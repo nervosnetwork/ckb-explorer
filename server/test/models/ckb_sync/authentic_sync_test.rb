@@ -13,7 +13,7 @@ module CkbSync
         assert_difference "Block.count", 11 do
           VCR.use_cassette("genesis_block") do
             VCR.use_cassette("blocks/two") do
-              CkbSync::AuthenticSync.start
+              CkbSync::AuthenticSync.sync_node_data
             end
           end
         end
@@ -27,7 +27,7 @@ module CkbSync
       VCR.use_cassette("genesis_block") do
         VCR.use_cassette("blocks/two") do
           assert_changes -> { CheckBlockWorker.jobs.size }, from: 0, to: 11 do
-            CkbSync::AuthenticSync.start
+            CkbSync::AuthenticSync.sync_node_data
           end
         end
       end
