@@ -14,9 +14,9 @@ module CkbSync
             Rails.cache.delete(@current_round_key)
             task.shutdown && (return)
           end
-          if @current_worker_args.size >= 1000 || ivars.any?(&:complete?)
-            args = @current_worker_args.shift(1000)
-            Sidekiq::Client.push_bulk("class" => @worker_name, "args" => args, "queue" => @queue_name)
+          if @current_worker_args.size >= 100 || ivars.any?(&:complete?)
+            args = @current_worker_args.shift(100)
+            Sidekiq::Client.push_bulk("class" => @worker_name, "args" => args, "queue" => @queue_name) if args.present?
           end
         end
       timer_task.add_observer(TaskObserver.new)
