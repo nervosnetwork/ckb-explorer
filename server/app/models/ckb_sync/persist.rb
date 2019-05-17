@@ -104,14 +104,16 @@ module CkbSync
       end
 
       def build_ckb_transactions(local_block, transactions, sync_type, ckb_transaction_and_display_cell_hashes)
+        addresses = Set.new
         transactions.each do |transaction|
           ckb_transaction_and_display_cell_hash = { transaction: nil, inputs: [], outputs: [] }
           ckb_transaction = build_ckb_transaction(local_block, transaction, sync_type)
           ckb_transaction_and_display_cell_hash[:transaction] = ckb_transaction
 
           build_cell_inputs(transaction["inputs"], ckb_transaction, ckb_transaction_and_display_cell_hash)
-          build_cell_outputs(transaction["outputs"], ckb_transaction, ckb_transaction_and_display_cell_hash)
-
+          build_cell_outputs(transaction["outputs"], ckb_transaction, ckb_transaction_and_display_cell_hash, addresses)
+          ckb_transaction.addresses << addresses
+          addresses.clear
           ckb_transaction_and_display_cell_hashes << ckb_transaction_and_display_cell_hash
         end
       end
@@ -123,14 +125,14 @@ module CkbSync
         end
       end
 
-      def build_cell_outputs(node_outputs, ckb_transaction, ckb_transaction_and_display_cell_hash)
+      def build_cell_outputs(node_outputs, ckb_transaction, ckb_transaction_and_display_cell_hash, addresses)
         node_outputs.each do |output|
           address = Address.find_or_create_address(output["lock"])
           cell_output = build_cell_output(ckb_transaction, output, address)
           build_lock_script(cell_output, output["lock"], address)
           build_type_script(cell_output, output["type"])
-          ckb_transaction.addresses << address
           ckb_transaction_and_display_cell_hash[:outputs] << cell_output
+          addresses << address
         end
       end
 
