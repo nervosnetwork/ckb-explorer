@@ -22,7 +22,7 @@ loop do
 
   generate_sync_log(from, to)
 
-  return if Sidekiq::Queue.new("authentic_sync").size > 1000
+  return if Sidekiq::Queue.new("authentic_sync").size > 4000
 
   sync_info_values = SyncInfo.authentic_syncing.recent.limit(1000).pluck(:value)
 
