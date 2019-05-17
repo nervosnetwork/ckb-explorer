@@ -112,7 +112,8 @@ module CkbSync
 
           build_cell_inputs(transaction["inputs"], ckb_transaction, ckb_transaction_and_display_cell_hash)
           build_cell_outputs(transaction["outputs"], ckb_transaction, ckb_transaction_and_display_cell_hash, addresses)
-          ckb_transaction.addresses << addresses
+          ckb_transaction.addresses << addresses.to_a
+
           addresses.clear
           ckb_transaction_and_display_cell_hashes << ckb_transaction_and_display_cell_hash
         end
