@@ -114,12 +114,6 @@ class AddressTest < ActiveSupport::TestCase
     end
   end
 
-  test "should update the related address's ckb_transactions_count after block synced" do
-    address = create(:address, address_hash: "ckt1q9gry5zgxmpjnmtrp4kww5r39frh2sm89tdt2l6v234ygf", ckb_transactions_count: 1)
-
-    assert_difference -> { address.reload.ckb_transactions_count }, 10, &method(:prepare_inauthentic_node_data)
-  end
-
   test "should update related addresses balance after block authenticated" do
     Sidekiq::Testing.inline!
 
@@ -128,7 +122,7 @@ class AddressTest < ActiveSupport::TestCase
     VCR.use_cassette("genesis_block") do
       VCR.use_cassette("blocks/three") do
         CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(20)
-        CkbSync::AuthenticSync.sync_node_data
+        CkbSync::AuthenticSync.sync_node_data(0..3)
         create(:sync_info, name: "authentic_tip_block_number", value: 10)
 
         local_block = Block.find_by(block_hash: DEFAULT_NODE_BLOCK_HASH)
@@ -157,7 +151,7 @@ class AddressTest < ActiveSupport::TestCase
     VCR.use_cassette("genesis_block") do
       VCR.use_cassette("blocks/three") do
         CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(20)
-        CkbSync::AuthenticSync.sync_node_data
+        CkbSync::AuthenticSync.sync_node_data(0..3)
         create(:sync_info, name: "authentic_tip_block_number", value: 10)
 
         previous_block = create(:block, :with_block_hash, number: 100)
