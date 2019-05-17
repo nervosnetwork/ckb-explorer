@@ -13,7 +13,7 @@ module CkbSync
 
         worker_args = Concurrent::Array.new
         ivars =
-          (from..to).each_slice(1000).map do |numbers|
+          (from..to).each_slice(10).map do |numbers|
             worker_args_producer = CkbSync::DataSyncWorkerArgsProducer.new(worker_args)
             worker_args_producer.async.produce_worker_args(numbers)
           end

@@ -24,6 +24,17 @@ class SyncInfo < ApplicationRecord
 
       sync_info.value
     end
+
+
+    def local_inauthentic_tip_block_number=(block_number)
+      sync_info = SyncInfo.find_by(name: "inauthentic_tip_block_number")
+      sync_info.update(value: block_number, status: "syncing")
+    end
+
+    def local_authentic_tip_block_number=(block_number)
+      sync_info = SyncInfo.find_by(name: "authentic_tip_block_number")
+      sync_info.update(value: block_number, status: "syncing")
+    end
   end
 end
 
