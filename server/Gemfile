@@ -48,6 +48,7 @@ gem "redis", "~> 4.0", ">= 4.0.3"
 gem "sidekiq", "~> 5.2", ">= 5.2.3"
 gem "sidekiq-unique-jobs"
 gem "sidekiq-failures"
+gem "sidekiq-status"
 
 # bulk insertion of data into database using ActiveRecord
 gem "activerecord-import"

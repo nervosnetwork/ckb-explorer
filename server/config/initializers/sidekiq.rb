@@ -1,14 +1,31 @@
 require "sidekiq/web"
+require "sidekiq-status"
+require "sidekiq-status/web"
 
 redis_config = Rails.application.config_for(:redis)
 redis_url = redis_config["url"]
 redis_password = redis_config["password"]
 
-Sidekiq.configure_server do |config|
-  config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
-end
+
 Sidekiq.configure_client do |config|
   config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
+  # sidekiq-status
+  config.client_middleware do |chain|
+    chain.add Sidekiq::Status::ClientMiddleware
+  end
+end
+
+Sidekiq.options[:poll_interval] = 1
+Sidekiq.configure_server do |config|
+  config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
+  # sidekiq-status
+  config.server_middleware do |chain|
+    chain.add Sidekiq::Status::ServerMiddleware, expiration: 30.minutes
+  end
+  # sidekiq-status
+  config.client_middleware do |chain|
+    chain.add Sidekiq::Status::ClientMiddleware, expiration: 30.minutes
+  end
 end
 
 # Auth sidekiq user in production env.
