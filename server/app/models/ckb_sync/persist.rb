@@ -104,9 +104,6 @@ module CkbSync
       end
 
       def build_ckb_transactions(local_block, transactions, sync_type, ckb_transaction_and_display_cell_hashes)
-        ckb_transaction_count_info = {}
-        addresses = Set.new
-
         transactions.each do |transaction|
           ckb_transaction_and_display_cell_hash = { transaction: nil, inputs: [], outputs: [] }
           ckb_transaction = build_ckb_transaction(local_block, transaction, sync_type)
@@ -116,26 +113,6 @@ module CkbSync
           build_cell_outputs(transaction["outputs"], ckb_transaction, ckb_transaction_and_display_cell_hash, addresses)
 
           ckb_transaction_and_display_cell_hashes << ckb_transaction_and_display_cell_hash
-
-          addresses_arr = addresses.to_a
-          ckb_transaction.addresses << addresses_arr
-          addresses_arr.each do |address|
-            if ckb_transaction_count_info[address.id].present?
-              ckb_transaction_count = ckb_transaction_count_info[address.id]
-              ckb_transaction_count_info[address.id] = ckb_transaction_count + 1
-            else
-              ckb_transaction_count_info.merge!({ address.id => 1 })
-            end
-          end
-        end
-
-        update_addresses_ckb_transactions_count(ckb_transaction_count_info)
-      end
-
-      def update_addresses_ckb_transactions_count(ckb_transaction_count_info)
-        ckb_transaction_count_info.each do |address_id, ckb_transaction_count|
-          address = Address.find(address_id)
-          address.increment!("ckb_transactions_count", ckb_transaction_count)
         end
       end
 
