@@ -271,7 +271,7 @@ module CkbSync
           status: sync_type,
           reward: CkbUtils.miner_reward(node_block["transactions"].first),
           total_transaction_fee: 0,
-          witnesses_root: header["witness_root"],
+          witnesses_root: header["witnesses_root"],
           epoch: header["epoch"],
           start_number: epoch_info.start_number,
           length: epoch_info.length
@@ -294,7 +294,7 @@ module CkbSync
           version: header["version"],
           proposals: uncle_block["proposals"],
           proposals_count: uncle_block["proposals"].count,
-          witnesses_root: header["witness_root"],
+          witnesses_root: header["witnesses_root"],
           epoch: header["epoch"]
         )
       end
