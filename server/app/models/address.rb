@@ -38,6 +38,6 @@ end
 #
 # Indexes
 #
-#  index_addresses_on_address_hash  (address_hash) UNIQUE
+#  index_addresses_on_address_hash  (address_hash)
 #  index_addresses_on_lock_hash     (lock_hash) UNIQUE
 #

@@ -32,7 +32,7 @@ ActiveRecord::Schema.define(version: 2019_06_04_062236) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.binary "lock_hash"
-    t.index ["address_hash"], name: "index_addresses_on_address_hash", unique: true
+    t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
   end
 
