@@ -169,11 +169,11 @@ def create_cell_output(trait_type: :with_full_transaction, status: "live")
   create(:cell_output, trait_type, block: block, status: status)
 end
 
-def generate_miner_ranking_related_data
+def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   blocks = create_list(:block, 10, :with_block_hash)
   cellbases = []
   blocks.each do |block|
-    cellbases << block.ckb_transactions.create(is_cellbase: true, status: :inauthentic, block_timestamp: 1560578500000)
+    cellbases << block.ckb_transactions.create(is_cellbase: true, status: :inauthentic, block_timestamp: block_timestamp)
   end
   cellbases_part1 = cellbases[0..1]
   cellbases_part2 = cellbases[2..8]
