@@ -10,12 +10,12 @@ class MinerRanking
   def ranking(limit = nil)
     limit = limit.presence || DEFAULT_LIMIT
     result =
-      Rails.cache.fetch("miner_ranking") do
+      Rails.cache.fetch("miner_ranking", expires_in: 1.hour) do
         ckb_transactions = CkbTransaction.where("block_timestamp >= ? and block_timestamp <= ?", STARTED_AT_TIMESTAMP, ENDED_AT_TIMESTAMP).where(is_cellbase: true)
         address_ids = AccountBook.where(ckb_transaction: ckb_transactions).select("address_id").distinct
         addresses = Address.where(id: address_ids)
         ranking_infos = []
-        addresses.each do |address|
+        addresses.find_each do |address|
           block_ids = address.ckb_transactions.where(is_cellbase: true).select("block_id")
           blocks = Block.where(id: block_ids)
           total_block_reward = 0
