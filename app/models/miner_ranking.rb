@@ -29,7 +29,11 @@ class MinerRanking
         ranking_infos.sort_by { |ranking_info| ranking_info[:total_block_reward] }.reverse
       end
 
-    result.take(limit)
+    if limit.negative?
+      result
+    else
+      result.take(limit)
+    end
   end
 
   private
