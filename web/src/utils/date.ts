@@ -36,11 +36,11 @@ export const parseTime = (millisecond: number) => {
   if (hour >= 1) {
     minute %= 60
     second %= 60
-    return `${hour.toFixed()} h ${minute.toFixed()} m ${second.toFixed(2)} s`
+    return `${Math.floor(hour)} h ${Math.floor(minute)} m ${second.toFixed(2)} s`
   }
   if (minute >= 1) {
     second %= 60
-    return `${minute.toFixed()} m ${second.toFixed(2)} s`
+    return `${Math.floor(minute)} m ${second.toFixed(2)} s`
   }
   return `${second.toFixed(2)} s`
 }
