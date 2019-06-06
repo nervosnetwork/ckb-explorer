@@ -57,7 +57,7 @@ export const TransactionTitlePanel = styled.div`
     justify-content: center;
     margin: 0 12px;
 
-    > div {
+    > code {
       color: rgb(136, 136, 136);
       font-size: 18px;
       height: 25px;
@@ -304,11 +304,13 @@ export const InputOutputTable = styled.table`
             font-size: 16px;
             color: #888888;
             font-weight: bold;
+            font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
             margin-top: 5px;
             min-height: 170px;
             background-color: #f9f9f9;
             border-radius: 6px 6px;
             user-select: none;
+            transform: translateZ(0);
           }
           .tr-detail-td-buttons {
             display: flex;

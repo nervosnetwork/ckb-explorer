@@ -27,7 +27,7 @@ export const BlockDetailTitlePanel = styled.div`
     flex-direction: row;
     justify-content: center;
 
-    > div {
+    > code {
       color: rgb(136, 136, 136);
       font-size: 18px;
       height: 25px;
@@ -87,24 +87,27 @@ export const BlockCommonContent = styled.div`
   border: 0px solid white;
   border-radius: 6px;
   box-shadow: 0px 5px 9px rgb(233, 233, 233);
-  display: flex;
-  flex-direction: row;
 
   > div:nth-child(1) {
-    flex: 1;
-    min-width: 350px;
-  }
-
-  > div:nth-child(2) {
     display: flex;
-    flex: 1;
-    min-width: 350px;
+    flex-direction: row;
+
     > div:nth-child(1) {
-      width: 1px;
-      height: 360px;
-      background: #3cc68a;
-      content: '';
-      margin-right: 82px;
+      flex: 1;
+      min-width: 350px;
+    }
+
+    > div:nth-child(2) {
+      display: flex;
+      flex: 1;
+      min-width: 350px;
+      > div:nth-child(1) {
+        width: 1px;
+        height: 360px;
+        background: #3cc68a;
+        content: '';
+        margin-right: 82px;
+      }
     }
   }
 
@@ -115,17 +118,20 @@ export const BlockCommonContent = styled.div`
     background: white;
     border: 0px solid white;
     border-radius: 6px;
-    display: flex;
-    flex-direction: column;
 
     > div:nth-child(1) {
-    }
+      display: flex;
+      flex-direction: column;
 
-    > div:nth-child(2) {
       > div:nth-child(1) {
-        width: 0px;
-        height: 0px;
-        margin-right: 0px;
+      }
+
+      > div:nth-child(2) {
+        > div:nth-child(1) {
+          width: 0px;
+          height: 0px;
+          margin-right: 0px;
+        }
       }
     }
   }

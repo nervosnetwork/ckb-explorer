@@ -39,7 +39,7 @@ const AddressTitle = ({ address }: { address: string }) => {
     <AddressTitlePanel>
       <div className="address__title">Address</div>
       <div className="address__content">
-        <div id="address__hash">{address}</div>
+        <code id="address__hash">{address}</code>
         <div
           role="button"
           tabIndex={-1}
@@ -69,15 +69,15 @@ const AddressScriptLabel = ({ image, label, script }: { image: string; label: st
       </AddressScriptLabelPanel>
       <AddressScriptContentPanel>
         <AddressScriptContent>
-          <div>{`Code hash: ${script.code_hash}`}</div>
+          <code>{`Code hash: ${script.code_hash}`}</code>
           {script.args.length === 1 ? (
-            <div>{`Args: ${script.args[0]}`}</div>
+            <code>{`Args: ${script.args[0]}`}</code>
           ) : (
             script.args.map((arg: string, index: number) => {
               return index === 0 ? (
-                <div>{`Args: #${index} ${arg}`}</div>
+                <code>{`Args: #${index} ${arg}`}</code>
               ) : (
-                <div className="script__args__others">{`#${index} ${arg}`}</div>
+                <code className="script__args__others">{`#${index} ${arg}`}</code>
               )
             })
           )}
@@ -90,6 +90,7 @@ const AddressScriptLabel = ({ image, label, script }: { image: string; label: st
 enum PageParams {
   PageNo = 1,
   PageSize = 10,
+  MaxPageSize = 100,
 }
 
 export default (props: React.PropsWithoutRef<RouteComponentProps<{ address: string }>>) => {
@@ -106,6 +107,7 @@ export default (props: React.PropsWithoutRef<RouteComponentProps<{ address: stri
   const initTransactionWrappers: TransactionWrapper[] = []
   const initAddress: Address = {
     address_hash: '',
+    lock_hash: '',
     balance: 0,
     transactions_count: 0,
     cell_consumed: 0,
@@ -119,6 +121,11 @@ export default (props: React.PropsWithoutRef<RouteComponentProps<{ address: stri
   const [totalTransactions, setTotalTransactions] = useState(1)
   const [pageNo, setPageNo] = useState(validNumber(page, PageParams.PageNo))
   const [pageSize, setPageSize] = useState(validNumber(size, PageParams.PageSize))
+
+  if (pageSize > PageParams.MaxPageSize) {
+    setPageSize(PageParams.MaxPageSize)
+    props.history.replace(`/address/${address}?page=${pageNo}&size=${PageParams.MaxPageSize}`)
+  }
 
   const getAddressInfo = () => {
     appContext.showLoading()
@@ -145,8 +152,9 @@ export default (props: React.PropsWithoutRef<RouteComponentProps<{ address: stri
         appContext.hideLoading()
         const { data, meta } = json as Response<TransactionWrapper[]>
         if (meta) {
-          const { total } = meta
+          const { total, page_size } = meta
           setTotalTransactions(total)
+          setPageSize(page_size)
         }
         setTransactionWrappers(data)
       })
