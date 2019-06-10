@@ -5,6 +5,11 @@ module Api
         statistic_info = StatisticInfo.new
         render json: IndexStatisticSerializer.new(statistic_info)
       end
+
+      def show
+        ranking = MinerRanking.new
+        render json: MinerRankingSerializer.new(ranking)
+      end
     end
   end
 end

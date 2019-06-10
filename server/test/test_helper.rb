@@ -169,6 +169,55 @@ def create_cell_output(trait_type: :with_full_transaction, status: "live")
   create(:cell_output, trait_type, block: block, status: status)
 end
 
+def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
+  blocks = create_list(:block, 10, :with_block_hash)
+  cellbases = []
+  blocks.each do |block|
+    cellbases << block.ckb_transactions.create(is_cellbase: true, status: :inauthentic, block_timestamp: block_timestamp)
+  end
+  cellbases_part1 = cellbases[0..1]
+  cellbases_part2 = cellbases[2..8]
+  cellbases_part3 = cellbases[9..-1]
+  address1 = create(:address, :with_lock_script)
+  address1.ckb_transactions << cellbases_part1
+  address2 = create(:address, :with_lock_script)
+  address2.ckb_transactions << cellbases_part2
+  address3 = create(:address, :with_lock_script)
+  address3.ckb_transactions << cellbases_part3
+
+  return address1, address2, address3
+end
+
+def expected_ranking(address1, address2, address3)
+  address1_block_ids = address1.ckb_transactions.where(is_cellbase: true).select("block_id")
+  address2_block_ids = address2.ckb_transactions.where(is_cellbase: true).select("block_id")
+  address3_block_ids = address3.ckb_transactions.where(is_cellbase: true).select("block_id")
+  address1_blocks = Block.where(id: address1_block_ids)
+  address2_blocks = Block.where(id: address2_block_ids)
+  address3_blocks = Block.where(id: address3_block_ids)
+  address1_block_rewards =
+    address1_blocks.map { |block|
+      epoch_info = CkbSync::Api.instance.get_epoch_by_number(block.epoch)
+      block_reward(block, epoch_info)
+    }.reduce(0, &:+)
+  address2_block_rewards =
+    address2_blocks.map { |block|
+      epoch_info = CkbSync::Api.instance.get_epoch_by_number(block.epoch)
+      block_reward(block, epoch_info)
+    }.reduce(0, &:+)
+  address3_block_rewards =
+    address3_blocks.map { |block|
+      epoch_info = CkbSync::Api.instance.get_epoch_by_number(block.epoch)
+      block_reward(block, epoch_info)
+    }.reduce(0, &:+)
+
+  [
+    { address_hash: address2.address_hash, lock_hash: address2.lock_hash, total_block_reward: address2_block_rewards },
+    { address_hash: address1.address_hash, lock_hash: address1.lock_hash, total_block_reward: address1_block_rewards },
+    { address_hash: address3.address_hash, lock_hash: address3.lock_hash, total_block_reward: address3_block_rewards }
+  ]
+end
+
 module RequestHelpers
   def json
     JSON.parse(response.body)

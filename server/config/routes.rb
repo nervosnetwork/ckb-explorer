@@ -18,7 +18,7 @@ Rails.application.routes.draw do
       resources :cell_output_type_scripts, only: :show
       resources :cell_output_data, only: :show
       resources :suggest_queries, only: :index
-      resources :statistics, only: :index
+      resources :statistics, only: %i(index show)
     end
   end
 end
