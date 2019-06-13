@@ -300,12 +300,12 @@ export default (props: React.PropsWithoutRef<RouteComponentProps<{ hash: string 
     },
     {
       image: StartNumberIcon,
-      label: 'Start Number:',
+      label: 'Epoch Start Number:',
       value: `${blockData.start_number}`,
     },
     {
       image: LengthIcon,
-      label: 'Length:',
+      label: 'Epoch Length:',
       value: blockData.length,
     },
     {
@@ -351,7 +351,6 @@ export default (props: React.PropsWithoutRef<RouteComponentProps<{ hash: string 
               })}
             </div>
             <div>
-              <div />
               <div>
                 {BlockRightItems[0].value ? (
                   <Link
