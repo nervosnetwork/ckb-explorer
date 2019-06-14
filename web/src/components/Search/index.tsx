@@ -26,7 +26,7 @@ const SearchPanel = styled.div`
     font-size: 16px;
     @media (max-width: 700px) {
       font-size: 12px;
-      width: 80%;
+      width: 100%;
       padding-left: 10px;
       padding-right: 20px;
     }
@@ -75,10 +75,8 @@ const Search = ({ opacity = false, content }: { opacity?: boolean; content?: str
     if (!query) {
       appContext.toastMessage('Please input valid content', 3000)
     } else {
-      appContext.showLoading()
       fetchSearchResult(query)
         .then((json: any) => {
-          appContext.hideLoading()
           const homeSearchBar = document.getElementById('home__search__bar') as HTMLInputElement
           homeSearchBar.value = ''
           const { data } = json
@@ -96,7 +94,6 @@ const Search = ({ opacity = false, content }: { opacity?: boolean; content?: str
           }
         })
         .catch(() => {
-          appContext.hideLoading()
           browserHistory.push(`/search/fail?q=${query}`)
         })
     }
