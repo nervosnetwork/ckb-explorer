@@ -31,18 +31,18 @@ set :user, "deploy"
 # set :shared_files, fetch(:shared_files, []).push('config/database.yml', 'config/secrets.yml')
 
 set :shared_dirs, fetch(:shared_dirs, []).push(
-  "server/log",
-  "server/public",
-  "server/vendor"
+  "log",
+  "public",
+  "vendor"
 )
 
 set :shared_files, fetch(:shared_files, []).push(
-  "server/config/database.yml",
-  "server/config/puma.rb",
-  "server/.env.local",
-  "server/config/settings.local.yml",
-  "server/config/master.key",
-  "server/config/newrelic.yml"
+  "config/database.yml",
+  "config/puma.rb",
+  ".env.local",
+  "config/settings.local.yml",
+  "config/master.key",
+  "config/newrelic.yml"
 )
 
 # This task is the environment that is loaded for all remote run commands, such as
@@ -61,18 +61,18 @@ end
 # All paths in `shared_dirs` and `shared_paths` will be created on their own.
 task :setup do
   # command %{rbenv install 2.3.0 --skip-existing}
-  command %[touch "#{fetch(:shared_path)}/server/config/database.yml"]
-  command %[touch "#{fetch(:shared_path)}/server/.env.local"]
-  command %[touch "#{fetch(:shared_path)}/server/config/settings.local.yml"]
-  command %[touch "#{fetch(:shared_path)}/server/config/puma.rb"]
-  command %[touch "#{fetch(:shared_path)}/server/config/master.key"]
-  command %[touch "#{fetch(:shared_path)}/server/config/ckb-explorer-puma.service"]
-  command %[touch "#{fetch(:shared_path)}/server/config/ckb-explorer-puma.socket"]
-  command %[touch "#{fetch(:shared_path)}/server/config/ckb-explorer-sidekiq.service"]
-  command %[touch "#{fetch(:shared_path)}/server/config/ckb-explorer-inauthentic-sync.service"]
-  command %[touch "#{fetch(:shared_path)}/server/config/ckb-explorer-authentic-sync.service"]
-  command %[touch "#{fetch(:shared_path)}/server/config/ckb-explorer-ckb-transaction-info-and-fee-updater.service"]
-  comment "Be sure to edit '#{fetch(:shared_path)}/server/config/database.yml', 'settings.local.yml', '.env.local', 'puma.rb', 'ckb-inauthentic-sync.server', 'ckb-authentic-sync.server', 'ckb-explorer-puma.service', 'ckb-explorer-puma.socket' and ckb-explorer-sidekiq.service."
+  command %[touch "#{fetch(:shared_path)}/config/database.yml"]
+  command %[touch "#{fetch(:shared_path)}/.env.local"]
+  command %[touch "#{fetch(:shared_path)}/config/settings.local.yml"]
+  command %[touch "#{fetch(:shared_path)}/config/puma.rb"]
+  command %[touch "#{fetch(:shared_path)}/config/master.key"]
+  command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-puma.service"]
+  command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-puma.socket"]
+  command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-sidekiq.service"]
+  command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-inauthentic-sync.service"]
+  command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-authentic-sync.service"]
+  command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-ckb-transaction-info-and-fee-updater.service"]
+  comment "Be sure to edit '#{fetch(:shared_path)}/config/database.yml', 'settings.local.yml', '.env.local', 'puma.rb', 'ckb-inauthentic-sync.server', 'ckb-authentic-sync.server', 'ckb-explorer-puma.service', 'ckb-explorer-puma.socket' and ckb-explorer-sidekiq.service."
 end
 
 desc "Deploys the current version to the server."
@@ -84,7 +84,6 @@ task :deploy do
     # instance of your project.
     invoke :'git:clone'
     invoke :'deploy:link_shared_paths'
-    command "cd server"
     invoke :'bundle:install'
     invoke :'rails:db_migrate'
     invoke :'deploy:cleanup'
