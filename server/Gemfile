@@ -38,7 +38,7 @@ gem "config"
 gem "daemons", "~> 1.2", ">= 1.2.6"
 
 # CKB SDK
-gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", branch: "develop"
+gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", branch: "rc/v0.14.0"
 
 # Redis
 gem "hiredis", "~> 0.6.1"
@@ -62,6 +62,7 @@ gem "concurrent-ruby", require: "concurrent"
 gem "mina", require: false
 gem "mina-multistage", require: false
 gem "newrelic_rpm"
+gem "turnout"
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
