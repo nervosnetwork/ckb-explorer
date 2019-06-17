@@ -13,11 +13,8 @@ class StatisticInfo
     CkbSync::Api.instance.get_tip_block_number
   end
 
-  def average_difficulty
-    blocks = Block.recent.take(difficulty_interval)
-    return if blocks.blank?
-
-    blocks.map { |block| block.difficulty.hex }.reduce(0, &:+) / blocks.size
+  def current_epoch_difficulty
+    CkbSync::Api.instance.get_current_epoch.difficulty.hex
   end
 
   def average_block_time
