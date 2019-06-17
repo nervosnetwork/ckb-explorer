@@ -132,9 +132,7 @@ end
 #
 # Indexes
 #
-#  index_blocks_on_block_hash             (block_hash) UNIQUE
-#  index_blocks_on_block_hash_and_status  (block_hash,status)
-#  index_blocks_on_number_and_status      (number,status)
-#  index_blocks_on_status                 (status)
-#  index_blocks_on_timestamp              (timestamp)
+#  index_blocks_on_block_hash  (block_hash) UNIQUE
+#  index_blocks_on_number      (number)
+#  index_blocks_on_timestamp   (timestamp)
 #
