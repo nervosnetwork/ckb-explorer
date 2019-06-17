@@ -50,23 +50,22 @@ class StatisticInfoTest < ActiveSupport::TestCase
     assert_equal 100, statistic_info.tip_block_number
   end
 
-  test ".average_difficulty should return average of the last 500 blocks if use default average interval" do
+  test ".current_epoch_difficulty should return current epoch difficulty" do
+    CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
+      CKB::Types::Epoch.new(
+        block_reward: "250000000000",
+        difficulty: "0x1000",
+        last_block_hash_in_previous_epoch: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        length: "2000",
+        number: "0",
+        remainder_reward: "0",
+        start_number: "0"
+      )
+    )
     statistic_info = StatisticInfo.new
-    create_list(:block, 500, :with_block_hash)
-    last_500_blocks = Block.recent.take(ENV["DIFFICULTY_INTERVAL"])
-    average_difficulty = last_500_blocks.map { |block| block.difficulty.hex }.reduce(0, &:+) / ENV["DIFFICULTY_INTERVAL"].to_i
 
-    assert_equal average_difficulty, statistic_info.average_difficulty
-  end
-
-  test ".average_difficulty should return average of the total blocks if blocks count less then default average interval" do
-    statistic_info = StatisticInfo.new
-    block_count = 10
-    create_list(:block, block_count, :with_block_hash)
-    last_10_blocks = Block.recent.take(block_count)
-    average_difficulty = last_10_blocks.map { |block| block.difficulty.hex }.reduce(&:+) / block_count
-
-    assert_equal average_difficulty, statistic_info.average_difficulty
+    current_epoch_difficulty = CkbSync::Api.instance.get_current_epoch.difficulty.hex
+    assert_equal current_epoch_difficulty, statistic_info.current_epoch_difficulty
   end
 
   test ".average_block_time should return average block time within 24 hours" do
