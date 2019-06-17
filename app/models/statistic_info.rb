@@ -5,12 +5,16 @@ class StatisticInfo
     @hash_rate_statistical_interval = hash_rate_statistical_interval.presence || ENV["HASH_RATE_STATISTICAL_INTERVAL"]
   end
 
+  def cache_key
+    tip_block_number
+  end
+
   def id
     Time.current.to_i
   end
 
   def tip_block_number
-    CkbSync::Api.instance.get_tip_block_number
+    @tip_block_number ||= CkbSync::Api.instance.get_tip_block_number
   end
 
   def current_epoch_difficulty
