@@ -9,31 +9,28 @@ class MinerRanking
 
   def ranking(limit = nil)
     limit = limit.presence || DEFAULT_LIMIT
-    result =
-      Rails.cache.fetch("miner_ranking", expires_in: 1.hour) do
-        ckb_transactions = CkbTransaction.available.where("block_timestamp >= ? and block_timestamp <= ?", STARTED_AT_TIMESTAMP, ENDED_AT_TIMESTAMP).where(is_cellbase: true)
-        address_ids = AccountBook.where(ckb_transaction: ckb_transactions).select("address_id").distinct
-        addresses = Address.where(id: address_ids)
-        ranking_infos = []
-        addresses.find_each do |address|
-          block_ids = address.ckb_transactions.available.where(is_cellbase: true).select("block_id")
-          blocks = Block.where(id: block_ids)
-          total_block_reward = 0
-          blocks.find_each do |block|
-            epoch_info = CkbUtils.get_epoch_info(block.epoch)
-            total_block_reward += block_reward(block, epoch_info)
-          end
-          ranking_infos << { address_hash: address.address_hash, lock_hash: address.lock_hash, total_block_reward: total_block_reward }
-        end
-
-        ranking_infos.sort_by { |ranking_info| ranking_info[:total_block_reward] }.reverse
-      end
-
-    if limit.negative?
-      result
-    else
-      result.take(limit)
+    Rails.cache.fetch("miner_ranking", expires_in: 1.hour) do
+      ranking_infos.take(limit)
     end
+  end
+
+  def ranking_infos
+    ckb_transactions = CkbTransaction.available.where("block_timestamp >= ? and block_timestamp <= ?", STARTED_AT_TIMESTAMP, ENDED_AT_TIMESTAMP).where(is_cellbase: true)
+    address_ids = AccountBook.where(ckb_transaction: ckb_transactions).select("address_id").distinct
+    addresses = Address.where(id: address_ids)
+    ranking_infos = []
+    addresses.find_each do |address|
+      block_ids = address.ckb_transactions.available.where(is_cellbase: true).select("block_id")
+      blocks = Block.where(id: block_ids)
+      total_block_reward = 0
+      blocks.find_each do |block|
+        epoch_info = CkbUtils.get_epoch_info(block.epoch)
+        total_block_reward += block_reward(block, epoch_info)
+      end
+      ranking_infos << { address_hash: address.address_hash, lock_hash: address.lock_hash, total_block_reward: total_block_reward }
+    end
+
+    ranking_infos.sort_by { |ranking_info| ranking_info[:total_block_reward] }.reverse
   end
 
   private
