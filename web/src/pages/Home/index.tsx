@@ -138,11 +138,11 @@ export default () => {
       name: 'Difficulty',
       value: `${parseInt(`${statistics.average_difficulty}`, 10).toLocaleString()}`,
       image: DifficultyImage,
-      tip: 'Average Difficulty of the last 500 blocks',
+      tip: 'Difficulty of the lastest Epoch',
     },
     {
       name: 'Hash Rate',
-      value: `${(Number(statistics.hash_rate) * 1000).toFixed()} gps`,
+      value: `${parseInt((Number(statistics.hash_rate) * 1000).toFixed(), 10).toLocaleString()} gps`,
       image: HashRateImage,
       tip: 'Average Hash Rate of the last 500 blocks',
     },
