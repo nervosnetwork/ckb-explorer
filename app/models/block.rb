@@ -57,14 +57,18 @@ class Block < ApplicationRecord
     ckb_transactions.where(transaction_fee_status: "uncalculated").exists?
   end
 
-  def self.find_block(query_key)
-    if QueryKeyUtils.valid_hex?(query_key)
-      where(block_hash: query_key).available.take!
-    else
-      where(number: query_key).available.take!
+  def self.find_block!(query_key)
+    cached_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
+  end
+
+  def self.cached_find(query_key)
+    Rails.cache.fetch([name, query_key]) do
+      if QueryKeyUtils.valid_hex?(query_key)
+        where(block_hash: query_key).available.first
+      else
+        where(number: query_key).available.first
+      end
     end
-  rescue ActiveRecord::RecordNotFound
-    raise Api::V1::Exceptions::BlockNotFoundError
   end
 
   def miner_address
