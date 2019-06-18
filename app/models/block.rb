@@ -28,6 +28,8 @@ class Block < ApplicationRecord
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
 
+  after_commit :flush_cache
+
   def verify!(node_block)
     if verified?(node_block.header.hash)
       authenticate!
@@ -74,6 +76,11 @@ class Block < ApplicationRecord
 
   def miner_address
     Address.find_by(address_hash: miner_hash)
+  end
+
+  def flush_cache
+    Rails.cache.delete([self.class.name, block_hash])
+    Rails.cache.delete([self.class.name, number])
   end
 
   private
