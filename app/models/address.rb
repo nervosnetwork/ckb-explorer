@@ -9,6 +9,7 @@ class Address < ApplicationRecord
   validates :balance, :cell_consumed, :ckb_transactions_count, numericality: { greater_than_or_equal_to: 0 }
 
   attribute :lock_hash, :ckb_hash
+  after_commit :flush_cache
 
   def lock_script
     LockScript.where(address: self).first
@@ -26,11 +27,29 @@ class Address < ApplicationRecord
   end
 
   def self.find_address!(query_key)
-    if QueryKeyUtils.valid_hex?(query_key)
-      Address.find_by!(lock_hash: query_key)
-    else
-      Address.find_by!(address_hash: query_key)
+    cached_find(query_key) || raise(Api::V1::Exceptions::AddressNotFoundError)
+  end
+
+  def self.cached_find(query_key)
+    Rails.cache.fetch([name, query_key]) do
+      if QueryKeyUtils.valid_hex?(query_key)
+        find_by(lock_hash: query_key)
+      else
+        find_by(address_hash: query_key)
+      end
     end
+  end
+
+  def cached_lock_script
+    Rails.cache.fetch([self.class.name, "lock_script"], race_condition_ttl: 3.seconds) do
+      lock_script.to_node_lock
+    end
+  end
+
+  def flush_cache
+    Rails.cache.delete([self.class.name, address_hash])
+    Rails.cache.delete([self.class.name, lock_hash])
+    Rails.cache.delete([self.class.name, "lock_script"])
   end
 end
 
