@@ -37,7 +37,7 @@ class SuggestQuery
   end
 
   def find_ckb_transaction_by_hash
-    ckb_transaction = CkbTransaction.where(tx_hash: query_key).available.first
+    ckb_transaction = CkbTransaction.cached_find(query_key)
     CkbTransactionSerializer.new(ckb_transaction) if ckb_transaction.present?
   end
 

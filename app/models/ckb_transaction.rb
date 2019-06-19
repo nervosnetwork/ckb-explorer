@@ -20,6 +20,18 @@ class CkbTransaction < ApplicationRecord
   scope :recent, -> { order(block_timestamp: :desc) }
   scope :available, -> { where(status: [:inauthentic, :authentic]) }
   scope :cellbase, -> { where(is_cellbase: true) }
+
+  after_commit :flush_cache
+
+  def self.cached_find(query_key)
+    Rails.cache.fetch([name, query_key]) do
+      where(tx_hash: query_key).available.first
+    end
+  end
+
+  def flush_cache
+    Rails.cache.delete([self.class.name, tx_hash])
+  end
 end
 
 # == Schema Information
