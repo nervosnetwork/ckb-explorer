@@ -7,8 +7,6 @@ module Api
         address = Address.find_address!(params[:id])
 
         render json: json_response(address)
-      rescue ActiveRecord::RecordNotFound
-        raise Api::V1::Exceptions::AddressNotFoundError
       end
 
       private
