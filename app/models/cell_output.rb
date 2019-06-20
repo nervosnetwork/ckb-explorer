@@ -13,8 +13,14 @@ class CellOutput < ApplicationRecord
 
   scope :available, -> { where(status: [:live, :dead]) }
 
+  after_commit :flush_cache
+
   def address_hash
     address.address_hash
+  end
+
+  def flush_cache
+    Rails.cache.delete([self.class.name, tx_hash, cell_index])
   end
 end
 
