@@ -50,7 +50,7 @@ class CellInput < ApplicationRecord
 
     tx_hash = cell["tx_hash"]
     cell_index = cell["index"].to_i
-    Rails.cache.fetch("CellOutput/#{tx_hash}/#{cell_index}") do
+    Rails.cache.fetch(["CellOutput", tx_hash, cell_index]) do
       cell_output = CellOutput.find_by!(tx_hash: tx_hash, cell_index: cell_index)
       cell_output.presence
     end
