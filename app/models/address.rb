@@ -19,7 +19,7 @@ class Address < ApplicationRecord
     address_hash = CkbUtils.generate_address(lock_script)
     lock_hash = lock_script.to_hash
 
-    Rails.cache.fetch(lock_hash, expires_in: 1.day) do
+    Rails.cache.fetch(lock_hash, expires_in: 1.day, race_condition_ttl: 3.seconds) do
       transaction(requires_new: true) { Address.create(address_hash: address_hash, balance: 0, cell_consumed: 0, lock_hash: lock_hash) }
     rescue ActiveRecord::RecordNotUnique
       Address.find_by(lock_hash: lock_hash)
@@ -31,7 +31,7 @@ class Address < ApplicationRecord
   end
 
   def self.cached_find(query_key)
-    Rails.cache.fetch([name, query_key]) do
+    Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds) do
       if QueryKeyUtils.valid_hex?(query_key)
         find_by(lock_hash: query_key)
       else

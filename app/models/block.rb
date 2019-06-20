@@ -64,7 +64,7 @@ class Block < ApplicationRecord
   end
 
   def self.cached_find(query_key)
-    Rails.cache.fetch([name, query_key]) do
+    Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds) do
       if QueryKeyUtils.valid_hex?(query_key)
         where(block_hash: query_key).available.first
       else

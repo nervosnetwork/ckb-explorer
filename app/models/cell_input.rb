@@ -4,13 +4,13 @@ class CellInput < ApplicationRecord
   after_commit :flush_cache
 
   def find_lock_script!
-    Rails.cache.fetch(["CellOutput", id, "lock_script"]) do
+    Rails.cache.fetch(["CellOutput", id, "lock_script"], race_condition_ttl: 3.seconds) do
       previous_cell_output!.lock_script
     end
   end
 
   def find_type_script!
-    Rails.cache.fetch(["CellOutput", id, "type_script"]) do
+    Rails.cache.fetch(["CellOutput", id, "type_script"], race_condition_ttl: 3.seconds) do
       previous_cell_output!.type_script
     end
   end
@@ -32,7 +32,7 @@ class CellInput < ApplicationRecord
   end
 
   def self.cached_find(id)
-    Rails.cache.fetch([name, id]) { find(id) }
+    Rails.cache.fetch([name, id], race_condition_ttl: 3.seconds) { find(id) }
   end
 
   def flush_cache
@@ -50,7 +50,7 @@ class CellInput < ApplicationRecord
 
     tx_hash = cell["tx_hash"]
     cell_index = cell["index"].to_i
-    Rails.cache.fetch(["CellOutput", tx_hash, cell_index]) do
+    Rails.cache.fetch(["CellOutput", tx_hash, cell_index], race_condition_ttl: 3.seconds) do
       cell_output = CellOutput.find_by!(tx_hash: tx_hash, cell_index: cell_index)
       cell_output.presence
     end
