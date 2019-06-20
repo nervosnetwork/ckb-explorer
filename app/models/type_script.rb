@@ -11,10 +11,6 @@ class TypeScript < ApplicationRecord
       code_hash: code_hash
     }
   end
-
-  def cache_key
-    "#{self.class.name}/#{id}-#{updated_at.utc.to_s(:usec)}"
-  end
 end
 
 # == Schema Information

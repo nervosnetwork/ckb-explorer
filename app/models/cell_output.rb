@@ -22,10 +22,6 @@ class CellOutput < ApplicationRecord
   def flush_cache
     Rails.cache.delete([self.class.name, tx_hash, cell_index])
   end
-
-  def cache_key
-    "#{self.class.name}/#{id}-#{updated_at.utc.to_s(:usec)}"
-  end
 end
 
 # == Schema Information
