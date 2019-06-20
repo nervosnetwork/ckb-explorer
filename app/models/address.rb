@@ -40,7 +40,7 @@ class Address < ApplicationRecord
   end
 
   def cached_lock_script
-    Rails.cache.realize([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
+    Rails.cache.realize([self.class.name, address_hash, "lock_script"], race_condition_ttl: 3.seconds) do
       lock_script.to_node_lock
     end
   end
@@ -52,7 +52,7 @@ class Address < ApplicationRecord
   end
 
   def cache_keys
-    %W(#{self.class.name}/#{address_hash} #{self.class.name}/#{lock_hash})
+    %W(#{self.class.name}/#{address_hash} #{self.class.name}/#{lock_hash} #{self.class.name}/#{address_hash}/lock_script)
   end
 
   def special?

@@ -51,7 +51,7 @@ class CellInput < ApplicationRecord
     tx_hash = previous_output["tx_hash"]
     cell_index = previous_output["index"].to_i
 
-    Rails.cache.realize("cell_input_#{id}/previous_cell_output/#{tx_hash}/#{cell_index}", race_condition_ttl: 3.seconds) do
+    Rails.cache.realize("previous_cell_output/#{tx_hash}/#{cell_index}", race_condition_ttl: 3.seconds) do
       CellOutput.find_by!(tx_hash: tx_hash, cell_index: cell_index)
     end
   end

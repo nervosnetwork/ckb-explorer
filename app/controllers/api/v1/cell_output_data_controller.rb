@@ -4,7 +4,7 @@ module Api
       before_action :validate_query_params
 
       def show
-        cell_output = CellOutput.where(id: params[:id]).take!
+        cell_output = CellOutput.cached_find(params[:id])
 
         raise Api::V1::Exceptions::CellOutputDataSizeExceedsLimitError if cell_output&.data_size.to_i > CellOutput::MAXIMUM_DOWNLOADABLE_SIZE
 

@@ -33,13 +33,27 @@ class CellOutput < ApplicationRecord
         normal_tx_display_inputs_previews_false_#{ckb_transaction_id} normal_tx_display_inputs_previews_true_#{consumed_by_id}
         normal_tx_display_inputs_previews_false_#{consumed_by_id} normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
         normal_tx_display_outputs_previews_false_#{ckb_transaction_id} normal_tx_display_outputs_previews_true_#{consumed_by_id}
-        normal_tx_display_outputs_previews_false_#{consumed_by_id}
+        normal_tx_display_outputs_previews_false_#{consumed_by_id} #{self.class.name}/#{tx_hash}/type_script #{self.class.name}/#{tx_hash}/lock_script
     )
   end
 
   def flush_cache
     $redis.pipelined do
       $redis.del(*cache_keys)
+    end
+  end
+
+  def cached_lock_script
+    Rails.cache.realize([self.class.name, tx_hash, "lock_script"], race_condition_ttl: 3.seconds) { lock_script }
+  end
+
+  def cached_type_script
+    Rails.cache.realize([self.class.name, tx_hash, "type_script"], race_condition_ttl: 3.seconds) { type_script }
+  end
+
+  def self.cached_find(id)
+    Rails.cache.realize([name, id], race_condition_ttl: 3.seconds) do
+      CellOutput.where(id: id).take!
     end
   end
 end
