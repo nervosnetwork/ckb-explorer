@@ -41,7 +41,7 @@ class Address < ApplicationRecord
   end
 
   def cached_lock_script
-    Rails.cache.fetch([self.class.name, "lock_script"], race_condition_ttl: 3.seconds) do
+    Rails.cache.fetch([self.class.name, address_hash, "lock_script"], race_condition_ttl: 3.seconds) do
       lock_script.to_node_lock
     end
   end
@@ -49,7 +49,7 @@ class Address < ApplicationRecord
   def flush_cache
     Rails.cache.delete([self.class.name, address_hash])
     Rails.cache.delete([self.class.name, lock_hash])
-    Rails.cache.delete([self.class.name, "lock_script"])
+    Rails.cache.delete([self.class.name, address_hash, "lock_script"])
   end
 end
 

@@ -21,6 +21,22 @@ class CellOutput < ApplicationRecord
 
   def flush_cache
     Rails.cache.delete([self.class.name, tx_hash, cell_index])
+    Rails.cache.delete([self.class.name, tx_hash, "lock_script"])
+    Rails.cache.delete([self.class.name, tx_hash, "type_script"])
+  end
+
+  def self.cached_find(id)
+    Rails.cache.fetch([name, id], race_condition_ttl: 3.seconds) do
+      CellOutput.where(id: id).available.take!
+    end
+  end
+
+  def cached_lock_script
+    Rails.cache.fetch([self.class.name, tx_hash, "lock_script"], race_condition_ttl: 3.seconds) { lock_script }
+  end
+
+  def cached_type_script
+    Rails.cache.fetch([self.class.name, tx_hash, "type_script"], race_condition_ttl: 3.seconds) { type_script }
   end
 end
 
