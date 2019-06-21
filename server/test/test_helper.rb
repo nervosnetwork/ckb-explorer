@@ -173,16 +173,20 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   blocks = create_list(:block, 10, :with_block_hash)
   cellbases = []
   blocks.each do |block|
-    cellbases << block.ckb_transactions.create(is_cellbase: true, status: :inauthentic, block_timestamp: block_timestamp)
+    cellbase = block.ckb_transactions.create(is_cellbase: true, status: :inauthentic, block_timestamp: block_timestamp, block_number: 10)
+    cellbases << cellbase
   end
   cellbases_part1 = cellbases[0..1]
   cellbases_part2 = cellbases[2..8]
   cellbases_part3 = cellbases[9..-1]
   address1 = create(:address, :with_lock_script)
+  cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1) }
   address1.ckb_transactions << cellbases_part1
   address2 = create(:address, :with_lock_script)
+  cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2) }
   address2.ckb_transactions << cellbases_part2
   address3 = create(:address, :with_lock_script)
+  cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3) }
   address3.ckb_transactions << cellbases_part3
 
   return address1, address2, address3
