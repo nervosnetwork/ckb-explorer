@@ -5,11 +5,10 @@ module Api
       before_action :validate_pagination_params, :pagination_params
 
       def show
-        block = Block.find_by!(block_hash: params[:id])
-        ckb_transactions = block.ckb_transactions.order(:id).page(@page).per(@page_size)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
+        block = Block.find_block!(params[:id])
+        ckb_transactions = block.cached_ckb_transactions(params[:id], @page, @page_size, request)
 
-        render json: CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true } }))
+        render json: ckb_transactions
       rescue ActiveRecord::RecordNotFound
         raise Api::V1::Exceptions::BlockTransactionsNotFoundError
       end
