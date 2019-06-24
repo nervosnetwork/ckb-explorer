@@ -77,9 +77,18 @@ class Block < ApplicationRecord
     Address.find_by(address_hash: miner_hash)
   end
 
+  def cached_ckb_transactions(block_hash, page, page_size, request)
+    Rails.cache.fetch([self.class.name, block_hash, "ckb_transactions", page, page_size], race_condition_ttl: 3.seconds) do
+      paginated_ckb_transactions = ckb_transactions.available.order(:id).page(page).per(page_size)
+      options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: paginated_ckb_transactions, page: page, page_size: page_size).call
+      CkbTransactionSerializer.new(paginated_ckb_transactions, options).serialized_json
+    end
+  end
+
   def flush_cache
     Rails.cache.delete([self.class.name, block_hash])
     Rails.cache.delete([self.class.name, number])
+    Rails.cache.delete_matched("#{self.class.name}/#{block_hash}/ckb_transactions/*")
   end
 
   private

@@ -7,7 +7,7 @@ class CkbTransaction < ApplicationRecord
   enum display_inputs_status: { ungenerated: 0, generated: 1 }
   enum transaction_fee_status: { uncalculated: 0, calculated: 1 }
 
-  belongs_to :block
+  belongs_to :block, touch: true
   has_many :account_books
   has_many :addresses, through: :account_books
   has_many :cell_inputs
