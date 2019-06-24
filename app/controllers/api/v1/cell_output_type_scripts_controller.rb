@@ -4,13 +4,8 @@ module Api
       before_action :validate_query_params
 
       def show
-<<<<<<< HEAD
-        cell_output = CellOutput.where(id: params[:id]).take!
-        type_script = cell_output.type_script
-=======
         cell_output = CellOutput.cached_find(params[:id])
         type_script = cell_output.cached_type_script
->>>>>>> b279525a... perf: cache cell output
 
         render json: TypeScriptSerializer.new(type_script)
       rescue ActiveRecord::RecordNotFound

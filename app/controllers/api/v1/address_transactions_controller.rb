@@ -8,11 +8,11 @@ module Api
         address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
 
-        presented_address = AddressPresenter.new(address)
-        ckb_transactions = presented_address.ckb_transactions.recent.distinct.page(@page).per(@page_size)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
+        ckb_transactions = address.cached_ckb_transactions(params[:id], @page, @page_size, request)
 
-        render json: CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true, address: address } }))
+        render json: ckb_transactions
+      rescue ActiveRecord::RecordNotFound
+        raise Api::V1::Exceptions::AddressNotFoundError
       end
 
       private

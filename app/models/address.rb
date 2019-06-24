@@ -34,7 +34,7 @@ class Address < ApplicationRecord
       if QueryKeyUtils.valid_hex?(query_key)
         find_by(lock_hash: query_key)
       else
-        where(address_hash: query_key).to_a.presence || NullAddress.new(query_key)
+        find_by(address_hash: query_key) || NullAddress.new(query_key)
       end
     end
   end
@@ -42,6 +42,14 @@ class Address < ApplicationRecord
   def cached_lock_script
     Rails.cache.realize([self.class.name, address_hash, "lock_script"], race_condition_ttl: 3.seconds) do
       lock_script.to_node_lock
+    end
+  end
+
+  def cached_ckb_transactions(address_or_lock_hash, page, page_size, request)
+    Rails.cache.fetch([self.class.name, address_or_lock_hash, "ckb_transactions", page, page_size], race_condition_ttl: 3.seconds, expires_in: 3.seconds) do
+      paginated_ckb_transactions = self.ckb_transactions.recent.distinct.page(page).per(page_size)
+      options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: paginated_ckb_transactions, page: page, page_size: page_size).call
+      CkbTransactionSerializer.new(paginated_ckb_transactions, options).serialized_json
     end
   end
 
