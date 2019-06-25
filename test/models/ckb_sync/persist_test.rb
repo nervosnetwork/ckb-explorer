@@ -457,6 +457,18 @@ module CkbSync
       end
     end
 
+    test ".save_block should change block reward status from pending to issued before proposal window" do
+      prepare_inauthentic_node_data(11)
+      SyncInfo.local_inauthentic_tip_block_number
+      node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
+      block1 = Block.find_by(number: 1)
+      VCR.use_cassette("blocks/12") do
+        assert_changes -> { block1.reload.reward_status }, from: "pending", to: "issued" do
+          CkbSync::Persist.save_block(node_block, "inauthentic")
+        end
+      end
+    end
+
     test ".update_ckb_transaction_display_inputs should update display inputs" do
       SyncInfo.local_inauthentic_tip_block_number
 
