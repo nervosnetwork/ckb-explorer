@@ -26,6 +26,7 @@ module CkbSync
           local_block.reload.ckb_transactions_count = ckb_transactions.size
           local_block.address_ids = AccountBook.where(ckb_transaction: local_block.ckb_transactions).pluck(:address_id).uniq
           local_block.save!
+          CkbUtils.update_block_reward_status!(local_block.number)
         end
 
         local_block
@@ -269,6 +270,7 @@ module CkbSync
           miner_hash: CkbUtils.miner_hash(node_block.transactions.first),
           status: sync_type,
           reward: CkbUtils.base_reward(header.number, header.epoch, node_block.transactions.first),
+          reward_status: header.number.to_i == 0 ? "issued" : "pending",
           total_transaction_fee: 0,
           witnesses_root: header.witnesses_root,
           epoch: header.epoch,

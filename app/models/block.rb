@@ -62,7 +62,7 @@ class Block < ApplicationRecord
   end
 
   def abandon!
-    update!(status: "abandoned")
+    update!(status: "abandoned", reward_status: "issued")
     ChangeCkbTransactionsStatusWorker.perform_async(id, "abandoned")
     ChangeCellOutputsStatusWorker.perform_async(id, "abandoned")
   end

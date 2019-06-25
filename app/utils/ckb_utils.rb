@@ -153,4 +153,12 @@ class CkbUtils
     input_capacities = cell_input_capacities.reduce(0, &:+)
     input_capacities.zero? ? 0 : (input_capacities - cell_output_capacities)
   end
+
+  def self.update_block_reward_status!(current_block_number)
+    target_block_number = current_block_number - ENV["PROPOSAL_WINDOW"].to_i - 1
+    return if target_block_number < 1
+
+    block = Block.find_by(number: target_block_number)
+    block.update!(reward_status: "issued")
+  end
 end
