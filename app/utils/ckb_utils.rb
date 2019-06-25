@@ -66,8 +66,18 @@ class CkbUtils
     CKB::Utils.bin_to_hex(data.slice(5..-1))
   end
 
-  def self.miner_reward(cellbase)
-    cellbase.outputs.first.capacity
+  def self.base_reward(block_number, epoch_number, cellbase = nil)
+    return cellbase.outputs.first.capacity if block_number.to_i == 0
+
+    epoch_info = get_epoch_info(epoch_number)
+    start_number = epoch_info.start_number.to_i
+    remainder_reward = epoch_info.remainder_reward.to_i
+    block_reward = epoch_info.block_reward.to_i
+    if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward
+      block_reward + 1
+    else
+      block_reward
+    end
   end
 
   def self.get_epoch_info(epoch)
