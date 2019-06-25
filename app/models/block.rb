@@ -4,6 +4,7 @@ class Block < ApplicationRecord
   max_paginates_per MAX_PAGINATES_PER
 
   enum status: { inauthentic: 0, authentic: 1, abandoned: 2 }
+  enum reward_status: { pending: 0, issued: 1 }
 
   has_many :ckb_transactions
   has_many :uncle_blocks
@@ -100,6 +101,7 @@ end
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #  address_ids            :string           is an Array
+#  reward_status          :integer          default(0)
 #
 # Indexes
 #
