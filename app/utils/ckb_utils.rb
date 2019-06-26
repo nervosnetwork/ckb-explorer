@@ -161,4 +161,16 @@ class CkbUtils
     block = Block.find_by(number: target_block_number)
     block.update!(reward_status: "issued")
   end
+
+  def self.calculate_received_tx_fee!(local_block)
+    target_block_number = local_block.number - ENV["PROPOSAL_WINDOW"].to_i - 1
+    return if target_block_number < 1
+
+    target_block = Block.find_by(number: target_block_number)
+    cellbase = local_block.ckb_transactions.where(is_cellbase: true).first
+    proposal_reward = cellbase.cell_outputs.first.capacity - target_block.reward - target_block.total_transaction_fee * 0.6
+    commit_reward = target_block.total_transaction_fee * 0.4
+    received_tx_fee = commit_reward + proposal_reward
+    target_block.update!(received_tx_fee: received_tx_fee, received_tx_fee_status: "calculated")
+  end
 end
