@@ -469,6 +469,32 @@ module CkbSync
       end
     end
 
+    test ".save_block should change block received tx fee status from calculating to calculated before proposal window" do
+      prepare_inauthentic_node_data(11)
+      SyncInfo.local_inauthentic_tip_block_number
+      node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
+      block1 = Block.find_by(number: 1)
+      VCR.use_cassette("blocks/12") do
+        assert_changes -> { block1.reload.received_tx_fee_status }, from: "calculating", to: "calculated" do
+          CkbSync::Persist.save_block(node_block, "inauthentic")
+        end
+      end
+    end
+
+    test ".save_block should update block received tx fee before proposal window" do
+      prepare_inauthentic_node_data(11)
+      SyncInfo.local_inauthentic_tip_block_number
+      node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
+      block1 = Block.find_by(number: 1)
+
+      expected_received_tx_fee = 10**8 * 6 - block1.reward - block1.total_transaction_fee * 0.6 + block1.total_transaction_fee * 0.4
+      VCR.use_cassette("blocks/12") do
+        assert_changes -> { block1.reload.received_tx_fee }, from: 0, to: expected_received_tx_fee do
+          CkbSync::Persist.save_block(node_block, "inauthentic")
+        end
+      end
+    end
+
     test ".update_ckb_transaction_display_inputs should update display inputs" do
       SyncInfo.local_inauthentic_tip_block_number
 
@@ -525,11 +551,11 @@ module CkbSync
         local_ckb_transaction = local_block.ckb_transactions.first
         CkbSync::Persist.update_ckb_transaction_display_inputs(local_ckb_transaction)
 
-        assert_changes -> { local_ckb_transaction.reload.transaction_fee }, from: 0, to: (10**8 * 5 - 50000) do
+        assert_changes -> { local_ckb_transaction.reload.transaction_fee }, from: 0, to: (10**8 * 7 - 10**8 * 6) do
           CkbSync::Persist.update_transaction_fee(local_ckb_transaction)
         end
 
-        assert_equal 10**8 * 5 - 50000, local_block.reload.total_transaction_fee
+        assert_equal 10**8, local_block.reload.total_transaction_fee
       end
     end
 
