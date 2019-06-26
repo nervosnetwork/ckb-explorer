@@ -8,4 +8,8 @@ class AddressSerializer
   attribute :lock_script do |object|
     object.lock_script.to_node_lock
   end
+
+  attribute :pending_reward_blocks_count do |object|
+    [object.pending_reward_blocks_count, 0].max
+  end
 end
