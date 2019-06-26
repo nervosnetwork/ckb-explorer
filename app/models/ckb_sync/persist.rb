@@ -28,6 +28,8 @@ module CkbSync
           local_block.save!
           CkbUtils.update_block_reward_status!(local_block.number)
           CkbUtils.calculate_received_tx_fee!(local_block)
+          CkbUtils.update_current_block_miner_address_pending_rewards(local_block)
+          CkbUtils.update_target_block_miner_address_pending_rewards(local_block.number)
         end
 
         local_block

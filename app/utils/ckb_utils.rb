@@ -173,4 +173,20 @@ class CkbUtils
     received_tx_fee = commit_reward + proposal_reward
     target_block.update!(received_tx_fee: received_tx_fee, received_tx_fee_status: "calculated")
   end
+
+  def self.update_current_block_miner_address_pending_rewards(local_block)
+    cellbase = local_block.ckb_transactions.where(is_cellbase: true).first
+    miner_address = cellbase.addresses.first
+    miner_address.increment!(:pending_reward_blocks_count)
+  end
+
+  def self.update_target_block_miner_address_pending_rewards(current_block_number)
+    target_block_number = current_block_number - ENV["PROPOSAL_WINDOW"].to_i - 1
+    return if target_block_number < 1
+
+    target_block = Block.find_by(number: target_block_number)
+    cellbase = target_block.ckb_transactions.where(is_cellbase: true).first
+    miner_address = cellbase.addresses.first
+    miner_address.decrement!(:pending_reward_blocks_count)
+  end
 end
