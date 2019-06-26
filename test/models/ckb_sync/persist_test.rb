@@ -495,6 +495,32 @@ module CkbSync
       end
     end
 
+    test ".save_block should update current block's miner address pending reward blocks count" do
+      prepare_inauthentic_node_data(11)
+      SyncInfo.local_inauthentic_tip_block_number
+      node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
+      VCR.use_cassette("blocks/12") do
+        miner_address = create(:address, lock_hash: "0xcb7bce98a778f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a5")
+        assert_difference -> { miner_address.reload.pending_reward_blocks_count }, 1 do
+          CkbSync::Persist.save_block(node_block, "inauthentic")
+        end
+      end
+    end
+
+    test ".save_block should update miner's address pending reward blocks count before the proposal window" do
+      prepare_inauthentic_node_data(11)
+      SyncInfo.local_inauthentic_tip_block_number
+      node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
+      block1 = Block.find_by(number: 1)
+      cellbase = block1.ckb_transactions.where(is_cellbase: true).first
+      miner_address = cellbase.addresses.first
+      VCR.use_cassette("blocks/12") do
+        assert_difference -> { miner_address.reload.pending_reward_blocks_count }, -1 do
+          CkbSync::Persist.save_block(node_block, "inauthentic")
+        end
+      end
+    end
+
     test ".update_ckb_transaction_display_inputs should update display inputs" do
       SyncInfo.local_inauthentic_tip_block_number
 
