@@ -26,10 +26,8 @@ module CkbSync
           local_block.reload.ckb_transactions_count = ckb_transactions.size
           local_block.address_ids = AccountBook.where(ckb_transaction: local_block.ckb_transactions).pluck(:address_id).uniq
           local_block.save!
-          CkbUtils.update_block_reward_status!(local_block)
-          CkbUtils.calculate_received_tx_fee!(local_block)
-          CkbUtils.update_current_block_miner_address_pending_rewards(local_block)
-          CkbUtils.update_target_block_miner_address_pending_rewards(local_block)
+          issue_block_reward(local_block)
+          update_pending_rewards(local_block)
         end
 
         local_block
@@ -101,6 +99,16 @@ module CkbSync
       end
 
       private
+
+      def update_pending_rewards(local_block)
+        CkbUtils.update_current_block_miner_address_pending_rewards(local_block)
+        CkbUtils.update_target_block_miner_address_pending_rewards(local_block)
+      end
+
+      def issue_block_reward(local_block)
+        CkbUtils.update_block_reward_status!(local_block)
+        CkbUtils.calculate_received_tx_fee!(local_block)
+      end
 
       def update_cell_status(ckb_transaction)
         previous_cell_output_ids = CellInput.where(ckb_transaction: ckb_transaction).select("previous_cell_output_id")
