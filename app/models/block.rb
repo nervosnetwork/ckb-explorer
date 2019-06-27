@@ -40,6 +40,10 @@ class Block < ApplicationRecord
     Address.where(id: address_ids)
   end
 
+  def cellbase
+    ckb_transactions.cellbase.first
+  end
+
   def self.find_block(query_key)
     if QueryKeyUtils.valid_hex?(query_key)
       where(block_hash: query_key).available.take!

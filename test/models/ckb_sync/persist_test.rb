@@ -512,7 +512,7 @@ module CkbSync
       SyncInfo.local_inauthentic_tip_block_number
       node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
       block1 = Block.find_by(number: 1)
-      cellbase = block1.ckb_transactions.where(is_cellbase: true).first
+      cellbase = block1.cellbase
       miner_address = cellbase.addresses.first
       VCR.use_cassette("blocks/12") do
         assert_difference -> { miner_address.reload.pending_reward_blocks_count }, -1 do

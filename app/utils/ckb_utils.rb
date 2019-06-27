@@ -167,7 +167,7 @@ class CkbUtils
     return if target_block_number < 1
 
     target_block = Block.find_by(number: target_block_number)
-    cellbase = local_block.ckb_transactions.where(is_cellbase: true).first
+    cellbase = local_block.cellbase
     proposal_reward = cellbase.cell_outputs.first.capacity - target_block.reward - target_block.total_transaction_fee * 0.6
     commit_reward = target_block.total_transaction_fee * 0.4
     received_tx_fee = commit_reward + proposal_reward
@@ -175,7 +175,7 @@ class CkbUtils
   end
 
   def self.update_current_block_miner_address_pending_rewards(local_block)
-    cellbase = local_block.ckb_transactions.where(is_cellbase: true).first
+    cellbase = local_block.cellbase
     miner_address = cellbase.addresses.first
     miner_address.increment!(:pending_reward_blocks_count)
   end
@@ -185,7 +185,7 @@ class CkbUtils
     return if target_block_number < 1
 
     target_block = Block.find_by(number: target_block_number)
-    cellbase = target_block.ckb_transactions.where(is_cellbase: true).first
+    cellbase = target_block.cellbase
     miner_address = cellbase.addresses.first
     miner_address.decrement!(:pending_reward_blocks_count)
   end
