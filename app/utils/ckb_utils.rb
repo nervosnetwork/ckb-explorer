@@ -154,8 +154,8 @@ class CkbUtils
     input_capacities.zero? ? 0 : (input_capacities - cell_output_capacities)
   end
 
-  def self.update_block_reward_status!(current_block_number)
-    target_block_number = current_block_number - ENV["PROPOSAL_WINDOW"].to_i - 1
+  def self.update_block_reward_status!(current_block)
+    target_block_number = current_block.target_block_number
     return if target_block_number < 1
 
     block = Block.find_by(number: target_block_number)
@@ -163,10 +163,10 @@ class CkbUtils
   end
 
   def self.calculate_received_tx_fee!(local_block)
-    target_block_number = local_block.number - ENV["PROPOSAL_WINDOW"].to_i - 1
+    target_block_number = local_block.target_block_number
     return if target_block_number < 1
 
-    target_block = Block.find_by(number: target_block_number)
+    target_block = local_block.target_block
     cellbase = local_block.cellbase
     proposal_reward = cellbase.cell_outputs.first.capacity - target_block.reward - target_block.total_transaction_fee * 0.6
     commit_reward = target_block.total_transaction_fee * 0.4
@@ -180,11 +180,11 @@ class CkbUtils
     miner_address.increment!(:pending_reward_blocks_count)
   end
 
-  def self.update_target_block_miner_address_pending_rewards(current_block_number)
-    target_block_number = current_block_number - ENV["PROPOSAL_WINDOW"].to_i - 1
+  def self.update_target_block_miner_address_pending_rewards(current_block)
+    target_block_number = current_block.target_block_number
     return if target_block_number < 1
 
-    target_block = Block.find_by(number: target_block_number)
+    target_block = current_block.target_block
     cellbase = target_block.cellbase
     miner_address = cellbase.addresses.first
     miner_address.decrement!(:pending_reward_blocks_count)

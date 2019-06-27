@@ -44,6 +44,14 @@ class Block < ApplicationRecord
     ckb_transactions.cellbase.first
   end
 
+  def target_block_number
+    number - ENV["PROPOSAL_WINDOW"].to_i - 1
+  end
+
+  def target_block
+    @target_block ||= Block.find_by(number: target_block_number)
+  end
+
   def self.find_block(query_key)
     if QueryKeyUtils.valid_hex?(query_key)
       where(block_hash: query_key).available.take!
