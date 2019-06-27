@@ -167,9 +167,9 @@ class CkbUtils
     return if target_block_number < 1
 
     target_block = local_block.target_block
-    cellbase = local_block.cellbase
-    proposal_reward = cellbase.cell_outputs.first.capacity - target_block.reward - target_block.total_transaction_fee * 0.6
-    commit_reward = target_block.total_transaction_fee * 0.4
+    cellbase = Cellbase.new(local_block)
+    proposal_reward = cellbase.proposal_reward
+    commit_reward = cellbase.commit_reward
     received_tx_fee = commit_reward + proposal_reward
     target_block.update!(received_tx_fee: received_tx_fee, received_tx_fee_status: "calculated")
   end
