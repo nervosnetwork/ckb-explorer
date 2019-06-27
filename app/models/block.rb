@@ -72,6 +72,7 @@ class Block < ApplicationRecord
     update!(status: "authentic")
     SyncInfo.find_by!(name: "authentic_tip_block_number", value: number).update_attribute(:status, "synced")
     ChangeCkbTransactionsStatusWorker.perform_async(id, "authentic")
+    self
   end
 
   def abandon!

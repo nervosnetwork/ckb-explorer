@@ -8,8 +8,8 @@ module CkbSync
         ApplicationRecord.transaction do
           return if local_block.blank?
 
-          local_block.verify!(node_block)
-          update_address_balance_and_ckb_transactions_count!(local_block)
+          best_block = local_block.verify!(node_block)
+          update_address_balance_and_ckb_transactions_count!(best_block)
         end
       end
 
@@ -20,8 +20,8 @@ module CkbSync
         ApplicationRecord.transaction do
           return if local_block.blank?
 
-          local_block.verify!(node_block)
-          update_address_balance_and_ckb_transactions_count!(local_block)
+          best_block = local_block.verify!(node_block)
+          update_address_balance_and_ckb_transactions_count!(best_block)
         end
       end
 
