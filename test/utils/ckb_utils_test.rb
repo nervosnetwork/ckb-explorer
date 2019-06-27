@@ -14,12 +14,10 @@ class CkbUtilsTest < ActiveSupport::TestCase
   test "#base_reward should return first output capacity in cellbase for genesis block" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        block_reward: "250000000000",
+        epoch_reward: "250000000000",
         difficulty: "0x1000",
-        last_block_hash_in_previous_epoch: "0x0000000000000000000000000000000000000000000000000000000000000000",
         length: "2000",
         number: "0",
-        remainder_reward: "0",
         start_number: "0"
       )
     )

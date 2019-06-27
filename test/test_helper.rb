@@ -200,18 +200,15 @@ def expected_ranking(address1, address2, address3)
   address3_blocks = Block.where(id: address3_block_ids)
   address1_block_rewards =
     address1_blocks.map { |block|
-      epoch_info = CkbSync::Api.instance.get_epoch_by_number(block.epoch)
-      block_reward(block, epoch_info)
+      block_reward(block.number, block.epoch)
     }.reduce(0, &:+)
   address2_block_rewards =
     address2_blocks.map { |block|
-      epoch_info = CkbSync::Api.instance.get_epoch_by_number(block.epoch)
-      block_reward(block, epoch_info)
+      block_reward(block.number, block.epoch)
     }.reduce(0, &:+)
   address3_block_rewards =
     address3_blocks.map { |block|
-      epoch_info = CkbSync::Api.instance.get_epoch_by_number(block.epoch)
-      block_reward(block, epoch_info)
+      block_reward(block.number, block.epoch)
     }.reduce(0, &:+)
 
   [
