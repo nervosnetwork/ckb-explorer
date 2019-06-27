@@ -546,6 +546,59 @@ module CkbSync
       end
     end
 
+    test "cellbase's display inputs should contain target block number" do
+      prepare_inauthentic_node_data(11)
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          block_reward: "250000000000",
+          difficulty: "0x1000",
+          last_block_hash_in_previous_epoch: "0x0000000000000000000000000000000000000000000000000000000000000000",
+          length: "2000",
+          number: "0",
+          remainder_reward: "0",
+          start_number: "0"
+        )
+      )
+      VCR.use_cassette("blocks/12") do
+        assert_difference "Block.count", 1 do
+          CkbSync::Persist.call("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", "inauthentic")
+          block = Block.last
+          CkbSync::Persist.update_ckb_transaction_display_inputs(block.cellbase)
+          cellbase = Cellbase.new(block)
+          expected_cellbase_display_inputs = [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
+
+          assert_equal JSON.parse(expected_cellbase_display_inputs.to_json), block.cellbase.display_inputs
+        end
+      end
+    end
+
+    test "cellbase's display outputs should contain block reward commit reward and proposal reward" do
+      prepare_inauthentic_node_data(11)
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          block_reward: "250000000000",
+          difficulty: "0x1000",
+          last_block_hash_in_previous_epoch: "0x0000000000000000000000000000000000000000000000000000000000000000",
+          length: "2000",
+          number: "0",
+          remainder_reward: "0",
+          start_number: "0"
+        )
+      )
+      VCR.use_cassette("blocks/12") do
+        assert_difference "Block.count", 1 do
+          CkbSync::Persist.call("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", "inauthentic")
+          block = Block.last
+          CkbSync::Persist.update_ckb_transaction_display_outputs(block.cellbase)
+          cellbase = Cellbase.new(block)
+          cell_output = block.cellbase.cell_outputs.first
+          expected_cellbase_display_outputs = [{ id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward }]
+
+          assert_equal JSON.parse(expected_cellbase_display_outputs.to_json), block.cellbase.display_outputs
+        end
+      end
+    end
+
     test ".update_transaction_fee should update transaction fee status" do
       SyncInfo.local_inauthentic_tip_block_number
       node_block = fake_node_block
