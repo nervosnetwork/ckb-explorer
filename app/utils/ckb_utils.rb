@@ -71,8 +71,9 @@ class CkbUtils
 
     epoch_info = get_epoch_info(epoch_number)
     start_number = epoch_info.start_number.to_i
-    remainder_reward = epoch_info.remainder_reward.to_i
-    block_reward = epoch_info.block_reward.to_i
+    epoch_reward = epoch_info.epoch_reward.to_i
+    block_reward = epoch_reward / epoch_info.length.to_i
+    remainder_reward = epoch_reward % epoch_info.length.to_i
     if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward
       block_reward + 1
     else
