@@ -69,7 +69,7 @@ module CkbSync
         if ckb_transaction.is_cellbase
           cell_output = ckb_transaction.cell_outputs.first
           cellbase = Cellbase.new(ckb_transaction.block)
-          display_outputs << { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward }
+          display_outputs << { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward }
         else
           ckb_transaction.cell_outputs.find_each do |cell_output|
             display_outputs << { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash }
