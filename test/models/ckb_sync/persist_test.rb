@@ -596,6 +596,15 @@ module CkbSync
 
     test ".update_block_reward_info should change block reward status from pending to issued before proposal window" do
       prepare_inauthentic_node_data(12)
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
       target_block = Block.find_by(number: 1)
       current_block = Block.find_by(number: 12)
       assert_changes -> { target_block.reload.reward_status }, from: "pending", to: "issued" do
@@ -605,6 +614,15 @@ module CkbSync
 
     test ".update_block_reward_info should change block received tx fee status from calculating to calculated before proposal window" do
       prepare_inauthentic_node_data(12)
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
       target_block = Block.find_by(number: 1)
       current_block = Block.find_by(number: 12)
       assert_changes -> { target_block.reload.received_tx_fee_status }, from: "calculating", to: "calculated" do
@@ -614,6 +632,15 @@ module CkbSync
 
     test ".update_block_reward_info should update block received tx fee before proposal window" do
       prepare_inauthentic_node_data(12)
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
       target_block = Block.find_by(number: 1)
       current_block = Block.find_by(number: 12)
 
