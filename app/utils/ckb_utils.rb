@@ -178,7 +178,7 @@ class CkbUtils
   def self.update_current_block_miner_address_pending_rewards(local_block)
     cellbase = local_block.cellbase
     miner_address = cellbase.addresses.first
-    miner_address.increment!(:pending_reward_blocks_count)
+    miner_address.increment!(:pending_reward_blocks_count) if miner_address.present?
   end
 
   def self.update_target_block_miner_address_pending_rewards(current_block)
@@ -188,6 +188,6 @@ class CkbUtils
 
     cellbase = target_block.cellbase
     miner_address = cellbase.addresses.first
-    miner_address.decrement!(:pending_reward_blocks_count)
+    miner_address.decrement!(:pending_reward_blocks_count) if miner_address.present?
   end
 end
