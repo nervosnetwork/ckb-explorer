@@ -278,6 +278,8 @@ module CkbSync
       def build_block(node_block, sync_type)
         header = node_block.header
         epoch_info = CkbUtils.get_epoch_info(header.epoch)
+        cellbase = node_block.transactions.first
+
         Block.new(
           difficulty: header.difficulty,
           block_hash: header.hash,
@@ -295,7 +297,7 @@ module CkbSync
           proposals_count: node_block.proposals.count,
           cell_consumed: CkbUtils.block_cell_consumed(node_block.transactions),
           total_cell_capacity: CkbUtils.total_cell_capacity(node_block.transactions),
-          miner_hash: CkbUtils.miner_hash(node_block.transactions.first),
+          miner_hash: CkbUtils.miner_hash(cellbase),
           status: sync_type,
           reward: CkbUtils.base_reward(header.number, header.epoch, node_block.transactions.first),
           reward_status: header.number.to_i == 0 ? "issued" : "pending",

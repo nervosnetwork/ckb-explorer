@@ -31,9 +31,14 @@ class CkbUtils
   def self.miner_hash(cellbase)
     return if cellbase.witnesses.blank?
 
-    witnesses_data = cellbase.witnesses.first.data
-    lock_script = CKB::Types::Script.new(code_hash: witnesses_data.first, args: [witnesses_data.last])
+    lock_script = generate_lock_script_from_cellbase(cellbase)
+
     generate_address(lock_script)
+  end
+
+  def self.generate_lock_script_from_cellbase(cellbase)
+    witnesses_data = cellbase.witnesses.first.data
+    CKB::Types::Script.new(code_hash: witnesses_data.first, args: [witnesses_data.last])
   end
 
   def self.generate_address(lock_script)
