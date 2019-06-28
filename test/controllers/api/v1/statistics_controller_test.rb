@@ -65,6 +65,7 @@ module Api
       end
 
       test "should return right statistic info" do
+        StatisticInfo.any_instance.stubs(:id).returns(1)
         statistic_info = StatisticInfo.new
 
         valid_get api_v1_statistics_url
