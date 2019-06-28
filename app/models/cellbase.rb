@@ -4,7 +4,7 @@ class Cellbase
   def initialize(block)
     @block = block
     @target_block = block.target_block
-    @target_block_number = block.target_block_number
+    @target_block_number = @target_block.present? ? block.target_block_number : 0
   end
 
   def proposal_reward
