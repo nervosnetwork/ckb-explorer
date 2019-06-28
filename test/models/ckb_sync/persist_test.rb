@@ -457,44 +457,6 @@ module CkbSync
       end
     end
 
-    test ".save_block should change block reward status from pending to issued before proposal window" do
-      prepare_inauthentic_node_data(11)
-      SyncInfo.local_inauthentic_tip_block_number
-      node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
-      block1 = Block.find_by(number: 1)
-      VCR.use_cassette("blocks/12") do
-        assert_changes -> { block1.reload.reward_status }, from: "pending", to: "issued" do
-          CkbSync::Persist.save_block(node_block, "inauthentic")
-        end
-      end
-    end
-
-    test ".save_block should change block received tx fee status from calculating to calculated before proposal window" do
-      prepare_inauthentic_node_data(11)
-      SyncInfo.local_inauthentic_tip_block_number
-      node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
-      block1 = Block.find_by(number: 1)
-      VCR.use_cassette("blocks/12") do
-        assert_changes -> { block1.reload.received_tx_fee_status }, from: "calculating", to: "calculated" do
-          CkbSync::Persist.save_block(node_block, "inauthentic")
-        end
-      end
-    end
-
-    test ".save_block should update block received tx fee before proposal window" do
-      prepare_inauthentic_node_data(11)
-      SyncInfo.local_inauthentic_tip_block_number
-      node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
-      block1 = Block.find_by(number: 1)
-
-      expected_received_tx_fee = 10**8 * 6 - block1.reward - block1.total_transaction_fee * 0.6 + block1.total_transaction_fee * 0.4
-      VCR.use_cassette("blocks/12") do
-        assert_changes -> { block1.reload.received_tx_fee }, from: 0, to: expected_received_tx_fee do
-          CkbSync::Persist.save_block(node_block, "inauthentic")
-        end
-      end
-    end
-
     test ".save_block should update current block's miner address pending reward blocks count" do
       prepare_inauthentic_node_data(11)
       SyncInfo.local_inauthentic_tip_block_number
@@ -502,20 +464,6 @@ module CkbSync
       VCR.use_cassette("blocks/12") do
         miner_address = create(:address, lock_hash: "0xcb7bce98a778f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a5")
         assert_difference -> { miner_address.reload.pending_reward_blocks_count }, 1 do
-          CkbSync::Persist.save_block(node_block, "inauthentic")
-        end
-      end
-    end
-
-    test ".save_block should update miner's address pending reward blocks count before the proposal window" do
-      prepare_inauthentic_node_data(11)
-      SyncInfo.local_inauthentic_tip_block_number
-      node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
-      block1 = Block.find_by(number: 1)
-      cellbase = block1.cellbase
-      miner_address = cellbase.addresses.first
-      VCR.use_cassette("blocks/12") do
-        assert_difference -> { miner_address.reload.pending_reward_blocks_count }, -1 do
           CkbSync::Persist.save_block(node_block, "inauthentic")
         end
       end
@@ -644,6 +592,48 @@ module CkbSync
       assert_equal 1000, Sidekiq::Queues["transaction_info_updater"].size
       assert_equal "UpdateTransactionDisplayInfosWorker", Sidekiq::Queues["transaction_info_updater"].first["class"]
       assert_equal "UpdateTransactionFeeWorker", Sidekiq::Queues["transaction_info_updater"].last["class"]
+    end
+
+    test ".update_block_reward_info should change block reward status from pending to issued before proposal window" do
+      prepare_inauthentic_node_data(12)
+      target_block = Block.find_by(number: 1)
+      current_block = Block.find_by(number: 12)
+      assert_changes -> { target_block.reload.reward_status }, from: "pending", to: "issued" do
+        CkbSync::Persist.update_block_reward_info(current_block)
+      end
+    end
+
+    test ".update_block_reward_info should change block received tx fee status from calculating to calculated before proposal window" do
+      prepare_inauthentic_node_data(12)
+      target_block = Block.find_by(number: 1)
+      current_block = Block.find_by(number: 12)
+      assert_changes -> { target_block.reload.received_tx_fee_status }, from: "calculating", to: "calculated" do
+        CkbSync::Persist.update_block_reward_info(current_block)
+      end
+    end
+
+    test ".update_block_reward_info should update block received tx fee before proposal window" do
+      prepare_inauthentic_node_data(12)
+      target_block = Block.find_by(number: 1)
+      current_block = Block.find_by(number: 12)
+
+      expected_received_tx_fee = current_block.cellbase.cell_outputs.first.capacity - target_block.reward - target_block.total_transaction_fee * 0.6 + target_block.total_transaction_fee * 0.4
+      assert_changes -> { target_block.reload.received_tx_fee }, from: 0, to: expected_received_tx_fee do
+        CkbSync::Persist.update_block_reward_info(current_block)
+      end
+    end
+
+    test ".update_block_reward_info should update miner's address pending reward blocks count before the proposal window" do
+      prepare_inauthentic_node_data(12)
+      target_block = Block.find_by(number: 1)
+      current_block = Block.find_by(number: 12)
+      cellbase = target_block.cellbase
+      miner_address = cellbase.addresses.first
+      VCR.use_cassette("blocks/12") do
+        assert_difference -> { miner_address.reload.pending_reward_blocks_count }, -1 do
+          CkbSync::Persist.update_block_reward_info(current_block)
+        end
+      end
     end
   end
 end
