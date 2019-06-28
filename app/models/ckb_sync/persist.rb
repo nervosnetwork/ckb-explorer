@@ -337,7 +337,7 @@ module CkbSync
           block_timestamp: local_block.timestamp,
           status: sync_type,
           transaction_fee: 0,
-          witnesses: transaction.witnesses,
+          witnesses: transaction.witnesses.map(&:to_h),
           is_cellbase: transaction_index.zero?
         )
       end
