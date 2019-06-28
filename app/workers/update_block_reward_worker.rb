@@ -1,6 +1,6 @@
 class UpdateBlockRewardWorker
   include Sidekiq::Worker
-  sidekiq_options queue: "block_info_updater", lock: :until_executed
+  sidekiq_options queue: "block_reward_updater", lock: :until_executed
 
   def perform(block_id)
     block = Block.find(block_id)
