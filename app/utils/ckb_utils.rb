@@ -161,6 +161,7 @@ class CkbUtils
     return if target_block_number < 1 || target_block.blank?
 
     target_block.update(reward_status: "issued")
+    current_block.update(target_block_reward_status: "issued")
   end
 
   def self.calculate_received_tx_fee!(current_block)

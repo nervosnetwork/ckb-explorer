@@ -5,6 +5,7 @@ class Block < ApplicationRecord
 
   enum status: { inauthentic: 0, authentic: 1, abandoned: 2 }
   enum reward_status: { pending: 0, issued: 1 }
+  enum target_block_reward_status: { pending: 0, issued: 1 }, _prefix: :target_block
   enum received_tx_fee_status: { calculating: 0, calculated: 1 }
 
   has_many :ckb_transactions
@@ -118,6 +119,7 @@ end
 #  reward_status          :integer          default("pending")
 #  received_tx_fee_status :integer          default("calculating")
 #  received_tx_fee        :decimal(30, )    default(0)
+#  target_block_reward_status :integer          default(0)
 
 #
 # Indexes
