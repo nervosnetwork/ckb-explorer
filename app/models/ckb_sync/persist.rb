@@ -108,7 +108,7 @@ module CkbSync
       def update_block_reward_info(current_block)
         target_block_number = current_block.target_block_number
         target_block = current_block.target_block
-        return if target_block_number < 1 || target_block.blank? || target_block.ckb_transactions.where(transaction_fee_status: "uncalculated").exists?
+        return if target_block_number < 1 || target_block.blank? || target_block.exist_uncalculated_tx?
 
         issue_block_reward(current_block)
         CkbUtils.update_target_block_miner_address_pending_rewards(current_block)

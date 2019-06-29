@@ -53,6 +53,10 @@ class Block < ApplicationRecord
     @target_block ||= Block.find_by(number: target_block_number)
   end
 
+  def exist_uncalculated_tx?
+    ckb_transactions.where(transaction_fee_status: "uncalculated").exists?
+  end
+
   def self.find_block(query_key)
     if QueryKeyUtils.valid_hex?(query_key)
       where(block_hash: query_key).available.take!
