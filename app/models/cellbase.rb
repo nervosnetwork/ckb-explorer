@@ -16,7 +16,7 @@ class Cellbase
   def commit_reward
     return if target_block_number < 1 || target_block.blank? || target_block.exist_uncalculated_tx?
 
-    target_block.total_transaction_fee * 0.4
+    target_block.total_transaction_fee * 0.6
   end
 
   def block_reward
