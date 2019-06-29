@@ -4,6 +4,9 @@ class Block < ApplicationRecord
   max_paginates_per MAX_PAGINATES_PER
 
   enum status: { inauthentic: 0, authentic: 1, abandoned: 2 }
+  enum reward_status: { pending: 0, issued: 1 }
+  enum target_block_reward_status: { pending: 0, issued: 1 }, _prefix: :target_block
+  enum received_tx_fee_status: { calculating: 0, calculated: 1 }
 
   has_many :ckb_transactions
   has_many :uncle_blocks
@@ -38,6 +41,22 @@ class Block < ApplicationRecord
     Address.where(id: address_ids)
   end
 
+  def cellbase
+    ckb_transactions.cellbase.first
+  end
+
+  def target_block_number
+    number - ENV["PROPOSAL_WINDOW"].to_i - 1
+  end
+
+  def target_block
+    @target_block ||= Block.find_by(number: target_block_number)
+  end
+
+  def exist_uncalculated_tx?
+    ckb_transactions.where(transaction_fee_status: "uncalculated").exists?
+  end
+
   def self.find_block(query_key)
     if QueryKeyUtils.valid_hex?(query_key)
       where(block_hash: query_key).available.take!
@@ -58,10 +77,11 @@ class Block < ApplicationRecord
     update!(status: "authentic")
     SyncInfo.find_by!(name: "authentic_tip_block_number", value: number).update_attribute(:status, "synced")
     ChangeCkbTransactionsStatusWorker.perform_async(id, "authentic")
+    self
   end
 
   def abandon!
-    update!(status: "abandoned")
+    update!(status: "abandoned", reward_status: "issued")
     ChangeCkbTransactionsStatusWorker.perform_async(id, "abandoned")
     ChangeCellOutputsStatusWorker.perform_async(id, "abandoned")
   end
@@ -100,6 +120,11 @@ end
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #  address_ids            :string           is an Array
+#  reward_status          :integer          default("pending")
+#  received_tx_fee_status :integer          default("calculating")
+#  received_tx_fee        :decimal(30, )    default(0)
+#  target_block_reward_status :integer          default(0)
+
 #
 # Indexes
 #

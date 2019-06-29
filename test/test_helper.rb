@@ -41,10 +41,19 @@ if ENV["CI"] == "true"
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
 
-def prepare_inauthentic_node_data
+def prepare_inauthentic_node_data(node_tip_block_number = 10)
+  Sidekiq::Testing.inline!
+  CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+    CKB::Types::Epoch.new(
+      epoch_reward: "250000000000",
+      difficulty: "0x1000",
+      length: "2000",
+      number: "0",
+      start_number: "0"
+    )
+  )
   local_tip_block_number = 0
   SyncInfo.local_inauthentic_tip_block_number
-  node_tip_block_number = 10
   ((local_tip_block_number + 1)..node_tip_block_number).each do |number|
     block_hash = nil
     VCR.use_cassette("genesis_block") do
@@ -52,8 +61,8 @@ def prepare_inauthentic_node_data
         block_hash = CkbSync::Api.instance.get_block_hash(number.to_s)
       end
 
-      sync_info = SyncInfo.find_by(name: "inauthentic_tip_block_number")
-      sync_info.update(value: number, status: "syncing")
+      sync_info = SyncInfo.find_or_create_by(name: "inauthentic_tip_block_number", value: number)
+      sync_info.update(value: number, status: "syncing") if sync_info.status != "syncing"
 
       VCR.use_cassette("blocks/#{number}") do
         node_block = CkbSync::Api.instance.get_block(block_hash)
@@ -63,6 +72,7 @@ def prepare_inauthentic_node_data
         output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
         CkbSync::Persist.save_block(node_block, "inauthentic")
+        CkbSync::Persist.update_ckb_transaction_info_and_fee
       end
     end
   end
@@ -123,11 +133,11 @@ def build_display_input_from_node_input(input)
   end
 end
 
-def fake_node_block(block_hash = "0x3c07186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815062")
-  json_block = "{\"header\":{\"difficulty\":\"0x1000\",\"epoch\":\"0\",\"hash\":\"#{block_hash}\",\"number\":\"10\",\"parent_hash\":\"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\",\"proposals_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"seal\":{\"nonce\":\"3241241169132127032\",\"proof\":\"0xd8010000850800001c0d00005c100000983b0000ae3b0000724300003e480000145f00008864000079770000d1780000\"},\"timestamp\":\"1557482351075\",\"transactions_root\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"uncles_count\":0,\"uncles_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"version\":0,\"witnesses_root\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"},\"proposals\":[],
+def fake_node_block(block_hash = "0x3c07186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815062", number = 10)
+  json_block = "{\"header\":{\"difficulty\":\"0x1000\",\"epoch\":\"0\",\"hash\":\"#{block_hash}\",\"number\":\"#{number}\",\"parent_hash\":\"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\",\"proposals_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"seal\":{\"nonce\":\"3241241169132127032\",\"proof\":\"0xd8010000850800001c0d00005c100000983b0000ae3b0000724300003e480000145f00008864000079770000d1780000\"},\"timestamp\":\"1557482351075\",\"transactions_root\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"uncles_count\":0,\"uncles_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"version\":0,\"witnesses_root\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"},\"proposals\":[],
     \"transactions\":[
-      {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"inputs\":[{\"args\":[\"0x0a00000000000000\"],\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"50000\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\"},\"type\":null}],\"version\":0,\"witnesses\":[]},
-      {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23\",\"inputs\":[{\"args\":[\"0x0a00000000000000\"],\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"50000\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\"},\"type\":null}],\"version\":0,\"witnesses\":[]}
+      {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"inputs\":[{\"args\":[\"0x0a00000000000000\"],\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 6}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\"},\"type\":null}],\"version\":0,\"witnesses\":[]},
+      {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23\",\"inputs\":[{\"args\":[\"0x0a00000000000000\"],\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 5}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\"},\"type\":null}],\"version\":0,\"witnesses\":[]}
     ]
     ,\"uncles\":[]}"
   CKB::Types::Block.from_h(JSON.parse(json_block).deep_symbolize_keys)
@@ -201,18 +211,15 @@ def expected_ranking(address1, address2, address3)
   address3_blocks = Block.where(id: address3_block_ids)
   address1_block_rewards =
     address1_blocks.map { |block|
-      epoch_info = CkbSync::Api.instance.get_epoch_by_number(block.epoch)
-      block_reward(block, epoch_info)
+      block_reward(block.number, block.epoch)
     }.reduce(0, &:+)
   address2_block_rewards =
     address2_blocks.map { |block|
-      epoch_info = CkbSync::Api.instance.get_epoch_by_number(block.epoch)
-      block_reward(block, epoch_info)
+      block_reward(block.number, block.epoch)
     }.reduce(0, &:+)
   address3_block_rewards =
     address3_blocks.map { |block|
-      epoch_info = CkbSync::Api.instance.get_epoch_by_number(block.epoch)
-      block_reward(block, epoch_info)
+      block_reward(block.number, block.epoch)
     }.reduce(0, &:+)
 
   [

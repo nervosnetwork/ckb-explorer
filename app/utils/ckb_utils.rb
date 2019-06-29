@@ -29,8 +29,16 @@ class CkbUtils
   end
 
   def self.miner_hash(cellbase)
-    lock_script = cellbase.outputs.first.lock
+    return if cellbase.witnesses.blank?
+
+    lock_script = generate_lock_script_from_cellbase(cellbase)
+
     generate_address(lock_script)
+  end
+
+  def self.generate_lock_script_from_cellbase(cellbase)
+    witnesses_data = cellbase.witnesses.first.data
+    CKB::Types::Script.new(code_hash: witnesses_data.first, args: [witnesses_data.last])
   end
 
   def self.generate_address(lock_script)
@@ -66,8 +74,19 @@ class CkbUtils
     CKB::Utils.bin_to_hex(data.slice(5..-1))
   end
 
-  def self.miner_reward(cellbase)
-    cellbase.outputs.first.capacity
+  def self.base_reward(block_number, epoch_number, cellbase = nil)
+    return cellbase.outputs.first.capacity if block_number.to_i == 0
+
+    epoch_info = get_epoch_info(epoch_number)
+    start_number = epoch_info.start_number.to_i
+    epoch_reward = epoch_info.epoch_reward.to_i
+    block_reward = epoch_reward / epoch_info.length.to_i
+    remainder_reward = epoch_reward % epoch_info.length.to_i
+    if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward
+      block_reward + 1
+    else
+      block_reward
+    end
   end
 
   def self.get_epoch_info(epoch)
@@ -142,5 +161,42 @@ class CkbUtils
 
     input_capacities = cell_input_capacities.reduce(0, &:+)
     input_capacities.zero? ? 0 : (input_capacities - cell_output_capacities)
+  end
+
+  def self.update_block_reward_status!(current_block)
+    target_block_number = current_block.target_block_number
+    target_block = current_block.target_block
+    return if target_block_number < 1 || target_block.blank?
+
+    target_block.update(reward_status: "issued")
+    current_block.update(target_block_reward_status: "issued")
+  end
+
+  def self.calculate_received_tx_fee!(current_block)
+    target_block_number = current_block.target_block_number
+    target_block = current_block.target_block
+    return if target_block_number < 1 || target_block.blank?
+
+    cellbase = Cellbase.new(current_block)
+    proposal_reward = cellbase.proposal_reward
+    commit_reward = cellbase.commit_reward
+    received_tx_fee = commit_reward + proposal_reward
+    target_block.update(received_tx_fee: received_tx_fee, received_tx_fee_status: "calculated")
+  end
+
+  def self.update_current_block_miner_address_pending_rewards(local_block)
+    cellbase = local_block.cellbase
+    miner_address = cellbase.addresses.first
+    miner_address.increment!(:pending_reward_blocks_count) if miner_address.present?
+  end
+
+  def self.update_target_block_miner_address_pending_rewards(current_block)
+    target_block_number = current_block.target_block_number
+    target_block = current_block.target_block
+    return if target_block_number < 1 || target_block.blank?
+
+    cellbase = target_block.cellbase
+    miner_address = cellbase.addresses.first
+    miner_address.decrement!(:pending_reward_blocks_count) if miner_address.present?
   end
 end

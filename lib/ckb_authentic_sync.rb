@@ -12,8 +12,6 @@ end
 authentic_sync_numbers = Concurrent::Set.new
 
 loop do
-  Rails.logger.info("authentic sync start")
-  Rails.logger.info("authentic_sync_numbers size: #{authentic_sync_numbers.size}")
   authentic_tip_block_number = SyncInfo.local_authentic_tip_block_number
   inauthentic_tip_block_number = SyncInfo.local_synced_inauthentic_tip_block_number
   from = authentic_tip_block_number
@@ -32,8 +30,6 @@ loop do
     current_sync_round_numbers << number
   end
 
-  Rails.logger.info("current_sync_round_numbers size: #{current_sync_round_numbers.size}")
-
   if authentic_sync_numbers.empty?
     sync_info_values.each do |number|
       authentic_sync_numbers << number
@@ -41,7 +37,6 @@ loop do
 
     CkbSync::AuthenticSync.sync_node_data_by_number(authentic_sync_numbers)
   else
-    Rails.logger.info("authentic there is no new number")
     sync_numbers = current_sync_round_numbers - authentic_sync_numbers
     if sync_numbers.present?
       sync_numbers.each do |number|

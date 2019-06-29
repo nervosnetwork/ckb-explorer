@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_06_12_034620) do
+ActiveRecord::Schema.define(version: 2019_06_28_052742) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -32,6 +32,7 @@ ActiveRecord::Schema.define(version: 2019_06_12_034620) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.binary "lock_hash"
+    t.integer "pending_reward_blocks_count", default: 0
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
   end
@@ -65,6 +66,10 @@ ActiveRecord::Schema.define(version: 2019_06_12_034620) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "address_ids", array: true
+    t.integer "reward_status", default: 0
+    t.integer "received_tx_fee_status", default: 0
+    t.decimal "received_tx_fee", precision: 30, default: "0"
+    t.integer "target_block_reward_status", default: 0
     t.index ["block_hash", "status"], name: "index_blocks_on_block_hash_and_status"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number", "status"], name: "index_blocks_on_number_and_status"

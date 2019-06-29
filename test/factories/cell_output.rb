@@ -2,7 +2,7 @@ FactoryBot.define do
   factory :cell_output do
     address
 
-    capacity { 10**8 * 5 }
+    capacity { 10**8 * 7 }
     data {}
 
     trait :with_full_transaction do
