@@ -321,7 +321,6 @@ module CkbSync
           code_hash: lock_script.code_hash,
           address: address
         )
-        binding.pry
       end
 
       def build_uncle_block(uncle_block, local_block)
