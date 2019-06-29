@@ -26,6 +26,7 @@ module CkbSync
           local_block.reload.ckb_transactions_count = ckb_transactions.size
           local_block.address_ids = AccountBook.where(ckb_transaction: local_block.ckb_transactions).pluck(:address_id).uniq
           local_block.save!
+          update_pending_rewards(local_block)
         end
 
         local_block
@@ -49,6 +50,7 @@ module CkbSync
       def update_ckb_transaction_display_inputs(ckb_transaction)
         display_inputs = Set.new
         cell_input_addresses = Set.new
+
         ckb_transaction.cell_inputs.find_each do |cell_input|
           display_inputs << build_display_input(cell_input)
           cell_input_addresses << cell_input_address(cell_input)
@@ -64,9 +66,16 @@ module CkbSync
 
       def update_ckb_transaction_display_outputs(ckb_transaction)
         display_outputs = []
-        ckb_transaction.cell_outputs.find_each do |cell_output|
-          display_outputs << { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash }
+        if ckb_transaction.is_cellbase
+          cell_output = ckb_transaction.cell_outputs.first
+          cellbase = Cellbase.new(ckb_transaction.block)
+          display_outputs << { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward }
+        else
+          ckb_transaction.cell_outputs.find_each do |cell_output|
+            display_outputs << { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash }
+          end
         end
+
         ckb_transaction.display_outputs = display_outputs
 
         ckb_transaction.save
@@ -96,7 +105,26 @@ module CkbSync
         update_block_address_ids(ckb_transaction)
       end
 
+      def update_block_reward_info(current_block)
+        target_block_number = current_block.target_block_number
+        target_block = current_block.target_block
+        return if target_block_number < 1 || target_block.blank? || target_block.exist_uncalculated_tx?
+
+        issue_block_reward(current_block)
+        CkbUtils.update_target_block_miner_address_pending_rewards(current_block)
+        update_ckb_transaction_display_outputs(current_block.cellbase)
+      end
+
       private
+
+      def issue_block_reward(current_block)
+        CkbUtils.update_block_reward_status!(current_block)
+        CkbUtils.calculate_received_tx_fee!(current_block)
+      end
+
+      def update_pending_rewards(local_block)
+        CkbUtils.update_current_block_miner_address_pending_rewards(local_block)
+      end
 
       def update_cell_status(ckb_transaction)
         previous_cell_output_ids = CellInput.where(ckb_transaction: ckb_transaction).select("previous_cell_output_id")
@@ -194,7 +222,8 @@ module CkbSync
         cell = cell_input.previous_output["cell"]
 
         if cell.blank?
-          { id: nil, from_cellbase: true, capacity: cell_input.ckb_transaction.block.reward, address_hash: nil }
+          cellbase = Cellbase.new(cell_input.ckb_transaction.block)
+          { id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }
         else
           previous_cell_output = cell_input.previous_cell_output
 
@@ -249,6 +278,8 @@ module CkbSync
       def build_block(node_block, sync_type)
         header = node_block.header
         epoch_info = CkbUtils.get_epoch_info(header.epoch)
+        cellbase = node_block.transactions.first
+
         Block.new(
           difficulty: header.difficulty,
           block_hash: header.hash,
@@ -266,9 +297,10 @@ module CkbSync
           proposals_count: node_block.proposals.count,
           cell_consumed: CkbUtils.block_cell_consumed(node_block.transactions),
           total_cell_capacity: CkbUtils.total_cell_capacity(node_block.transactions),
-          miner_hash: CkbUtils.miner_hash(node_block.transactions.first),
+          miner_hash: CkbUtils.miner_hash(cellbase),
           status: sync_type,
-          reward: CkbUtils.miner_reward(node_block.transactions.first),
+          reward: CkbUtils.base_reward(header.number, header.epoch, node_block.transactions.first),
+          reward_status: header.number.to_i == 0 ? "issued" : "pending",
           total_transaction_fee: 0,
           witnesses_root: header.witnesses_root,
           epoch: header.epoch,
@@ -307,7 +339,7 @@ module CkbSync
           block_timestamp: local_block.timestamp,
           status: sync_type,
           transaction_fee: 0,
-          witnesses: transaction.witnesses,
+          witnesses: transaction.witnesses.map(&:to_h),
           is_cellbase: transaction_index.zero?
         )
       end

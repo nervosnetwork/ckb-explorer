@@ -7,12 +7,10 @@ module Api
         CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(100)
         CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
           CKB::Types::Epoch.new(
-            block_reward: "250000000000",
+            epoch_reward: "250000000000",
             difficulty: "0x1000",
-            last_block_hash_in_previous_epoch: "0x0000000000000000000000000000000000000000000000000000000000000000",
             length: "2000",
             number: "0",
-            remainder_reward: "0",
             start_number: "0"
           )
         )
@@ -67,6 +65,7 @@ module Api
       end
 
       test "should return right statistic info" do
+        StatisticInfo.any_instance.stubs(:id).returns(1)
         statistic_info = StatisticInfo.new
 
         valid_get api_v1_statistics_url
@@ -82,12 +81,10 @@ module Api
       test "the returned miner ranking info should contain right keys" do
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
-            block_reward: "250000000000",
+            epoch_reward: "250000000000",
             difficulty: "0x1000",
-            last_block_hash_in_previous_epoch: "0x0000000000000000000000000000000000000000000000000000000000000000",
             length: "2000",
             number: "0",
-            remainder_reward: "0",
             start_number: "0"
           )
         )
@@ -101,12 +98,10 @@ module Api
       test "should return right ranking" do
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
-            block_reward: "250000000000",
+            epoch_reward: "250000000000",
             difficulty: "0x1000",
-            last_block_hash_in_previous_epoch: "0x0000000000000000000000000000000000000000000000000000000000000000",
             length: "2000",
             number: "0",
-            remainder_reward: "0",
             start_number: "0"
           )
         )
@@ -121,12 +116,10 @@ module Api
       test "the returned empty array when event not start" do
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
-            block_reward: "250000000000",
+            epoch_reward: "250000000000",
             difficulty: "0x1000",
-            last_block_hash_in_previous_epoch: "0x0000000000000000000000000000000000000000000000000000000000000000",
             length: "2000",
             number: "0",
-            remainder_reward: "0",
             start_number: "0"
           )
         )

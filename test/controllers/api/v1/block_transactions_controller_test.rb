@@ -80,8 +80,8 @@ module Api
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page_size: page_size }
 
-        block_ckb_transaction_hashes = block.ckb_transactions.available.recent.map(&:tx_hash)
-        block_ckb_transaction_statuses = block.ckb_transactions.available.recent.map(&:status).uniq
+        block_ckb_transaction_hashes = block.ckb_transactions.available.order(:id).map(&:tx_hash)
+        block_ckb_transaction_statuses = block.ckb_transactions.available.order(:id).map(&:status).uniq
         search_result_ckb_transaction_hashes = json["data"].map { |ckb_transaction| ckb_transaction.dig("attributes", "transaction_hash") }
 
         assert_equal block_ckb_transaction_hashes, search_result_ckb_transaction_hashes
@@ -94,7 +94,7 @@ module Api
         block = create(:block, :with_ckb_transactions)
 
         valid_get api_v1_block_transaction_url(block.block_hash)
-        ckb_transactions = block.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
 
         assert_equal CkbTransactionSerializer.new(ckb_transactions, options).serialized_json, response.body
@@ -107,7 +107,7 @@ module Api
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return error object when no records found by id" do
@@ -163,7 +163,7 @@ module Api
         page = 2
         page_size = 10
         block = create(:block, :with_ckb_transactions, transactions_count: 30)
-        block_ckb_transactions = block.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        block_ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page: page }
 
@@ -178,7 +178,7 @@ module Api
         page = 1
         page_size = 12
         block = create(:block, :with_ckb_transactions, transactions_count: 15)
-        block_ckb_transactions = block.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        block_ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page_size: page_size }
 
@@ -193,7 +193,7 @@ module Api
         page = 2
         page_size = 5
         block = create(:block, :with_ckb_transactions, transactions_count: 30)
-        block_ckb_transactions = block.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        block_ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page: page, page_size: page_size }
 
@@ -207,7 +207,7 @@ module Api
         page = 2
         page_size = 5
         block = create(:block)
-        block_ckb_transactions = block.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        block_ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page: page, page_size: page_size }
 

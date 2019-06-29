@@ -16,7 +16,7 @@ class ChangeCkbTransactionsStatusWorkerTest < ActiveSupport::TestCase
     block = create(:block)
     ChangeCkbTransactionsStatusWorker.perform_async(block.id, "authentic")
 
-    assert_equal 1, Sidekiq::Queues["transaction_info_updater"].size
-    assert_equal "ChangeCkbTransactionsStatusWorker", Sidekiq::Queues["transaction_info_updater"].first["class"]
+    assert_equal 1, Sidekiq::Queues["transaction_status_updater"].size
+    assert_equal "ChangeCkbTransactionsStatusWorker", Sidekiq::Queues["transaction_status_updater"].first["class"]
   end
 end

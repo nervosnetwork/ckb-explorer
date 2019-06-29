@@ -30,26 +30,11 @@ class MinerRanking
       blocks = Block.where(id: block_ids)
       total_block_reward = 0
       blocks.find_each do |block|
-        epoch_info = CkbUtils.get_epoch_info(block.epoch)
-        total_block_reward += block_reward(block, epoch_info)
+        total_block_reward += CkbUtils.base_reward(block.number, block.epoch)
       end
       ranking_infos << { address_hash: address.address_hash, lock_hash: address.lock_hash, total_block_reward: total_block_reward }
     end
 
     ranking_infos.sort_by { |ranking_info| ranking_info[:total_block_reward] }.reverse
-  end
-
-  private
-
-  def block_reward(block, epoch_info)
-    block_number = block.number
-    start_number = epoch_info.start_number.to_i
-    remainder_reward = epoch_info.remainder_reward.to_i
-    block_reward = epoch_info.block_reward.to_i
-    if block_number >= start_number && block_number < start_number + remainder_reward
-      block_reward + 1
-    else
-      block_reward
-    end
   end
 end

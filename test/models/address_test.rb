@@ -80,7 +80,6 @@ class AddressTest < ActiveSupport::TestCase
 
   test "should update related addresses balance after block authenticated" do
     Sidekiq::Testing.inline!
-
     prepare_inauthentic_node_data
 
     VCR.use_cassette("genesis_block") do
