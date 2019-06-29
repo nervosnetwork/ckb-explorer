@@ -42,6 +42,16 @@ if ENV["CI"] == "true"
 end
 
 def prepare_inauthentic_node_data(node_tip_block_number = 10)
+  Sidekiq::Testing.inline!
+  CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+    CKB::Types::Epoch.new(
+      epoch_reward: "250000000000",
+      difficulty: "0x1000",
+      length: "2000",
+      number: "0",
+      start_number: "0"
+    )
+  )
   local_tip_block_number = 0
   SyncInfo.local_inauthentic_tip_block_number
   ((local_tip_block_number + 1)..node_tip_block_number).each do |number|
@@ -62,6 +72,7 @@ def prepare_inauthentic_node_data(node_tip_block_number = 10)
         output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
         CkbSync::Persist.save_block(node_block, "inauthentic")
+        CkbSync::Persist.update_ckb_transaction_info_and_fee
       end
     end
   end
