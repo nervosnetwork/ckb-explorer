@@ -35,14 +35,15 @@ end
 #
 # Table name: addresses
 #
-#  id                     :bigint           not null, primary key
-#  balance                :decimal(30, )
-#  address_hash           :binary
-#  cell_consumed          :decimal(30, )
-#  ckb_transactions_count :decimal(30, )    default(0)
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  lock_hash              :binary
+#  id                          :bigint           not null, primary key
+#  balance                     :decimal(30, )
+#  address_hash                :binary
+#  cell_consumed               :decimal(30, )
+#  ckb_transactions_count      :decimal(30, )    default(0)
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  lock_hash                   :binary
+#  pending_reward_blocks_count :integer          default(0)
 #
 # Indexes
 #

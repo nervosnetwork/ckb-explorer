@@ -84,7 +84,6 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#contained_addresses should return addresses under the block" do
-    prepare_inauthentic_node_data
     Block.all.each do |block|
       ckb_transactions_under_the_block = block.ckb_transactions
       addresses = ckb_transactions_under_the_block.map(&:addresses).flatten.uniq

@@ -19,6 +19,7 @@ class CkbTransaction < ApplicationRecord
 
   scope :recent, -> { order(block_timestamp: :desc) }
   scope :available, -> { where(status: [:inauthentic, :authentic]) }
+  scope :cellbase, -> { where(is_cellbase: true) }
 end
 
 # == Schema Information
