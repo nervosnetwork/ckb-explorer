@@ -280,6 +280,8 @@ module CkbSync
         epoch_info = CkbUtils.get_epoch_info(header.epoch)
         cellbase = node_block.transactions.first
 
+        generate_address_in_advance(cellbase)
+
         Block.new(
           difficulty: header.difficulty,
           block_hash: header.hash,
@@ -307,6 +309,19 @@ module CkbSync
           start_number: epoch_info.start_number,
           length: epoch_info.length
         )
+      end
+
+      def generate_address_in_advance(cellbase)
+        return if cellbase.witnesses.blank?
+
+        lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+        address = Address.find_or_create_address(lock_script)
+        LockScript.find_or_create_by(
+          args: lock_script.args,
+          code_hash: lock_script.code_hash,
+          address: address
+        )
+        binding.pry
       end
 
       def build_uncle_block(uncle_block, local_block)
