@@ -33,9 +33,9 @@ FactoryBot.define do
         output1 = create(:cell_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 0)
         output2 = create(:cell_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 1)
         output3 = create(:cell_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 2)
-        create(:lock_script, cell_output: output1)
-        create(:lock_script, cell_output: output2)
-        create(:lock_script, cell_output: output3)
+        create(:lock_script, cell_output_id: output1.id)
+        create(:lock_script, cell_output_id: output2.id)
+        create(:lock_script, cell_output_id: output3.id)
       end
     end
 
@@ -44,11 +44,11 @@ FactoryBot.define do
         output1 = create(:cell_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 0)
         output2 = create(:cell_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 1)
         output3 = create(:cell_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 2)
-        create(:lock_script, cell_output: output1)
+        create(:lock_script, cell_output_id: output1.id)
         create(:type_script, cell_output: output1)
-        create(:lock_script, cell_output: output2)
+        create(:lock_script, cell_output_id: output2.id)
         create(:type_script, cell_output: output2)
-        create(:lock_script, cell_output: output3)
+        create(:lock_script, cell_output_id: output3.id)
         create(:type_script, cell_output: output3)
       end
     end
