@@ -486,7 +486,9 @@ module CkbSync
       SyncInfo.local_inauthentic_tip_block_number
       node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
       VCR.use_cassette("blocks/12") do
-        miner_address = create(:address, lock_hash: "0xcb7bce98a778f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a5")
+        cellbase = node_block.transactions.first
+        lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+        miner_address = Address.find_or_create_address(lock_script)
         assert_difference -> { miner_address.reload.pending_reward_blocks_count }, 1 do
           CkbSync::Persist.save_block(node_block, "inauthentic")
         end
@@ -678,8 +680,7 @@ module CkbSync
       prepare_inauthentic_node_data(12)
       target_block = Block.find_by(number: 1)
       current_block = Block.find_by(number: 12)
-      cellbase = target_block.cellbase
-      miner_address = cellbase.addresses.first
+      miner_address = target_block.miner_address
       VCR.use_cassette("blocks/12") do
         assert_difference -> { miner_address.reload.pending_reward_blocks_count }, -1 do
           CkbSync::Persist.update_block_reward_info(current_block)
