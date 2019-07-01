@@ -67,6 +67,10 @@ class Block < ApplicationRecord
     raise Api::V1::Exceptions::BlockNotFoundError
   end
 
+  def miner_address
+    Address.find_by(address_hash: miner_hash)
+  end
+
   private
 
   def verified?(node_block_hash)

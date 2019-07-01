@@ -184,9 +184,7 @@ class CkbUtils
     target_block.update(received_tx_fee: received_tx_fee, received_tx_fee_status: "calculated")
   end
 
-  def self.update_current_block_miner_address_pending_rewards(local_block)
-    cellbase = local_block.cellbase
-    miner_address = cellbase.addresses.first
+  def self.update_current_block_miner_address_pending_rewards(miner_address)
     miner_address.increment!(:pending_reward_blocks_count) if miner_address.present?
   end
 
@@ -195,8 +193,7 @@ class CkbUtils
     target_block = current_block.target_block
     return if target_block_number < 1 || target_block.blank?
 
-    cellbase = target_block.cellbase
-    miner_address = cellbase.addresses.first
+    miner_address = target_block.miner_address
     miner_address.decrement!(:pending_reward_blocks_count) if miner_address.present?
   end
 end
