@@ -185,7 +185,7 @@ class CkbUtils
   end
 
   def self.update_current_block_miner_address_pending_rewards(miner_address)
-    miner_address.increment!(:pending_reward_blocks_count) if miner_address.present?
+    Address.increment_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
   end
 
   def self.update_target_block_miner_address_pending_rewards(current_block)
@@ -194,6 +194,6 @@ class CkbUtils
     return if target_block_number < 1 || target_block.blank?
 
     miner_address = target_block.miner_address
-    miner_address.decrement!(:pending_reward_blocks_count) if miner_address.present?
+    Address.decrement_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
   end
 end
