@@ -2,7 +2,6 @@ class Address < ApplicationRecord
   PREFIX_MAINNET = "ckb".freeze
   PREFIX_TESTNET = "ckt".freeze
 
-  has_one :lock_script
   has_many :cell_outputs
   has_many :account_books
   has_many :ckb_transactions, through: :account_books
@@ -10,6 +9,10 @@ class Address < ApplicationRecord
   validates :balance, :cell_consumed, :ckb_transactions_count, numericality: { greater_than_or_equal_to: 0 }
 
   attribute :lock_hash, :ckb_hash
+
+  def lock_script
+    LockScript.where(address: self).first
+  end
 
   def self.find_or_create_address(lock_script)
     address_hash = CkbUtils.generate_address(lock_script)

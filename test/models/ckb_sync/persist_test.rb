@@ -27,6 +27,30 @@ module CkbSync
       end
     end
 
+    test ".save_block should generate miner's address when cellbase has witnesses" do
+      assert_difference "Address.count", 2 do
+        VCR.use_cassette("blocks/11") do
+          SyncInfo.local_inauthentic_tip_block_number
+          node_block = CkbSync::Api.instance.get_block("0x6da75b45555cdf49c2844d5fb337cfd5513f234c00a7a4d22515b17089cf48a3")
+          set_default_lock_params(node_block: node_block)
+
+          CkbSync::Persist.save_block(node_block, "inauthentic")
+        end
+      end
+    end
+
+    test ".save_block should generate miner's lock when cellbase has witnesses" do
+      assert_difference "LockScript.count", 2 do
+        VCR.use_cassette("blocks/11") do
+          SyncInfo.local_inauthentic_tip_block_number
+          node_block = CkbSync::Api.instance.get_block("0x6da75b45555cdf49c2844d5fb337cfd5513f234c00a7a4d22515b17089cf48a3")
+          set_default_lock_params(node_block: node_block)
+
+          CkbSync::Persist.save_block(node_block, "inauthentic")
+        end
+      end
+    end
+
     test "after .save_block generated block's ckb_transactions_count should equal to transactions count" do
       VCR.use_cassette("blocks/10") do
         SyncInfo.local_inauthentic_tip_block_number
