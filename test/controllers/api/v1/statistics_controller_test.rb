@@ -64,7 +64,7 @@ module Api
         assert_equal %w(average_block_time current_epoch_difficulty hash_rate tip_block_number), json.dig("data", "attributes").keys.sort
       end
 
-      test "should return right statistic info" do
+      test "should return right index statistic info" do
         StatisticInfo.any_instance.stubs(:id).returns(1)
         statistic_info = StatisticInfo.new
 
@@ -72,13 +72,16 @@ module Api
 
         assert_equal IndexStatisticSerializer.new(statistic_info).serialized_json, response.body
       end
+
       test "should get success code when call show" do
+        ENV["MINER_RANKING_EVENT"] = "on"
         valid_get api_v1_statistic_url("miner_ranking")
 
         assert_response :success
       end
 
       test "the returned miner ranking info should contain right keys" do
+        ENV["MINER_RANKING_EVENT"] = "on"
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
             epoch_reward: "250000000000",
@@ -92,10 +95,11 @@ module Api
 
         valid_get api_v1_statistic_url("miner_ranking")
 
-        assert_equal %w(ranking), json.dig("data", "attributes").keys.sort
+        assert_equal %w(miner_ranking), json.dig("data", "attributes").keys.sort
       end
 
       test "should return right ranking" do
+        ENV["MINER_RANKING_EVENT"] = "on"
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
             epoch_reward: "250000000000",
@@ -106,14 +110,15 @@ module Api
           )
         )
         generate_miner_ranking_related_data
-        ranking = MinerRanking.new
+        statistic_info = StatisticInfo.new
 
         valid_get api_v1_statistic_url("miner_ranking")
 
-        assert_equal MinerRankingSerializer.new(ranking).serialized_json, response.body
+        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "miner_ranking" } }).serialized_json, response.body
       end
 
       test "the returned empty array when event not start" do
+        ENV["MINER_RANKING_EVENT"] = "on"
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
             epoch_reward: "250000000000",
@@ -127,7 +132,63 @@ module Api
 
         valid_get api_v1_statistic_url("miner_ranking")
 
-        assert_equal [], json.dig("data", "attributes", "ranking")
+        assert_equal [], json.dig("data", "attributes", "miner_ranking")
+      end
+
+      test "should return right statistic info" do
+        ENV["MINER_RANKING_EVENT"] = "on"
+        tip_block_number = 101
+        CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(tip_block_number)
+        statistic_info = StatisticInfo.new
+
+        valid_get api_v1_statistic_url("tip_block_number")
+
+        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "tip_block_number" } }).serialized_json, response.body
+      end
+
+      test "should return tip block number when param is tip_block_number" do
+        tip_block_number = 101
+        CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(tip_block_number)
+
+        valid_get api_v1_statistic_url("tip_block_number")
+
+        assert_equal tip_block_number, json.dig("data", "attributes", "tip_block_number")
+      end
+
+      test "should return average block time when param is average_block_time" do
+        average_block_time = 10_000
+        StatisticInfo.any_instance.stubs(:average_block_time).returns(average_block_time)
+
+        valid_get api_v1_statistic_url("average_block_time")
+
+        assert_equal average_block_time, json.dig("data", "attributes", "average_block_time")
+      end
+
+      test "should return current epoch difficulty when param is current_epoch_difficulty" do
+        current_epoch_difficulty = 100_000
+        StatisticInfo.any_instance.stubs(:current_epoch_difficulty).returns(current_epoch_difficulty)
+
+        valid_get api_v1_statistic_url("current_epoch_difficulty")
+
+        assert_equal current_epoch_difficulty, json.dig("data", "attributes", "current_epoch_difficulty")
+      end
+
+      test "should return current hash rate when param is hash_rate" do
+        hash_rate = 1_000_000
+        StatisticInfo.any_instance.stubs(:hash_rate).returns(hash_rate)
+
+        valid_get api_v1_statistic_url("hash_rate")
+
+        assert_equal hash_rate, json.dig("data", "attributes", "hash_rate")
+      end
+
+      test "should respond with error object when statistic info name is invalid" do
+        error_object = Api::V1::Exceptions::StatisticInfoNameInvalidError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get api_v1_statistic_url("hash_rates")
+
+        assert_equal response_json, response.body
       end
     end
   end

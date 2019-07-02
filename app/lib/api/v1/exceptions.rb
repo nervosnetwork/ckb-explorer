@@ -120,6 +120,12 @@ module Api
           super code: 1018, status: 404, title: "No matching records found", detail: "No records found by given query key", href: "https://github.com/nervosnetwork/ckb-explorer"
         end
       end
+
+      class StatisticInfoNameInvalidError < Error
+        def initialize
+          super code: 1019, status: 422, title: "URI parameters is invalid", detail: "Given statistic info name is invalid", href: "https://github.com/nervosnetwork/ckb-explorer"
+        end
+      end
     end
   end
 end

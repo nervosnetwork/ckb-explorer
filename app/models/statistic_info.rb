@@ -38,6 +38,10 @@ class StatisticInfo
     total_difficulties.to_d / total_time / cycle_rate
   end
 
+  def miner_ranking
+    MinerRanking.new.ranking
+  end
+
   private
 
   attr_reader :difficulty_interval, :block_time_interval, :hash_rate_statistical_interval
