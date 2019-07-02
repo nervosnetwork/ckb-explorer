@@ -11,8 +11,6 @@ module Api
         ckb_transactions = address.cached_ckb_transactions(@page, @page_size, request)
 
         render json: ckb_transactions
-      rescue ActiveRecord::RecordNotFound
-        raise Api::V1::Exceptions::AddressNotFoundError
       end
 
       private
