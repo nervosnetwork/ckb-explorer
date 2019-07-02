@@ -9,8 +9,6 @@ module Api
         ckb_transactions = block.cached_ckb_transactions(params[:id], @page, @page_size, request)
 
         render json: ckb_transactions
-      rescue ActiveRecord::RecordNotFound
-        raise Api::V1::Exceptions::BlockTransactionsNotFoundError
       end
 
       private
