@@ -27,8 +27,7 @@ class SuggestQuery
   end
 
   def find_cached_block
-    block = Block.cached_find(query_key)
-    BlockSerializer.new(block) if block.present?
+    Block.cached_find(query_key)
   end
 
   def find_ckb_transaction_by_hash
