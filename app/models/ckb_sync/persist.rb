@@ -112,7 +112,9 @@ module CkbSync
 
         issue_block_reward(current_block)
         CkbUtils.update_target_block_miner_address_pending_rewards(current_block)
-        update_ckb_transaction_display_outputs(current_block.cellbase)
+        current_block_cellbase = current_block.cellbase
+        update_ckb_transaction_display_outputs(current_block_cellbase)
+        update_ckb_transaction_display_inputs(current_block_cellbase)
       end
 
       private
