@@ -79,6 +79,7 @@ class Block < ApplicationRecord
 
   def authenticate!
     update!(status: "authentic")
+    uncle_blocks.update_all(status: "authentic")
     SyncInfo.find_by!(name: "authentic_tip_block_number", value: number).update_attribute(:status, "synced")
     ChangeCkbTransactionsStatusWorker.perform_async(id, "authentic")
     self
@@ -86,6 +87,7 @@ class Block < ApplicationRecord
 
   def abandon!
     update!(status: "abandoned", reward_status: "issued")
+    uncle_blocks.update_all(status: "abandoned")
     ChangeCkbTransactionsStatusWorker.perform_async(id, "abandoned")
     ChangeCellOutputsStatusWorker.perform_async(id, "abandoned")
   end

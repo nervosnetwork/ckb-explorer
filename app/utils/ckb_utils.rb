@@ -168,8 +168,8 @@ class CkbUtils
     target_block = current_block.target_block
     return if target_block_number < 1 || target_block.blank?
 
-    target_block.update(reward_status: "issued")
-    current_block.update(target_block_reward_status: "issued")
+    target_block.update!(reward_status: "issued")
+    current_block.update!(target_block_reward_status: "issued")
   end
 
   def self.calculate_received_tx_fee!(current_block)
@@ -181,7 +181,7 @@ class CkbUtils
     proposal_reward = cellbase.proposal_reward
     commit_reward = cellbase.commit_reward
     received_tx_fee = commit_reward + proposal_reward
-    target_block.update(received_tx_fee: received_tx_fee, received_tx_fee_status: "calculated")
+    target_block.update!(received_tx_fee: received_tx_fee, received_tx_fee_status: "calculated")
   end
 
   def self.update_current_block_miner_address_pending_rewards(miner_address)
