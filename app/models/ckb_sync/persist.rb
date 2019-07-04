@@ -110,8 +110,10 @@ module CkbSync
         target_block = current_block.target_block
         return if target_block_number < 1 || target_block.blank? || target_block.exist_uncalculated_tx?
 
-        issue_block_reward(current_block)
-        CkbUtils.update_target_block_miner_address_pending_rewards(current_block)
+        ApplicationRecord.transaction do
+          issue_block_reward!(current_block)
+          CkbUtils.update_target_block_miner_address_pending_rewards(current_block)
+        end
         current_block_cellbase = current_block.cellbase
         update_ckb_transaction_display_outputs(current_block_cellbase)
         update_ckb_transaction_display_inputs(current_block_cellbase)
@@ -119,7 +121,7 @@ module CkbSync
 
       private
 
-      def issue_block_reward(current_block)
+      def issue_block_reward!(current_block)
         CkbUtils.update_block_reward_status!(current_block)
         CkbUtils.calculate_received_tx_fee!(current_block)
       end
