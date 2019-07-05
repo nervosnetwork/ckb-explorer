@@ -1,10 +1,13 @@
 class LockScript < ApplicationRecord
-  belongs_to :cell_output
   belongs_to :address
 
   validates_presence_of :code_hash
 
   attribute :code_hash, :ckb_hash
+
+  def cell_output
+    CellOutput.find(cell_output_id)
+  end
 
   def to_node_lock
     {

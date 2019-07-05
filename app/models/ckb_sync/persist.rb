@@ -26,7 +26,7 @@ module CkbSync
           local_block.reload.ckb_transactions_count = ckb_transactions.size
           local_block.address_ids = AccountBook.where(ckb_transaction: local_block.ckb_transactions).pluck(:address_id).uniq
           local_block.save!
-          update_pending_rewards(local_block)
+          update_pending_rewards(local_block.miner_address)
         end
 
         local_block
@@ -110,20 +110,24 @@ module CkbSync
         target_block = current_block.target_block
         return if target_block_number < 1 || target_block.blank? || target_block.exist_uncalculated_tx?
 
-        issue_block_reward(current_block)
-        CkbUtils.update_target_block_miner_address_pending_rewards(current_block)
-        update_ckb_transaction_display_outputs(current_block.cellbase)
+        ApplicationRecord.transaction do
+          issue_block_reward!(current_block)
+          CkbUtils.update_target_block_miner_address_pending_rewards(current_block)
+        end
+        current_block_cellbase = current_block.cellbase
+        update_ckb_transaction_display_outputs(current_block_cellbase)
+        update_ckb_transaction_display_inputs(current_block_cellbase)
       end
 
       private
 
-      def issue_block_reward(current_block)
+      def issue_block_reward!(current_block)
         CkbUtils.update_block_reward_status!(current_block)
         CkbUtils.calculate_received_tx_fee!(current_block)
       end
 
-      def update_pending_rewards(local_block)
-        CkbUtils.update_current_block_miner_address_pending_rewards(local_block)
+      def update_pending_rewards(miner_address)
+        CkbUtils.update_current_block_miner_address_pending_rewards(miner_address)
       end
 
       def update_cell_status(ckb_transaction)
@@ -280,6 +284,8 @@ module CkbSync
         epoch_info = CkbUtils.get_epoch_info(header.epoch)
         cellbase = node_block.transactions.first
 
+        generate_address_in_advance(cellbase)
+
         Block.new(
           difficulty: header.difficulty,
           block_hash: header.hash,
@@ -306,6 +312,18 @@ module CkbSync
           epoch: header.epoch,
           start_number: epoch_info.start_number,
           length: epoch_info.length
+        )
+      end
+
+      def generate_address_in_advance(cellbase)
+        return if cellbase.witnesses.blank?
+
+        lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+        address = Address.find_or_create_address(lock_script)
+        LockScript.find_or_create_by(
+          args: lock_script.args,
+          code_hash: lock_script.code_hash,
+          address: address
         )
       end
 
