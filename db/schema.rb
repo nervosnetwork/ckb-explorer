@@ -99,10 +99,14 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.decimal "block_id", precision: 30
     t.binary "tx_hash"
     t.integer "cell_index"
+    t.decimal "generated_by_id", precision: 30
+    t.decimal "consumed_by_id", precision: 30
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
     t.index ["tx_hash", "cell_index"], name: "index_cell_outputs_on_tx_hash_and_cell_index"
+    t.index ["consumed_by_id"], name: "index_cell_outputs_on_consumed_by_id"
+    t.index ["generated_by_id"], name: "index_cell_outputs_on_generated_by_id"
   end
 
   create_table "ckb_transactions", force: :cascade do |t|

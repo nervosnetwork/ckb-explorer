@@ -2,6 +2,8 @@ class CellOutput < ApplicationRecord
   enum status: { live: 0, dead: 1, abandoned: 2 }
 
   belongs_to :ckb_transaction
+  belongs_to :generated_by, class_name: "CkbTransaction"
+  belongs_to :consumed_by, class_name: "CkbTransaction"
   belongs_to :address
   belongs_to :block
   has_one :lock_script
@@ -33,11 +35,15 @@ end
 #  block_id           :decimal(30, )
 #  tx_hash            :binary
 #  cell_index         :integer
+#  generated_by_id    :decimal(30, )
+#  consumed_by_id     :decimal(30, )
 #
 # Indexes
 #
 #  index_cell_outputs_on_address_id_and_status   (address_id,status)
 #  index_cell_outputs_on_block_id                (block_id)
 #  index_cell_outputs_on_ckb_transaction_id      (ckb_transaction_id)
+#  index_cell_outputs_on_consumed_by_id          (consumed_by_id)
+#  index_cell_outputs_on_generated_by_id         (generated_by_id)
 #  index_cell_outputs_on_tx_hash_and_cell_index  (tx_hash,cell_index)
 #
