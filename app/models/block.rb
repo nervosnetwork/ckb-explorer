@@ -28,6 +28,8 @@ class Block < ApplicationRecord
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
 
+  after_commit :flush_cache
+
   def verify!(node_block)
     if verified?(node_block.header.hash)
       authenticate!
@@ -57,18 +59,28 @@ class Block < ApplicationRecord
     ckb_transactions.where(transaction_fee_status: "uncalculated").exists?
   end
 
-  def self.find_block(query_key)
-    if QueryKeyUtils.valid_hex?(query_key)
-      where(block_hash: query_key).available.take!
-    else
-      where(number: query_key).available.take!
+  def self.find_block!(query_key)
+    cached_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
+  end
+
+  def self.cached_find(query_key)
+    Rails.cache.fetch([name, query_key]) do
+      if QueryKeyUtils.valid_hex?(query_key)
+        block = where(block_hash: query_key).available.first
+      else
+        block = where(number: query_key).available.first
+      end
+      BlockSerializer.new(block) if block.present?
     end
-  rescue ActiveRecord::RecordNotFound
-    raise Api::V1::Exceptions::BlockNotFoundError
   end
 
   def miner_address
     Address.find_by(address_hash: miner_hash)
+  end
+
+  def flush_cache
+    Rails.cache.delete([self.class.name, block_hash])
+    Rails.cache.delete([self.class.name, number])
   end
 
   private
@@ -134,9 +146,7 @@ end
 #
 # Indexes
 #
-#  index_blocks_on_block_hash             (block_hash) UNIQUE
-#  index_blocks_on_block_hash_and_status  (block_hash,status)
-#  index_blocks_on_number_and_status      (number,status)
-#  index_blocks_on_status                 (status)
-#  index_blocks_on_timestamp              (timestamp)
+#  index_blocks_on_block_hash  (block_hash) UNIQUE
+#  index_blocks_on_number      (number)
+#  index_blocks_on_timestamp   (timestamp)
 #
