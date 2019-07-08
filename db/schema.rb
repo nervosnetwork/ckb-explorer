@@ -84,6 +84,8 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.datetime "updated_at", null: false
     t.bigint "previous_cell_output_id"
     t.boolean "from_cell_base", default: false
+    t.decimal "block_id", precision: 30
+    t.index ["block_id"], name: "index_cell_inputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_inputs_on_ckb_transaction_id"
     t.index ["previous_cell_output_id"], name: "index_cell_inputs_on_previous_cell_output_id"
   end

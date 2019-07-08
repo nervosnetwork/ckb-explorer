@@ -52,9 +52,11 @@ end
 #  updated_at              :datetime         not null
 #  previous_cell_output_id :bigint
 #  from_cell_base          :boolean          default(FALSE)
+#  block_id                :decimal(30, )
 #
 # Indexes
 #
 #  index_cell_inputs_on_ckb_transaction_id       (ckb_transaction_id)
 #  index_cell_inputs_on_previous_cell_output_id  (previous_cell_output_id)
+#  index_cell_outputs_on_block_id                (block_id)
 #
