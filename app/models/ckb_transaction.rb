@@ -22,6 +22,38 @@ class CkbTransaction < ApplicationRecord
   scope :recent, -> { order(block_timestamp: :desc) }
   scope :available, -> { where(status: [:inauthentic, :authentic]) }
   scope :cellbase, -> { where(is_cellbase: true) }
+
+  def display_inputs
+    display_inputs = []
+    return if transaction_fee_status == "uncalculated"
+
+    if is_cellbase
+      cellbase = Cellbase.new(block)
+      display_inputs << { id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }
+    else
+      inputs.order(:id).each do |input|
+        previous_cell_output = input.previous_cell_output
+        display_inputs << { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash }
+      end
+    end
+
+    display_inputs
+  end
+
+  def display_outputs
+    display_outputs = []
+    if is_cellbase
+      output = outputs.order(:id).first
+      cellbase = Cellbase.new(block)
+      display_outputs << { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward }
+    else
+      outputs.order(:id).each do |output|
+        display_outputs << { id: output.id, capacity: output.capacity, address_hash: output.address_hash }
+      end
+    end
+
+    display_outputs
+  end
 end
 
 # == Schema Information
