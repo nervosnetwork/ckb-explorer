@@ -51,6 +51,17 @@ module CkbSync
       end
     end
 
+    test ".save_block should set cellbase's transaction_fee_status to calculated" do
+      VCR.use_cassette("blocks/11") do
+        SyncInfo.local_inauthentic_tip_block_number
+        node_block = CkbSync::Api.instance.get_block("0x6da75b45555cdf49c2844d5fb337cfd5513f234c00a7a4d22515b17089cf48a3")
+        set_default_lock_params(node_block: node_block)
+
+        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
+        assert_equal "calculated", local_block.cellbase.transaction_fee_status
+      end
+    end
+
     test "after .save_block generated block's ckb_transactions_count should equal to transactions count" do
       VCR.use_cassette("blocks/10") do
         SyncInfo.local_inauthentic_tip_block_number
@@ -360,22 +371,6 @@ module CkbSync
       end
     end
 
-    test ".save_block generated transactions should has correct transaction fee" do
-      VCR.use_cassette("blocks/10") do
-        SyncInfo.local_inauthentic_tip_block_number
-        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
-        set_default_lock_params(node_block: node_block)
-        node_block_transactions = node_block.transactions
-        transactions_fee = node_block_transactions.reduce(0) { |memo, commit_transaction| memo + CkbUtils.transaction_fee(commit_transaction).to_i }
-
-        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
-        local_ckb_transactions = local_block.ckb_transactions
-        local_ckb_transactions_fee = local_ckb_transactions.reduce(0) { |memo, ckb_transaction| memo + ckb_transaction.transaction_fee }
-
-        assert_equal transactions_fee, local_ckb_transactions_fee
-      end
-    end
-
     test ".save_block generated block should has correct total transaction fee" do
       VCR.use_cassette("blocks/10") do
         SyncInfo.local_inauthentic_tip_block_number
@@ -489,7 +484,7 @@ module CkbSync
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
         local_ckb_transactions = local_block.ckb_transactions
 
-        assert_equal "uncalculated", local_ckb_transactions.map(&:transaction_fee_status).uniq.first
+        assert_equal "uncalculated", local_ckb_transactions.where(is_cellbase: false).pluck(:transaction_fee_status).uniq.first
       end
     end
 
@@ -603,27 +598,17 @@ module CkbSync
       end
     end
 
-    test ".update_transaction_fee should update transaction fee status" do
+    test ".calculate_tx_fee should update transaction fee status" do
       SyncInfo.local_inauthentic_tip_block_number
       node_block = fake_node_block
 
       VCR.use_cassette("blocks/10") do
-        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
-        block = create(:block, :with_block_hash)
-
-        create(:ckb_transaction, :with_cell_output_and_lock_script, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3")
-        create(:ckb_transaction, :with_cell_output_and_lock_script, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
-
-        local_ckb_transaction = local_block.ckb_transactions.first
-        CkbSync::Persist.update_ckb_transaction_display_inputs(local_ckb_transaction)
-
-        assert_changes -> { local_ckb_transaction.transaction_fee_status }, from: "uncalculated", to: "calculated" do
-          CkbSync::Persist.update_transaction_fee(local_ckb_transaction)
-        end
+        CkbSync::Persist.expects(:calculate_tx_fee)
+        CkbSync::Persist.save_block(node_block, "inauthentic")
       end
     end
 
-    test ".update_transaction_fee should update transaction fee" do
+    test ".calculate_tx_fee should not update transaction fee if previous cell output is not synced" do
       SyncInfo.local_inauthentic_tip_block_number
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/10") do
@@ -634,11 +619,26 @@ module CkbSync
         local_ckb_transaction = local_block.ckb_transactions.first
         CkbSync::Persist.update_ckb_transaction_display_inputs(local_ckb_transaction)
 
-        assert_changes -> { local_ckb_transaction.reload.transaction_fee }, from: 0, to: (10**8 * 7 - 10**8 * 6) do
-          CkbSync::Persist.update_transaction_fee(local_ckb_transaction)
+        assert_no_difference -> { local_ckb_transaction.reload.transaction_fee } do
+          CkbSync::Persist.calculate_tx_fee(local_block)
         end
+      end
+    end
 
-        assert_equal 10**8, local_block.reload.total_transaction_fee
+    test ".calculate_tx_fee should update transaction fee" do
+      SyncInfo.local_inauthentic_tip_block_number
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      VCR.use_cassette("blocks/10") do
+        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
+        block = create(:block, :with_block_hash)
+        ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+        ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+        create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block)
+        create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
+        CkbSync::Persist.update_tx_fee_related_data(local_block)
+        CkbSync::Persist.calculate_tx_fee(local_block)
+
+        assert_equal 10**8 * 3, local_block.reload.total_transaction_fee
       end
     end
 

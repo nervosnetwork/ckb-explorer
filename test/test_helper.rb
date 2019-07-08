@@ -137,7 +137,7 @@ def fake_node_block(block_hash = "0x3c07186493c5da8b91917924253a5ffd35231151649d
   json_block = "{\"header\":{\"difficulty\":\"0x1000\",\"epoch\":\"0\",\"hash\":\"#{block_hash}\",\"number\":\"#{number}\",\"parent_hash\":\"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\",\"proposals_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"seal\":{\"nonce\":\"3241241169132127032\",\"proof\":\"0xd8010000850800001c0d00005c100000983b0000ae3b0000724300003e480000145f00008864000079770000d1780000\"},\"timestamp\":\"1557482351075\",\"transactions_root\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"uncles_count\":0,\"uncles_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"version\":0,\"witnesses_root\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"},\"proposals\":[],
     \"transactions\":[
       {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"inputs\":[{\"args\":[\"0x0a00000000000000\"],\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 6}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\"},\"type\":null}],\"version\":0,\"witnesses\":[{\"data\":[\"0x94334bdda40b69bae067d84937aa6bbccf8acd0df6626d4b9ac70d4612a11933\",\"0x95006587a511a885b8657733f1613485845e0652\"]}]},
-      {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23\",\"inputs\":[{\"args\":[\"0x0a00000000000000\"],\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 5}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\"},\"type\":null}],\"version\":0,\"witnesses\":[]}
+      {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23\",\"inputs\":[{\"args\":[\"0x0a00000000000000\"],\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"1\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 5}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\"},\"type\":null}],\"version\":0,\"witnesses\":[]}
     ]
     ,\"uncles\":[]}"
   CKB::Types::Block.from_h(JSON.parse(json_block).deep_symbolize_keys)
@@ -190,13 +190,13 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   cellbases_part2 = cellbases[2..8]
   cellbases_part3 = cellbases[9..-1]
   address1 = create(:address, :with_lock_script)
-  cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1) }
+  cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1, generated_by: cellbase) }
   address1.ckb_transactions << cellbases_part1
   address2 = create(:address, :with_lock_script)
-  cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2) }
+  cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2, generated_by: cellbase) }
   address2.ckb_transactions << cellbases_part2
   address3 = create(:address, :with_lock_script)
-  cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3) }
+  cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3, generated_by: cellbase) }
   address3.ckb_transactions << cellbases_part3
 
   return address1, address2, address3
