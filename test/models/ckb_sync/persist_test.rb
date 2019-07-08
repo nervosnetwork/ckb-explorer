@@ -351,8 +351,10 @@ module CkbSync
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
         local_ckb_transactions = local_block.ckb_transactions
         local_block_cell_inputs = local_ckb_transactions.map(&:display_inputs).flatten
+        cellbase = Cellbase.new(local_block)
+        expected_display_inputs = [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
 
-        assert_equal [nil], local_block_cell_inputs
+        assert_equal expected_display_inputs, local_block_cell_inputs
       end
     end
 
@@ -366,8 +368,11 @@ module CkbSync
 
         local_ckb_transactions = local_block.ckb_transactions
         local_block_cell_outputs = local_ckb_transactions.map(&:display_outputs).flatten
+        output = local_ckb_transactions.first.outputs.order(:id).first
+        cellbase = Cellbase.new(local_block)
+        expected_display_outputs = [{ id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward }]
 
-        assert_equal [nil], local_block_cell_outputs
+        assert_equal expected_display_outputs, local_block_cell_outputs
       end
     end
 
@@ -502,31 +507,6 @@ module CkbSync
       end
     end
 
-    test ".update_ckb_transaction_display_inputs should update display inputs" do
-      SyncInfo.local_inauthentic_tip_block_number
-
-      node_block = fake_node_block
-      VCR.use_cassette("blocks/10") do
-        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
-
-        previous_transaction = create(:ckb_transaction, :with_cell_output_and_lock_script, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3")
-        previous_output = previous_transaction.cell_outputs.order(:id)[0]
-
-        local_ckb_transaction = local_block.ckb_transactions.first
-
-        node_display_inputs = [
-          { id: local_ckb_transaction.cell_inputs.first.id, from_cellbase: false, capacity: previous_output.capacity.to_s, address_hash: previous_output.address_hash }.sort_by { |k, _v| k }.to_h.deep_stringify_keys
-        ]
-
-        assert_changes -> { local_ckb_transaction.reload.display_inputs_status }, from: "ungenerated", to: "generated" do
-          CkbSync::Persist.update_ckb_transaction_display_inputs(local_ckb_transaction)
-        end
-
-        local_block_cell_inputs = local_ckb_transaction.display_inputs.map { |display_input| display_input.sort_by { |k, _v| k }.to_h }
-        assert_equal node_display_inputs, local_block_cell_inputs
-      end
-    end
-
     test "cellbase's display inputs should contain target block number" do
       prepare_inauthentic_node_data(11)
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
@@ -542,11 +522,10 @@ module CkbSync
         assert_difference "Block.count", 1 do
           CkbSync::Persist.call("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", "inauthentic")
           block = Block.last
-          CkbSync::Persist.update_ckb_transaction_display_inputs(block.cellbase)
           cellbase = Cellbase.new(block)
           expected_cellbase_display_inputs = [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
 
-          assert_equal JSON.parse(expected_cellbase_display_inputs.to_json), block.cellbase.display_inputs
+          assert_equal expected_cellbase_display_inputs, block.cellbase.display_inputs
         end
       end
     end
@@ -588,12 +567,11 @@ module CkbSync
         assert_difference "Block.count", 1 do
           CkbSync::Persist.call("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", "inauthentic")
           block = Block.last
-          CkbSync::Persist.update_ckb_transaction_display_outputs(block.cellbase)
           cellbase = Cellbase.new(block)
           cell_output = block.cellbase.cell_outputs.first
           expected_cellbase_display_outputs = [{ id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward }]
 
-          assert_equal JSON.parse(expected_cellbase_display_outputs.to_json), block.cellbase.display_outputs
+          assert_equal expected_cellbase_display_outputs, block.cellbase.display_outputs
         end
       end
     end
@@ -617,7 +595,7 @@ module CkbSync
         create(:ckb_transaction, :with_cell_output_and_lock_script, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: local_block)
 
         local_ckb_transaction = local_block.ckb_transactions.first
-        CkbSync::Persist.update_ckb_transaction_display_inputs(local_ckb_transaction)
+        CkbSync::Persist.update_tx_fee_related_data(local_block)
 
         assert_no_difference -> { local_ckb_transaction.reload.transaction_fee } do
           CkbSync::Persist.calculate_tx_fee(local_block)
@@ -640,18 +618,6 @@ module CkbSync
 
         assert_equal 10**8 * 3, local_block.reload.total_transaction_fee
       end
-    end
-
-    test ".update_ckb_transaction_info_and_fee should queuing 1000 jobs when has 1000 transaction" do
-      Sidekiq::Testing.fake!
-
-      block = create(:block, :with_block_hash)
-      create_list(:ckb_transaction, 1000, block: block)
-      CkbSync::Persist.update_ckb_transaction_info_and_fee
-
-      assert_equal 1000, Sidekiq::Queues["transaction_info_updater"].size
-      assert_equal "UpdateTransactionDisplayInfosWorker", Sidekiq::Queues["transaction_info_updater"].first["class"]
-      assert_equal "UpdateTransactionFeeWorker", Sidekiq::Queues["transaction_info_updater"].last["class"]
     end
 
     test ".update_block_reward_info should change block reward status from pending to issued before proposal window" do
