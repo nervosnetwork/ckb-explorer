@@ -1,5 +1,6 @@
 class CellInput < ApplicationRecord
   belongs_to :ckb_transaction
+  belongs_to :block
 
   def find_lock_script!
     previous_cell_output!.lock_script
@@ -21,8 +22,7 @@ class CellInput < ApplicationRecord
     tx_hash = cell["tx_hash"]
     cell_index = cell["index"].to_i
 
-    cell_output = CellOutput.find_by(tx_hash: tx_hash, cell_index: cell_index)
-    cell_output.presence
+    CellOutput.find_by(tx_hash: tx_hash, cell_index: cell_index)
   end
 
   private
@@ -35,8 +35,7 @@ class CellInput < ApplicationRecord
     tx_hash = cell["tx_hash"]
     cell_index = cell["index"].to_i
 
-    cell_output = CellOutput.find_by!(tx_hash: tx_hash, cell_index: cell_index)
-    cell_output.presence
+    CellOutput.find_by!(tx_hash: tx_hash, cell_index: cell_index)
   end
 end
 

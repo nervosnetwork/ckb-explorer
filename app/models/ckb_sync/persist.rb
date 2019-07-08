@@ -26,8 +26,11 @@ module CkbSync
           local_block.reload.ckb_transactions_count = ckb_transactions.size
           local_block.address_ids = AccountBook.where(ckb_transaction: local_block.ckb_transactions).pluck(:address_id).uniq
           local_block.save!
+
           update_pending_rewards(local_block.miner_address)
         end
+
+        calculate_tx_fee(local_block)
 
         local_block
       end
@@ -45,6 +48,20 @@ module CkbSync
       def update_ckb_transaction_fee
         transaction_fee_ckb_transaction_ids = CkbTransaction.uncalculated.limit(500).ids.map { |ids| [ids] }
         Sidekiq::Client.push_bulk("class" => "UpdateTransactionFeeWorker", "args" => transaction_fee_ckb_transaction_ids, "queue" => "transaction_info_updater") if transaction_fee_ckb_transaction_ids.present?
+      end
+
+      def update_tx_fee_related_data(block)
+        ApplicationRecord.transaction do
+          block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).each do |cell_input|
+            previous_cell_output = cell_input.previous_cell_output
+            next if previous_cell_output.blank?
+
+            cell_input.update!(previous_cell_output_id: previous_cell_output.id)
+            ckb_transaction = cell_input.ckb_transaction
+            ckb_transaction.addresses << previous_cell_output.address
+            previous_cell_output.update!(consumed_by: ckb_transaction)
+          end
+        end
       end
 
       def update_ckb_transaction_display_inputs(ckb_transaction)
@@ -82,19 +99,6 @@ module CkbSync
         ckb_transaction.save
       end
 
-      def update_transaction_fee(ckb_transaction)
-        transaction_fee = CkbUtils.ckb_transaction_fee(ckb_transaction)
-        return if transaction_fee.blank?
-
-        assign_ckb_transaction_fee(ckb_transaction, transaction_fee)
-        ApplicationRecord.transaction do
-          ckb_transaction.save!
-          block = ckb_transaction.block
-          block.total_transaction_fee = block.ckb_transactions.sum(:transaction_fee)
-          block.save!
-        end
-      end
-
       def update_address_balance_and_ckb_transactions_count(address)
         address.balance = address.cell_outputs.live.sum(:capacity)
         address.ckb_transactions_count = address.ckb_transactions.available.distinct.count
@@ -120,7 +124,25 @@ module CkbSync
         update_ckb_transaction_display_inputs(current_block_cellbase)
       end
 
+      def calculate_tx_fee(local_block)
+        ckb_transactions = local_block.ckb_transactions.where(is_cellbase: false)
+        return if ckb_transactions.joins(:cell_inputs).merge(CellInput.where(previous_cell_output_id: nil, from_cell_base: false)).exists?
+
+        ApplicationRecord.transaction do
+          ckb_transactions.each(&method(:update_transaction_fee))
+          local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
+          local_block.save!
+        end
+      end
+
       private
+
+      def update_transaction_fee(ckb_transaction)
+        transaction_fee = CkbUtils.ckb_transaction_fee(ckb_transaction)
+        ckb_transaction.transaction_fee = transaction_fee
+        ckb_transaction.transaction_fee_status = "calculated"
+        ckb_transaction.save!
+      end
 
       def issue_block_reward!(current_block)
         CkbUtils.update_block_reward_status!(current_block)
@@ -158,13 +180,6 @@ module CkbSync
         end
 
         Sidekiq::Client.push_bulk("class" => "UpdateAddressInfoWorker", "args" => address_ids.map { |ids| [ids] }, "queue" => "address_info_updater")
-      end
-
-      def assign_ckb_transaction_fee(ckb_transaction, transaction_fee)
-        if transaction_fee.present?
-          ckb_transaction.transaction_fee = transaction_fee
-          ckb_transaction.transaction_fee_status = "calculated"
-        end
       end
 
       def assign_display_inputs(ckb_transaction, display_inputs)
@@ -258,21 +273,34 @@ module CkbSync
       end
 
       def build_cell_input(ckb_transaction, input)
+        cell = input.previous_output.cell
+        previous_cell_output = nil
+        previous_cell_output = CellOutput.available.where(tx_hash: cell.tx_hash, cell_index: cell.index).first if cell.present?
+
         ckb_transaction.cell_inputs.build(
           previous_output: input.previous_output,
           since: input.since,
-          from_cell_base: input.previous_output.cell.blank?
+          previous_cell_output_id: previous_cell_output&.id,
+          block: ckb_transaction.block,
+          from_cell_base: cell.blank?
         )
       end
 
       def build_cell_output(ckb_transaction, output, address, cell_index)
+        tx_hash = ckb_transaction.tx_hash
+        previous_output = CellInput.where("previous_output -> 'cell'  @> ?", { tx_hash: tx_hash, index: cell_index.to_s }.to_json)
+        consumed_by_id = nil
+        consumed_by_id = CkbTransaction.find_by(tx_hash: tx_hash) if previous_output.exists?
+
         ckb_transaction.cell_outputs.build(
           capacity: output.capacity,
           data: output.data,
           address: address,
           block: ckb_transaction.block,
           tx_hash: ckb_transaction.tx_hash,
-          cell_index: cell_index
+          cell_index: cell_index,
+          generated_by: ckb_transaction,
+          consumed_by_id: consumed_by_id
         )
       end
 
@@ -359,6 +387,7 @@ module CkbSync
           block_timestamp: local_block.timestamp,
           status: sync_type,
           transaction_fee: 0,
+          transaction_fee_status: transaction_index.zero? ? "calculated" : "uncalculated",
           witnesses: transaction.witnesses.map(&:to_h),
           is_cellbase: transaction_index.zero?
         )

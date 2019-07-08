@@ -3,7 +3,7 @@ class CellOutput < ApplicationRecord
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
-  belongs_to :consumed_by, class_name: "CkbTransaction"
+  belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
   belongs_to :address
   belongs_to :block
   has_one :lock_script
