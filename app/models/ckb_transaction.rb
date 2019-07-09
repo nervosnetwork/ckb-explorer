@@ -31,7 +31,7 @@ class CkbTransaction < ApplicationRecord
       cellbase = Cellbase.new(block)
       display_inputs << { id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }
     else
-      inputs.order(:id).each do |input|
+      self.cell_inputs.order(:id).each do |input|
         previous_cell_output = input.previous_cell_output
         display_inputs << { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash }
       end
@@ -43,11 +43,11 @@ class CkbTransaction < ApplicationRecord
   def display_outputs
     display_outputs = []
     if is_cellbase
-      output = outputs.order(:id).first
+      output = cell_outputs.order(:id).first
       cellbase = Cellbase.new(block)
       display_outputs << { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward }
     else
-      outputs.order(:id).each do |output|
+      cell_outputs.order(:id).each do |output|
         display_outputs << { id: output.id, capacity: output.capacity, address_hash: output.address_hash }
       end
     end

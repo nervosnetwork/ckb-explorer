@@ -144,23 +144,6 @@ module CkbSync
         "#{sync_type}_tip_block_number"
       end
 
-      def build_display_input(cell_input)
-        cell = cell_input.previous_output["cell"]
-
-        if cell.blank?
-          cellbase = Cellbase.new(cell_input.ckb_transaction.block)
-          { id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }
-        else
-          previous_cell_output = cell_input.previous_cell_output
-
-          return if previous_cell_output.blank?
-
-          cell_input.update(previous_cell_output_id: previous_cell_output.id)
-          address_hash = previous_cell_output.address_hash
-          { id: cell_input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: address_hash }
-        end
-      end
-
       def build_type_script(cell_output, type_script)
         return if type_script.blank?
 
@@ -180,24 +163,16 @@ module CkbSync
 
       def build_cell_input(ckb_transaction, input)
         cell = input.previous_output.cell
-        previous_cell_output = nil
-        previous_cell_output = CellOutput.available.where(tx_hash: cell.tx_hash, cell_index: cell.index).first if cell.present?
 
         ckb_transaction.cell_inputs.build(
           previous_output: input.previous_output,
           since: input.since,
-          previous_cell_output_id: previous_cell_output&.id,
           block: ckb_transaction.block,
           from_cell_base: cell.blank?
         )
       end
 
       def build_cell_output(ckb_transaction, output, address, cell_index)
-        tx_hash = ckb_transaction.tx_hash
-        previous_output = CellInput.where("previous_output -> 'cell'  @> ?", { tx_hash: tx_hash, index: cell_index.to_s }.to_json)
-        consumed_by_id = nil
-        consumed_by_id = CkbTransaction.find_by(tx_hash: tx_hash) if previous_output.exists?
-
         ckb_transaction.cell_outputs.build(
           capacity: output.capacity,
           data: output.data,
@@ -205,8 +180,7 @@ module CkbSync
           block: ckb_transaction.block,
           tx_hash: ckb_transaction.tx_hash,
           cell_index: cell_index,
-          generated_by: ckb_transaction,
-          consumed_by_id: consumed_by_id
+          generated_by: ckb_transaction
         )
       end
 
