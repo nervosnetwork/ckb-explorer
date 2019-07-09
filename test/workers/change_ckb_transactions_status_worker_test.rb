@@ -12,7 +12,7 @@ class ChangeCkbTransactionsStatusWorkerTest < ActiveSupport::TestCase
     assert_nil ChangeCkbTransactionsStatusWorker.perform_async(block.id, "authentic")
   end
 
-  test "queuing in the transaction_info_updater" do
+  test "queuing in the transaction_status_updater" do
     block = create(:block)
     ChangeCkbTransactionsStatusWorker.perform_async(block.id, "authentic")
 
