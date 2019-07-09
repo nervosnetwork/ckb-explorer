@@ -28,10 +28,9 @@ module CkbSync
           local_block.save!
 
           update_pending_rewards(local_block.miner_address)
+          calculate_tx_fee(local_block)
+          local_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         end
-
-        calculate_tx_fee(local_block)
-        local_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
 
         local_block
       end
@@ -55,7 +54,7 @@ module CkbSync
           end
 
           block.address_ids = block_address_ids.to_a
-          block.save!
+          calculate_tx_fee(block)
         end
       end
 
@@ -74,7 +73,7 @@ module CkbSync
         ckb_transactions = local_block.ckb_transactions.where(is_cellbase: false)
         return if ckb_transactions.joins(:cell_inputs).merge(CellInput.where(previous_cell_output_id: nil, from_cell_base: false)).exists?
 
-        ApplicationRecord.transaction do
+        ApplicationRecord.transaction(requires_new: true) do
           ckb_transactions.each(&method(:update_transaction_fee))
           local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
           local_block.save!
