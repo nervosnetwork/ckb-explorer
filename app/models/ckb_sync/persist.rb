@@ -31,6 +31,7 @@ module CkbSync
         end
 
         calculate_tx_fee(local_block)
+        local_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
 
         local_block
       end
