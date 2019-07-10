@@ -182,6 +182,23 @@ module Api
         assert_equal hash_rate, json.dig("data", "attributes", "hash_rate")
       end
 
+      test "should return current blockchain info when param is blockchain_info" do
+        blockchain_info = CKB::Types::ChainInfo.new(
+          is_initial_block_download: false,
+          epoch: "1",
+          difficulty: "0x100",
+          median_time: "1562669768293",
+          chain: "ckb_testnet",
+          alerts: []
+        )
+        StatisticInfo.any_instance.stubs(:blockchain_info).returns(blockchain_info)
+        statistic_info = StatisticInfo.new
+
+        valid_get api_v1_statistic_url("blockchain_info")
+
+        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "blockchain_info" } }).serialized_json, response.body
+      end
+
       test "should respond with error object when statistic info name is invalid" do
         error_object = Api::V1::Exceptions::StatisticInfoNameInvalidError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
