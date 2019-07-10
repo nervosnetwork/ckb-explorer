@@ -70,10 +70,8 @@ ActiveRecord::Schema.define(version: 2019_07_03_102751) do
     t.integer "received_tx_fee_status", default: 0
     t.decimal "received_tx_fee", precision: 30, default: "0"
     t.integer "target_block_reward_status", default: 0
-    t.index ["block_hash", "status"], name: "index_blocks_on_block_hash_and_status"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
-    t.index ["number", "status"], name: "index_blocks_on_number_and_status"
-    t.index ["status"], name: "index_blocks_on_status"
+    t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
   end
 
