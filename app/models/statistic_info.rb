@@ -46,6 +46,10 @@ class StatisticInfo
     MinerRanking.new.ranking
   end
 
+  def blockchain_info
+    CkbSync::Api.instance.get_blockchain_info
+  end
+
   private
 
   attr_reader :difficulty_interval, :block_time_interval, :hash_rate_statistical_interval

@@ -20,4 +20,8 @@ class StatisticSerializer
   attribute :miner_ranking, if: Proc.new { |_record, params|
     ENV["MINER_RANKING_EVENT"] && params && params[:info_name] == "miner_ranking"
   }
+
+  attribute :blockchain_info, if: Proc.new { |_record, params|
+    params && params[:info_name] == "blockchain_info"
+  }
 end
