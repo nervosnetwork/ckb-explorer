@@ -1,3 +1,6 @@
+## About CKB
+CKB is the layer 1 of Nervos Network, a public/permissionless blockchain. CKB uses [Proof of Work](https://en.wikipedia.org/wiki/Proof-of-work_system) and [improved Nakamoto concensus](https://medium.com/nervosnetwork/breaking-the-throughput-limit-of-nakamoto-consensus-ccdf65fe0832) to achieve maximized performance on average hardware and internet condition, without sacrificing decentralization and security which are the core value of blockchain.
+
 # CKB Explorer
 CKB Explorer is a [Nervos CKB](https://github.com/nervosnetwork/ckb) blockchain explorer built with React and Ruby on Rails.
 
@@ -16,6 +19,8 @@ A blockchain explorer cache server of [Nervos CKB](https://github.com/nervosnetw
 ```shell
   $ git clone https://github.com/bitcoin-core/secp256k1.git && cd secp256k1 && ./autogen.sh && ./configure --enable-module-recovery --enable-experimental --enable-module-ecdh && make && sudo make install && cd ..
 ```
+## Optional prerequisites
+If you want to contribute to the API documentation you need to install [raml2html](https://github.com/raml2html/raml2html#raml2html) to generate HTML documentation.
 
 ## Initial Project
 
@@ -55,6 +60,18 @@ You can deploy this via [mina](https://github.com/mina-deploy/mina)
 $ mina setup
 $ mina staging deploy
 ```
+
+## How to Contribute
+CKB Explorer Server is an open source project and your contribution is very much appreciated. Please check out [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines about how to proceed.
+
+## Build API Documentation
+```shell
+$ cd ckb-explorer
+$ raml2html doc/api.raml > public/api_doc.html
+```
+
+## API Documentation
+Please see this [Documentation](https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html).
 
 ## License
 
