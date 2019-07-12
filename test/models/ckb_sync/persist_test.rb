@@ -412,6 +412,18 @@ module CkbSync
       end
     end
 
+    test ".save_block generated block should has correct miner lock hash when miner use default lock script " do
+      VCR.use_cassette("blocks/10") do
+        SyncInfo.local_inauthentic_tip_block_number
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        set_default_lock_params(node_block: node_block, code_hash: ENV["CODE_HASH"])
+
+        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
+
+        assert_equal CkbUtils.miner_lock_hash(node_block.transactions.first), local_block.miner_lock_hash
+      end
+    end
+
     test ".save_block generated block should has correct reward" do
       VCR.use_cassette("blocks/10") do
         SyncInfo.local_inauthentic_tip_block_number
