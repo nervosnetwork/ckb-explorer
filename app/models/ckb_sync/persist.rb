@@ -304,6 +304,7 @@ module CkbSync
           cell_consumed: CkbUtils.block_cell_consumed(node_block.transactions),
           total_cell_capacity: CkbUtils.total_cell_capacity(node_block.transactions),
           miner_hash: CkbUtils.miner_hash(cellbase),
+          miner_lock_hash: CkbUtils.miner_lock_hash(cellbase),
           status: sync_type,
           reward: CkbUtils.base_reward(header.number, header.epoch, node_block.transactions.first),
           reward_status: header.number.to_i == 0 ? "issued" : "pending",
