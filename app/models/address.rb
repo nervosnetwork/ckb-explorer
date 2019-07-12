@@ -8,8 +8,6 @@ class Address < ApplicationRecord
   validates_presence_of :balance, :cell_consumed, :ckb_transactions_count
   validates :balance, :cell_consumed, :ckb_transactions_count, numericality: { greater_than_or_equal_to: 0 }
 
-  attribute :lock_hash, :ckb_hash
-
   def lock_script
     LockScript.where(address: self).first
   end
