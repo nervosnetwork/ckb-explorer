@@ -31,5 +31,3 @@ class MinerRankingTest < ActiveSupport::TestCase
     end
   end
 end
-
-
