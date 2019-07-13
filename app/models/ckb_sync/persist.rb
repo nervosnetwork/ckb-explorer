@@ -68,7 +68,7 @@ module CkbSync
         display_outputs = []
 
         if ckb_transaction.is_cellbase
-          cell_outputs = ckb_transaction.cell_outputs
+          cell_outputs = ckb_transaction.cell_outputs.order(:id)
           cellbase = Cellbase.new(ckb_transaction.block)
           display_outputs = cell_outputs.map { |cell_output| { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward } }
         else
