@@ -556,6 +556,28 @@ module CkbSync
       end
     end
 
+    test "genesis block's cellbase display outputs should have multiple cells" do
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
+      VCR.use_cassette("genesis_block") do
+        create(:sync_info, name: "inauthentic_tip_block_number", value: 0)
+        CkbSync::Persist.sync(0)
+        block = Block.last
+        CkbSync::Persist.update_ckb_transaction_display_outputs(block.cellbase)
+        cellbase = Cellbase.new(block)
+        expected_cellbase_display_outputs = block.cellbase.cell_outputs.map { |cell_output| { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward } }
+
+        assert_equal JSON.parse(expected_cellbase_display_outputs.to_json), block.cellbase.display_outputs
+      end
+    end
+
     test "cellbase's display outputs should contain block reward commit reward and proposal reward" do
       prepare_inauthentic_node_data(11)
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
