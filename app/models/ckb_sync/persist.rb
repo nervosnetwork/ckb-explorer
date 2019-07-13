@@ -51,7 +51,7 @@ module CkbSync
         display_inputs = Set.new
         cell_input_addresses = Set.new
 
-        ckb_transaction.cell_inputs.find_each do |cell_input|
+        ckb_transaction.cell_inputs.order(:id).find_each do |cell_input|
           display_inputs << build_display_input(cell_input)
           cell_input_addresses << cell_input_address(cell_input)
         end
@@ -68,11 +68,11 @@ module CkbSync
         display_outputs = []
 
         if ckb_transaction.is_cellbase
-          cell_outputs = ckb_transaction.cell_outputs
+          cell_outputs = ckb_transaction.cell_outputs.order(:id)
           cellbase = Cellbase.new(ckb_transaction.block)
           display_outputs = cell_outputs.map { |cell_output| { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward } }
         else
-          ckb_transaction.cell_outputs.find_each do |cell_output|
+          ckb_transaction.cell_outputs.order(:id).find_each do |cell_output|
             display_outputs << { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash }
           end
         end
