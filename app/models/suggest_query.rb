@@ -28,7 +28,9 @@ class SuggestQuery
 
   def find_block_by_number
     block = Block.where(number: query_key).available.first
-    BlockSerializer.new(block) if block.present?
+    raise Api::V1::Exceptions::BlockNotFoundError if block.blank?
+
+    BlockSerializer.new(block)
   end
 
   def find_block_by_hash
