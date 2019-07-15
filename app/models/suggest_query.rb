@@ -45,7 +45,9 @@ class SuggestQuery
 
   def find_address_by_hash
     address = Address.find_by(address_hash: query_key)
-    AddressSerializer.new(address) if address.present?
+    raise Api::V1::Exceptions::AddressNotFoundError if address.blank?
+
+    AddressSerializer.new(address)
   end
 
   def find_address_by_lock_hash
