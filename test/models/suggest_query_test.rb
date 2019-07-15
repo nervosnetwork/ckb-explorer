@@ -39,4 +39,11 @@ class SuggestQueryTest < ActiveSupport::TestCase
       SuggestQuery.new("11").find!
     end
   end
+
+  test "should raise AddressNotFoundError when query key is a address that doesn't exist" do
+    create(:address, :with_lock_script)
+    assert_raises Api::V1::Exceptions::AddressNotFoundError do
+      SuggestQuery.new("ckt1q9gry5zgaxqw54l5g22qtrzfzdcf7n53j9r6aq9p4gedz0").find!
+    end
+  end
 end
