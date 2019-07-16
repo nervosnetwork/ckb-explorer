@@ -3,6 +3,19 @@ require "test_helper"
 module Api
   module V1
     class NetsControllerTest < ActionDispatch::IntegrationTest
+      setup do
+        CkbSync::Api.any_instance.stubs(:local_node_info).returns(
+          CKB::Types::Peer.new(
+            addresses: [
+              CKB::Types::AddressInfo.new(address: "/ip4/172.16.55.2/tcp/8115/p2p/QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNrc", score: "1"),
+              CKB::Types::AddressInfo.new(address: "/ip4/172.16.55.2/tcp/8115/p2p/QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNrc", score: "1")
+            ],
+            is_outbound: nil,
+            node_id: "QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNra",
+            version: "0.16.0 (rylai-v5 2178d78 2019-07-13)"
+          )
+        )
+      end
       test "should get success code when call index" do
         valid_get api_v1_nets_url
 
@@ -43,6 +56,21 @@ module Api
         get api_v1_nets_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal response_json, response.body
+      end
+
+      test "the returned net info should contain right keys when call index" do
+        valid_get api_v1_nets_url
+
+        assert_equal %w(local_node_info), json.dig("data", "attributes").keys.sort
+      end
+
+      test "should return right net info" do
+        NetInfo.any_instance.stubs(:id).returns(1)
+        net_info = NetInfo.new
+
+        valid_get api_v1_nets_url
+
+        assert_equal NetInfoSerializer.new(net_info, { params: { info_name: "local_node_info" } }).serialized_json, response.body
       end
     end
   end
