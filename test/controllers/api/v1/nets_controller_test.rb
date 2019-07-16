@@ -72,6 +72,44 @@ module Api
 
         assert_equal NetInfoSerializer.new(net_info, { params: { info_name: "local_node_info" } }).serialized_json, response.body
       end
+
+      test "should get success code when call show" do
+        valid_get api_v1_net_url("version")
+
+        assert_response :success
+      end
+
+      test "should return addresses when param is addresses" do
+        net_info = NetInfo.new
+
+        valid_get api_v1_net_url("addresses")
+
+        assert_equal NetInfoSerializer.new(net_info, { params: { info_name: "addresses" } }).serialized_json, response.body
+      end
+
+      test "should return is outbound when param is is_outbound" do
+        net_info = NetInfo.new
+
+        valid_get api_v1_net_url("is_outbound")
+
+        assert_equal NetInfoSerializer.new(net_info, { params: { info_name: "is_outbound" } }).serialized_json, response.body
+      end
+
+      test "should return is node id when param is node_id" do
+        net_info = NetInfo.new
+
+        valid_get api_v1_net_url("node_id")
+
+        assert_equal NetInfoSerializer.new(net_info, { params: { info_name: "node_id" } }).serialized_json, response.body
+      end
+
+      test "should return is version when param is version" do
+        net_info = NetInfo.new
+
+        valid_get api_v1_net_url("version")
+
+        assert_equal NetInfoSerializer.new(net_info, { params: { info_name: "version" } }).serialized_json, response.body
+      end
     end
   end
 end
