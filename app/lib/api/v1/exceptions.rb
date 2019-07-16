@@ -126,6 +126,12 @@ module Api
           super code: 1019, status: 422, title: "URI parameters is invalid", detail: "Given statistic info name is invalid", href: "https://github.com/nervosnetwork/ckb-explorer"
         end
       end
+
+      class NetInfoNameInvalidError < Error
+        def initialize
+          super code: 1020, status: 422, title: "URI parameters is invalid", detail: "Given net info name is invalid", href: "https://github.com/nervosnetwork/ckb-explorer"
+        end
+      end
     end
   end
 end
