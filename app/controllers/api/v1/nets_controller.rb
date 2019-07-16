@@ -7,7 +7,8 @@ module Api
       end
 
       def show
-        render json: {}
+        net_info = NetInfo.new
+        render json: NetInfoSerializer.new(net_info, params: { info_name: params[:id] })
       end
     end
   end
