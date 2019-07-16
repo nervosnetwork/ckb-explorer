@@ -1,7 +1,5 @@
 class StatisticInfo
-  def initialize(difficulty_interval: nil, block_time_interval: nil, hash_rate_statistical_interval: nil)
-    @difficulty_interval = difficulty_interval.presence || ENV["DIFFICULTY_INTERVAL"]
-    @block_time_interval = block_time_interval.presence || ENV["BLOCK_TIME_INTERVAL"]
+  def initialize(hash_rate_statistical_interval: nil)
     @hash_rate_statistical_interval = hash_rate_statistical_interval.presence || ENV["HASH_RATE_STATISTICAL_INTERVAL"]
   end
 
@@ -21,15 +19,12 @@ class StatisticInfo
     CkbSync::Api.instance.get_current_epoch.difficulty.hex
   end
 
-  def average_block_time
-    ended_at = DateTime.now
-    started_at = ended_at - block_time_interval.to_i.hours
-    started_at_timestamp = started_at.strftime("%Q").to_i
-    ended_at_timestamp = ended_at.strftime("%Q").to_i
-    blocks = Block.created_after(started_at_timestamp).created_before(ended_at_timestamp).order(:timestamp)
+  def current_epoch_average_block_time
+    current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
+    blocks = Block.where(epoch: current_epoch_number).available.order(:timestamp)
     return if blocks.empty?
 
-    total_block_time(blocks) / blocks.size
+    total_block_time(blocks, current_epoch_number) / blocks.size
   end
 
   def hash_rate
@@ -54,8 +49,10 @@ class StatisticInfo
 
   attr_reader :difficulty_interval, :block_time_interval, :hash_rate_statistical_interval
 
-  def total_block_time(blocks)
-    (blocks.last.timestamp - blocks.first.timestamp).to_d
+  def total_block_time(blocks, current_epoch_number)
+    prev_epoch_nubmer = [current_epoch_number.to_i - 1, 0].max
+    prev_epoch_last_block = Block.where(epoch: prev_epoch_nubmer).available.recent.first
+    (blocks.last.timestamp - prev_epoch_last_block.timestamp).to_d
   end
 
   def n_l(n, l)
