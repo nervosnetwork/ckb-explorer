@@ -110,6 +110,15 @@ module Api
 
         assert_equal NetInfoSerializer.new(net_info, { params: { info_name: "version" } }).serialized_json, response.body
       end
+
+      test "should respond with error object when net info name is invalid" do
+        error_object = Api::V1::Exceptions::NetInfoNameInvalidError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get api_v1_net_url("hash_rates")
+
+        assert_equal response_json, response.body
+      end
     end
   end
 end
