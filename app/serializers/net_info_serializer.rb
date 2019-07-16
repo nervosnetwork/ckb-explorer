@@ -20,8 +20,4 @@ class NetInfoSerializer
   attribute :local_node_info, if: Proc.new { |_record, params|
     params && params[:info_name] == "local_node_info"
   }
-
-  attribute :blockchain_info, if: Proc.new { |_record, params|
-    params && params[:info_name] == "blockchain_info"
-  }
 end
