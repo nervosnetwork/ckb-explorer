@@ -321,6 +321,36 @@ types:
     }
   }
 
+  net_info_address: {
+    type: object,
+    properties: {
+      "address": {
+        type: "string"
+      },
+      "score": {
+        type: "string"
+      }
+    }
+  }
+
+  net_info_attributes: {
+    type: object,
+    properties: {
+      "addresses": {
+        type: "net_info_address[]",
+      },
+      "is_outbound": {
+        type: "string",
+      },
+      "node_id": {
+        type: "integer",
+      },
+      "version": {
+        type: "string",
+      }
+    }
+  }
+
   index_statistic_info: {
     type: object,
     properties: {
@@ -482,6 +512,15 @@ types:
     properties: {
       "data": {
         "type": statistic_info_attributes
+      }
+    }
+  }
+
+  net_info_response: {
+    type: object,
+    properties: {
+      "data": {
+        "type": net_info_attributes
       }
     }
   }
@@ -1470,6 +1509,112 @@ types:
                              }
                          }
                      }
+                  }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "message": "Record Not Found",
+                  "errors": [
+                    {
+                      "id": "ActiveRecord::RecordNotFound",
+                      "code": "1141",
+                      "status": "404",
+                      "title": "Record not fund",
+                      "detail": "No matching address record were found",
+                      "href": "http://shaojunda.coding.me/doc/api_doc.html#statistics__info_name__get"
+                    }
+                  ]
+                }
+
+/nets:
+  /{info_name}:
+    uriParameters:
+      info_name:
+        description: The statistic info name
+        required: true
+        type: string
+    get:
+      description: Returns the net info
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: net_info_response
+              examples:
+                local_node_info: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "net_info",
+                      "attributes": {
+                        "local_node_info": {
+                          "addresses": [
+                            {
+                              "address": "/ip4/192.168.0.2/tcp/8112/p2p/QmTRHCdrRtgUzYLNCin69zEvPvLYdxUZLLfLYyHVY3DZAS",
+                              "score": "255"
+                            },
+                            {
+                              "address": "/ip4/0.0.0.0/tcp/8112/p2p/QmTRHCdrRtgUzYLNCin69zEvPvLYdxUZLLfLYyHVY3DZAS",
+                              "score": "1"
+                            }
+                          ],
+                          "is_outbound": null,
+                          "node_id": "QmTRHCdrRtgUzYLNCin69zEvPvLYdxUZLLfLYyHVY3DZAS",
+                          "version": "0.16.0 (rylai-v5 2178d78 2019-07-13)"
+                        }
+                      }
+                    }
+                  }
+                addresses: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "net_info",
+                      "attributes":
+                        "addresses": [
+                          {
+                            "address": "/ip4/192.168.0.2/tcp/8112/p2p/QmTRHCdrRtgUzYLNCin69zEvPvLYdxUZLLfLYyHVY3DZAS",
+                            "score": "255"
+                          },
+                          {
+                            "address": "/ip4/0.0.0.0/tcp/8112/p2p/QmTRHCdrRtgUzYLNCin69zEvPvLYdxUZLLfLYyHVY3DZAS",
+                            "score": "1"
+                          }
+                        ]
+                    }
+                  }
+                is_outbound: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "net_info",
+                      "attributes": {
+                        "is_outbound": null
+                      }
+                    }
+                  }
+                node_id: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "net_info",
+                      "attributes": {
+                        "node_id": "QmTRHCdrRtgUzYLNCin69zEvPvLYdxUZLLfLYyHVY3DZAS"
+                      }
+                    }
+                  }
+                version: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "net_info",
+                      "attributes": {
+                        "version": "0.16.0 (rylai-v5 2178d78 2019-07-13)"
+                      }
+                    }
                   }
         404:
           body:
