@@ -24,4 +24,6 @@ Rails.application.routes.draw do
       resources :nets, only: %i(index show)
     end
   end
+
+  match "*path", to: "application#catch_404", via: :all
 end
