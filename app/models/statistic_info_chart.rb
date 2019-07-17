@@ -1,6 +1,7 @@
 class StatisticInfoChart
   def initialize
     @max_block_number = Block.maximum(:number)
+    @last_epoch0_block_number = Block.available.where(epoch: 0).recent.first.number
   end
 
   def id
@@ -9,7 +10,7 @@ class StatisticInfoChart
 
   def hash_rate
     result =
-      1.step(@max_block_number, 100).map do |number|
+      (@last_epoch0_block_number + 1).step(@max_block_number, 100).map do |number|
         blocks = Block.where("number <= ?", number).available.recent.includes(:uncle_blocks).limit(100)
         next if blocks.blank?
 
@@ -23,7 +24,7 @@ class StatisticInfoChart
   end
 
   def difficulty
-    block_numbers = 1.step(@max_block_number, 100).to_a
+    block_numbers = (@last_epoch0_block_number + 1).step(@max_block_number, 100).to_a
     Block.where(number: block_numbers).available.order(:number).select(:number, :difficulty).map do |block|
       { block_number: block.number, difficulty: block.difficulty.hex }
     end
