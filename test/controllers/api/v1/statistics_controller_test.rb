@@ -14,6 +14,7 @@ module Api
             start_number: "0"
           )
         )
+        StatisticInfo.any_instance.stubs(:id).returns(1)
       end
 
       test "should get success code when call index" do
