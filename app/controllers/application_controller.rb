@@ -1,9 +1,16 @@
 class ApplicationController < ActionController::API
   before_action :check_header_info
   rescue_from Api::V1::Exceptions::Error, with: :api_error
+  rescue_from ActionController::RoutingError do |exception|
+    render json: { message: exception.message }, status: :not_found
+  end
 
   def homepage
     render json: { message: "Please read more API info at https://github.com/nervosnetwork/ckb-explorer/" }
+  end
+
+  def catch_404
+    raise ActionController::RoutingError.new(params[:path])
   end
 
   private
