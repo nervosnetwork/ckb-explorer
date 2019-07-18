@@ -23,6 +23,18 @@ class CkbTransaction < ApplicationRecord
   scope :available, -> { where(status: [:inauthentic, :authentic]) }
   scope :cellbase, -> { where(is_cellbase: true) }
 
+  after_commit :flush_cache
+
+  def self.cached_find(query_key)
+    Rails.cache.fetch([name, query_key]) do
+      where(tx_hash: query_key).available.first
+    end
+  end
+
+  def flush_cache
+    Rails.cache.delete([self.class.name, tx_hash])
+  end
+
   def display_inputs
     return if transaction_fee_status == "uncalculated"
 
@@ -74,10 +86,9 @@ end
 #
 # Indexes
 #
-#  index_ckb_transactions_on_block_id                (block_id)
-#  index_ckb_transactions_on_display_inputs_status   (display_inputs_status)
-#  index_ckb_transactions_on_is_cellbase             (is_cellbase)
-#  index_ckb_transactions_on_transaction_fee_status  (transaction_fee_status)
-#  index_ckb_transactions_on_tx_hash_and_block_id    (tx_hash,block_id) UNIQUE
-#  index_ckb_transactions_on_tx_hash_and_status      (tx_hash,status)
+#  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
+#  index_ckb_transactions_on_display_inputs_status         (display_inputs_status)
+#  index_ckb_transactions_on_is_cellbase                   (is_cellbase)
+#  index_ckb_transactions_on_transaction_fee_status        (transaction_fee_status)
+#  index_ckb_transactions_on_tx_hash_and_block_id          (tx_hash,block_id) UNIQUE
 #
