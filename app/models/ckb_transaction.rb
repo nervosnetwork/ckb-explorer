@@ -39,9 +39,9 @@ class CkbTransaction < ApplicationRecord
 
   def display_outputs
     if is_cellbase
-      output = cell_outputs.order(:id).first
+      outputs = cell_outputs.order(:id)
       cellbase = Cellbase.new(block)
-      [{ id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward }]
+      outputs.map { |output| { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward } }
     else
       cell_outputs.order(:id).map do |output|
         { id: output.id, capacity: output.capacity, address_hash: output.address_hash }
