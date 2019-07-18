@@ -12,6 +12,8 @@ class CkbTransaction < ApplicationRecord
   has_many :addresses, through: :account_books
   has_many :cell_inputs
   has_many :cell_outputs
+  has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
+  has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
 
   validates_presence_of :status, :display_inputs_status, :transaction_fee_status
 
@@ -20,6 +22,32 @@ class CkbTransaction < ApplicationRecord
   scope :recent, -> { order(block_timestamp: :desc) }
   scope :available, -> { where(status: [:inauthentic, :authentic]) }
   scope :cellbase, -> { where(is_cellbase: true) }
+
+  def display_inputs
+    return if transaction_fee_status == "uncalculated"
+
+    if is_cellbase
+      cellbase = Cellbase.new(block)
+      [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
+    else
+      self.cell_inputs.order(:id).map do |input|
+        previous_cell_output = input.previous_cell_output
+        { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash }
+      end
+    end
+  end
+
+  def display_outputs
+    if is_cellbase
+      outputs = cell_outputs.order(:id)
+      cellbase = Cellbase.new(block)
+      outputs.map { |output| { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward } }
+    else
+      cell_outputs.order(:id).map do |output|
+        { id: output.id, capacity: output.capacity, address_hash: output.address_hash }
+      end
+    end
+  end
 end
 
 # == Schema Information

@@ -103,24 +103,7 @@ class CkbUtils
   end
 
   def self.ckb_transaction_fee(ckb_transaction)
-    cell_output_capacities = ckb_transaction.cell_outputs.sum(:capacity)
-    previous_cell_output_capacities = 0
-    return if CellInput.where(ckb_transaction: ckb_transaction, from_cell_base: false, previous_cell_output_id: nil).exists?
-
-    previous_cell_output_ids = CellInput.where(ckb_transaction: ckb_transaction, from_cell_base: false).select("previous_cell_output_id")
-
-    if previous_cell_output_ids.exists?
-      previous_cell_output_capacities = CellOutput.where(id: previous_cell_output_ids).sum(:capacity)
-    end
-
-    previous_cell_output_capacities.zero? ? 0 : (previous_cell_output_capacities - cell_output_capacities)
-  end
-
-  def self.transaction_fee(transaction)
-    cell_output_capacities = transaction.outputs.sum { |output| output.capacity.to_i }
-    cell_input_capacities = transaction.inputs.map(&method(:cell_input_capacity))
-
-    calculate_transaction_fee(cell_input_capacities, cell_output_capacities)
+    ckb_transaction.inputs.available.sum(:capacity) - ckb_transaction.outputs.available.sum(:capacity)
   end
 
   def self.get_unspent_cells(address_hash)
@@ -145,29 +128,6 @@ class CkbUtils
     end
 
     address_cell_consumed
-  end
-
-  def self.cell_input_capacity(cell_input)
-    cell = cell_input.previous_output.cell
-
-    if cell.blank?
-      0
-    else
-      previous_transaction_hash = cell.tx_hash
-      previous_output_index = cell.index.to_i
-
-      previous_output = CellOutput.find_by(tx_hash: previous_transaction_hash, cell_index: previous_output_index)
-      return if previous_output.blank?
-
-      previous_output.capacity
-    end
-  end
-
-  def self.calculate_transaction_fee(cell_input_capacities, cell_output_capacities)
-    return if cell_input_capacities.include?(nil)
-
-    input_capacities = cell_input_capacities.reduce(0, &:+)
-    input_capacities.zero? ? 0 : (input_capacities - cell_output_capacities)
   end
 
   def self.update_block_reward_status!(current_block)
