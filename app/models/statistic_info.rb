@@ -28,7 +28,7 @@ class StatisticInfo
   end
 
   def hash_rate
-    blocks = Block.recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval.to_i)
+    blocks = Block.available.recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval.to_i)
     return if blocks.blank?
 
     total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty.hex }
