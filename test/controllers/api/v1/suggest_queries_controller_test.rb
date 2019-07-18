@@ -83,7 +83,7 @@ module Api
       end
 
       test "should return error object when no available block found by block number" do
-        error_object = Api::V1::Exceptions::SuggestQueryResultNotFoundError.new
+        error_object = Api::V1::Exceptions::BlockNotFoundError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
         block = create(:block, status: "abandoned")
         valid_get api_v1_suggest_queries_url, params: { q: block.number }
@@ -149,7 +149,7 @@ module Api
       end
 
       test "should return error object when no records found by a integer query key" do
-        error_object = Api::V1::Exceptions::SuggestQueryResultNotFoundError.new
+        error_object = Api::V1::Exceptions::BlockNotFoundError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         valid_get api_v1_suggest_queries_url, params: { q: 1 }
@@ -167,7 +167,7 @@ module Api
       end
 
       test "should return error object when no records found by a address query key" do
-        error_object = Api::V1::Exceptions::SuggestQueryResultNotFoundError.new
+        error_object = Api::V1::Exceptions::AddressNotFoundError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         valid_get api_v1_suggest_queries_url, params: { q: "ckt1q9gry5zg3pzs2q65ty0ylaf6c9er0hju5su49jdgry8n2c" }

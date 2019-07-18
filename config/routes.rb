@@ -21,7 +21,10 @@ Rails.application.routes.draw do
       resources :cell_output_data, only: :show
       resources :suggest_queries, only: :index
       resources :statistics, only: %i(index show)
+      resources :nets, only: %i(index show)
       resources :statistic_info_charts, only: :index
     end
   end
+
+  match "*path", to: "application#catch_404", via: :all
 end
