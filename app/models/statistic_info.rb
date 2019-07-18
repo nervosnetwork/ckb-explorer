@@ -27,8 +27,8 @@ class StatisticInfo
     total_block_time(blocks, current_epoch_number) / blocks.size
   end
 
-  def hash_rate
-    blocks = Block.available.recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval.to_i)
+  def hash_rate(block_number = tip_block_number)
+    blocks = Block.where("number <= ?", block_number).available.recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval.to_i)
     return if blocks.blank?
 
     total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty.hex }
@@ -47,7 +47,7 @@ class StatisticInfo
 
   private
 
-  attr_reader :difficulty_interval, :block_time_interval, :hash_rate_statistical_interval
+  attr_reader :hash_rate_statistical_interval
 
   def total_block_time(blocks, current_epoch_number)
     prev_epoch_nubmer = [current_epoch_number.to_i - 1, 0].max

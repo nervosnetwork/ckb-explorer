@@ -84,6 +84,8 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.datetime "updated_at", null: false
     t.bigint "previous_cell_output_id"
     t.boolean "from_cell_base", default: false
+    t.decimal "block_id", precision: 30
+    t.index ["block_id"], name: "index_cell_inputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_inputs_on_ckb_transaction_id"
     t.index ["previous_cell_output_id"], name: "index_cell_inputs_on_previous_cell_output_id"
   end
@@ -99,10 +101,14 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.decimal "block_id", precision: 30
     t.binary "tx_hash"
     t.integer "cell_index"
+    t.decimal "generated_by_id", precision: 30
+    t.decimal "consumed_by_id", precision: 30
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
     t.index ["tx_hash", "cell_index"], name: "index_cell_outputs_on_tx_hash_and_cell_index"
+    t.index ["consumed_by_id"], name: "index_cell_outputs_on_consumed_by_id"
+    t.index ["generated_by_id"], name: "index_cell_outputs_on_generated_by_id"
   end
 
   create_table "ckb_transactions", force: :cascade do |t|
@@ -122,12 +128,11 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.integer "display_inputs_status", limit: 2, default: 0
     t.integer "transaction_fee_status", limit: 2, default: 0
     t.boolean "is_cellbase", default: false
-    t.index ["block_id"], name: "index_ckb_transactions_on_block_id"
+    t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["display_inputs_status"], name: "index_ckb_transactions_on_display_inputs_status"
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["transaction_fee_status"], name: "index_ckb_transactions_on_transaction_fee_status"
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
-    t.index ["tx_hash", "status"], name: "index_ckb_transactions_on_tx_hash_and_status"
   end
 
   create_table "lock_scripts", force: :cascade do |t|

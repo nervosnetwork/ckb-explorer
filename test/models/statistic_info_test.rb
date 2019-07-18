@@ -68,6 +68,7 @@ class StatisticInfoTest < ActiveSupport::TestCase
   end
 
   test ".hash_rate should return average hash rate of the last 500 blocks" do
+    CkbSync::Api.any_instance.expects(:get_tip_block_number).returns(100)
     statistic_info = StatisticInfo.new
     create_list(:block, 500, :with_block_hash)
     block_count = ENV["HASH_RATE_STATISTICAL_INTERVAL"]
