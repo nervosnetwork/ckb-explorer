@@ -57,7 +57,7 @@ class StatisticInfoChart
     total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty.hex }
     total_time = blocks.first.timestamp - blocks.last.timestamp
     hash_rate = total_difficulties.to_d / total_time / cycle_rate
-    { block_number: number.to_i, hash_rate: hash_rate.infinite? ? 0 : hash_rate }
+    { block_number: number.to_i, hash_rate: hash_rate.infinite? ? "0" : hash_rate }
   end
 
   def n_l(n, l)
