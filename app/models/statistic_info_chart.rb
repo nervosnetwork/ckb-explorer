@@ -40,6 +40,8 @@ class StatisticInfoChart
     end
 
     to = max_block_number
+    return if from == to
+
     epoch_first_block_numbers = Block.available.order(:epoch, :timestamp).select("distinct on (epoch) number").to_a.pluck(:number)
     result =
       (from + 1).step(to, 100).to_a.concat(epoch_first_block_numbers).uniq.sort.map do |number|
