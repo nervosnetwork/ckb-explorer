@@ -150,7 +150,8 @@ module CkbSync
 
         cell_output.build_type_script(
           args: type_script.args,
-          code_hash: type_script.code_hash
+          code_hash: type_script.code_hash,
+          hash_type: type_script.hash_type
         )
       end
 
@@ -158,7 +159,8 @@ module CkbSync
         cell_output.build_lock_script(
           args: verify_script.args,
           code_hash: verify_script.code_hash,
-          address: address
+          address: address,
+          hash_type: verify_script.hash_type
         )
       end
 

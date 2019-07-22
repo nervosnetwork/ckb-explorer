@@ -23,6 +23,7 @@ end
 #  cell_output_id :bigint
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
+#  hash_type      :string
 #
 # Indexes
 #
