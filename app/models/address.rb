@@ -20,9 +20,9 @@ class Address < ApplicationRecord
     lock_hash = lock_script.to_hash
 
     Rails.cache.fetch(lock_hash, expires_in: 1.day) do
-      transaction(requires_new: true) { Address.create(address_hash: address_hash, balance: 0, cell_consumed: 0, lock_hash: lock_hash) }
+      transaction(requires_new: true) { Address.create!(address_hash: address_hash, balance: 0, cell_consumed: 0, lock_hash: lock_hash) }
     rescue ActiveRecord::RecordNotUnique
-      Address.find_by(lock_hash: lock_hash)
+      Address.find_by!(lock_hash: lock_hash)
     end
   end
 
