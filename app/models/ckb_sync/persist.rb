@@ -27,10 +27,11 @@ module CkbSync
           local_block.address_ids = AccountBook.where(ckb_transaction: local_block.ckb_transactions).pluck(:address_id).uniq
           local_block.save!
 
-          update_pending_rewards(local_block.miner_address)
           calculate_tx_fee(local_block)
           local_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         end
+
+        update_pending_rewards(local_block.miner_address)
 
         local_block
       end
