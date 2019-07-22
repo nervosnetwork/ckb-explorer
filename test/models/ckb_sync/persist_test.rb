@@ -319,7 +319,7 @@ module CkbSync
 
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
         local_block_transactions = local_block.ckb_transactions
-        local_block_lock_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.lock_script.attributes.select { |attribute| attribute.in?(%w(args code_hash)) } }.sort }.flatten
+        local_block_lock_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.lock_script.attributes.select { |attribute| attribute.in?(%w(args code_hash hash_type)) } }.sort }.flatten
 
         assert_equal node_block_lock_scripts, local_block_lock_scripts
       end
@@ -336,7 +336,7 @@ module CkbSync
 
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
         local_block_transactions = local_block.ckb_transactions
-        local_block_type_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.type_script.attributes.select { |attribute| attribute.in?(%w(args code_hash)) } }.sort }.flatten
+        local_block_type_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.type_script.attributes.select { |attribute| attribute.in?(%w(args code_hash hash_type)) } }.sort }.flatten
 
         assert_equal node_block_type_scripts, local_block_type_scripts
       end
