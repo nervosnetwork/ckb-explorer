@@ -97,9 +97,7 @@ class CkbUtils
   end
 
   def self.get_epoch_info(epoch)
-    Rails.cache.fetch("epoch_#{epoch}", expires_in: 1.day) do
-      CkbSync::Api.instance.get_epoch_by_number(epoch)
-    end
+    CkbSync::Api.instance.get_epoch_by_number(epoch)
   end
 
   def self.ckb_transaction_fee(ckb_transaction)
