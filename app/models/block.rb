@@ -144,6 +144,7 @@ end
 #  received_tx_fee            :decimal(30, )    default(0)
 #  target_block_reward_status :integer          default("pending")
 #  miner_lock_hash            :binary
+#  dao                        :string
 #
 # Indexes
 #

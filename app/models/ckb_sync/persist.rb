@@ -224,7 +224,8 @@ module CkbSync
           witnesses_root: header.witnesses_root,
           epoch: header.epoch,
           start_number: epoch_info.start_number,
-          length: epoch_info.length
+          length: epoch_info.length,
+          dao: header.dao
         )
       end
 

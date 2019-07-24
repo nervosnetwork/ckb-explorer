@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_07_22_051936) do
+ActiveRecord::Schema.define(version: 2019_07_24_053202) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -71,6 +71,7 @@ ActiveRecord::Schema.define(version: 2019_07_22_051936) do
     t.decimal "received_tx_fee", precision: 30, default: "0"
     t.integer "target_block_reward_status", default: 0
     t.binary "miner_lock_hash"
+    t.string "dao"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
