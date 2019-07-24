@@ -227,7 +227,7 @@ module CkbSync
         formatted_node_block = format_node_block(node_block)
         formatted_node_block["witnesses_root"] = formatted_node_block.delete("witnesses_root")
 
-        local_block_hash = local_block.attributes.select { |attribute| attribute.in?(%w(difficulty block_hash number parent_hash seal timestamp transactions_root proposals_hash uncles_count uncles_hash version witnesses_root proposals epoch)) }
+        local_block_hash = local_block.attributes.select { |attribute| attribute.in?(%w(difficulty block_hash number parent_hash seal timestamp transactions_root proposals_hash uncles_count uncles_hash version witnesses_root proposals epoch dao)) }
         local_block_hash["hash"] = local_block_hash.delete("block_hash")
         local_block_hash["number"] = local_block_hash["number"].to_s
         local_block_hash["version"] = local_block_hash["version"].to_s
