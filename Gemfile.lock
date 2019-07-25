@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/nervosnetwork/ckb-sdk-ruby.git
-  revision: d9c765eacc726ab7e8334c72f7c3e126be76f90a
+  revision: 8d38ecc8e359a79d875e6de9686db99a73c1dd0a
   branch: rc/v0.17.0
   specs:
     ckb-sdk-ruby (0.17.0)
