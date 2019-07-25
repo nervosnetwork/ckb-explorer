@@ -304,6 +304,31 @@ module CkbSync
       end
     end
 
+    test "#call should create lock_scripts for output" do
+      VCR.use_cassette("blocks/10") do
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        expected_lock_scripts = node_block.transactions.map(&:outputs).flatten.map(&:lock).map(&:to_h)
+        local_block = node_data_processor.call(node_block)
+        actual_lock_scripts = local_block.cell_outputs.map { |cell_output| CKB::Types::Script.new(code_hash: cell_output.lock_script.code_hash, args: cell_output.lock_script.args) }.map(&:to_h)
+
+        assert_equal expected_lock_scripts, actual_lock_scripts
+      end
+    end
+
+    test "#call created lock_script's attribute value should equal with the node lock_script's attribute value" do
+      VCR.use_cassette("blocks/10") do
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        node_block_transactions = node_block.transactions
+        node_block_lock_scripts = node_block_transactions.map { |commit_transaction| commit_transaction.to_h.deep_stringify_keys["outputs"].map { |output| output["lock"] }.sort }.flatten
+
+        local_block = node_data_processor.call(node_block)
+        local_block_transactions = local_block.ckb_transactions
+        local_block_lock_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.lock_script.attributes.select { |attribute| attribute.in?(%w(args code_hash hash_type)) } }.sort }.flatten
+
+        assert_equal node_block_lock_scripts, local_block_lock_scripts
+      end
+    end
+
     private
 
     def node_data_processor
