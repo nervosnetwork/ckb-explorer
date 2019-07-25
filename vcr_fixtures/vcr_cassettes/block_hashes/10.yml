@@ -15,26 +15,26 @@ http_interactions:
       - Ruby
       Content-Type:
       - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
   response:
     status:
       code: 200
       message: OK
     headers:
-      Server:
-      - nginx/1.14.0 (Ubuntu)
-      Date:
-      - Wed, 15 May 2019 10:21:08 GMT
       Content-Type:
       - application/json; charset=utf-8
       Content-Length:
       - '103'
-      Connection:
-      - keep-alive
+      Date:
+      - Mon, 22 Jul 2019 05:43:00 GMT
     body:
       encoding: UTF-8
-      string: '{"jsonrpc":"2.0","result":"0xe6471b6ba597dc7c0a7d5a5f19a9c67c0386358d21c31514ae617aeb4982acbb","id":1}
+      string: '{"jsonrpc":"2.0","result":"0xfe658f33e9e6c8f1a1830b0bfc01a0c014b8e38ec3d132337d5f622a0fa58288","id":1}
 
 '
     http_version:
-  recorded_at: Wed, 15 May 2019 10:21:08 GMT
-recorded_with: VCR 4.0.0
+  recorded_at: Mon, 22 Jul 2019 05:43:00 GMT
+recorded_with: VCR 5.0.0
