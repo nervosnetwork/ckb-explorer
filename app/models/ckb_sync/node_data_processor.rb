@@ -96,6 +96,7 @@ module CkbSync
       transaction_index = 0
       transactions.map do |transaction|
         ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
+        build_cell_inputs(transaction.inputs, ckb_transaction)
         transaction_index += 1
         ckb_transaction
       end
@@ -111,6 +112,23 @@ module CkbSync
         transaction_fee: 0,
         witnesses: transaction.witnesses.map(&:to_h),
         is_cellbase: transaction_index.zero?
+      )
+    end
+
+    def build_cell_inputs(node_inputs, ckb_transaction)
+      node_inputs.each do |node_input|
+        build_cell_input(ckb_transaction, node_input)
+      end
+    end
+
+    def build_cell_input(ckb_transaction, node_input)
+      cell = node_input.previous_output.cell
+
+      ckb_transaction.cell_inputs.build(
+        previous_output: node_input.previous_output,
+        since: node_input.since,
+        block: ckb_transaction.block,
+        from_cell_base: cell.blank?
       )
     end
   end
