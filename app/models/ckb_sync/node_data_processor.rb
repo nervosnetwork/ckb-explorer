@@ -143,6 +143,7 @@ module CkbSync
         address = Address.find_or_create_address(output.lock)
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index)
+        build_lock_script(cell_output, output.lock, address)
         cell_index += 1
 
         cell_output
@@ -158,6 +159,15 @@ module CkbSync
         tx_hash: ckb_transaction.tx_hash,
         cell_index: cell_index,
         generated_by: ckb_transaction
+      )
+    end
+
+    def build_lock_script(cell_output, lock_script, address)
+      cell_output.build_lock_script(
+        args: lock_script.args,
+        code_hash: lock_script.code_hash,
+        address: address,
+        hash_type: lock_script.hash_type
       )
     end
   end
