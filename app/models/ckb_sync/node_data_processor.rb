@@ -2,12 +2,33 @@ module CkbSync
   class NodeDataProcessor
     def call(node_block)
       local_block = build_block(node_block)
+
+      node_block.uncles.each do |uncle_block|
+        build_uncle_block(uncle_block, local_block)
+      end
+
       local_block.save
 
       local_block
     end
 
     private
+
+    def uncle_block_hashes(node_block_uncles)
+      node_block_uncles.map { |uncle| uncle.to_h.dig("header", "hash") }
+    end
+
+    def generate_address_in_advance(cellbase)
+      return if cellbase.witnesses.blank?
+
+      lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+      address = Address.find_or_create_address(lock_script)
+      LockScript.find_or_create_by(
+        args: lock_script.args,
+        code_hash: lock_script.code_hash,
+        address: address
+      )
+    end
 
     def build_block(node_block)
       header = node_block.header
@@ -47,19 +68,25 @@ module CkbSync
       )
     end
 
-    def uncle_block_hashes(node_block_uncles)
-      node_block_uncles.map { |uncle| uncle.to_h.dig("header", "hash") }
-    end
-
-    def generate_address_in_advance(cellbase)
-      return if cellbase.witnesses.blank?
-
-      lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-      address = Address.find_or_create_address(lock_script)
-      LockScript.find_or_create_by(
-        args: lock_script.args,
-        code_hash: lock_script.code_hash,
-        address: address
+    def build_uncle_block(uncle_block, local_block)
+      header = uncle_block.header
+      local_block.uncle_blocks.build(
+        difficulty: header.difficulty,
+        block_hash: header.hash,
+        number: header.number,
+        parent_hash: header.parent_hash,
+        seal: header.seal,
+        timestamp: header.timestamp,
+        transactions_root: header.transactions_root,
+        proposals_hash: header.proposals_hash,
+        uncles_count: header.uncles_count,
+        uncles_hash: header.uncles_hash,
+        version: header.version,
+        proposals: uncle_block.proposals,
+        proposals_count: uncle_block.proposals.count,
+        witnesses_root: header.witnesses_root,
+        epoch: header.epoch,
+        dao: header.dao
       )
     end
   end
