@@ -7,6 +7,8 @@ module CkbSync
         build_uncle_block(uncle_block, local_block)
       end
 
+      ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
+      local_block.ckb_transactions_count = ckb_transactions.size
       local_block.save
 
       local_block
@@ -87,6 +89,28 @@ module CkbSync
         witnesses_root: header.witnesses_root,
         epoch: header.epoch,
         dao: header.dao
+      )
+    end
+
+    def build_ckb_transactions(local_block, transactions)
+      transaction_index = 0
+      transactions.map do |transaction|
+        ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
+        transaction_index += 1
+        ckb_transaction
+      end
+    end
+
+    def build_ckb_transaction(local_block, transaction, transaction_index)
+      local_block.ckb_transactions.build(
+        tx_hash: transaction.hash,
+        deps: transaction.deps,
+        version: transaction.version,
+        block_number: local_block.number,
+        block_timestamp: local_block.timestamp,
+        transaction_fee: 0,
+        witnesses: transaction.witnesses.map(&:to_h),
+        is_cellbase: transaction_index.zero?
       )
     end
   end
