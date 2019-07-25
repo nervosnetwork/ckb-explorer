@@ -95,9 +95,14 @@ module CkbSync
     def build_ckb_transactions(local_block, transactions)
       transaction_index = 0
       transactions.map do |transaction|
+        addresses = Set.new
         ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
         build_cell_inputs(transaction.inputs, ckb_transaction)
+        build_cell_outputs(transaction.outputs, ckb_transaction, addresses)
+        addresses_arr = addresses.to_a
+        ckb_transaction.addresses << addresses_arr
         transaction_index += 1
+
         ckb_transaction
       end
     end
@@ -129,6 +134,30 @@ module CkbSync
         since: node_input.since,
         block: ckb_transaction.block,
         from_cell_base: cell.blank?
+      )
+    end
+
+    def build_cell_outputs(node_outputs, ckb_transaction, addresses)
+      cell_index = 0
+      node_outputs.map do |output|
+        address = Address.find_or_create_address(output.lock)
+        addresses << address
+        cell_output = build_cell_output(ckb_transaction, output, address, cell_index)
+        cell_index += 1
+
+        cell_output
+      end
+    end
+
+    def build_cell_output(ckb_transaction, output, address, cell_index)
+      ckb_transaction.cell_outputs.build(
+        capacity: output.capacity,
+        data: output.data,
+        address: address,
+        block: ckb_transaction.block,
+        tx_hash: ckb_transaction.tx_hash,
+        cell_index: cell_index,
+        generated_by: ckb_transaction
       )
     end
   end
