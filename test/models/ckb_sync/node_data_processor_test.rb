@@ -222,6 +222,32 @@ module CkbSync
       end
     end
 
+    test "#call should create cell_inputs" do
+      VCR.use_cassette("blocks/10") do
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        node_block_transactions = node_block.transactions
+        node_cell_inputs_count = node_block_transactions.reduce(0) { |memo, commit_transaction| memo + commit_transaction.inputs.size }
+
+        assert_difference -> { CellInput.count }, node_cell_inputs_count do
+          node_data_processor.call(node_block)
+        end
+      end
+    end
+
+    test ".save_block created cell_inputs's attribute value should equal with the node cell_inputs's attribute value" do
+      VCR.use_cassette("blocks/10") do
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        node_transactions = node_block.transactions.map(&:to_h).map(&:deep_stringify_keys)
+        node_block_cell_inputs = node_transactions.map { |commit_transaction| commit_transaction["inputs"].map(&:sort) }.flatten
+
+        local_block = node_data_processor.call(node_block)
+        local_block_transactions = local_block.ckb_transactions
+        local_block_cell_inputs = local_block_transactions.map { |commit_transaction| commit_transaction.cell_inputs.map { |cell_input| cell_input.attributes.select { |attribute| attribute.in?(%(previous_output since)) }.sort } }.flatten
+
+        assert_equal node_block_cell_inputs, local_block_cell_inputs
+      end
+    end
+
     private
 
     def node_data_processor
