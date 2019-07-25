@@ -67,8 +67,10 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block("0xd895e3fd670fd499567ce219cf8a8e6da27a91e1679ed01088fdcd1b072d3c4c")
         local_block = node_data_processor.call(node_block)
         expected_miner_hash = CkbUtils.miner_hash(node_block.transactions.first)
+        expected_miner_address = Address.find_by(address_hash: expected_miner_hash)
 
         assert expected_miner_hash, local_block.miner_hash
+        assert expected_miner_address, local_block.miner_address
       end
     end
 
@@ -245,6 +247,60 @@ module CkbSync
         local_block_cell_inputs = local_block_transactions.map { |commit_transaction| commit_transaction.cell_inputs.map { |cell_input| cell_input.attributes.select { |attribute| attribute.in?(%(previous_output since)) }.sort } }.flatten
 
         assert_equal node_block_cell_inputs, local_block_cell_inputs
+      end
+    end
+
+    test "#call should create cell_outputs" do
+      VCR.use_cassette("blocks/10") do
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        node_block_transactions = node_block.transactions
+        node_cell_outputs_count = node_block_transactions.reduce(0) { |memo, commit_transaction| memo + commit_transaction.outputs.size }
+
+        assert_difference -> { CellOutput.count }, node_cell_outputs_count do
+          node_data_processor.call(node_block)
+        end
+      end
+    end
+
+    test "#call created cell_outputs's attribute value should equal with the node cell_outputs's attribute value" do
+      VCR.use_cassette("blocks/10") do
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        node_block_transactions = node_block.transactions
+        node_block_cell_outputs = node_block_transactions.map { |commit_transaction| commit_transaction.to_h.deep_stringify_keys["outputs"].map { |output| format_node_block_cell_output(output).sort } }.flatten
+
+        local_block = node_data_processor.call(node_block)
+        local_block_transactions = local_block.ckb_transactions
+        local_block_cell_outputs = local_block_transactions.map { |commit_transaction|
+          commit_transaction.cell_outputs.map do |cell_output|
+            attributes = cell_output.attributes
+            attributes["capacity"] = attributes["capacity"].to_i.to_s
+            attributes.select { |attribute| attribute.in?(%w(capacity data)) }.sort
+          end
+        }.flatten
+
+        assert_equal node_block_cell_outputs, local_block_cell_outputs
+      end
+    end
+
+    test "#call should create addresses for cell_output" do
+      VCR.use_cassette("blocks/10") do
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        locks = node_block.transactions.map(&:outputs).flatten.map(&:lock)
+        local_block = node_data_processor.call(node_block)
+        expected_lock_address = locks.map { |lock| Address.find_or_create_address(lock) }
+
+        assert_equal expected_lock_address, local_block.cell_outputs.map(&:address)
+      end
+    end
+
+    test "#call should create addresses for ckb transaction" do
+      VCR.use_cassette("blocks/10") do
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        locks = node_block.transactions.map(&:outputs).flatten.map(&:lock)
+        local_block = node_data_processor.call(node_block)
+        expected_lock_address = locks.map { |lock| Address.find_or_create_address(lock) }
+
+        assert_equal expected_lock_address, local_block.ckb_transactions.map(&:addresses).flatten
       end
     end
 
