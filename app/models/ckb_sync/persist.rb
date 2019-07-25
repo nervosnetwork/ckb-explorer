@@ -258,7 +258,8 @@ module CkbSync
           proposals: uncle_block.proposals,
           proposals_count: uncle_block.proposals.count,
           witnesses_root: header.witnesses_root,
-          epoch: header.epoch
+          epoch: header.epoch,
+          dao: header.dao
         )
       end
 
