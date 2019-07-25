@@ -329,6 +329,34 @@ module CkbSync
       end
     end
 
+    test "#call should create type_scripts" do
+      VCR.use_cassette("blocks/10") do
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        node_block_transactions = node_block.transactions
+        node_cell_outputs = node_block_transactions.map { |commit_transaction| commit_transaction.outputs }.flatten
+        node_cell_outputs_with_type_script = node_cell_outputs.select { |cell_output| cell_output.type.present? }
+
+        assert_difference -> { TypeScript.count }, node_cell_outputs_with_type_script.size do
+          node_data_processor.call(node_block)
+        end
+      end
+    end
+
+    test "#call created type_script's attribute value should equal with the node type_script's attribute value" do
+      VCR.use_cassette("blocks/10") do
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        fake_node_block_with_type_script(node_block)
+        node_block_transactions = node_block.transactions
+        node_block_type_scripts = node_block_transactions.map { |commit_transaction| commit_transaction.to_h.deep_stringify_keys["outputs"].map { |output| output["type"] }.sort }.flatten
+
+        local_block = node_data_processor.call(node_block)
+        local_block_transactions = local_block.ckb_transactions
+        local_block_type_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.type_script.attributes.select { |attribute| attribute.in?(%w(args code_hash hash_type)) } }.sort }.flatten
+
+        assert_equal node_block_type_scripts, local_block_type_scripts
+      end
+    end
+
     private
 
     def node_data_processor
