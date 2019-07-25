@@ -144,6 +144,7 @@ module CkbSync
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index)
         build_lock_script(cell_output, output.lock, address)
+        build_type_script(cell_output, output.type)
         cell_index += 1
 
         cell_output
@@ -168,6 +169,16 @@ module CkbSync
         code_hash: lock_script.code_hash,
         address: address,
         hash_type: lock_script.hash_type
+      )
+    end
+
+    def build_type_script(cell_output, type_script)
+      return if type_script.blank?
+
+      cell_output.build_type_script(
+        args: type_script.args,
+        code_hash: type_script.code_hash,
+        hash_type: type_script.hash_type
       )
     end
   end
