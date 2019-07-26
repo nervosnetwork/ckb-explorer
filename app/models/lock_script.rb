@@ -12,7 +12,8 @@ class LockScript < ApplicationRecord
   def to_node_lock
     {
       args: args,
-      code_hash: code_hash
+      code_hash: code_hash,
+      hash_type: hash_type
     }
   end
 end
