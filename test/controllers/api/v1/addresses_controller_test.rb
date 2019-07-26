@@ -92,7 +92,7 @@ module Api
         error_object = Api::V1::Exceptions::AddressNotFoundError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        valid_get api_v1_address_url("ckt1q9gry5zgwayze0rtl8g0m8lgtx0cj35hmajzz2r9e6rtnt")
+        valid_get api_v1_address_url("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
 
         assert_equal response_json, response.body
       end
