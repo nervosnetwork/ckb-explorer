@@ -35,7 +35,7 @@ class Address < ApplicationRecord
       if QueryKeyUtils.valid_hex?(query_key)
         find_by(lock_hash: query_key)
       else
-        find_by(address_hash: query_key)
+        where(address_hash: query_key).to_a.presence
       end
     end
   end
