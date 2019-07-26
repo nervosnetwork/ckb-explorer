@@ -52,6 +52,10 @@ class Block < ApplicationRecord
     number - ENV["PROPOSAL_WINDOW"].to_i - 1
   end
 
+  def genesis_block?
+    number.zero?
+  end
+
   def target_block
     @target_block ||= Block.find_by(number: target_block_number)
   end
