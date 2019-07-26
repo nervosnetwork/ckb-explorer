@@ -141,7 +141,8 @@ module Api
 
       test "should return address when query key is a exist address hash" do
         address = create(:address, :with_lock_script)
-        response_json = AddressSerializer.new(address).serialized_json
+        presented_address = AddressPresenter.new(address)
+        response_json = AddressSerializer.new(presented_address).serialized_json
 
         valid_get api_v1_suggest_queries_url, params: { q: address.address_hash }
 

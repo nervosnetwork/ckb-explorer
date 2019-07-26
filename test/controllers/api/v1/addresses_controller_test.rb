@@ -66,10 +66,11 @@ module Api
 
       test "should return corresponding data with given address hash" do
         address = create(:address, :with_lock_script)
+        presented_address = AddressPresenter.new(address)
 
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal AddressSerializer.new(address).serialized_json, response.body
+        assert_equal AddressSerializer.new(presented_address).serialized_json, response.body
       end
 
       test "should return corresponding data with given lock hash" do
@@ -85,7 +86,7 @@ module Api
 
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal %w(address_hash balance transactions_count cell_consumed lock_script pending_reward_blocks_count).sort, json["data"]["attributes"].keys.sort
+        assert_equal %w(address_hash balance transactions_count lock_script pending_reward_blocks_count).sort, json["data"]["attributes"].keys.sort
       end
 
       test "should return error object when no cell output found by id" do
