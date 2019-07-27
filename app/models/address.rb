@@ -8,6 +8,9 @@ class Address < ApplicationRecord
   validates_presence_of :balance, :cell_consumed, :ckb_transactions_count
   validates :balance, :cell_consumed, :ckb_transactions_count, numericality: { greater_than_or_equal_to: 0 }
 
+  attribute :lock_hash, :ckb_hash
+  after_commit :flush_cache
+
   def lock_script
     LockScript.where(address: self).first
   end
@@ -17,18 +20,35 @@ class Address < ApplicationRecord
     lock_hash = lock_script.to_hash
 
     Rails.cache.fetch(lock_hash, expires_in: 1.day) do
-      transaction(requires_new: true) { Address.create(address_hash: address_hash, balance: 0, cell_consumed: 0, lock_hash: lock_hash) }
+      transaction(requires_new: true) { Address.create!(address_hash: address_hash, balance: 0, cell_consumed: 0, lock_hash: lock_hash) }
     rescue ActiveRecord::RecordNotUnique
-      Address.find_by(lock_hash: lock_hash)
+      Address.find_by!(lock_hash: lock_hash)
     end
   end
 
   def self.find_address!(query_key)
-    if QueryKeyUtils.valid_hex?(query_key)
-      Address.find_by!(lock_hash: query_key)
-    else
-      Address.find_by!(address_hash: query_key)
+    cached_find(query_key) || raise(Api::V1::Exceptions::AddressNotFoundError)
+  end
+
+  def self.cached_find(query_key)
+    Rails.cache.fetch([name, query_key]) do
+      if QueryKeyUtils.valid_hex?(query_key)
+        find_by(lock_hash: query_key)
+      else
+        where(address_hash: query_key).to_a.presence
+      end
     end
+  end
+
+  def cached_lock_script
+    Rails.cache.fetch([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
+      lock_script.to_node_lock
+    end
+  end
+
+  def flush_cache
+    Rails.cache.delete([self.class.name, address_hash])
+    Rails.cache.delete([self.class.name, lock_hash])
   end
 end
 

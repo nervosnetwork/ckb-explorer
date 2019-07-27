@@ -28,10 +28,19 @@ module CkbSync
     end
 
     test ".save_block should generate miner's address when cellbase has witnesses" do
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
       assert_difference "Address.count", 2 do
         VCR.use_cassette("blocks/11") do
           SyncInfo.local_inauthentic_tip_block_number
-          node_block = CkbSync::Api.instance.get_block("0x6da75b45555cdf49c2844d5fb337cfd5513f234c00a7a4d22515b17089cf48a3")
+          node_block = CkbSync::Api.instance.get_block("0xd895e3fd670fd499567ce219cf8a8e6da27a91e1679ed01088fdcd1b072d3c4c")
           set_default_lock_params(node_block: node_block)
 
           CkbSync::Persist.save_block(node_block, "inauthentic")
@@ -40,14 +49,43 @@ module CkbSync
     end
 
     test ".save_block should generate miner's lock when cellbase has witnesses" do
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
       assert_difference "LockScript.count", 2 do
         VCR.use_cassette("blocks/11") do
           SyncInfo.local_inauthentic_tip_block_number
-          node_block = CkbSync::Api.instance.get_block("0x6da75b45555cdf49c2844d5fb337cfd5513f234c00a7a4d22515b17089cf48a3")
+          node_block = CkbSync::Api.instance.get_block("0xd895e3fd670fd499567ce219cf8a8e6da27a91e1679ed01088fdcd1b072d3c4c")
           set_default_lock_params(node_block: node_block)
 
           CkbSync::Persist.save_block(node_block, "inauthentic")
         end
+      end
+    end
+
+    test ".save_block should set cellbase's transaction_fee_status to calculated" do
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
+      VCR.use_cassette("blocks/11") do
+        SyncInfo.local_inauthentic_tip_block_number
+        node_block = CkbSync::Api.instance.get_block("0xd895e3fd670fd499567ce219cf8a8e6da27a91e1679ed01088fdcd1b072d3c4c")
+        set_default_lock_params(node_block: node_block)
+
+        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
+        assert_equal "calculated", local_block.cellbase.transaction_fee_status
       end
     end
 
@@ -126,7 +164,15 @@ module CkbSync
         node_cell_outputs = node_block_transactions.map { |commit_transaction| commit_transaction.outputs }.flatten
         node_lock_scripts = node_cell_outputs.map { |cell_output| cell_output.lock }.uniq
 
-        assert_difference "Address.count", node_lock_scripts.size do
+        cellbase = node_block.transactions.first
+        miner_lock = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+        if miner_lock.in?(node_lock_scripts)
+          expected_difference = node_cell_outputs.size
+        else
+          expected_difference = node_cell_outputs.size + 1
+        end
+
+        assert_difference "Address.count", expected_difference do
           CkbSync::Persist.save_block(node_block, "inauthentic")
         end
       end
@@ -139,8 +185,16 @@ module CkbSync
         set_default_lock_params(node_block: node_block)
         node_block_transactions = node_block.transactions
         node_cell_outputs = node_block_transactions.map { |commit_transaction| commit_transaction.outputs }.flatten
+        cellbase = node_block.transactions.first
+        miner_lock = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+        cell_output_locks = node_cell_outputs.map(&:lock)
+        if miner_lock.in?(cell_output_locks)
+          expected_difference = node_cell_outputs.size
+        else
+          expected_difference = node_cell_outputs.size + 1
+        end
 
-        assert_difference "LockScript.count", node_cell_outputs.size do
+        assert_difference "LockScript.count", expected_difference do
           CkbSync::Persist.save_block(node_block, "inauthentic")
         end
       end
@@ -173,7 +227,7 @@ module CkbSync
         formatted_node_block = format_node_block(node_block)
         formatted_node_block["witnesses_root"] = formatted_node_block.delete("witnesses_root")
 
-        local_block_hash = local_block.attributes.select { |attribute| attribute.in?(%w(difficulty block_hash number parent_hash seal timestamp transactions_root proposals_hash uncles_count uncles_hash version witnesses_root proposals epoch)) }
+        local_block_hash = local_block.attributes.select { |attribute| attribute.in?(%w(difficulty block_hash number parent_hash seal timestamp transactions_root proposals_hash uncles_count uncles_hash version witnesses_root proposals epoch dao)) }
         local_block_hash["hash"] = local_block_hash.delete("block_hash")
         local_block_hash["number"] = local_block_hash["number"].to_s
         local_block_hash["version"] = local_block_hash["version"].to_s
@@ -202,7 +256,7 @@ module CkbSync
         SyncInfo.local_inauthentic_tip_block_number
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         set_default_lock_params(node_block: node_block)
-        node_uncle_blocks = node_block.uncles
+        node_uncle_blocks = node_block.uncles.map { |uncle| uncle.to_h.deep_stringify_keys }
         formatted_node_uncle_blocks = node_uncle_blocks.map { |uncle_block| format_node_block(uncle_block).sort }
 
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
@@ -210,12 +264,14 @@ module CkbSync
           local_block.uncle_blocks.map do |uncle_block|
             uncle_block =
               uncle_block.attributes.select do |attribute|
-                attribute.in?(%w(difficulty block_hash number parent_hash seal timestamp transactions_root proposals_hash uncles_count uncles_hash version witnesses_root proposals epoch))
+                attribute.in?(%w(difficulty block_hash number parent_hash seal timestamp transactions_root proposals_hash uncles_count uncles_hash version witnesses_root proposals epoch dao))
               end
             uncle_block["hash"] = uncle_block.delete("block_hash")
             uncle_block["epoch"] = uncle_block["epoch"].to_s
             uncle_block["number"] = uncle_block["number"].to_s
             uncle_block["timestamp"] = uncle_block["timestamp"].to_s
+            uncle_block["version"] = uncle_block["version"].to_s
+            uncle_block["uncles_count"] = uncle_block["uncles_count"].to_s
             uncle_block.sort
           end
 
@@ -233,7 +289,7 @@ module CkbSync
 
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
         local_uncle_blocks = local_block.uncle_blocks
-        local_uncle_blocks_count = local_uncle_blocks.reduce(0) { |memo, uncle_block| memo + uncle_block.proposals.size }
+        local_uncle_blocks_count = local_uncle_blocks.reduce(0) { |memo, uncle_block| memo + uncle_block.proposals_count }
 
         assert_equal node_uncle_blocks_count, local_uncle_blocks_count
       end
@@ -308,7 +364,7 @@ module CkbSync
 
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
         local_block_transactions = local_block.ckb_transactions
-        local_block_lock_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.lock_script.attributes.select { |attribute| attribute.in?(%w(args code_hash)) } }.sort }.flatten
+        local_block_lock_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.lock_script.attributes.select { |attribute| attribute.in?(%w(args code_hash hash_type)) } }.sort }.flatten
 
         assert_equal node_block_lock_scripts, local_block_lock_scripts
       end
@@ -325,7 +381,7 @@ module CkbSync
 
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
         local_block_transactions = local_block.ckb_transactions
-        local_block_type_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.type_script.attributes.select { |attribute| attribute.in?(%w(args code_hash)) } }.sort }.flatten
+        local_block_type_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.type_script.attributes.select { |attribute| attribute.in?(%w(args code_hash hash_type)) } }.sort }.flatten
 
         assert_equal node_block_type_scripts, local_block_type_scripts
       end
@@ -334,19 +390,39 @@ module CkbSync
     test ".save_block generated transactions should be nil" do
       VCR.use_cassette("blocks/10") do
         SyncInfo.local_inauthentic_tip_block_number
+        CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+          CKB::Types::BlockReward.new(
+            total: "100000000000",
+            primary: "100000000000",
+            secondary: "0",
+            tx_fee: "0",
+            proposal_reward: "0"
+          )
+        )
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         set_default_lock_params(node_block: node_block)
 
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
         local_ckb_transactions = local_block.ckb_transactions
         local_block_cell_inputs = local_ckb_transactions.map(&:display_inputs).flatten
+        cellbase = Cellbase.new(local_block)
+        expected_display_inputs = [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
 
-        assert_equal [nil], local_block_cell_inputs
+        assert_equal expected_display_inputs, local_block_cell_inputs
       end
     end
 
     test ".save_block generated transactions should has correct display output" do
       VCR.use_cassette("blocks/10") do
+        CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+          CKB::Types::BlockReward.new(
+            total: "100000000000",
+            primary: "100000000000",
+            secondary: "0",
+            tx_fee: "0",
+            proposal_reward: "0"
+          )
+        )
         SyncInfo.local_inauthentic_tip_block_number
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         set_default_lock_params(node_block: node_block)
@@ -355,24 +431,11 @@ module CkbSync
 
         local_ckb_transactions = local_block.ckb_transactions
         local_block_cell_outputs = local_ckb_transactions.map(&:display_outputs).flatten
+        output = local_ckb_transactions.first.outputs.order(:id).first
+        cellbase = Cellbase.new(local_block)
+        expected_display_outputs = [{ id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward }]
 
-        assert_equal [nil], local_block_cell_outputs
-      end
-    end
-
-    test ".save_block generated transactions should has correct transaction fee" do
-      VCR.use_cassette("blocks/10") do
-        SyncInfo.local_inauthentic_tip_block_number
-        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
-        set_default_lock_params(node_block: node_block)
-        node_block_transactions = node_block.transactions
-        transactions_fee = node_block_transactions.reduce(0) { |memo, commit_transaction| memo + CkbUtils.transaction_fee(commit_transaction).to_i }
-
-        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
-        local_ckb_transactions = local_block.ckb_transactions
-        local_ckb_transactions_fee = local_ckb_transactions.reduce(0) { |memo, ckb_transaction| memo + ckb_transaction.transaction_fee }
-
-        assert_equal transactions_fee, local_ckb_transactions_fee
+        assert_equal expected_display_outputs, local_block_cell_outputs
       end
     end
 
@@ -425,6 +488,15 @@ module CkbSync
     end
 
     test ".save_block generated block should has correct reward" do
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
       VCR.use_cassette("blocks/10") do
         SyncInfo.local_inauthentic_tip_block_number
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
@@ -462,6 +534,15 @@ module CkbSync
       SyncInfo.local_inauthentic_tip_block_number
       node_block = fake_node_block
       VCR.use_cassette("blocks/10") do
+        CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+          CKB::Types::BlockReward.new(
+            total: "100000000000",
+            primary: "100000000000",
+            secondary: "0",
+            tx_fee: "0",
+            proposal_reward: "0"
+          )
+        )
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
         local_ckb_transactions = local_block.ckb_transactions
         local_block_cell_inputs = local_ckb_transactions.map(&:display_inputs).flatten
@@ -489,51 +570,36 @@ module CkbSync
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
         local_ckb_transactions = local_block.ckb_transactions
 
-        assert_equal "uncalculated", local_ckb_transactions.map(&:transaction_fee_status).uniq.first
+        assert_equal "uncalculated", local_ckb_transactions.where(is_cellbase: false).pluck(:transaction_fee_status).uniq.first
       end
     end
 
     test ".save_block should update current block's miner address pending reward blocks count" do
       prepare_inauthentic_node_data(11)
       SyncInfo.local_inauthentic_tip_block_number
-      node_block = fake_node_block("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", 12)
+      node_block = fake_node_block("0x4f1d958f0601d04d1bd88634fac4bcd65ffc8a42e8b0c50d065e70ba5e922840", 12)
       VCR.use_cassette("blocks/12") do
         cellbase = node_block.transactions.first
         lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
         miner_address = Address.find_or_create_address(lock_script)
+
         assert_difference -> { miner_address.reload.pending_reward_blocks_count }, 1 do
           CkbSync::Persist.save_block(node_block, "inauthentic")
         end
       end
     end
 
-    test ".update_ckb_transaction_display_inputs should update display inputs" do
-      SyncInfo.local_inauthentic_tip_block_number
-
-      node_block = fake_node_block
-      VCR.use_cassette("blocks/10") do
-        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
-
-        previous_transaction = create(:ckb_transaction, :with_cell_output_and_lock_script, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3")
-        previous_output = previous_transaction.cell_outputs.order(:id)[0]
-
-        local_ckb_transaction = local_block.ckb_transactions.first
-
-        node_display_inputs = [
-          { id: local_ckb_transaction.cell_inputs.first.id, from_cellbase: false, capacity: previous_output.capacity.to_s, address_hash: previous_output.address_hash }.sort_by { |k, _v| k }.to_h.deep_stringify_keys
-        ]
-
-        assert_changes -> { local_ckb_transaction.reload.display_inputs_status }, from: "ungenerated", to: "generated" do
-          CkbSync::Persist.update_ckb_transaction_display_inputs(local_ckb_transaction)
-        end
-
-        local_block_cell_inputs = local_ckb_transaction.display_inputs.map { |display_input| display_input.sort_by { |k, _v| k }.to_h }
-        assert_equal node_display_inputs, local_block_cell_inputs
-      end
-    end
-
     test "cellbase's display inputs should contain target block number" do
       prepare_inauthentic_node_data(11)
+      CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+        CKB::Types::BlockReward.new(
+          total: "100000000000",
+          primary: "100000000000",
+          secondary: "0",
+          tx_fee: "0",
+          proposal_reward: "0"
+        )
+      )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           epoch_reward: "250000000000",
@@ -545,18 +611,26 @@ module CkbSync
       )
       VCR.use_cassette("blocks/12") do
         assert_difference "Block.count", 1 do
-          CkbSync::Persist.call("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", "inauthentic")
+          CkbSync::Persist.call("0x4f1d958f0601d04d1bd88634fac4bcd65ffc8a42e8b0c50d065e70ba5e922840", "inauthentic")
           block = Block.last
-          CkbSync::Persist.update_ckb_transaction_display_inputs(block.cellbase)
           cellbase = Cellbase.new(block)
           expected_cellbase_display_inputs = [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
 
-          assert_equal JSON.parse(expected_cellbase_display_inputs.to_json), block.cellbase.display_inputs
+          assert_equal expected_cellbase_display_inputs, block.cellbase.display_inputs
         end
       end
     end
 
     test "genesis block's cellbase display outputs should have multiple cells" do
+      CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+        CKB::Types::BlockReward.new(
+          total: "100000000000",
+          primary: "100000000000",
+          secondary: "0",
+          tx_fee: "0",
+          proposal_reward: "0"
+        )
+      )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           epoch_reward: "250000000000",
@@ -570,15 +644,14 @@ module CkbSync
         create(:sync_info, name: "inauthentic_tip_block_number", value: 0)
         CkbSync::Persist.sync(0)
         block = Block.last
-        CkbSync::Persist.update_ckb_transaction_display_outputs(block.cellbase)
         cellbase = Cellbase.new(block)
-        expected_cellbase_display_outputs = block.cellbase.cell_outputs.map { |cell_output| { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward } }
+        expected_cellbase_display_outputs = block.cellbase.cell_outputs.map { |cell_output| { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward } }
 
-        assert_equal JSON.parse(expected_cellbase_display_outputs.to_json), block.cellbase.display_outputs
+        assert_equal expected_cellbase_display_outputs, block.cellbase.display_outputs
       end
     end
 
-    test "cellbase's display outputs should contain block reward commit reward and proposal reward" do
+    test "cellbase's display outputs should contain block reward commit reward, proposal reward and secondary reward" do
       prepare_inauthentic_node_data(11)
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
@@ -589,41 +662,39 @@ module CkbSync
           start_number: "0"
         )
       )
+      CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+        CKB::Types::BlockReward.new(
+          total: "100000000000",
+          primary: "100000000000",
+          secondary: "0",
+          tx_fee: "0",
+          proposal_reward: "0"
+        )
+      )
       VCR.use_cassette("blocks/12") do
         assert_difference "Block.count", 1 do
-          CkbSync::Persist.call("0xe6f5dab69a1c513d9632680af83f72de29fe99adc258b734acc0aa5fcb1c4300", "inauthentic")
+          CkbSync::Persist.call("0x4f1d958f0601d04d1bd88634fac4bcd65ffc8a42e8b0c50d065e70ba5e922840", "inauthentic")
           block = Block.last
-          CkbSync::Persist.update_ckb_transaction_display_outputs(block.cellbase)
           cellbase = Cellbase.new(block)
           cell_output = block.cellbase.cell_outputs.first
-          expected_cellbase_display_outputs = [{ id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward }]
+          expected_cellbase_display_outputs = [{ id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward }]
 
-          assert_equal JSON.parse(expected_cellbase_display_outputs.to_json), block.cellbase.display_outputs
+          assert_equal expected_cellbase_display_outputs, block.cellbase.display_outputs
         end
       end
     end
 
-    test ".update_transaction_fee should update transaction fee status" do
+    test ".calculate_tx_fee should update transaction fee status" do
       SyncInfo.local_inauthentic_tip_block_number
       node_block = fake_node_block
 
       VCR.use_cassette("blocks/10") do
-        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
-        block = create(:block, :with_block_hash)
-
-        create(:ckb_transaction, :with_cell_output_and_lock_script, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3")
-        create(:ckb_transaction, :with_cell_output_and_lock_script, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
-
-        local_ckb_transaction = local_block.ckb_transactions.first
-        CkbSync::Persist.update_ckb_transaction_display_inputs(local_ckb_transaction)
-
-        assert_changes -> { local_ckb_transaction.transaction_fee_status }, from: "uncalculated", to: "calculated" do
-          CkbSync::Persist.update_transaction_fee(local_ckb_transaction)
-        end
+        CkbSync::Persist.expects(:calculate_tx_fee)
+        CkbSync::Persist.save_block(node_block, "inauthentic")
       end
     end
 
-    test ".update_transaction_fee should update transaction fee" do
+    test ".calculate_tx_fee should not update transaction fee if previous cell output is not synced" do
       SyncInfo.local_inauthentic_tip_block_number
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/10") do
@@ -632,30 +703,42 @@ module CkbSync
         create(:ckb_transaction, :with_cell_output_and_lock_script, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: local_block)
 
         local_ckb_transaction = local_block.ckb_transactions.first
-        CkbSync::Persist.update_ckb_transaction_display_inputs(local_ckb_transaction)
+        CkbSync::Persist.update_tx_fee_related_data(local_block)
 
-        assert_changes -> { local_ckb_transaction.reload.transaction_fee }, from: 0, to: (10**8 * 7 - 10**8 * 6) do
-          CkbSync::Persist.update_transaction_fee(local_ckb_transaction)
+        assert_no_difference -> { local_ckb_transaction.reload.transaction_fee } do
+          CkbSync::Persist.calculate_tx_fee(local_block)
         end
-
-        assert_equal 10**8, local_block.reload.total_transaction_fee
       end
     end
 
-    test ".update_ckb_transaction_info_and_fee should queuing 1000 jobs when has 1000 transaction" do
-      Sidekiq::Testing.fake!
+    test ".calculate_tx_fee should update transaction fee" do
+      SyncInfo.local_inauthentic_tip_block_number
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      VCR.use_cassette("blocks/10") do
+        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
+        block = create(:block, :with_block_hash)
+        ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+        ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+        create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block)
+        create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
+        CkbSync::Persist.update_tx_fee_related_data(local_block)
+        CkbSync::Persist.calculate_tx_fee(local_block)
 
-      block = create(:block, :with_block_hash)
-      create_list(:ckb_transaction, 1000, block: block)
-      CkbSync::Persist.update_ckb_transaction_info_and_fee
-
-      assert_equal 1000, Sidekiq::Queues["transaction_info_updater"].size
-      assert_equal "UpdateTransactionDisplayInfosWorker", Sidekiq::Queues["transaction_info_updater"].first["class"]
-      assert_equal "UpdateTransactionFeeWorker", Sidekiq::Queues["transaction_info_updater"].last["class"]
+        assert_equal 10**8 * 3, local_block.reload.total_transaction_fee
+      end
     end
 
     test ".update_block_reward_info should change block reward status from pending to issued before proposal window" do
       prepare_inauthentic_node_data(12)
+      CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+        CKB::Types::BlockReward.new(
+          total: "100000000000",
+          primary: "100000000000",
+          secondary: "0",
+          tx_fee: "0",
+          proposal_reward: "0"
+        )
+      )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           epoch_reward: "250000000000",
@@ -674,6 +757,15 @@ module CkbSync
 
     test ".update_block_reward_info should change block received tx fee status from calculating to calculated before proposal window" do
       prepare_inauthentic_node_data(12)
+      CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+        CKB::Types::BlockReward.new(
+          total: "100000000000",
+          primary: "100000000000",
+          secondary: "0",
+          tx_fee: "0",
+          proposal_reward: "0"
+        )
+      )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           epoch_reward: "250000000000",
@@ -692,6 +784,15 @@ module CkbSync
 
     test ".update_block_reward_info should update block received tx fee before proposal window" do
       prepare_inauthentic_node_data(12)
+      CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+        CKB::Types::BlockReward.new(
+          total: "100000000000",
+          primary: "100000000000",
+          secondary: "0",
+          tx_fee: "100",
+          proposal_reward: "1"
+        )
+      )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           epoch_reward: "250000000000",
@@ -704,7 +805,7 @@ module CkbSync
       target_block = Block.find_by(number: 1)
       current_block = Block.find_by(number: 12)
 
-      expected_received_tx_fee = current_block.cellbase.cell_outputs.first.capacity - target_block.reward - target_block.total_transaction_fee * 0.6 + target_block.total_transaction_fee * 0.4
+      expected_received_tx_fee = 101
       assert_changes -> { target_block.reload.received_tx_fee }, from: 0, to: expected_received_tx_fee do
         CkbSync::Persist.update_block_reward_info(current_block)
       end
@@ -715,6 +816,15 @@ module CkbSync
       target_block = Block.find_by(number: 1)
       current_block = Block.find_by(number: 12)
       miner_address = target_block.miner_address
+      CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+        CKB::Types::BlockReward.new(
+          total: "100000000000",
+          primary: "100000000000",
+          secondary: "0",
+          tx_fee: "0",
+          proposal_reward: "0"
+        )
+      )
       VCR.use_cassette("blocks/12") do
         assert_difference -> { miner_address.reload.pending_reward_blocks_count }, -1 do
           CkbSync::Persist.update_block_reward_info(current_block)

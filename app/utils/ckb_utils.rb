@@ -58,11 +58,7 @@ class CkbUtils
     blake160 = lock_script.args.first
     return if blake160.blank? || !CKB::Utils.valid_hex_string?(blake160)
 
-    target_pubkey_blake160_bin = [blake160[2..-1]].pack("H*")
-    type = ["01"].pack("H*")
-    bin_idx = ["P2PH".each_char.map { |c| c.ord.to_s(16) }.join].pack("H*")
-    payload = type + bin_idx + target_pubkey_blake160_bin
-    CKB::ConvertAddress.encode(Address::PREFIX_TESTNET, payload)
+    CKB::Address.new(blake160).generate
   end
 
   def self.use_default_lock_script?(lock_script)
@@ -74,11 +70,7 @@ class CkbUtils
   end
 
   def self.parse_address(address_hash)
-    decoded_prefix, data = CKB::ConvertAddress.decode(address_hash)
-    raise "Invalid prefix" if decoded_prefix != Address::PREFIX_TESTNET
-    raise "Invalid type/bin-idx" if data.slice(0..4) != ["0150325048"].pack("H*")
-
-    CKB::Utils.bin_to_hex(data.slice(5..-1))
+    CKB::Address.parse(address_hash)
   end
 
   def self.base_reward(block_number, epoch_number, cellbase = nil)
@@ -101,24 +93,7 @@ class CkbUtils
   end
 
   def self.ckb_transaction_fee(ckb_transaction)
-    cell_output_capacities = ckb_transaction.cell_outputs.sum(:capacity)
-    previous_cell_output_capacities = 0
-    return if CellInput.where(ckb_transaction: ckb_transaction, from_cell_base: false, previous_cell_output_id: nil).exists?
-
-    previous_cell_output_ids = CellInput.where(ckb_transaction: ckb_transaction, from_cell_base: false).select("previous_cell_output_id")
-
-    if previous_cell_output_ids.exists?
-      previous_cell_output_capacities = CellOutput.where(id: previous_cell_output_ids).sum(:capacity)
-    end
-
-    previous_cell_output_capacities.zero? ? 0 : (previous_cell_output_capacities - cell_output_capacities)
-  end
-
-  def self.transaction_fee(transaction)
-    cell_output_capacities = transaction.outputs.sum { |output| output.capacity.to_i }
-    cell_input_capacities = transaction.inputs.map(&method(:cell_input_capacity))
-
-    calculate_transaction_fee(cell_input_capacities, cell_output_capacities)
+    ckb_transaction.inputs.available.sum(:capacity) - ckb_transaction.outputs.available.sum(:capacity)
   end
 
   def self.get_unspent_cells(address_hash)
@@ -143,29 +118,6 @@ class CkbUtils
     end
 
     address_cell_consumed
-  end
-
-  def self.cell_input_capacity(cell_input)
-    cell = cell_input.previous_output.cell
-
-    if cell.blank?
-      0
-    else
-      previous_transaction_hash = cell.tx_hash
-      previous_output_index = cell.index.to_i
-
-      previous_output = CellOutput.find_by(tx_hash: previous_transaction_hash, cell_index: previous_output_index)
-      return if previous_output.blank?
-
-      previous_output.capacity
-    end
-  end
-
-  def self.calculate_transaction_fee(cell_input_capacities, cell_output_capacities)
-    return if cell_input_capacities.include?(nil)
-
-    input_capacities = cell_input_capacities.reduce(0, &:+)
-    input_capacities.zero? ? 0 : (input_capacities - cell_output_capacities)
   end
 
   def self.update_block_reward_status!(current_block)

@@ -18,7 +18,9 @@ Minitest::Reporters.use!
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
-DEFAULT_NODE_BLOCK_HASH = "0xe6471b6ba597dc7c0a7d5a5f19a9c67c0386358d21c31514ae617aeb4982acbb".freeze
+DEFAULT_NODE_BLOCK_HASH = "0xfe658f33e9e6c8f1a1830b0bfc01a0c014b8e38ec3d132337d5f622a0fa58288".freeze
+HAS_UNCLES_BLOCK_HASH = "0x8ce0d72cbf64745f4dfeafe142aa1cc5d0a2d5acc2303fb0dd4bd1603b7503df".freeze
+HAS_UNCLES_BLOCK_NUMBER = 4
 
 VCR.configure do |config|
   config.cassette_library_dir = "vcr_fixtures/vcr_cassettes"
@@ -72,7 +74,6 @@ def prepare_inauthentic_node_data(node_tip_block_number = 10)
         output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
         CkbSync::Persist.save_block(node_block, "inauthentic")
-        CkbSync::Persist.update_ckb_transaction_info_and_fee
       end
     end
   end
@@ -104,7 +105,10 @@ def format_node_block(node_block)
 end
 
 def format_node_block_commit_transaction(commit_transaction)
-  commit_transaction.instance_values.reject { |key, _value| key.in?(%w(inputs outputs)) }
+  tx = commit_transaction.instance_values.reject { |key, _value| key.in?(%w(inputs outputs)) }
+  tx["witnesses"] = tx["witnesses"].map(&:to_h).map(&:to_s)
+
+  tx
 end
 
 def format_node_block_cell_output(cell_output)
@@ -133,11 +137,11 @@ def build_display_input_from_node_input(input)
   end
 end
 
-def fake_node_block(block_hash = "0x3c07186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815062", number = 10)
-  json_block = "{\"header\":{\"difficulty\":\"0x1000\",\"epoch\":\"0\",\"hash\":\"#{block_hash}\",\"number\":\"#{number}\",\"parent_hash\":\"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\",\"proposals_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"seal\":{\"nonce\":\"3241241169132127032\",\"proof\":\"0xd8010000850800001c0d00005c100000983b0000ae3b0000724300003e480000145f00008864000079770000d1780000\"},\"timestamp\":\"1557482351075\",\"transactions_root\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"uncles_count\":0,\"uncles_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"version\":0,\"witnesses_root\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"},\"proposals\":[],
+def fake_node_block(block_hash = DEFAULT_NODE_BLOCK_HASH, number = 10)
+  json_block = "{\"header\":{\"dao\":\"0x01000000000000000000c16ff286230000a3a65e97fd03000057c138586f0000\",\"difficulty\":\"0x1000\",\"epoch\":\"0\",\"hash\":\"#{block_hash}\",\"number\":\"#{number}\",\"parent_hash\":\"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\",\"proposals_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"seal\":{\"nonce\":\"3241241169132127032\",\"proof\":\"0xd8010000850800001c0d00005c100000983b0000ae3b0000724300003e480000145f00008864000079770000d1780000\"},\"timestamp\":\"1557482351075\",\"transactions_root\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"uncles_count\":0,\"uncles_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"version\":0,\"witnesses_root\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"},\"proposals\":[],
     \"transactions\":[
-      {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"inputs\":[{\"args\":[\"0x0a00000000000000\"],\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 6}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\"},\"type\":null}],\"version\":0,\"witnesses\":[{\"data\":[\"0x94334bdda40b69bae067d84937aa6bbccf8acd0df6626d4b9ac70d4612a11933\",\"0x95006587a511a885b8657733f1613485845e0652\"]}]},
-      {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23\",\"inputs\":[{\"args\":[\"0x0a00000000000000\"],\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 5}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\"},\"type\":null}],\"version\":0,\"witnesses\":[]}
+      {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"inputs\":[{\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 6}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\",\"hash_type\":\"Data\"},\"type\":null}],\"version\":0,\"witnesses\":[{\"data\":[\"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c\",\"0x3954acece65096bfa81258983ddb83915fc56bd8\"]}]},
+      {\"deps\":[],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23\",\"inputs\":[{\"previous_output\":{\"block_hash\":null,\"cell\":{\"tx_hash\": \"0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"1\"}},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 5}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\",\"hash_type\":\"Data\"},\"type\":null}],\"version\":0,\"witnesses\":[]}
     ]
     ,\"uncles\":[]}"
   CKB::Types::Block.from_h(JSON.parse(json_block).deep_symbolize_keys)
@@ -150,7 +154,7 @@ def build_display_info_from_node_output(output)
   { id: cell_output.id, capacity: cell_output.capacity.to_s, address_hash: cell_output.address_hash }.stringify_keys
 end
 
-def set_default_lock_params(node_block: block, args: ["0xe6471b6ba597dc7c0a7d5a5f19a9c67c0386358d21c31514ae617aeb4982acbb"], code_hash: "0x#{SecureRandom.hex(32)}")
+def set_default_lock_params(node_block: block, args: ["0x#{SecureRandom.hex(20)}"], code_hash: ENV["CODE_HASH"])
   tx = node_block.transactions.first
   output = tx.outputs.first
   output.lock.instance_variable_set(:@args, args)
@@ -190,13 +194,13 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   cellbases_part2 = cellbases[2..8]
   cellbases_part3 = cellbases[9..-1]
   address1 = create(:address, :with_lock_script)
-  cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1) }
+  cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1, generated_by: cellbase) }
   address1.ckb_transactions << cellbases_part1
   address2 = create(:address, :with_lock_script)
-  cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2) }
+  cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2, generated_by: cellbase) }
   address2.ckb_transactions << cellbases_part2
   address3 = create(:address, :with_lock_script)
-  cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3) }
+  cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3, generated_by: cellbase) }
   address3.ckb_transactions << cellbases_part3
 
   return address1, address2, address3

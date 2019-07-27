@@ -12,7 +12,8 @@ class LockScript < ApplicationRecord
   def to_node_lock
     {
       args: args,
-      code_hash: code_hash
+      code_hash: code_hash,
+      hash_type: hash_type
     }
   end
 end
@@ -28,6 +29,7 @@ end
 #  address_id     :bigint
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
+#  hash_type      :string
 #
 # Indexes
 #

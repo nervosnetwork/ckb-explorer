@@ -83,7 +83,7 @@ module Api
       end
 
       test "should return error object when no available block found by block number" do
-        error_object = Api::V1::Exceptions::SuggestQueryResultNotFoundError.new
+        error_object = Api::V1::Exceptions::BlockNotFoundError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
         block = create(:block, status: "abandoned")
         valid_get api_v1_suggest_queries_url, params: { q: block.number }
@@ -141,7 +141,8 @@ module Api
 
       test "should return address when query key is a exist address hash" do
         address = create(:address, :with_lock_script)
-        response_json = AddressSerializer.new(address).serialized_json
+        presented_address = AddressPresenter.new(address)
+        response_json = AddressSerializer.new(presented_address).serialized_json
 
         valid_get api_v1_suggest_queries_url, params: { q: address.address_hash }
 
@@ -149,7 +150,7 @@ module Api
       end
 
       test "should return error object when no records found by a integer query key" do
-        error_object = Api::V1::Exceptions::SuggestQueryResultNotFoundError.new
+        error_object = Api::V1::Exceptions::BlockNotFoundError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         valid_get api_v1_suggest_queries_url, params: { q: 1 }
@@ -167,10 +168,10 @@ module Api
       end
 
       test "should return error object when no records found by a address query key" do
-        error_object = Api::V1::Exceptions::SuggestQueryResultNotFoundError.new
+        error_object = Api::V1::Exceptions::AddressNotFoundError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        valid_get api_v1_suggest_queries_url, params: { q: "ckt1q9gry5zg3pzs2q65ty0ylaf6c9er0hju5su49jdgry8n2c" }
+        valid_get api_v1_suggest_queries_url, params: { q: "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83" }
 
         assert_equal response_json, response.body
       end

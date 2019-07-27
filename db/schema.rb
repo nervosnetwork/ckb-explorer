@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_07_11_102928) do
+ActiveRecord::Schema.define(version: 2019_07_25_014432) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -71,6 +71,7 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.decimal "received_tx_fee", precision: 30, default: "0"
     t.integer "target_block_reward_status", default: 0
     t.binary "miner_lock_hash"
+    t.string "dao"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
@@ -84,6 +85,8 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.datetime "updated_at", null: false
     t.bigint "previous_cell_output_id"
     t.boolean "from_cell_base", default: false
+    t.decimal "block_id", precision: 30
+    t.index ["block_id"], name: "index_cell_inputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_inputs_on_ckb_transaction_id"
     t.index ["previous_cell_output_id"], name: "index_cell_inputs_on_previous_cell_output_id"
   end
@@ -99,9 +102,13 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.decimal "block_id", precision: 30
     t.binary "tx_hash"
     t.integer "cell_index"
+    t.decimal "generated_by_id", precision: 30
+    t.decimal "consumed_by_id", precision: 30
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
+    t.index ["consumed_by_id"], name: "index_cell_outputs_on_consumed_by_id"
+    t.index ["generated_by_id"], name: "index_cell_outputs_on_generated_by_id"
     t.index ["tx_hash", "cell_index"], name: "index_cell_outputs_on_tx_hash_and_cell_index"
   end
 
@@ -122,12 +129,11 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.integer "display_inputs_status", limit: 2, default: 0
     t.integer "transaction_fee_status", limit: 2, default: 0
     t.boolean "is_cellbase", default: false
-    t.index ["block_id"], name: "index_ckb_transactions_on_block_id"
+    t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["display_inputs_status"], name: "index_ckb_transactions_on_display_inputs_status"
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["transaction_fee_status"], name: "index_ckb_transactions_on_transaction_fee_status"
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
-    t.index ["tx_hash", "status"], name: "index_ckb_transactions_on_tx_hash_and_status"
   end
 
   create_table "lock_scripts", force: :cascade do |t|
@@ -137,6 +143,7 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.bigint "address_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "hash_type"
     t.index ["address_id"], name: "index_lock_scripts_on_address_id"
     t.index ["cell_output_id"], name: "index_lock_scripts_on_cell_output_id"
   end
@@ -157,6 +164,7 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.bigint "cell_output_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "hash_type"
     t.index ["cell_output_id"], name: "index_type_scripts_on_cell_output_id"
   end
 
@@ -180,6 +188,7 @@ ActiveRecord::Schema.define(version: 2019_07_11_102928) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "status", default: 0
+    t.string "dao"
     t.index ["block_hash", "block_id"], name: "index_uncle_blocks_on_block_hash_and_block_id", unique: true
     t.index ["block_id"], name: "index_uncle_blocks_on_block_id"
   end

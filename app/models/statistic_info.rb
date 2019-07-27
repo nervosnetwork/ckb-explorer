@@ -1,7 +1,5 @@
 class StatisticInfo
-  def initialize(difficulty_interval: nil, block_time_interval: nil, hash_rate_statistical_interval: nil)
-    @difficulty_interval = difficulty_interval.presence || ENV["DIFFICULTY_INTERVAL"]
-    @block_time_interval = block_time_interval.presence || ENV["BLOCK_TIME_INTERVAL"]
+  def initialize(hash_rate_statistical_interval: nil)
     @hash_rate_statistical_interval = hash_rate_statistical_interval.presence || ENV["HASH_RATE_STATISTICAL_INTERVAL"]
   end
 
@@ -21,19 +19,16 @@ class StatisticInfo
     CkbSync::Api.instance.get_current_epoch.difficulty.hex
   end
 
-  def average_block_time
-    ended_at = DateTime.now
-    started_at = ended_at - block_time_interval.to_i.hours
-    started_at_timestamp = started_at.strftime("%Q").to_i
-    ended_at_timestamp = ended_at.strftime("%Q").to_i
-    blocks = Block.created_after(started_at_timestamp).created_before(ended_at_timestamp).order(:timestamp)
+  def current_epoch_average_block_time
+    current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
+    blocks = Block.where(epoch: current_epoch_number).available.order(:timestamp)
     return if blocks.empty?
 
-    total_block_time(blocks) / blocks.size
+    total_block_time(blocks, current_epoch_number) / blocks.size
   end
 
-  def hash_rate
-    blocks = Block.available.recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval.to_i)
+  def hash_rate(block_number = tip_block_number)
+    blocks = Block.where("number <= ?", block_number).available.recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval.to_i)
     return if blocks.blank?
 
     total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty.hex }
@@ -52,10 +47,16 @@ class StatisticInfo
 
   private
 
-  attr_reader :difficulty_interval, :block_time_interval, :hash_rate_statistical_interval
+  attr_reader :hash_rate_statistical_interval
 
-  def total_block_time(blocks)
-    (blocks.last.timestamp - blocks.first.timestamp).to_d
+  def total_block_time(blocks, current_epoch_number)
+    prev_epoch_nubmer = [current_epoch_number.to_i - 1, 0].max
+    if prev_epoch_nubmer.zero?
+      prev_epoch_last_block = Block.find_by(number: 0)
+    else
+      prev_epoch_last_block = Block.where(epoch: prev_epoch_nubmer).available.recent.first
+    end
+    (blocks.last.timestamp - prev_epoch_last_block.timestamp).to_d
   end
 
   def n_l(n, l)

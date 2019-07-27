@@ -7,8 +7,6 @@ module Api
         address = Address.find_address!(params[:id])
 
         render json: json_response(address)
-      rescue ActiveRecord::RecordNotFound
-        raise Api::V1::Exceptions::AddressNotFoundError
       end
 
       private
@@ -28,7 +26,8 @@ module Api
         if QueryKeyUtils.valid_hex?(params[:id])
           LockHashSerializer.new(address)
         else
-          AddressSerializer.new(address)
+          presented_address = AddressPresenter.new(address)
+          AddressSerializer.new(presented_address)
         end
       end
     end
