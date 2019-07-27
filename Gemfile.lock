@@ -1,10 +1,10 @@
 GIT
   remote: https://github.com/nervosnetwork/ckb-sdk-ruby.git
-  revision: 4d49d6d7b8b581335a64ae2a4c4fa1ec11a863f3
-  branch: rc/v0.15.0
+  revision: 98d0779235d53675c9a6f609b17b7f4daf2327a9
+  branch: rc/v0.17.0
   specs:
-    ckb-sdk-ruby (0.15.0)
-      bitcoin-secp256k1 (~> 0.5.0)
+    ckb-sdk-ruby (0.17.0)
+      bitcoin-secp256k1 (~> 0.5.2)
       net-http-persistent (~> 3.0.0)
       rbnacl (~> 6.0, >= 6.0.1)
 
@@ -76,7 +76,7 @@ GEM
     arel (9.0.0)
     ast (2.4.0)
     awesome_print (1.8.0)
-    bitcoin-secp256k1 (0.5.1)
+    bitcoin-secp256k1 (0.5.2)
       ffi (>= 1.9.25)
     bootsnap (1.4.4)
       msgpack (~> 1.0)

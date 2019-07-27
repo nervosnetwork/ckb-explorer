@@ -128,13 +128,21 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#uncle_block_hashes should decodes packed string" do
-    VCR.use_cassette("blocks/2") do
+    CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+      CKB::Types::Epoch.new(
+        epoch_reward: "250000000000",
+        difficulty: "0x1000",
+        length: "2000",
+        number: "0",
+        start_number: "0"
+      )
+    )
+    VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
       SyncInfo.local_inauthentic_tip_block_number
-      create(:sync_info, name: "inauthentic_tip_block_number", value: 2)
-      block_hash = "0x2f8cd9eeb04e2c57c8192e77d6f5cf64630201fd23b1d7c0b89edd73033efbba"
-      node_block = CkbSync::Api.instance.get_block(block_hash)
+      create(:sync_info, name: "inauthentic_tip_block_number", value: HAS_UNCLES_BLOCK_NUMBER)
+      node_block = CkbSync::Api.instance.get_block(HAS_UNCLES_BLOCK_HASH)
       CkbSync::Persist.save_block(node_block, "inauthentic")
-      block = Block.find_by(block_hash: block_hash)
+      block = Block.find_by(block_hash: HAS_UNCLES_BLOCK_HASH)
       uncle_block_hashes = block.uncle_block_hashes
 
       assert_equal unpack_array_attribute(block, "uncle_block_hashes", block.uncles_count, ENV["DEFAULT_HASH_LENGTH"]), uncle_block_hashes
@@ -149,14 +157,22 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#proposals should decodes packed string" do
-    VCR.use_cassette("blocks/2") do
-      create(:sync_info, name: "inauthentic_tip_block_number", value: 2)
+    CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+      CKB::Types::Epoch.new(
+        epoch_reward: "250000000000",
+        difficulty: "0x1000",
+        length: "2000",
+        number: "0",
+        start_number: "0"
+      )
+    )
+    VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
+      create(:sync_info, name: "inauthentic_tip_block_number", value: HAS_UNCLES_BLOCK_NUMBER)
       SyncInfo.local_inauthentic_tip_block_number
-      block_hash = "0x2f8cd9eeb04e2c57c8192e77d6f5cf64630201fd23b1d7c0b89edd73033efbba"
-      node_block = CkbSync::Api.instance.get_block(block_hash)
+      node_block = CkbSync::Api.instance.get_block(HAS_UNCLES_BLOCK_HASH)
       node_block.instance_variable_set(:@proposals, ["0x98a4e0c18c"])
       CkbSync::Persist.save_block(node_block, "inauthentic")
-      block = Block.find_by(block_hash: block_hash)
+      block = Block.find_by(block_hash: HAS_UNCLES_BLOCK_HASH)
       proposals = block.proposals
 
       assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, ENV["DEFAULT_SHORT_HASH_LENGTH"]), proposals

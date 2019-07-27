@@ -47,7 +47,8 @@ class SuggestQuery
     address = Address.cached_find(query_key)
     raise Api::V1::Exceptions::AddressNotFoundError if address.blank?
 
-    AddressSerializer.new(address)
+    presented_address = AddressPresenter.new(address)
+    AddressSerializer.new(presented_address)
   end
 
   def find_by_hex

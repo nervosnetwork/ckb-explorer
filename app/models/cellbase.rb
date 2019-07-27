@@ -3,29 +3,35 @@ class Cellbase
 
   def initialize(block)
     @block = block
-    @target_block = block.target_block
-    @target_block_number = @target_block.present? ? block.target_block_number : 0
+    @target_block_number = @block.target_block.present? ? @block.target_block_number : 0
+    @cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(block.block_hash)
   end
 
   def proposal_reward
-    return if target_block_number < 1 || target_block.blank? || target_block.exist_uncalculated_tx?
+    return if block.genesis_block?
 
-    block.cellbase.cell_outputs.first.capacity - target_block.reward - target_block.total_transaction_fee * 0.6
+    cellbase_output_capacity_details.proposal_reward.to_i
   end
 
   def commit_reward
-    return if target_block_number < 1 || target_block.blank? || target_block.exist_uncalculated_tx?
+    return if block.genesis_block?
 
-    target_block.total_transaction_fee * 0.6
+    cellbase_output_capacity_details.tx_fee.to_i
   end
 
   def block_reward
-    return if target_block_number < 1 || target_block.blank? || target_block.exist_uncalculated_tx?
+    return if block.genesis_block?
 
-    CkbUtils.base_reward(target_block_number, target_block.epoch)
+    cellbase_output_capacity_details.primary.to_i
+  end
+
+  def secondary_reward
+    return if block.genesis_block?
+
+    cellbase_output_capacity_details.secondary.to_i
   end
 
   private
 
-  attr_reader :block, :target_block
+  attr_reader :cellbase_output_capacity_details, :block
 end

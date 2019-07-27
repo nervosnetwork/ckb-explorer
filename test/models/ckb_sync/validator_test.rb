@@ -38,34 +38,50 @@ module CkbSync
     end
 
     test "should change uncle blocks status to authentic when the existing block's status is authenticated" do
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
       local_block = nil
-      block_hash = "0x2f8cd9eeb04e2c57c8192e77d6f5cf64630201fd23b1d7c0b89edd73033efbba"
-      VCR.use_cassette("blocks/2") do
-        create(:sync_info, name: "authentic_tip_block_number", value: 2)
-        create(:sync_info, name: "inauthentic_tip_block_number", value: 2)
-        node_block = CkbSync::Api.instance.get_block(block_hash)
+      VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
+        create(:sync_info, name: "authentic_tip_block_number", value: HAS_UNCLES_BLOCK_NUMBER)
+        create(:sync_info, name: "inauthentic_tip_block_number", value: HAS_UNCLES_BLOCK_NUMBER)
+        node_block = CkbSync::Api.instance.get_block(HAS_UNCLES_BLOCK_HASH)
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
       end
-      VCR.use_cassette("blocks/2") do
+      VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
         assert_changes -> { local_block.reload.uncle_blocks.pluck(:status).uniq }, from: ["inauthentic"], to: ["authentic"] do
-          CkbSync::Validator.call(block_hash)
+          CkbSync::Validator.call(HAS_UNCLES_BLOCK_HASH)
         end
       end
     end
 
     test "should change uncle blocks status to abandoned when the existing block's status is inauthenticated" do
-      block_hash = "0x2f8cd9eeb04e2c57c8192e77d6f5cf64630201fd23b1d7c0b89edd73033efbba"
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
       local_block = nil
-      VCR.use_cassette("blocks/2") do
-        create(:sync_info, name: "authentic_tip_block_number", value: 2)
-        create(:sync_info, name: "inauthentic_tip_block_number", value: 2)
-        node_block = CkbSync::Api.instance.get_block(block_hash)
+      VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
+        create(:sync_info, name: "authentic_tip_block_number", value: HAS_UNCLES_BLOCK_NUMBER)
+        create(:sync_info, name: "inauthentic_tip_block_number", value: HAS_UNCLES_BLOCK_NUMBER)
+        node_block = CkbSync::Api.instance.get_block(HAS_UNCLES_BLOCK_HASH)
         local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
       end
 
-      VCR.use_cassette("blocks/2") do
+      VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
         assert_changes -> { local_block.reload.uncle_blocks.pluck(:status).uniq }, from: ["inauthentic"], to: ["authentic"] do
-          CkbSync::Validator.call(block_hash)
+          CkbSync::Validator.call(HAS_UNCLES_BLOCK_HASH)
         end
       end
     end
