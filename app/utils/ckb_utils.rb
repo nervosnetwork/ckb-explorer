@@ -58,11 +58,7 @@ class CkbUtils
     blake160 = lock_script.args.first
     return if blake160.blank? || !CKB::Utils.valid_hex_string?(blake160)
 
-    target_pubkey_blake160_bin = [blake160[2..-1]].pack("H*")
-    type = ["01"].pack("H*")
-    bin_idx = ["P2PH".each_char.map { |c| c.ord.to_s(16) }.join].pack("H*")
-    payload = type + bin_idx + target_pubkey_blake160_bin
-    CKB::ConvertAddress.encode(Address::PREFIX_TESTNET, payload)
+    CKB::Address.new(blake160).generate
   end
 
   def self.use_default_lock_script?(lock_script)
@@ -74,11 +70,7 @@ class CkbUtils
   end
 
   def self.parse_address(address_hash)
-    decoded_prefix, data = CKB::ConvertAddress.decode(address_hash)
-    raise "Invalid prefix" if decoded_prefix != Address::PREFIX_TESTNET
-    raise "Invalid type/bin-idx" if data.slice(0..4) != ["0150325048"].pack("H*")
-
-    CKB::Utils.bin_to_hex(data.slice(5..-1))
+    CKB::Address.parse(address_hash)
   end
 
   def self.base_reward(block_number, epoch_number, cellbase = nil)

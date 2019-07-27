@@ -26,7 +26,8 @@ module Api
         if QueryKeyUtils.valid_hex?(params[:id])
           LockHashSerializer.new(address)
         else
-          AddressSerializer.new(address)
+          presented_address = AddressPresenter.new(address)
+          AddressSerializer.new(presented_address)
         end
       end
     end

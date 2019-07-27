@@ -51,7 +51,11 @@ class StatisticInfo
 
   def total_block_time(blocks, current_epoch_number)
     prev_epoch_nubmer = [current_epoch_number.to_i - 1, 0].max
-    prev_epoch_last_block = Block.where(epoch: prev_epoch_nubmer).available.recent.first
+    if prev_epoch_nubmer.zero?
+      prev_epoch_last_block = Block.find_by(number: 0)
+    else
+      prev_epoch_last_block = Block.where(epoch: prev_epoch_nubmer).available.recent.first
+    end
     (blocks.last.timestamp - prev_epoch_last_block.timestamp).to_d
   end
 

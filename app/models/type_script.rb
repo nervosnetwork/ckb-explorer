@@ -8,7 +8,8 @@ class TypeScript < ApplicationRecord
   def to_node_type
     {
       args: args,
-      code_hash: code_hash
+      code_hash: code_hash,
+      hash_type: hash_type
     }
   end
 end

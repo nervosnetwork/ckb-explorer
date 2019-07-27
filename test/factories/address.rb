@@ -1,6 +1,10 @@
 FactoryBot.define do
   factory :address do
-    address_hash { CKB::Address.new("0x#{SecureRandom.hex(32)}").generate }
+    address_hash do
+      privkey = SecureRandom.hex(33)
+      pubkey = CKB::Key.pubkey(privkey)
+      CKB::Address.from_pubkey(pubkey).generate
+    end
     balance { 0 }
     cell_consumed { 0 }
     ckb_transactions_count { 0 }

@@ -55,12 +55,14 @@ class StatisticInfoTest < ActiveSupport::TestCase
 
     statistic_info = StatisticInfo.new
     ended_at = DateTime.now
-    10.times do |num|
-      create(:block, :with_block_hash, timestamp: (ended_at - 23.hours).strftime("%Q").to_i + num)
-    end
     current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
+    create(:block, :with_block_hash, number: 0, epoch: current_epoch_number)
+    10.times do |num|
+      create(:block, :with_block_hash, timestamp: (ended_at - 23.hours).strftime("%Q").to_i + num, epoch: current_epoch_number)
+    end
+
     blocks = Block.where(epoch: current_epoch_number).order(:timestamp)
-    prev_epoch_last_block = Block.where(epoch: current_epoch_number).available.recent.first
+    prev_epoch_last_block = Block.find_by(number: 0)
     total_block_time = (blocks.last.timestamp - prev_epoch_last_block.timestamp).to_d
 
     average_block_time = total_block_time.to_d / blocks.size
