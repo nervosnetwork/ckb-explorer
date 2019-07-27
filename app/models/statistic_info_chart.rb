@@ -29,7 +29,6 @@ class StatisticInfoChart
 
   def calculate_hash_rate
     max_block_number = Block.available.maximum(:number).to_i
-    last_epoch0_block_number = Block.available.where(epoch: 0).recent.first.number.to_i
     from = Rails.cache.fetch("hash_rate_from") { last_epoch0_block_number }
     to = Rails.cache.fetch("hash_rate_to") { max_block_number }
 
@@ -57,4 +56,13 @@ class StatisticInfoChart
   private
 
   attr_reader :statistic_info
+
+  def last_epoch0_block_number
+    current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
+    if current_epoch_number > 0
+      Block.available.where(epoch: 0).recent.first.number.to_i
+    else
+      Block.available.recent.last.number.to_i
+    end
+  end
 end
