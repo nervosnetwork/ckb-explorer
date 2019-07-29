@@ -537,6 +537,113 @@ module CkbSync
       end
     end
 
+    test "should change the existing block status to abandoned when it is invalid" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      VCR.use_cassette("blocks/10") do
+        node_data_processor.call
+
+        assert_equal "abandoned", local_block.reload.status
+      end
+    end
+
+    test "should delete all uncle blocks under the existing block when it is invalid" do
+      prepare_inauthentic_node_data(HAS_UNCLES_BLOCK_NUMBER)
+      local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+      assert_not_empty local_block.uncle_blocks
+
+      VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
+        assert_changes -> { local_block.reload.uncle_blocks.count }, from: local_block.uncle_blocks.count, to: 0 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should delete all ckb transactions under the existing block when it is invalid" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+      assert_not_empty local_block.ckb_transactions
+
+      VCR.use_cassette("blocks/10") do
+        assert_changes -> { local_block.reload.ckb_transactions.count }, from: local_block.ckb_transactions.count, to: 0 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should delete all cell inputs under the existing block when it is invalid" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+      assert_not_empty local_block.cell_inputs
+
+      VCR.use_cassette("blocks/10") do
+        assert_changes -> { local_block.reload.cell_inputs.count }, from: local_block.cell_inputs.count, to: 0 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should delete all cell outputs under the existing block when it is invalid" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+      assert_not_empty local_block.cell_outputs
+
+      VCR.use_cassette("blocks/10") do
+        assert_changes -> { local_block.reload.cell_outputs.count }, from: local_block.cell_outputs.count, to: 0 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should delete all lock script under the existing block when it is invalid" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      origin_lock_scripts = local_block.cell_outputs.map(&:lock_script)
+
+      assert_not_empty origin_lock_scripts
+
+      VCR.use_cassette("blocks/10") do
+        assert_changes -> { local_block.reload.cell_outputs.map(&:lock_script).count }, from: origin_lock_scripts.count, to: 0 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should delete all type script under the existing block when it is invalid" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      origin_type_scripts = local_block.cell_outputs.map(&:type_script)
+
+      assert_not_empty origin_type_scripts
+
+      VCR.use_cassette("blocks/10") do
+        assert_changes -> { local_block.reload.cell_outputs.map(&:type_script).count }, from: origin_type_scripts.count, to: 0 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should do nothing when target block is not exist" do
+      prepare_inauthentic_node_data
+      local_block = Block.find_by(number: 10)
+      local_block.update(number: 100_000_000)
+
+      VCR.use_cassette("blocks/10", :record => :new_episodes) do
+        assert_nil node_data_processor.call
+      end
+    end
+
     private
 
     def node_data_processor
