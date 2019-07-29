@@ -16,6 +16,8 @@ module CkbSync
       update_tx_fee_related_data(local_block)
       calculate_tx_fee(local_block)
 
+      update_pending_rewards(local_block.miner_address)
+
       local_block
     end
 
@@ -235,6 +237,10 @@ module CkbSync
       transaction_fee = CkbUtils.ckb_transaction_fee(ckb_transaction)
       ckb_transaction.transaction_fee = transaction_fee
       ckb_transaction.save!
+    end
+
+    def update_pending_rewards(miner_address)
+      CkbUtils.update_current_block_miner_address_pending_rewards(miner_address)
     end
   end
 end
