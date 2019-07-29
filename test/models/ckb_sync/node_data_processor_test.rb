@@ -400,6 +400,20 @@ module CkbSync
       end
     end
 
+    test "#call should update current block's miner address pending reward blocks count" do
+      prepare_inauthentic_node_data(11)
+      VCR.use_cassette("blocks/12") do
+        node_block = CkbSync::Api.instance.get_block("0x4f1d958f0601d04d1bd88634fac4bcd65ffc8a42e8b0c50d065e70ba5e922840")
+        cellbase = node_block.transactions.first
+        lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+        miner_address = Address.find_or_create_address(lock_script)
+
+        assert_difference -> { miner_address.reload.pending_reward_blocks_count }, 1 do
+          node_data_processor.call(node_block)
+        end
+      end
+    end
+
     private
 
     def node_data_processor
