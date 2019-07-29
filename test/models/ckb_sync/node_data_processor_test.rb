@@ -2,16 +2,16 @@ require "test_helper"
 
 module CkbSync
   class NodeDataProcessorTest < ActiveSupport::TestCase
-    test "#call should create one block" do
+    test "#process_block should create one block" do
       assert_difference -> { Block.count }, 1 do
         VCR.use_cassette("blocks/10") do
           node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
-          node_data_processor.call(node_block)
+          node_data_processor.process_block(node_block)
         end
       end
     end
 
-    test "#call created block's attribute value should equal with the node block's attribute value" do
+    test "#process_block created block's attribute value should equal with the node block's attribute value" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           epoch_reward: "250000000000",
@@ -23,7 +23,7 @@ module CkbSync
       )
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
 
         node_block = node_block.to_h.deep_stringify_keys
         formatted_node_block = format_node_block(node_block)
@@ -43,17 +43,17 @@ module CkbSync
       end
     end
 
-    test "#call created block's proposals_count should equal with the node block's proposals size" do
+    test "#process_block created block's proposals_count should equal with the node block's proposals size" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
 
         assert_equal node_block.proposals.size, local_block.proposals_count
       end
     end
 
-    test "#call should generate miner's address when cellbase has witnesses" do
+    test "#process_block should generate miner's address when cellbase has witnesses" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           epoch_reward: "250000000000",
@@ -65,7 +65,7 @@ module CkbSync
       )
       VCR.use_cassette("blocks/11") do
         node_block = CkbSync::Api.instance.get_block("0xd895e3fd670fd499567ce219cf8a8e6da27a91e1679ed01088fdcd1b072d3c4c")
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         expected_miner_hash = CkbUtils.miner_hash(node_block.transactions.first)
         expected_miner_address = Address.find_by(address_hash: expected_miner_hash)
 
@@ -74,7 +74,7 @@ module CkbSync
       end
     end
 
-    test "#call should generate miner's lock when cellbase has witnesses" do
+    test "#process_block should generate miner's lock when cellbase has witnesses" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           epoch_reward: "250000000000",
@@ -87,24 +87,24 @@ module CkbSync
       VCR.use_cassette("blocks/11") do
         node_block = CkbSync::Api.instance.get_block("0xd895e3fd670fd499567ce219cf8a8e6da27a91e1679ed01088fdcd1b072d3c4c")
         expected_miner_lock_hash = CkbUtils.miner_lock_hash(node_block.transactions.first)
-        block = node_data_processor.call(node_block)
+        block = node_data_processor.process_block(node_block)
 
         assert_equal expected_miner_lock_hash, block.miner_lock_hash
       end
     end
 
-    test "#call generated block's total_cell_capacity should equal to the sum of transactions output capacity" do
+    test "#process_block generated block's total_cell_capacity should equal to the sum of transactions output capacity" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         expected_total_capacity = CkbUtils.total_cell_capacity(node_block.transactions)
 
         assert_equal expected_total_capacity, local_block.total_cell_capacity
       end
     end
 
-    test "#call generated block should has correct reward" do
+    test "#process_block generated block should has correct reward" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           epoch_reward: "250000000000",
@@ -117,40 +117,40 @@ module CkbSync
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
 
         assert_equal CkbUtils.base_reward(node_block.header.number, node_block.header.epoch).to_i, local_block.reward
       end
     end
 
-    test "#call generated block should has correct cell consumed" do
+    test "#process_block generated block should has correct cell consumed" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
 
         assert_equal CkbUtils.block_cell_consumed(node_block.transactions), local_block.cell_consumed
       end
     end
 
-    test "#call should create uncle_blocks" do
+    test "#process_block should create uncle_blocks" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         node_block_uncle_blocks = node_block.uncles
 
         assert_difference -> { UncleBlock.count }, node_block_uncle_blocks.size do
-          node_data_processor.call(node_block)
+          node_data_processor.process_block(node_block)
         end
       end
     end
 
-    test "#call created uncle_block's attribute value should equal with the node uncle_block's attribute value" do
+    test "#process_block created uncle_block's attribute value should equal with the node uncle_block's attribute value" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         node_uncle_blocks = node_block.uncles.map { |uncle| uncle.to_h.deep_stringify_keys }
         formatted_node_uncle_blocks = node_uncle_blocks.map { |uncle_block| format_node_block(uncle_block).sort }
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         local_uncle_blocks =
           local_block.uncle_blocks.map do |uncle_block|
             uncle_block =
@@ -170,13 +170,13 @@ module CkbSync
       end
     end
 
-    test "#call created unlce_block's proposals_count should equal with the node uncle_block's proposals size" do
+    test "#process_block created unlce_block's proposals_count should equal with the node uncle_block's proposals size" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         node_uncle_blocks = node_block.uncles
         node_uncle_blocks_count = node_uncle_blocks.reduce(0) { |memo, uncle_block| memo + uncle_block.proposals.size }
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         local_uncle_blocks = local_block.uncle_blocks
         local_uncle_blocks_count = local_uncle_blocks.reduce(0) { |memo, uncle_block| memo + uncle_block.proposals_count }
 
@@ -184,34 +184,34 @@ module CkbSync
       end
     end
 
-    test "#call should create ckb_transactions" do
+    test "#process_block should create ckb_transactions" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         node_block_transactions = node_block.transactions
 
         assert_difference -> { CkbTransaction.count }, node_block_transactions.count do
-          node_data_processor.call(node_block)
+          node_data_processor.process_block(node_block)
         end
       end
     end
 
-    test "#call created block's ckb_transactions_count should equal to transactions count" do
+    test "#process_block created block's ckb_transactions_count should equal to transactions count" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
 
         assert_equal node_block.transactions.size, local_block.ckb_transactions_count
       end
     end
 
-    test "#call created ckb_transaction's attribute value should equal with the node commit_transaction's attribute value" do
+    test "#process_block created ckb_transaction's attribute value should equal with the node commit_transaction's attribute value" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         node_block_transactions = node_block.transactions
         formatted_node_block_transactions = node_block_transactions.map { |commit_transaction| format_node_block_commit_transaction(commit_transaction).sort }
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         local_ckb_transactions =
           local_block.ckb_transactions.map do |ckb_transaction|
             ckb_transaction = ckb_transaction.attributes.select { |attribute| attribute.in?(%w(tx_hash deps version witnesses)) }
@@ -224,14 +224,14 @@ module CkbSync
       end
     end
 
-    test "#call should create cell_inputs" do
+    test "#process_block should create cell_inputs" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         node_block_transactions = node_block.transactions
         node_cell_inputs_count = node_block_transactions.reduce(0) { |memo, commit_transaction| memo + commit_transaction.inputs.size }
 
         assert_difference -> { CellInput.count }, node_cell_inputs_count do
-          node_data_processor.call(node_block)
+          node_data_processor.process_block(node_block)
         end
       end
     end
@@ -242,7 +242,7 @@ module CkbSync
         node_transactions = node_block.transactions.map(&:to_h).map(&:deep_stringify_keys)
         node_block_cell_inputs = node_transactions.map { |commit_transaction| commit_transaction["inputs"].map(&:sort) }.flatten
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         local_block_transactions = local_block.ckb_transactions
         local_block_cell_inputs = local_block_transactions.map { |commit_transaction| commit_transaction.cell_inputs.map { |cell_input| cell_input.attributes.select { |attribute| attribute.in?(%(previous_output since)) }.sort } }.flatten
 
@@ -250,25 +250,25 @@ module CkbSync
       end
     end
 
-    test "#call should create cell_outputs" do
+    test "#process_block should create cell_outputs" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         node_block_transactions = node_block.transactions
         node_cell_outputs_count = node_block_transactions.reduce(0) { |memo, commit_transaction| memo + commit_transaction.outputs.size }
 
         assert_difference -> { CellOutput.count }, node_cell_outputs_count do
-          node_data_processor.call(node_block)
+          node_data_processor.process_block(node_block)
         end
       end
     end
 
-    test "#call created cell_outputs's attribute value should equal with the node cell_outputs's attribute value" do
+    test "#process_block created cell_outputs's attribute value should equal with the node cell_outputs's attribute value" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         node_block_transactions = node_block.transactions
         node_block_cell_outputs = node_block_transactions.map { |commit_transaction| commit_transaction.to_h.deep_stringify_keys["outputs"].map { |output| format_node_block_cell_output(output).sort } }.flatten
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         local_block_transactions = local_block.ckb_transactions
         local_block_cell_outputs = local_block_transactions.map { |commit_transaction|
           commit_transaction.cell_outputs.map do |cell_output|
@@ -282,46 +282,46 @@ module CkbSync
       end
     end
 
-    test "#call should create addresses for cell_output" do
+    test "#process_block should create addresses for cell_output" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         locks = node_block.transactions.map(&:outputs).flatten.map(&:lock)
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         expected_lock_address = locks.map { |lock| Address.find_or_create_address(lock) }
 
         assert_equal expected_lock_address, local_block.cell_outputs.map(&:address)
       end
     end
 
-    test "#call should create addresses for ckb transaction" do
+    test "#process_block should create addresses for ckb transaction" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         locks = node_block.transactions.map(&:outputs).flatten.map(&:lock)
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         expected_lock_address = locks.map { |lock| Address.find_or_create_address(lock) }
 
         assert_equal expected_lock_address, local_block.ckb_transactions.map(&:addresses).flatten
       end
     end
 
-    test "#call should create lock_scripts for output" do
+    test "#process_block should create lock_scripts for output" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         expected_lock_scripts = node_block.transactions.map(&:outputs).flatten.map(&:lock).map(&:to_h)
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         actual_lock_scripts = local_block.cell_outputs.map { |cell_output| CKB::Types::Script.new(code_hash: cell_output.lock_script.code_hash, args: cell_output.lock_script.args) }.map(&:to_h)
 
         assert_equal expected_lock_scripts, actual_lock_scripts
       end
     end
 
-    test "#call created lock_script's attribute value should equal with the node lock_script's attribute value" do
+    test "#process_block created lock_script's attribute value should equal with the node lock_script's attribute value" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         node_block_transactions = node_block.transactions
         node_block_lock_scripts = node_block_transactions.map { |commit_transaction| commit_transaction.to_h.deep_stringify_keys["outputs"].map { |output| output["lock"] }.sort }.flatten
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         local_block_transactions = local_block.ckb_transactions
         local_block_lock_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.lock_script.attributes.select { |attribute| attribute.in?(%w(args code_hash hash_type)) } }.sort }.flatten
 
@@ -329,7 +329,7 @@ module CkbSync
       end
     end
 
-    test "#call should create type_scripts" do
+    test "#process_block should create type_scripts" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         node_block_transactions = node_block.transactions
@@ -337,19 +337,19 @@ module CkbSync
         node_cell_outputs_with_type_script = node_cell_outputs.select { |cell_output| cell_output.type.present? }
 
         assert_difference -> { TypeScript.count }, node_cell_outputs_with_type_script.size do
-          node_data_processor.call(node_block)
+          node_data_processor.process_block(node_block)
         end
       end
     end
 
-    test "#call created type_script's attribute value should equal with the node type_script's attribute value" do
+    test "#process_block created type_script's attribute value should equal with the node type_script's attribute value" do
       VCR.use_cassette("blocks/10") do
         node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
         fake_node_block_with_type_script(node_block)
         node_block_transactions = node_block.transactions
         node_block_type_scripts = node_block_transactions.map { |commit_transaction| commit_transaction.to_h.deep_stringify_keys["outputs"].map { |output| output["type"] }.sort }.flatten
 
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
         local_block_transactions = local_block.ckb_transactions
         local_block_type_scripts = local_block_transactions.map { |commit_transaction| commit_transaction.cell_outputs.map { |cell_output| cell_output.type_script.attributes.select { |attribute| attribute.in?(%w(args code_hash hash_type)) } }.sort }.flatten
 
@@ -357,7 +357,7 @@ module CkbSync
       end
     end
 
-    test "#call should update block's total transaction fee" do
+    test "#process_block should update block's total transaction fee" do
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/10") do
         block = create(:block, :with_block_hash)
@@ -365,13 +365,13 @@ module CkbSync
         ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
         create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block)
         create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
 
         assert_equal 10**8 * 3, local_block.reload.total_transaction_fee
       end
     end
 
-    test "#call should update cell status" do
+    test "#process_block should update cell status" do
       VCR.use_cassette("blocks/10") do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
         block = create(:block, :with_block_hash)
@@ -381,12 +381,12 @@ module CkbSync
         create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
 
         assert_difference -> { CellOutput.dead.count }, 2 do
-          node_data_processor.call(node_block)
+          node_data_processor.process_block(node_block)
         end
       end
     end
 
-    test "#call should fill all cell input's previous cell output id without cellbase's cell input" do
+    test "#process_block should fill all cell input's previous cell output id without cellbase's cell input" do
       VCR.use_cassette("blocks/10") do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
         block = create(:block, :with_block_hash)
@@ -394,13 +394,13 @@ module CkbSync
         ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
         create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block)
         create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
-        local_block = node_data_processor.call(node_block)
+        local_block = node_data_processor.process_block(node_block)
 
         assert_empty local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil)
       end
     end
 
-    test "#call should update current block's miner address pending reward blocks count" do
+    test "#process_block should update current block's miner address pending reward blocks count" do
       prepare_inauthentic_node_data(11)
       VCR.use_cassette("blocks/12") do
         node_block = CkbSync::Api.instance.get_block("0x4f1d958f0601d04d1bd88634fac4bcd65ffc8a42e8b0c50d065e70ba5e922840")
@@ -409,7 +409,7 @@ module CkbSync
         miner_address = Address.find_or_create_address(lock_script)
 
         assert_difference -> { miner_address.reload.pending_reward_blocks_count }, 1 do
-          node_data_processor.call(node_block)
+          node_data_processor.process_block(node_block)
         end
       end
     end

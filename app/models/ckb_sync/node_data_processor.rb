@@ -1,6 +1,6 @@
 module CkbSync
   class NodeDataProcessor
-    def call(node_block)
+    def process_block(node_block)
       local_block = build_block(node_block)
 
       node_block.uncles.each do |uncle_block|
