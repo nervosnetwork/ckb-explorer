@@ -13,12 +13,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
     should have_many(:cell_outputs)
   end
 
-  context "validations" do
-    should validate_presence_of(:status)
-    should validate_presence_of(:display_inputs_status)
-    should validate_presence_of(:transaction_fee_status)
-  end
-
   test "#code_hash should decodes packed string" do
     VCR.use_cassette("blocks/10") do
       SyncInfo.local_inauthentic_tip_block_number
