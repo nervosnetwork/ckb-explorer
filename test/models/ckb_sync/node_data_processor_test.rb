@@ -414,6 +414,129 @@ module CkbSync
       end
     end
 
+    test "cellbase's display inputs should contain target block number" do
+      prepare_inauthentic_node_data(11)
+      CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+        CKB::Types::BlockReward.new(
+          total: "100000000000",
+          primary: "100000000000",
+          secondary: "0",
+          tx_fee: "0",
+          proposal_reward: "0"
+        )
+      )
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
+      VCR.use_cassette("blocks/12") do
+        assert_difference "Block.count", 1 do
+          node_block = CkbSync::Api.instance.get_block("0x4f1d958f0601d04d1bd88634fac4bcd65ffc8a42e8b0c50d065e70ba5e922840")
+          node_data_processor.process_block(node_block)
+          block = Block.last
+          cellbase = Cellbase.new(block)
+          expected_cellbase_display_inputs = [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
+
+          assert_equal expected_cellbase_display_inputs, block.cellbase.display_inputs
+        end
+      end
+    end
+
+    test ".save_block generated transactions should has correct display output" do
+      VCR.use_cassette("blocks/10") do
+        CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+          CKB::Types::BlockReward.new(
+            total: "100000000000",
+            primary: "100000000000",
+            secondary: "0",
+            tx_fee: "0",
+            proposal_reward: "0"
+          )
+        )
+        node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+        local_block = node_data_processor.process_block(node_block)
+
+        local_ckb_transactions = local_block.ckb_transactions
+        local_block_cell_outputs = local_ckb_transactions.map(&:display_outputs).flatten
+        output = local_ckb_transactions.first.outputs.order(:id).first
+        cellbase = Cellbase.new(local_block)
+        expected_display_outputs = [{ id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward }]
+
+        assert_equal expected_display_outputs, local_block_cell_outputs
+      end
+    end
+
+    test "genesis block's cellbase display outputs should have multiple cells" do
+      CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+        CKB::Types::BlockReward.new(
+          total: "100000000000",
+          primary: "100000000000",
+          secondary: "0",
+          tx_fee: "0",
+          proposal_reward: "0"
+        )
+      )
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
+      VCR.use_cassette("genesis_block") do
+        node_block = CkbSync::Api.instance.get_block_by_number(0)
+        node_data_processor.process_block(node_block)
+
+        block = Block.last
+        cellbase = Cellbase.new(block)
+        expected_cellbase_display_outputs = block.cellbase.cell_outputs.map { |cell_output| { id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward } }
+
+        assert_equal expected_cellbase_display_outputs, block.cellbase.display_outputs
+      end
+    end
+
+    test "cellbase's display outputs should contain block reward commit reward, proposal reward and secondary reward" do
+      prepare_inauthentic_node_data(11)
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          epoch_reward: "250000000000",
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
+      CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+        CKB::Types::BlockReward.new(
+          total: "100000000000",
+          primary: "100000000000",
+          secondary: "0",
+          tx_fee: "0",
+          proposal_reward: "0"
+        )
+      )
+      VCR.use_cassette("blocks/12") do
+        assert_difference "Block.count", 1 do
+          node_block = CkbSync::Api.instance.get_block("0x4f1d958f0601d04d1bd88634fac4bcd65ffc8a42e8b0c50d065e70ba5e922840")
+          node_data_processor.process_block(node_block)
+
+          block = Block.last
+          cellbase = Cellbase.new(block)
+          cell_output = block.cellbase.cell_outputs.first
+          expected_cellbase_display_outputs = [{ id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, block_reward: cellbase.block_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward }]
+
+          assert_equal expected_cellbase_display_outputs, block.cellbase.display_outputs
+        end
+      end
+    end
+
     private
 
     def node_data_processor
