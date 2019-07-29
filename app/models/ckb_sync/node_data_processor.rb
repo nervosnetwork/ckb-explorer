@@ -7,9 +7,14 @@ module CkbSync
         build_uncle_block(uncle_block, local_block)
       end
 
-      ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
-      local_block.ckb_transactions_count = ckb_transactions.size
-      local_block.save
+      ApplicationRecord.transaction do
+        ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
+        local_block.ckb_transactions_count = ckb_transactions.size
+        local_block.save
+      end
+
+      update_tx_fee_related_data(local_block)
+      calculate_tx_fee(local_block)
 
       local_block
     end
@@ -180,6 +185,56 @@ module CkbSync
         code_hash: type_script.code_hash,
         hash_type: type_script.hash_type
       )
+    end
+
+    def update_tx_fee_related_data(lock_block)
+      ApplicationRecord.transaction do
+        lock_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_each do |cell_input|
+          ckb_transaction = cell_input.ckb_transaction
+          previous_cell_output = cell_input.previous_cell_output
+          address = previous_cell_output.address
+
+          link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
+          link_payer_address_to_ckb_transaction(ckb_transaction, address)
+
+          update_previous_cell_output_status(ckb_transaction, previous_cell_output)
+          update_address_balance_and_ckb_transactions_count(address)
+        end
+      end
+    end
+
+    def link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
+      cell_input.update!(previous_cell_output_id: previous_cell_output.id)
+    end
+
+    def link_payer_address_to_ckb_transaction(ckb_transaction, address)
+      ckb_transaction.addresses << address
+    end
+
+    def update_previous_cell_output_status(ckb_transaction, previous_cell_output)
+      previous_cell_output.update!(consumed_by: ckb_transaction, status: :dead)
+    end
+
+    def update_address_balance_and_ckb_transactions_count(address)
+      address.balance = address.cell_outputs.live.sum(:capacity)
+      address.ckb_transactions_count = address.ckb_transactions.available.distinct.count
+      address.save!
+    end
+
+    def calculate_tx_fee(local_block)
+      ckb_transactions = local_block.ckb_transactions.where(is_cellbase: false)
+
+      ApplicationRecord.transaction do
+        ckb_transactions.each(&method(:update_transaction_fee))
+        local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
+        local_block.save!
+      end
+    end
+
+    def update_transaction_fee(ckb_transaction)
+      transaction_fee = CkbUtils.ckb_transaction_fee(ckb_transaction)
+      ckb_transaction.transaction_fee = transaction_fee
+      ckb_transaction.save!
     end
   end
 end
