@@ -10,8 +10,8 @@ class CkbTransaction < ApplicationRecord
   belongs_to :block
   has_many :account_books
   has_many :addresses, through: :account_books
-  has_many :cell_inputs
-  has_many :cell_outputs
+  has_many :cell_inputs, dependent: :delete_all
+  has_many :cell_outputs, dependent: :delete_all
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
 

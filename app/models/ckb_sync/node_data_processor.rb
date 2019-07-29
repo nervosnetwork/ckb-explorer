@@ -1,5 +1,17 @@
 module CkbSync
   class NodeDataProcessor
+    def call
+      local_tip_block = Block.recent.first
+      target_block = CkbSync::Api.instance.get_block_by_number(local_tip_block.number + 1)
+      return if target_block.blank?
+
+      if !forked?(target_block, local_tip_block)
+        process_block(target_block)
+      else
+        local_tip_block.invalid!
+      end
+    end
+
     def process_block(node_block)
       local_block = build_block(node_block)
 
@@ -22,6 +34,10 @@ module CkbSync
     end
 
     private
+
+    def forked?(target_block, local_tip_block)
+      target_block.header.parent_hash != local_tip_block.block_hash
+    end
 
     def uncle_block_hashes(node_block_uncles)
       node_block_uncles.map { |uncle| uncle.to_h.dig("header", "hash") }

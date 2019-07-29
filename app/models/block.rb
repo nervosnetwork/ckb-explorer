@@ -88,6 +88,12 @@ class Block < ApplicationRecord
     Rails.cache.delete([self.class.name, number])
   end
 
+  def invalid!
+    update!(status: "abandoned")
+    uncle_blocks.delete_all
+    ckb_transactions.destroy_all
+  end
+
   private
 
   def verified?(node_block_hash)
