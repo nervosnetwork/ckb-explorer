@@ -654,6 +654,32 @@ module CkbSync
       end
     end
 
+    test "should update abandoned block's contained address transactions count" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+      VCR.use_cassette("blocks/10") do
+        assert_difference -> { local_block.reload.contained_addresses.map(&:ckb_transactions).flatten.count }, -1 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should update abandoned block's contained address's balance" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      ckb_transaction_ids = local_block.ckb_transactions.pluck(:id)
+      balance_diff = CellOutput.where(ckb_transaction_id: ckb_transaction_ids).sum(:capacity)
+
+      VCR.use_cassette("blocks/10") do
+        assert_difference -> { local_block.reload.contained_addresses.sum(:balance) }, -balance_diff do
+          node_data_processor.call
+        end
+      end
+    end
+
     private
 
     def node_data_processor
