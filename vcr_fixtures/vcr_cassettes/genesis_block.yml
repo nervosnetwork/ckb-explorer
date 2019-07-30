@@ -74,4 +74,41 @@ http_interactions:
 '
     http_version:
   recorded_at: Mon, 22 Jul 2019 05:43:25 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"get_epoch_by_number","params":["0"]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '139'
+      Date:
+      - Tue, 30 Jul 2019 02:22:15 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":{"difficulty":"0x9292","epoch_reward":"125000000000000","length":"1250","number":"0","start_number":"0"},"id":1}
+
+'
+    http_version:
+  recorded_at: Tue, 30 Jul 2019 02:22:16 GMT
 recorded_with: VCR 5.0.0

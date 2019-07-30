@@ -639,8 +639,18 @@ module CkbSync
       local_block = Block.find_by(number: 10)
       local_block.update(number: 100_000_000)
 
-      VCR.use_cassette("blocks/10", :record => :new_episodes) do
+      VCR.use_cassette("blocks/10") do
         assert_nil node_data_processor.call
+      end
+    end
+
+    test "should process the genesis block correctly when there is no local block" do
+      VCR.use_cassette("genesis_block") do
+        assert_difference -> { Block.count }, 1 do
+          local_block = node_data_processor.call
+
+          assert_equal 0, local_block.number
+        end
       end
     end
 
