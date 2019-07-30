@@ -10,6 +10,9 @@ module CkbSync
         process_block(target_block)
       else
         local_tip_block.invalid!
+        local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
+
+        local_tip_block
       end
     end
 
@@ -220,7 +223,6 @@ module CkbSync
           link_payer_address_to_ckb_transaction(ckb_transaction, address)
 
           update_previous_cell_output_status(ckb_transaction, previous_cell_output)
-          update_address_balance_and_ckb_transactions_count(address)
         end
       end
     end
