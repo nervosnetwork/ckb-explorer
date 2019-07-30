@@ -26,18 +26,27 @@ module CkbSync
       ApplicationRecord.transaction do
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
         local_block.ckb_transactions_count = ckb_transactions.size
-        local_block.save
+        local_block.save!
       end
 
       update_tx_fee_related_data(local_block)
       calculate_tx_fee(local_block)
 
       update_pending_rewards(local_block.miner_address)
+      update_block_contained_address_info(local_block)
 
       local_block
     end
 
     private
+
+    def update_block_contained_address_info(local_block)
+      ApplicationRecord.transaction do
+        local_block.address_ids = AccountBook.where(ckb_transaction: local_block.ckb_transactions).pluck(:address_id).uniq
+        local_block.save!
+        local_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
+      end
+    end
 
     def forked?(target_block, local_tip_block)
       return false if local_tip_block.blank?
