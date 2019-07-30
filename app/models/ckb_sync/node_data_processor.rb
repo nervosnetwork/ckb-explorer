@@ -9,10 +9,7 @@ module CkbSync
       if !forked?(target_block, local_tip_block)
         process_block(target_block)
       else
-        local_tip_block.invalid!
-        local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
-
-        local_tip_block
+        invalid_block(local_tip_block)
       end
     end
 
@@ -39,6 +36,15 @@ module CkbSync
     end
 
     private
+
+    def invalid_block(local_tip_block)
+      ApplicationRecord.transaction do
+        local_tip_block.invalid!
+        local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
+
+        local_tip_block
+      end
+    end
 
     def update_block_contained_address_info(local_block)
       ApplicationRecord.transaction do
