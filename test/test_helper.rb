@@ -73,7 +73,17 @@ def prepare_inauthentic_node_data(node_tip_block_number = 10)
         output.lock.instance_variable_set(:@args, ["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"])
         output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
-        CkbSync::Persist.save_block(node_block, "inauthentic")
+        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
+        CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+          CKB::Types::BlockReward.new(
+            total: "100000000000",
+            primary: "100000000000",
+            secondary: "0",
+            tx_fee: "10",
+            proposal_reward: "10"
+          )
+        )
+        CkbSync::Persist.update_block_reward_info(local_block)
       end
     end
   end

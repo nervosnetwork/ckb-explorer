@@ -704,6 +704,109 @@ module CkbSync
       end
     end
 
+    test "should let abandoned block miner's pending reward blocks count decrease by one" do
+      prepare_inauthentic_node_data(12)
+      local_block = Block.find_by(number: 12)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      miner_address = local_block.miner_address
+      VCR.use_cassette("blocks/12") do
+        assert_difference -> { miner_address.reload.pending_reward_blocks_count }, -1 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should change abandoned block's target block reward status to pending when there is the target block" do
+      prepare_inauthentic_node_data(12)
+      local_block = Block.find_by(number: 12)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      VCR.use_cassette("blocks/12") do
+        assert_changes -> { local_block.reload.target_block_reward_status }, from: "issued", to: "pending" do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should do nothing on abandoned block's target block reward status when there is no target block" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      VCR.use_cassette("blocks/10") do
+        assert_no_changes -> { local_block.reload.target_block_reward_status } do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should change abandoned block target block's received tx fee to zero when there is the target block" do
+      prepare_inauthentic_node_data(12)
+      local_block = Block.find_by(number: 12)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      target_block = local_block.target_block
+      VCR.use_cassette("blocks/12") do
+        assert_changes -> { target_block.reload.received_tx_fee }, from: target_block.received_tx_fee, to: 0 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should do nothing on abandoned block target block's received tx fee when there is no target block" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      VCR.use_cassette("blocks/10") do
+        assert_nothing_raised do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should change abandoned block target block' reward status to pending when there is the target block" do
+      prepare_inauthentic_node_data(12)
+      local_block = Block.find_by(number: 12)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      target_block = local_block.target_block
+      VCR.use_cassette("blocks/12") do
+        assert_changes -> { target_block.reload.reward_status }, from: "issued", to: "pending" do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should do nothing on abandoned block target block's reward status when there is no target block" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      VCR.use_cassette("blocks/10") do
+        assert_nothing_raised do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should change abandoned block target block' received_tx_fee_status to pending when there is the target block" do
+      prepare_inauthentic_node_data(12)
+      local_block = Block.find_by(number: 12)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      target_block = local_block.target_block
+      VCR.use_cassette("blocks/12") do
+        assert_changes -> { target_block.reload.received_tx_fee_status }, from: "calculated", to: "calculating" do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should do nothing on abandoned block target block's received_tx_fee_status when there is no target block" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      VCR.use_cassette("blocks/10") do
+        assert_nothing_raised do
+          node_data_processor.call
+        end
+      end
+    end
+
     private
 
     def node_data_processor
