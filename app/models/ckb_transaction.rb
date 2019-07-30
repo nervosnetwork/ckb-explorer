@@ -34,6 +34,8 @@ class CkbTransaction < ApplicationRecord
   end
 
   def display_inputs
+    return if transaction_fee_status == "uncalculated"
+
     if is_cellbase
       cellbase = Cellbase.new(block)
       [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
