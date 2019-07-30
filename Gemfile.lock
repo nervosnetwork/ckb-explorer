@@ -365,6 +365,7 @@ DEPENDENCIES
   redis (~> 4.0, >= 4.0.3)
   rubocop
   rubocop-performance
+  ruby-progressbar
   shoulda-context
   shoulda-matchers
   sidekiq (~> 5.2, >= 5.2.3)
