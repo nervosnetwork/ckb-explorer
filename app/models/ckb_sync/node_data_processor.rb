@@ -37,10 +37,23 @@ module CkbSync
 
     private
 
+    def revert_pending_rewards(local_tip_block)
+      miner_address = local_tip_block.miner_address
+      Address.decrement_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
+      target_block = local_tip_block.target_block
+      target_block_number = local_tip_block.target_block_number
+      return if target_block_number < 1 || target_block.blank?
+
+      target_block.update!(reward_status: "pending")
+      local_tip_block.update!(target_block_reward_status: "pending")
+      target_block.update!(received_tx_fee: 0, received_tx_fee_status: "calculating")
+    end
+
     def invalid_block(local_tip_block)
       ApplicationRecord.transaction do
         local_tip_block.invalid!
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
+        revert_pending_rewards(local_tip_block)
 
         local_tip_block
       end
