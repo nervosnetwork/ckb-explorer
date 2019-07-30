@@ -29,7 +29,7 @@ module CkbSync
       update_tx_fee_related_data(local_block)
       calculate_tx_fee(local_block)
 
-      update_pending_rewards(local_block.miner_address)
+      update_miner_pending_rewards(local_block.miner_address)
       update_block_contained_address_info(local_block)
 
       local_block
@@ -302,7 +302,7 @@ module CkbSync
       ckb_transaction.save!
     end
 
-    def update_pending_rewards(miner_address)
+    def update_miner_pending_rewards(miner_address)
       CkbUtils.update_current_block_miner_address_pending_rewards(miner_address)
     end
   end
