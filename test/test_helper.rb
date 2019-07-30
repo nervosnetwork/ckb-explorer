@@ -70,7 +70,7 @@ def prepare_inauthentic_node_data(node_tip_block_number = 10)
         node_block = CkbSync::Api.instance.get_block(block_hash)
         tx = node_block.transactions.first
         output = tx.outputs.first
-        output.lock.instance_variable_set(:@args, ["0x36c329ed630d6ce750712a477543672adab57f4c"])
+        output.lock.instance_variable_set(:@args, ["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"])
         output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
         CkbSync::Persist.save_block(node_block, "inauthentic")

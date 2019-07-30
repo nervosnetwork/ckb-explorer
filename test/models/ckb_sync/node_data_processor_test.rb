@@ -414,6 +414,30 @@ module CkbSync
       end
     end
 
+    test "#process_block should update abandoned block's contained address's transactions count" do
+      prepare_inauthentic_node_data(8)
+      local_block = Block.find_by(number: 8)
+
+      VCR.use_cassette("blocks/9") do
+        assert_difference -> { local_block.reload.contained_addresses.map(&:ckb_transactions).flatten.count }, 1 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "#process_block should update abandoned block's contained address's balance" do
+      prepare_inauthentic_node_data(8)
+      local_block = Block.find_by(number: 8)
+      balance_diff = 100000000000
+      origin_balance = local_block.contained_addresses.sum(:balance)
+
+      VCR.use_cassette("blocks/9") do
+        new_local_block = node_data_processor.call
+
+        assert_equal origin_balance + balance_diff, new_local_block.contained_addresses.sum(:balance)
+      end
+    end
+
     test "cellbase's display inputs should contain target block number" do
       prepare_inauthentic_node_data(11)
       CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
@@ -447,7 +471,7 @@ module CkbSync
       end
     end
 
-    test ".save_block generated transactions should has correct display output" do
+    test "generated transactions should has correct display output" do
       VCR.use_cassette("blocks/10") do
         CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
           CKB::Types::BlockReward.new(
