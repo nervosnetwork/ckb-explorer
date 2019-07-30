@@ -82,34 +82,6 @@ module Api
         assert_equal response_json, response.body
       end
 
-      test "should return error object when no available block found by block number" do
-        error_object = Api::V1::Exceptions::BlockNotFoundError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
-        block = create(:block, status: "abandoned")
-        valid_get api_v1_suggest_queries_url, params: { q: block.number }
-
-        assert_equal response_json, response.body
-      end
-
-      test "should return error object when no available block found by block hash" do
-        error_object = Api::V1::Exceptions::SuggestQueryResultNotFoundError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
-        block = create(:block, status: "abandoned")
-        valid_get api_v1_suggest_queries_url, params: { q: block.block_hash }
-
-        assert_equal response_json, response.body
-      end
-
-      test "should return error object when no available transaction found by transaction hash" do
-        ckb_transaction = create(:ckb_transaction, status: "abandoned")
-        error_object = Api::V1::Exceptions::SuggestQueryResultNotFoundError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
-
-        valid_get api_v1_suggest_queries_url, params: { q: ckb_transaction.tx_hash }
-
-        assert_equal response_json, response.body
-      end
-
       test "should return a block when query key is a exist block height" do
         block = create(:block)
         response_json = BlockSerializer.new(block).serialized_json

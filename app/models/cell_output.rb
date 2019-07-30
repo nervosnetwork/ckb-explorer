@@ -1,5 +1,5 @@
 class CellOutput < ApplicationRecord
-  enum status: { live: 0, dead: 1, abandoned: 2 }
+  enum status: { live: 0, dead: 1 }
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
