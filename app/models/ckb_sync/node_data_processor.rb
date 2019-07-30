@@ -2,7 +2,8 @@ module CkbSync
   class NodeDataProcessor
     def call
       local_tip_block = Block.recent.first
-      target_block = CkbSync::Api.instance.get_block_by_number(local_tip_block.number + 1)
+      target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
+      target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
       return if target_block.blank?
 
       if !forked?(target_block, local_tip_block)
@@ -36,6 +37,8 @@ module CkbSync
     private
 
     def forked?(target_block, local_tip_block)
+      return false if local_tip_block.blank?
+
       target_block.header.parent_hash != local_tip_block.block_hash
     end
 
