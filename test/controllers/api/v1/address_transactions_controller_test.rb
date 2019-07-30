@@ -155,8 +155,8 @@ module Api
         create(:ckb_transaction, address: address, status: "abandoned")
 
         valid_get api_v1_address_transaction_url(address.address_hash), params: { page_size: page_size }
-        address_ckb_transaction_hashes = address.ckb_transactions.available.recent.map(&:tx_hash)
-        address_ckb_transaction_statuses = address.ckb_transactions.available.recent.map(&:status).uniq
+        address_ckb_transaction_hashes = address.ckb_transactions.recent.map(&:tx_hash)
+        address_ckb_transaction_statuses = address.ckb_transactions.recent.map(&:status).uniq
         search_result_ckb_transaction_hashes = json["data"].map { |ckb_transaction| ckb_transaction.dig("attributes", "transaction_hash") }
 
         assert_equal address_ckb_transaction_hashes, search_result_ckb_transaction_hashes

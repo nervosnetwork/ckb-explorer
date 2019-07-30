@@ -18,14 +18,13 @@ class CkbTransaction < ApplicationRecord
   attribute :tx_hash, :ckb_hash
 
   scope :recent, -> { order(block_timestamp: :desc) }
-  scope :available, -> { where(status: [:inauthentic, :authentic]) }
   scope :cellbase, -> { where(is_cellbase: true) }
 
   after_commit :flush_cache
 
   def self.cached_find(query_key)
     Rails.cache.fetch([name, query_key]) do
-      where(tx_hash: query_key).available.first
+      find_by(tx_hash: query_key)
     end
   end
 

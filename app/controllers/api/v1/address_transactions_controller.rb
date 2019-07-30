@@ -7,7 +7,7 @@ module Api
       def show
         address = Address.find_address!(params[:id])
         presented_address = AddressPresenter.new(address)
-        ckb_transactions = presented_address.ckb_transactions.available.recent.distinct.page(@page).per(@page_size)
+        ckb_transactions = presented_address.ckb_transactions.recent.distinct.page(@page).per(@page_size)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
 
         render json: CkbTransactionSerializer.new(ckb_transactions, options)

@@ -15,7 +15,7 @@ class MinerRanking
   end
 
   def ranking_infos
-    ckb_transactions = CkbTransaction.available.where("block_timestamp >= ? and block_timestamp <= ?", STARTED_AT_TIMESTAMP, ENDED_AT_TIMESTAMP).where(is_cellbase: true).where.not(block_number: 0)
+    ckb_transactions = CkbTransaction.where("block_timestamp >= ? and block_timestamp <= ?", STARTED_AT_TIMESTAMP, ENDED_AT_TIMESTAMP).where(is_cellbase: true).where.not(block_number: 0)
     only_one_cell_output_txs = CellOutput.where(ckb_transaction: ckb_transactions).group(:ckb_transaction_id).having("count(*) = 1").select("ckb_transaction_id")
     address_ids = AccountBook.where(ckb_transaction: only_one_cell_output_txs).select(:address_id).distinct
     more_than_one_cell_output_txs = CellOutput.where(ckb_transaction: ckb_transactions).group(:ckb_transaction_id).having("count(*) > 1").select("ckb_transaction_id")
@@ -26,7 +26,7 @@ class MinerRanking
     addresses = Address.where(id: address_ids)
     ranking_infos = []
     addresses.find_each do |address|
-      block_ids = address.ckb_transactions.available.where(is_cellbase: true).select("block_id")
+      block_ids = address.ckb_transactions.where(is_cellbase: true).select("block_id")
       blocks = Block.where(id: block_ids)
       total_base_reward = 0
       blocks.find_each do |block|

@@ -80,8 +80,8 @@ module Api
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page_size: page_size }
 
-        block_ckb_transaction_hashes = block.ckb_transactions.available.order(:id).map(&:tx_hash)
-        block_ckb_transaction_statuses = block.ckb_transactions.available.order(:id).map(&:status).uniq
+        block_ckb_transaction_hashes = block.ckb_transactions.order(:id).map(&:tx_hash)
+        block_ckb_transaction_statuses = block.ckb_transactions.order(:id).map(&:status).uniq
         search_result_ckb_transaction_hashes = json["data"].map { |ckb_transaction| ckb_transaction.dig("attributes", "transaction_hash") }
 
         assert_equal block_ckb_transaction_hashes, search_result_ckb_transaction_hashes
