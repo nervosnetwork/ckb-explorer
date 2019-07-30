@@ -4,7 +4,7 @@ module Api
       before_action :validate_query_params
 
       def show
-        cell_output = CellOutput.where(id: params[:id]).available.take!
+        cell_output = CellOutput.where(id: params[:id]).accepted.take!
         type_script = cell_output.type_script
 
         render json: TypeScriptSerializer.new(type_script)

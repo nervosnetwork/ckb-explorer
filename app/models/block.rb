@@ -25,7 +25,7 @@ class Block < ApplicationRecord
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
 
   scope :recent, -> { order(timestamp: :desc) }
-  scope :available, -> { where(status: [:inauthentic, :authentic]) }
+  scope :accepted, -> { where(status: :accepted) }
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
 
@@ -71,9 +71,9 @@ class Block < ApplicationRecord
   def self.cached_find(query_key)
     Rails.cache.fetch([name, query_key]) do
       if QueryKeyUtils.valid_hex?(query_key)
-        block = where(block_hash: query_key).available.first
+        block = where(block_hash: query_key).accepted.first
       else
-        block = where(number: query_key).available.first
+        block = where(number: query_key).accepted.first
       end
       BlockSerializer.new(block) if block.present?
     end

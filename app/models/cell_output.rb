@@ -13,7 +13,7 @@ class CellOutput < ApplicationRecord
 
   attribute :tx_hash, :ckb_hash
 
-  scope :available, -> { where(status: [:live, :dead]) }
+  scope :accepted, -> { where(status: [:live, :dead]) }
 
   def address_hash
     address.address_hash

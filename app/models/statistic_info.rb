@@ -21,14 +21,14 @@ class StatisticInfo
 
   def current_epoch_average_block_time
     current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
-    blocks = Block.where(epoch: current_epoch_number).available.order(:timestamp)
+    blocks = Block.where(epoch: current_epoch_number).accepted.order(:timestamp)
     return if blocks.empty?
 
     total_block_time(blocks, current_epoch_number) / blocks.size
   end
 
   def hash_rate(block_number = tip_block_number)
-    blocks = Block.where("number <= ?", block_number).available.recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval.to_i)
+    blocks = Block.where("number <= ?", block_number).accepted.recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval.to_i)
     return if blocks.blank?
 
     total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty.hex }
@@ -54,7 +54,7 @@ class StatisticInfo
     if prev_epoch_nubmer.zero?
       prev_epoch_last_block = Block.find_by(number: 0)
     else
-      prev_epoch_last_block = Block.where(epoch: prev_epoch_nubmer).available.recent.first
+      prev_epoch_last_block = Block.where(epoch: prev_epoch_nubmer).accepted.recent.first
     end
     (blocks.last.timestamp - prev_epoch_last_block.timestamp).to_d
   end
