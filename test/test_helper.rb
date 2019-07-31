@@ -54,16 +54,12 @@ def prepare_inauthentic_node_data(node_tip_block_number = 10)
     )
   )
   local_tip_block_number = 0
-  SyncInfo.local_inauthentic_tip_block_number
   ((local_tip_block_number + 1)..node_tip_block_number).each do |number|
     block_hash = nil
     VCR.use_cassette("genesis_block") do
       VCR.use_cassette("block_hashes/#{number}") do
         block_hash = CkbSync::Api.instance.get_block_hash(number.to_s)
       end
-
-      sync_info = SyncInfo.find_or_create_by(name: "inauthentic_tip_block_number", value: number)
-      sync_info.update(value: number, status: "syncing") if sync_info.status != "syncing"
 
       VCR.use_cassette("blocks/#{number}") do
         node_block = CkbSync::Api.instance.get_block(block_hash)
@@ -72,7 +68,7 @@ def prepare_inauthentic_node_data(node_tip_block_number = 10)
         output.lock.instance_variable_set(:@args, ["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"])
         output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
-        local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
+        CkbSync::NodeDataProcessor.new.process_block(node_block)
         CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
           CKB::Types::BlockReward.new(
             total: "100000000000",
@@ -82,7 +78,6 @@ def prepare_inauthentic_node_data(node_tip_block_number = 10)
             proposal_reward: "10"
           )
         )
-        CkbSync::Persist.update_block_reward_info(local_block)
       end
     end
   end
@@ -205,7 +200,7 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   blocks = create_list(:block, 10, :with_block_hash)
   cellbases = []
   blocks.each do |block|
-    cellbase = block.ckb_transactions.create(is_cellbase: true, status: :inauthentic, block_timestamp: block_timestamp, block_number: 10)
+    cellbase = block.ckb_transactions.create(is_cellbase: true, block_timestamp: block_timestamp, block_number: 10)
     cellbases << cellbase
   end
   cellbases_part1 = cellbases[0..1]

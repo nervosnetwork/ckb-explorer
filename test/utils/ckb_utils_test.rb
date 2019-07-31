@@ -22,11 +22,10 @@ class CkbUtilsTest < ActiveSupport::TestCase
       )
     )
     VCR.use_cassette("genesis_block") do
-      SyncInfo.local_inauthentic_tip_block_number
       node_block = CkbSync::Api.instance.get_block_by_number("0")
       set_default_lock_params(node_block: node_block)
 
-      local_block = CkbSync::Persist.save_block(node_block, "inauthentic")
+      local_block = CkbSync::NodeDataProcessor.new.process_block(node_block)
 
       assert_equal node_block.transactions.first.outputs.first.capacity.to_i, local_block.reward
     end
