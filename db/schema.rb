@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_07_25_014432) do
+ActiveRecord::Schema.define(version: 2019_07_31_111218) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -146,16 +146,6 @@ ActiveRecord::Schema.define(version: 2019_07_25_014432) do
     t.string "hash_type"
     t.index ["address_id"], name: "index_lock_scripts_on_address_id"
     t.index ["cell_output_id"], name: "index_lock_scripts_on_cell_output_id"
-  end
-
-  create_table "sync_infos", force: :cascade do |t|
-    t.string "name"
-    t.decimal "value", precision: 30
-    t.integer "status", limit: 2
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["name", "status"], name: "index_sync_infos_on_name_and_status"
-    t.index ["name", "value"], name: "index_sync_infos_on_name_and_value", unique: true
   end
 
   create_table "type_scripts", force: :cascade do |t|
