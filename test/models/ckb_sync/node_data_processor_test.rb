@@ -401,9 +401,9 @@ module CkbSync
     end
 
     test "#process_block should update current block's miner address pending reward blocks count" do
-      prepare_inauthentic_node_data(11)
+      prepare_inauthentic_node_data(12)
       VCR.use_cassette("blocks/12") do
-        node_block = CkbSync::Api.instance.get_block("0x4f1d958f0601d04d1bd88634fac4bcd65ffc8a42e8b0c50d065e70ba5e922840")
+        node_block = CkbSync::Api.instance.get_block_by_number(13)
         cellbase = node_block.transactions.first
         lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
         miner_address = Address.find_or_create_address(lock_script)
@@ -435,6 +435,99 @@ module CkbSync
         new_local_block = node_data_processor.call
 
         assert_equal origin_balance + balance_diff, new_local_block.contained_addresses.sum(:balance)
+      end
+    end
+
+    test "should let the local tip block miner's pending reward blocks count increase by one" do
+      prepare_inauthentic_node_data(12)
+      miner_address = nil
+      VCR.use_cassette("blocks/12") do
+        node_block = CkbSync::Api.instance.get_block_by_number(13)
+        cellbase = node_block.transactions.first
+        lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+        miner_address = Address.find_or_create_address(lock_script)
+      end
+
+      VCR.use_cassette("blocks/12") do
+        assert_difference -> { miner_address.reload.pending_reward_blocks_count }, 1 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should change the local tip block's target block reward status to issued when there is the target block" do
+      prepare_inauthentic_node_data(12)
+      VCR.use_cassette("blocks/12") do
+        local_block = node_data_processor.call
+
+        assert_equal "issued", local_block.target_block_reward_status
+      end
+    end
+
+    test "should do nothing on the local tip block's target block reward status when there is no target block" do
+      prepare_inauthentic_node_data(9)
+      local_block = Block.find_by(number: 9)
+      VCR.use_cassette("blocks/10") do
+        assert_no_changes -> { local_block.reload.target_block_reward_status } do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should update the local tip block target block's received tx fee when there is the target block" do
+      prepare_inauthentic_node_data(12)
+      target_block = Block.find_by(number: 2)
+      VCR.use_cassette("blocks/12") do
+        assert_changes -> { target_block.reload.received_tx_fee }, from: 0, to: 20 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should do nothing on the local tip block target block's received tx fee when there is no target block" do
+      prepare_inauthentic_node_data(9)
+      VCR.use_cassette("blocks/10") do
+        assert_nothing_raised do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should change the local tip block target block' reward status to issued when there is the target block" do
+      prepare_inauthentic_node_data(12)
+      target_block = Block.find_by(number: 2)
+      VCR.use_cassette("blocks/12") do
+        assert_changes -> { target_block.reload.reward_status }, from: "pending", to: "issued" do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should do nothing on the local tip block target block's reward status when there is no target block" do
+      prepare_inauthentic_node_data(9)
+      VCR.use_cassette("blocks/10") do
+        assert_nothing_raised do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should change the local tip block target block' received_tx_fee_status to issued when there is the target block" do
+      prepare_inauthentic_node_data(12)
+      target_block = Block.find_by(number: 2)
+      VCR.use_cassette("blocks/12") do
+        assert_changes -> { target_block.reload.received_tx_fee_status }, from: "calculating", to: "calculated" do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should do nothing on the local tip block target block's received_tx_fee_status when there is no target block" do
+      prepare_inauthentic_node_data(9)
+      VCR.use_cassette("blocks/10") do
+        assert_nothing_raised do
+          node_data_processor.call
+        end
       end
     end
 
