@@ -76,7 +76,7 @@ class CkbUtils
   def self.block_reward(node_block)
     header = node_block.header
     cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(header.hash)
-    secondary_reward = header.number != 0 ? cellbase_output_capacity_details.secondary.to_i : 0
+    secondary_reward = header.number.to_i != 0 ? cellbase_output_capacity_details.secondary.to_i : 0
     base_reward(header.number, header.epoch, node_block.transactions.first) + secondary_reward
   end
 
