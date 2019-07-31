@@ -19,7 +19,7 @@ class Cellbase
     cellbase_output_capacity_details.tx_fee.to_i
   end
 
-  def block_reward
+  def base_reward
     return if block.genesis_block?
 
     cellbase_output_capacity_details.primary.to_i
