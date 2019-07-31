@@ -9,7 +9,7 @@ class StatisticInfoChart
 
   def hash_rate
     to = Rails.cache.read("hash_rate_to")
-    Rails.cache.fetch("hash_rate_chart_data_#{to}").uniq
+    Rails.cache.fetch("hash_rate_chart_data_#{to}")&.uniq
   end
 
   def difficulty
