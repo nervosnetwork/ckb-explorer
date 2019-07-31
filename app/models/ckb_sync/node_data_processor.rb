@@ -31,11 +31,28 @@ module CkbSync
 
       update_miner_pending_rewards(local_block.miner_address)
       update_block_contained_address_info(local_block)
+      update_block_reward_info(local_block)
 
       local_block
     end
 
     private
+
+    def update_block_reward_info(current_block)
+      target_block_number = current_block.target_block_number
+      target_block = current_block.target_block
+      return if target_block_number < 1 || target_block.blank?
+
+      ApplicationRecord.transaction do
+        issue_block_reward!(current_block)
+        CkbUtils.update_target_block_miner_address_pending_rewards(current_block)
+      end
+    end
+
+    def issue_block_reward!(current_block)
+      CkbUtils.update_block_reward_status!(current_block)
+      CkbUtils.calculate_received_tx_fee!(current_block)
+    end
 
     def revert_block_rewards(local_tip_block)
       revert_miner_pending_reward_blocks_count(local_tip_block)
