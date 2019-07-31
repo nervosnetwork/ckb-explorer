@@ -1,6 +1,4 @@
 class UncleBlock < ApplicationRecord
-  enum status: { inauthentic: 0, authentic: 1, abandoned: 2 }
-
   belongs_to :block
 
   validates_presence_of :difficulty, :block_hash, :number, :parent_hash, :seal, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version
@@ -36,7 +34,6 @@ end
 #  epoch             :decimal(30, )
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
-#  status            :integer          default("inauthentic")
 #  dao               :string
 #
 # Indexes
