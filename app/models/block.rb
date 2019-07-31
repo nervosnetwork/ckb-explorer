@@ -3,7 +3,7 @@ class Block < ApplicationRecord
   paginates_per 10
   max_paginates_per MAX_PAGINATES_PER
 
-  enum status: { abandoned: 0, accepted: 1, inauthentic: 2, authentic: 3 }
+  enum status: { abandoned: 0, accepted: 1 }
   enum reward_status: { pending: 0, issued: 1 }
   enum target_block_reward_status: { pending: 0, issued: 1 }, _prefix: :target_block
   enum received_tx_fee_status: { calculating: 0, calculated: 1 }
@@ -121,14 +121,6 @@ end
 #  target_block_reward_status :integer          default("pending")
 #  miner_lock_hash            :binary
 #  dao                        :string
-#
-# Indexes
-#
-#  index_blocks_on_block_hash  (block_hash) UNIQUE
-#  index_blocks_on_number      (number)
-#  index_blocks_on_timestamp   (timestamp)
-#
-
 #
 # Indexes
 #
