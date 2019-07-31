@@ -31,15 +31,6 @@ class Block < ApplicationRecord
 
   after_commit :flush_cache
 
-  def verify!(node_block)
-    if verified?(node_block.header.hash)
-      authenticate!
-    else
-      abandon!
-      CkbSync::Persist.save_block(node_block, "authentic")
-    end
-  end
-
   def contained_addresses
     Address.where(id: address_ids)
   end
@@ -58,10 +49,6 @@ class Block < ApplicationRecord
 
   def target_block
     @target_block ||= Block.find_by(number: target_block_number)
-  end
-
-  def exist_uncalculated_tx?
-    ckb_transactions.where(transaction_fee_status: "uncalculated").exists?
   end
 
   def self.find_block!(query_key)
@@ -92,27 +79,6 @@ class Block < ApplicationRecord
     update!(status: "abandoned")
     uncle_blocks.delete_all
     ckb_transactions.destroy_all
-  end
-
-  private
-
-  def verified?(node_block_hash)
-    block_hash == node_block_hash
-  end
-
-  def authenticate!
-    update!(status: "authentic")
-    uncle_blocks.update_all(status: "authentic")
-    SyncInfo.find_by!(name: "authentic_tip_block_number", value: number).update_attribute(:status, "synced")
-    ChangeCkbTransactionsStatusWorker.perform_async(id, "authentic")
-    self
-  end
-
-  def abandon!
-    update!(status: "abandoned", reward_status: "issued")
-    uncle_blocks.update_all(status: "abandoned")
-    ChangeCkbTransactionsStatusWorker.perform_async(id, "abandoned")
-    ChangeCellOutputsStatusWorker.perform_async(id, "abandoned")
   end
 end
 
