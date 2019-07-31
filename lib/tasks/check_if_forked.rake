@@ -1,3 +1,5 @@
+require "ruby-progressbar"
+
 namespace :block_validator do
   desc "Check the validity of the blocks"
 
@@ -29,7 +31,12 @@ namespace :block_validator do
       number if local_block.block_hash != target_block.header.hash
     end.compact
 
-    puts "invalid block numbers : #{result.join(", ")}"
+    if result.present?
+      puts "invalid block numbers : #{result.join(", ")}"
+    else
+      puts "All block is valid"
+    end
+
     puts "done."
   end
 end
