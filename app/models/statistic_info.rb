@@ -20,7 +20,7 @@ class StatisticInfo
   end
 
   def current_epoch_average_block_time
-    current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
+    current_epoch_number = Block.recent.accepted.first&.epoch
     blocks = Block.where(epoch: current_epoch_number).accepted.order(:timestamp)
     return if blocks.empty?
 
