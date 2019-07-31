@@ -162,6 +162,15 @@ def set_default_lock_params(node_block: block, args: ["0x#{SecureRandom.hex(20)}
 end
 
 def prepare_api_wrapper
+  CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+    CKB::Types::BlockReward.new(
+      total: "100000000000",
+      primary: "100000000000",
+      secondary: "0",
+      tx_fee: "0",
+      proposal_reward: "0"
+    )
+  )
   VCR.use_cassette("genesis_block") do
     CkbSync::Api.instance
   end
@@ -213,23 +222,23 @@ def expected_ranking(address1, address2, address3)
   address1_blocks = Block.where(id: address1_block_ids)
   address2_blocks = Block.where(id: address2_block_ids)
   address3_blocks = Block.where(id: address3_block_ids)
-  address1_block_rewards =
+  address1_base_rewards =
     address1_blocks.map { |block|
-      block_reward(block.number, block.epoch)
+      base_reward(block.number, block.epoch)
     }.reduce(0, &:+)
-  address2_block_rewards =
+  address2_base_rewards =
     address2_blocks.map { |block|
-      block_reward(block.number, block.epoch)
+      base_reward(block.number, block.epoch)
     }.reduce(0, &:+)
-  address3_block_rewards =
+  address3_base_rewards =
     address3_blocks.map { |block|
-      block_reward(block.number, block.epoch)
+      base_reward(block.number, block.epoch)
     }.reduce(0, &:+)
 
   [
-    { address_hash: address2.address_hash, lock_hash: address2.lock_hash, total_block_reward: address2_block_rewards },
-    { address_hash: address1.address_hash, lock_hash: address1.lock_hash, total_block_reward: address1_block_rewards },
-    { address_hash: address3.address_hash, lock_hash: address3.lock_hash, total_block_reward: address3_block_rewards }
+    { address_hash: address2.address_hash, lock_hash: address2.lock_hash, total_base_reward: address2_base_rewards },
+    { address_hash: address1.address_hash, lock_hash: address1.lock_hash, total_base_reward: address1_base_rewards },
+    { address_hash: address3.address_hash, lock_hash: address3.lock_hash, total_base_reward: address3_base_rewards }
   ]
 end
 

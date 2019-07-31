@@ -16,18 +16,18 @@ class MinerRankingTest < ActiveSupport::TestCase
     assert_equal expected_ranking(address1, address2, address3), miner_ranking.ranking
   end
 
-  def block_reward(block_number, epoch_number, cellbase = nil)
-    return cellbase.outputs.first.capacity if block_number.to_i == 0
+  def base_reward(block_number, epoch_number, cellbase = nil)
+    return cellbase.outputs.first.capacity.to_i if block_number.to_i == 0
 
     epoch_info = CkbSync::Api.instance.get_epoch_by_number(epoch_number)
     start_number = epoch_info.start_number.to_i
     epoch_reward = epoch_info.epoch_reward.to_i
-    block_reward = epoch_reward / epoch_info.length.to_i
+    base_reward = epoch_reward / epoch_info.length.to_i
     remainder_reward = epoch_reward % epoch_info.length.to_i
     if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward
-      block_reward + 1
+      base_reward + 1
     else
-      block_reward
+      base_reward
     end
   end
 end
