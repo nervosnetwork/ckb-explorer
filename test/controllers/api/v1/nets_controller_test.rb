@@ -15,6 +15,7 @@ module Api
             version: "0.16.0 (rylai-v5 2178d78 2019-07-13)"
           )
         )
+        NetInfo.any_instance.stubs(:id).returns(1)
       end
       test "should get success code when call index" do
         valid_get api_v1_nets_url
