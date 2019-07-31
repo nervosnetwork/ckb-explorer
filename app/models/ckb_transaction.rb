@@ -3,10 +3,6 @@ class CkbTransaction < ApplicationRecord
   paginates_per 10
   max_paginates_per MAX_PAGINATES_PER
 
-  enum status: { inauthentic: 0, authentic: 1, abandoned: 2 }
-  enum display_inputs_status: { ungenerated: 0, generated: 1 }
-  enum transaction_fee_status: { uncalculated: 0, calculated: 1 }
-
   belongs_to :block
   has_many :account_books
   has_many :addresses, through: :account_books
@@ -33,8 +29,6 @@ class CkbTransaction < ApplicationRecord
   end
 
   def display_inputs
-    return if transaction_fee_status == "uncalculated"
-
     if is_cellbase
       cellbase = Cellbase.new(block)
       [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
@@ -63,29 +57,22 @@ end
 #
 # Table name: ckb_transactions
 #
-#  id                     :bigint           not null, primary key
-#  tx_hash                :binary
-#  deps                   :jsonb
-#  block_id               :bigint
-#  block_number           :decimal(30, )
-#  block_timestamp        :decimal(30, )
-#  display_inputs         :jsonb
-#  display_outputs        :jsonb
-#  status                 :integer
-#  transaction_fee        :decimal(30, )
-#  version                :integer
-#  witnesses              :string           is an Array
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  display_inputs_status  :integer          default("ungenerated")
-#  transaction_fee_status :integer          default("uncalculated")
-#  is_cellbase            :boolean          default(FALSE)
+#  id              :bigint           not null, primary key
+#  tx_hash         :binary
+#  deps            :jsonb
+#  block_id        :bigint
+#  block_number    :decimal(30, )
+#  block_timestamp :decimal(30, )
+#  transaction_fee :decimal(30, )
+#  version         :integer
+#  witnesses       :string           is an Array
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  is_cellbase     :boolean          default(FALSE)
 #
 # Indexes
 #
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
-#  index_ckb_transactions_on_display_inputs_status         (display_inputs_status)
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)
-#  index_ckb_transactions_on_transaction_fee_status        (transaction_fee_status)
 #  index_ckb_transactions_on_tx_hash_and_block_id          (tx_hash,block_id) UNIQUE
 #

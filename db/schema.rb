@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_07_31_111218) do
+ActiveRecord::Schema.define(version: 2019_07_31_111431) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -118,21 +118,14 @@ ActiveRecord::Schema.define(version: 2019_07_31_111218) do
     t.bigint "block_id"
     t.decimal "block_number", precision: 30
     t.decimal "block_timestamp", precision: 30
-    t.jsonb "display_inputs"
-    t.jsonb "display_outputs"
-    t.integer "status", limit: 2
     t.decimal "transaction_fee", precision: 30
     t.integer "version"
     t.string "witnesses", array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "display_inputs_status", limit: 2, default: 0
-    t.integer "transaction_fee_status", limit: 2, default: 0
     t.boolean "is_cellbase", default: false
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
-    t.index ["display_inputs_status"], name: "index_ckb_transactions_on_display_inputs_status"
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
-    t.index ["transaction_fee_status"], name: "index_ckb_transactions_on_transaction_fee_status"
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
   end
 
