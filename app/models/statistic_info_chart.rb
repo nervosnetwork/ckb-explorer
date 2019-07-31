@@ -9,7 +9,7 @@ class StatisticInfoChart
 
   def hash_rate
     to = Rails.cache.read("hash_rate_to")
-    Rails.cache.fetch("hash_rate_chart_data_#{to}")
+    Rails.cache.fetch("hash_rate_chart_data_#{to}")&.uniq
   end
 
   def difficulty
@@ -50,7 +50,7 @@ class StatisticInfoChart
 
     Rails.cache.write("hash_rate_from", from)
     Rails.cache.write("hash_rate_to", to)
-    Rails.cache.write("hash_rate_chart_data_#{to}", prev_cached_data.concat(result.compact))
+    Rails.cache.write("hash_rate_chart_data_#{to}", prev_cached_data.concat(result.compact).uniq)
   end
 
   private
@@ -58,7 +58,7 @@ class StatisticInfoChart
   attr_reader :statistic_info
 
   def last_epoch0_block_number
-    current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
+    current_epoch_number = CkbSync::Api.instance.get_current_epoch.number.to_i
     if current_epoch_number > 0
       Block.available.where(epoch: 0).recent.first.number.to_i
     else
