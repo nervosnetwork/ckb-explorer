@@ -5,9 +5,8 @@ SimpleCov.start "rails" do
   add_filter "/app/mailers/"
   add_filter "/lib/api/"
   add_filter "/lib/fast_jsonapi"
-  add_filter "/lib/ckb_authentic_sync.rb"
-  add_filter "/lib/ckb_inauthentic_sync.rb"
-  add_filter "/lib/ckb_transaction_info_and_fee_updater.rb"
+  add_filter "/lib/ckb_block_node_processor.rb"
+  add_filter "/lib/ckb_statistic_info_chart_data_updater.rb"
 end
 require "database_cleaner"
 require "minitest/reporters"
