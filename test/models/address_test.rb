@@ -7,18 +7,6 @@ class AddressTest < ActiveSupport::TestCase
       through(:account_books)
   end
 
-  context "validations" do
-    should validate_presence_of(:balance)
-    should validate_presence_of(:cell_consumed)
-    should validate_presence_of(:ckb_transactions_count)
-    should validate_numericality_of(:balance).
-      is_greater_than_or_equal_to(0).on(:create)
-    should validate_numericality_of(:cell_consumed).
-      is_greater_than_or_equal_to(0).on(:create)
-    should validate_numericality_of(:ckb_transactions_count).
-      is_greater_than_or_equal_to(0).on(:create)
-  end
-
   test "address_hash should be nil when args is empty" do
     VCR.use_cassette("blocks/10") do
       node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
