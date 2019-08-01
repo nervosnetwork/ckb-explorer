@@ -28,13 +28,13 @@ class MinerRanking
     addresses.find_each do |address|
       block_ids = address.ckb_transactions.available.where(is_cellbase: true).select("block_id")
       blocks = Block.where(id: block_ids)
-      total_block_reward = 0
+      total_base_reward = 0
       blocks.find_each do |block|
-        total_block_reward += CkbUtils.base_reward(block.number, block.epoch)
+        total_base_reward += CkbUtils.base_reward(block.number, block.epoch)
       end
-      ranking_infos << { address_hash: address.address_hash, lock_hash: address.lock_hash, total_block_reward: total_block_reward }
+      ranking_infos << { address_hash: address.address_hash, lock_hash: address.lock_hash, total_base_reward: total_base_reward }
     end
 
-    ranking_infos.sort_by { |ranking_info| ranking_info[:total_block_reward] }.reverse
+    ranking_infos.sort_by { |ranking_info| ranking_info[:total_base_reward] }.reverse
   end
 end

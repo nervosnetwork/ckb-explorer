@@ -73,18 +73,25 @@ class CkbUtils
     CKB::Address.parse(address_hash)
   end
 
+  def self.block_reward(node_block)
+    header = node_block.header
+    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(header.hash)
+    secondary_reward = header.number.to_i != 0 ? cellbase_output_capacity_details.secondary.to_i : 0
+    base_reward(header.number, header.epoch, node_block.transactions.first) + secondary_reward
+  end
+
   def self.base_reward(block_number, epoch_number, cellbase = nil)
-    return cellbase.outputs.first.capacity if block_number.to_i == 0
+    return cellbase.outputs.first.capacity.to_i if block_number.to_i == 0
 
     epoch_info = get_epoch_info(epoch_number)
     start_number = epoch_info.start_number.to_i
     epoch_reward = epoch_info.epoch_reward.to_i
-    block_reward = epoch_reward / epoch_info.length.to_i
+    base_reward = epoch_reward / epoch_info.length.to_i
     remainder_reward = epoch_reward % epoch_info.length.to_i
     if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward
-      block_reward + 1
+      base_reward + 1
     else
-      block_reward
+      base_reward
     end
   end
 

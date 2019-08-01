@@ -218,7 +218,7 @@ module CkbSync
           miner_hash: CkbUtils.miner_hash(cellbase),
           miner_lock_hash: CkbUtils.miner_lock_hash(cellbase),
           status: sync_type,
-          reward: CkbUtils.base_reward(header.number, header.epoch, node_block.transactions.first),
+          reward: CkbUtils.block_reward(node_block),
           reward_status: header.number.to_i == 0 ? "issued" : "pending",
           total_transaction_fee: 0,
           witnesses_root: header.witnesses_root,
