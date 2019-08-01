@@ -104,7 +104,7 @@ module CkbSync
     end
 
     def uncle_block_hashes(node_block_uncles)
-      node_block_uncles.map { |uncle| uncle.to_h.dig("header", "hash") }
+      node_block_uncles.map { |uncle| uncle.header.hash }
     end
 
     def generate_address_in_advance(cellbase)
