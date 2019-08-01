@@ -56,7 +56,6 @@ gem "fast_jsonapi"
 
 gem "kaminari"
 
-gem "concurrent-ruby", require: "concurrent"
 gem "ruby-progressbar", require: false
 
 # Deployment

@@ -340,7 +340,6 @@ DEPENDENCIES
   bootsnap (>= 1.1.0)
   ckb-sdk-ruby!
   codecov
-  concurrent-ruby
   config
   daemons (~> 1.2, >= 1.2.6)
   database_cleaner
