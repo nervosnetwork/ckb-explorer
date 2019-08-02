@@ -1,19 +1,17 @@
 class CellOutput < ApplicationRecord
-  enum status: { live: 0, dead: 1, abandoned: 2 }
+  enum status: { live: 0, dead: 1 }
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
   belongs_to :address
   belongs_to :block
-  has_one :lock_script
-  has_one :type_script
+  has_one :lock_script, dependent: :delete
+  has_one :type_script, dependent: :delete
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   attribute :tx_hash, :ckb_hash
-
-  scope :available, -> { where(status: [:live, :dead]) }
 
   def address_hash
     address.address_hash

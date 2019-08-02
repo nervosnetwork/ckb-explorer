@@ -69,10 +69,8 @@ task :setup do
   command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-puma.service"]
   command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-puma.socket"]
   command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-sidekiq.service"]
-  command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-inauthentic-sync.service"]
-  command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-authentic-sync.service"]
-  command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-ckb-transaction-info-and-fee-updater.service"]
-  comment "Be sure to edit '#{fetch(:shared_path)}/config/database.yml', 'settings.local.yml', '.env.local', 'puma.rb', 'ckb-inauthentic-sync.server', 'ckb-authentic-sync.server', 'ckb-explorer-puma.service', 'ckb-explorer-puma.socket' and ckb-explorer-sidekiq.service."
+  command %[touch "#{fetch(:shared_path)}/config/ckb-explorer-block-node-processor.service"]
+  comment "Be sure to edit '#{fetch(:shared_path)}/config/database.yml', 'settings.local.yml', '.env.local', 'puma.rb', 'ckb-explorer-puma.service', 'ckb-explorer-puma.socket', 'ckb-explorer-block-node-processor' and ckb-explorer-sidekiq.service."
 end
 
 desc "Deploys the current version to the server."
@@ -89,12 +87,10 @@ task :deploy do
     invoke :'deploy:cleanup'
 
     on :launch do
-      command "systemctl restart ckb-explorer-puma.socket ckb-explorer-puma.service"
-      command "systemctl restart ckb-explorer-sidekiq"
-      command "systemctl restart ckb-explorer-inauthentic-sync"
-      command "systemctl restart ckb-explorer-authentic-sync"
-      command "systemctl restart ckb-explorer-ckb-transaction-info-and-fee-updater"
-      command "systemctl daemon-reload"
+      command "sudo systemctl restart ckb-explorer-puma.socket ckb-explorer-puma.service"
+      command "sudo systemctl restart ckb-explorer-sidekiq"
+      command "sudo systemctl restart ckb-explorer-block-node-processor.service"
+      command "sudo systemctl daemon-reload"
     end
   end
 

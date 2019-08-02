@@ -3,7 +3,7 @@ class Block < ApplicationRecord
   paginates_per 10
   max_paginates_per MAX_PAGINATES_PER
 
-  enum status: { inauthentic: 0, authentic: 1, abandoned: 2 }
+  enum status: { abandoned: 0, accepted: 1 }
   enum reward_status: { pending: 0, issued: 1 }
   enum target_block_reward_status: { pending: 0, issued: 1 }, _prefix: :target_block
   enum received_tx_fee_status: { calculating: 0, calculated: 1 }
@@ -25,20 +25,10 @@ class Block < ApplicationRecord
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
 
   scope :recent, -> { order(timestamp: :desc) }
-  scope :available, -> { where(status: [:inauthentic, :authentic]) }
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
 
   after_commit :flush_cache
-
-  def verify!(node_block)
-    if verified?(node_block.header.hash)
-      authenticate!
-    else
-      abandon!
-      CkbSync::Persist.save_block(node_block, "authentic")
-    end
-  end
 
   def contained_addresses
     Address.where(id: address_ids)
@@ -60,10 +50,6 @@ class Block < ApplicationRecord
     @target_block ||= Block.find_by(number: target_block_number)
   end
 
-  def exist_uncalculated_tx?
-    ckb_transactions.where(transaction_fee_status: "uncalculated").exists?
-  end
-
   def self.find_block!(query_key)
     cached_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
   end
@@ -71,9 +57,9 @@ class Block < ApplicationRecord
   def self.cached_find(query_key)
     Rails.cache.fetch([name, query_key]) do
       if QueryKeyUtils.valid_hex?(query_key)
-        block = where(block_hash: query_key).available.first
+        block = where(block_hash: query_key).accepted.first
       else
-        block = where(number: query_key).available.first
+        block = where(number: query_key).accepted.first
       end
       BlockSerializer.new(block) if block.present?
     end
@@ -88,25 +74,10 @@ class Block < ApplicationRecord
     Rails.cache.delete([self.class.name, number])
   end
 
-  private
-
-  def verified?(node_block_hash)
-    block_hash == node_block_hash
-  end
-
-  def authenticate!
-    update!(status: "authentic")
-    uncle_blocks.update_all(status: "authentic")
-    SyncInfo.find_by!(name: "authentic_tip_block_number", value: number).update_attribute(:status, "synced")
-    ChangeCkbTransactionsStatusWorker.perform_async(id, "authentic")
-    self
-  end
-
-  def abandon!
-    update!(status: "abandoned", reward_status: "issued")
-    uncle_blocks.update_all(status: "abandoned")
-    ChangeCkbTransactionsStatusWorker.perform_async(id, "abandoned")
-    ChangeCellOutputsStatusWorker.perform_async(id, "abandoned")
+  def invalid!
+    abandoned!
+    uncle_blocks.delete_all
+    ckb_transactions.destroy_all
   end
 end
 
@@ -149,14 +120,6 @@ end
 #  target_block_reward_status :integer          default("pending")
 #  miner_lock_hash            :binary
 #  dao                        :string
-#
-# Indexes
-#
-#  index_blocks_on_block_hash  (block_hash) UNIQUE
-#  index_blocks_on_number      (number)
-#  index_blocks_on_timestamp   (timestamp)
-#
-
 #
 # Indexes
 #
