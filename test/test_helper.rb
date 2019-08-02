@@ -220,9 +220,9 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
 end
 
 def expected_ranking(address1, address2, address3)
-  address1_block_ids = address1.ckb_transactions.where(is_cellbase: true).select("block_id")
-  address2_block_ids = address2.ckb_transactions.where(is_cellbase: true).select("block_id")
-  address3_block_ids = address3.ckb_transactions.where(is_cellbase: true).select("block_id")
+  address1_block_ids = address1.ckb_transactions.where(is_cellbase: true).pluck("block_id")
+  address2_block_ids = address2.ckb_transactions.where(is_cellbase: true).pluck("block_id")
+  address3_block_ids = address3.ckb_transactions.where(is_cellbase: true).pluck("block_id")
   address1_blocks = Block.where(id: address1_block_ids)
   address2_blocks = Block.where(id: address2_block_ids)
   address3_blocks = Block.where(id: address3_block_ids)
