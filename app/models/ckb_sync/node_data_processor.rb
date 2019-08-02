@@ -180,15 +180,13 @@ module CkbSync
     end
 
     def build_ckb_transactions(local_block, transactions)
-      transaction_index = 0
-      transactions.map do |transaction|
+      transactions.each_with_index.map do |transaction, transaction_index|
         addresses = Set.new
         ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
         build_cell_inputs(transaction.inputs, ckb_transaction)
         build_cell_outputs(transaction.outputs, ckb_transaction, addresses)
         addresses_arr = addresses.to_a
         ckb_transaction.addresses << addresses_arr
-        transaction_index += 1
 
         ckb_transaction
       end
@@ -225,14 +223,12 @@ module CkbSync
     end
 
     def build_cell_outputs(node_outputs, ckb_transaction, addresses)
-      cell_index = 0
-      node_outputs.map do |output|
+      node_outputs.each_with_index.map do |output, cell_index|
         address = Address.find_or_create_address(output.lock)
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index)
         build_lock_script(cell_output, output.lock, address)
         build_type_script(cell_output, output.type)
-        cell_index += 1
 
         cell_output
       end
