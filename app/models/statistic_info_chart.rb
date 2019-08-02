@@ -9,14 +9,14 @@ class StatisticInfoChart
 
   def hash_rate
     to = Rails.cache.read("hash_rate_to")
-    Rails.cache.fetch("hash_rate_chart_data_#{to}")&.uniq
+    Rails.cache.fetch("hash_rate_chart_data_#{to}")&.uniq || []
   end
 
   def difficulty
     current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
 
     Rails.cache.fetch("statistic_info_difficulty_#{current_epoch_number}", expires_in: 10.minutes, race_condition_ttl: 10.seconds) do
-      from = Block.accepted.where(epoch: 0).recent.first.number.to_i
+      from = Block.accepted.where(epoch: 0).recent.first&.number.to_i
       to = Block.accepted.maximum(:number).to_i
       hash_rate_block_numbers = (from + 1).step(to, 100).to_a
       hash_rate_blocks = Block.accepted.where(number: hash_rate_block_numbers).order(:timestamp)
