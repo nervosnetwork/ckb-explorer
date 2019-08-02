@@ -25,7 +25,6 @@ class Block < ApplicationRecord
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
 
   scope :recent, -> { order(timestamp: :desc) }
-  scope :accepted, -> { where(status: :accepted) }
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
 
@@ -76,7 +75,7 @@ class Block < ApplicationRecord
   end
 
   def invalid!
-    update!(status: "abandoned")
+    abandoned!
     uncle_blocks.delete_all
     ckb_transactions.destroy_all
   end
