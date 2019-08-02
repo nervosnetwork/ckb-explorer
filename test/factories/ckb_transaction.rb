@@ -5,9 +5,6 @@ FactoryBot.define do
     deps {}
     block_number {}
     block_timestamp { Faker::Time.between(2.days.ago, Date.today, :all).to_i }
-    display_inputs {}
-    display_outputs {}
-    status { 0 }
     transaction_fee { 0 }
     version { 0 }
     witnesses {}

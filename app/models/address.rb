@@ -5,8 +5,7 @@ class Address < ApplicationRecord
   has_many :cell_outputs
   has_many :account_books
   has_many :ckb_transactions, through: :account_books
-  validates_presence_of :balance, :cell_consumed, :ckb_transactions_count
-  validates :balance, :cell_consumed, :ckb_transactions_count, numericality: { greater_than_or_equal_to: 0 }
+  validates :balance, :cell_consumed, :ckb_transactions_count, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   attribute :lock_hash, :ckb_hash
   after_commit :flush_cache
@@ -20,9 +19,7 @@ class Address < ApplicationRecord
     lock_hash = lock_script.to_hash
 
     Rails.cache.fetch(lock_hash, expires_in: 1.day) do
-      transaction(requires_new: true) { Address.create!(address_hash: address_hash, balance: 0, cell_consumed: 0, lock_hash: lock_hash) }
-    rescue ActiveRecord::RecordNotUnique
-      Address.find_by!(lock_hash: lock_hash)
+      Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
     end
   end
 
