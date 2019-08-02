@@ -1,0 +1,44 @@
+version: '3'
+services:
+  redis:
+    image: redis:5.0.1
+    volumes:
+      - ./docker/redis_data:/data
+  db:
+    image: postgres:10.6
+    env_file: .env.local
+    volumes:
+      - ./docker/postgres_data:/var/lib/postgresql/data
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/app/Dockerfile
+    image: stoneking/c-test:ckb_explorer_app
+    env_file: .env.local
+    environment:
+      RAILS_ENV: production
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    command: bundle exec puma -C config/puma.rb config.ru
+    depends_on:
+      - db
+      - redis
+  block_processor:
+    build:
+      context: .
+      dockerfile: ./docker/app/Dockerfile
+    volumes:
+      - .:/app
+    command: bin/rails runner lib/ckb_statistic_info_chart_data_updater.rb & bin/rails runner lib/ckb_block_node_processor.rb
+    depends_on:
+      - db
+  web:
+    build:
+      context: .
+      dockerfile: ./docker/web/Dockerfile
+    depends_on:
+      - app
+    ports:
+      - 80:80

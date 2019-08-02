@@ -1,0 +1,5 @@
+.git
+.github
+tmp
+docker/postgres_data
+docker/redis_data
