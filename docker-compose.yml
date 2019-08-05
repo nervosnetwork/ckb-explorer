@@ -31,7 +31,7 @@ services:
       dockerfile: ./docker/app/Dockerfile
     volumes:
       - .:/app
-    command: bin/rails runner lib/ckb_statistic_info_chart_data_updater.rb & bin/rails runner lib/ckb_block_node_processor.rb
+    command: ruby lib/ckb_block_node_processor.rb
     depends_on:
       - db
   web:
