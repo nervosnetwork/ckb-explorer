@@ -18,7 +18,7 @@ FactoryBot.define do
     total_cell_capacity { 50000 }
     uncle_block_hashes {}
     proposals {}
-    status { "inauthentic" }
+    status { "accepted" }
     epoch { "0" }
     start_number { "0" }
     length { "1000" }

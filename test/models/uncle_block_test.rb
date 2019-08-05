@@ -69,13 +69,11 @@ class UncleBlockTest < ActiveSupport::TestCase
       )
     )
     VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
-      SyncInfo.local_inauthentic_tip_block_number
       node_block = CkbSync::Api.instance.get_block(HAS_UNCLES_BLOCK_HASH)
       node_block.uncles.first.instance_variable_set(:@proposals, ["0x98a4e0c18c"])
-      create(:sync_info, name: "inauthentic_tip_block_number", value: node_block.header.number)
       set_default_lock_params(node_block: node_block)
 
-      CkbSync::Persist.save_block(node_block, "inauthentic")
+      CkbSync::NodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(block_hash: HAS_UNCLES_BLOCK_HASH)
       uncle_block = block.uncle_blocks.first
       proposals = uncle_block.proposals

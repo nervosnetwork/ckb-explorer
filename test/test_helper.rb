@@ -5,9 +5,8 @@ SimpleCov.start "rails" do
   add_filter "/app/mailers/"
   add_filter "/lib/api/"
   add_filter "/lib/fast_jsonapi"
-  add_filter "/lib/ckb_authentic_sync.rb"
-  add_filter "/lib/ckb_inauthentic_sync.rb"
-  add_filter "/lib/ckb_transaction_info_and_fee_updater.rb"
+  add_filter "/lib/ckb_block_node_processor.rb"
+  add_filter "/lib/ckb_statistic_info_chart_data_updater.rb"
 end
 require "database_cleaner"
 require "minitest/reporters"
@@ -55,7 +54,6 @@ def prepare_inauthentic_node_data(node_tip_block_number = 10)
     )
   )
   local_tip_block_number = 0
-  SyncInfo.local_inauthentic_tip_block_number
   ((local_tip_block_number + 1)..node_tip_block_number).each do |number|
     block_hash = nil
     VCR.use_cassette("genesis_block") do
@@ -63,17 +61,23 @@ def prepare_inauthentic_node_data(node_tip_block_number = 10)
         block_hash = CkbSync::Api.instance.get_block_hash(number.to_s)
       end
 
-      sync_info = SyncInfo.find_or_create_by(name: "inauthentic_tip_block_number", value: number)
-      sync_info.update(value: number, status: "syncing") if sync_info.status != "syncing"
-
       VCR.use_cassette("blocks/#{number}") do
         node_block = CkbSync::Api.instance.get_block(block_hash)
         tx = node_block.transactions.first
         output = tx.outputs.first
-        output.lock.instance_variable_set(:@args, ["0x36c329ed630d6ce750712a477543672adab57f4c"])
+        output.lock.instance_variable_set(:@args, ["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"])
         output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
-        CkbSync::Persist.save_block(node_block, "inauthentic")
+        CkbSync::NodeDataProcessor.new.process_block(node_block)
+        CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
+          CKB::Types::BlockReward.new(
+            total: "100000000000",
+            primary: "100000000000",
+            secondary: "0",
+            tx_fee: "10",
+            proposal_reward: "10"
+          )
+        )
       end
     end
   end
@@ -196,7 +200,7 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   blocks = create_list(:block, 10, :with_block_hash)
   cellbases = []
   blocks.each do |block|
-    cellbase = block.ckb_transactions.create(is_cellbase: true, status: :inauthentic, block_timestamp: block_timestamp, block_number: 10)
+    cellbase = block.ckb_transactions.create(is_cellbase: true, block_timestamp: block_timestamp, block_number: 10)
     cellbases << cellbase
   end
   cellbases_part1 = cellbases[0..1]
@@ -216,9 +220,9 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
 end
 
 def expected_ranking(address1, address2, address3)
-  address1_block_ids = address1.ckb_transactions.where(is_cellbase: true).select("block_id")
-  address2_block_ids = address2.ckb_transactions.where(is_cellbase: true).select("block_id")
-  address3_block_ids = address3.ckb_transactions.where(is_cellbase: true).select("block_id")
+  address1_block_ids = address1.ckb_transactions.where(is_cellbase: true).pluck("block_id")
+  address2_block_ids = address2.ckb_transactions.where(is_cellbase: true).pluck("block_id")
+  address3_block_ids = address3.ckb_transactions.where(is_cellbase: true).pluck("block_id")
   address1_blocks = Block.where(id: address1_block_ids)
   address2_blocks = Block.where(id: address2_block_ids)
   address3_blocks = Block.where(id: address3_block_ids)

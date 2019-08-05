@@ -100,7 +100,7 @@ class CkbUtils
   end
 
   def self.ckb_transaction_fee(ckb_transaction)
-    ckb_transaction.inputs.available.sum(:capacity) - ckb_transaction.outputs.available.sum(:capacity)
+    ckb_transaction.inputs.sum(:capacity) - ckb_transaction.outputs.sum(:capacity)
   end
 
   def self.get_unspent_cells(address_hash)
