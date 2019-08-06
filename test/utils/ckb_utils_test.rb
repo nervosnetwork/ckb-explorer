@@ -30,4 +30,48 @@ class CkbUtilsTest < ActiveSupport::TestCase
       assert_equal node_block.transactions.first.outputs.first.capacity.to_i, local_block.reward
     end
   end
+
+  test "#calculate_cell_min_capacity should return output's min capacity" do
+    VCR.use_cassette("blocks/10") do
+      node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+
+      node_data_processor.process_block(node_block)
+      output = node_block.transactions.first.outputs.first
+      expected_cell_min_capacity = output.calculate_min_capacity
+
+      assert_equal expected_cell_min_capacity, CkbUtils.calculate_cell_min_capacity(output)
+    end
+  end
+
+
+  test "#block_cell_consumed generated block's cell_consumed should equal to the sum of transactions output occupied capacity" do
+    VCR.use_cassette("blocks/10") do
+      node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+
+      node_data_processor.process_block(node_block)
+      expected_total_cell_consumed = node_block.transactions.flat_map(&:outputs).flatten.reduce(0) { |memo, output| memo + output.calculate_min_capacity }
+
+      assert_equal expected_total_cell_consumed, CkbUtils.block_cell_consumed(node_block.transactions)
+    end
+  end
+
+  test "#address_cell_consumed should return right cell consumed by the address" do
+    prepare_inauthentic_node_data(12)
+    VCR.use_cassette("blocks/12") do
+      node_block = CkbSync::Api.instance.get_block_by_number(13)
+      cellbase = node_block.transactions.first
+      lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+      miner_address = Address.find_or_create_address(lock_script)
+      unspent_cells = miner_address.cell_outputs.live
+      expected_address_cell_consumed = unspent_cells.reduce(0) { |memo, cell| memo + cell.node_output.calculate_min_capacity }
+
+      assert_equal expected_address_cell_consumed, CkbUtils.address_cell_consumed(miner_address.address_hash)
+    end
+  end
+
+  private
+
+  def node_data_processor
+    CkbSync::NodeDataProcessor.new
+  end
 end
