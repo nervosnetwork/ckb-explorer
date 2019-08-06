@@ -60,9 +60,9 @@ class StatisticInfoChart
   def last_epoch0_block_number
     current_epoch_number = CkbSync::Api.instance.get_current_epoch.number.to_i
     if current_epoch_number > 0
-      Block.accepted.where(epoch: 0).recent.first.number.to_i
+      Block.accepted.where(epoch: 0).recent.first&.number.to_i
     else
-      Block.accepted.recent.last.number.to_i
+      Block.accepted.recent.last&.number.to_i
     end
   end
 end
