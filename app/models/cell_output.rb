@@ -16,6 +16,12 @@ class CellOutput < ApplicationRecord
   def address_hash
     address.address_hash
   end
+
+  def node_output
+    lock = CKB::Types::Script.new(lock_script.to_node_lock)
+    type = type_script.present? ? CKB::Types::Script.new(type_script.to_node_lock) : nil
+    CKB::Types::Output.new(capacity: capacity.to_i, data: data, lock: lock, type: type)
+  end
 end
 
 # == Schema Information
