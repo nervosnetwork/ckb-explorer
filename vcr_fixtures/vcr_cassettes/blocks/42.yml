@@ -1,0 +1,40 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_by_number","params":["42"]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '1471'
+      Date:
+      - Thu, 08 Aug 2019 09:39:15 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":{"header":{"dao":"0x01000000000000001db9a81bd0872300000c2c6abebe350000bd48ca886f0000","difficulty":"0x9292","epoch":"0","hash":"0xfe9b26c96a825dceba7c08e416bf449f9ae9b9c64cf226d018133afdad05d8b6","number":"42","parent_hash":"0x675a87d0db93d195b3988eda41630782c7fa7762e61cf7b0a2d228a1c7c3b4e4","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","seal":{"nonce":"17064709343612366348","proof":"0xf00200007b070000dc07000031140000181c00004c200000ec290000b13c000009520000005e00003e67000049770000"},"timestamp":"1564210106018","transactions_root":"0x0f4814e19a09faa6dc77c066d796ef181628b9c13b8cf129f0db3b4066bdfc92","uncles_count":"0","uncles_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","version":"0","witnesses_root":"0x004dbcf85b2d8f9d73d3deaa96b0c15963f64bbe5845b571b158d5a23b256c81"},"proposals":[],"transactions":[{"deps":[],"hash":"0x0f4814e19a09faa6dc77c066d796ef181628b9c13b8cf129f0db3b4066bdfc92","inputs":[{"previous_output":{"block_hash":null,"cell":null},"since":"42"}],"outputs":[{"capacity":"100388918384","data":"0x","lock":{"args":["0xda648442dbb7347e467d1d09da13e5cd3a0ef0e1"],"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","hash_type":"Data"},"type":null}],"version":"0","witnesses":[{"data":["0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","0x47a47878cf6e4151c8f60b1a64d695b8f8985692"]}]}],"uncles":[]},"id":1}
+
+'
+    http_version:
+  recorded_at: Thu, 08 Aug 2019 09:39:15 GMT
+recorded_with: VCR 5.0.0
