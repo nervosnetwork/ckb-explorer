@@ -10,11 +10,10 @@ class LockScriptTest < ActiveSupport::TestCase
   end
 
   test "#code_hash should decodes packed string" do
-    VCR.use_cassette("blocks/10") do
-      node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+      node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       CkbSync::NodeDataProcessor.new.process_block(node_block)
-      packed_block_hash = DEFAULT_NODE_BLOCK_HASH
-      block = Block.find_by(block_hash: packed_block_hash)
+      block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
       ckb_transaction = block.ckb_transactions.first
       cell_output = ckb_transaction.cell_outputs.first
       lock_script = cell_output.lock_script

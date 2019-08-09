@@ -18,8 +18,9 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 DEFAULT_NODE_BLOCK_HASH = "0xfe658f33e9e6c8f1a1830b0bfc01a0c014b8e38ec3d132337d5f622a0fa58288".freeze
-HAS_UNCLES_BLOCK_HASH = "0x8ce0d72cbf64745f4dfeafe142aa1cc5d0a2d5acc2303fb0dd4bd1603b7503df".freeze
-HAS_UNCLES_BLOCK_NUMBER = 4
+DEFAULT_NODE_BLOCK_NUMBER = 10
+HAS_UNCLES_BLOCK_HASH = "0x252e4e972211b61466245ecb876c5025ce1c20bc2c4b07f23d377a14422a3f4e".freeze
+HAS_UNCLES_BLOCK_NUMBER = 77
 
 VCR.configure do |config|
   config.cassette_library_dir = "vcr_fixtures/vcr_cassettes"
@@ -55,14 +56,9 @@ def prepare_inauthentic_node_data(node_tip_block_number = 10)
   )
   local_tip_block_number = 0
   ((local_tip_block_number + 1)..node_tip_block_number).each do |number|
-    block_hash = nil
     VCR.use_cassette("genesis_block") do
-      VCR.use_cassette("block_hashes/#{number}") do
-        block_hash = CkbSync::Api.instance.get_block_hash(number.to_s)
-      end
-
       VCR.use_cassette("blocks/#{number}") do
-        node_block = CkbSync::Api.instance.get_block(block_hash)
+        node_block = CkbSync::Api.instance.get_block_by_number(number)
         tx = node_block.transactions.first
         output = tx.outputs.first
         output.lock.instance_variable_set(:@args, ["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"])

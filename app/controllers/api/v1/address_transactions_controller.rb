@@ -11,8 +11,6 @@ module Api
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
 
         render json: CkbTransactionSerializer.new(ckb_transactions, options)
-      rescue ActiveRecord::RecordNotFound
-        raise Api::V1::Exceptions::AddressNotFoundError
       end
 
       private
