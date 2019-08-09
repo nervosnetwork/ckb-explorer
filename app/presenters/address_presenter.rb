@@ -12,7 +12,7 @@ class AddressPresenter
   end
 
   def balance
-    object.reduce(0) { |sum, addr| sum + addr.balance }
+    object.reduce(0) { |sum, addr| sum + addr.balance.to_i }
   end
 
   def lock_script
