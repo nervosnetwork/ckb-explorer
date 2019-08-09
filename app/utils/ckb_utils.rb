@@ -83,7 +83,13 @@ class CkbUtils
   end
 
   def self.ckb_transaction_fee(ckb_transaction)
-    ckb_transaction.inputs.sum(:capacity) - ckb_transaction.outputs.sum(:capacity)
+    if ckb_transaction.inputs.dao.present?
+      dao_cells = ckb_transaction.inputs.dao
+      dao_reward = dao_cells.reduce(0) { |memo, dao_cell| memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(dao_cell).to_i }
+      ckb_transaction.inputs.sum(:capacity) + dao_reward - ckb_transaction.outputs.sum(:capacity)
+    else
+      ckb_transaction.inputs.sum(:capacity) - ckb_transaction.outputs.sum(:capacity)
+    end
   end
 
   def self.get_unspent_cells(address_hash)
