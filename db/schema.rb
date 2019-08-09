@@ -104,6 +104,7 @@ ActiveRecord::Schema.define(version: 2019_08_10_071407) do
     t.integer "cell_index"
     t.decimal "generated_by_id", precision: 30
     t.decimal "consumed_by_id", precision: 30
+    t.integer "cell_type", default: 0
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"

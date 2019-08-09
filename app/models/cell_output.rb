@@ -1,5 +1,6 @@
 class CellOutput < ApplicationRecord
   enum status: { live: 0, dead: 1 }
+  enum cell_type: { normal: 0, dao: 1 }
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
@@ -41,6 +42,7 @@ end
 #  cell_index         :integer
 #  generated_by_id    :decimal(30, )
 #  consumed_by_id     :decimal(30, )
+#  cell_type          :integer          default(0)
 #
 # Indexes
 #
