@@ -300,6 +300,7 @@ module CkbSync
 
     def calculate_tx_fee(local_block)
       ckb_transactions = local_block.ckb_transactions.where(is_cellbase: false)
+      return if ckb_transactions.blank?
 
       ApplicationRecord.transaction do
         ckb_transactions.each(&method(:update_transaction_fee))
