@@ -13,8 +13,10 @@ A blockchain explorer cache server of [Nervos CKB](https://github.com/nervosnetw
 
 ## Prerequisites
 
-- [postgresql](https://www.postgresql.org/) 9.4 and above
-- install secp256k1 (see [secp256k1](https://github.com/bitcoin-core/secp256k1.git) for more info)
+- [PostgreSQL](https://www.postgresql.org/) 9.4 and above
+- [Redis](https://redis.io/) 4.0.9 and above
+- [libsodium](https://libsodium.gitbook.io/doc/installation)
+- [secp256k1](https://github.com/bitcoin-core/secp256k1.git)
 
 ```shell
   $ git clone https://github.com/bitcoin-core/secp256k1.git && cd secp256k1 && ./autogen.sh && ./configure --enable-module-recovery --enable-experimental --enable-module-ecdh && make && sudo make install && cd ..
@@ -43,13 +45,7 @@ $ bundle exec rails test
 $ bundle exec rails s
 
 # start sync process
-$ ruby lib/ckb_inauthentic_sync.rb
-
-# start validator process
-$ ruby lib/ckb_authentic_sync.rb
-
-# strat ckb transaction info and fee process
-$ ruby lib/ckb_transaction_info_and_fee_updater.rb
+$ ruby lib/ckb_block_node_processor.rb
 ```
 
 ## Deploy

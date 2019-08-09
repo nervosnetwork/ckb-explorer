@@ -40,15 +40,15 @@ class BlockTest < ActiveSupport::TestCase
   test "#invalid! change block status to abandoned when block is not verified" do
     prepare_inauthentic_node_data(9)
     local_block = Block.find_by(number: 9)
-    VCR.use_cassette("blocks/10") do
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       local_block.invalid!
       assert_equal "abandoned", local_block.reload.status
     end
   end
 
   test "#invalid! delete all uncle blocks under the abandoned block" do
-    prepare_inauthentic_node_data(9)
-    local_block = Block.find_by(number: 9)
+    prepare_inauthentic_node_data(HAS_UNCLES_BLOCK_NUMBER)
+    local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
 
     assert_not_empty local_block.uncle_blocks
 
@@ -65,7 +65,7 @@ class BlockTest < ActiveSupport::TestCase
 
     assert_not_empty local_block.ckb_transactions
 
-    VCR.use_cassette("blocks/10") do
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       assert_changes -> { local_block.reload.ckb_transactions.count }, from: local_block.ckb_transactions.count, to: 0 do
         local_block.invalid!
       end
@@ -78,7 +78,7 @@ class BlockTest < ActiveSupport::TestCase
 
     assert_not_empty local_block.cell_inputs
 
-    VCR.use_cassette("blocks/10") do
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       assert_changes -> { local_block.reload.cell_inputs.count }, from: local_block.cell_inputs.count, to: 0 do
         local_block.invalid!
       end
@@ -91,7 +91,7 @@ class BlockTest < ActiveSupport::TestCase
 
     assert_not_empty local_block.cell_outputs
 
-    VCR.use_cassette("blocks/10") do
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       assert_changes -> { local_block.reload.cell_outputs.count }, from: local_block.cell_outputs.count, to: 0 do
         local_block.invalid!
       end
@@ -105,7 +105,7 @@ class BlockTest < ActiveSupport::TestCase
 
     assert_not_empty origin_lock_scripts
 
-    VCR.use_cassette("blocks/10") do
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       assert_changes -> { local_block.reload.cell_outputs.map(&:lock_script).count }, from: origin_lock_scripts.count, to: 0 do
         local_block.invalid!
       end
@@ -119,7 +119,7 @@ class BlockTest < ActiveSupport::TestCase
 
     assert_not_empty origin_type_scripts
 
-    VCR.use_cassette("blocks/10") do
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       assert_changes -> { local_block.reload.cell_outputs.map(&:type_script).count }, from: origin_type_scripts.count, to: 0 do
         local_block.invalid!
       end
@@ -181,9 +181,9 @@ class BlockTest < ActiveSupport::TestCase
       )
     )
     VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
-      node_block = CkbSync::Api.instance.get_block(HAS_UNCLES_BLOCK_HASH)
+      node_block = CkbSync::Api.instance.get_block_by_number(HAS_UNCLES_BLOCK_NUMBER)
       CkbSync::NodeDataProcessor.new.process_block(node_block)
-      block = Block.find_by(block_hash: HAS_UNCLES_BLOCK_HASH)
+      block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       uncle_block_hashes = block.uncle_block_hashes
 
       assert_equal unpack_array_attribute(block, "uncle_block_hashes", block.uncles_count, ENV["DEFAULT_HASH_LENGTH"]), uncle_block_hashes
@@ -207,11 +207,11 @@ class BlockTest < ActiveSupport::TestCase
         start_number: "0"
       )
     )
-    VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
-      node_block = CkbSync::Api.instance.get_block(HAS_UNCLES_BLOCK_HASH)
+    VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
+      node_block = CkbSync::Api.instance.get_block_by_number(HAS_UNCLES_BLOCK_NUMBER)
       node_block.instance_variable_set(:@proposals, ["0x98a4e0c18c"])
       CkbSync::NodeDataProcessor.new.process_block(node_block)
-      block = Block.find_by(block_hash: HAS_UNCLES_BLOCK_HASH)
+      block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       proposals = block.proposals
 
       assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, ENV["DEFAULT_SHORT_HASH_LENGTH"]), proposals

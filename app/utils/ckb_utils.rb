@@ -1,31 +1,14 @@
 class CkbUtils
   def self.calculate_cell_min_capacity(output)
-    output = output
-    capacity = 8 + output.data.bytesize + calculate_script_capacity(output.lock)
-    if output.type.present?
-      capacity += calculate_script_capacity(output.type)
-    end
-    capacity
-  end
-
-  def self.calculate_script_capacity(script)
-    capacity = 1 + (script.args || []).map(&:bytesize).reduce(0, &:+)
-    if script.code_hash
-      capacity += CKB::Utils.hex_to_bin(script.code_hash).bytesize
-    end
-    capacity
+    output.calculate_min_capacity
   end
 
   def self.block_cell_consumed(transactions)
-    transactions.reduce(0) do |memo, transaction|
-      memo + transaction.outputs.reduce(0) { |inside_memo, output| inside_memo + calculate_cell_min_capacity(output) }
-    end
+    transactions.flat_map(&:outputs).reduce(0) { |memo, output| memo + calculate_cell_min_capacity(output) }
   end
 
   def self.total_cell_capacity(transactions)
-    transactions.reduce(0) do |memo, transaction|
-      memo + transaction.outputs.reduce(0) { |inside_memo, output| inside_memo + output.capacity.to_i }
-    end
+    transactions.flat_map(&:outputs).reduce(0) { |memo, output| memo + output.capacity.to_i }
   end
 
   def self.miner_hash(cellbase)
@@ -121,7 +104,7 @@ class CkbUtils
 
     address_cell_consumed = 0
     get_unspent_cells(address_hash).find_each do |cell_output|
-      address_cell_consumed += calculate_cell_min_capacity(cell_output.node_cell_output)
+      address_cell_consumed += calculate_cell_min_capacity(cell_output.node_output)
     end
 
     address_cell_consumed
