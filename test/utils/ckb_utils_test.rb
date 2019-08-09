@@ -32,8 +32,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test "#calculate_cell_min_capacity should return output's min capacity" do
-    VCR.use_cassette("blocks/10") do
-      node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+      node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
 
       node_data_processor.process_block(node_block)
       output = node_block.transactions.first.outputs.first
@@ -45,8 +45,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
 
 
   test "#block_cell_consumed generated block's cell_consumed should equal to the sum of transactions output occupied capacity" do
-    VCR.use_cassette("blocks/10") do
-      node_block = CkbSync::Api.instance.get_block(DEFAULT_NODE_BLOCK_HASH)
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+      node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
 
       node_data_processor.process_block(node_block)
       expected_total_cell_consumed = node_block.transactions.flat_map(&:outputs).flatten.reduce(0) { |memo, output| memo + output.calculate_min_capacity }
