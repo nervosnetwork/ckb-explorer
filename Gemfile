@@ -38,7 +38,7 @@ gem "config"
 gem "daemons", "~> 1.2", ">= 1.2.6"
 
 # CKB SDK
-gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", branch: "rc/v0.17.0"
+gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", branch: "rc/v0.18.0"
 
 # Redis
 gem "hiredis", "~> 0.6.1"
