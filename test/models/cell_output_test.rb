@@ -14,4 +14,11 @@ class CellOutputTest < ActiveSupport::TestCase
     should validate_numericality_of(:capacity).
       is_greater_than_or_equal_to(0)
   end
+
+  test "should have cell_type column" do
+    block = create(:block)
+    cell_output = create(:cell_output, :with_full_transaction, block: block)
+
+    assert_equal "normal", cell_output.cell_type
+  end
 end
