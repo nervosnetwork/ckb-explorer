@@ -7,7 +7,6 @@ class Address < ApplicationRecord
   has_many :ckb_transactions, through: :account_books
   validates :balance, :cell_consumed, :ckb_transactions_count, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
-  attribute :lock_hash, :ckb_hash
   after_commit :flush_cache
 
   def lock_script
