@@ -282,6 +282,26 @@ module CkbSync
       end
     end
 
+    test "#process_block created cell_outputs's cell_type should be equal to normal when cell is not dao cell" do
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        local_block = node_data_processor.process_block(node_block)
+
+        assert_equal ["normal"], local_block.cell_outputs.pluck(:cell_type).uniq
+      end
+    end
+
+    test "#process_block created cell_outputs's cell_type should be equal to dao when cell is dao cell" do
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        node_output = node_block.transactions.first.outputs.first
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_CODE_HASH"], args: [])
+        local_block = node_data_processor.process_block(node_block)
+
+        assert_equal ["dao"], local_block.cell_outputs.pluck(:cell_type).uniq
+      end
+    end
+
     test "#process_block should create addresses for cell_output" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
