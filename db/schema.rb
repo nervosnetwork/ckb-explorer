@@ -10,7 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
+<<<<<<< HEAD
 ActiveRecord::Schema.define(version: 2019_08_19_090938) do
+=======
+ActiveRecord::Schema.define(version: 2019_08_13_074456) do
+>>>>>>> feat: add header_deps and cell_deps to ckb_transactions
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -125,6 +129,8 @@ ActiveRecord::Schema.define(version: 2019_08_19_090938) do
     t.datetime "updated_at", null: false
     t.boolean "is_cellbase", default: false
     t.jsonb "witnesses"
+    t.binary "header_deps"
+    t.jsonb "cell_deps"
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
