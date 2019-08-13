@@ -43,7 +43,7 @@ if ENV["CI"] == "true"
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
 
-def prepare_inauthentic_node_data(node_tip_block_number = 10)
+def prepare_node_data(node_tip_block_number = 10)
   Sidekiq::Testing.inline!
   CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
     CKB::Types::Epoch.new(
@@ -112,7 +112,7 @@ def format_node_block_commit_transaction(commit_transaction)
 end
 
 def format_node_block_cell_output(cell_output)
-  cell_output.select { |key, _value| key.in?(%w(capacity data)) }
+  cell_output.select { |key, _value| key == "capacity" }
 end
 
 def fake_node_block_with_type_script(node_block)

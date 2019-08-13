@@ -56,7 +56,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test "#address_cell_consumed should return right cell consumed by the address" do
-    prepare_inauthentic_node_data(12)
+    prepare_node_data(12)
     VCR.use_cassette("blocks/12") do
       node_block = CkbSync::Api.instance.get_block_by_number(13)
       cellbase = node_block.transactions.first
