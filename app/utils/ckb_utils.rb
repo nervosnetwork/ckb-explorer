@@ -1,10 +1,17 @@
 class CkbUtils
-  def self.calculate_cell_min_capacity(output)
+  def self.calculate_cell_min_capacity(output, data)
+    output.data = data if output.data.blank?
     output.calculate_min_capacity
   end
 
   def self.block_cell_consumed(transactions)
-    transactions.flat_map(&:outputs).reduce(0) { |memo, output| memo + calculate_cell_min_capacity(output) }
+    transactions.reduce(0) do |memo, transaction|
+      outputs_data = transaction.outputs_data
+      transaction.outputs.each_with_index do |output, cell_index|
+        memo += calculate_cell_min_capacity(output, outputs_data[cell_index])
+      end
+      memo
+    end
   end
 
   def self.total_cell_capacity(transactions)
@@ -15,7 +22,6 @@ class CkbUtils
     return if cellbase.witnesses.blank?
 
     lock_script = generate_lock_script_from_cellbase(cellbase)
-
     generate_address(lock_script)
   end
 
@@ -108,7 +114,7 @@ class CkbUtils
 
     address_cell_consumed = 0
     get_unspent_cells(address_hash).find_each do |cell_output|
-      address_cell_consumed += calculate_cell_min_capacity(cell_output.node_output)
+      address_cell_consumed += calculate_cell_min_capacity(cell_output.node_output, cell_output.data)
     end
 
     address_cell_consumed
