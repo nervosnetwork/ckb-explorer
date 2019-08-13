@@ -91,7 +91,7 @@ module Api
       end
 
       test "should contain right keys in the serialized object when call show" do
-        prepare_inauthentic_node_data(8)
+        prepare_node_data(8)
         ckb_transaction = CkbTransaction.last
 
         valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
