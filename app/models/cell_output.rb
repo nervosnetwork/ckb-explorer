@@ -42,7 +42,7 @@ end
 #  cell_index         :integer
 #  generated_by_id    :decimal(30, )
 #  consumed_by_id     :decimal(30, )
-#  cell_type          :integer          default(0)
+#  cell_type          :integer          default("normal")
 #
 # Indexes
 #
