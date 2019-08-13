@@ -94,7 +94,7 @@ module CkbSync
     end
 
     test "#process_block generated block's total_cell_capacity should equal to the sum of transactions output capacity" do
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
 
         local_block = node_data_processor.process_block(node_block)
@@ -214,9 +214,10 @@ module CkbSync
         local_block = node_data_processor.process_block(node_block)
         local_ckb_transactions =
           local_block.ckb_transactions.map do |ckb_transaction|
-            ckb_transaction = ckb_transaction.attributes.select { |attribute| attribute.in?(%w(tx_hash deps version witnesses)) }
+            ckb_transaction = ckb_transaction.attributes.select { |attribute| attribute.in?(%w(tx_hash cell_deps header_deps version witnesses)) }
             ckb_transaction["hash"] = ckb_transaction.delete("tx_hash")
             ckb_transaction["version"] = ckb_transaction["version"].to_s
+            ckb_transaction["header_deps"] = [] if ckb_transaction["header_deps"].blank?
             ckb_transaction.sort
           end
 
@@ -274,11 +275,23 @@ module CkbSync
           commit_transaction.cell_outputs.map do |cell_output|
             attributes = cell_output.attributes
             attributes["capacity"] = attributes["capacity"].to_i.to_s
-            attributes.select { |attribute| attribute.in?(%w(capacity data)) }.sort
+            attributes.select { |attribute| attribute == "capacity" }.sort
           end
         }.flatten
 
         assert_equal node_block_cell_outputs, local_block_cell_outputs
+      end
+    end
+
+    test "cell output's data should equal with transaction's outputs_data" do
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        node_transaction = node_block.transactions.first
+        node_transaction.outputs_data = %w(0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063 0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815062)
+        local_block = node_data_processor.process_block(node_block)
+        expected_data = local_block.cell_outputs.order(:id).pluck(:data)
+
+        assert_equal expected_data, ["0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063"]
       end
     end
 
@@ -421,7 +434,7 @@ module CkbSync
     end
 
     test "#process_block should update current block's miner address pending reward blocks count" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         node_block = CkbSync::Api.instance.get_block_by_number(13)
         cellbase = node_block.transactions.first
@@ -435,7 +448,7 @@ module CkbSync
     end
 
     test "#process_block should update abandoned block's contained address's transactions count" do
-      prepare_inauthentic_node_data(8)
+      prepare_node_data(8)
       local_block = Block.find_by(number: 8)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
@@ -447,9 +460,9 @@ module CkbSync
     end
 
     test "#process_block should update abandoned block's contained address's balance" do
-      prepare_inauthentic_node_data(8)
+      prepare_node_data(8)
       local_block = Block.find_by(number: 8)
-      balance_diff = 100000000000
+      balance_diff = 125000000000
       origin_balance = local_block.contained_addresses.sum(:balance)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
@@ -461,7 +474,7 @@ module CkbSync
     end
 
     test "should let the local tip block miner's pending reward blocks count increase by one" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       miner_address = nil
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         node_block = CkbSync::Api.instance.get_block_by_number(13)
@@ -478,7 +491,7 @@ module CkbSync
     end
 
     test "should change the local tip block's target block reward status to issued when there is the target block" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         local_block = node_data_processor.call
 
@@ -487,7 +500,7 @@ module CkbSync
     end
 
     test "should do nothing on the local tip block's target block reward status when there is no target block" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         assert_no_changes -> { local_block.reload.target_block_reward_status } do
@@ -497,7 +510,7 @@ module CkbSync
     end
 
     test "should update the local tip block target block's received tx fee when there is the target block" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       target_block = Block.find_by(number: 2)
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         assert_changes -> { target_block.reload.received_tx_fee }, from: 0, to: 20 do
@@ -507,7 +520,7 @@ module CkbSync
     end
 
     test "should do nothing on the local tip block target block's received tx fee when there is no target block" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         assert_nothing_raised do
           node_data_processor.call
@@ -516,7 +529,7 @@ module CkbSync
     end
 
     test "should change the local tip block target block' reward status to issued when there is the target block" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       target_block = Block.find_by(number: 2)
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         assert_changes -> { target_block.reload.reward_status }, from: "pending", to: "issued" do
@@ -526,7 +539,7 @@ module CkbSync
     end
 
     test "should do nothing on the local tip block target block's reward status when there is no target block" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         assert_nothing_raised do
           node_data_processor.call
@@ -535,7 +548,7 @@ module CkbSync
     end
 
     test "should change the local tip block target block' received_tx_fee_status to issued when there is the target block" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       target_block = Block.find_by(number: 2)
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         assert_changes -> { target_block.reload.received_tx_fee_status }, from: "calculating", to: "calculated" do
@@ -545,7 +558,7 @@ module CkbSync
     end
 
     test "should do nothing on the local tip block target block's received_tx_fee_status when there is no target block" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         assert_nothing_raised do
           node_data_processor.call
@@ -554,7 +567,7 @@ module CkbSync
     end
 
     test "cellbase's display inputs should contain target block number" do
-      prepare_inauthentic_node_data(11)
+      prepare_node_data(11)
       CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
         CKB::Types::BlockReward.new(
           total: "100000000000",
@@ -642,7 +655,7 @@ module CkbSync
     end
 
     test "cellbase's display outputs should contain block reward commit reward, proposal reward and secondary reward" do
-      prepare_inauthentic_node_data(11)
+      prepare_node_data(11)
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           epoch_reward: "250000000000",
@@ -677,7 +690,7 @@ module CkbSync
     end
 
     test "should change the existing block status to abandoned when it is invalid" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -688,7 +701,7 @@ module CkbSync
     end
 
     test "should delete all uncle blocks under the existing block when it is invalid" do
-      prepare_inauthentic_node_data(HAS_UNCLES_BLOCK_NUMBER)
+      prepare_node_data(HAS_UNCLES_BLOCK_NUMBER)
       local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
@@ -702,7 +715,7 @@ module CkbSync
     end
 
     test "should delete all ckb transactions under the existing block when it is invalid" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
@@ -716,7 +729,7 @@ module CkbSync
     end
 
     test "should delete all cell inputs under the existing block when it is invalid" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
@@ -730,7 +743,7 @@ module CkbSync
     end
 
     test "should delete all cell outputs under the existing block when it is invalid" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
@@ -744,7 +757,7 @@ module CkbSync
     end
 
     test "should delete all lock script under the existing block when it is invalid" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       origin_lock_scripts = local_block.cell_outputs.map(&:lock_script)
@@ -759,7 +772,7 @@ module CkbSync
     end
 
     test "should delete all type script under the existing block when it is invalid" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       origin_type_scripts = local_block.cell_outputs.map(&:type_script)
@@ -774,7 +787,7 @@ module CkbSync
     end
 
     test "should do nothing when target block is not exist" do
-      prepare_inauthentic_node_data
+      prepare_node_data
       local_block = Block.find_by(number: 10)
       local_block.update(number: 100_000_000)
 
@@ -794,7 +807,7 @@ module CkbSync
     end
 
     test "should update abandoned block's contained address transactions count" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
@@ -806,7 +819,7 @@ module CkbSync
     end
 
     test "should update abandoned block's contained address's balance" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       ckb_transaction_ids = local_block.ckb_transactions.pluck(:id)
@@ -820,7 +833,7 @@ module CkbSync
     end
 
     test "should let abandoned block miner's pending reward blocks count decrease by one" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       local_block = Block.find_by(number: 12)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       miner_address = local_block.miner_address
@@ -832,7 +845,7 @@ module CkbSync
     end
 
     test "should change abandoned block's target block reward status to pending when there is the target block" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       local_block = Block.find_by(number: 12)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       VCR.use_cassette("blocks/12", record: :new_episodes) do
@@ -843,7 +856,7 @@ module CkbSync
     end
 
     test "should do nothing on abandoned block's target block reward status when there is no target block" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -854,7 +867,7 @@ module CkbSync
     end
 
     test "should change abandoned block target block's received tx fee to zero when there is the target block" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       local_block = Block.find_by(number: 12)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       target_block = local_block.target_block
@@ -866,7 +879,7 @@ module CkbSync
     end
 
     test "should do nothing on abandoned block target block's received tx fee when there is no target block" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -877,7 +890,7 @@ module CkbSync
     end
 
     test "should change abandoned block target block' reward status to pending when there is the target block" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       local_block = Block.find_by(number: 12)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       target_block = local_block.target_block
@@ -889,7 +902,7 @@ module CkbSync
     end
 
     test "should do nothing on abandoned block target block's reward status when there is no target block" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -900,7 +913,7 @@ module CkbSync
     end
 
     test "should change abandoned block target block' received_tx_fee_status to pending when there is the target block" do
-      prepare_inauthentic_node_data(12)
+      prepare_node_data(12)
       local_block = Block.find_by(number: 12)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       target_block = local_block.target_block
@@ -912,7 +925,7 @@ module CkbSync
     end
 
     test "should do nothing on abandoned block target block's received_tx_fee_status when there is no target block" do
-      prepare_inauthentic_node_data(9)
+      prepare_node_data(9)
       local_block = Block.find_by(number: 9)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
