@@ -37,9 +37,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
 
       node_data_processor.process_block(node_block)
       output = node_block.transactions.first.outputs.first
+      output_data = node_block.transactions.first.outputs_data.first
+      output.data = output_data
       expected_cell_min_capacity = output.calculate_min_capacity
 
-      assert_equal expected_cell_min_capacity, CkbUtils.calculate_cell_min_capacity(output)
+      assert_equal expected_cell_min_capacity, CkbUtils.calculate_cell_min_capacity(output, output_data)
     end
   end
 
