@@ -34,7 +34,7 @@ class CkbUtils
 
   def self.generate_lock_script_from_cellbase(cellbase)
     witnesses_data = cellbase.witnesses.first.data
-    CKB::Types::Script.new(code_hash: witnesses_data.first, args: [witnesses_data.last])
+    CKB::Types::Script.new(code_hash: witnesses_data.first[0..-3], args: [witnesses_data.last])
   end
 
   def self.generate_address(lock_script)
