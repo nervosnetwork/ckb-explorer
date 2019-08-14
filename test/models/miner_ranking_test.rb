@@ -5,7 +5,6 @@ class MinerRankingTest < ActiveSupport::TestCase
     miner_ranking = MinerRanking.new
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",
@@ -21,7 +20,7 @@ class MinerRankingTest < ActiveSupport::TestCase
 
     epoch_info = CkbSync::Api.instance.get_epoch_by_number(epoch_number)
     start_number = epoch_info.start_number.to_i
-    epoch_reward = epoch_info.epoch_reward.to_i
+    epoch_reward = ENV["DEFAULT_EPOCH_REWARD"].to_i
     base_reward = epoch_reward / epoch_info.length.to_i
     remainder_reward = epoch_reward % epoch_info.length.to_i
     if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward

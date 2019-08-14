@@ -47,7 +47,6 @@ def prepare_node_data(node_tip_block_number = 10)
   Sidekiq::Testing.inline!
   CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
     CKB::Types::Epoch.new(
-      epoch_reward: "250000000000",
       difficulty: "0x1000",
       length: "2000",
       number: "0",
