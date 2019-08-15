@@ -26,9 +26,21 @@ class CkbTransactionTest < ActiveSupport::TestCase
     assert_equal 10, ckb_transaction.display_inputs(previews: true).count
   end
 
+  test "#display_inputs should return all records when previews is false" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+
+    assert_equal 15, ckb_transaction.display_inputs.count
+  end
+
   test "#display_outputs should return up to ten records when previews is true" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
 
     assert_equal 10, ckb_transaction.display_outputs(previews: true).count
+  end
+
+  test "#display_outputs should return all records when previews is false" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+
+    assert_equal 15, ckb_transaction.display_outputs.count
   end
 end
