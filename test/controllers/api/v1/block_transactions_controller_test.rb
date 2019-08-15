@@ -239,6 +239,26 @@ module Api
         valid_get api_v1_block_transaction_url(block.block_hash)
         assert_equal links.stringify_keys.sort, json["links"].sort
       end
+
+      test "should return up to ten display_inputs" do
+        block = create(:block, :with_block_hash)
+        create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block)
+
+        valid_get api_v1_block_transaction_url(block.block_hash)
+
+        assert_equal 10, json["data"].first.dig("attributes", "display_inputs").count
+        assert_equal [true], json["data"].first.dig("attributes", "display_inputs").map { |input| input.key?("from_cellbase") }.uniq
+      end
+
+      test "should return up to ten display_outputs" do
+        block = create(:block, :with_block_hash)
+        create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block)
+
+        valid_get api_v1_block_transaction_url(block.block_hash)
+
+        assert_equal 10, json["data"].first.dig("attributes", "display_outputs").count
+        assert_equal [false], json["data"].first.dig("attributes", "display_outputs").map { |input| input.key?("from_cellbase") }.uniq
+      end
     end
   end
 end
