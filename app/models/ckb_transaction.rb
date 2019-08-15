@@ -29,12 +29,13 @@ class CkbTransaction < ApplicationRecord
     Rails.cache.delete([self.class.name, tx_hash])
   end
 
-  def display_inputs
+  def display_inputs(previews: false)
     if is_cellbase
       cellbase = Cellbase.new(block)
       [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
     else
-      self.cell_inputs.order(:id).map do |input|
+      cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
+      cell_inputs_for_display.order(:id).map do |input|
         previous_cell_output = input.previous_cell_output
         { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash }
       end
