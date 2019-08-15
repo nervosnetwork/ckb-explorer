@@ -213,14 +213,16 @@ module CkbSync
     end
 
     def build_cell_input(ckb_transaction, node_input)
-      cell = node_input.previous_output.cell
-
       ckb_transaction.cell_inputs.build(
         previous_output: node_input.previous_output,
         since: node_input.since,
         block: ckb_transaction.block,
-        from_cell_base: cell.blank?
+        from_cell_base: from_cell_base?(node_input)
       )
+    end
+
+    def from_cell_base?(node_input)
+      node_input.previous_output.tx_hash == CellOutput::SYSTEM_TX_HASH
     end
 
     def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data)

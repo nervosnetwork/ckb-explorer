@@ -1,4 +1,6 @@
 class CellOutput < ApplicationRecord
+  SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
+
   enum status: { live: 0, dead: 1 }
   enum cell_type: { normal: 0, dao: 1 }
 
