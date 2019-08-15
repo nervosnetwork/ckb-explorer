@@ -114,7 +114,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, cell_type: "dao")
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
       tx = node_block.transactions.last
-      input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(cell: CKB::Types::CellOutPoint.new(tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", index: 0)))
+      input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", index: 0))
       tx.inputs.unshift(input)
       node_data_processor.process_block(node_block)
       node_tx = node_block.transactions.last
