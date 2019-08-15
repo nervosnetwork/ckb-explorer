@@ -61,7 +61,6 @@ class UncleBlockTest < ActiveSupport::TestCase
   test "#proposals should decodes packed string" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",

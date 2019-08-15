@@ -1,4 +1,6 @@
 class CellOutput < ApplicationRecord
+  SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
+
   enum status: { live: 0, dead: 1 }
   enum cell_type: { normal: 0, dao: 1 }
 
@@ -42,7 +44,7 @@ end
 #  cell_index         :integer
 #  generated_by_id    :decimal(30, )
 #  consumed_by_id     :decimal(30, )
-#  cell_type          :integer          default(0)
+#  cell_type          :integer          default("normal")
 #
 # Indexes
 #

@@ -38,7 +38,7 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#invalid! change block status to abandoned when block is not verified" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       local_block.invalid!
@@ -47,7 +47,7 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#invalid! delete all uncle blocks under the abandoned block" do
-    prepare_inauthentic_node_data(HAS_UNCLES_BLOCK_NUMBER)
+    prepare_node_data(HAS_UNCLES_BLOCK_NUMBER)
     local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
 
     assert_not_empty local_block.uncle_blocks
@@ -60,7 +60,7 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#invalid! delete all ckb transactions under the abandoned block" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
 
     assert_not_empty local_block.ckb_transactions
@@ -73,7 +73,7 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#invalid! delete cell inputs under the abandoned block" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
 
     assert_not_empty local_block.cell_inputs
@@ -86,7 +86,7 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#invalid! delete cell outputs under the abandoned block" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
 
     assert_not_empty local_block.cell_outputs
@@ -99,7 +99,7 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#invalid! delete all lock script under the abandoned block" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
     origin_lock_scripts = local_block.cell_outputs.map(&:lock_script)
 
@@ -113,7 +113,7 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#invalid! delete all type script under the abandoned block" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
     origin_type_scripts = local_block.cell_outputs.map(&:type_script)
 
@@ -173,7 +173,6 @@ class BlockTest < ActiveSupport::TestCase
   test "#uncle_block_hashes should decodes packed string" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",
@@ -200,7 +199,6 @@ class BlockTest < ActiveSupport::TestCase
   test "#proposals should decodes packed string" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",

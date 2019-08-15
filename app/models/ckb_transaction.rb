@@ -12,6 +12,7 @@ class CkbTransaction < ApplicationRecord
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
 
   attribute :tx_hash, :ckb_hash
+  attribute :header_deps, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]
 
   scope :recent, -> { order(block_timestamp: :desc) }
   scope :cellbase, -> { where(is_cellbase: true) }
@@ -69,6 +70,8 @@ end
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  is_cellbase     :boolean          default(FALSE)
+#  header_deps     :binary
+#  cell_deps       :jsonb
 #
 # Indexes
 #

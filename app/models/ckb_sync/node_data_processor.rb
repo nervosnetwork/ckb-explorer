@@ -184,7 +184,7 @@ module CkbSync
         addresses = Set.new
         ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
         build_cell_inputs(transaction.inputs, ckb_transaction)
-        build_cell_outputs(transaction.outputs, ckb_transaction, addresses)
+        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data)
         addresses_arr = addresses.to_a
         ckb_transaction.addresses << addresses_arr
 
@@ -195,7 +195,8 @@ module CkbSync
     def build_ckb_transaction(local_block, transaction, transaction_index)
       local_block.ckb_transactions.build(
         tx_hash: transaction.hash,
-        deps: transaction.deps,
+        cell_deps: transaction.cell_deps,
+        header_deps: transaction.header_deps,
         version: transaction.version,
         block_number: local_block.number,
         block_timestamp: local_block.timestamp,
@@ -212,21 +213,23 @@ module CkbSync
     end
 
     def build_cell_input(ckb_transaction, node_input)
-      cell = node_input.previous_output.cell
-
       ckb_transaction.cell_inputs.build(
         previous_output: node_input.previous_output,
         since: node_input.since,
         block: ckb_transaction.block,
-        from_cell_base: cell.blank?
+        from_cell_base: from_cell_base?(node_input)
       )
     end
 
-    def build_cell_outputs(node_outputs, ckb_transaction, addresses)
+    def from_cell_base?(node_input)
+      node_input.previous_output.tx_hash == CellOutput::SYSTEM_TX_HASH
+    end
+
+    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data)
       node_outputs.each_with_index.map do |output, cell_index|
         address = Address.find_or_create_address(output.lock)
         addresses << address
-        cell_output = build_cell_output(ckb_transaction, output, address, cell_index)
+        cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
         build_lock_script(cell_output, output.lock, address)
         build_type_script(cell_output, output.type)
 
@@ -240,10 +243,10 @@ module CkbSync
       type_script.code_hash == ENV["DAO_CODE_HASH"] ? "dao" : "normal"
     end
 
-    def build_cell_output(ckb_transaction, output, address, cell_index)
+    def build_cell_output(ckb_transaction, output, address, cell_index, output_data)
       ckb_transaction.cell_outputs.build(
         capacity: output.capacity,
-        data: output.data,
+        data: output_data,
         address: address,
         block: ckb_transaction.block,
         tx_hash: ckb_transaction.tx_hash,
