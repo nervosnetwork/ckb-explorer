@@ -21,10 +21,6 @@ FactoryBot.define do
       args { nil }
     end
 
-    transient do
-      lock_script_version { nil }
-    end
-
     trait :with_cell_output_and_lock_script do
       after(:create) do |ckb_transaction, _evaluator|
         output1 = create(:cell_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 0, generated_by: ckb_transaction)
@@ -48,6 +44,16 @@ FactoryBot.define do
         create(:type_script, cell_output: output2)
         create(:lock_script, cell_output_id: output3.id)
         create(:type_script, cell_output: output3)
+      end
+    end
+
+    trait :with_multiple_inputs_and_outputs do
+      after(:create) do |ckb_transaction|
+        15.times do |index|
+          create(:cell_output, capacity: 10**8 * 8, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index, generated_by: ckb_transaction)
+          previous_output = { tx_hash: ckb_transaction.tx_hash, index: 1 }
+          create(:cell_input, previous_output: previous_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block)
+        end
       end
     end
   end
