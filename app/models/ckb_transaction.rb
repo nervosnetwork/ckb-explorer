@@ -31,28 +31,46 @@ class CkbTransaction < ApplicationRecord
 
   def display_inputs(previews: false)
     if is_cellbase
-      cellbase = Cellbase.new(block)
-      [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
+      cellbase_display_inputs
     else
-      cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
-      cell_inputs_for_display.order(:id).map do |input|
-        previous_cell_output = input.previous_cell_output
-        { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash }
-      end
+      normal_tx_display_inputs(previews)
     end
   end
 
   def display_outputs(previews: false)
     if is_cellbase
-      outputs = cell_outputs.order(:id)
-      cellbase = Cellbase.new(block)
-      outputs.map { |output| { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward } }
+      cellbase_display_outputs
     else
-      cell_outputs_for_display = previews ? cell_outputs.limit(10) : cell_inputs
-      cell_outputs_for_display.order(:id).map do |output|
-        { id: output.id, capacity: output.capacity, address_hash: output.address_hash }
-      end
+      normal_tx_display_outputs(previews)
     end
+  end
+
+  private
+
+  def normal_tx_display_outputs(previews)
+    cell_outputs_for_display = previews ? cell_outputs.limit(10) : cell_outputs
+    cell_outputs_for_display.order(:id).map do |output|
+      { id: output.id, capacity: output.capacity, address_hash: output.address_hash }
+    end
+  end
+
+  def cellbase_display_outputs
+    outputs = cell_outputs.order(:id)
+    cellbase = Cellbase.new(block)
+    outputs.map { |output| { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward } }
+  end
+
+  def normal_tx_display_inputs(previews)
+    cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
+    cell_inputs_for_display.order(:id).map do |input|
+      previous_cell_output = input.previous_cell_output
+      { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash }
+    end
+  end
+
+  def cellbase_display_inputs
+    cellbase = Cellbase.new(block)
+    [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
   end
 end
 
