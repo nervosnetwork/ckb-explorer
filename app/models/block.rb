@@ -76,6 +76,8 @@ class Block < ApplicationRecord
   def invalid!
     uncle_blocks.delete_all
     ckb_transactions.destroy_all
+    ForkedBlock.create(attributes)
+    destroy
   end
 end
 
