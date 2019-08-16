@@ -10,11 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-<<<<<<< HEAD
 ActiveRecord::Schema.define(version: 2019_08_19_090938) do
-=======
-ActiveRecord::Schema.define(version: 2019_08_13_074456) do
->>>>>>> feat: add header_deps and cell_deps to ckb_transactions
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -76,7 +72,7 @@ ActiveRecord::Schema.define(version: 2019_08_13_074456) do
     t.integer "target_block_reward_status", default: 0
     t.binary "miner_lock_hash"
     t.string "dao"
-    t.index ["block_hash", "status"], name: "index_blocks_on_block_hash_and_status", unique: true
+    t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
   end
