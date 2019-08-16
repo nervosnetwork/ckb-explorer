@@ -1,7 +1,7 @@
 module CkbSync
   class NodeDataProcessor
     def call
-      local_tip_block = Block.recent.accepted.first
+      local_tip_block = Block.recent.first
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
       return if target_block.blank?
@@ -145,7 +145,6 @@ module CkbSync
         total_cell_capacity: CkbUtils.total_cell_capacity(node_block.transactions),
         miner_hash: CkbUtils.miner_hash(cellbase),
         miner_lock_hash: CkbUtils.miner_lock_hash(cellbase),
-        status: "accepted",
         reward: CkbUtils.block_reward(node_block),
         reward_status: header.number.to_i == 0 ? "issued" : "pending",
         total_transaction_fee: 0,

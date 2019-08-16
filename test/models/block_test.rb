@@ -23,8 +23,6 @@ class BlockTest < ActiveSupport::TestCase
     should validate_presence_of(:total_transaction_fee).on(:create)
     should validate_presence_of(:ckb_transactions_count).on(:create)
     should validate_presence_of(:total_cell_capacity).on(:create)
-    should validate_presence_of(:status).on(:create)
-    should define_enum_for(:status).with_values(Block::statuses.keys)
     should validate_numericality_of(:reward).
       is_greater_than_or_equal_to(0).on(:create)
     should validate_numericality_of(:total_transaction_fee).

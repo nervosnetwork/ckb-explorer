@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_08_16_092434) do
+ActiveRecord::Schema.define(version: 2019_08_16_092718) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -54,7 +54,6 @@ ActiveRecord::Schema.define(version: 2019_08_16_092434) do
     t.integer "proposals_count"
     t.decimal "cell_consumed", precision: 30
     t.binary "miner_hash"
-    t.integer "status", limit: 2
     t.decimal "reward", precision: 30
     t.decimal "total_transaction_fee", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"

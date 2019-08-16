@@ -6,10 +6,10 @@ module Api
 
       def index
         if from_home_page?
-          blocks = Block.accepted.recent.limit(Block.default_per_page)
+          blocks = Block.recent.limit(Block.default_per_page)
           options = {}
         else
-          blocks = Block.accepted.recent.page(@page).per(@page_size)
+          blocks = Block.recent.page(@page).per(@page_size)
           options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: @page, page_size: @page_size).call
         end
 
