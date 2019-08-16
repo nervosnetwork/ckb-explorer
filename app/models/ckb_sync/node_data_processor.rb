@@ -60,7 +60,7 @@ module CkbSync
       target_block_number = local_tip_block.target_block_number
       return if target_block_number < 1 || target_block.blank?
 
-      revert_reward_status(local_tip_block, target_block)
+      revert_reward_status(target_block)
       revert_received_tx_fee(target_block)
     end
 
@@ -68,9 +68,8 @@ module CkbSync
       target_block.update!(received_tx_fee: 0)
     end
 
-    def revert_reward_status(local_tip_block, target_block)
+    def revert_reward_status(target_block)
       target_block.update!(reward_status: "pending")
-      local_tip_block.update!(target_block_reward_status: "pending")
       target_block.update!(received_tx_fee_status: "calculating")
     end
 
