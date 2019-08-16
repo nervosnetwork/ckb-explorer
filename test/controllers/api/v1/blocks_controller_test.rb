@@ -119,16 +119,14 @@ module Api
         page = 1
         page_size = 30
         create_list(:block, 15, :with_block_hash)
-        create(:block, status: "abandoned")
+        create(:block)
 
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
-        block_hashes = Block.accepted.recent.map(&:block_hash)
-        blocks_statuses = Block.accepted.recent.map(&:status).uniq
+        block_hashes = Block.recent.map(&:block_hash)
         search_result_block_hashes = json["data"].map { |ckb_transaction| ckb_transaction.dig("attributes", "block_hash") }
 
         assert_equal block_hashes, search_result_block_hashes
-        assert_equal ["accepted"], blocks_statuses
       end
 
       test "should return corresponding page's records when page is set and page_size is not set" do

@@ -35,12 +35,32 @@ class BlockTest < ActiveSupport::TestCase
       is_greater_than_or_equal_to(0).on(:create)
   end
 
-  test "#invalid! change block status to abandoned when block is not verified" do
+  test "#invalid! should destroy block when block is not verified" do
     prepare_node_data(9)
     local_block = Block.find_by(number: 9)
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       local_block.invalid!
-      assert_equal "abandoned", local_block.reload.status
+      assert_nil Block.find_by(number: local_block.number)
+    end
+  end
+
+  test "#invalid! should create forked block when block is not verified" do
+    prepare_node_data(9)
+    local_block = Block.find_by(number: 9)
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+      assert_difference -> { ForkedBlock.count }, 1 do
+        local_block.invalid!
+      end
+    end
+  end
+
+  test "#invalid! created forked block's attributes should equal to block's attributes when block is not verified" do
+    prepare_node_data(9)
+    local_block = Block.find_by(number: 9)
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+      local_block.invalid!
+      forked_block = ForkedBlock.last
+      assert_equal local_block.attributes.reject { |attribute| attribute == "id" }, forked_block.attributes.reject { |attribute| attribute == "id" }
     end
   end
 
@@ -51,7 +71,7 @@ class BlockTest < ActiveSupport::TestCase
     assert_not_empty local_block.uncle_blocks
 
     VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.uncle_blocks.count }, from: local_block.uncle_blocks.count, to: 0 do
+      assert_changes -> { UncleBlock.where(block: local_block).count }, from: local_block.uncle_blocks.count, to: 0 do
         local_block.invalid!
       end
     end
@@ -64,7 +84,7 @@ class BlockTest < ActiveSupport::TestCase
     assert_not_empty local_block.ckb_transactions
 
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.ckb_transactions.count }, from: local_block.ckb_transactions.count, to: 0 do
+      assert_changes -> { CkbTransaction.where(block: local_block).count }, from: local_block.ckb_transactions.count, to: 0 do
         local_block.invalid!
       end
     end
@@ -77,7 +97,7 @@ class BlockTest < ActiveSupport::TestCase
     assert_not_empty local_block.cell_inputs
 
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.cell_inputs.count }, from: local_block.cell_inputs.count, to: 0 do
+      assert_changes -> { CellInput.where(block: local_block).count }, from: local_block.cell_inputs.count, to: 0 do
         local_block.invalid!
       end
     end
@@ -90,7 +110,7 @@ class BlockTest < ActiveSupport::TestCase
     assert_not_empty local_block.cell_outputs
 
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.cell_outputs.count }, from: local_block.cell_outputs.count, to: 0 do
+      assert_changes -> { CellOutput.where(block: local_block).count }, from: local_block.cell_outputs.count, to: 0 do
         local_block.invalid!
       end
     end
@@ -104,7 +124,7 @@ class BlockTest < ActiveSupport::TestCase
     assert_not_empty origin_lock_scripts
 
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.cell_outputs.map(&:lock_script).count }, from: origin_lock_scripts.count, to: 0 do
+      assert_changes -> { CellOutput.where(block: local_block).map(&:lock_script).count }, from: origin_lock_scripts.count, to: 0 do
         local_block.invalid!
       end
     end
@@ -118,7 +138,7 @@ class BlockTest < ActiveSupport::TestCase
     assert_not_empty origin_type_scripts
 
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.cell_outputs.map(&:type_script).count }, from: origin_type_scripts.count, to: 0 do
+      assert_changes -> { CellOutput.where(block: local_block).map(&:type_script).count }, from: origin_type_scripts.count, to: 0 do
         local_block.invalid!
       end
     end
