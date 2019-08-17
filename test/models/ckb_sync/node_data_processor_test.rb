@@ -449,7 +449,7 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/9") do
-        assert_difference -> { local_block.reload.contained_addresses.map(&:ckb_transactions).flatten.count }, -1 do
+        assert_difference -> { local_block.contained_addresses.map(&:ckb_transactions).flatten.count }, -1 do
           node_data_processor.call
         end
       end
@@ -682,17 +682,6 @@ module CkbSync
       end
     end
 
-    test "should change the existing block status to abandoned when it is invalid" do
-      prepare_node_data(9)
-      local_block = Block.find_by(number: 9)
-      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        node_data_processor.call
-
-        assert_equal "abandoned", local_block.reload.status
-      end
-    end
-
     test "should delete all uncle blocks under the existing block when it is invalid" do
       prepare_node_data(HAS_UNCLES_BLOCK_NUMBER)
       local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
@@ -701,7 +690,7 @@ module CkbSync
       assert_not_empty local_block.uncle_blocks
 
       VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
-        assert_changes -> { local_block.reload.uncle_blocks.count }, from: local_block.uncle_blocks.count, to: 0 do
+        assert_changes -> { local_block.uncle_blocks.count }, from: local_block.uncle_blocks.count, to: 0 do
           node_data_processor.call
         end
       end
@@ -715,7 +704,7 @@ module CkbSync
       assert_not_empty local_block.ckb_transactions
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        assert_changes -> { local_block.reload.ckb_transactions.count }, from: local_block.ckb_transactions.count, to: 0 do
+        assert_changes -> { local_block.ckb_transactions.count }, from: local_block.ckb_transactions.count, to: 0 do
           node_data_processor.call
         end
       end
@@ -729,7 +718,7 @@ module CkbSync
       assert_not_empty local_block.cell_inputs
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        assert_changes -> { local_block.reload.cell_inputs.count }, from: local_block.cell_inputs.count, to: 0 do
+        assert_changes -> { local_block.cell_inputs.count }, from: local_block.cell_inputs.count, to: 0 do
           node_data_processor.call
         end
       end
@@ -743,7 +732,7 @@ module CkbSync
       assert_not_empty local_block.cell_outputs
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        assert_changes -> { local_block.reload.cell_outputs.count }, from: local_block.cell_outputs.count, to: 0 do
+        assert_changes -> { CellOutput.where(block: local_block).count }, from: CellOutput.where(block: local_block).count, to: 0 do
           node_data_processor.call
         end
       end
@@ -758,7 +747,7 @@ module CkbSync
       assert_not_empty origin_lock_scripts
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        assert_changes -> { local_block.reload.cell_outputs.map(&:lock_script).count }, from: origin_lock_scripts.count, to: 0 do
+        assert_changes -> { CellOutput.where(block: local_block).map(&:lock_script).count }, from: origin_lock_scripts.count, to: 0 do
           node_data_processor.call
         end
       end
@@ -773,7 +762,7 @@ module CkbSync
       assert_not_empty origin_type_scripts
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        assert_changes -> { local_block.reload.cell_outputs.map(&:type_script).count }, from: origin_type_scripts.count, to: 0 do
+        assert_changes -> { CellOutput.where(block: local_block).map(&:type_script).count }, from: origin_type_scripts.count, to: 0 do
           node_data_processor.call
         end
       end
@@ -805,7 +794,8 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        assert_difference -> { local_block.reload.contained_addresses.map(&:ckb_transactions).flatten.count }, -1 do
+
+        assert_difference -> { local_block.contained_addresses.map(&:ckb_transactions).flatten.count }, -1 do
           node_data_processor.call
         end
       end
@@ -817,43 +807,10 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       ckb_transaction_ids = local_block.ckb_transactions.pluck(:id)
       balance_diff = CellOutput.where(ckb_transaction_id: ckb_transaction_ids).sum(:capacity)
+      contained_address = local_block.contained_addresses
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        assert_difference -> { local_block.reload.contained_addresses.sum(:balance) }, -balance_diff do
-          node_data_processor.call
-        end
-      end
-    end
-
-    test "should let abandoned block miner's pending reward blocks count decrease by one" do
-      prepare_node_data(12)
-      local_block = Block.find_by(number: 12)
-      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-      miner_address = local_block.miner_address
-      VCR.use_cassette("blocks/12", record: :new_episodes) do
-        assert_difference -> { miner_address.reload.pending_reward_blocks_count }, -1 do
-          node_data_processor.call
-        end
-      end
-    end
-
-    test "should change abandoned block's target block reward status to pending when there is the target block" do
-      prepare_node_data(12)
-      local_block = Block.find_by(number: 12)
-      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-      VCR.use_cassette("blocks/12", record: :new_episodes) do
-        assert_changes -> { local_block.reload.target_block_reward_status }, from: "issued", to: "pending" do
-          node_data_processor.call
-        end
-      end
-    end
-
-    test "should do nothing on abandoned block's target block reward status when there is no target block" do
-      prepare_node_data(9)
-      local_block = Block.find_by(number: 9)
-      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        assert_no_changes -> { local_block.reload.target_block_reward_status } do
+        assert_difference -> { contained_address.sum(:balance) }, -balance_diff do
           node_data_processor.call
         end
       end
