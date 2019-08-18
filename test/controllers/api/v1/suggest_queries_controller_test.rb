@@ -88,7 +88,6 @@ module Api
 
         valid_get api_v1_suggest_queries_url, params: { q: block.number }
         assert_equal response_json, response.body
-        assert_equal "accepted", block.status
       end
 
       test "should return a block when query key is a exist block hash" do
@@ -98,7 +97,6 @@ module Api
         valid_get api_v1_suggest_queries_url, params: { q: block.block_hash }
 
         assert_equal response_json, response.body
-        assert_equal "accepted", block.status
       end
 
       test "should return a ckb transaction when query key is a exist ckb transaction hash" do

@@ -18,17 +18,12 @@ FactoryBot.define do
     total_cell_capacity { 50000 }
     uncle_block_hashes {}
     proposals {}
-    status { "accepted" }
     epoch { "0" }
     start_number { "0" }
     length { "1000" }
 
     transient do
       transactions_count { 10 }
-    end
-
-    trait :authentic do
-      status { "authentic" }
     end
 
     trait :with_block_hash do
