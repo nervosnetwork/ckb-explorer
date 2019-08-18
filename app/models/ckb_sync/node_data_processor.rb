@@ -307,6 +307,9 @@ module CkbSync
         local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
         local_block.save!
       end
+    rescue ActiveRecord::RecordInvalid
+      local_block.update(total_transaction_fee: 0)
+      Rails.logger.error "tx_fee is negative"
     end
 
     def update_transaction_fee(ckb_transaction)
