@@ -106,7 +106,7 @@ end
 
 def format_node_block_commit_transaction(commit_transaction)
   tx = commit_transaction.instance_values.reject { |key, _value| key.in?(%w(inputs outputs)) }
-  tx["witnesses"] = tx["witnesses"].map(&:to_h).map(&:to_s)
+  tx["witnesses"] = JSON.parse(tx["witnesses"].map(&:to_h).to_json)
 
   tx
 end
