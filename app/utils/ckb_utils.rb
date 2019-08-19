@@ -154,11 +154,15 @@ class CkbUtils
 
   def self.dao_withdraw_tx_fee(ckb_transaction)
     dao_cells = ckb_transaction.inputs.dao
-    dao_reward =
+    witnesses = ckb_transaction.witnesses
+    deps = ckb_transaction.deps
+    interests =
       dao_cells.reduce(0) do |memo, dao_cell|
+        witness = witnesses[dao_cell.cell_index]
+        dep = deps[witness["data"].last.hex]
         out_point = CKB::Types::OutPoint.new(cell: CKB::Types::CellOutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index))
-        memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, dao_cell.block.block_hash).to_i
+        memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, dep["block_hash"]).to_i - dao_cell.capacity.to_i
       end
-    ckb_transaction.inputs.sum(:capacity) + dao_reward - ckb_transaction.outputs.sum(:capacity)
+    ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
   end
 end
