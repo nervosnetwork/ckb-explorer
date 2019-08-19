@@ -86,12 +86,12 @@ end
 #  block_timestamp :decimal(30, )
 #  transaction_fee :decimal(30, )
 #  version         :integer
-#  witnesses       :string           is an Array
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  is_cellbase     :boolean          default(FALSE)
 #  header_deps     :binary
 #  cell_deps       :jsonb
+#  witnesses       :jsonb
 #
 # Indexes
 #
