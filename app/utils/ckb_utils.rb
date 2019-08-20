@@ -163,6 +163,9 @@ class CkbUtils
         out_point = CKB::Types::OutPoint.new(cell: CKB::Types::CellOutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index))
         memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, dep["block_hash"]).to_i - dao_cell.capacity.to_i
       end
+
     ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+  rescue CKB::RPCError
+    0
   end
 end
