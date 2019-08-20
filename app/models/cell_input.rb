@@ -15,12 +15,10 @@ class CellInput < ApplicationRecord
   end
 
   def previous_cell_output
-    cell = previous_output["cell"]
+    return if previous_output["tx_hash"] == CellOutput::SYSTEM_TX_HASH
 
-    return if cell.blank?
-
-    tx_hash = cell["tx_hash"]
-    cell_index = cell["index"].to_i
+    tx_hash = previous_output["tx_hash"]
+    cell_index = previous_output["index"].to_i
 
     CellOutput.find_by(tx_hash: tx_hash, cell_index: cell_index)
   end
@@ -28,12 +26,10 @@ class CellInput < ApplicationRecord
   private
 
   def previous_cell_output!
-    cell = previous_output["cell"]
+    raise ActiveRecord::RecordNotFound if previous_output["tx_hash"] == CellOutput::SYSTEM_TX_HASH
 
-    raise ActiveRecord::RecordNotFound if cell.blank?
-
-    tx_hash = cell["tx_hash"]
-    cell_index = cell["index"].to_i
+    tx_hash = previous_output["tx_hash"]
+    cell_index = previous_output["index"].to_i
 
     CellOutput.find_by!(tx_hash: tx_hash, cell_index: cell_index)
   end

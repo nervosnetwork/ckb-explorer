@@ -29,7 +29,6 @@ class StatisticInfoTest < ActiveSupport::TestCase
   test ".current_epoch_difficulty should return current epoch difficulty" do
     CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",
@@ -45,7 +44,6 @@ class StatisticInfoTest < ActiveSupport::TestCase
   test ".average_block_time should return average block time within current epoch" do
     CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",

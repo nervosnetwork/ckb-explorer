@@ -14,7 +14,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
   test "#base_reward should return first output capacity in cellbase for genesis block" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",
@@ -37,9 +36,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
 
       node_data_processor.process_block(node_block)
       output = node_block.transactions.first.outputs.first
+      output_data = node_block.transactions.first.outputs_data.first
+      output.data = output_data
       expected_cell_min_capacity = output.calculate_min_capacity
 
-      assert_equal expected_cell_min_capacity, CkbUtils.calculate_cell_min_capacity(output)
+      assert_equal expected_cell_min_capacity, CkbUtils.calculate_cell_min_capacity(output, output_data)
     end
   end
 
@@ -55,7 +56,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test "#address_cell_consumed should return right cell consumed by the address" do
-    prepare_inauthentic_node_data(12)
+    prepare_node_data(12)
     VCR.use_cassette("blocks/12") do
       node_block = CkbSync::Api.instance.get_block_by_number(13)
       cellbase = node_block.transactions.first
@@ -94,7 +95,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, cell_type: "dao")
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
       tx = node_block.transactions.last
-      tx.deps = [CKB::Types::OutPoint.new(cell: nil, block_hash: "0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61")]
+      tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
       tx.witnesses = [CKB::Types::Witness.new(data: %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000)), CKB::Types::Witness.new(data: %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d360a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000))]
 
       node_data_processor.process_block(node_block)
@@ -117,9 +118,9 @@ class CkbUtilsTest < ActiveSupport::TestCase
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, cell_type: "dao")
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
       tx = node_block.transactions.last
-      input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(cell: CKB::Types::CellOutPoint.new(tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", index: 0)))
+      input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", index: 0))
       tx.inputs.unshift(input)
-      tx.deps = [CKB::Types::OutPoint.new(cell: nil, block_hash: "0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61")]
+      tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
       tx.witnesses = [CKB::Types::Witness.new(data: %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000)), CKB::Types::Witness.new(data: %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d360a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000))]
 
       node_data_processor.process_block(node_block)

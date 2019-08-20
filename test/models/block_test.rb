@@ -23,8 +23,6 @@ class BlockTest < ActiveSupport::TestCase
     should validate_presence_of(:total_transaction_fee).on(:create)
     should validate_presence_of(:ckb_transactions_count).on(:create)
     should validate_presence_of(:total_cell_capacity).on(:create)
-    should validate_presence_of(:status).on(:create)
-    should define_enum_for(:status).with_values(Block::statuses.keys)
     should validate_numericality_of(:reward).
       is_greater_than_or_equal_to(0).on(:create)
     should validate_numericality_of(:total_transaction_fee).
@@ -37,90 +35,110 @@ class BlockTest < ActiveSupport::TestCase
       is_greater_than_or_equal_to(0).on(:create)
   end
 
-  test "#invalid! change block status to abandoned when block is not verified" do
-    prepare_inauthentic_node_data(9)
+  test "#invalid! should destroy block when block is not verified" do
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       local_block.invalid!
-      assert_equal "abandoned", local_block.reload.status
+      assert_nil Block.find_by(number: local_block.number)
+    end
+  end
+
+  test "#invalid! should create forked block when block is not verified" do
+    prepare_node_data(9)
+    local_block = Block.find_by(number: 9)
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+      assert_difference -> { ForkedBlock.count }, 1 do
+        local_block.invalid!
+      end
+    end
+  end
+
+  test "#invalid! created forked block's attributes should equal to block's attributes when block is not verified" do
+    prepare_node_data(9)
+    local_block = Block.find_by(number: 9)
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+      local_block.invalid!
+      forked_block = ForkedBlock.last
+      assert_equal local_block.attributes.reject { |attribute| attribute == "id" }, forked_block.attributes.reject { |attribute| attribute == "id" }
     end
   end
 
   test "#invalid! delete all uncle blocks under the abandoned block" do
-    prepare_inauthentic_node_data(HAS_UNCLES_BLOCK_NUMBER)
+    prepare_node_data(HAS_UNCLES_BLOCK_NUMBER)
     local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
 
     assert_not_empty local_block.uncle_blocks
 
     VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.uncle_blocks.count }, from: local_block.uncle_blocks.count, to: 0 do
+      assert_changes -> { UncleBlock.where(block: local_block).count }, from: local_block.uncle_blocks.count, to: 0 do
         local_block.invalid!
       end
     end
   end
 
   test "#invalid! delete all ckb transactions under the abandoned block" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
 
     assert_not_empty local_block.ckb_transactions
 
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.ckb_transactions.count }, from: local_block.ckb_transactions.count, to: 0 do
+      assert_changes -> { CkbTransaction.where(block: local_block).count }, from: local_block.ckb_transactions.count, to: 0 do
         local_block.invalid!
       end
     end
   end
 
   test "#invalid! delete cell inputs under the abandoned block" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
 
     assert_not_empty local_block.cell_inputs
 
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.cell_inputs.count }, from: local_block.cell_inputs.count, to: 0 do
+      assert_changes -> { CellInput.where(block: local_block).count }, from: local_block.cell_inputs.count, to: 0 do
         local_block.invalid!
       end
     end
   end
 
   test "#invalid! delete cell outputs under the abandoned block" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
 
     assert_not_empty local_block.cell_outputs
 
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.cell_outputs.count }, from: local_block.cell_outputs.count, to: 0 do
+      assert_changes -> { CellOutput.where(block: local_block).count }, from: local_block.cell_outputs.count, to: 0 do
         local_block.invalid!
       end
     end
   end
 
   test "#invalid! delete all lock script under the abandoned block" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
     origin_lock_scripts = local_block.cell_outputs.map(&:lock_script)
 
     assert_not_empty origin_lock_scripts
 
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.cell_outputs.map(&:lock_script).count }, from: origin_lock_scripts.count, to: 0 do
+      assert_changes -> { CellOutput.where(block: local_block).map(&:lock_script).count }, from: origin_lock_scripts.count, to: 0 do
         local_block.invalid!
       end
     end
   end
 
   test "#invalid! delete all type script under the abandoned block" do
-    prepare_inauthentic_node_data(9)
+    prepare_node_data(9)
     local_block = Block.find_by(number: 9)
     origin_type_scripts = local_block.cell_outputs.map(&:type_script)
 
     assert_not_empty origin_type_scripts
 
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-      assert_changes -> { local_block.reload.cell_outputs.map(&:type_script).count }, from: origin_type_scripts.count, to: 0 do
+      assert_changes -> { CellOutput.where(block: local_block).map(&:type_script).count }, from: origin_type_scripts.count, to: 0 do
         local_block.invalid!
       end
     end
@@ -173,7 +191,6 @@ class BlockTest < ActiveSupport::TestCase
   test "#uncle_block_hashes should decodes packed string" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",
@@ -200,7 +217,6 @@ class BlockTest < ActiveSupport::TestCase
   test "#proposals should decodes packed string" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",
