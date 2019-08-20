@@ -172,5 +172,7 @@ class CkbUtils
       end
 
     ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+  rescue CKB::RPCError
+    0
   end
 end
