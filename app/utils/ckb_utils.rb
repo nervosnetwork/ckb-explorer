@@ -83,7 +83,11 @@ class CkbUtils
   end
 
   def self.ckb_transaction_fee(ckb_transaction)
-    ckb_transaction.inputs.sum(:capacity) - ckb_transaction.outputs.sum(:capacity)
+    if ckb_transaction.inputs.dao.present?
+      dao_withdraw_tx_fee(ckb_transaction)
+    else
+      normal_tx_fee(ckb_transaction)
+    end
   end
 
   def self.get_unspent_cells(address_hash)
@@ -142,5 +146,26 @@ class CkbUtils
 
     miner_address = target_block.miner_address
     Address.decrement_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
+  end
+
+  def self.normal_tx_fee(ckb_transaction)
+    ckb_transaction.inputs.sum(:capacity) - ckb_transaction.outputs.sum(:capacity)
+  end
+
+  def self.dao_withdraw_tx_fee(ckb_transaction)
+    dao_cells = ckb_transaction.inputs.dao
+    witnesses = ckb_transaction.witnesses
+    deps = ckb_transaction.deps
+    interests =
+      dao_cells.reduce(0) do |memo, dao_cell|
+        witness = witnesses[dao_cell.cell_index]
+        dep = deps[witness["data"].last.hex]
+        out_point = CKB::Types::OutPoint.new(cell: CKB::Types::CellOutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index))
+        memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, dep["block_hash"]).to_i - dao_cell.capacity.to_i
+      end
+
+    ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+  rescue CKB::RPCError
+    0
   end
 end

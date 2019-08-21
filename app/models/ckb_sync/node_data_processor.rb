@@ -234,6 +234,12 @@ module CkbSync
       end
     end
 
+    def cell_type(type_script)
+      return "normal" if type_script.blank?
+
+      type_script.code_hash == ENV["DAO_CODE_HASH"] ? "dao" : "normal"
+    end
+
     def build_cell_output(ckb_transaction, output, address, cell_index)
       ckb_transaction.cell_outputs.build(
         capacity: output.capacity,
@@ -242,7 +248,8 @@ module CkbSync
         block: ckb_transaction.block,
         tx_hash: ckb_transaction.tx_hash,
         cell_index: cell_index,
-        generated_by: ckb_transaction
+        generated_by: ckb_transaction,
+        cell_type: cell_type(output.type)
       )
     end
 
