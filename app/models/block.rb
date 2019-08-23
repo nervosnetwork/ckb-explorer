@@ -120,10 +120,12 @@ end
 #  target_block_reward_status :integer          default("pending")
 #  miner_lock_hash            :binary
 #  dao                        :string
+#  primary_reward             :decimal(30, )    default(0)
+#  secondary_reward           :decimal(30, )    default(0)
 #
 # Indexes
 #
 #  index_blocks_on_block_hash_and_status  (block_hash,status) UNIQUE
-#  index_blocks_on_number                 (number)
-#  index_blocks_on_timestamp              (timestamp)
+#  index_blocks_on_number      (number)
+#  index_blocks_on_timestamp   (timestamp)
 #
