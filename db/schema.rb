@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_08_23_015148) do
+ActiveRecord::Schema.define(version: 2019_08_23_031706) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -55,8 +55,6 @@ ActiveRecord::Schema.define(version: 2019_08_23_015148) do
     t.decimal "cell_consumed", precision: 30
     t.binary "miner_hash"
     t.decimal "reward", precision: 30
-    t.decimal "primary_reward", precision: 30, default: "0"
-    t.decimal "secondary_reward", precision: 30, default: "0"
     t.decimal "total_transaction_fee", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
     t.decimal "total_cell_capacity", precision: 30
@@ -73,6 +71,8 @@ ActiveRecord::Schema.define(version: 2019_08_23_015148) do
     t.integer "target_block_reward_status", default: 0
     t.binary "miner_lock_hash"
     t.string "dao"
+    t.decimal "primary_reward", precision: 30, default: "0"
+    t.decimal "secondary_reward", precision: 30, default: "0"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
@@ -125,9 +125,9 @@ ActiveRecord::Schema.define(version: 2019_08_23_015148) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "is_cellbase", default: false
+    t.jsonb "witnesses"
     t.binary "header_deps"
     t.jsonb "cell_deps"
-    t.jsonb "witnesses"
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
@@ -167,6 +167,8 @@ ActiveRecord::Schema.define(version: 2019_08_23_015148) do
     t.string "dao"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "primary_reward", precision: 30, default: "0"
+    t.decimal "secondary_reward", precision: 30, default: "0"
   end
 
   create_table "lock_scripts", force: :cascade do |t|
