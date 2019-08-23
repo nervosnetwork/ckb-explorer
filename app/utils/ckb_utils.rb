@@ -62,11 +62,8 @@ class CkbUtils
     CKB::Address.parse(address_hash)
   end
 
-  def self.block_reward(node_block)
-    header = node_block.header
-    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(header.hash)
-    secondary_reward = header.number.to_i != 0 ? cellbase_output_capacity_details.secondary.to_i : 0
-    base_reward(header.number, header.epoch, node_block.transactions.first) + secondary_reward
+  def self.block_reward(node_block_header)
+    primary_reward(node_block_header) + secondary_reward(node_block_header)
   end
 
   def self.base_reward(block_number, epoch_number, cellbase = nil)
@@ -82,6 +79,16 @@ class CkbUtils
     else
       base_reward
     end
+  end
+
+  def self.primary_reward(node_block_header)
+    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(node_block_header.hash)
+    node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.primary.to_i : 0
+  end
+
+  def self.secondary_reward(node_block_header)
+    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(node_block_header.hash)
+    node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.secondary.to_i : 0
   end
 
   def self.get_epoch_info(epoch)
