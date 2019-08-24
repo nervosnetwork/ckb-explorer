@@ -50,4 +50,6 @@ end
 #  dao                        :string
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
+#  primary_reward             :decimal(30, )    default(0)
+#  secondary_reward           :decimal(30, )    default(0)
 #

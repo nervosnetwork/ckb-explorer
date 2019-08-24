@@ -102,20 +102,32 @@ module CkbSync
     end
 
     test "#process_block generated block should has correct reward" do
-      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
-        CKB::Types::Epoch.new(
-          difficulty: "0x1000",
-          length: "2000",
-          number: "0",
-          start_number: "0"
-        )
-      )
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
 
         local_block = node_data_processor.process_block(node_block)
 
-        assert_equal CkbUtils.base_reward(node_block.header.number, node_block.header.epoch).to_i, local_block.reward
+        assert_equal CkbUtils.block_reward(node_block.header).to_i, local_block.reward
+      end
+    end
+
+    test "#process_block generated block should has correct primary reward" do
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+
+        local_block = node_data_processor.process_block(node_block)
+
+        assert_equal CkbUtils.primary_reward(node_block.header), local_block.primary_reward
+      end
+    end
+
+    test "#process_block generated block should has correct secondary reward" do
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+
+        local_block = node_data_processor.process_block(node_block)
+
+        assert_equal CkbUtils.secondary_reward(node_block.header), local_block.secondary_reward
       end
     end
 

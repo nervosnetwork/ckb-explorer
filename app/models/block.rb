@@ -119,6 +119,8 @@ end
 #  target_block_reward_status :integer          default("pending")
 #  miner_lock_hash            :binary
 #  dao                        :string
+#  primary_reward             :decimal(30, )    default(0)
+#  secondary_reward           :decimal(30, )    default(0)
 #
 # Indexes
 #
