@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_08_23_031706) do
+ActiveRecord::Schema.define(version: 2019_08_24_025831) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -42,7 +42,6 @@ ActiveRecord::Schema.define(version: 2019_08_23_031706) do
     t.binary "block_hash"
     t.decimal "number", precision: 30
     t.binary "parent_hash"
-    t.jsonb "seal"
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
@@ -73,6 +72,7 @@ ActiveRecord::Schema.define(version: 2019_08_23_031706) do
     t.string "dao"
     t.decimal "primary_reward", precision: 30, default: "0"
     t.decimal "secondary_reward", precision: 30, default: "0"
+    t.string "nonce"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
@@ -138,7 +138,6 @@ ActiveRecord::Schema.define(version: 2019_08_23_031706) do
     t.binary "block_hash"
     t.decimal "number", precision: 30
     t.binary "parent_hash"
-    t.jsonb "seal"
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
@@ -169,6 +168,7 @@ ActiveRecord::Schema.define(version: 2019_08_23_031706) do
     t.datetime "updated_at", null: false
     t.decimal "primary_reward", precision: 30, default: "0"
     t.decimal "secondary_reward", precision: 30, default: "0"
+    t.string "nonce"
   end
 
   create_table "lock_scripts", force: :cascade do |t|
@@ -198,7 +198,6 @@ ActiveRecord::Schema.define(version: 2019_08_23_031706) do
     t.binary "block_hash"
     t.decimal "number", precision: 30
     t.binary "parent_hash"
-    t.jsonb "seal"
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
@@ -213,6 +212,7 @@ ActiveRecord::Schema.define(version: 2019_08_23_031706) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "dao"
+    t.string "nonce"
     t.index ["block_hash", "block_id"], name: "index_uncle_blocks_on_block_hash_and_block_id", unique: true
     t.index ["block_id"], name: "index_uncle_blocks_on_block_id"
   end
