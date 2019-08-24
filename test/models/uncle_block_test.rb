@@ -9,7 +9,6 @@ class UncleBlockTest < ActiveSupport::TestCase
     should validate_presence_of(:block_hash).on(:create)
     should validate_presence_of(:number).on(:create)
     should validate_presence_of(:parent_hash).on(:create)
-    should validate_presence_of(:seal).on(:create)
     should validate_presence_of(:timestamp).on(:create)
     should validate_presence_of(:transactions_root).on(:create)
     should validate_presence_of(:proposals_hash).on(:create)

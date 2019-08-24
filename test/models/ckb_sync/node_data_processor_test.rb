@@ -30,7 +30,7 @@ module CkbSync
         formatted_node_block["start_number"] = epoch_info.start_number
         formatted_node_block["length"] = epoch_info.length
 
-        local_block_hash = local_block.attributes.select { |attribute| attribute.in?(%w(difficulty block_hash number parent_hash seal timestamp transactions_root proposals_hash uncles_count uncles_hash version proposals witnesses_root epoch start_number length dao)) }
+        local_block_hash = local_block.attributes.select { |attribute| attribute.in?(%w(difficulty block_hash number parent_hash nonce timestamp transactions_root proposals_hash uncles_count uncles_hash version proposals witnesses_root epoch start_number length dao)) }
         local_block_hash["hash"] = local_block_hash.delete("block_hash")
         local_block_hash["number"] = local_block_hash["number"].to_s
         local_block_hash["version"] = local_block_hash["version"].to_s
@@ -163,7 +163,7 @@ module CkbSync
           local_block.uncle_blocks.map do |uncle_block|
             uncle_block =
               uncle_block.attributes.select do |attribute|
-                attribute.in?(%w(difficulty block_hash number parent_hash seal timestamp transactions_root proposals_hash uncles_count uncles_hash version proposals witnesses_root epoch dao))
+                attribute.in?(%w(difficulty block_hash number parent_hash nonce timestamp transactions_root proposals_hash uncles_count uncles_hash version proposals witnesses_root epoch dao))
               end
             uncle_block["hash"] = uncle_block.delete("block_hash")
             uncle_block["epoch"] = uncle_block["epoch"].to_s
