@@ -29,7 +29,7 @@ class CkbUtils
     return if cellbase.witnesses.blank?
 
     lock_script = generate_lock_script_from_cellbase(cellbase)
-    lock_script.to_hash
+    lock_script.to_hash(CkbSync::Api.instance)
   end
 
   def self.generate_lock_script_from_cellbase(cellbase)
