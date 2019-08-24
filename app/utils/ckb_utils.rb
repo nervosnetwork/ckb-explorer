@@ -55,7 +55,7 @@ class CkbUtils
 
     return false if code_hash.blank?
 
-    code_hash == ENV["CODE_HASH"]
+    [ENV["CODE_HASH"], ENV["SECP_CELL_TYPE_HASH"]].include?(code_hash)
   end
 
   def self.parse_address(address_hash)
