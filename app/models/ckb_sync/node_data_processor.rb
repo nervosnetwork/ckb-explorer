@@ -240,7 +240,7 @@ module CkbSync
     def cell_type(type_script)
       return "normal" if type_script.blank?
 
-      type_script.code_hash == ENV["DAO_CODE_HASH"] ? "dao" : "normal"
+      [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]].include?(type_script.code_hash) ? "dao" : "normal"
     end
 
     def build_cell_output(ckb_transaction, output, address, cell_index, output_data)
