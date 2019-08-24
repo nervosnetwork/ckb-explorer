@@ -12,13 +12,22 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test "#base_reward should return 0 for genesis block" do
+    CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+      CKB::Types::Epoch.new(
+        epoch_reward: "250000000000",
+        difficulty: "0x1000",
+        length: "2000",
+        number: "0",
+        start_number: "0"
+      )
+    )
     VCR.use_cassette("genesis_block") do
       node_block = CkbSync::Api.instance.get_block_by_number("0")
       set_default_lock_params(node_block: node_block)
 
       local_block = CkbSync::NodeDataProcessor.new.process_block(node_block)
 
-      assert_equal 0, local_block.primary_reward
+      assert_equal node_block.transactions.first.outputs.first.capacity.to_i, local_block.primary_reward
     end
   end
 

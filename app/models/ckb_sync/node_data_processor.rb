@@ -147,7 +147,7 @@ module CkbSync
         miner_lock_hash: CkbUtils.miner_lock_hash(cellbase),
         status: "accepted",
         reward: CkbUtils.block_reward(header),
-        primary_reward: CkbUtils.primary_reward(header),
+        primary_reward: CkbUtils.base_reward(header.number, header.epoch, cellbase),
         secondary_reward: CkbUtils.secondary_reward(header),
         reward_status: header.number.to_i == 0 ? "issued" : "pending",
         total_transaction_fee: 0,
