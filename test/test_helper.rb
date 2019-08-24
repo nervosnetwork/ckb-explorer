@@ -17,7 +17,7 @@ Minitest::Reporters.use!
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
-DEFAULT_NODE_BLOCK_HASH = "0x896d92fb194cea37aad02f331790635c2347e08ad0587c5a8cb81cac1cb225a3".freeze
+DEFAULT_NODE_BLOCK_HASH = "0xd727151d8c532b3cc23f51242a7a33b4566bc9f5c8ccfc11b7afbf4419a0a231".freeze
 DEFAULT_NODE_BLOCK_NUMBER = 10
 HAS_UNCLES_BLOCK_HASH = "0x2efba0fe1030bb5e3cfed6b4014385ed93dd3dcfc80317b075fe99b38f740b75".freeze
 HAS_UNCLES_BLOCK_NUMBER = 5
@@ -56,7 +56,7 @@ def prepare_node_data(node_tip_block_number = 10)
   local_tip_block_number = 0
   ((local_tip_block_number + 1)..node_tip_block_number).each do |number|
     VCR.use_cassette("genesis_block") do
-      VCR.use_cassette("blocks/#{number}") do
+      VCR.use_cassette("blocks/#{number}", record: :new_episodes) do
         node_block = CkbSync::Api.instance.get_block_by_number(number)
         tx = node_block.transactions.first
         output = tx.outputs.first
@@ -139,8 +139,8 @@ end
 def fake_node_block(block_hash = DEFAULT_NODE_BLOCK_HASH, number = 10)
   json_block = "{\"header\":{\"dao\":\"0x01000000000000000000c16ff286230000a3a65e97fd03000057c138586f0000\",\"difficulty\":\"0x1000\",\"epoch\":\"0\",\"hash\":\"#{block_hash}\",\"number\":\"#{number}\",\"parent_hash\":\"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\",\"proposals_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"nonce\":\"3241241169132127032\",\"timestamp\":\"1557482351075\",\"transactions_root\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"uncles_count\":0,\"uncles_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"version\":0,\"witnesses_root\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"},\"proposals\":[],
     \"transactions\":[
-      {\"header_deps\":[],\"cell_deps\":[],\"outputs_data\":[\"0x\"],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"inputs\":[{\"previous_output\":{\"tx_hash\": \"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 6}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\",\"hash_type\":\"Data\"},\"type\":null}],\"version\":0,\"witnesses\":[{\"data\":[\"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c\",\"0x3954acece65096bfa81258983ddb83915fc56bd8\"]}]},
-      {\"header_deps\":[],\"cell_deps\":[],\"outputs_data\":[\"0x\"],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23\",\"inputs\":[{\"previous_output\":{\"tx_hash\": \"0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"1\"},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 5}\",\"data\":\"0x\",\"lock\":{\"args\":[],\"code_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000001\",\"hash_type\":\"Data\"},\"type\":null}],\"version\":0,\"witnesses\":[]}
+      {\"header_deps\":[],\"cell_deps\":[],\"outputs_data\":[\"0x\"],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"inputs\":[{\"previous_output\":{\"tx_hash\": \"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0\"},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 6}\",\"data\":\"0x\",\"lock\":{\"args\":[\"0xb2e61ff569acf041b3c2c17724e2379c581eeac3\"],\"code_hash\":\"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794\",\"hash_type\":\"data\"},\"type\":null}],\"version\":0,\"witnesses\":[{\"data\":[\"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a79400\",\"0x3954acece65096bfa81258983ddb83915fc56bd8\"]}]},
+      {\"header_deps\":[],\"cell_deps\":[],\"outputs_data\":[\"0x\"],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23\",\"inputs\":[{\"previous_output\":{\"tx_hash\": \"0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"1\"},\"since\":\"0\"}],\"outputs\":[{\"capacity\":\"#{10**8 * 5}\",\"data\":\"0x\",\"lock\":{\"args\":[\"0xb2e61ff569acf041b3c2c17724e2379c581eeac3\"],\"code_hash\":\"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794\",\"hash_type\":\"data\"},\"type\":null}],\"version\":0,\"witnesses\":[]}
     ]
     ,\"uncles\":[]}"
   CKB::Types::Block.from_h(JSON.parse(json_block).deep_symbolize_keys)
@@ -151,13 +151,6 @@ def build_display_info_from_node_output(output)
   lock_script = LockScript.find_by(args: lock["args"], code_hash: lock["code_hash"])
   cell_output = lock_script.cell_output
   { id: cell_output.id, capacity: cell_output.capacity.to_s, address_hash: cell_output.address_hash }.stringify_keys
-end
-
-def set_default_lock_params(node_block: block, args: ["0x#{SecureRandom.hex(20)}"], code_hash: ENV["CODE_HASH"])
-  tx = node_block.transactions.first
-  output = tx.outputs.first
-  output.lock.instance_variable_set(:@args, args)
-  output.lock.instance_variable_set(:@code_hash, code_hash)
 end
 
 def prepare_api_wrapper

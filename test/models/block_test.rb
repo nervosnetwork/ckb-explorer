@@ -196,7 +196,7 @@ class BlockTest < ActiveSupport::TestCase
         start_number: "0"
       )
     )
-    VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
+    VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(HAS_UNCLES_BLOCK_NUMBER)
       CkbSync::NodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
