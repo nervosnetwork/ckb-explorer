@@ -34,7 +34,7 @@ class StatisticInfo
     total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty.hex }
     total_time = blocks.first.timestamp - blocks.last.timestamp
 
-    total_difficulties.to_d / total_time / cycle_rate
+    total_difficulties.to_d / total_time
   end
 
   def miner_ranking
@@ -57,19 +57,5 @@ class StatisticInfo
       prev_epoch_last_block = Block.where(epoch: prev_epoch_nubmer).recent.first
     end
     (blocks.last.timestamp - prev_epoch_last_block.timestamp).to_d
-  end
-
-  def n_l(n, l)
-    ((n - l + 1)..n).reduce(1, :*)
-  end
-
-  # this formula comes from https://www.youtube.com/watch?v=CLiKX0nOsHE&feature=youtu.be&list=PLvgCPbagiHgqYdVUj-ylqhsXOifWrExiq&t=1242
-  # n and l is Cuckoo's params
-  # on ckb testnet the value of 'n' is 2**15 and the value of 'l' is 12
-  # the value of n and l and this formula are unstable, will change as the POW changes.
-  def cycle_rate
-    n = 2**15
-    l = 12
-    n_l(n, l).to_f / (n**l) * (n_l(n, l / 2)**2) / (n**l) / l
   end
 end
