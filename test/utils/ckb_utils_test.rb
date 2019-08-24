@@ -124,6 +124,18 @@ class CkbUtilsTest < ActiveSupport::TestCase
     end
   end
 
+  test ".use_default_lock_script? should return true when code_hash is equal with secp cell code hash" do
+    lock_script = CKB::Types::Script.new(code_hash: ENV["CODE_HASH"], args: "0x5282764c8cf8677148969758a183c9cdcdf207dd")
+
+    assert CkbUtils.use_default_lock_script?(lock_script)
+  end
+
+  test ".use_default_lock_script? should return true when code_hash is equal with secp cell type hash" do
+    lock_script = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x5282764c8cf8677148969758a183c9cdcdf207dd")
+
+    assert CkbUtils.use_default_lock_script?(lock_script)
+  end
+
   private
 
   def node_data_processor
