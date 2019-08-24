@@ -21,7 +21,6 @@ end
 #  block_hash                 :binary
 #  number                     :decimal(30, )
 #  parent_hash                :binary
-#  seal                       :jsonb
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
@@ -52,4 +51,5 @@ end
 #  updated_at                 :datetime         not null
 #  primary_reward             :decimal(30, )    default(0)
 #  secondary_reward           :decimal(30, )    default(0)
+#  nonce                      :string
 #

@@ -12,7 +12,7 @@ class Block < ApplicationRecord
   has_many :cell_outputs
   has_many :cell_inputs
 
-  validates_presence_of :difficulty, :block_hash, :number, :parent_hash, :seal, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
+  validates_presence_of :difficulty, :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
   validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed, numericality: { greater_than_or_equal_to: 0 }
 
   attribute :block_hash, :ckb_hash
@@ -90,7 +90,6 @@ end
 #  block_hash                 :binary
 #  number                     :decimal(30, )
 #  parent_hash                :binary
-#  seal                       :jsonb
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
@@ -121,6 +120,7 @@ end
 #  dao                        :string
 #  primary_reward             :decimal(30, )    default(0)
 #  secondary_reward           :decimal(30, )    default(0)
+#  nonce                      :string
 #
 # Indexes
 #

@@ -27,14 +27,199 @@ http_interactions:
       Content-Type:
       - application/json; charset=utf-8
       Content-Length:
-      - '1558'
+      - '2941'
       Date:
-      - Tue, 13 Aug 2019 08:40:08 GMT
+      - Sat, 24 Aug 2019 09:45:38 GMT
     body:
       encoding: UTF-8
-      string: '{"jsonrpc":"2.0","result":{"header":{"dao":"0x01000000000000000000c16ff286230000f6ff05e9fd0300001b11ce596f0000","difficulty":"0x100","epoch":"0","hash":"0x24a7a1af1ed26ebb6196b173c4fc99ae058e995a8e57c31d1c28abe111e92867","number":"11","parent_hash":"0x896d92fb194cea37aad02f331790635c2347e08ad0587c5a8cb81cac1cb225a3","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","seal":{"nonce":"5814902081449308177","proof":"0x"},"timestamp":"1565685528450","transactions_root":"0x4cfcd0c307b63cdefcdf7b006a95fce2e0b165ed7b79d8ce6b318c42a174d4a4","uncles_count":"0","uncles_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","version":"0","witnesses_root":"0x8665f1d759ede3e2c5d54598fded9f1439fc6ca2579ec9be75535e04bf88ecee"},"proposals":[],"transactions":[{"cell_deps":[],"hash":"0x4cfcd0c307b63cdefcdf7b006a95fce2e0b165ed7b79d8ce6b318c42a174d4a4","header_deps":[],"inputs":[{"previous_output":{"index":"4294967295","tx_hash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"since":"11"}],"outputs":[{"capacity":"125000000000","data_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","lock":{"args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","hash_type":"Data"},"type":null}],"outputs_data":["0x"],"version":"0","witnesses":[{"data":["0xa76801d09a0eabbfa545f1577084b6f3bafb0b6250e7f5c89efcfd4e3499fb5500","0x3954acece65096bfa81258983ddb83915fc56bd8"]}]}],"uncles":[]},"id":1}
+      string: '{"jsonrpc":"2.0","result":{"header":{"dao":"0x01000000000000000000c16ff286230000c7881f58f803000015f5aebe690000","difficulty":"0x100","epoch":"0","hash":"0x27c8b958de7cb600790b1b67b937b73fd3a114f736467ef4593e0170d8916969","nonce":"9233657394867070489","number":"11","parent_hash":"0xd727151d8c532b3cc23f51242a7a33b4566bc9f5c8ccfc11b7afbf4419a0a231","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1566632517063","transactions_root":"0xa99ddd409eaf1525d7ddabfa5f3b24181f92b3100009bdbdd71c76e608aa0877","uncles_count":"2","uncles_hash":"0xe41a2ea3072214b85558c06a75e8fd09dd734dc983708b4eee9b10a15daaf886","version":"0","witnesses_root":"0x867f2f0297477f1cad9d79cd071edacf0619542d5a0a454e380c955c5a8d71ea"},"proposals":[],"transactions":[{"cell_deps":[],"hash":"0xa99ddd409eaf1525d7ddabfa5f3b24181f92b3100009bdbdd71c76e608aa0877","header_deps":[],"inputs":[{"previous_output":{"index":"4294967295","tx_hash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"since":"11"}],"outputs":[{"capacity":"125000000000","lock":{"args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","hash_type":"data"},"type":null}],"outputs_data":["0x"],"version":"0","witnesses":[{"data":["0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a79400","0x3954acece65096bfa81258983ddb83915fc56bd8"]}]}],"uncles":[{"header":{"dao":"0x01000000000000000000c16ff286230000fb0c80a9f7030000676d29b6690000","difficulty":"0x100","epoch":"0","hash":"0x8b7889e19848d21914a9777df7308b0b8b3389a7389c5f9996e65c507681e7e6","nonce":"9300557872964006628","number":"5","parent_hash":"0x3234eadd3f87485998d1b45ad35409bf40d91cd405843262aa45e964110a7ac5","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1566631962078","transactions_root":"0xd7384cc28ed106995f4190855efadbdbc2af9f06acf2b15dee62e5040c77e5a4","uncles_count":"2","uncles_hash":"0xb866e336364aa1f24274ba3a79b45ffbe1c1ed5a73d934f1570dfee176c7dc55","version":"0","witnesses_root":"0xfa5638175e061857601eebd81cb6eda6a61f7f2a04dc7e40ac09b10e36957252"},"proposals":[]},{"header":{"dao":"0x01000000000000000000c16ff286230000fb0c80a9f7030000676d29b6690000","difficulty":"0x100","epoch":"0","hash":"0xcd9eb608ed14bad2438d799eb8476dd5881575d27db9d2f7513800ce9eaee8e8","nonce":"10397902142294362787","number":"5","parent_hash":"0x3234eadd3f87485998d1b45ad35409bf40d91cd405843262aa45e964110a7ac5","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1566631987054","transactions_root":"0xd7384cc28ed106995f4190855efadbdbc2af9f06acf2b15dee62e5040c77e5a4","uncles_count":"2","uncles_hash":"0xb866e336364aa1f24274ba3a79b45ffbe1c1ed5a73d934f1570dfee176c7dc55","version":"0","witnesses_root":"0xfa5638175e061857601eebd81cb6eda6a61f7f2a04dc7e40ac09b10e36957252"},"proposals":[]}]},"id":1}
 
 '
     http_version:
-  recorded_at: Tue, 13 Aug 2019 08:40:08 GMT
+  recorded_at: Sat, 24 Aug 2019 09:45:38 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0x3954acece65096bfa81258983ddb83915fc56bd8"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 09:45:38 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xa37f22b1ae898e98d0c1c544169e6b33f8ab6abfd21ad8fdb00ceb2cd00af536","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:45:39 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0x3954acece65096bfa81258983ddb83915fc56bd8"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 09:45:39 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xa37f22b1ae898e98d0c1c544169e6b33f8ab6abfd21ad8fdb00ceb2cd00af536","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:45:39 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0x3954acece65096bfa81258983ddb83915fc56bd8"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 09:45:39 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xa37f22b1ae898e98d0c1c544169e6b33f8ab6abfd21ad8fdb00ceb2cd00af536","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:45:39 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 09:45:39 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xed907c4d7c969b2b0c41f65cdd651300610e7f1db74b604607f51509b515329d","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:45:39 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 09:49:58 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xc3ae6148bd53ed7c8c3e1961012c60d6a1d8c8389d5bcedd363a435f31aa1565","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:49:58 GMT
 recorded_with: VCR 5.0.0

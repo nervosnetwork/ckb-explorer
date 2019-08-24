@@ -12,9 +12,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test "#base_reward should return 0 for genesis block" do
-    VCR.use_cassette("genesis_block") do
+    VCR.use_cassette("genesis_block", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number("0")
-      set_default_lock_params(node_block: node_block)
 
       local_block = CkbSync::NodeDataProcessor.new.process_block(node_block)
 
