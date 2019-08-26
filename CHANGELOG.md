@@ -1,3 +1,38 @@
+# [](https://github.com/shaojunda/ckb-explorer/compare/v0.2.0...v) (2019-08-26)
+
+
+### Bug Fixes
+
+* dao withdraw tx fee bug ([180d119](https://github.com/shaojunda/ckb-explorer/commit/180d119))
+
+
+### Features
+
+* add DEFAULT_EPOCH_REWARD ([f326ca8](https://github.com/shaojunda/ckb-explorer/commit/f326ca8))
+* add ForkedBlock ([a741eff](https://github.com/shaojunda/ckb-explorer/commit/a741eff))
+* add header_deps and cell_deps to ckb_transactions ([6a6c374](https://github.com/shaojunda/ckb-explorer/commit/6a6c374))
+* address transaction api return up to ten display info ([fe19b83](https://github.com/shaojunda/ckb-explorer/commit/fe19b83))
+* block transaction api should return up to ten display info ([8dbd566](https://github.com/shaojunda/ckb-explorer/commit/8dbd566))
+* display inputs should return 10 records for previews ([730b5c0](https://github.com/shaojunda/ckb-explorer/commit/730b5c0))
+* display outputs return 10 records for previews ([8bea3f4](https://github.com/shaojunda/ckb-explorer/commit/8bea3f4))
+* get epoch_reward from config ([2c675e7](https://github.com/shaojunda/ckb-explorer/commit/2c675e7))
+* remove seal from blocks ([cae5caa](https://github.com/shaojunda/ckb-explorer/commit/cae5caa))
+* rescue CKB::RPCError ([9f25b0f](https://github.com/shaojunda/ckb-explorer/commit/9f25b0f))
+* save header_deps and cell_deps to ckb_transactions ([0d912b1](https://github.com/shaojunda/ckb-explorer/commit/0d912b1))
+* save nonce ([80df01b](https://github.com/shaojunda/ckb-explorer/commit/80df01b))
+* save primary reward and secondary reward to blocks ([93021ff](https://github.com/shaojunda/ckb-explorer/commit/93021ff))
+* save primary reward and secondary reward to blocks ([d1eab43](https://github.com/shaojunda/ckb-explorer/commit/d1eab43))
+* save primary reward and secondary reward to forked blocks ([5540edf](https://github.com/shaojunda/ckb-explorer/commit/5540edf))
+* set output's data manually when calculate cell min capacity ([d7759df](https://github.com/shaojunda/ckb-explorer/commit/d7759df))
+* support dao type hash ([019f0e9](https://github.com/shaojunda/ckb-explorer/commit/019f0e9))
+* update default lock script check logic ([59beb70](https://github.com/shaojunda/ckb-explorer/commit/59beb70))
+* update hash rate calculation way ([a51f43a](https://github.com/shaojunda/ckb-explorer/commit/a51f43a))
+* update invalid logic ([049028a](https://github.com/shaojunda/ckb-explorer/commit/049028a))
+* update system cells code_hash ([96c46dd](https://github.com/shaojunda/ckb-explorer/commit/96c46dd))
+* use compute_script_hash ([ce592cb](https://github.com/shaojunda/ckb-explorer/commit/ce592cb))
+
+
+
 # [](https://github.com/shaojunda/ckb-explorer/compare/v0.1.0...v) (2019-08-21)
 
 
