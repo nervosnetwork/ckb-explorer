@@ -72,7 +72,7 @@ module Api
         valid_get api_v1_blocks_url
 
         response_block = json["data"].first
-        assert_equal %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp difficulty version nonce proof epoch start_number length transactions_root witnesses_root reward_status received_tx_fee received_tx_fee_status).sort, response_block["attributes"].keys.sort
+        assert_equal %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp difficulty version nonce epoch start_number length transactions_root witnesses_root reward_status received_tx_fee received_tx_fee_status).sort, response_block["attributes"].keys.sort
       end
 
       test "should return error object when page param is invalid" do
@@ -119,16 +119,14 @@ module Api
         page = 1
         page_size = 30
         create_list(:block, 15, :with_block_hash)
-        create(:block, status: "abandoned")
+        create(:block)
 
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
-        block_hashes = Block.accepted.recent.map(&:block_hash)
-        blocks_statuses = Block.accepted.recent.map(&:status).uniq
+        block_hashes = Block.recent.map(&:block_hash)
         search_result_block_hashes = json["data"].map { |ckb_transaction| ckb_transaction.dig("attributes", "block_hash") }
 
         assert_equal block_hashes, search_result_block_hashes
-        assert_equal ["accepted"], blocks_statuses
       end
 
       test "should return corresponding page's records when page is set and page_size is not set" do
@@ -303,7 +301,7 @@ module Api
         valid_get api_v1_block_url(block.block_hash)
 
         response_block = json["data"]
-        assert_equal %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp difficulty version nonce proof epoch start_number length transactions_root witnesses_root reward_status received_tx_fee received_tx_fee_status).sort, response_block["attributes"].keys.sort
+        assert_equal %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp difficulty version nonce epoch start_number length transactions_root witnesses_root reward_status received_tx_fee received_tx_fee_status).sort, response_block["attributes"].keys.sort
       end
 
       test "should return error object when no records found by id" do

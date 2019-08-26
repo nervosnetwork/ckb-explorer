@@ -9,7 +9,6 @@ class UncleBlockTest < ActiveSupport::TestCase
     should validate_presence_of(:block_hash).on(:create)
     should validate_presence_of(:number).on(:create)
     should validate_presence_of(:parent_hash).on(:create)
-    should validate_presence_of(:seal).on(:create)
     should validate_presence_of(:timestamp).on(:create)
     should validate_presence_of(:transactions_root).on(:create)
     should validate_presence_of(:proposals_hash).on(:create)
@@ -61,17 +60,15 @@ class UncleBlockTest < ActiveSupport::TestCase
   test "#proposals should decodes packed string" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",
         start_number: "0"
       )
     )
-    VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
+    VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}") do
       node_block = CkbSync::Api.instance.get_block_by_number(HAS_UNCLES_BLOCK_NUMBER)
       node_block.uncles.first.instance_variable_set(:@proposals, ["0x98a4e0c18c"])
-      set_default_lock_params(node_block: node_block)
 
       CkbSync::NodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)

@@ -27,16 +27,16 @@ http_interactions:
       Content-Type:
       - application/json; charset=utf-8
       Content-Length:
-      - '1471'
+      - '2942'
       Date:
-      - Thu, 08 Aug 2019 09:22:27 GMT
+      - Sat, 24 Aug 2019 09:32:37 GMT
     body:
       encoding: UTF-8
-      string: '{"jsonrpc":"2.0","result":{"header":{"dao":"0x01000000000000000000c16ff286230000cc9e1486ba3500001d75575b6f0000","difficulty":"0x9292","epoch":"0","hash":"0xc68ad30a5ab460c13f33cf0a3df1add32cfa08388790774b2f7867f3f1799fcc","number":"10","parent_hash":"0x503feb83f7605f6e56d2d9c7cf34faf66886a71eafee41351d32cd7d1cdb3028","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","seal":{"nonce":"13526975623329717266","proof":"0xb8030000001b00004a200000d4340000054100004a410000ef4600007a50000006540000995b00005f680000d1770000"},"timestamp":"1564208465185","transactions_root":"0x7b45c9db7c573c29f551d85e3002dc37c3622bf61a2d18849324644414301a6e","uncles_count":"0","uncles_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","version":"0","witnesses_root":"0xb949c6c153570b1f2fad2452980168fdc62a921009643d514df0b176175eca28"},"proposals":[],"transactions":[{"deps":[],"hash":"0x7b45c9db7c573c29f551d85e3002dc37c3622bf61a2d18849324644414301a6e","inputs":[{"previous_output":{"block_hash":null,"cell":null},"since":"10"}],"outputs":[{"capacity":"100000000000","data":"0x","lock":{"args":["0x64257f00b6b63e987609fa9be2d0c86d351020fb"],"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","hash_type":"Data"},"type":null}],"version":"0","witnesses":[{"data":["0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","0xda648442dbb7347e467d1d09da13e5cd3a0ef0e1"]}]}],"uncles":[]},"id":1}
+      string: '{"jsonrpc":"2.0","result":{"header":{"dao":"0x01000000000000000000c16ff28623000025f4043bf8030000785e43bd690000","difficulty":"0x100","epoch":"0","hash":"0xd727151d8c532b3cc23f51242a7a33b4566bc9f5c8ccfc11b7afbf4419a0a231","nonce":"1423297903023973355","number":"10","parent_hash":"0x09d99a9f862d3c7b8083955448446b9733b32fa60d31fdca834ef57b7bd8e1b8","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1566632407061","transactions_root":"0x94fb7bda30955458a2bdf38bfc094a9319b84c4394eb1760e6e139920b2a56ab","uncles_count":"2","uncles_hash":"0xbcaf54ff94cdc803007b2d151ac567ea78d419875099f63089006dd5f45ba880","version":"0","witnesses_root":"0x0a7860f5623cf44fb053adb0ccd0961ae2d0f78947bbe6b1e341c58f07f6059b"},"proposals":[],"transactions":[{"cell_deps":[],"hash":"0x94fb7bda30955458a2bdf38bfc094a9319b84c4394eb1760e6e139920b2a56ab","header_deps":[],"inputs":[{"previous_output":{"index":"4294967295","tx_hash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"since":"10"}],"outputs":[{"capacity":"125000000000","lock":{"args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","hash_type":"data"},"type":null}],"outputs_data":["0x"],"version":"0","witnesses":[{"data":["0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a79400","0x3954acece65096bfa81258983ddb83915fc56bd8"]}]}],"uncles":[{"header":{"dao":"0x01000000000000000000c16ff286230000fb0c80a9f7030000676d29b6690000","difficulty":"0x100","epoch":"0","hash":"0x8d4e5c8c9dd314017c3da1c6cb9e098bc4752b32db42c3427e272978e4e20a84","nonce":"10381307747004114123","number":"5","parent_hash":"0x3234eadd3f87485998d1b45ad35409bf40d91cd405843262aa45e964110a7ac5","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1566631967081","transactions_root":"0xd7384cc28ed106995f4190855efadbdbc2af9f06acf2b15dee62e5040c77e5a4","uncles_count":"2","uncles_hash":"0xb866e336364aa1f24274ba3a79b45ffbe1c1ed5a73d934f1570dfee176c7dc55","version":"0","witnesses_root":"0xfa5638175e061857601eebd81cb6eda6a61f7f2a04dc7e40ac09b10e36957252"},"proposals":[]},{"header":{"dao":"0x01000000000000000000c16ff286230000fb0c80a9f7030000676d29b6690000","difficulty":"0x100","epoch":"0","hash":"0x9593f166cf6f3b93978073dfb0b95afe0fd3032ca5d5fe6590990217cbfa0c7a","nonce":"12756788665262678835","number":"5","parent_hash":"0x3234eadd3f87485998d1b45ad35409bf40d91cd405843262aa45e964110a7ac5","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1566631992054","transactions_root":"0xd7384cc28ed106995f4190855efadbdbc2af9f06acf2b15dee62e5040c77e5a4","uncles_count":"2","uncles_hash":"0xb866e336364aa1f24274ba3a79b45ffbe1c1ed5a73d934f1570dfee176c7dc55","version":"0","witnesses_root":"0xfa5638175e061857601eebd81cb6eda6a61f7f2a04dc7e40ac09b10e36957252"},"proposals":[]}]},"id":1}
 
 '
     http_version:
-  recorded_at: Thu, 08 Aug 2019 09:22:27 GMT
+  recorded_at: Sat, 24 Aug 2019 09:32:37 GMT
 - request:
     method: post
     uri: http://localhost:8414/
@@ -64,22 +64,22 @@ http_interactions:
       Content-Type:
       - application/json; charset=utf-8
       Content-Length:
-      - '139'
+      - '105'
       Date:
-      - Thu, 08 Aug 2019 09:22:27 GMT
+      - Sat, 24 Aug 2019 09:32:37 GMT
     body:
       encoding: UTF-8
-      string: '{"jsonrpc":"2.0","result":{"difficulty":"0x9292","epoch_reward":"125000000000000","length":"1250","number":"0","start_number":"0"},"id":1}
+      string: '{"jsonrpc":"2.0","result":{"difficulty":"0x100","length":"1000","number":"0","start_number":"0"},"id":1}
 
 '
     http_version:
-  recorded_at: Thu, 08 Aug 2019 09:22:27 GMT
+  recorded_at: Sat, 24 Aug 2019 09:32:37 GMT
 - request:
     method: post
     uri: http://localhost:8414/
     body:
       encoding: UTF-8
-      string: '{"id":1,"jsonrpc":"2.0","method":"get_epoch_by_number","params":["0"]}'
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0x3954acece65096bfa81258983ddb83915fc56bd8"],"hash_type":"data"}]}'
     headers:
       Accept-Encoding:
       - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
@@ -101,16 +101,202 @@ http_interactions:
       Content-Type:
       - application/json; charset=utf-8
       Content-Length:
-      - '139'
+      - '103'
       Date:
-      - Thu, 08 Aug 2019 09:22:27 GMT
+      - Sat, 24 Aug 2019 09:45:02 GMT
     body:
       encoding: UTF-8
-      string: '{"jsonrpc":"2.0","result":{"difficulty":"0x9292","epoch_reward":"125000000000000","length":"1250","number":"0","start_number":"0"},"id":1}
+      string: '{"jsonrpc":"2.0","result":"0xa37f22b1ae898e98d0c1c544169e6b33f8ab6abfd21ad8fdb00ceb2cd00af536","id":1}
 
 '
     http_version:
-  recorded_at: Thu, 08 Aug 2019 09:22:27 GMT
+  recorded_at: Sat, 24 Aug 2019 09:45:02 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0x3954acece65096bfa81258983ddb83915fc56bd8"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 09:45:02 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xa37f22b1ae898e98d0c1c544169e6b33f8ab6abfd21ad8fdb00ceb2cd00af536","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:45:02 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 09:45:03 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xed907c4d7c969b2b0c41f65cdd651300610e7f1db74b604607f51509b515329d","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:45:03 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 09:49:57 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xed907c4d7c969b2b0c41f65cdd651300610e7f1db74b604607f51509b515329d","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:49:57 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 09:49:58 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xc3ae6148bd53ed7c8c3e1961012c60d6a1d8c8389d5bcedd363a435f31aa1565","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:49:58 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a1","args":["0x3954acece65096bfa81258983ddb83915fc56bd8"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '146'
+      Date:
+      - Sat, 24 Aug 2019 09:50:06 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","error":{"code":-32602,"message":"Invalid params:
+        invalid length 62, expected a 0x-prefixed hex string with 64 digits."},"id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:50:06 GMT
 - request:
     method: post
     uri: http://localhost:8414/
@@ -140,12 +326,423 @@ http_interactions:
       Content-Length:
       - '39'
       Date:
-      - Thu, 08 Aug 2019 09:33:26 GMT
+      - Sat, 24 Aug 2019 09:50:17 GMT
     body:
       encoding: UTF-8
       string: '{"jsonrpc":"2.0","result":null,"id":1}
 
 '
     http_version:
-  recorded_at: Thu, 08 Aug 2019 09:33:27 GMT
+  recorded_at: Sat, 24 Aug 2019 09:50:17 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a1","args":["0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a1"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '146'
+      Date:
+      - Sat, 24 Aug 2019 09:53:26 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","error":{"code":-32602,"message":"Invalid params:
+        invalid length 62, expected a 0x-prefixed hex string with 64 digits."},"id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 09:53:26 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x601cc4dbe918ea31c63dc2e3e0453056cb4825cadc4f68dd827745e9a99a0a5f34b58261fe2295ebe0136f5235401334f7e4a958efd0027b4ed6b643fb5a0e2b","args":["0x601cc4dbe918ea31c63dc2e3e0453056cb4825cadc4f68dd827745e9a99a0a5f34b58261fe2295ebe0136f5235401334f7e4a958efd0027b4ed6b643fb5a0e2b01"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '147'
+      Date:
+      - Sat, 24 Aug 2019 10:03:02 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","error":{"code":-32602,"message":"Invalid params:
+        invalid length 128, expected a 0x-prefixed hex string with 64 digits."},"id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 10:03:03 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a1","args":["0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '146'
+      Date:
+      - Sat, 24 Aug 2019 10:04:13 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","error":{"code":-32602,"message":"Invalid params:
+        invalid length 62, expected a 0x-prefixed hex string with 64 digits."},"id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 10:04:13 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"hash_type":"Data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '128'
+      Date:
+      - Sat, 24 Aug 2019 10:04:17 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","error":{"code":-32602,"message":"Invalid params:
+        unknown variant `Data`, expected `data` or `type`."},"id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 10:04:18 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 10:05:05 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xc3ae6148bd53ed7c8c3e1961012c60d6a1d8c8389d5bcedd363a435f31aa1565","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 10:05:05 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x54811ce986d5c3e57eaafab22cdd080e32209e39590e204a99b32935f835a13c","args":[],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 13:05:32 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x66e5e101d4da83f7b08e435722476c9c82143b4406e68dfe0acfaa6abbb514ee","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 13:05:33 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 13:05:33 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x5a39c1ea9278a1502138fd72bcaed7bd67ec73234c217996f80335d4897ed670","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 13:05:33 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 13:05:33 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x5a39c1ea9278a1502138fd72bcaed7bd67ec73234c217996f80335d4897ed670","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 13:05:33 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0x5d827d882aad6d64ffbdd6186f9071fef72ae8f9"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 13:05:39 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xd9515806f408c10e4120ef09b7a38efd322bab1f29ae19f7680e437d3fd79f30","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 13:05:39 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 13:06:22 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x5a39c1ea9278a1502138fd72bcaed7bd67ec73234c217996f80335d4897ed670","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 13:06:22 GMT
+- request:
+    method: post
+    uri: http://localhost:8414/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"_compute_script_hash","params":[{"code_hash":"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794","args":["0x95cc238083dc27919ba8e2506d710488ead14a1a"],"hash_type":"data"}]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '103'
+      Date:
+      - Sat, 24 Aug 2019 13:16:21 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0xf6cdf56ef1987f42a50eaed4507a86812d6df3c38824d75b181fb11bebcb3f3e","id":1}
+
+'
+    http_version:
+  recorded_at: Sat, 24 Aug 2019 13:16:21 GMT
 recorded_with: VCR 5.0.0

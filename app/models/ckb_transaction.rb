@@ -12,6 +12,7 @@ class CkbTransaction < ApplicationRecord
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
 
   attribute :tx_hash, :ckb_hash
+  attribute :header_deps, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]
 
   scope :recent, -> { order(block_timestamp: :desc) }
   scope :cellbase, -> { where(is_cellbase: true) }
@@ -28,28 +29,48 @@ class CkbTransaction < ApplicationRecord
     Rails.cache.delete([self.class.name, tx_hash])
   end
 
-  def display_inputs
+  def display_inputs(previews: false)
     if is_cellbase
-      cellbase = Cellbase.new(block)
-      [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
+      cellbase_display_inputs
     else
-      self.cell_inputs.order(:id).map do |input|
-        previous_cell_output = input.previous_cell_output
-        { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash }
-      end
+      normal_tx_display_inputs(previews)
     end
   end
 
-  def display_outputs
+  def display_outputs(previews: false)
     if is_cellbase
-      outputs = cell_outputs.order(:id)
-      cellbase = Cellbase.new(block)
-      outputs.map { |output| { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward } }
+      cellbase_display_outputs
     else
-      cell_outputs.order(:id).map do |output|
-        { id: output.id, capacity: output.capacity, address_hash: output.address_hash }
-      end
+      normal_tx_display_outputs(previews)
     end
+  end
+
+  private
+
+  def normal_tx_display_outputs(previews)
+    cell_outputs_for_display = previews ? cell_outputs.limit(10) : cell_outputs
+    cell_outputs_for_display.order(:id).map do |output|
+      { id: output.id, capacity: output.capacity, address_hash: output.address_hash }
+    end
+  end
+
+  def cellbase_display_outputs
+    outputs = cell_outputs.order(:id)
+    cellbase = Cellbase.new(block)
+    outputs.map { |output| { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward } }
+  end
+
+  def normal_tx_display_inputs(previews)
+    cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
+    cell_inputs_for_display.order(:id).map do |input|
+      previous_cell_output = input.previous_cell_output
+      { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash }
+    end
+  end
+
+  def cellbase_display_inputs
+    cellbase = Cellbase.new(block)
+    [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
   end
 end
 
@@ -68,6 +89,8 @@ end
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  is_cellbase     :boolean          default(FALSE)
+#  header_deps     :binary
+#  cell_deps       :jsonb
 #  witnesses       :jsonb
 #
 # Indexes

@@ -243,6 +243,30 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash)
         assert_equal links.stringify_keys.sort, json["links"].sort
       end
+
+      test "should return up to ten display_inputs" do
+        address = create(:address)
+        block = create(:block, :with_block_hash)
+        ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block)
+        address.ckb_transactions << ckb_transaction
+
+        valid_get api_v1_address_transaction_url(address.address_hash)
+
+        assert_equal 10, json["data"].first.dig("attributes", "display_inputs").count
+        assert_equal [true], json["data"].first.dig("attributes", "display_inputs").map { |input| input.key?("from_cellbase") }.uniq
+      end
+
+      test "should return up to ten display_outputs" do
+        address = create(:address)
+        block = create(:block, :with_block_hash)
+        ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block)
+        address.ckb_transactions << ckb_transaction
+
+        valid_get api_v1_address_transaction_url(address.address_hash)
+
+        assert_equal 10, json["data"].first.dig("attributes", "display_outputs").count
+        assert_equal [false], json["data"].first.dig("attributes", "display_outputs").map { |input| input.key?("from_cellbase") }.uniq
+      end
     end
   end
 end
