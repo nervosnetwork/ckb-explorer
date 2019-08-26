@@ -2,6 +2,17 @@ require "test_helper"
 
 module CkbSync
   class NodeDataProcessorTest < ActiveSupport::TestCase
+    setup do
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
+    end
+
     test "#process_block should create one block" do
       assert_difference -> { Block.count }, 1 do
         VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -117,7 +128,7 @@ module CkbSync
 
         local_block = node_data_processor.process_block(node_block)
 
-        assert_equal CkbUtils.primary_reward(node_block.header), local_block.primary_reward
+        assert_equal CkbUtils.base_reward(node_block.header.number, node_block.header.epoch, node_block.transactions.first), local_block.primary_reward
       end
     end
 

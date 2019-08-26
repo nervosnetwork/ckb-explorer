@@ -1,6 +1,17 @@
 require "test_helper"
 
 class CkbUtilsTest < ActiveSupport::TestCase
+  setup do
+    CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+      CKB::Types::Epoch.new(
+        difficulty: "0x1000",
+        length: "2000",
+        number: "0",
+        start_number: "0"
+      )
+    )
+  end
+
   test "#generate_address should return type1 address when use default lock script" do
     type1_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
