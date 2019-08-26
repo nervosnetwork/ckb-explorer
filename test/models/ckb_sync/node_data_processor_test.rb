@@ -2,6 +2,17 @@ require "test_helper"
 
 module CkbSync
   class NodeDataProcessorTest < ActiveSupport::TestCase
+    setup do
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          difficulty: "0x1000",
+          length: "2000",
+          number: "0",
+          start_number: "0"
+        )
+      )
+    end
+
     test "#process_block should create one block" do
       assert_difference -> { Block.count }, 1 do
         VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -117,7 +128,7 @@ module CkbSync
 
         local_block = node_data_processor.process_block(node_block)
 
-        assert_equal CkbUtils.primary_reward(node_block.header), local_block.primary_reward
+        assert_equal CkbUtils.base_reward(node_block.header.number, node_block.header.epoch, node_block.transactions.first), local_block.primary_reward
       end
     end
 
@@ -441,7 +452,6 @@ module CkbSync
     test "#process_block should update block's contained addresses's info even if raise RPCError " do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).raises(CKB::RPCError)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         block = create(:block, :with_block_hash)
         ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
