@@ -12,4 +12,8 @@ class CkbTransactionSerializer
   attribute :display_outputs do |object, params|
     params && params[:previews] ? object.display_outputs(previews: true) : object.display_outputs
   end
+
+  attribute :income do |object, params|
+    params && params[:previews] && params[:address] ? object.income(params[:address]) : nil
+  end
 end

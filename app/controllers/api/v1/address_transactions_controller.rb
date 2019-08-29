@@ -10,7 +10,7 @@ module Api
         ckb_transactions = presented_address.ckb_transactions.recent.distinct.page(@page).per(@page_size)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
 
-        render json: CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true } }))
+        render json: CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true, address: address } }))
       end
 
       private
