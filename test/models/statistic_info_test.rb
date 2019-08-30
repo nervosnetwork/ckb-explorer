@@ -29,7 +29,6 @@ class StatisticInfoTest < ActiveSupport::TestCase
   test ".current_epoch_difficulty should return current epoch difficulty" do
     CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",
@@ -45,7 +44,6 @@ class StatisticInfoTest < ActiveSupport::TestCase
   test ".average_block_time should return average block time within current epoch" do
     CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
       CKB::Types::Epoch.new(
-        epoch_reward: "250000000000",
         difficulty: "0x1000",
         length: "2000",
         number: "0",
@@ -77,8 +75,7 @@ class StatisticInfoTest < ActiveSupport::TestCase
     last_500_blocks = Block.recent.includes(:uncle_blocks).limit(block_count.to_i)
     total_difficulties = last_500_blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty.hex }
     total_time = last_500_blocks.first.timestamp - last_500_blocks.last.timestamp
-    cycle_rate = 0.08308952614941366
-    hash_rate = total_difficulties.to_d / total_time / cycle_rate
+    hash_rate = total_difficulties.to_d / total_time
 
     assert_equal hash_rate, statistic_info.hash_rate
   end

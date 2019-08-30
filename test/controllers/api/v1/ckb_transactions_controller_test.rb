@@ -91,13 +91,42 @@ module Api
       end
 
       test "should contain right keys in the serialized object when call show" do
-        prepare_inauthentic_node_data(8)
+        prepare_node_data(8)
         ckb_transaction = CkbTransaction.last
 
         valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
 
         response_tx_transaction = json["data"]
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income).sort, response_tx_transaction["attributes"].keys.sort
+      end
+
+      test "returned income should be null" do
+        prepare_node_data(8)
+        ckb_transaction = CkbTransaction.last
+
+        valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
+
+        assert_nil json["data"].dig("attributes", "income")
+      end
+
+      test "should return all display_inputs" do
+        block = create(:block, :with_block_hash)
+        ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block)
+
+        valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
+
+        assert_equal 15, json["data"].dig("attributes", "display_inputs").count
+        assert_equal [true], json["data"].dig("attributes", "display_inputs").map { |input| input.key?("from_cellbase") }.uniq
+      end
+
+      test "should return all display_outputs" do
+        block = create(:block, :with_block_hash)
+        ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block)
+
+        valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
+
+        assert_equal 15, json["data"].dig("attributes", "display_outputs").count
+        assert_equal [false], json["data"].dig("attributes", "display_outputs").map { |input| input.key?("from_cellbase") }.uniq
       end
     end
   end

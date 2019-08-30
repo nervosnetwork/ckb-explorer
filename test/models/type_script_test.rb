@@ -10,9 +10,16 @@ class TypeScriptTest < ActiveSupport::TestCase
   end
 
   test "#code_hash should decodes packed string" do
-    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+    CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+      CKB::Types::Epoch.new(
+        difficulty: "0x1000",
+        length: "2000",
+        number: "0",
+        start_number: "0"
+      )
+    )
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
-      set_default_lock_params(node_block: node_block)
 
       CkbSync::NodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)

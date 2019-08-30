@@ -92,7 +92,15 @@ module Api
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income).sort, response_tx_transaction["attributes"].keys.sort
+      end
+
+      test "returned income should be null" do
+        block = create(:block, :with_ckb_transactions)
+
+        valid_get api_v1_block_transaction_url(block.block_hash)
+
+        assert_nil json["data"].map { |transaction| transaction.dig("attributes", "income") }.uniq.first
       end
 
       test "should return error object when no records found by id" do
@@ -238,6 +246,26 @@ module Api
 
         valid_get api_v1_block_transaction_url(block.block_hash)
         assert_equal links.stringify_keys.sort, json["links"].sort
+      end
+
+      test "should return up to ten display_inputs" do
+        block = create(:block, :with_block_hash)
+        create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block)
+
+        valid_get api_v1_block_transaction_url(block.block_hash)
+
+        assert_equal 10, json["data"].first.dig("attributes", "display_inputs").count
+        assert_equal [true], json["data"].first.dig("attributes", "display_inputs").map { |input| input.key?("from_cellbase") }.uniq
+      end
+
+      test "should return up to ten display_outputs" do
+        block = create(:block, :with_block_hash)
+        create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block)
+
+        valid_get api_v1_block_transaction_url(block.block_hash)
+
+        assert_equal 10, json["data"].first.dig("attributes", "display_outputs").count
+        assert_equal [false], json["data"].first.dig("attributes", "display_outputs").map { |input| input.key?("from_cellbase") }.uniq
       end
     end
   end

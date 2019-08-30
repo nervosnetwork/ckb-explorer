@@ -3,7 +3,6 @@ class Block < ApplicationRecord
   paginates_per 10
   max_paginates_per MAX_PAGINATES_PER
 
-  enum status: { abandoned: 0, accepted: 1 }
   enum reward_status: { pending: 0, issued: 1 }
   enum target_block_reward_status: { pending: 0, issued: 1 }, _prefix: :target_block
   enum received_tx_fee_status: { calculating: 0, calculated: 1 }
@@ -13,7 +12,7 @@ class Block < ApplicationRecord
   has_many :cell_outputs
   has_many :cell_inputs
 
-  validates_presence_of :difficulty, :block_hash, :number, :parent_hash, :seal, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :status, on: :create
+  validates_presence_of :difficulty, :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
   validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed, numericality: { greater_than_or_equal_to: 0 }
 
   attribute :block_hash, :ckb_hash
@@ -57,9 +56,9 @@ class Block < ApplicationRecord
   def self.cached_find(query_key)
     Rails.cache.fetch([name, query_key]) do
       if QueryKeyUtils.valid_hex?(query_key)
-        block = where(block_hash: query_key).accepted.first
+        block = where(block_hash: query_key).first
       else
-        block = where(number: query_key).accepted.first
+        block = where(number: query_key).first
       end
       BlockSerializer.new(block) if block.present?
     end
@@ -75,9 +74,10 @@ class Block < ApplicationRecord
   end
 
   def invalid!
-    abandoned!
     uncle_blocks.delete_all
     ckb_transactions.destroy_all
+    ForkedBlock.create(attributes)
+    destroy
   end
 end
 
@@ -90,7 +90,6 @@ end
 #  block_hash                 :binary
 #  number                     :decimal(30, )
 #  parent_hash                :binary
-#  seal                       :jsonb
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
@@ -102,7 +101,6 @@ end
 #  proposals_count            :integer
 #  cell_consumed              :decimal(30, )
 #  miner_hash                 :binary
-#  status                     :integer
 #  reward                     :decimal(30, )
 #  total_transaction_fee      :decimal(30, )
 #  ckb_transactions_count     :decimal(30, )    default(0)
@@ -122,10 +120,11 @@ end
 #  dao                        :string
 #  primary_reward             :decimal(30, )    default(0)
 #  secondary_reward           :decimal(30, )    default(0)
+#  nonce                      :string
 #
 # Indexes
 #
-#  index_blocks_on_block_hash_and_status  (block_hash,status) UNIQUE
+#  index_blocks_on_block_hash  (block_hash) UNIQUE
 #  index_blocks_on_number      (number)
 #  index_blocks_on_timestamp   (timestamp)
 #
