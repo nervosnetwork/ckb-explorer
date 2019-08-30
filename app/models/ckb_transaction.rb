@@ -45,6 +45,10 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
+  def income(address)
+    outputs.where(address: address).sum(:capacity) - inputs.where(address: address).sum(:capacity)
+  end
+
   private
 
   def normal_tx_display_outputs(previews)
