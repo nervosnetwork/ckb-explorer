@@ -39,8 +39,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
       node_data_processor.process_block(node_block)
       output = node_block.transactions.first.outputs.first
       output_data = node_block.transactions.first.outputs_data.first
-      output.data = output_data
-      expected_cell_min_capacity = output.calculate_min_capacity
+
+      expected_cell_min_capacity = output.calculate_min_capacity(output_data)
 
       assert_equal expected_cell_min_capacity, CkbUtils.calculate_cell_min_capacity(output, output_data)
     end
@@ -51,7 +51,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
 
       node_data_processor.process_block(node_block)
-      expected_total_cell_consumed = node_block.transactions.flat_map(&:outputs).flatten.reduce(0) { |memo, output| memo + output.calculate_min_capacity }
+      outputs_data = node_block.transactions.flat_map(&:outputs_data).flatten
+      expected_total_cell_consumed =
+        node_block.transactions.flat_map(&:outputs).flatten.each_with_index.reduce(0) do |memo, (output, index)|
+          memo + output.calculate_min_capacity(outputs_data[index])
+        end
 
       assert_equal expected_total_cell_consumed, CkbUtils.block_cell_consumed(node_block.transactions)
     end
