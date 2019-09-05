@@ -396,7 +396,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         node_block_transactions = node_block.transactions
-        node_cell_outputs = node_block_transactions.map { |commit_transaction| commit_transaction.outputs }.flatten
+        node_cell_outputs = node_block_transactions.map(&:outputs).flatten
         node_cell_outputs_with_type_script = node_cell_outputs.select { |cell_output| cell_output.type.present? }
 
         assert_difference -> { TypeScript.count }, node_cell_outputs_with_type_script.size do
@@ -862,7 +862,6 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-
         assert_difference -> { local_block.contained_addresses.map(&:ckb_transactions).flatten.count }, -1 do
           node_data_processor.call
         end

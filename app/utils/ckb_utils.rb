@@ -67,7 +67,7 @@ class CkbUtils
   end
 
   def self.base_reward(block_number, epoch_number, cellbase = nil)
-    return cellbase.outputs.first.capacity.to_i if block_number.to_i == 0
+    return cellbase.outputs.first.capacity.to_i if block_number.to_i == 0 && cellbase.present?
 
     epoch_info = get_epoch_info(epoch_number)
     start_number = epoch_info.start_number.to_i
