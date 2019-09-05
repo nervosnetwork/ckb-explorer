@@ -1,7 +1,6 @@
 class CkbUtils
   def self.calculate_cell_min_capacity(output, data)
-    output.data = data if output.data.blank?
-    output.calculate_min_capacity
+    output.calculate_min_capacity(data)
   end
 
   def self.block_cell_consumed(transactions)
