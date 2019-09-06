@@ -23,7 +23,8 @@ module CkbSync
       ApplicationRecord.transaction do
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
         local_block.ckb_transactions_count = ckb_transactions.size
-        local_block.save!
+        Block.import! [local_block], recursive: true, batch_size: 1000, validate: false
+        local_block.reload
       end
 
       update_tx_fee_related_data(local_block)
