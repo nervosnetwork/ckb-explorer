@@ -63,7 +63,8 @@ class CkbUtils
   end
 
   def self.block_reward(node_block_header)
-    primary_reward(node_block_header) + secondary_reward(node_block_header)
+    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(node_block_header.hash)
+    primary_reward(node_block_header, cellbase_output_capacity_details) + secondary_reward(node_block_header, cellbase_output_capacity_details)
   end
 
   def self.base_reward(block_number, epoch_number, cellbase = nil)
@@ -81,13 +82,11 @@ class CkbUtils
     end
   end
 
-  def self.primary_reward(node_block_header)
-    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(node_block_header.hash)
+  def self.primary_reward(node_block_header, cellbase_output_capacity_details)
     node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.primary.to_i : 0
   end
 
-  def self.secondary_reward(node_block_header)
-    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(node_block_header.hash)
+  def self.secondary_reward(node_block_header, cellbase_output_capacity_details)
     node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.secondary.to_i : 0
   end
 
@@ -127,12 +126,14 @@ class CkbUtils
     address_cell_consumed
   end
 
-  def self.update_block_reward_status!(current_block)
+  def self.update_block_reward!(current_block)
     target_block_number = current_block.target_block_number
     target_block = current_block.target_block
     return if target_block_number < 1 || target_block.blank?
 
-    target_block.update!(reward_status: "issued")
+    block_header = Struct.new(:hash, :number)
+    reward = CkbUtils.block_reward(block_header.new(current_block.block_hash, current_block.number))
+    target_block.update!(reward_status: "issued", reward: reward)
     current_block.update!(target_block_reward_status: "issued")
   end
 
