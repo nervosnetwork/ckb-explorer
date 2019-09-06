@@ -115,10 +115,10 @@ module CkbSync
     test "#process_block generated block should has correct reward" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
-
+        cellbase = node_block.transactions.first
         local_block = node_data_processor.process_block(node_block)
 
-        assert_equal CkbUtils.block_reward(node_block.header).to_i, local_block.reward
+        assert_equal  CkbUtils.base_reward(node_block.header.number, node_block.header.epoch, cellbase), local_block.reward
       end
     end
 
@@ -138,7 +138,7 @@ module CkbSync
 
         local_block = node_data_processor.process_block(node_block)
 
-        assert_equal CkbUtils.secondary_reward(node_block.header), local_block.secondary_reward
+        assert_equal 0, local_block.secondary_reward
       end
     end
 
