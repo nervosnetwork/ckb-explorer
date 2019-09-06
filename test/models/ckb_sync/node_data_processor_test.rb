@@ -563,6 +563,18 @@ module CkbSync
       end
     end
 
+    test "should update the target block reward to the sum of primary, secondary, proposal_reward and commit_reward when there is the target block" do
+      prepare_node_data(12)
+      VCR.use_cassette("blocks/12", record: :new_episodes) do
+        local_block = node_data_processor.call
+        target_block = local_block.target_block
+        block_header = Struct.new(:hash, :number)
+        expected_reward = CkbUtils.block_reward(block_header.new(local_block.block_hash, local_block.number))
+
+        assert_equal expected_reward, target_block.reward
+      end
+    end
+
     test "should do nothing on the local tip block's target block reward status when there is no target block" do
       prepare_node_data(9)
       local_block = Block.find_by(number: 9)
