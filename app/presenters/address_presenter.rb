@@ -24,7 +24,7 @@ class AddressPresenter
   end
 
   def transactions_count
-    object.reduce(0) { |sum, addr| sum + addr.ckb_transactions_count }
+    ckb_transactions.count
   end
 
   def ckb_transactions
