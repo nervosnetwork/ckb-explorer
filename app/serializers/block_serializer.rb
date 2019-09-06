@@ -6,6 +6,5 @@ class BlockSerializer
              :difficulty, :version, :epoch, :start_number, :length, :transactions_root, :witnesses_root, :reward_status,
              :received_tx_fee, :received_tx_fee_status, :nonce
 
-
   attribute :transactions_count, &:ckb_transactions_count
 end

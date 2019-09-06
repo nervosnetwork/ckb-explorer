@@ -77,7 +77,7 @@ class AddressTest < ActiveSupport::TestCase
       lock_script = node_block.transactions.first.outputs.first.lock
       address = Address.find_or_create_address(lock_script)
 
-      assert_equal output.lock.to_hash(CkbSync::Api.instance), address.lock_hash
+      assert_equal output.lock.compute_hash, address.lock_hash
     end
   end
 end

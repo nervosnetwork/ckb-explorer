@@ -23,7 +23,8 @@ module CkbSync
       ApplicationRecord.transaction do
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
         local_block.ckb_transactions_count = ckb_transactions.size
-        local_block.save!
+        Block.import! [local_block], recursive: true, batch_size: 1000, validate: false
+        local_block.reload
       end
 
       update_tx_fee_related_data(local_block)
@@ -50,7 +51,7 @@ module CkbSync
     end
 
     def issue_block_reward!(current_block)
-      CkbUtils.update_block_reward_status!(current_block)
+      CkbUtils.update_block_reward!(current_block)
       CkbUtils.calculate_received_tx_fee!(current_block)
     end
 
@@ -144,11 +145,9 @@ module CkbSync
         total_cell_capacity: CkbUtils.total_cell_capacity(node_block.transactions),
         miner_hash: CkbUtils.miner_hash(cellbase),
         miner_lock_hash: CkbUtils.miner_lock_hash(cellbase),
-        reward: CkbUtils.block_reward(header),
-        primary_reward: CkbUtils.primary_reward(header),
-        reward: CkbUtils.block_reward(header),
+        reward: CkbUtils.base_reward(header.number, header.epoch, cellbase),
         primary_reward: CkbUtils.base_reward(header.number, header.epoch, cellbase),
-        secondary_reward: CkbUtils.secondary_reward(header),
+        secondary_reward: 0,
         reward_status: header.number.to_i == 0 ? "issued" : "pending",
         total_transaction_fee: 0,
         witnesses_root: header.witnesses_root,

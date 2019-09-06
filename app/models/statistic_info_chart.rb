@@ -29,8 +29,8 @@ class StatisticInfoChart
 
   def calculate_hash_rate
     max_block_number = Block.maximum(:number).to_i
-    from = Rails.cache.fetch("hash_rate_from") { last_epoch0_block_number }
-    to = Rails.cache.fetch("hash_rate_to") { max_block_number }
+    from = Rails.cache.fetch("hash_rate_from", &method(:last_epoch0_block_number))
+    to = Rails.cache.fetch("hash_rate_to", &method(:max_block_number))
 
     prev_cached_data = []
     if Rails.cache.read("hash_rate_chart_data_#{to}").present?

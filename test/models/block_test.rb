@@ -59,7 +59,10 @@ class BlockTest < ActiveSupport::TestCase
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       local_block.invalid!
       forked_block = ForkedBlock.last
-      assert_equal local_block.attributes.reject { |attribute| attribute == "id" }, forked_block.attributes.reject { |attribute| attribute == "id" }
+      actual_attributes = forked_block.attributes.reject { |attribute| attribute == "id" }
+      expected_attributes = local_block.attributes.reject { |attribute| attribute == "id" }
+
+      assert_equal expected_attributes, actual_attributes
     end
   end
 
