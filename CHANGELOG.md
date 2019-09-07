@@ -3,7 +3,7 @@
 
 ### Bug Fixes
 
-* wrong transactions count for address presenter ([78397b4](https://github.com/shaojunda/ckb-explorer/commit/78397b4))
+* wrong transactions count for address presenter ([a90432f](https://github.com/shaojunda/ckb-explorer/commit/a90432f))
 
 
 ### Features
@@ -12,7 +12,9 @@
 * Bump sdk to v0.20.0 ([124c178](https://github.com/shaojunda/ckb-explorer/commit/124c178))
 * implement income ([5e3ebc6](https://github.com/shaojunda/ckb-explorer/commit/5e3ebc6))
 * send data to calculate_min_capacity ([2a875b0](https://github.com/shaojunda/ckb-explorer/commit/2a875b0))
-* update block's reward when issue block reward. ([313edd5](https://github.com/shaojunda/ckb-explorer/commit/313edd5))
+* update block's reward when issue block reward. ([c2fb256](https://github.com/shaojunda/ckb-explorer/commit/c2fb256))
+* update target block primary reward after process ([b21b692](https://github.com/shaojunda/ckb-explorer/commit/b21b692))
+* update the target block secondary reward after process ([c5f1cb1](https://github.com/shaojunda/ckb-explorer/commit/c5f1cb1))
 * use compute_hash replace to_hash ([2efc0c0](https://github.com/shaojunda/ckb-explorer/commit/2efc0c0))
 * use import! replace save! ([8e85222](https://github.com/shaojunda/ckb-explorer/commit/8e85222))
 * use type for generate address from cellbase's witnesses ([544c264](https://github.com/shaojunda/ckb-explorer/commit/544c264))
