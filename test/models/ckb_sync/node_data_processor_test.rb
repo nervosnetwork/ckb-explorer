@@ -563,7 +563,7 @@ module CkbSync
       end
     end
 
-    test "should update the target block reward to the sum of primary, secondary, proposal_reward and commit_reward when there is the target block" do
+    test "should update the target block reward to the sum of primary and secondary when there is the target block" do
       prepare_node_data(12)
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         local_block = node_data_processor.call
@@ -572,6 +572,19 @@ module CkbSync
         expected_reward = CkbUtils.block_reward(block_header.new(local_block.block_hash, local_block.number))
 
         assert_equal expected_reward, target_block.reward
+      end
+    end
+
+    test "should update the target block primary reward when there is the target block" do
+      prepare_node_data(12)
+      VCR.use_cassette("blocks/12", record: :new_episodes) do
+        local_block = node_data_processor.call
+        target_block = local_block.target_block
+        block_header = Struct.new(:hash, :number)
+        cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(local_block.block_hash)
+        expected_primary_reward = CkbUtils.primary_reward(block_header.new(local_block.block_hash, local_block.number), cellbase_output_capacity_details)
+
+        assert_equal expected_primary_reward, target_block.primary_reward
       end
     end
 
