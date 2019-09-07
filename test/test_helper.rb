@@ -68,7 +68,7 @@ def prepare_node_data(node_tip_block_number = 10)
           CKB::Types::BlockReward.new(
             total: "100000000000",
             primary: "100000000000",
-            secondary: "0",
+            secondary: "10",
             tx_fee: "10",
             proposal_reward: "10"
           )
