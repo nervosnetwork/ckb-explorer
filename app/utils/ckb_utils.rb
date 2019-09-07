@@ -131,7 +131,8 @@ class CkbUtils
     target_block = current_block.target_block
     return if target_block_number < 1 || target_block.blank?
 
-    reward = CkbUtils.block_reward(OpenStruct.new({ hash: current_block.block_hash, number: current_block.number }))
+    block_header = Struct.new(:hash, :number)
+    reward = CkbUtils.block_reward(block_header.new(current_block.block_hash, current_block.number))
     target_block.update!(reward_status: "issued", reward: reward)
     current_block.update!(target_block_reward_status: "issued")
   end

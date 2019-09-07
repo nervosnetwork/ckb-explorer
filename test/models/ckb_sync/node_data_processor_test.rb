@@ -568,7 +568,8 @@ module CkbSync
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         local_block = node_data_processor.call
         target_block = local_block.target_block
-        expected_reward = CkbUtils.block_reward(OpenStruct.new({ hash: local_block.block_hash, number: local_block.number }))
+        block_header = Struct.new(:hash, :number)
+        expected_reward = CkbUtils.block_reward(block_header.new(local_block.block_hash, local_block.number))
 
         assert_equal expected_reward, target_block.reward
       end
