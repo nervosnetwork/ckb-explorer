@@ -135,7 +135,8 @@ class CkbUtils
     cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(current_block.block_hash)
     reward = CkbUtils.block_reward(block_header.new(current_block.block_hash, current_block.number))
     primary_reward = CkbUtils.primary_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
-    target_block.update!(reward_status: "issued", reward: reward, primary_reward: primary_reward)
+    secondary_reward = CkbUtils.secondary_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
+    target_block.update!(reward_status: "issued", reward: reward, primary_reward: primary_reward, secondary_reward: secondary_reward)
     current_block.update!(target_block_reward_status: "issued")
   end
 
