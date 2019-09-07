@@ -29,17 +29,8 @@ class StatisticInfoChart
 
   def calculate_hash_rate
     max_block_number = Block.maximum(:number).to_i
-    from = Rails.cache.fetch("hash_rate_from", &method(:last_epoch0_block_number))
-    to = Rails.cache.fetch("hash_rate_to", &method(:max_block_number))
-
-    prev_cached_data = []
-    if Rails.cache.read("hash_rate_chart_data_#{to}").present?
-      from = to
-      prev_cached_data = Rails.cache.read("hash_rate_chart_data_#{to}")
-    end
-
-    to = max_block_number
-    return if from == to
+    from = Rails.cache.fetch("hash_rate_from") { last_epoch0_block_number }
+    to = Rails.cache.fetch("hash_rate_to") { max_block_number }
 
     epoch_first_block_numbers = Block.order(:epoch, :timestamp).select("distinct on (epoch) number").to_a.pluck(:number)
     result =
@@ -50,7 +41,7 @@ class StatisticInfoChart
 
     Rails.cache.write("hash_rate_from", from)
     Rails.cache.write("hash_rate_to", to)
-    Rails.cache.write("hash_rate_chart_data_#{to}", prev_cached_data.concat(result.compact).uniq)
+    Rails.cache.write("hash_rate_chart_data_#{to}", result.compact.uniq)
   end
 
   private
