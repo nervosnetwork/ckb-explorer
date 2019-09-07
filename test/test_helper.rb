@@ -17,9 +17,9 @@ Minitest::Reporters.use!
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
-DEFAULT_NODE_BLOCK_HASH = "0xd727151d8c532b3cc23f51242a7a33b4566bc9f5c8ccfc11b7afbf4419a0a231".freeze
+DEFAULT_NODE_BLOCK_HASH = "0x1cd94f4e6855bdd4036045ebff30d192c63a780975c3aa78e7ebffe19dc044c5".freeze
 DEFAULT_NODE_BLOCK_NUMBER = 10
-HAS_UNCLES_BLOCK_HASH = "0x2efba0fe1030bb5e3cfed6b4014385ed93dd3dcfc80317b075fe99b38f740b75".freeze
+HAS_UNCLES_BLOCK_HASH = "0x791fc9d2210cb6bac440c71922636cb86b0dbfcda031d2e9379700ab9e251c56".freeze
 HAS_UNCLES_BLOCK_NUMBER = 5
 
 VCR.configure do |config|
@@ -68,7 +68,7 @@ def prepare_node_data(node_tip_block_number = 10)
           CKB::Types::BlockReward.new(
             total: "100000000000",
             primary: "100000000000",
-            secondary: "0",
+            secondary: "10",
             tx_fee: "10",
             proposal_reward: "10"
           )

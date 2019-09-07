@@ -22,13 +22,15 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal type1_address, CkbUtils.generate_address(lock_script)
   end
 
-  test "#base_reward should return 0 for genesis block" do
+  test "#base_reward should return cellbase's first output's capacity for genesis block" do
     VCR.use_cassette("genesis_block", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number("0")
 
       local_block = CkbSync::NodeDataProcessor.new.process_block(node_block)
+      cellbase = node_block.transactions.first
+      output = cellbase.outputs.first
 
-      assert_equal 0, local_block.reward
+      assert_equal output.capacity.to_i, local_block.reward
     end
   end
 
@@ -39,8 +41,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
       node_data_processor.process_block(node_block)
       output = node_block.transactions.first.outputs.first
       output_data = node_block.transactions.first.outputs_data.first
-      output.data = output_data
-      expected_cell_min_capacity = output.calculate_min_capacity
+
+      expected_cell_min_capacity = output.calculate_min_capacity(output_data)
 
       assert_equal expected_cell_min_capacity, CkbUtils.calculate_cell_min_capacity(output, output_data)
     end
@@ -51,7 +53,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
 
       node_data_processor.process_block(node_block)
-      expected_total_cell_consumed = node_block.transactions.flat_map(&:outputs).flatten.reduce(0) { |memo, output| memo + output.calculate_min_capacity }
+      outputs_data = node_block.transactions.flat_map(&:outputs_data).flatten
+      expected_total_cell_consumed =
+        node_block.transactions.flat_map(&:outputs).flatten.each_with_index.reduce(0) do |memo, (output, index)|
+          memo + output.calculate_min_capacity(outputs_data[index])
+        end
 
       assert_equal expected_total_cell_consumed, CkbUtils.block_cell_consumed(node_block.transactions)
     end

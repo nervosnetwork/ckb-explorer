@@ -116,8 +116,9 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash)
 
         expected_incomes = address.ckb_transactions.recent.distinct.map { |transaction| transaction.outputs.sum(:capacity) - transaction.inputs.sum(:capacity) }.map(&:to_i)
+        actual_incomes = json["data"].map { |transaction| transaction["attributes"]["income"].to_i }
 
-        assert_equal expected_incomes, json["data"].map { |transaction| transaction["attributes"]["income"].to_i }
+        assert_equal expected_incomes, actual_incomes
       end
 
       test "should return error object when no records found by id" do

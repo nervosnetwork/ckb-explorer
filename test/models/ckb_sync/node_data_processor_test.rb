@@ -115,10 +115,10 @@ module CkbSync
     test "#process_block generated block should has correct reward" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
-
+        cellbase = node_block.transactions.first
         local_block = node_data_processor.process_block(node_block)
 
-        assert_equal CkbUtils.block_reward(node_block.header).to_i, local_block.reward
+        assert_equal  CkbUtils.base_reward(node_block.header.number, node_block.header.epoch, cellbase), local_block.reward
       end
     end
 
@@ -138,7 +138,7 @@ module CkbSync
 
         local_block = node_data_processor.process_block(node_block)
 
-        assert_equal CkbUtils.secondary_reward(node_block.header), local_block.secondary_reward
+        assert_equal 0, local_block.secondary_reward
       end
     end
 
@@ -372,7 +372,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         expected_lock_scripts = node_block.transactions.map(&:outputs).flatten.map(&:lock).map(&:to_h)
         local_block = node_data_processor.process_block(node_block)
-        actual_lock_scripts = local_block.cell_outputs.map { |cell_output| CKB::Types::Script.new(code_hash: cell_output.lock_script.code_hash, args: cell_output.lock_script.args) }.map(&:to_h)
+        actual_lock_scripts = local_block.cell_outputs.map { |cell_output| CKB::Types::Script.new(code_hash: cell_output.lock_script.code_hash, args: cell_output.lock_script.args, hash_type: "type") }.map(&:to_h)
 
         assert_equal expected_lock_scripts, actual_lock_scripts
       end
@@ -396,7 +396,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         node_block_transactions = node_block.transactions
-        node_cell_outputs = node_block_transactions.map { |commit_transaction| commit_transaction.outputs }.flatten
+        node_cell_outputs = node_block_transactions.map(&:outputs).flatten
         node_cell_outputs_with_type_script = node_cell_outputs.select { |cell_output| cell_output.type.present? }
 
         assert_difference -> { TypeScript.count }, node_cell_outputs_with_type_script.size do
@@ -560,6 +560,44 @@ module CkbSync
         local_block = node_data_processor.call
 
         assert_equal "issued", local_block.target_block_reward_status
+      end
+    end
+
+    test "should update the target block reward to the sum of primary and secondary when there is the target block" do
+      prepare_node_data(12)
+      VCR.use_cassette("blocks/12", record: :new_episodes) do
+        local_block = node_data_processor.call
+        target_block = local_block.target_block
+        block_header = Struct.new(:hash, :number)
+        expected_reward = CkbUtils.block_reward(block_header.new(local_block.block_hash, local_block.number))
+
+        assert_equal expected_reward, target_block.reward
+      end
+    end
+
+    test "should update the target block primary reward when there is the target block" do
+      prepare_node_data(12)
+      VCR.use_cassette("blocks/12", record: :new_episodes) do
+        local_block = node_data_processor.call
+        target_block = local_block.target_block
+        block_header = Struct.new(:hash, :number)
+        cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(local_block.block_hash)
+        expected_primary_reward = CkbUtils.primary_reward(block_header.new(local_block.block_hash, local_block.number), cellbase_output_capacity_details)
+
+        assert_equal expected_primary_reward, target_block.primary_reward
+      end
+    end
+
+    test "should update the target block secondary reward when there is the target block" do
+      prepare_node_data(12)
+      VCR.use_cassette("blocks/12", record: :new_episodes) do
+        local_block = node_data_processor.call
+        target_block = local_block.target_block
+        block_header = Struct.new(:hash, :number)
+        cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(local_block.block_hash)
+        expected_secondary_reward = CkbUtils.secondary_reward(block_header.new(local_block.block_hash, local_block.number), cellbase_output_capacity_details)
+
+        assert_equal expected_secondary_reward, target_block.secondary_reward
       end
     end
 
@@ -862,7 +900,6 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-
         assert_difference -> { local_block.contained_addresses.map(&:ckb_transactions).flatten.count }, -1 do
           node_data_processor.call
         end
