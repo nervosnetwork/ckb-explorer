@@ -8,7 +8,15 @@ class AddressTest < ActiveSupport::TestCase
   end
 
   test "address_hash should be nil when args is empty" do
-    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+    CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+      CKB::Types::Epoch.new(
+        difficulty: "0x1000",
+        length: "2000",
+        number: "0",
+        start_number: "0"
+      )
+    )
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       tx = node_block.transactions.first
       output = tx.outputs.first
@@ -23,7 +31,15 @@ class AddressTest < ActiveSupport::TestCase
   end
 
   test ".find_or_create_address should return the address when the address_hash exists and use default lock script" do
-    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+    CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+      CKB::Types::Epoch.new(
+        difficulty: "0x1000",
+        length: "2000",
+        number: "0",
+        start_number: "0"
+      )
+    )
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       tx = node_block.transactions.first
       output = tx.outputs.first
@@ -41,7 +57,15 @@ class AddressTest < ActiveSupport::TestCase
   end
 
   test ".find_or_create_address should returned address's lock hash should equal with output's lock hash" do
-    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+    CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+      CKB::Types::Epoch.new(
+        difficulty: "0x1000",
+        length: "2000",
+        number: "0",
+        start_number: "0"
+      )
+    )
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       tx = node_block.transactions.first
       output = tx.outputs.first
@@ -53,7 +77,7 @@ class AddressTest < ActiveSupport::TestCase
       lock_script = node_block.transactions.first.outputs.first.lock
       address = Address.find_or_create_address(lock_script)
 
-      assert_equal output.lock.to_hash, address.lock_hash
+      assert_equal output.lock.compute_hash, address.lock_hash
     end
   end
 end

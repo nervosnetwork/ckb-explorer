@@ -51,6 +51,12 @@ types:
       "transaction_fee": {
         type: "integer"
       },
+      "is_cellbase": {
+        type: "boolean"
+      },
+      "income": {
+        type: "string"
+      },
       "version": {
         type: "integer"
       },
@@ -162,7 +168,11 @@ types:
         type: integer
       },
       "target_block_number": {
-        type: integer
+        type: integer,
+        required: false
+      },
+      "generated_tx_hash": {
+         type: "string",
       }
     }
   }
@@ -182,16 +192,32 @@ types:
         type: integer
       },
       "target_block_number": {
-        type: integer
+        type: integer,
+        required: false
       },
-      "block_reward": {
-        type: integer
+      "base_reward": {
+        type: integer,
+        required: false
       },
       "commit_reward": {
-        type: integer
+        type: integer,
+        required: false
       },
       "proposal_reward": {
-        type: integer
+        type: integer,
+        required: false
+      },
+      "secondary_reward": {
+        type: integer,
+        required: false
+      },
+      "consumed_by_tx_hash": {
+         type: "string",
+         required: false
+      },
+      "status": {
+        type: "string",
+        enum: ["live", "dead"]
       }
     }
   }
@@ -767,20 +793,23 @@ types:
                       "block_timestamp": 1553068833785,
                       "transaction_fee": 666,
                       "version": 0,
+                      "is_cellbase": true,
+                      "income": "0.0",
                       "display_inputs": [
                         {
                           "from_cellbase": true,
                           "input_id": 101,
                           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                           "capacity": 100,
-                          "target_block_number": 100
+                          "target_block_number": 759，
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
                         },
                         {
                           "from_cellbase": false,
                           "input_id": 102,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
-                          "target_block_number": 100
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
                         }
                       ],
                       "display_outputs": [
@@ -788,19 +817,19 @@ types:
                           "output_id": 103,
                           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                           "capacity": 100,
-                          "target_block_number": 100,
-                          "block_reward": 10000,
-                          "commit_reward": 100,
-                          "proposal_reward": 10
+                         "base_reward": 125000000000,
+                         "commit_reward": 0,
+                         "proposal_reward": 0,
+                         "secondary_reward": 476623447,
+                         "consumed_by_tx_hash": null,
+                         "status": "live"
                         },
                         {
                           "output_id": 104,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
-                          "target_block_number": 100,
-                          "block_reward": 10000,
-                          "commit_reward": 100,
-                          "proposal_reward": 10
+                          "consumed_by_tx_hash": null,
+                          "status": "live"
                         }
                       ]
                     }
@@ -863,30 +892,43 @@ types:
                         "block_timestamp": 1553068833785,
                         "transaction_fee": 666,
                         "version": 0,
+                        "is_cellbase": true,
+                        "income": "0.0",
                         "display_inputs": [
                           {
                             "from_cellbase": true,
                             "input_id": 101,
                             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "capacity": 100
+                            "capacity": 100,
+                            "target_block_number": 759,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           },
                           {
-                            "from_cellbase": true,
+                            "from_cellbase": false,
                             "input_id": 102,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-                            "capacity": 100
+                            "capacity": 100,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
                           }
                         ],
                         "display_outputs": [
                           {
                             "output_id": 103,
                             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "capacity": 100
+                            "capacity": 100,
+                            "base_reward": 125000000000,
+                            "commit_reward": 0,
+                            "proposal_reward": 0,
+                            "secondary_reward": 476623447,
+                            "consumed_by_tx_hash": null,
+                            "status": "live"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-                            "capacity": 100
+                            "capacity": 100,
+                            "consumed_by_tx_hash": null,
+                            "status": "live"
                           }
                         ]
                       }
@@ -900,30 +942,43 @@ types:
                         "block_timestamp": 1553068833785,
                         "transaction_fee": 666,
                         "version": 0,
+                        "is_cellbase": true,
+                        "income": "0.0",
                         "display_inputs": [
                           {
                             "from_cellbase": true,
                             "input_id": 101,
                             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "capacity": 100
+                            "capacity": 100,
+                            "target_block_number": 759,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
                           },
                           {
-                            "from_cellbase": true,
+                            "from_cellbase": false,
                             "input_id": 102,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-                            "capacity": 100
+                            "capacity": 100,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
                           }
                         ],
                         "display_outputs": [
                           {
                             "output_id": 103,
                             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "capacity": 100
+                            "capacity": 100,
+                            "base_reward": 125000000000,
+                            "commit_reward": 0,
+                            "proposal_reward": 0,
+                            "secondary_reward": 476623447,
+                            "consumed_by_tx_hash": null,
+                            "status": "live"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-                            "capacity": 100
+                            "capacity": 100,
+                            "consumed_by_tx_hash": null,
+                            "status": "live"
                           }
                         ]
                       }
@@ -999,25 +1054,36 @@ types:
                             "from_cellbase": true,
                             "input_id": 101,
                             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "capacity": 100
+                            "capacity": 100,
+                            "target_block_number": 759,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           },
                           {
-                            "from_cellbase": true,
+                            "from_cellbase": false,
                             "input_id": 102,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-                            "capacity": 100
+                            "capacity": 100,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
                           }
                         ],
                         "display_outputs": [
                           {
                             "output_id": 103,
                             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "capacity": 100
+                            "capacity": 100,
+                            "base_reward": 125000000000,
+                            "commit_reward": 0,
+                            "proposal_reward": 0,
+                            "secondary_reward": 476623447,
+                            "consumed_by_tx_hash": null,
+                            "status": "live"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-                            "capacity": 100
+                            "capacity": 100,
+                            "consumed_by_tx_hash": null,
+                            "status": "live"
                           }
                         ]
                       }
@@ -1036,25 +1102,36 @@ types:
                             "from_cellbase": true,
                             "input_id": 101,
                             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "capacity": 100
+                            "capacity": 100,
+                            "target_block_number": 759,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           },
                           {
                             "from_cellbase": true,
                             "input_id": 102,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-                            "capacity": 100
+                            "capacity": 100,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
                           }
                         ],
                         "display_outputs": [
                           {
                             "output_id": 103,
                             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "capacity": 100
+                            "capacity": 100,
+                            "base_reward": 125000000000,
+                            "commit_reward": 0,
+                            "proposal_reward": 0,
+                            "secondary_reward": 476623447,
+                            "consumed_by_tx_hash": "0x2bbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                            "status": "dead"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-                            "capacity": 100
+                            "capacity": 100,
+                            "consumed_by_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                            "status": "dead"
                           }
                         ]
                       }
@@ -1688,20 +1765,23 @@ types:
                       "block_timestamp": 1553068833785,
                       "transaction_fee": 666,
                       "version": 0,
+                      "is_cellbase": true,
+                      "income": "0.0",
                       "display_inputs": [
                         {
                           "from_cellbase": true,
                           "input_id": 101,
                           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                           "capacity": 100,
-                          "target_block_number": 100
+                          "target_block_number": 100,
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
                         },
                         {
-                          "from_cellbase": true,
+                          "from_cellbase": false,
                           "input_id": 102,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
-                          "target_block_number": 100
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
                         }
                       ],
                       "display_outputs": [
@@ -1710,18 +1790,19 @@ types:
                           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                           "capacity": 100,
                           "target_block_number": 100,
-                          "block_reward": 10000,
-                          "commit_reward": 100,
-                          "proposal_reward": 10
+                          "base_reward": 125000000000,
+                          "commit_reward": 0,
+                          "proposal_reward": 0,
+                          "secondary_reward": 476623447,
+                          "consumed_by_tx_hash": null,
+                          "status": "live"
                         },
                         {
                           "output_id": 104,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
-                          "target_block_number": 100,
-                          "block_reward": 10000,
-                          "commit_reward": 100,
-                          "proposal_reward": 10
+                          "consumed_by_tx_hash": null,
+                          "status": "live"
                         }
                       ]
                     }

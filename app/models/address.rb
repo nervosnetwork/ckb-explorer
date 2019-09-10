@@ -15,9 +15,9 @@ class Address < ApplicationRecord
 
   def self.find_or_create_address(lock_script)
     address_hash = CkbUtils.generate_address(lock_script)
-    lock_hash = lock_script.to_hash
+    lock_hash = lock_script.compute_hash
 
-    Rails.cache.fetch(lock_hash, expires_in: 1.day) do
+    Rails.cache.fetch(lock_hash, expires_in: 1.day, race_condition_ttl: 3.seconds) do
       Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
     end
   end
@@ -27,7 +27,7 @@ class Address < ApplicationRecord
   end
 
   def self.cached_find(query_key)
-    Rails.cache.fetch([name, query_key]) do
+    Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds) do
       if QueryKeyUtils.valid_hex?(query_key)
         find_by(lock_hash: query_key)
       else

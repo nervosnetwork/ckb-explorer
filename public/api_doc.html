@@ -321,7 +321,7 @@ pre code {
     }
   ]
 }
-</code></pre></div></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="transactions" class="panel-title">/transactions</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_transactions__tx_hash_"><span class="parent">/transactions</span>/{tx_hash}</a> <span class="methods"><a href="#transactions__tx_hash__get"><span class="badge badge_get">get</span></a></span></h4></div><div id="panel_transactions__tx_hash_" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#transactions__tx_hash__get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Returns a transaction by transaction hash</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="transactions__tx_hash__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent">/transactions</span>/{tx_hash}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Returns a transaction by transaction hash</p></div><ul class="nav nav-tabs"><li class="active"><a href="#transactions__tx_hash__get_request" data-toggle="tab">Request</a></li><li><a href="#transactions__tx_hash__get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="transactions__tx_hash__get_request"><h3>URI Parameters</h3><ul><li><strong>tx_hash</strong>: <em><span class="required">required</span>(string - minLength: 66 - maxLength: 66)</em><p>The transaction hash</p></li></ul></div><div class="tab-pane" id="transactions__tx_hash__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/vnd.api+json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>data</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>id</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>type</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>attributes</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>block_number</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>block_timestamp</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_fee"</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>version</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>display_inputs</strong>: <em><span class="required">required</span>(array of display_input)</em><p><strong>Items</strong>: display_input</p><div class="items"><ul><li><strong>from_cellbase</strong>: <em><span class="required">required</span>(boolean)</em></li><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div></li><li><strong>display_outputs</strong>: <em><span class="required">required</span>(array of display_output)</em><p><strong>Items</strong>: display_output</p><div class="items"><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>block_reward</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>commit_reward</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>proposal_reward</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div></li></ul></li></ul></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+</code></pre></div></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="transactions" class="panel-title">/transactions</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_transactions__tx_hash_"><span class="parent">/transactions</span>/{tx_hash}</a> <span class="methods"><a href="#transactions__tx_hash__get"><span class="badge badge_get">get</span></a></span></h4></div><div id="panel_transactions__tx_hash_" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#transactions__tx_hash__get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Returns a transaction by transaction hash</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="transactions__tx_hash__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent">/transactions</span>/{tx_hash}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Returns a transaction by transaction hash</p></div><ul class="nav nav-tabs"><li class="active"><a href="#transactions__tx_hash__get_request" data-toggle="tab">Request</a></li><li><a href="#transactions__tx_hash__get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="transactions__tx_hash__get_request"><h3>URI Parameters</h3><ul><li><strong>tx_hash</strong>: <em><span class="required">required</span>(string - minLength: 66 - maxLength: 66)</em><p>The transaction hash</p></li></ul></div><div class="tab-pane" id="transactions__tx_hash__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/vnd.api+json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>data</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>id</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>type</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>attributes</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>block_number</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>block_timestamp</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_fee"</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>is_cellbase</strong>: <em><span class="required">required</span>(boolean)</em></li><li><strong>income</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>version</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>display_inputs</strong>: <em><span class="required">required</span>(array of display_input)</em><p><strong>Items</strong>: display_input</p><div class="items"><ul><li><strong>from_cellbase</strong>: <em><span class="required">required</span>(boolean)</em></li><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em>(integer)</em></li><li><strong>generated_tx_hash</strong>: <em><span class="required">required</span>(string)</em></li></ul></div></li><li><strong>display_outputs</strong>: <em><span class="required">required</span>(array of display_output)</em><p><strong>Items</strong>: display_output</p><div class="items"><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em>(integer)</em></li><li><strong>base_reward</strong>: <em>(integer)</em></li><li><strong>commit_reward</strong>: <em>(integer)</em></li><li><strong>proposal_reward</strong>: <em>(integer)</em></li><li><strong>secondary_reward</strong>: <em>(integer)</em></li><li><strong>consumed_by_tx_hash</strong>: <em>(string)</em></li><li><strong>status</strong>: <em><span class="required">required</span>(one of live, dead)</em></li></ul></div></li></ul></li></ul></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
   "data": {
     "id": 11,
     "type": "transaction",
@@ -331,20 +331,23 @@ pre code {
       "block_timestamp": 1553068833785,
       "transaction_fee": 666,
       "version": 0,
+      "is_cellbase": true,
+      "income": "0.0",
       "display_inputs": [
         {
           "from_cellbase": true,
           "input_id": 101,
           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
           "capacity": 100,
-          "target_block_number": 100
+          "target_block_number": 759，
+          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
         },
         {
           "from_cellbase": false,
           "input_id": 102,
           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
           "capacity": 100,
-          "target_block_number": 100
+          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
         }
       ],
       "display_outputs": [
@@ -352,19 +355,19 @@ pre code {
           "output_id": 103,
           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
           "capacity": 100,
-          "target_block_number": 100,
-          "block_reward": 10000,
-          "commit_reward": 100,
-          "proposal_reward": 10
+         "base_reward": 125000000000,
+         "commit_reward": 0,
+         "proposal_reward": 0,
+         "secondary_reward": 476623447,
+         "consumed_by_tx_hash": null,
+         "status": "live"
         },
         {
           "output_id": 104,
           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
           "capacity": 100,
-          "target_block_number": 100,
-          "block_reward": 10000,
-          "commit_reward": 100,
-          "proposal_reward": 10
+          "consumed_by_tx_hash": null,
+          "status": "live"
         }
       ]
     }
@@ -383,7 +386,7 @@ pre code {
     }
   ]
 }
-</code></pre></div></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="address_transactions" class="panel-title">/address_transactions</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_address_transactions__address_hash_"><span class="parent">/address_transactions</span>/{address_hash}</a> <span class="methods"><a href="#address_transactions__address_hash__get"><span class="badge badge_get">get</span></a></span></h4></div><div id="panel_address_transactions__address_hash_" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#address_transactions__address_hash__get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Returns transactions related to an address</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="address_transactions__address_hash__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent">/address_transactions</span>/{address_hash}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Returns transactions related to an address</p></div><ul class="nav nav-tabs"><li class="active"><a href="#address_transactions__address_hash__get_request" data-toggle="tab">Request</a></li><li><a href="#address_transactions__address_hash__get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="address_transactions__address_hash__get_request"><h3>URI Parameters</h3><ul><li><strong>address_hash</strong>: <em><span class="required">required</span>(string - minLength: 66 - maxLength: 66)</em><p>The address hash</p></li></ul><h3>Query Parameters</h3><ul><li><strong>page_size</strong>: <em><span class="required">required</span>(integer - default: 10)</em></li><li><strong>page</strong>: <em><span class="required">required</span>(integer - default: 1)</em></li></ul></div><div class="tab-pane" id="address_transactions__address_hash__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/vnd.api+json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>meta</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>total</strong>: <em><span class="required">required</span>(integer)</em></li></ul></li><li><strong>data</strong>: <em><span class="required">required</span>(array of transaction)</em><p><strong>Items</strong>: transaction</p><div class="items"><ul><li><strong>id</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>type</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>attributes</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>block_number</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>block_timestamp</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_fee"</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>version</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>display_inputs</strong>: <em><span class="required">required</span>(array of display_input)</em><p><strong>Items</strong>: display_input</p><div class="items"><ul><li><strong>from_cellbase</strong>: <em><span class="required">required</span>(boolean)</em></li><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div></li><li><strong>display_outputs</strong>: <em><span class="required">required</span>(array of display_output)</em><p><strong>Items</strong>: display_output</p><div class="items"><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>block_reward</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>commit_reward</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>proposal_reward</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div></li></ul></li></ul></div></li><li><strong>links</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>self</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>first</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>prev</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>next</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>last</strong>: <em><span class="required">required</span>(string)</em></li></ul></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+</code></pre></div></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="address_transactions" class="panel-title">/address_transactions</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_address_transactions__address_hash_"><span class="parent">/address_transactions</span>/{address_hash}</a> <span class="methods"><a href="#address_transactions__address_hash__get"><span class="badge badge_get">get</span></a></span></h4></div><div id="panel_address_transactions__address_hash_" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#address_transactions__address_hash__get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Returns transactions related to an address</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="address_transactions__address_hash__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent">/address_transactions</span>/{address_hash}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Returns transactions related to an address</p></div><ul class="nav nav-tabs"><li class="active"><a href="#address_transactions__address_hash__get_request" data-toggle="tab">Request</a></li><li><a href="#address_transactions__address_hash__get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="address_transactions__address_hash__get_request"><h3>URI Parameters</h3><ul><li><strong>address_hash</strong>: <em><span class="required">required</span>(string - minLength: 66 - maxLength: 66)</em><p>The address hash</p></li></ul><h3>Query Parameters</h3><ul><li><strong>page_size</strong>: <em><span class="required">required</span>(integer - default: 10)</em></li><li><strong>page</strong>: <em><span class="required">required</span>(integer - default: 1)</em></li></ul></div><div class="tab-pane" id="address_transactions__address_hash__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/vnd.api+json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>meta</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>total</strong>: <em><span class="required">required</span>(integer)</em></li></ul></li><li><strong>data</strong>: <em><span class="required">required</span>(array of transaction)</em><p><strong>Items</strong>: transaction</p><div class="items"><ul><li><strong>id</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>type</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>attributes</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>block_number</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>block_timestamp</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_fee"</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>is_cellbase</strong>: <em><span class="required">required</span>(boolean)</em></li><li><strong>income</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>version</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>display_inputs</strong>: <em><span class="required">required</span>(array of display_input)</em><p><strong>Items</strong>: display_input</p><div class="items"><ul><li><strong>from_cellbase</strong>: <em><span class="required">required</span>(boolean)</em></li><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em>(integer)</em></li><li><strong>generated_tx_hash</strong>: <em><span class="required">required</span>(string)</em></li></ul></div></li><li><strong>display_outputs</strong>: <em><span class="required">required</span>(array of display_output)</em><p><strong>Items</strong>: display_output</p><div class="items"><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em>(integer)</em></li><li><strong>base_reward</strong>: <em>(integer)</em></li><li><strong>commit_reward</strong>: <em>(integer)</em></li><li><strong>proposal_reward</strong>: <em>(integer)</em></li><li><strong>secondary_reward</strong>: <em>(integer)</em></li><li><strong>consumed_by_tx_hash</strong>: <em>(string)</em></li><li><strong>status</strong>: <em><span class="required">required</span>(one of live, dead)</em></li></ul></div></li></ul></li></ul></div></li><li><strong>links</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>self</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>first</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>prev</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>next</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>last</strong>: <em><span class="required">required</span>(string)</em></li></ul></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
   "meta": {
     "total": 100
   },
@@ -397,30 +400,43 @@ pre code {
         "block_timestamp": 1553068833785,
         "transaction_fee": 666,
         "version": 0,
+        "is_cellbase": true,
+        "income": "0.0",
         "display_inputs": [
           {
             "from_cellbase": true,
             "input_id": 101,
             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-            "capacity": 100
+            "capacity": 100,
+            "target_block_number": 759,
+            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
           },
           {
-            "from_cellbase": true,
+            "from_cellbase": false,
             "input_id": 102,
             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-            "capacity": 100
+            "capacity": 100,
+            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
           }
         ],
         "display_outputs": [
           {
             "output_id": 103,
             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-            "capacity": 100
+            "capacity": 100,
+            "base_reward": 125000000000,
+            "commit_reward": 0,
+            "proposal_reward": 0,
+            "secondary_reward": 476623447,
+            "consumed_by_tx_hash": null,
+            "status": "live"
           },
           {
             "output_id": 104,
             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-            "capacity": 100
+            "capacity": 100,
+            "consumed_by_tx_hash": null,
+            "status": "live"
           }
         ]
       }
@@ -434,30 +450,43 @@ pre code {
         "block_timestamp": 1553068833785,
         "transaction_fee": 666,
         "version": 0,
+        "is_cellbase": true,
+        "income": "0.0",
         "display_inputs": [
           {
             "from_cellbase": true,
             "input_id": 101,
             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-            "capacity": 100
+            "capacity": 100,
+            "target_block_number": 759,
+            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
           },
           {
-            "from_cellbase": true,
+            "from_cellbase": false,
             "input_id": 102,
             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-            "capacity": 100
+            "capacity": 100,
+            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
           }
         ],
         "display_outputs": [
           {
             "output_id": 103,
             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-            "capacity": 100
+            "capacity": 100,
+            "base_reward": 125000000000,
+            "commit_reward": 0,
+            "proposal_reward": 0,
+            "secondary_reward": 476623447,
+            "consumed_by_tx_hash": null,
+            "status": "live"
           },
           {
             "output_id": 104,
             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-            "capacity": 100
+            "capacity": 100,
+            "consumed_by_tx_hash": null,
+            "status": "live"
           }
         ]
       }
@@ -484,7 +513,7 @@ pre code {
     }
   ]
 }
-</code></pre></div></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="block_transactions" class="panel-title">/block_transactions</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_block_transactions__block_hash_"><span class="parent">/block_transactions</span>/{block_hash}</a> <span class="methods"><a href="#block_transactions__block_hash__get"><span class="badge badge_get">get</span></a></span></h4></div><div id="panel_block_transactions__block_hash_" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#block_transactions__block_hash__get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Returns transactions in the block</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="block_transactions__block_hash__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent">/block_transactions</span>/{block_hash}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Returns transactions in the block</p></div><ul class="nav nav-tabs"><li class="active"><a href="#block_transactions__block_hash__get_request" data-toggle="tab">Request</a></li><li><a href="#block_transactions__block_hash__get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="block_transactions__block_hash__get_request"><h3>URI Parameters</h3><ul><li><strong>block_hash</strong>: <em><span class="required">required</span>(string - minLength: 66 - maxLength: 66)</em><p>The block hash</p></li></ul><h3>Query Parameters</h3><ul><li><strong>page_size</strong>: <em><span class="required">required</span>(integer - default: 10)</em></li><li><strong>page</strong>: <em><span class="required">required</span>(integer - default: 1)</em></li></ul></div><div class="tab-pane" id="block_transactions__block_hash__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/vnd.api+json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>meta</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>total</strong>: <em><span class="required">required</span>(integer)</em></li></ul></li><li><strong>data</strong>: <em><span class="required">required</span>(array of transaction)</em><p><strong>Items</strong>: transaction</p><div class="items"><ul><li><strong>id</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>type</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>attributes</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>block_number</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>block_timestamp</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_fee"</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>version</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>display_inputs</strong>: <em><span class="required">required</span>(array of display_input)</em><p><strong>Items</strong>: display_input</p><div class="items"><ul><li><strong>from_cellbase</strong>: <em><span class="required">required</span>(boolean)</em></li><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div></li><li><strong>display_outputs</strong>: <em><span class="required">required</span>(array of display_output)</em><p><strong>Items</strong>: display_output</p><div class="items"><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>block_reward</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>commit_reward</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>proposal_reward</strong>: <em><span class="required">required</span>(integer)</em></li></ul></div></li></ul></li></ul></div></li><li><strong>links</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>self</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>first</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>prev</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>next</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>last</strong>: <em><span class="required">required</span>(string)</em></li></ul></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+</code></pre></div></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="block_transactions" class="panel-title">/block_transactions</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_block_transactions__block_hash_"><span class="parent">/block_transactions</span>/{block_hash}</a> <span class="methods"><a href="#block_transactions__block_hash__get"><span class="badge badge_get">get</span></a></span></h4></div><div id="panel_block_transactions__block_hash_" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#block_transactions__block_hash__get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Returns transactions in the block</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="block_transactions__block_hash__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent">/block_transactions</span>/{block_hash}</h4></div><div class="modal-body"><div class="alert alert-info"><p>Returns transactions in the block</p></div><ul class="nav nav-tabs"><li class="active"><a href="#block_transactions__block_hash__get_request" data-toggle="tab">Request</a></li><li><a href="#block_transactions__block_hash__get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="block_transactions__block_hash__get_request"><h3>URI Parameters</h3><ul><li><strong>block_hash</strong>: <em><span class="required">required</span>(string - minLength: 66 - maxLength: 66)</em><p>The block hash</p></li></ul><h3>Query Parameters</h3><ul><li><strong>page_size</strong>: <em><span class="required">required</span>(integer - default: 10)</em></li><li><strong>page</strong>: <em><span class="required">required</span>(integer - default: 1)</em></li></ul></div><div class="tab-pane" id="block_transactions__block_hash__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/vnd.api+json</p><p><strong>Type</strong>: object</p><strong>Properties</strong><ul><li><strong>meta</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>total</strong>: <em><span class="required">required</span>(integer)</em></li></ul></li><li><strong>data</strong>: <em><span class="required">required</span>(array of transaction)</em><p><strong>Items</strong>: transaction</p><div class="items"><ul><li><strong>id</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>type</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>attributes</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>block_number</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>block_timestamp</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>transaction_fee"</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>is_cellbase</strong>: <em><span class="required">required</span>(boolean)</em></li><li><strong>income</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>version</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>display_inputs</strong>: <em><span class="required">required</span>(array of display_input)</em><p><strong>Items</strong>: display_input</p><div class="items"><ul><li><strong>from_cellbase</strong>: <em><span class="required">required</span>(boolean)</em></li><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em>(integer)</em></li><li><strong>generated_tx_hash</strong>: <em><span class="required">required</span>(string)</em></li></ul></div></li><li><strong>display_outputs</strong>: <em><span class="required">required</span>(array of display_output)</em><p><strong>Items</strong>: display_output</p><div class="items"><ul><li><strong>id</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>address_hash</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>capacity</strong>: <em><span class="required">required</span>(integer)</em></li><li><strong>target_block_number</strong>: <em>(integer)</em></li><li><strong>base_reward</strong>: <em>(integer)</em></li><li><strong>commit_reward</strong>: <em>(integer)</em></li><li><strong>proposal_reward</strong>: <em>(integer)</em></li><li><strong>secondary_reward</strong>: <em>(integer)</em></li><li><strong>consumed_by_tx_hash</strong>: <em>(string)</em></li><li><strong>status</strong>: <em><span class="required">required</span>(one of live, dead)</em></li></ul></div></li></ul></li></ul></div></li><li><strong>links</strong>: <em><span class="required">required</span>(object)</em><ul><li><strong>self</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>first</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>prev</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>next</strong>: <em><span class="required">required</span>(string)</em></li><li><strong>last</strong>: <em><span class="required">required</span>(string)</em></li></ul></li></ul><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
   "meta": {
     "total": 100,
   },
@@ -503,25 +532,36 @@ pre code {
             "from_cellbase": true,
             "input_id": 101,
             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-            "capacity": 100
+            "capacity": 100,
+            "target_block_number": 759,
+            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
           },
           {
-            "from_cellbase": true,
+            "from_cellbase": false,
             "input_id": 102,
             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-            "capacity": 100
+            "capacity": 100,
+            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
           }
         ],
         "display_outputs": [
           {
             "output_id": 103,
             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-            "capacity": 100
+            "capacity": 100,
+            "base_reward": 125000000000,
+            "commit_reward": 0,
+            "proposal_reward": 0,
+            "secondary_reward": 476623447,
+            "consumed_by_tx_hash": null,
+            "status": "live"
           },
           {
             "output_id": 104,
             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-            "capacity": 100
+            "capacity": 100,
+            "consumed_by_tx_hash": null,
+            "status": "live"
           }
         ]
       }
@@ -540,25 +580,36 @@ pre code {
             "from_cellbase": true,
             "input_id": 101,
             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-            "capacity": 100
+            "capacity": 100,
+            "target_block_number": 759,
+            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
           },
           {
             "from_cellbase": true,
             "input_id": 102,
             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-            "capacity": 100
+            "capacity": 100,
+            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
           }
         ],
         "display_outputs": [
           {
             "output_id": 103,
             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-            "capacity": 100
+            "capacity": 100,
+            "base_reward": 125000000000,
+            "commit_reward": 0,
+            "proposal_reward": 0,
+            "secondary_reward": 476623447,
+            "consumed_by_tx_hash": "0x2bbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+            "status": "dead"
           },
           {
             "output_id": 104,
             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
-            "capacity": 100
+            "capacity": 100,
+            "consumed_by_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+            "status": "dead"
           }
         ]
       }
@@ -792,12 +843,12 @@ pre code {
     }
   }
 }
-</code></pre><p><strong>average_block_time</strong>:<br></p><pre><code>{
+</code></pre><p><strong>current_epoch_average_block_time</strong>:<br></p><pre><code>{
   "data": {
     "id": "1",
     "type": "statistic_info",
     "attributes": {
-      "average_block_time": 1000
+      "current_epoch_average_block_time": 1000
     }
   }
 }
@@ -815,7 +866,7 @@ pre code {
     "id": "1",
     "type": "statistic_info",
     "attributes": {
-      "current_epoch_difficulty": 1000000
+      "hash_rate": 1000000
     }
   }
 }
@@ -977,20 +1028,23 @@ pre code {
       "block_timestamp": 1553068833785,
       "transaction_fee": 666,
       "version": 0,
+      "is_cellbase": true,
+      "income": "0.0",
       "display_inputs": [
         {
           "from_cellbase": true,
           "input_id": 101,
           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
           "capacity": 100,
-          "target_block_number": 100
+          "target_block_number": 100,
+          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
         },
         {
-          "from_cellbase": true,
+          "from_cellbase": false,
           "input_id": 102,
           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
           "capacity": 100,
-          "target_block_number": 100
+          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
         }
       ],
       "display_outputs": [
@@ -999,18 +1053,19 @@ pre code {
           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
           "capacity": 100,
           "target_block_number": 100,
-          "block_reward": 10000,
-          "commit_reward": 100,
-          "proposal_reward": 10
+          "base_reward": 125000000000,
+          "commit_reward": 0,
+          "proposal_reward": 0,
+          "secondary_reward": 476623447,
+          "consumed_by_tx_hash": null,
+          "status": "live"
         },
         {
           "output_id": 104,
           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
           "capacity": 100,
-          "target_block_number": 100,
-          "block_reward": 10000,
-          "commit_reward": 100,
-          "proposal_reward": 10
+          "consumed_by_tx_hash": null,
+          "status": "live"
         }
       ]
     }

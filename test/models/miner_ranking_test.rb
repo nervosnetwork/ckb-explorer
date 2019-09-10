@@ -16,7 +16,7 @@ class MinerRankingTest < ActiveSupport::TestCase
   end
 
   def base_reward(block_number, epoch_number, cellbase = nil)
-    return cellbase.outputs.first.capacity.to_i if block_number.to_i == 0
+    return cellbase.outputs.first.capacity.to_i if block_number.to_i == 0 && cellbase.present?
 
     epoch_info = CkbSync::Api.instance.get_epoch_by_number(epoch_number)
     start_number = epoch_info.start_number.to_i

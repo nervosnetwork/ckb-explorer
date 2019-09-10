@@ -1,7 +1,7 @@
 module CkbSync
   class NodeDataProcessor
     def call
-      local_tip_block = Block.recent.accepted.first
+      local_tip_block = Block.recent.first
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
       return if target_block.blank?
@@ -23,7 +23,8 @@ module CkbSync
       ApplicationRecord.transaction do
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
         local_block.ckb_transactions_count = ckb_transactions.size
-        local_block.save!
+        Block.import! [local_block], recursive: true, batch_size: 1000, validate: false
+        local_block.reload
       end
 
       update_tx_fee_related_data(local_block)
@@ -50,7 +51,7 @@ module CkbSync
     end
 
     def issue_block_reward!(current_block)
-      CkbUtils.update_block_reward_status!(current_block)
+      CkbUtils.update_block_reward!(current_block)
       CkbUtils.calculate_received_tx_fee!(current_block)
     end
 
@@ -60,7 +61,7 @@ module CkbSync
       target_block_number = local_tip_block.target_block_number
       return if target_block_number < 1 || target_block.blank?
 
-      revert_reward_status(local_tip_block, target_block)
+      revert_reward_status(target_block)
       revert_received_tx_fee(target_block)
     end
 
@@ -68,9 +69,8 @@ module CkbSync
       target_block.update!(received_tx_fee: 0)
     end
 
-    def revert_reward_status(local_tip_block, target_block)
+    def revert_reward_status(target_block)
       target_block.update!(reward_status: "pending")
-      local_tip_block.update!(target_block_reward_status: "pending")
       target_block.update!(received_tx_fee_status: "calculating")
     end
 
@@ -131,7 +131,7 @@ module CkbSync
         block_hash: header.hash,
         number: header.number,
         parent_hash: header.parent_hash,
-        seal: header.seal,
+        nonce: header.nonce,
         timestamp: header.timestamp,
         transactions_root: header.transactions_root,
         proposals_hash: header.proposals_hash,
@@ -145,8 +145,9 @@ module CkbSync
         total_cell_capacity: CkbUtils.total_cell_capacity(node_block.transactions),
         miner_hash: CkbUtils.miner_hash(cellbase),
         miner_lock_hash: CkbUtils.miner_lock_hash(cellbase),
-        status: "accepted",
-        reward: CkbUtils.block_reward(node_block),
+        reward: CkbUtils.base_reward(header.number, header.epoch, cellbase),
+        primary_reward: CkbUtils.base_reward(header.number, header.epoch, cellbase),
+        secondary_reward: 0,
         reward_status: header.number.to_i == 0 ? "issued" : "pending",
         total_transaction_fee: 0,
         witnesses_root: header.witnesses_root,
@@ -164,7 +165,7 @@ module CkbSync
         block_hash: header.hash,
         number: header.number,
         parent_hash: header.parent_hash,
-        seal: header.seal,
+        nonce: header.nonce,
         timestamp: header.timestamp,
         transactions_root: header.transactions_root,
         proposals_hash: header.proposals_hash,
@@ -240,7 +241,7 @@ module CkbSync
     def cell_type(type_script)
       return "normal" if type_script.blank?
 
-      type_script.code_hash == ENV["DAO_CODE_HASH"] ? "dao" : "normal"
+      [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]].include?(type_script.code_hash) ? "dao" : "normal"
     end
 
     def build_cell_output(ckb_transaction, output, address, cell_index, output_data)
@@ -317,6 +318,9 @@ module CkbSync
         local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
         local_block.save!
       end
+    rescue ActiveRecord::RecordInvalid
+      local_block.update(total_transaction_fee: 0)
+      Rails.logger.error "tx_fee is negative"
     end
 
     def update_transaction_fee(ckb_transaction)

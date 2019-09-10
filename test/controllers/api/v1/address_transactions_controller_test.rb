@@ -74,7 +74,7 @@ module Api
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
 
-        assert_equal CkbTransactionSerializer.new(ckb_transactions, options).serialized_json, response.body
+        assert_equal CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json, response.body
       end
 
       test "should return corresponding ckb transactions with given lock hash" do
@@ -87,7 +87,7 @@ module Api
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
 
-        assert_equal CkbTransactionSerializer.new(ckb_transactions, options).serialized_json, response.body
+        assert_equal CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json, response.body
       end
 
       test "should contain right keys in the serialized object when call show" do
@@ -97,7 +97,28 @@ module Api
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income).sort, response_tx_transaction["attributes"].keys.sort
+      end
+
+      test "should return correct income" do
+        address = create(:address)
+
+        block = create(:block, :with_block_hash)
+        generated_ckb_transaction = create(:ckb_transaction, block: block, block_timestamp: "1567131126594")
+        create(:cell_output, capacity: 10**8 * 8, ckb_transaction: generated_ckb_transaction, block: generated_ckb_transaction.block, tx_hash: generated_ckb_transaction.tx_hash, cell_index: 0, generated_by: generated_ckb_transaction, address: address)
+        consumed_ckb_transaction = create(:ckb_transaction, block: block, block_timestamp: "1567131126595")
+
+        generated_ckb_transaction1 = create(:ckb_transaction, block: block, block_timestamp: "1567131126596")
+        create(:cell_output, capacity: 10**8 * 8, ckb_transaction: generated_ckb_transaction1, block: generated_ckb_transaction1.block, tx_hash: generated_ckb_transaction1.tx_hash, cell_index: 0, generated_by: generated_ckb_transaction1, address: address)
+        create(:cell_output, capacity: 10**8 * 6, ckb_transaction: consumed_ckb_transaction, block: consumed_ckb_transaction.block, tx_hash: consumed_ckb_transaction.tx_hash, cell_index: 0, generated_by: generated_ckb_transaction, consumed_by: consumed_ckb_transaction, address: address)
+        address.ckb_transactions << [generated_ckb_transaction1, consumed_ckb_transaction, generated_ckb_transaction]
+
+        valid_get api_v1_address_transaction_url(address.address_hash)
+
+        expected_incomes = address.ckb_transactions.recent.distinct.map { |transaction| transaction.outputs.sum(:capacity) - transaction.inputs.sum(:capacity) }.map(&:to_i)
+        actual_incomes = json["data"].map { |transaction| transaction["attributes"]["income"].to_i }
+
+        assert_equal expected_incomes, actual_incomes
       end
 
       test "should return error object when no records found by id" do
@@ -158,7 +179,7 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash), params: { page: page }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options).serialized_json
+        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
 
         assert_equal response_transaction, response.body
         assert_equal page_size, json["data"].size
@@ -173,7 +194,7 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash), params: { page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options).serialized_json
+        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
 
         assert_equal response_transaction, response.body
         assert_equal page_size, json["data"].size
@@ -187,7 +208,7 @@ module Api
 
         valid_get api_v1_address_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options).serialized_json
+        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
 
         assert_equal response_transaction, response.body
       end
@@ -201,7 +222,7 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options).serialized_json
+        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
 
         assert_equal [], json["data"]
         assert_equal response_transaction, response.body

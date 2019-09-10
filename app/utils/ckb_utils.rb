@@ -1,7 +1,6 @@
 class CkbUtils
   def self.calculate_cell_min_capacity(output, data)
-    output.data = data if output.data.blank?
-    output.calculate_min_capacity
+    output.calculate_min_capacity(data)
   end
 
   def self.block_cell_consumed(transactions)
@@ -29,12 +28,13 @@ class CkbUtils
     return if cellbase.witnesses.blank?
 
     lock_script = generate_lock_script_from_cellbase(cellbase)
-    lock_script.to_hash
+    lock_script.compute_hash
   end
 
   def self.generate_lock_script_from_cellbase(cellbase)
     witnesses_data = cellbase.witnesses.first.data
-    CKB::Types::Script.new(code_hash: witnesses_data.first[0..-3], args: [witnesses_data.last])
+    hash_type = witnesses_data.first[-2..-1] == "00" ? "data" : "type"
+    CKB::Types::Script.new(code_hash: witnesses_data.first[0..-3], args: [witnesses_data.last], hash_type: hash_type)
   end
 
   def self.generate_address(lock_script)
@@ -55,22 +55,20 @@ class CkbUtils
 
     return false if code_hash.blank?
 
-    code_hash == ENV["CODE_HASH"]
+    [ENV["CODE_HASH"], ENV["SECP_CELL_TYPE_HASH"]].include?(code_hash)
   end
 
   def self.parse_address(address_hash)
     CKB::Address.parse(address_hash)
   end
 
-  def self.block_reward(node_block)
-    header = node_block.header
-    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(header.hash)
-    secondary_reward = header.number.to_i != 0 ? cellbase_output_capacity_details.secondary.to_i : 0
-    base_reward(header.number, header.epoch, node_block.transactions.first) + secondary_reward
+  def self.block_reward(node_block_header)
+    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(node_block_header.hash)
+    primary_reward(node_block_header, cellbase_output_capacity_details) + secondary_reward(node_block_header, cellbase_output_capacity_details)
   end
 
   def self.base_reward(block_number, epoch_number, cellbase = nil)
-    return cellbase.outputs.first.capacity.to_i if block_number.to_i == 0
+    return cellbase.outputs.first.capacity.to_i if block_number.to_i == 0 && cellbase.present?
 
     epoch_info = get_epoch_info(epoch_number)
     start_number = epoch_info.start_number.to_i
@@ -82,6 +80,14 @@ class CkbUtils
     else
       base_reward
     end
+  end
+
+  def self.primary_reward(node_block_header, cellbase_output_capacity_details)
+    node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.primary.to_i : 0
+  end
+
+  def self.secondary_reward(node_block_header, cellbase_output_capacity_details)
+    node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.secondary.to_i : 0
   end
 
   def self.get_epoch_info(epoch)
@@ -120,12 +126,17 @@ class CkbUtils
     address_cell_consumed
   end
 
-  def self.update_block_reward_status!(current_block)
+  def self.update_block_reward!(current_block)
     target_block_number = current_block.target_block_number
     target_block = current_block.target_block
     return if target_block_number < 1 || target_block.blank?
 
-    target_block.update!(reward_status: "issued")
+    block_header = Struct.new(:hash, :number)
+    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(current_block.block_hash)
+    reward = CkbUtils.block_reward(block_header.new(current_block.block_hash, current_block.number))
+    primary_reward = CkbUtils.primary_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
+    secondary_reward = CkbUtils.secondary_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
+    target_block.update!(reward_status: "issued", reward: reward, primary_reward: primary_reward, secondary_reward: secondary_reward)
     current_block.update!(target_block_reward_status: "issued")
   end
 
@@ -160,11 +171,19 @@ class CkbUtils
 
   def self.dao_withdraw_tx_fee(ckb_transaction)
     dao_cells = ckb_transaction.inputs.dao
-    dao_reward =
+    witnesses = ckb_transaction.witnesses
+    header_deps = ckb_transaction.header_deps
+    interests =
       dao_cells.reduce(0) do |memo, dao_cell|
+        witness = witnesses[dao_cell.cell_index]
+        block_hash = header_deps[witness["data"].last.hex]
         out_point = CKB::Types::OutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index)
-        memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, dao_cell.block.block_hash).to_i
+
+        memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).to_i - dao_cell.capacity.to_i
       end
-    ckb_transaction.inputs.sum(:capacity) + dao_reward - ckb_transaction.outputs.sum(:capacity)
+
+    ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+  rescue CKB::RPCError
+    0
   end
 end

@@ -92,7 +92,15 @@ module Api
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income).sort, response_tx_transaction["attributes"].keys.sort
+      end
+
+      test "returned income should be null" do
+        block = create(:block, :with_ckb_transactions)
+
+        valid_get api_v1_block_transaction_url(block.block_hash)
+
+        assert_nil json["data"].map { |transaction| transaction.dig("attributes", "income") }.uniq.first
       end
 
       test "should return error object when no records found by id" do

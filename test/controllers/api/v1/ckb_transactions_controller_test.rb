@@ -97,7 +97,16 @@ module Api
         valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
 
         response_tx_transaction = json["data"]
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income).sort, response_tx_transaction["attributes"].keys.sort
+      end
+
+      test "returned income should be null" do
+        prepare_node_data(8)
+        ckb_transaction = CkbTransaction.last
+
+        valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
+
+        assert_nil json["data"].dig("attributes", "income")
       end
 
       test "should return all display_inputs" do

@@ -1,7 +1,7 @@
 class UncleBlock < ApplicationRecord
   belongs_to :block
 
-  validates_presence_of :difficulty, :block_hash, :number, :parent_hash, :seal, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version
+  validates_presence_of :difficulty, :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version
 
   attribute :block_hash, :ckb_hash
   attribute :parent_hash, :ckb_hash
@@ -20,7 +20,6 @@ end
 #  block_hash        :binary
 #  number            :decimal(30, )
 #  parent_hash       :binary
-#  seal              :jsonb
 #  timestamp         :decimal(30, )
 #  transactions_root :binary
 #  proposals_hash    :binary
@@ -35,6 +34,7 @@ end
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #  dao               :string
+#  nonce             :string
 #
 # Indexes
 #
