@@ -20,7 +20,7 @@ class CkbTransaction < ApplicationRecord
   after_commit :flush_cache
 
   def self.cached_find(query_key)
-    Rails.cache.fetch([name, query_key]) do
+    Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds) do
       find_by(tx_hash: query_key)
     end
   end
