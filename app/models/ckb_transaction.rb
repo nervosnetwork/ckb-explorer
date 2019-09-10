@@ -72,13 +72,13 @@ class CkbTransaction < ApplicationRecord
     cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
     cell_inputs_for_display.order(:id).map do |input|
       previous_cell_output = input.previous_cell_output
-      { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash }
+      { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: tx_hash }
     end
   end
 
   def cellbase_display_inputs
     cellbase = Cellbase.new(block)
-    [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
+    [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number, generated_tx_hash: tx_hash }]
   end
 end
 
