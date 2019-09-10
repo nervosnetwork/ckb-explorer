@@ -211,7 +211,8 @@ GEM
     pry-nav (0.3.0)
       pry (>= 0.9.10, < 0.13.0)
     public_suffix (3.1.0)
-    puma (3.12.1)
+    puma (4.1.1)
+      nio4r (~> 2.0)
     rack (2.0.7)
     rack-accept (0.4.5)
       rack (>= 0.4)
@@ -358,7 +359,7 @@ DEPENDENCIES
   pg (>= 0.18, < 2.0)
   pry
   pry-nav
-  puma (~> 3.11)
+  puma (~> 4.1.1)
   rack-cors
   rails (~> 5.2.2, >= 5.2.2.1)
   redis (~> 4.0, >= 4.0.3)
