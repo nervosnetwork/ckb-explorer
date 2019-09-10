@@ -54,27 +54,31 @@ class CkbTransaction < ApplicationRecord
   def normal_tx_display_outputs(previews)
     cell_outputs_for_display = previews ? cell_outputs.limit(10) : cell_outputs
     cell_outputs_for_display.order(:id).map do |output|
-      { id: output.id, capacity: output.capacity, address_hash: output.address_hash }
+      consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
+      { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash}
     end
   end
 
   def cellbase_display_outputs
     outputs = cell_outputs.order(:id)
     cellbase = Cellbase.new(block)
-    outputs.map { |output| { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward } }
+    outputs.map do |output|
+      consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
+      { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash }
+    end
   end
 
   def normal_tx_display_inputs(previews)
     cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
     cell_inputs_for_display.order(:id).map do |input|
       previous_cell_output = input.previous_cell_output
-      { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash }
+      { id: input.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: tx_hash }
     end
   end
 
   def cellbase_display_inputs
     cellbase = Cellbase.new(block)
-    [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number }]
+    [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number, generated_tx_hash: tx_hash }]
   end
 end
 

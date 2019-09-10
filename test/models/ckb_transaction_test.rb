@@ -51,4 +51,60 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
     assert_equal 15, ckb_transaction.display_outputs.count
   end
+
+  test "#display_inputs should contain correct attributes for normal transaction" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash)
+
+    assert_equal [expected_attributes], ckb_transaction.display_inputs.map(&:keys).uniq
+  end
+
+  test "#display_inputs should contain correct attributes for cellbase" do
+    ckb_transaction = create(:ckb_transaction, :with_single_output, is_cellbase: true)
+    expected_attributes = %i(id from_cellbase capacity address_hash target_block_number generated_tx_hash)
+
+    assert_equal [expected_attributes], ckb_transaction.display_inputs.map(&:keys).uniq
+  end
+
+  test "#display_outputs should contain correct attributes for normal transaction" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+    expected_attributes = %i(id capacity address_hash status consumed_tx_hash)
+
+    assert_equal [expected_attributes], ckb_transaction.display_outputs.map(&:keys).uniq
+  end
+
+  test "#display_outputs should contain correct attributes for cellbase" do
+    ckb_transaction = create(:ckb_transaction, :with_single_output, is_cellbase: true)
+    expected_attributes = %i(id capacity address_hash target_block_number base_reward commit_reward proposal_reward secondary_reward status consumed_tx_hash)
+
+    assert_equal [expected_attributes], ckb_transaction.display_outputs.map(&:keys).uniq
+  end
+
+  test "#display_inputs should return correct generated_tx_hash" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+    expected_tx_hash = ckb_transaction.tx_hash
+
+    assert_equal [expected_tx_hash], ckb_transaction.display_inputs.pluck(:generated_tx_hash).uniq
+  end
+
+  test "#display_outputs should return live when cell not be consumed" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+
+    assert_equal ["live"], ckb_transaction.display_outputs.pluck(:status).uniq
+  end
+
+  test "#display_outputs should not return consumed_tx_hash when cell not be consumed" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+
+    assert_equal [nil], ckb_transaction.display_outputs.pluck(:consumed_tx_hash).uniq
+  end
+
+  test "#display_outputs should return dead when cell be consumed" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+    block = create(:block, :with_block_hash)
+    consumed_tx = create(:ckb_transaction, block: block)
+    ckb_transaction.outputs.update(consumed_by: consumed_tx, status: "dead")
+
+    assert_equal ["dead"], ckb_transaction.display_outputs.pluck(:status).uniq
+  end
 end
