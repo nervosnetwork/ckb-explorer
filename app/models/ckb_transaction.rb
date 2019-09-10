@@ -52,10 +52,12 @@ class CkbTransaction < ApplicationRecord
   private
 
   def normal_tx_display_outputs(previews)
-    cell_outputs_for_display = previews ? outputs.limit(10) : outputs
-    cell_outputs_for_display.order(:id).map do |output|
-      consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-      { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash}
+    Rails.cache.fetch("normal_tx_display_outputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
+      cell_outputs_for_display = previews ? outputs.limit(10) : outputs
+      cell_outputs_for_display.order(:id).map do |output|
+        consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
+        { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash }
+      end
     end
   end
 
@@ -69,9 +71,11 @@ class CkbTransaction < ApplicationRecord
   end
 
   def normal_tx_display_inputs(previews)
-    cell_inputs_for_display = previews ? inputs.limit(10) : inputs
-    cell_inputs_for_display.order(:id).map do |input|
-      { id: input.id, from_cellbase: false, capacity: input.capacity, address_hash: input.address_hash, generated_tx_hash: tx_hash }
+    Rails.cache.fetch("normal_tx_display_inputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
+      cell_inputs_for_display = previews ? inputs.limit(10) : inputs
+      cell_inputs_for_display.order(:id).map do |input|
+        { id: input.id, from_cellbase: false, capacity: input.capacity, address_hash: input.address_hash, generated_tx_hash: tx_hash }
+      end
     end
   end
 
