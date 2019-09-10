@@ -56,5 +56,21 @@ FactoryBot.define do
         end
       end
     end
+
+    trait :with_single_output do
+      after(:create) do |ckb_transaction|
+        create(:cell_output, capacity: 10**8 * 8, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 0, generated_by: ckb_transaction)
+      end
+    end
+
+    trait :cell_base_with_multiple_inputs_and_outputs do
+      after(:create) do |ckb_transaction|
+        15.times do |index|
+          create(:cell_output, capacity: 10**8 * 8, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index, generated_by: ckb_transaction)
+          previous_output = { tx_hash: ckb_transaction.tx_hash, index: 1 }
+          create(:cell_input, previous_output: previous_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block)
+        end
+      end
+    end
   end
 end
