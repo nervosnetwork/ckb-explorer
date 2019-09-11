@@ -72,8 +72,6 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
     t.integer "target_block_reward_status", default: 0
     t.binary "miner_lock_hash"
     t.string "dao"
-    t.decimal "primary_reward", precision: 30, default: "0"
-    t.decimal "secondary_reward", precision: 30, default: "0"
     t.string "nonce"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"

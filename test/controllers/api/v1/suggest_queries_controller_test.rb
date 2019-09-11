@@ -13,7 +13,7 @@ module Api
       test "should set right content type when call show" do
         valid_get api_v1_suggest_queries_url("0x3b238b3326d10ec000417b68bc715f17e86293d6cdbcb3fd8a628ad4a0b756f6")
 
-        assert_equal "application/vnd.api+json", response.content_type
+        assert_equal "application/vnd.api+json", response.media_type
       end
 
       test "should respond with 415 Unsupported Media Type when Content-Type is wrong" do

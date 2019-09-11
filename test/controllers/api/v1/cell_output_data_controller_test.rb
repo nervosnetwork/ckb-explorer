@@ -16,7 +16,7 @@ module Api
 
         valid_get api_v1_cell_output_datum_url(cell_output.id)
 
-        assert_equal "application/vnd.api+json", response.content_type
+        assert_equal "application/vnd.api+json", response.media_type
       end
 
       test "should respond with 415 Unsupported Media Type when Content-Type is wrong" do

@@ -12,7 +12,7 @@ module Api
       test "should set right content type when visit index" do
         valid_get api_v1_blocks_url
 
-        assert_equal "application/vnd.api+json", response.content_type
+        assert_equal "application/vnd.api+json", response.media_type
       end
 
       test "should respond with 415 Unsupported Media Type when Content-Type is wrong" do
@@ -228,7 +228,7 @@ module Api
       test "should set right content type when visit show" do
         valid_get api_v1_block_url(1)
 
-        assert_equal "application/vnd.api+json", response.content_type
+        assert_equal "application/vnd.api+json", response.media_type
       end
 
       test "should respond with 415 Unsupported Media Type when Content-Type is wrong when vist show" do

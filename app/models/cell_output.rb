@@ -16,6 +16,8 @@ class CellOutput < ApplicationRecord
 
   attribute :tx_hash, :ckb_hash
 
+  after_commit :flush_cache
+
   def address_hash
     address.address_hash
   end
@@ -24,6 +26,12 @@ class CellOutput < ApplicationRecord
     lock = CKB::Types::Script.new(lock_script.to_node_lock)
     type = type_script.present? ? CKB::Types::Script.new(type_script.to_node_lock) : nil
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
+  end
+
+  def flush_cache
+    Rails.cache.delete("previous_cell_output/#{tx_hash}/#{cell_index}")
+    Rails.cache.delete_matched("normal_tx_display_inputs_previews_*_#{ckb_transaction_id}")
+    Rails.cache.delete_matched("normal_tx_display_outputs_previews_*_#{ckb_transaction_id}")
   end
 end
 
