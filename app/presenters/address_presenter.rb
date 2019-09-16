@@ -28,7 +28,8 @@ class AddressPresenter
   end
 
   def ckb_transactions
-    CkbTransaction.joins(:account_books).where("account_books.address_id in (?)", object.pluck(:id)).recent.distinct
+    ckb_transaction_ids = AccountBook.where(address_id: object.pluck(:id)).select(:ckb_transaction_id).distinct
+    CkbTransaction.where(id: ckb_transaction_ids).recent
   end
 
   private

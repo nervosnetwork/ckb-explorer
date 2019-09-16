@@ -9,7 +9,7 @@ jobs:
       addons:
         postgresql: "10"
       rvm:
-        - 2.5.3
+        - 2.6.4
       env:
         global:
           - RAILS_ENV=test

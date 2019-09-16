@@ -1,3 +1,25 @@
+# [](https://github.com/shaojunda/ckb-explorer/compare/v0.4.0...v) (2019-09-16)
+
+
+### Features
+
+* add consumed_tx_hash and generated_tx_hash to display_output ([80964de](https://github.com/shaojunda/ckb-explorer/commit/80964de))
+* add generated_tx_hash to display_inputs ([a8ea5b0](https://github.com/shaojunda/ckb-explorer/commit/a8ea5b0))
+* update api doc ([be22e6d](https://github.com/shaojunda/ckb-explorer/commit/be22e6d))
+* upgrade to Rails 6.0 ([33d8ff8](https://github.com/shaojunda/ckb-explorer/commit/33d8ff8))
+
+
+### Performance Improvements
+
+* add cache on display info ([a39f282](https://github.com/shaojunda/ckb-explorer/commit/a39f282))
+* cache cell input ([4fbdda6](https://github.com/shaojunda/ckb-explorer/commit/4fbdda6))
+* enable parallel testing ([a1a696c](https://github.com/shaojunda/ckb-explorer/commit/a1a696c))
+* get ckb transactions sql ([c61676e](https://github.com/shaojunda/ckb-explorer/commit/c61676e))
+* handling race condition ([a455538](https://github.com/shaojunda/ckb-explorer/commit/a455538))
+* use cache on serializer ([3ed1b4b](https://github.com/shaojunda/ckb-explorer/commit/3ed1b4b))
+
+
+
 #  (2019-09-07)
 
 

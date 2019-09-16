@@ -8,6 +8,8 @@ require "active_record/railtie"
 require "active_storage/engine"
 require "action_controller/railtie"
 require "action_mailer/railtie"
+require "action_mailbox/engine"
+require "action_text/engine"
 require "action_view/railtie"
 require "action_cable/engine"
 # require "sprockets/railtie"
@@ -20,8 +22,8 @@ Bundler.require(*Rails.groups)
 module Server
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 5.2
-
+    config.load_defaults 6.0
+    config.action_dispatch.return_only_media_type_on_content_type = false
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded after loading

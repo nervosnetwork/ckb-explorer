@@ -25,7 +25,7 @@ module Api
       test "should set right content type when call index" do
         valid_get api_v1_statistics_url
 
-        assert_equal "application/vnd.api+json", response.content_type
+        assert_equal "application/vnd.api+json", response.media_type
       end
 
       test "should respond with 415 Unsupported Media Type when Content-Type is wrong" do
