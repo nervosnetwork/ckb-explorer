@@ -22,6 +22,7 @@ class Block < ApplicationRecord
   attribute :uncles_hash, :ckb_hash
   attribute :uncle_block_hashes, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
+  attribute :chain_root, :ckb_hash
 
   scope :recent, -> { order(timestamp: :desc) }
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
@@ -121,6 +122,7 @@ end
 #  primary_reward             :decimal(30, )    default(0)
 #  secondary_reward           :decimal(30, )    default(0)
 #  nonce                      :string
+#  chain_root                 :binary
 #
 # Indexes
 #

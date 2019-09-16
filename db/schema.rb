@@ -2,15 +2,15 @@
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
 #
-# Note that this schema.rb definition is the authoritative source for your
-# database schema. If you need to create the application database on another
-# system, you should be using db:schema:load, not running all the migrations
-# from scratch. The latter is a flawed and unsustainable approach (the more migrations
-# you'll amass, the slower it'll run and the greater likelihood for issues).
+# This file is the source Rails uses to define your schema when running `rails
+# db:schema:load`. When creating a new database, `rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_08_24_025831) do
+ActiveRecord::Schema.define(version: 2019_09_16_033119) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -54,8 +54,6 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
     t.decimal "cell_consumed", precision: 30
     t.binary "miner_hash"
     t.decimal "reward", precision: 30
-    t.decimal "primary_reward", precision: 30, default: "0"
-    t.decimal "secondary_reward", precision: 30, default: "0"
     t.decimal "total_transaction_fee", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
     t.decimal "total_cell_capacity", precision: 30
@@ -72,7 +70,10 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
     t.integer "target_block_reward_status", default: 0
     t.binary "miner_lock_hash"
     t.string "dao"
+    t.decimal "primary_reward", precision: 30, default: "0"
+    t.decimal "secondary_reward", precision: 30, default: "0"
     t.string "nonce"
+    t.binary "chain_root"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
@@ -169,6 +170,7 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
     t.decimal "primary_reward", precision: 30, default: "0"
     t.decimal "secondary_reward", precision: 30, default: "0"
     t.string "nonce"
+    t.binary "chain_root"
   end
 
   create_table "lock_scripts", force: :cascade do |t|
@@ -213,6 +215,7 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
     t.datetime "updated_at", null: false
     t.string "dao"
     t.string "nonce"
+    t.binary "chain_root"
     t.index ["block_hash", "block_id"], name: "index_uncle_blocks_on_block_hash_and_block_id", unique: true
     t.index ["block_id"], name: "index_uncle_blocks_on_block_id"
   end
