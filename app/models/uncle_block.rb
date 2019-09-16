@@ -9,6 +9,7 @@ class UncleBlock < ApplicationRecord
   attribute :proposals_hash, :ckb_hash
   attribute :uncles_hash, :ckb_hash
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
+  attribute :chain_root, :ckb_hash
 end
 
 # == Schema Information
@@ -35,6 +36,7 @@ end
 #  updated_at        :datetime         not null
 #  dao               :string
 #  nonce             :string
+#  chain_root        :binary
 #
 # Indexes
 #
