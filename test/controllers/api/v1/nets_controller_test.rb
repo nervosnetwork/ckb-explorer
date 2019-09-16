@@ -7,8 +7,8 @@ module Api
         CkbSync::Api.any_instance.stubs(:local_node_info).returns(
           CKB::Types::Peer.new(
             addresses: [
-              CKB::Types::AddressInfo.new(address: "/ip4/172.16.55.2/tcp/8115/p2p/QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNrc", score: "1"),
-              CKB::Types::AddressInfo.new(address: "/ip4/172.16.55.2/tcp/8115/p2p/QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNrc", score: "1")
+              CKB::Types::AddressInfo.new(address: "/ip4/172.16.55.2/tcp/8115/p2p/QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNrc", score: "0x1"),
+              CKB::Types::AddressInfo.new(address: "/ip4/172.16.55.2/tcp/8115/p2p/QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNrc", score: "0x1")
             ],
             is_outbound: nil,
             node_id: "QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNra",

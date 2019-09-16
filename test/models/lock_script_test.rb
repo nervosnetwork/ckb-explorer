@@ -14,9 +14,9 @@ class LockScriptTest < ActiveSupport::TestCase
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           difficulty: "0x1000",
-          length: "2000",
-          number: "0",
-          start_number: "0"
+          length: "0x07d0",
+          number: "0x0",
+          start_number: "0x0"
         )
       )
 

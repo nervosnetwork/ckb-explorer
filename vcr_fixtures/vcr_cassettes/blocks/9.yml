@@ -5,7 +5,7 @@ http_interactions:
     uri: http://localhost:8414/
     body:
       encoding: UTF-8
-      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_by_number","params":["9"]}'
+      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_by_number","params":["0x9"]}'
     headers:
       Accept-Encoding:
       - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
@@ -27,100 +27,14 @@ http_interactions:
       Content-Type:
       - application/json; charset=utf-8
       Content-Length:
-      - '2940'
+      - '2377'
       Date:
-      - Thu, 05 Sep 2019 08:28:50 GMT
-      X-Cache:
-      - MISS from tw2.pandafan
-      Connection:
-      - keep-alive
+      - Mon, 16 Sep 2019 07:26:15 GMT
     body:
       encoding: UTF-8
-      string: '{"jsonrpc":"2.0","result":{"header":{"dao":"0x01000000000000000000c16ff28623000021244308f8030000503169b0690000","difficulty":"0x100","epoch":"0","hash":"0x2b48eb4b9d32c423a10185806c416e296db7b6d6b6ae873a0f153b5f49e87acd","nonce":"2688473757957713151","number":"9","parent_hash":"0xa637e996eb77bc5096ebce62a600720f8735abc8f5ecb8060c571baa94f408eb","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1567664062227","transactions_root":"0x047b915c9d90b3305b3be134d50ba6a7555cb3ea382b5c6a3dfca14b3a71615c","uncles_count":"2","uncles_hash":"0x459f01a9aa9d3315c7b04686dd5ce3a8edef22673c0e79dd9c36181ec10a4731","version":"0","witnesses_root":"0xa6b7f60c91cb7069f77115f9fec7d71d10a6952938dbe74b3f04342f693d1074"},"proposals":[],"transactions":[{"cell_deps":[],"hash":"0x047b915c9d90b3305b3be134d50ba6a7555cb3ea382b5c6a3dfca14b3a71615c","header_deps":[],"inputs":[{"previous_output":{"index":"4294967295","tx_hash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"since":"9"}],"outputs":[{"capacity":"125000000000","lock":{"args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"code_hash":"0x68d5438ac952d2f584abf879527946a537e82c7f3c1cbf6d8ebf9767437d8e88","hash_type":"type"},"type":null}],"outputs_data":["0x"],"version":"0","witnesses":[{"data":["0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df201","0x3954acece65096bfa81258983ddb83915fc56bd8"]}]}],"uncles":[{"header":{"dao":"0x01000000000000000000c16ff28623000099d1d893f7030000dcd6baaa690000","difficulty":"0x100","epoch":"0","hash":"0x55864c6ceb4c9e54bbf0e47bc95933646d75c33f9773a5299aeb0307d0c96f4f","nonce":"15081313955458391214","number":"5","parent_hash":"0x2252fba55fb88cdee3b70d154056ac834b5e42e0dc5bfdc1e76f719ab9b9b201","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1567663822224","transactions_root":"0xc8e7c0a3b1c5ee6aa969239b93644f2cded6771e8861cfb09e99baf2ff022dd6","uncles_count":"2","uncles_hash":"0x3db8582a9475bab8491b0d22019eec2f0a605161ab57c5ddc1852d9c8e68c47c","version":"0","witnesses_root":"0x31f26f4dffb34513ba3fb49169e2730299e572c21134f84c05c69f4286fa32d6"},"proposals":[]},{"header":{"dao":"0x01000000000000000000c16ff28623000099d1d893f7030000dcd6baaa690000","difficulty":"0x100","epoch":"0","hash":"0x97be25d27313da5e18ec9f117b4f81a15a54d6443e9910f14ed64a86085480a5","nonce":"10038574141740411515","number":"5","parent_hash":"0x2252fba55fb88cdee3b70d154056ac834b5e42e0dc5bfdc1e76f719ab9b9b201","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1567663827223","transactions_root":"0xc8e7c0a3b1c5ee6aa969239b93644f2cded6771e8861cfb09e99baf2ff022dd6","uncles_count":"2","uncles_hash":"0x8e59aec542c8348d94bbbd79b31ea6a646fa9d4f9d9dc11dd00aea2f986d03f4","version":"0","witnesses_root":"0x31f26f4dffb34513ba3fb49169e2730299e572c21134f84c05c69f4286fa32d6"},"proposals":[]}]},"id":1}
+      string: '{"jsonrpc":"2.0","result":{"header":{"chain_root":"0x1fc52b12e69090fd82c53a335218c1a7425324e854b726692bb7909b55c803a1","dao":"0x01000000000000000000c16ff28623000021244308f8030000503169b0690000","difficulty":"0x100","epoch":"0x0","hash":"0xdbe6785962f8edb1bd50b0829b6071262835dc9b5ba0490dcede61e2d29ee731","nonce":"0x72cff4f13ef97566","number":"0x9","parent_hash":"0xf06e4aa4c7651808d29daa00a8ec0aad85b91098134a66281de88025719f0a98","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"0x16d38bdef21","transactions_root":"0x4d5bb4d562f51c4c94cd93f8b9c7e2b39e63b5b367bd7bd3b1dfde8eeaa1a585","uncles_count":"0x1","uncles_hash":"0xe833a6e7feb869c94ab66b8c9fe862d222e52d4b9ece76097c67bf790d9afeed","version":"0x0","witnesses_root":"0x5ddc37cb19e9fdcafb83dc2277b7b97a08808eea12dcb16219a5e362abdab890"},"proposals":[],"transactions":[{"cell_deps":[],"hash":"0x4d5bb4d562f51c4c94cd93f8b9c7e2b39e63b5b367bd7bd3b1dfde8eeaa1a585","header_deps":[],"inputs":[{"previous_output":{"index":"0xffffffff","tx_hash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"since":"0x9"}],"outputs":[{"capacity":"0x1d1a94a200","lock":{"args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"code_hash":"0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df2","hash_type":"type"},"type":null}],"outputs_data":["0x"],"version":"0x0","witnesses":[{"data":["0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df201","0x3954acece65096bfa81258983ddb83915fc56bd8"]}]}],"uncles":[{"header":{"chain_root":"0x08c3adb7131490f10d30110b4fb131de4847ee303ac281e0cd89d0816b008bcf","dao":"0x01000000000000000000c16ff286230000ddfa0dcef7030000160492ad690000","difficulty":"0x100","epoch":"0x0","hash":"0xd8dbcc2442ca6c3547563ce05e464b405602e832b583b3802dfd8f1ff18e4bcf","nonce":"0x47ddfd3df46da731","number":"0x7","parent_hash":"0x2b003cfba50e62a0cbb5697c058e200bb157b34a881dd2ac2a607b8ea21f7eb0","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"0x16d38bddf7e","transactions_root":"0x25d81f9eea880875ce1f670e8dba205f9dd0dbf2f43ce3289a72d37bf9c5301a","uncles_count":"0x1","uncles_hash":"0xc691ac015363f139268638246b0a3c074fceb836b599abaeeb820a3fcde9e031","version":"0x0","witnesses_root":"0x82a0c0be61f64b3b946e80cb7f734a2deaa5f05b36287cadb3ac7f8ec4852c79"},"proposals":[]}]},"id":1}
 
 '
     http_version: 
-  recorded_at: Thu, 05 Sep 2019 08:28:50 GMT
-- request:
-    method: get
-    uri: http://metadata.google.internal/computeMetadata/v1/instance/?recursive=true
-    body:
-      encoding: US-ASCII
-      string: ''
-    headers:
-      Metadata-Flavor:
-      - Google
-      Accept-Encoding:
-      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
-      Accept:
-      - "*/*"
-      User-Agent:
-      - Ruby
-      Host:
-      - metadata.google.internal
-  response:
-    status:
-      code: 503
-      message: Service Unavailable
-    headers:
-      Server:
-      - squid/3.5.27
-      Mime-Version:
-      - '1.0'
-      Date:
-      - Thu, 05 Sep 2019 08:46:35 GMT
-      Content-Type:
-      - text/html;charset=utf-8
-      Content-Length:
-      - '3934'
-      X-Squid-Error:
-      - ERR_DNS_FAIL 0
-      X-Cache:
-      - MISS from tw2.pandafan
-      Connection:
-      - keep-alive
-    body:
-      encoding: UTF-8
-      string: "\n<html><head>\n<meta type=\"copyright\" content=\"Copyright (C) 1996-2017
-        The Squid Software Foundation and contributors\">\n<meta http-equiv=\"Content-Type\"
-        content=\"text/html; charset=utf-8\">\n<title>ERROR: The requested URL could
-        not be retrieved</title>\n<style type=\"text/css\"><!-- \n /*\n * Copyright
-        (C) 1996-2017 The Squid Software Foundation and contributors\n *\n * Squid
-        software is distributed under GPLv2+ license and includes\n * contributions
-        from numerous individuals and organizations.\n * Please see the COPYING and
-        CONTRIBUTORS files for details.\n */\n\n/*\n Stylesheet for Squid Error pages\n
-        Adapted from design by Free CSS Templates\n http://www.freecsstemplates.org\n
-        Released for free under a Creative Commons Attribution 2.5 License\n*/\n\n/*
-        Page basics */\n* {\n\tfont-family: verdana, sans-serif;\n}\n\nhtml body {\n\tmargin:
-        0;\n\tpadding: 0;\n\tbackground: #efefef;\n\tfont-size: 12px;\n\tcolor: #1e1e1e;\n}\n\n/*
-        Page displayed title area */\n#titles {\n\tmargin-left: 15px;\n\tpadding:
-        10px;\n\tpadding-left: 100px;\n\tbackground: url('/squid-internal-static/icons/SN.png')
-        no-repeat left;\n}\n\n/* initial title */\n#titles h1 {\n\tcolor: #000000;\n}\n#titles
-        h2 {\n\tcolor: #000000;\n}\n\n/* special event: FTP success page titles */\n#titles
-        ftpsuccess {\n\tbackground-color:#00ff00;\n\twidth:100%;\n}\n\n/* Page displayed
-        body content area */\n#content {\n\tpadding: 10px;\n\tbackground: #ffffff;\n}\n\n/*
-        General text */\np {\n}\n\n/* error brief description */\n#error p {\n}\n\n/*
-        some data which may have caused the problem */\n#data {\n}\n\n/* the error
-        message received from the system or other software */\n#sysmsg {\n}\n\npre
-        {\n    font-family:sans-serif;\n}\n\n/* special event: FTP / Gopher directory
-        listing */\n#dirmsg {\n    font-family: courier;\n    color: black;\n    font-size:
-        10pt;\n}\n#dirlisting {\n    margin-left: 2%;\n    margin-right: 2%;\n}\n#dirlisting
-        tr.entry td.icon,td.filename,td.size,td.date {\n    border-bottom: groove;\n}\n#dirlisting
-        td.size {\n    width: 50px;\n    text-align: right;\n    padding-right: 5px;\n}\n\n/*
-        horizontal lines */\nhr {\n\tmargin: 0;\n}\n\n/* page displayed footer area
-        */\n#footer {\n\tfont-size: 9px;\n\tpadding-left: 10px;\n}\n\n\nbody\n:lang(fa)
-        { direction: rtl; font-size: 100%; font-family: Tahoma, Roya, sans-serif;
-        float: right; }\n:lang(he) { direction: rtl; }\n --></style>\n</head><body
-        id=\"ERR_DNS_FAIL\">\n<div id=\"titles\">\n<h1>ERROR</h1>\n<h2>The requested
-        URL could not be retrieved</h2>\n</div>\n<hr>\n\n<div id=\"content\">\n<p>The
-        following error was encountered while trying to retrieve the URL: <a href=\"http://metadata.google.internal/computeMetadata/v1/instance/?\">http://metadata.google.internal/computeMetadata/v1/instance/?</a></p>\n\n<blockquote
-        id=\"error\">\n<p><b>Unable to determine IP address from host name <q>metadata.google.internal</q></b></p>\n</blockquote>\n\n<p>The
-        DNS server returned:</p>\n<blockquote id=\"data\">\n<pre>Name Error: The domain
-        name does not exist.</pre>\n</blockquote>\n\n<p>This means that the cache
-        was not able to resolve the hostname presented in the URL. Check if the address
-        is correct.</p>\n\n<p>Your cache administrator is <a href=\"mailto:webmaster?subject=CacheErrorInfo%20-%20ERR_DNS_FAIL&amp;body=CacheHost%3A%20tw2.pandafan%0D%0AErrPage%3A%20ERR_DNS_FAIL%0D%0AErr%3A%20%5Bnone%5D%0D%0ADNS%20ErrMsg%3A%20Name%20Error%3A%20The%20domain%20name%20does%20not%20exist.%0D%0ATimeStamp%3A%20Thu,%2005%20Sep%202019%2008%3A46%3A35%20GMT%0D%0A%0D%0AClientIP%3A%20125.120.145.155%0D%0A%0D%0AHTTP%20Request%3A%0D%0AGET%20%2FcomputeMetadata%2Fv1%2Finstance%2F%3Frecursive%3Dtrue%20HTTP%2F1.1%0AMetadata-Flavor%3A%20Google%0D%0AAccept-Encoding%3A%20gzip%3Bq%3D1.0,deflate%3Bq%3D0.6,identity%3Bq%3D0.3%0D%0AAccept%3A%20*%2F*%0D%0AUser-Agent%3A%20Ruby%0D%0AProxy-Authorization%3A%20Basic%20MTY0MDg2OjRiYmI4YzNj%0D%0AHost%3A%20metadata.google.internal%0D%0A%0D%0A%0D%0A\">webmaster</a>.</p>\n<br>\n</div>\n\n<hr>\n<div
-        id=\"footer\">\n<p>Generated Thu, 05 Sep 2019 08:46:35 GMT by tw2.pandafan
-        (squid/3.5.27)</p>\n<!-- ERR_DNS_FAIL -->\n</div>\n</body></html>\n"
-    http_version: 
-  recorded_at: Thu, 05 Sep 2019 08:46:35 GMT
+  recorded_at: Mon, 16 Sep 2019 07:26:15 GMT
 recorded_with: VCR 5.0.0

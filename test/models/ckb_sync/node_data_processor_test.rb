@@ -6,9 +6,9 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           difficulty: "0x1000",
-          length: "2000",
-          number: "0",
-          start_number: "0"
+          length: "0x07d0",
+          number: "0x0",
+          start_number: "0x0"
         )
       )
     end
@@ -26,9 +26,9 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           difficulty: "0x1000",
-          length: "2000",
-          number: "0",
-          start_number: "0"
+          length: "0x07d0",
+          number: "0x0",
+          start_number: "0x0"
         )
       )
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -43,11 +43,11 @@ module CkbSync
 
         local_block_hash = local_block.attributes.select { |attribute| attribute.in?(%w(difficulty block_hash number parent_hash nonce timestamp transactions_root proposals_hash uncles_count uncles_hash version proposals witnesses_root epoch start_number length dao)) }
         local_block_hash["hash"] = local_block_hash.delete("block_hash")
-        local_block_hash["number"] = local_block_hash["number"].to_s
-        local_block_hash["version"] = local_block_hash["version"].to_s
-        local_block_hash["uncles_count"] = local_block_hash["uncles_count"].to_s
-        local_block_hash["epoch"] = local_block_hash["epoch"].to_s
-        local_block_hash["timestamp"] = local_block_hash["timestamp"].to_s
+        local_block_hash["number"] = local_block_hash["number"]
+        local_block_hash["version"] = local_block_hash["version"]
+        local_block_hash["uncles_count"] = local_block_hash["uncles_count"]
+        local_block_hash["epoch"] = local_block_hash["epoch"]
+        local_block_hash["timestamp"] = local_block_hash["timestamp"]
 
         assert_equal formatted_node_block.sort, local_block_hash.sort
       end
@@ -67,9 +67,9 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           difficulty: "0x1000",
-          length: "2000",
-          number: "0",
-          start_number: "0"
+          length: "0x07d0",
+          number: "0x0",
+          start_number: "0x0"
         )
       )
       VCR.use_cassette("blocks/11") do
@@ -87,9 +87,9 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           difficulty: "0x1000",
-          length: "2000",
-          number: "0",
-          start_number: "0"
+          length: "0x07d0",
+          number: "0x0",
+          start_number: "0x0"
         )
       )
       VCR.use_cassette("blocks/11") do
@@ -177,11 +177,6 @@ module CkbSync
                 attribute.in?(%w(difficulty block_hash number parent_hash nonce timestamp transactions_root proposals_hash uncles_count uncles_hash version proposals witnesses_root epoch dao))
               end
             uncle_block["hash"] = uncle_block.delete("block_hash")
-            uncle_block["epoch"] = uncle_block["epoch"].to_s
-            uncle_block["number"] = uncle_block["number"].to_s
-            uncle_block["timestamp"] = uncle_block["timestamp"].to_s
-            uncle_block["version"] = uncle_block["version"].to_s
-            uncle_block["uncles_count"] = uncle_block["uncles_count"].to_s
             uncle_block.sort
           end
 
@@ -235,7 +230,7 @@ module CkbSync
           local_block.ckb_transactions.map do |ckb_transaction|
             ckb_transaction = ckb_transaction.attributes.select { |attribute| attribute.in?(%w(tx_hash cell_deps header_deps version witnesses)) }
             ckb_transaction["hash"] = ckb_transaction.delete("tx_hash")
-            ckb_transaction["version"] = ckb_transaction["version"].to_s
+            ckb_transaction["version"] = ckb_transaction["version"]
             ckb_transaction["header_deps"] = [] if ckb_transaction["header_deps"].blank?
             ckb_transaction.sort
           end
@@ -260,11 +255,20 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         node_transactions = node_block.transactions.map(&:to_h).map(&:deep_stringify_keys)
-        node_block_cell_inputs = node_transactions.map { |commit_transaction| commit_transaction["inputs"].map(&:sort) }.flatten
+        node_block_cell_inputs = node_transactions.map do |commit_transaction|
+          commit_transaction["inputs"].each do |input|
+            input["previous_output"]["index"] = input["previous_output"]["index"].hex
+            input["since"] = input["since"].hex
+            input["previous_output"] = input["previous_output"].sort
+          end.map(&:sort)
+        end.flatten
 
         local_block = node_data_processor.process_block(node_block)
         local_block_transactions = local_block.ckb_transactions
-        local_block_cell_inputs = local_block_transactions.map { |commit_transaction| commit_transaction.cell_inputs.map { |cell_input| cell_input.attributes.select { |attribute| attribute.in?(%(previous_output since)) }.sort } }.flatten
+        local_block_cell_inputs = local_block_transactions.map { |commit_transaction| commit_transaction.cell_inputs.map { |cell_input|
+          cell_input.previous_output = cell_input.previous_output.sort
+          cell_input.attributes.select { |attribute| attribute.in?(%(previous_output since)) }.sort
+        } }.flatten
 
         assert_equal node_block_cell_inputs, local_block_cell_inputs
       end
@@ -293,7 +297,7 @@ module CkbSync
         local_block_cell_outputs = local_block_transactions.map { |commit_transaction|
           commit_transaction.cell_outputs.map do |cell_output|
             attributes = cell_output.attributes
-            attributes["capacity"] = attributes["capacity"].to_i.to_s
+            attributes["capacity"] = attributes["capacity"]
             attributes.select { |attribute| attribute == "capacity" }.sort
           end
         }.flatten
@@ -672,19 +676,19 @@ module CkbSync
       prepare_node_data(11)
       CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
         CKB::Types::BlockReward.new(
-          total: "100000000000",
-          primary: "100000000000",
-          secondary: "0",
-          tx_fee: "0",
-          proposal_reward: "0"
+          total: "0x174876e800",
+          primary: "0x174876e800",
+          secondary: "0x0",
+          tx_fee: "0x0",
+          proposal_reward: "0x0"
         )
       )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           difficulty: "0x1000",
-          length: "2000",
-          number: "0",
-          start_number: "0"
+          length: "0x07d0",
+          number: "0x0",
+          start_number: "0x0"
         )
       )
       VCR.use_cassette("blocks/12") do
@@ -704,11 +708,11 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
           CKB::Types::BlockReward.new(
-            total: "100000000000",
-            primary: "100000000000",
-            secondary: "0",
-            tx_fee: "0",
-            proposal_reward: "0"
+            total: "0x174876e800",
+            primary: "0x174876e800",
+            secondary: "0x0",
+            tx_fee: "0x0",
+            proposal_reward: "0x0"
           )
         )
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
@@ -727,19 +731,19 @@ module CkbSync
     test "genesis block's cellbase display outputs should have multiple cells" do
       CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
         CKB::Types::BlockReward.new(
-          total: "100000000000",
-          primary: "100000000000",
-          secondary: "0",
-          tx_fee: "0",
-          proposal_reward: "0"
+          total: "0x174876e800",
+          primary: "0x174876e800",
+          secondary: "0x0",
+          tx_fee: "0x0",
+          proposal_reward: "0x0"
         )
       )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           difficulty: "0x1000",
-          length: "2000",
-          number: "0",
-          start_number: "0"
+          length: "0x07d0",
+          number: "0x0",
+          start_number: "0x0"
         )
       )
       VCR.use_cassette("genesis_block") do
@@ -763,18 +767,18 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           difficulty: "0x1000",
-          length: "2000",
-          number: "0",
-          start_number: "0"
+          length: "0x07d0",
+          number: "0x0",
+          start_number: "0x0"
         )
       )
       CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
         CKB::Types::BlockReward.new(
-          total: "100000000000",
-          primary: "100000000000",
-          secondary: "0",
-          tx_fee: "0",
-          proposal_reward: "0"
+          total: "0x174876e800",
+          primary: "0x174876e800",
+          secondary: "0x0",
+          tx_fee: "0x0",
+          proposal_reward: "0x0"
         )
       )
       VCR.use_cassette("blocks/12") do

@@ -30,14 +30,14 @@ class StatisticInfoTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
       CKB::Types::Epoch.new(
         difficulty: "0x1000",
-        length: "2000",
-        number: "0",
-        start_number: "0"
+        length: "0x07d0",
+        number: "0x0",
+        start_number: "0x0"
       )
     )
     statistic_info = StatisticInfo.new
 
-    current_epoch_difficulty = CkbSync::Api.instance.get_current_epoch.difficulty.hex
+    current_epoch_difficulty = CkbSync::Api.instance.get_current_epoch.difficulty
     assert_equal current_epoch_difficulty, statistic_info.current_epoch_difficulty
   end
 
@@ -45,9 +45,9 @@ class StatisticInfoTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
       CKB::Types::Epoch.new(
         difficulty: "0x1000",
-        length: "2000",
-        number: "0",
-        start_number: "0"
+        length: "0x07d0",
+        number: "0x0",
+        start_number: "0x0"
       )
     )
 
@@ -73,7 +73,7 @@ class StatisticInfoTest < ActiveSupport::TestCase
     create_list(:block, 500, :with_block_hash)
     block_count = ENV["HASH_RATE_STATISTICAL_INTERVAL"]
     last_500_blocks = Block.recent.includes(:uncle_blocks).limit(block_count.to_i)
-    total_difficulties = last_500_blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty.hex }
+    total_difficulties = last_500_blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty }
     total_time = last_500_blocks.first.timestamp - last_500_blocks.last.timestamp
     hash_rate = total_difficulties.to_d / total_time
 
