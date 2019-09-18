@@ -9,13 +9,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Set up Ruby 2.6
-      uses: actions/setup-ruby@v1
-      with:
-        ruby-version: 2.6.4
-    - name: Build and test with Rake
+    - name: Set up Ruby 2.6.4
       run: |
-        sudo apt-get install ruby-full
+        curl -sSL https://get.rvm.io | bash -s stable
+        rvm install ruby-2.6.4
+    - name: Build and test with Rake
+      run: |  
         gem install bundler
         bundle install --jobs 4 --retry 3
         bundle exec rake
