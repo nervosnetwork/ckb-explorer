@@ -33,7 +33,7 @@ end
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #  dao               :string
-#  difficulty        :decimal(30, )    default(0)
+#  difficulty        :decimal(80, )    default(0)
 #  nonce             :decimal(30, )    default(0)
 #
 # Indexes
