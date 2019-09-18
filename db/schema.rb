@@ -53,8 +53,6 @@ ActiveRecord::Schema.define(version: 2019_09_16_094321) do
     t.decimal "cell_consumed", precision: 30
     t.binary "miner_hash"
     t.decimal "reward", precision: 30
-    t.decimal "primary_reward", precision: 30, default: "0"
-    t.decimal "secondary_reward", precision: 30, default: "0"
     t.decimal "total_transaction_fee", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
     t.decimal "total_cell_capacity", precision: 30
