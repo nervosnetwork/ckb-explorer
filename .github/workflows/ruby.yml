@@ -15,8 +15,7 @@ jobs:
         ruby-version: 2.6.4
     - name: Build and test with Rake
       run: |
+        sudo apt-get install ruby-full
         gem install bundler
         bundle install --jobs 4 --retry 3
         bundle exec rake
-    container:
-      image: ruby:2.6.4
