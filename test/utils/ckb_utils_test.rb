@@ -12,11 +12,22 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
   end
 
-  test "#generate_address should return type1 address when use default lock script" do
+  test "#generate_address should return short payload blake160 address when use correct code match" do
     type1_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
       ENV["CODE_HASH"]
+    )
+
+    assert_equal type1_address, CkbUtils.generate_address(lock_script)
+  end
+
+  test "#generate_address should return short payload blake160 address when use correct type match" do
+    type1_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
+    lock_script = CKB::Types::Script.generate_lock(
+      "0x36c329ed630d6ce750712a477543672adab57f4c",
+      ENV["SECP_CELL_TYPE_HASH"],
+      hash_type: "type"
     )
 
     assert_equal type1_address, CkbUtils.generate_address(lock_script)
