@@ -52,10 +52,13 @@ class CkbUtils
 
   def self.use_default_lock_script?(lock_script)
     code_hash = lock_script.code_hash
+    hash_type = lock_script.hash_type
+    correct_code_match = "#{ENV["CODE_HASH"]}data"
+    correct_type_match = "#{ENV["SECP_CELL_TYPE_HASH"]}type"
 
     return false if code_hash.blank?
 
-    [ENV["CODE_HASH"], ENV["SECP_CELL_TYPE_HASH"]].include?(code_hash)
+    "#{code_hash}#{hash_type}".in?([correct_code_match, correct_type_match])
   end
 
   def self.parse_address(address_hash)
