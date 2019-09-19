@@ -38,12 +38,21 @@ class CkbUtils
   end
 
   def self.generate_address(lock_script)
-    return unless use_default_lock_script?(lock_script)
+    if use_default_lock_script?(lock_script)
+      short_payload_blake160_address(lock_script)
+    else
+      code_hash = lock_script.code_hash
+      args = lock_script.args
+      format_type = lock_script.hash_type == "data" ? "0x02" : "0x04"
+      first_arg = args.first
 
-    type1_address(lock_script)
+      return if args.blank? || !args.all? { |arg| CKB::Utils.valid_hex_string?(arg) }
+
+      CKB::Address.new(first_arg).generate_full_payload_address(format_type, code_hash, args)
+    end
   end
 
-  def self.type1_address(lock_script)
+  def self.short_payload_blake160_address(lock_script)
     blake160 = lock_script.args.first
     return if blake160.blank? || !CKB::Utils.valid_hex_string?(blake160)
 
