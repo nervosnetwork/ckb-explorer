@@ -7,6 +7,7 @@ CKB Explorer is a [Nervos CKB](https://github.com/nervosnetwork/ckb) blockchain 
 It supports searching block, transaction, address and includes two parts: [frontend](https://github.com/nervosnetwork/ckb-explorer-frontend) and [backend server](https://github.com/nervosnetwork/ckb-explorer).
 
 # CKB Explorer Server
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/nervosnetwork/ckb-explorer/blob/develop/COPYING)
 [![TravisCI](https://travis-ci.com/nervosnetwork/ckb-explorer.svg?branch=develop)](https://travis-ci.com/nervosnetwork/ckb-explorer)
 [![Codecov](https://codecov.io/gh/nervosnetwork/ckb-explorer/branch/master/graph/badge.svg)](https://codecov.io/gh/nervosnetwork/ckb-explorer/branch/master)
 [![Telegram Group](https://cdn.rawgit.com/Patrolavia/telegram-badge/8fe3382b/chat.svg)](https://t.me/nervos_ckb_dev)
