@@ -13,24 +13,55 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test "#generate_address should return short payload blake160 address when use correct code match" do
-    type1_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
+    short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
-      ENV["CODE_HASH"]
+      ENV["CODE_HASH"],
+      "data"
     )
 
-    assert_equal type1_address, CkbUtils.generate_address(lock_script)
+    assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
   end
 
   test "#generate_address should return short payload blake160 address when use correct type match" do
-    type1_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
+    short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
-      ENV["SECP_CELL_TYPE_HASH"],
-      hash_type: "type"
+      ENV["SECP_CELL_TYPE_HASH"]
     )
 
-    assert_equal type1_address, CkbUtils.generate_address(lock_script)
+    assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+  end
+
+  test "#generate_address should return full payload data address when do not use default lock script and hash type is data" do
+    full_payload_address = "ckt1qgvf96jqmq4483ncl7yrzfzshwchu9jd0glq4yy5r2jcsw04d7xly9pkcv576ccddnn4quf2ga65xee2m26h7nqyypkl0"
+    lock_script = CKB::Types::Script.generate_lock(
+      "0x36c329ed630d6ce750712a477543672adab57f4c",
+      "0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df2",
+      "data"
+    )
+
+    assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+  end
+
+  test "#generate_address should return full payload data address when do not use default lock script and hash type is type" do
+    full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhv9pkcv576ccddnn4quf2ga65xee2m26h7nq0n3krt"
+    lock_script = CKB::Types::Script.generate_lock(
+      "0x36c329ed630d6ce750712a477543672adab57f4c",
+      "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176",
+    )
+
+    assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+  end
+
+  test "#generate_address should return nil when do not use default lock script and args is empty" do
+    full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhvqqm5f36w"
+    lock_script = CKB::Types::Script.generate_lock(
+      "0x",
+      "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176",
+      )
+
+    assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
   end
 
   test "#base_reward should return cellbase's first output's capacity for genesis block" do
