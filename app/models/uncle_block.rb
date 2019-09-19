@@ -16,7 +16,6 @@ end
 # Table name: uncle_blocks
 #
 #  id                :bigint           not null, primary key
-#  difficulty        :string(66)
 #  block_hash        :binary
 #  number            :decimal(30, )
 #  parent_hash       :binary
@@ -34,7 +33,8 @@ end
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #  dao               :string
-#  nonce             :string
+#  difficulty        :decimal(80, )    default(0)
+#  nonce             :decimal(30, )    default(0)
 #
 # Indexes
 #

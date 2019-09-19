@@ -8,9 +8,9 @@ module Api
         CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
           CKB::Types::Epoch.new(
             difficulty: "0x1000",
-            length: "2000",
-            number: "0",
-            start_number: "0"
+            length: "0x07d0",
+            number: "0x0",
+            start_number: "0x0"
           )
         )
         StatisticInfo.any_instance.stubs(:id).returns(1)
@@ -85,9 +85,9 @@ module Api
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
             difficulty: "0x1000",
-            length: "2000",
-            number: "0",
-            start_number: "0"
+            length: "0x07d0",
+            number: "0x0",
+            start_number: "0x0"
           )
         )
         generate_miner_ranking_related_data
@@ -102,9 +102,9 @@ module Api
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
             difficulty: "0x1000",
-            length: "2000",
-            number: "0",
-            start_number: "0"
+            length: "0x07d0",
+            number: "0x0",
+            start_number: "0x0"
           )
         )
         generate_miner_ranking_related_data
@@ -120,9 +120,9 @@ module Api
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
             difficulty: "0x1000",
-            length: "2000",
-            number: "0",
-            start_number: "0"
+            length: "0x07d0",
+            number: "0x0",
+            start_number: "0x0"
           )
         )
         generate_miner_ranking_related_data(1550578400000)
@@ -182,9 +182,9 @@ module Api
       test "should return current blockchain info when param is blockchain_info" do
         blockchain_info = CKB::Types::ChainInfo.new(
           is_initial_block_download: false,
-          epoch: "1",
+          epoch: "0x1",
           difficulty: "0x100",
-          median_time: "1562669768293",
+          median_time: "0x16bd6605e65",
           chain: "ckb_testnet",
           alerts: []
         )
