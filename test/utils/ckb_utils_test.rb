@@ -12,7 +12,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
   end
 
-  test "#generate_address should return short payload blake160 address when use correct code match" do
+  test ".generate_address should return short payload blake160 address when use correct code match" do
     short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -23,7 +23,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
   end
 
-  test "#generate_address should return short payload blake160 address when use correct type match" do
+  test ".generate_address should return short payload blake160 address when use correct type match" do
     short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -33,7 +33,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
   end
 
-  test "#generate_address should return full payload data address when do not use default lock script and hash type is data" do
+  test ".generate_address should return full payload data address when do not use default lock script and hash type is data" do
     full_payload_address = "ckt1qgvf96jqmq4483ncl7yrzfzshwchu9jd0glq4yy5r2jcsw04d7xly9pkcv576ccddnn4quf2ga65xee2m26h7nqyypkl0"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -44,7 +44,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
   end
 
-  test "#generate_address should return full payload data address when do not use default lock script and hash type is type" do
+  test ".generate_address should return full payload data address when do not use default lock script and hash type is type" do
     full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhv9pkcv576ccddnn4quf2ga65xee2m26h7nq0n3krt"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -54,7 +54,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
   end
 
-  test "#generate_address should return nil when do not use default lock script and args is empty" do
+  test ".generate_address should return nil when do not use default lock script and args is empty" do
     full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhvqqm5f36w"
     lock_script = CKB::Types::Script.generate_lock(
       "0x",
@@ -64,7 +64,21 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
   end
 
-  test "#base_reward should return cellbase's first output's capacity for genesis block" do
+  test ".parse_address should return block160 when target is short payload blake160 address" do
+    blake160 = "0x36c329ed630d6ce750712a477543672adab57f4c"
+    short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
+
+    assert_equal blake160, CkbUtils.parse_address(short_payload_blake160_address)
+  end
+
+  test ".parse_address should return an array that contains format type, code hash and args when target is full payload address" do
+    parsed_result = ["0x02", "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176", ["0x36c329ed630d6ce750712a477543672adab57f4c"]]
+    full_payload_address = "ckt1q2n9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhv9pkcv576ccddnn4quf2ga65xee2m26h7nq2rtnac"
+
+    assert_equal parsed_result, CkbUtils.parse_address(full_payload_address)
+  end
+
+  test ".base_reward should return cellbase's first output's capacity for genesis block" do
     VCR.use_cassette("genesis_block", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(0)
 
@@ -76,7 +90,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     end
   end
 
-  test "#calculate_cell_min_capacity should return output's min capacity" do
+  test ".calculate_cell_min_capacity should return output's min capacity" do
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
 
@@ -90,7 +104,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     end
   end
 
-  test "#block_cell_consumed generated block's cell_consumed should equal to the sum of transactions output occupied capacity" do
+  test ".block_cell_consumed generated block's cell_consumed should equal to the sum of transactions output occupied capacity" do
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
 
@@ -105,7 +119,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     end
   end
 
-  test "#address_cell_consumed should return right cell consumed by the address" do
+  test ".address_cell_consumed should return right cell consumed by the address" do
     prepare_node_data(12)
     VCR.use_cassette("blocks/12") do
       node_block = CkbSync::Api.instance.get_block_by_number(13)
