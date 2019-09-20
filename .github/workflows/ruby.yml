@@ -18,7 +18,6 @@ jobs:
         echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
         echo 'eval "$(rbenv init -)"' >> ~/.bashrc
         source ~/.bashrc
-        type rbenv
         git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
         rbenv install -l
         sudo rbenv install 2.6.4
