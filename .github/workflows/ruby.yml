@@ -13,6 +13,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libreadline-dev zlib1g-dev rbenv ruby-build libsodium-dev
+        sudo apt-get upgrade
         rbenv install -l
         sudo rbenv install 2.6.4
         sudo rbenv global 2.6.4
