@@ -1,3 +1,21 @@
+# [](https://github.com/shaojunda/ckb-explorer/compare/v0.4.1...v) (2019-09-21)
+
+
+### Features
+
+* add chain root ([70c603b](https://github.com/shaojunda/ckb-explorer/commit/70c603b))
+* add chain_root to block serializer ([ef3227d](https://github.com/shaojunda/ckb-explorer/commit/ef3227d))
+* add codecov and telegram group badge ([769b0f5](https://github.com/shaojunda/ckb-explorer/commit/769b0f5))
+* add license badge ([d39bf5a](https://github.com/shaojunda/ckb-explorer/commit/d39bf5a))
+* Bump sdk to v0.21.0 ([8570c44](https://github.com/shaojunda/ckb-explorer/commit/8570c44))
+* change columns type to decimal ([e23eb53](https://github.com/shaojunda/ckb-explorer/commit/e23eb53))
+* change use default lock verification rule ([b67057a](https://github.com/shaojunda/ckb-explorer/commit/b67057a))
+* create short payload blake160 address when use correct matches ([c9bba68](https://github.com/shaojunda/ckb-explorer/commit/c9bba68))
+* generate full payload address ([2e49198](https://github.com/shaojunda/ckb-explorer/commit/2e49198))
+* use github actions ([88cc30f](https://github.com/shaojunda/ckb-explorer/commit/88cc30f))
+
+
+
 # [](https://github.com/shaojunda/ckb-explorer/compare/v0.4.0...v) (2019-09-16)
 
 
