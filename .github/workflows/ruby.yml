@@ -1,6 +1,6 @@
 name: Ruby
 
-on: [pull_request]
+on: [push]
 
 jobs:
   build:
@@ -11,14 +11,23 @@ jobs:
     - uses: actions/checkout@v1
     - name: Set up Ruby 2.6.4
       run: |
-        sudo apt-get install rbenv ruby-build
+        sudo apt-get update
+        sudo apt-get install autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev
+        sudo apt-get install -y libsodium-dev
+        git clone https://github.com/rbenv/rbenv.git ~/.rbenv
         echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
-        exec $SHELL
-        rbenv install 2.6.4
-        rbenv global 2.6.4
+        echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+        source ~/.bashrc
+        type rbenv
+        git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+        rbenv install -l
+        sudo rbenv install 2.6.4
+        sudo rbenv global 2.6.4
+        sudo rbenv versions
+        sudo apt autoremove
     - name: Build and test with Rake
-      run: |  
-        sudo gem install bundler
-        rbenv rehash
+      run: |
+        sudo gem install bundler -v 2.0.1
+        sudo rbenv rehash
         bundle install --jobs 4 --retry 3
         bundle exec rake
