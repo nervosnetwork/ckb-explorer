@@ -11,12 +11,9 @@ jobs:
     - uses: actions/checkout@v1
     - name: Set up Ruby 2.6.4
       run: |
-        sudo apt-get install -y libreadline-dev zlib1g-dev
-        git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+        sudo apt-get install rbenv ruby-build
         echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
-        echo 'eval "$(rbenv init -)"' >> ~/.bashrc
         exec $SHELL
-        git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
         rbenv install 2.6.4
         rbenv global 2.6.4
     - name: Build and test with Rake
