@@ -16,7 +16,7 @@ class StatisticInfo
   end
 
   def current_epoch_difficulty
-    CkbSync::Api.instance.get_current_epoch.difficulty.hex
+    CkbSync::Api.instance.get_current_epoch.difficulty
   end
 
   def current_epoch_average_block_time
@@ -31,7 +31,7 @@ class StatisticInfo
     blocks = Block.where("number <= ?", block_number).recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval.to_i)
     return if blocks.blank?
 
-    total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty.hex }
+    total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty }
     total_time = blocks.first.timestamp - blocks.last.timestamp
 
     total_difficulties.to_d / total_time

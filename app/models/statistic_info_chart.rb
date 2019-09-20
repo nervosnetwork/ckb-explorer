@@ -22,7 +22,7 @@ class StatisticInfoChart
       hash_rate_blocks = Block.where(number: hash_rate_block_numbers).order(:timestamp)
       blocks = Block.order(:epoch, :timestamp).select("distinct on (epoch) *")
       (blocks + hash_rate_blocks).uniq.map do |block|
-        { epoch_number: block.epoch.to_i, block_number: block.number.to_i, difficulty: block.difficulty.hex }
+        { epoch_number: block.epoch.to_i, block_number: block.number.to_i, difficulty: block.difficulty }
       end
     end
   end

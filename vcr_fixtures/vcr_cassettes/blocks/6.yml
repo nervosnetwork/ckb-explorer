@@ -5,7 +5,7 @@ http_interactions:
     uri: http://localhost:8414/
     body:
       encoding: UTF-8
-      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_by_number","params":["6"]}'
+      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_by_number","params":["0x6"]}'
     headers:
       Accept-Encoding:
       - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
@@ -27,18 +27,14 @@ http_interactions:
       Content-Type:
       - application/json; charset=utf-8
       Content-Length:
-      - '2941'
+      - '2377'
       Date:
-      - Thu, 05 Sep 2019 08:28:48 GMT
-      X-Cache:
-      - MISS from tw2.pandafan
-      Connection:
-      - keep-alive
+      - Mon, 16 Sep 2019 07:26:15 GMT
     body:
       encoding: UTF-8
-      string: '{"jsonrpc":"2.0","result":{"header":{"dao":"0x01000000000000000000c16ff2862300003b66f3b0f7030000796d26ac690000","difficulty":"0x100","epoch":"0","hash":"0xf34dc75966ae51e8ae30a2f02b1aad6fd5ff255bbf5ed1782c30bd68574b13e1","nonce":"12252249651961554441","number":"6","parent_hash":"0x791fc9d2210cb6bac440c71922636cb86b0dbfcda031d2e9379700ab9e251c56","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1567663832225","transactions_root":"0x52f34cfcd8aeea38f5db8486a749149707b65b80360974bace86ab77c7f8c3a5","uncles_count":"2","uncles_hash":"0x10cd7c5451fb5deb8334b011c9753ab40af7067a79b60e8afad87468989a5a17","version":"0","witnesses_root":"0x08b95055cf872806b247ff72e0ff14821b5b565086acf60756cfc2041610be00"},"proposals":[],"transactions":[{"cell_deps":[],"hash":"0x52f34cfcd8aeea38f5db8486a749149707b65b80360974bace86ab77c7f8c3a5","header_deps":[],"inputs":[{"previous_output":{"index":"4294967295","tx_hash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"since":"6"}],"outputs":[{"capacity":"125000000000","lock":{"args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"code_hash":"0x68d5438ac952d2f584abf879527946a537e82c7f3c1cbf6d8ebf9767437d8e88","hash_type":"type"},"type":null}],"outputs_data":["0x"],"version":"0","witnesses":[{"data":["0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df201","0x3954acece65096bfa81258983ddb83915fc56bd8"]}]}],"uncles":[{"header":{"dao":"0x01000000000000000000c16ff286230000f73cbe76f70300003f404fa9690000","difficulty":"0x100","epoch":"0","hash":"0x2252fba55fb88cdee3b70d154056ac834b5e42e0dc5bfdc1e76f719ab9b9b201","nonce":"14863423855997763817","number":"4","parent_hash":"0xa94ca00227eb2bd534ee5afe46871c094e9335e66b3460067c5517c1a7fcd11a","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1567663807223","transactions_root":"0x807b067c84ce4a321073b27f8bab7c7e9b44ce354760a9f5094db44880b9d0af","uncles_count":"1","uncles_hash":"0xfc908cb83eafc485e99d11e06afc881dd38f60109da9c558dc527ca897b5aa96","version":"0","witnesses_root":"0xbd9e26b9ab699da4b364152b60f42fced9311a9014efff2d51756448e5dd347a"},"proposals":[]},{"header":{"dao":"0x01000000000000000000c16ff286230000f73cbe76f70300003f404fa9690000","difficulty":"0x100","epoch":"0","hash":"0x51b0d5cf5b8157b5d5b2aaa8b1ed5116531323bcedff5ea7b4699fdcb6d9a4d0","nonce":"13326914406462551584","number":"4","parent_hash":"0xa94ca00227eb2bd534ee5afe46871c094e9335e66b3460067c5517c1a7fcd11a","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"1567663802226","transactions_root":"0x807b067c84ce4a321073b27f8bab7c7e9b44ce354760a9f5094db44880b9d0af","uncles_count":"0","uncles_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","version":"0","witnesses_root":"0xbd9e26b9ab699da4b364152b60f42fced9311a9014efff2d51756448e5dd347a"},"proposals":[]}]},"id":1}
+      string: '{"jsonrpc":"2.0","result":{"header":{"dao":"0x01000000000000000000c16ff2862300003b66f3b0f7030000796d26ac690000","difficulty":"0x100","epoch":"0x0","hash":"0x2b003cfba50e62a0cbb5697c058e200bb157b34a881dd2ac2a607b8ea21f7eb0","nonce":"0xb37fb9248d662c9c","number":"0x6","parent_hash":"0x165176fea279557c70b6c830b593cda27bd63f53a875529f7230c287e36a5f20","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"0x16d38bdd7aa","transactions_root":"0x03247de6a37ea9e7f1d70cb073563faabb14100937da139acbd95fbc8ca58571","uncles_count":"0x1","uncles_hash":"0x37046d8ff4b91ee1226c649e54e85d425dee1f9309f3f4d45725bd14910ca646","version":"0x0","witnesses_root":"0x7ca0339302eede114a3fd1b16a22b488c24f487b57bc478d44c376f812dd85d3"},"proposals":[],"transactions":[{"cell_deps":[],"hash":"0x03247de6a37ea9e7f1d70cb073563faabb14100937da139acbd95fbc8ca58571","header_deps":[],"inputs":[{"previous_output":{"index":"0xffffffff","tx_hash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"since":"0x6"}],"outputs":[{"capacity":"0x1d1a94a200","lock":{"args":["0xb2e61ff569acf041b3c2c17724e2379c581eeac3"],"code_hash":"0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df2","hash_type":"type"},"type":null}],"outputs_data":["0x"],"version":"0x0","witnesses":[{"data":["0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df201","0x3954acece65096bfa81258983ddb83915fc56bd8"]}]}],"uncles":[{"header":{"dao":"0x01000000000000000000c16ff286230000f73cbe76f70300003f404fa9690000","difficulty":"0x100","epoch":"0x0","hash":"0x3dae08dc7efa46edeb107e49e28ba67f099c4d85e3edc29bcfe388e77a90e069","nonce":"0xdc061cc0c03c1484","number":"0x4","parent_hash":"0x07e45a3b491109e63c7a74efd064cba0b374f9bdd315dbaf6a2568fb1559af66","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"0x16d38bdc801","transactions_root":"0xef1bec7ad74a51637fee359881530e84428228506232c15efe4413ff6f0a5535","uncles_count":"0x1","uncles_hash":"0x4b7728033f7cb4d14e3554c2446cdbc12e0b1462babcb12f92b8e0e167f9f0da","version":"0x0","witnesses_root":"0x298df31cb13fc2863ce2a344ced027a8b1947f8da96747d6b6fe838383169934"},"proposals":[]}]},"id":1}
 
 '
     http_version:
-  recorded_at: Thu, 05 Sep 2019 08:28:48 GMT
+  recorded_at: Mon, 16 Sep 2019 07:26:15 GMT
 recorded_with: VCR 5.0.0

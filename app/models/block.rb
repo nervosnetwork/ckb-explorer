@@ -86,7 +86,6 @@ end
 # Table name: blocks
 #
 #  id                         :bigint           not null, primary key
-#  difficulty                 :string(66)
 #  block_hash                 :binary
 #  number                     :decimal(30, )
 #  parent_hash                :binary
@@ -107,8 +106,6 @@ end
 #  total_cell_capacity        :decimal(30, )
 #  witnesses_root             :binary
 #  epoch                      :decimal(30, )
-#  start_number               :string
-#  length                     :string
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
 #  address_ids                :string           is an Array
@@ -120,7 +117,10 @@ end
 #  dao                        :string
 #  primary_reward             :decimal(30, )    default(0)
 #  secondary_reward           :decimal(30, )    default(0)
-#  nonce                      :string
+#  difficulty                 :decimal(80, )    default(0)
+#  nonce                      :decimal(30, )    default(0)
+#  start_number               :decimal(30, )    default(0)
+#  length                     :decimal(30, )    default(0)
 #
 # Indexes
 #

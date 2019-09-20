@@ -58,13 +58,13 @@ end
 #
 #  id                      :bigint           not null, primary key
 #  previous_output         :jsonb
-#  since                   :string
 #  ckb_transaction_id      :bigint
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  previous_cell_output_id :bigint
 #  from_cell_base          :boolean          default(FALSE)
 #  block_id                :decimal(30, )
+#  since                   :decimal(30, )    default(0)
 #
 # Indexes
 #
