@@ -6,9 +6,9 @@ class MinerRankingTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
       CKB::Types::Epoch.new(
         difficulty: "0x1000",
-        length: "2000",
-        number: "0",
-        start_number: "0"
+        length: "0x07d0",
+        number: "0x0",
+        start_number: "0x0"
       )
     )
     address1, address2, address3 = generate_miner_ranking_related_data

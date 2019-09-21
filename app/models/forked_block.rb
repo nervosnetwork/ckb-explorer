@@ -17,7 +17,6 @@ end
 # Table name: forked_blocks
 #
 #  id                         :bigint           not null, primary key
-#  difficulty                 :string(66)
 #  block_hash                 :binary
 #  number                     :decimal(30, )
 #  parent_hash                :binary
@@ -38,8 +37,6 @@ end
 #  total_cell_capacity        :decimal(30, )
 #  witnesses_root             :binary
 #  epoch                      :decimal(30, )
-#  start_number               :string
-#  length                     :string
 #  address_ids                :string           is an Array
 #  reward_status              :integer          default("pending")
 #  received_tx_fee_status     :integer          default("calculating")
@@ -51,5 +48,8 @@ end
 #  updated_at                 :datetime         not null
 #  primary_reward             :decimal(30, )    default(0)
 #  secondary_reward           :decimal(30, )    default(0)
-#  nonce                      :string
+#  difficulty                 :decimal(80, )    default(0)
+#  nonce                      :decimal(30, )    default(0)
+#  start_number               :decimal(30, )    default(0)
+#  length                     :decimal(30, )    default(0)
 #

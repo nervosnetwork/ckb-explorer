@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_08_24_025831) do
+ActiveRecord::Schema.define(version: 2019_09_16_094321) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -38,7 +38,6 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
   end
 
   create_table "blocks", force: :cascade do |t|
-    t.string "difficulty", limit: 66
     t.binary "block_hash"
     t.decimal "number", precision: 30
     t.binary "parent_hash"
@@ -54,15 +53,11 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
     t.decimal "cell_consumed", precision: 30
     t.binary "miner_hash"
     t.decimal "reward", precision: 30
-    t.decimal "primary_reward", precision: 30, default: "0"
-    t.decimal "secondary_reward", precision: 30, default: "0"
     t.decimal "total_transaction_fee", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
     t.decimal "total_cell_capacity", precision: 30
     t.binary "witnesses_root"
     t.decimal "epoch", precision: 30
-    t.string "start_number"
-    t.string "length"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "address_ids", array: true
@@ -72,7 +67,12 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
     t.integer "target_block_reward_status", default: 0
     t.binary "miner_lock_hash"
     t.string "dao"
-    t.string "nonce"
+    t.decimal "primary_reward", precision: 30, default: "0"
+    t.decimal "secondary_reward", precision: 30, default: "0"
+    t.decimal "difficulty", precision: 80, default: "0"
+    t.decimal "nonce", precision: 30, default: "0"
+    t.decimal "start_number", precision: 30, default: "0"
+    t.decimal "length", precision: 30, default: "0"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
@@ -80,13 +80,13 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
 
   create_table "cell_inputs", force: :cascade do |t|
     t.jsonb "previous_output"
-    t.string "since"
     t.bigint "ckb_transaction_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "previous_cell_output_id"
     t.boolean "from_cell_base", default: false
     t.decimal "block_id", precision: 30
+    t.decimal "since", precision: 30, default: "0"
     t.index ["block_id"], name: "index_cell_inputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_inputs_on_ckb_transaction_id"
     t.index ["previous_cell_output_id"], name: "index_cell_inputs_on_previous_cell_output_id"
@@ -134,7 +134,6 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
   end
 
   create_table "forked_blocks", force: :cascade do |t|
-    t.string "difficulty", limit: 66
     t.binary "block_hash"
     t.decimal "number", precision: 30
     t.binary "parent_hash"
@@ -155,8 +154,6 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
     t.decimal "total_cell_capacity", precision: 30
     t.binary "witnesses_root"
     t.decimal "epoch", precision: 30
-    t.string "start_number"
-    t.string "length"
     t.string "address_ids", array: true
     t.integer "reward_status", default: 0
     t.integer "received_tx_fee_status", default: 0
@@ -168,7 +165,10 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
     t.datetime "updated_at", null: false
     t.decimal "primary_reward", precision: 30, default: "0"
     t.decimal "secondary_reward", precision: 30, default: "0"
-    t.string "nonce"
+    t.decimal "difficulty", precision: 80, default: "0"
+    t.decimal "nonce", precision: 30, default: "0"
+    t.decimal "start_number", precision: 30, default: "0"
+    t.decimal "length", precision: 30, default: "0"
   end
 
   create_table "lock_scripts", force: :cascade do |t|
@@ -194,7 +194,6 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
   end
 
   create_table "uncle_blocks", force: :cascade do |t|
-    t.string "difficulty", limit: 66
     t.binary "block_hash"
     t.decimal "number", precision: 30
     t.binary "parent_hash"
@@ -212,7 +211,8 @@ ActiveRecord::Schema.define(version: 2019_08_24_025831) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "dao"
-    t.string "nonce"
+    t.decimal "difficulty", precision: 80, default: "0"
+    t.decimal "nonce", precision: 30, default: "0"
     t.index ["block_hash", "block_id"], name: "index_uncle_blocks_on_block_hash_and_block_id", unique: true
     t.index ["block_id"], name: "index_uncle_blocks_on_block_id"
   end

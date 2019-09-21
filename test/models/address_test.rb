@@ -11,9 +11,9 @@ class AddressTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
         difficulty: "0x1000",
-        length: "2000",
-        number: "0",
-        start_number: "0"
+        length: "0x07d0",
+        number: "0x0",
+        start_number: "0x0"
       )
     )
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
@@ -34,9 +34,9 @@ class AddressTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
         difficulty: "0x1000",
-        length: "2000",
-        number: "0",
-        start_number: "0"
+        length: "0x07d0",
+        number: "0x0",
+        start_number: "0x0"
       )
     )
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
@@ -60,9 +60,9 @@ class AddressTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
         difficulty: "0x1000",
-        length: "2000",
-        number: "0",
-        start_number: "0"
+        length: "0x07d0",
+        number: "0x0",
+        start_number: "0x0"
       )
     )
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
