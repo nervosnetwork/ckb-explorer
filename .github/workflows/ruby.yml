@@ -8,20 +8,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Ruby 2.6.4
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libreadline-dev zlib1g-dev rbenv ruby-build libsodium-dev
-        sudo apt-get upgrade
-        rbenv install -l
-        sudo rbenv install 2.6.4
-        sudo rbenv global 2.6.4
-        sudo rbenv versions
-        sudo apt autoremove
-    - name: Build and test with Rake
-      run: |
-        sudo gem install bundler -v 2.0.1
-        sudo rbenv rehash
-        bundle install --jobs 4 --retry 3
-        bundle exec rake
+      - uses: actions/checkout@v1
+      - name: Set up Ruby 2.6.4
+        run: |
+          sudo apt-get update
+          sudo apt-get install software-properties-common
+          sudo apt-get install -y libsodium-dev
+          sudo apt-add-repository -y ppa:rael-gc/rvm
+          sudo apt-get install libpq-dev rvm
+          sudo /usr/share/rvm/bin/rvm install "ruby-2.6.4"
+          sudo /usr/share/rvm/bin/rvm use 2.6.4
+      - name: Set up SECP256k1
+        run: |
+          git clone https://github.com/bitcoin-core/secp256k1.git && cd secp256k1 && ./autogen.sh && ./configure && make && ./tests && sudo make install && cd ..
+      - name: Set up PostgreSQL
+        run: |
+          sudo apt install postgresql postgresql-contrib
+          sudo sed -i 's/peer/trust/gI' /etc/postgresql/10/main/pg_hba.conf
+          sudo sed -i 's/md5/trust/gI' /etc/postgresql/10/main/pg_hba.conf
+          sudo systemctl restart postgresql.service
+          psql -c 'create database "ckb_explorer_test";' -U postgres
+      - name: Build and test with Rake
+        run: |
+          source /usr/share/rvm/scripts/rvm
+          gem install bundler:2.0.1
+          bundle install --jobs 4 --retry 3
+          bundle exec rails db:create RAILS_ENV=test
+          bundle exec rails db:migrate RAILS_ENV=test
+          bundle exec rails test RAILS_ENV=test
