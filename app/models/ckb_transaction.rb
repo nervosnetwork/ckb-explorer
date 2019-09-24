@@ -75,7 +75,19 @@ class CkbTransaction < ApplicationRecord
       cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
       cell_inputs_for_display.order(:id).map do |cell_input|
         previous_cell_output = cell_input.previous_cell_output
-        { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash }
+        display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash }
+        if previous_cell_output.dao?
+          witness = witnesses[previous_cell_output.cell_index]
+          block_hash = header_deps[witness["data"].last.hex]
+          out_point = CKB::Types::OutPoint.new(tx_hash: previous_cell_output.tx_hash, index: previous_cell_output.cell_index)
+
+          started_at = Block.find(previous_cell_output.block_id).number
+          ended_at = Block.find_by(block_hash: block_hash).number
+          subsidy = CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).to_i - previous_cell_output.capacity.to_i
+          display_input.merge!({ started_at: started_at, ended_at: ended_at, subsidy: subsidy })
+        end
+
+        display_input
       end
     end
   end
