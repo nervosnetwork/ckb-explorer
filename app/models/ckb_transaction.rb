@@ -89,11 +89,11 @@ class CkbTransaction < ApplicationRecord
   def attributes_for_dao_input(input)
     witness = witnesses[input.cell_index]
     withdraw_block_hash = header_deps[witness["data"].last.hex]
-    started_at = Block.find(input.block_id).number
-    ended_at = Block.find_by(block_hash: withdraw_block_hash).number
+    started_block_number = Block.find(input.block_id).number
+    ended_block_number = Block.find_by(block_hash: withdraw_block_hash).number
     subsidy = CkbUtils.dao_subsidy(input, header_deps, witnesses)
 
-    { started_at: started_at, ended_at: ended_at, subsidy: subsidy, dao_type_hash: ENV["DAO_TYPE_HASH"] }
+    { started_block_number: started_block_number, ended_block_number: ended_block_number, subsidy: subsidy, dao_type_hash: ENV["DAO_TYPE_HASH"] }
   end
 
   def cellbase_display_inputs

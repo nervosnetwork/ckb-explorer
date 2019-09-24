@@ -128,8 +128,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
     out_point = CKB::Types::OutPoint.new(tx_hash: dao_input.tx_hash, index: dao_input.cell_index)
     subsidy = CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, ended_block_hash).to_i - dao_input.capacity.to_i
 
-    expected_display_input = { id: dao_input.id, from_cellbase: false, capacity: dao_input.capacity, address_hash: dao_input.address_hash, generated_tx_hash: dao_input.generated_by.tx_hash, started_at: started_block_number, ended_at: ended_block_number, subsidy: subsidy, cell_type: dao_input.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }.sort
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash started_at ended_at subsidy cell_type dao_type_hash).sort
+    expected_display_input = { id: dao_input.id, from_cellbase: false, capacity: dao_input.capacity, address_hash: dao_input.address_hash, generated_tx_hash: dao_input.generated_by.tx_hash, started_block_number: started_block_number, ended_block_number: ended_block_number, subsidy: subsidy, cell_type: dao_input.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }.sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash started_block_number ended_block_number subsidy cell_type dao_type_hash).sort
 
     assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
     assert_equal expected_display_input, ckb_transaction.display_inputs.first.sort
