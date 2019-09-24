@@ -56,7 +56,10 @@ class CkbTransaction < ApplicationRecord
       cell_outputs_for_display = previews ? outputs.limit(10) : outputs
       cell_outputs_for_display.order(:id).map do |output|
         consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-        { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
+        display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
+        display_output.merge!({ dao_type_hash: ENV["DAO_TYPE_HASH"] }) if output.dao?
+
+        display_output
       end
     end
   end
@@ -90,7 +93,7 @@ class CkbTransaction < ApplicationRecord
     ended_at = Block.find_by(block_hash: withdraw_block_hash).number
     subsidy = CkbUtils.dao_subsidy(input, header_deps, witnesses)
 
-    { started_at: started_at, ended_at: ended_at, subsidy: subsidy }
+    { started_at: started_at, ended_at: ended_at, subsidy: subsidy, dao_type_hash: ENV["DAO_TYPE_HASH"] }
   end
 
   def cellbase_display_inputs
