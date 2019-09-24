@@ -56,7 +56,7 @@ class CkbTransaction < ApplicationRecord
       cell_outputs_for_display = previews ? outputs.limit(10) : outputs
       cell_outputs_for_display.order(:id).map do |output|
         consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-        { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash }
+        { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
       end
     end
   end
@@ -66,7 +66,7 @@ class CkbTransaction < ApplicationRecord
     cellbase = Cellbase.new(block)
     cell_outputs_for_display.map do |output|
       consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-      { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash }
+      { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash  }
     end
   end
 
@@ -75,7 +75,7 @@ class CkbTransaction < ApplicationRecord
       cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
       cell_inputs_for_display.order(:id).map do |cell_input|
         previous_cell_output = cell_input.previous_cell_output
-        display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash }
+        display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_type: previous_cell_output.cell_type }
         display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.dao?
 
         display_input
