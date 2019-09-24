@@ -54,7 +54,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
   test "#display_inputs should contain correct attributes for normal transaction" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash)
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash cell_type)
 
     assert_equal [expected_attributes], ckb_transaction.display_inputs.map(&:keys).uniq
   end
@@ -68,7 +68,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
   test "#display_outputs should contain correct attributes for normal transaction" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
-    expected_attributes = %i(id capacity address_hash status consumed_tx_hash)
+    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type)
 
     assert_equal [expected_attributes], ckb_transaction.display_outputs.map(&:keys).uniq
   end
@@ -113,5 +113,25 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_output_is = ckb_transaction.cell_inputs.map(&:previous_cell_output).map(&:id).sort
 
     assert_equal expected_output_is, ckb_transaction.display_inputs.map{ |display_input| display_input[:id] }
+  end
+
+  test "#display_inputs should return dao display input when cell type is dao" do
+    prepare_node_data(11)
+    CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("800001000")
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, header_deps: %w(0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2 0x83dcd4378e31ed9426df6acfaf0f8d2a028bf3c479ec21430eb03d562bb5bde9))
+    dao_input = ckb_transaction.inputs.first
+    witness = ckb_transaction.witnesses.first
+    started_block_number = Block.find(dao_input.block_id).number
+    ended_block_hash = ckb_transaction.header_deps[witness["data"].last.hex]
+    ended_block_number = Block.find_by(block_hash: ended_block_hash).number
+    dao_input.update(cell_type: "dao")
+    out_point = CKB::Types::OutPoint.new(tx_hash: dao_input.tx_hash, index: dao_input.cell_index)
+    subsidy = CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, ended_block_hash).to_i - dao_input.capacity.to_i
+
+    expected_display_input = { id: dao_input.id, from_cellbase: false, capacity: dao_input.capacity, address_hash: dao_input.address_hash, generated_tx_hash: dao_input.generated_by.tx_hash, started_at: started_block_number, ended_at: ended_block_number, subsidy: subsidy }.sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash started_at ended_at subsidy)
+
+    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys
+    assert_equal expected_display_input, ckb_transaction.display_inputs.first.sort
   end
 end
