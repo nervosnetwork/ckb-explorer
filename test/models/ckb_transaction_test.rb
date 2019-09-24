@@ -68,9 +68,9 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
   test "#display_outputs should contain correct attributes for normal transaction" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
-    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type)
+    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type).sort
 
-    assert_equal [expected_attributes], ckb_transaction.display_outputs.map(&:keys).uniq
+    assert_equal [expected_attributes], ckb_transaction.display_outputs.map(&:keys).map(&:sort).uniq.sort
   end
 
   test "#display_outputs should contain correct attributes for cellbase" do
@@ -128,10 +128,10 @@ class CkbTransactionTest < ActiveSupport::TestCase
     out_point = CKB::Types::OutPoint.new(tx_hash: dao_input.tx_hash, index: dao_input.cell_index)
     subsidy = CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, ended_block_hash).to_i - dao_input.capacity.to_i
 
-    expected_display_input = { id: dao_input.id, from_cellbase: false, capacity: dao_input.capacity, address_hash: dao_input.address_hash, generated_tx_hash: dao_input.generated_by.tx_hash, started_at: started_block_number, ended_at: ended_block_number, subsidy: subsidy }.sort
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash started_at ended_at subsidy)
+    expected_display_input = { id: dao_input.id, from_cellbase: false, capacity: dao_input.capacity, address_hash: dao_input.address_hash, generated_tx_hash: dao_input.generated_by.tx_hash, started_at: started_block_number, ended_at: ended_block_number, subsidy: subsidy, cell_type: dao_input.cell_type }.sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash started_at ended_at subsidy cell_type).sort
 
-    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys
+    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
     assert_equal expected_display_input, ckb_transaction.display_inputs.first.sort
   end
 end
