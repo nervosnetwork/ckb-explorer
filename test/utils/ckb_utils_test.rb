@@ -162,7 +162,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".ckb_transaction_fee should return right tx_fee when tx is dao withdraw tx" do
-    CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("800001000")
+    CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
     node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       block = create(:block, :with_block_hash)
@@ -184,7 +184,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".ckb_transaction_fee should return right tx_fee when tx is dao withdraw tx and have multiple dao cell" do
-    CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("800001000")
+    CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
     node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       block = create(:block, :with_block_hash)
