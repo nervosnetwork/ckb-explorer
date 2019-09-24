@@ -76,20 +76,21 @@ class CkbTransaction < ApplicationRecord
       cell_inputs_for_display.order(:id).map do |cell_input|
         previous_cell_output = cell_input.previous_cell_output
         display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash }
-        if previous_cell_output.dao?
-          witness = witnesses[previous_cell_output.cell_index]
-          block_hash = header_deps[witness["data"].last.hex]
-          out_point = CKB::Types::OutPoint.new(tx_hash: previous_cell_output.tx_hash, index: previous_cell_output.cell_index)
-
-          started_at = Block.find(previous_cell_output.block_id).number
-          ended_at = Block.find_by(block_hash: block_hash).number
-          subsidy = CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).to_i - previous_cell_output.capacity.to_i
-          display_input.merge!({ started_at: started_at, ended_at: ended_at, subsidy: subsidy })
-        end
+        display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.dao?
 
         display_input
       end
     end
+  end
+
+  def attributes_for_dao_input(input)
+    witness = witnesses[input.cell_index]
+    withdraw_block_hash = header_deps[witness["data"].last.hex]
+    started_at = Block.find(input.block_id).number
+    ended_at = Block.find_by(block_hash: withdraw_block_hash).number
+    subsidy = CkbUtils.dao_subsidy(input, header_deps, witnesses)
+
+    { started_at: started_at, ended_at: ended_at, subsidy: subsidy }
   end
 
   def cellbase_display_inputs
