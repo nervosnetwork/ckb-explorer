@@ -82,7 +82,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
   test "#display_inputs should return correct generated_tx_hash" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
-    expected_tx_hash = ckb_transaction.inputs.first.generated_by.tx_hash
+    expected_tx_hash = ckb_transaction.cell_inputs.first.previous_cell_output.generated_by.tx_hash
 
     assert_equal [expected_tx_hash], ckb_transaction.display_inputs.pluck(:generated_tx_hash).uniq
   end
