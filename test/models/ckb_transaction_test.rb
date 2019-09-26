@@ -82,9 +82,9 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
   test "#display_inputs should return correct generated_tx_hash" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
-    expected_tx_hash = ckb_transaction.cell_inputs.first.previous_cell_output.generated_by.tx_hash
+    expected_tx_hashes = ckb_transaction.cell_inputs.map(&:previous_cell_output).map(&:generated_by).map(&:tx_hash).sort
 
-    assert_equal [expected_tx_hash], ckb_transaction.display_inputs.pluck(:generated_tx_hash).uniq
+    assert_equal expected_tx_hashes, ckb_transaction.display_inputs.pluck(:generated_tx_hash).sort
   end
 
   test "#display_outputs should return live when cell not be consumed" do
@@ -106,5 +106,12 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction.outputs.update(consumed_by: consumed_tx, status: "dead")
 
     assert_equal ["dead"], ckb_transaction.display_outputs.pluck(:status).uniq
+  end
+
+  test "#display_inputs order should be the same as inputs in the tx" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+    expected_output_is = ckb_transaction.cell_inputs.map(&:previous_cell_output).map(&:id).sort
+
+    assert_equal expected_output_is, ckb_transaction.display_inputs.map{ |display_input| display_input[:id] }
   end
 end

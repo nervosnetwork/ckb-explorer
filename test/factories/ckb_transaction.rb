@@ -49,11 +49,11 @@ FactoryBot.define do
 
     trait :with_multiple_inputs_and_outputs do
       after(:create) do |ckb_transaction|
-        block = create(:block, :with_block_hash)
-        tx = create(:ckb_transaction, block: block)
         15.times do |index|
+          block = create(:block, :with_block_hash)
+          tx = create(:ckb_transaction, :with_cell_output_and_lock_script, block: block)
           create(:cell_output, capacity: 10**8 * 8, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index, generated_by: ckb_transaction)
-          previous_output = { tx_hash: ckb_transaction.tx_hash, index: 1 }
+          previous_output = { tx_hash: tx.tx_hash, index: 1 }
           create(:cell_input, previous_output: previous_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block)
         end
       end
