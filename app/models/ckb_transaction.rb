@@ -72,9 +72,10 @@ class CkbTransaction < ApplicationRecord
 
   def normal_tx_display_inputs(previews)
     Rails.cache.fetch("normal_tx_display_inputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
-      cell_inputs_for_display = previews ? inputs.limit(10) : inputs
-      cell_inputs_for_display.order(:id).map do |input|
-        { id: input.id, from_cellbase: false, capacity: input.capacity, address_hash: input.address_hash, generated_tx_hash: input.generated_by.tx_hash }
+      cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
+      cell_inputs_for_display.order(:id).map do |cell_input|
+        previous_cell_output = cell_input.previous_cell_output
+        { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash }
       end
     end
   end
