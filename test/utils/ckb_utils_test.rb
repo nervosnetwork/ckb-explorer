@@ -12,6 +12,18 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
   end
 
+  test ".generate_address should return mainnet address when mode is mainnet" do
+    ENV["CKB_NET_MODE"] = "mainnet"
+    lock_script = CKB::Types::Script.generate_lock(
+      "0x36c329ed630d6ce750712a477543672adab57f4c",
+      ENV["CODE_HASH"],
+      "data"
+    )
+
+    assert CkbUtils.generate_address(lock_script).start_with?("ckb")
+    ENV["CKB_NET_MODE"] = "testnet"
+  end
+
   test ".generate_address should return short payload blake160 address when use correct code match" do
     short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
