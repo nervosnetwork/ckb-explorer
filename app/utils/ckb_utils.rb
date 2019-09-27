@@ -49,7 +49,7 @@ class CkbUtils
     blake160 = lock_script.args.first
     return if blake160.blank? || !CKB::Utils.valid_hex_string?(blake160)
 
-    CKB::Address.new(blake160).generate
+    CKB::Address.new(blake160, mode: ENV["CKB_NET_MODE"]).generate
   end
 
   def self.full_payload_address(lock_script)
@@ -59,7 +59,7 @@ class CkbUtils
 
     return unless args.all? { |arg| CKB::Utils.valid_hex_string?(arg) }
 
-    CKB::Address.generate_full_payload_address(format_type, code_hash, args)
+    CKB::Address.generate_full_payload_address(format_type, code_hash, args, mode: ENV["CKB_NET_MODE"])
   end
 
   def self.use_default_lock_script?(lock_script)
