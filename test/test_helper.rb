@@ -19,7 +19,7 @@ require_relative "../config/environment"
 require "rails/test_help"
 DEFAULT_NODE_BLOCK_HASH = "0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2".freeze
 DEFAULT_NODE_BLOCK_NUMBER = 10
-HAS_UNCLES_BLOCK_HASH = "0x134af07206606968ec4aa49bb4a374909b127819e852f148bfbb390727d2efc7".freeze
+HAS_UNCLES_BLOCK_HASH = "0x5d15059e9afe2b2c10cefdf579014f7644ca1a78ae494975c30eba7f5171a5dc".freeze
 HAS_UNCLES_BLOCK_NUMBER = 4
 
 VCR.configure do |config|
@@ -103,9 +103,9 @@ def format_node_block(node_block)
   header["number"] = header["number"].hex
   header["timestamp"] = header["timestamp"].hex
   header["uncles_count"] = header["uncles_count"].hex
-  header["epoch"] = header["epoch"].hex
   header["version"] = header["version"].hex
   header["nonce"] = header["nonce"].hex
+  header["epoch"] = "0x#{CKB::Utils.to_hex(header["epoch"]).split(//).last(6).join("")}".hex
   proposals = node_block["proposals"].presence
   header.merge({ proposals: proposals }.deep_stringify_keys)
 end
@@ -261,7 +261,7 @@ module ActiveSupport
     # fixtures :all
     include FactoryBot::Syntax::Methods
     include ::RequestHelpers
-    parallelize(workers: :number_of_processors, with: :processes)
+    parallelize(workers: 2, with: :processes)
 
     # Add more helper methods to be used by all tests here...
     def before_setup

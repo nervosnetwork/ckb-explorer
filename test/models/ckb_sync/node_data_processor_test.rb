@@ -530,7 +530,7 @@ module CkbSync
     test "#process_block should update abandoned block's contained address's balance" do
       prepare_node_data(8)
       local_block = Block.find_by(number: 8)
-      balance_diff = 125000000000
+      balance_diff = 191780821918
       origin_balance = local_block.contained_addresses.sum(:balance)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
