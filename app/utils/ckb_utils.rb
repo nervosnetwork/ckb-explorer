@@ -109,6 +109,10 @@ class CkbUtils
     CkbSync::Api.instance.get_epoch_by_number(epoch)
   end
 
+  #The lower 56 bits of the epoch number field are split into 3 parts(listed in the order from higher bits to lower bits):
+  #The highest 16 bits represent the epoch length
+  #The next 16 bits represent the current block index in the epoch
+  #The lowest 24 bits represent the current epoch number
   def self.parse_epoch_info(header)
     epoch = header.epoch
     return get_epoch_info(epoch) if epoch.zero?
