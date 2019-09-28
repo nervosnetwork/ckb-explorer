@@ -26,7 +26,7 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           difficulty: "0x1000",
-          length: "0x07d0",
+          length: "0x3e8",
           number: "0x0",
           start_number: "0x0"
         )
