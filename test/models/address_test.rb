@@ -10,7 +10,7 @@ class AddressTest < ActiveSupport::TestCase
   test "address_hash should not be nil when args is empty" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        difficulty: "0x1000",
+        compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
         start_number: "0x0"
@@ -33,7 +33,7 @@ class AddressTest < ActiveSupport::TestCase
   test ".find_or_create_address should return the address when the address_hash exists and use default lock script" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        difficulty: "0x1000",
+        compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
         start_number: "0x0"
@@ -59,7 +59,7 @@ class AddressTest < ActiveSupport::TestCase
   test ".find_or_create_address should returned address's lock hash should equal with output's lock hash" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        difficulty: "0x1000",
+        compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
         start_number: "0x0"

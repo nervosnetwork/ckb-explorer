@@ -5,7 +5,7 @@ class MinerRankingTest < ActiveSupport::TestCase
     miner_ranking = MinerRanking.new
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
       CKB::Types::Epoch.new(
-        difficulty: "0x1000",
+        compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
         start_number: "0x0"

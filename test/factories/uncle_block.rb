@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :uncle_block do
-    difficulty { "0x100" }
+    compact_target { "0x100" }
     block_hash { "0xf6d9c070dfebb30eeb685d74836e7c7dcf82b61ef8214a769f50d9fa8b4ed783" }
     number { 7 }
     parent_hash { "0xe20604d760b8d13d76608fe74653554e727f81186697d976707d589a36948a59" }
