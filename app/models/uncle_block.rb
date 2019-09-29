@@ -22,19 +22,17 @@ end
 #  timestamp         :decimal(30, )
 #  transactions_root :binary
 #  proposals_hash    :binary
-#  uncles_count      :integer
 #  uncles_hash       :binary
 #  version           :integer
 #  proposals         :binary
 #  proposals_count   :integer
 #  block_id          :bigint
-#  witnesses_root    :binary
 #  epoch             :decimal(30, )
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #  dao               :string
-#  difficulty        :decimal(80, )    default(0)
 #  nonce             :decimal(30, )    default(0)
+#  compact_target    :decimal(20, )
 #
 # Indexes
 #

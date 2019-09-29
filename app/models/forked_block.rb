@@ -23,7 +23,6 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
-#  uncles_count               :integer
 #  uncles_hash                :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
@@ -35,7 +34,6 @@ end
 #  total_transaction_fee      :decimal(30, )
 #  ckb_transactions_count     :decimal(30, )    default(0)
 #  total_cell_capacity        :decimal(30, )
-#  witnesses_root             :binary
 #  epoch                      :decimal(30, )
 #  address_ids                :string           is an Array
 #  reward_status              :integer          default("pending")
@@ -48,8 +46,9 @@ end
 #  updated_at                 :datetime         not null
 #  primary_reward             :decimal(30, )    default(0)
 #  secondary_reward           :decimal(30, )    default(0)
-#  difficulty                 :decimal(80, )    default(0)
 #  nonce                      :decimal(30, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
+#  uncles_count               :integer
+#  compact_target             :decimal(20, )
 #
