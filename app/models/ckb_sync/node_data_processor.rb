@@ -127,7 +127,7 @@ module CkbSync
       generate_address_in_advance(cellbase)
 
       Block.new(
-        difficulty: header.difficulty,
+        compact_target: header.compact_target,
         block_hash: header.hash,
         number: header.number,
         parent_hash: header.parent_hash,
@@ -162,7 +162,7 @@ module CkbSync
       header = uncle_block.header
       epoch_info = CkbUtils.parse_epoch_info(header)
       local_block.uncle_blocks.build(
-        difficulty: header.difficulty,
+        compact_target: header.compact_target,
         block_hash: header.hash,
         number: header.number,
         parent_hash: header.parent_hash,
