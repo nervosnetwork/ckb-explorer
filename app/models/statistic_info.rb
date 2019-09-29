@@ -16,7 +16,8 @@ class StatisticInfo
   end
 
   def current_epoch_difficulty
-    CkbSync::Api.instance.get_current_epoch.difficulty
+    compact_target = CkbSync::Api.instance.get_current_epoch.compact_target
+    CkbUtils.compact_to_difficulty(compact_target)
   end
 
   def current_epoch_average_block_time

@@ -49,6 +49,10 @@ class Block < ApplicationRecord
     @target_block ||= Block.find_by(number: target_block_number)
   end
 
+  def difficulty
+    CkbUtils.compact_to_difficulty(compact_target)
+  end
+
   def self.find_block!(query_key)
     cached_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
   end

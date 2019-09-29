@@ -150,7 +150,6 @@ module CkbSync
         secondary_reward: 0,
         reward_status: header.number.to_i == 0 ? "issued" : "pending",
         total_transaction_fee: 0,
-        witnesses_root: header.witnesses_root,
         epoch: epoch_info.number,
         start_number: epoch_info.start_number,
         length: epoch_info.length,
@@ -174,7 +173,6 @@ module CkbSync
         version: header.version,
         proposals: uncle_block.proposals,
         proposals_count: uncle_block.proposals.count,
-        witnesses_root: header.witnesses_root,
         epoch: epoch_info.number,
         dao: header.dao
       )
@@ -202,7 +200,7 @@ module CkbSync
         block_number: local_block.number,
         block_timestamp: local_block.timestamp,
         transaction_fee: 0,
-        witnesses: transaction.witnesses.map(&:to_h),
+        witnesses: transaction.witnesses,
         is_cellbase: transaction_index.zero?
       )
     end

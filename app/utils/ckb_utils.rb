@@ -217,4 +217,39 @@ class CkbUtils
   rescue CKB::RPCError
     0
   end
+
+  def self.compact_to_difficulty(compact)
+    target, overflow = compact_to_target(compact)
+    if target.zero? || overflow
+      return 0
+    end
+
+    target_to_difficulty(target)
+  end
+
+  def self.compact_to_target(compact)
+    exponent = compact >> 24
+    mantissa = compact & 0x00ff_ffff
+
+    if exponent <= 3
+      mantissa >>= 8 * (3 - exponent)
+      ret = mantissa.dup
+    else
+      ret = mantissa.dup
+      ret <<= 8 * (exponent - 3)
+    end
+    overflow = !mantissa.zero? && exponent > 32
+
+    return ret, overflow
+  end
+
+  def self.target_to_difficulty(target)
+    u256_max_value = 2 ** 256 -1
+    hspace = "0x10000000000000000000000000000000000000000000000000000000000000000".hex
+    if target.zero?
+      u256_max_value
+    else
+      hspace / target
+    end
+  end
 end
