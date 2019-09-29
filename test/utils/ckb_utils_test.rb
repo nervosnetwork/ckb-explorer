@@ -5,7 +5,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
         difficulty: "0x1000",
-        length: "0x07d0",
+        length: "0x3e8",
         number: "0x0",
         start_number: "0x0"
       )
@@ -231,6 +231,25 @@ class CkbUtilsTest < ActiveSupport::TestCase
     lock_script = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x5282764c8cf8677148969758a183c9cdcdf207dd")
 
     assert_not CkbUtils.use_default_lock_script?(lock_script)
+  end
+
+  test ".parse_epoch_info should return epoch 0 info if epoch is equal to 0" do
+    header = OpenStruct.new(epoch: 0, number: 0)
+
+    assert_equal CkbUtils.get_epoch_info(0), CkbUtils.parse_epoch_info(header)
+  end
+
+  test ".parse_epoch_info should return correct epoch info" do
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+      node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+      header = node_block.header
+      epoch_info = CkbUtils.parse_epoch_info(header)
+      expected_epoch_info = CkbUtils.get_epoch_info(epoch_info.number)
+
+      assert_equal expected_epoch_info.number, epoch_info.number
+      assert_equal expected_epoch_info.start_number, epoch_info.start_number
+      assert_equal expected_epoch_info.length, epoch_info.length
+    end
   end
 
   private

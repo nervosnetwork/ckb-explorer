@@ -7,7 +7,7 @@ class AddressTest < ActiveSupport::TestCase
       through(:account_books)
   end
 
-  test "address_hash should be nil when args is empty" do
+  test "address_hash should not be nil when args is empty" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
         difficulty: "0x1000",
@@ -26,7 +26,7 @@ class AddressTest < ActiveSupport::TestCase
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
       address = block.contained_addresses.first
 
-      assert_nil address.address_hash
+      assert_not_nil address.address_hash
     end
   end
 

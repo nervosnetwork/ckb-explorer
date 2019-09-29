@@ -109,6 +109,22 @@ class CkbUtils
     CkbSync::Api.instance.get_epoch_by_number(epoch)
   end
 
+  #The lower 56 bits of the epoch number field are split into 3 parts(listed in the order from higher bits to lower bits):
+  #The highest 16 bits represent the epoch length
+  #The next 16 bits represent the current block index in the epoch
+  #The lowest 24 bits represent the current epoch number
+  def self.parse_epoch_info(header)
+    epoch = header.epoch
+    return get_epoch_info(epoch) if epoch.zero?
+
+    epoch_number = "0x#{CKB::Utils.to_hex(epoch).split(//)[-6..-1].join("")}".hex
+    block_index = "0x#{CKB::Utils.to_hex(epoch).split(//)[-10..-7].join("")}".hex
+    length = "0x#{CKB::Utils.to_hex(epoch).split(//)[2..-11].join("")}".hex
+    start_number = header.number - block_index
+
+    OpenStruct.new(number: epoch_number, length: length, start_number: start_number)
+  end
+
   def self.ckb_transaction_fee(ckb_transaction)
     if ckb_transaction.inputs.dao.present?
       dao_withdraw_tx_fee(ckb_transaction)
