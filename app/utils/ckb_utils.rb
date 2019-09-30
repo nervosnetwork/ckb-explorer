@@ -32,9 +32,18 @@ class CkbUtils
   end
 
   def self.generate_lock_script_from_cellbase(cellbase)
-    witnesses_data = cellbase.witnesses.first.data
-    hash_type = witnesses_data.first[-2..-1] == "00" ? "data" : "type"
-    CKB::Types::Script.new(code_hash: witnesses_data.first[0..-3], args: [witnesses_data.last], hash_type: hash_type)
+    witness = cellbase.witnesses.first.delete_prefix("0x")
+    code_hash_length = 64
+    header_length = 32
+    code_hash_end_index = header_length + code_hash_length - 1
+    code_hash = witness[header_length..code_hash_end_index]
+    hash_type_end_index = code_hash_end_index + 2
+    hash_type_hex = witness[code_hash_end_index + 1 .. hash_type_end_index]
+    items_count_length = 8
+    args = witness[hash_type_end_index + 1 + items_count_length .. -1]
+
+    hash_type = hash_type_hex == "00" ? "data" : "type"
+    CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: hash_type)
   end
 
   def self.generate_address(lock_script)
