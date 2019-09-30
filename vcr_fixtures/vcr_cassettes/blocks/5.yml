@@ -1,0 +1,40 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_by_number","params":["0x5"]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '2023'
+      Date:
+      - Mon, 30 Sep 2019 04:00:23 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":{"header":{"compact_target":"0x20010000","dao":"0x3c7205341a8807008002c3944388230019e7024dc80000000010a09a897a0100","epoch":"0x3e80005000000","hash":"0x21126e0808b4365095f56b919446c1b747338538521a9fb3358aa8467ce93cdc","nonce":"0xf5479f195ee8cd78","number":"0x5","parent_hash":"0x97e69aafb6c04ad1d84ae3644096828f02b52ca7f50aa0ec8fd585f7dbc7ab6c","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"0x16d7b13590f","transactions_root":"0x8f1f411219af7e046b8a3ea5370c77c736c4b7512f5f5b0263f87c5d694ff6fb","uncles_hash":"0x4de53309b8b632e4074fc7ab7cc274256dc7a97a841321c8bf4dc65ae9be3496","version":"0x0"},"proposals":[],"transactions":[{"cell_deps":[],"hash":"0x93babb08e14a418105298f346cb088d7310ec69e11e5664ba27323613bf31efe","header_deps":[],"inputs":[{"previous_output":{"index":"0xffffffff","tx_hash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"since":"0x5"}],"outputs":[{"capacity":"0x2ca7071b9e","lock":{"args":"0x","code_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","hash_type":"type"},"type":null}],"outputs_data":["0x"],"version":"0x0","witnesses":["0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd8"]}],"uncles":[{"header":{"compact_target":"0x20010000","dao":"0x34a41b52a48707000a43d8bdbc872300cba6af55b100000000feddb1877a0100","epoch":"0x3e80003000000","hash":"0x6f6a80dd406eb24087d8391d7c02620d2ed4e302fbb2a8e744687d861af7101a","nonce":"0x1fc7ab46fb26cfb8","number":"0x3","parent_hash":"0x163f0d6bcb8cc18e0c22c28d7cc3e6937582e70e42f4ab61b26bfbc59b39e16c","proposals_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","timestamp":"0x16d7b134d3e","transactions_root":"0x26b0ee60b59dba3ea4365084b0a4872dec20846650772fa63d540c8a6adb39b2","uncles_hash":"0x0000000000000000000000000000000000000000000000000000000000000000","version":"0x0"},"proposals":[]}]},"id":1}
+
+        '
+    http_version: 
+  recorded_at: Mon, 30 Sep 2019 04:00:23 GMT
+recorded_with: VCR 5.0.0

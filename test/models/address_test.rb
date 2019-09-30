@@ -20,7 +20,7 @@ class AddressTest < ActiveSupport::TestCase
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       tx = node_block.transactions.first
       output = tx.outputs.first
-      output.lock.instance_variable_set(:@args, [])
+      output.lock.instance_variable_set(:@args, "0x")
 
       CkbSync::NodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
@@ -43,7 +43,7 @@ class AddressTest < ActiveSupport::TestCase
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       tx = node_block.transactions.first
       output = tx.outputs.first
-      output.lock.instance_variable_set(:@args, ["0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6"])
+      output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
       output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
       CkbSync::NodeDataProcessor.new.process_block(node_block)
@@ -69,7 +69,7 @@ class AddressTest < ActiveSupport::TestCase
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       tx = node_block.transactions.first
       output = tx.outputs.first
-      output.lock.instance_variable_set(:@args, ["0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6"])
+      output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
       output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
       CkbSync::NodeDataProcessor.new.process_block(node_block)

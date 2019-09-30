@@ -36,11 +36,11 @@ class CkbUtils
     code_hash_length = 64
     header_length = 32
     code_hash_end_index = header_length + code_hash_length - 1
-    code_hash = witness[header_length..code_hash_end_index]
+    code_hash = "0x#{witness[header_length..code_hash_end_index]}"
     hash_type_end_index = code_hash_end_index + 2
     hash_type_hex = witness[code_hash_end_index + 1 .. hash_type_end_index]
     items_count_length = 8
-    args = witness[hash_type_end_index + 1 + items_count_length .. -1]
+    args = "0x#{witness[hash_type_end_index + 1 + items_count_length .. -1]}"
 
     hash_type = hash_type_hex == "00" ? "data" : "type"
     CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: hash_type)
@@ -55,7 +55,7 @@ class CkbUtils
   end
 
   def self.short_payload_blake160_address(lock_script)
-    blake160 = lock_script.args.first
+    blake160 = lock_script.args
     return if blake160.blank? || !CKB::Utils.valid_hex_string?(blake160)
 
     CKB::Address.new(blake160, mode: ENV["CKB_NET_MODE"]).generate
@@ -66,9 +66,9 @@ class CkbUtils
     args = lock_script.args
     format_type = lock_script.hash_type == "data" ? "0x02" : "0x04"
 
-    return unless args.all? { |arg| CKB::Utils.valid_hex_string?(arg) }
+    return unless CKB::Utils.valid_hex_string?(args)
 
-    CKB::Address.generate_full_payload_address(format_type, code_hash, args, mode: ENV["CKB_NET_MODE"])
+    CKB::Address.generate_full_payload_address(format_type, code_hash, [args], mode: ENV["CKB_NET_MODE"])
   end
 
   def self.use_default_lock_script?(lock_script)
@@ -216,7 +216,7 @@ class CkbUtils
     interests =
       dao_cells.reduce(0) do |memo, dao_cell|
         witness = witnesses[dao_cell.cell_index]
-        block_hash = header_deps[witness["data"].last.hex]
+        block_hash = header_deps[witness.last.hex]
         out_point = CKB::Types::OutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index)
 
         memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).to_i - dao_cell.capacity.to_i

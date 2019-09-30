@@ -183,7 +183,7 @@ module Api
         blockchain_info = CKB::Types::ChainInfo.new(
           is_initial_block_download: false,
           epoch: "0x1",
-          compact_target: "0x100",
+          difficulty: "0x100",
           median_time: "0x16bd6605e65",
           chain: "ckb_testnet",
           alerts: []
