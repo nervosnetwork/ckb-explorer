@@ -1,4 +1,4 @@
-# [](https://github.com/shaojunda/ckb-explorer/compare/v0.4.1...v) (2019-10-04)
+# [](https://github.com/shaojunda/ckb-explorer/compare/v0.4.1...v) (2019-10-05)
 
 
 ### Bug Fixes
