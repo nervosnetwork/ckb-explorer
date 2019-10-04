@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_09_30_025437) do
+ActiveRecord::Schema.define(version: 2019_10_04_060003) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -67,7 +67,7 @@ ActiveRecord::Schema.define(version: 2019_09_30_025437) do
     t.string "dao"
     t.decimal "primary_reward", precision: 30, default: "0"
     t.decimal "secondary_reward", precision: 30, default: "0"
-    t.decimal "nonce", precision: 30, default: "0"
+    t.decimal "nonce", precision: 50, default: "0"
     t.decimal "start_number", precision: 30, default: "0"
     t.decimal "length", precision: 30, default: "0"
     t.integer "uncles_count"
@@ -162,7 +162,7 @@ ActiveRecord::Schema.define(version: 2019_09_30_025437) do
     t.datetime "updated_at", null: false
     t.decimal "primary_reward", precision: 30, default: "0"
     t.decimal "secondary_reward", precision: 30, default: "0"
-    t.decimal "nonce", precision: 30, default: "0"
+    t.decimal "nonce", precision: 50, default: "0"
     t.decimal "start_number", precision: 30, default: "0"
     t.decimal "length", precision: 30, default: "0"
     t.integer "uncles_count"
@@ -207,7 +207,7 @@ ActiveRecord::Schema.define(version: 2019_09_30_025437) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "dao"
-    t.decimal "nonce", precision: 30, default: "0"
+    t.decimal "nonce", precision: 50, default: "0"
     t.decimal "compact_target", precision: 20
     t.index ["block_hash", "block_id"], name: "index_uncle_blocks_on_block_hash_and_block_id", unique: true
     t.index ["block_id"], name: "index_uncle_blocks_on_block_id"
