@@ -119,7 +119,7 @@ end
 #  dao                        :string
 #  primary_reward             :decimal(30, )    default(0)
 #  secondary_reward           :decimal(30, )    default(0)
-#  nonce                      :decimal(30, )    default(0)
+#  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
 #  uncles_count               :integer
