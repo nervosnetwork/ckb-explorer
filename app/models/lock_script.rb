@@ -23,7 +23,7 @@ end
 # Table name: lock_scripts
 #
 #  id             :bigint           not null, primary key
-#  args           :string           is an Array
+#  args           :string
 #  code_hash      :binary
 #  cell_output_id :bigint
 #  address_id     :bigint

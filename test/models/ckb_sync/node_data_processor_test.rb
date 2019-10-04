@@ -5,7 +5,7 @@ module CkbSync
     setup do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
-          difficulty: "0x1000",
+          compact_target: "0x1000",
           length: "0x07d0",
           number: "0x0",
           start_number: "0x0"
@@ -25,7 +25,7 @@ module CkbSync
     test "#process_block created block's attribute value should equal with the node block's attribute value" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
-          difficulty: "0x1000",
+          compact_target: "0x1000",
           length: "0x3e8",
           number: "0x0",
           start_number: "0x0"
@@ -41,11 +41,10 @@ module CkbSync
         formatted_node_block["start_number"] = epoch_info.start_number
         formatted_node_block["length"] = epoch_info.length
 
-        local_block_hash = local_block.attributes.select { |attribute| attribute.in?(%w(difficulty block_hash number parent_hash nonce timestamp transactions_root proposals_hash uncles_count uncles_hash version proposals witnesses_root epoch start_number length dao)) }
+        local_block_hash = local_block.attributes.select { |attribute| attribute.in?(%w(compact_target block_hash number parent_hash nonce timestamp transactions_root proposals_hash uncles_hash version proposals epoch start_number length dao)) }
         local_block_hash["hash"] = local_block_hash.delete("block_hash")
         local_block_hash["number"] = local_block_hash["number"]
         local_block_hash["version"] = local_block_hash["version"]
-        local_block_hash["uncles_count"] = local_block_hash["uncles_count"]
         local_block_hash["epoch"] = local_block_hash["epoch"]
         local_block_hash["timestamp"] = local_block_hash["timestamp"]
 
@@ -66,7 +65,7 @@ module CkbSync
     test "#process_block should generate miner's address when cellbase has witnesses" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
-          difficulty: "0x1000",
+          compact_target: "0x1000",
           length: "0x07d0",
           number: "0x0",
           start_number: "0x0"
@@ -86,7 +85,7 @@ module CkbSync
     test "#process_block should generate miner's lock when cellbase has witnesses" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
-          difficulty: "0x1000",
+          compact_target: "0x1000",
           length: "0x07d0",
           number: "0x0",
           start_number: "0x0"
@@ -174,7 +173,7 @@ module CkbSync
           local_block.uncle_blocks.map do |uncle_block|
             uncle_block =
               uncle_block.attributes.select do |attribute|
-                attribute.in?(%w(difficulty block_hash number parent_hash nonce timestamp transactions_root proposals_hash uncles_count uncles_hash version proposals witnesses_root epoch dao))
+                attribute.in?(%w(compact_target block_hash number parent_hash nonce timestamp transactions_root proposals_hash uncles_count uncles_hash version proposals epoch dao))
               end
             uncle_block["hash"] = uncle_block.delete("block_hash")
             uncle_block.sort
@@ -331,7 +330,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         node_output = node_block.transactions.first.outputs.first
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_CODE_HASH"], args: [])
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_CODE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         local_block = node_data_processor.process_block(node_block)
 
         assert_equal ["dao"], local_block.cell_outputs.pluck(:cell_type).uniq
@@ -342,7 +341,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         node_output = node_block.transactions.first.outputs.first
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_TYPE_HASH"], args: [])
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         local_block = node_data_processor.process_block(node_block)
 
         assert_equal ["dao"], local_block.cell_outputs.pluck(:cell_type).uniq
@@ -464,7 +463,7 @@ module CkbSync
         create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
         tx = node_block.transactions.last
         tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
-        tx.witnesses = [CKB::Types::Witness.new(data: %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000)), CKB::Types::Witness.new(data: %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d360a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000))]
+        tx.witnesses = %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef 0x000000000000000000)
 
         local_block = node_data_processor.process_block(node_block)
 
@@ -685,7 +684,7 @@ module CkbSync
       )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
-          difficulty: "0x1000",
+          compact_target: "0x1000",
           length: "0x07d0",
           number: "0x0",
           start_number: "0x0"
@@ -740,7 +739,7 @@ module CkbSync
       )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
-          difficulty: "0x1000",
+          compact_target: "0x1000",
           length: "0x07d0",
           number: "0x0",
           start_number: "0x0"
@@ -766,7 +765,7 @@ module CkbSync
       prepare_node_data(11)
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
-          difficulty: "0x1000",
+          compact_target: "0x1000",
           length: "0x07d0",
           number: "0x0",
           start_number: "0x0"

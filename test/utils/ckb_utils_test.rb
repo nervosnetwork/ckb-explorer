@@ -4,7 +4,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   setup do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        difficulty: "0x1000",
+        compact_target: "0x1000",
         length: "0x3e8",
         number: "0x0",
         start_number: "0x0"
@@ -139,7 +139,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
       miner_address = Address.find_or_create_address(lock_script)
       unspent_cells = miner_address.cell_outputs.live
-      expected_address_cell_consumed = unspent_cells.reduce(0) { |memo, cell| memo + cell.node_output.calculate_min_capacity }
+      expected_address_cell_consumed = unspent_cells.reduce(0) { |memo, cell| memo + cell.node_output.calculate_min_capacity(cell.data) }
 
       assert_equal expected_address_cell_consumed, CkbUtils.address_cell_consumed(miner_address.address_hash)
     end
@@ -172,7 +172,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
       tx = node_block.transactions.last
       tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
-      tx.witnesses = [CKB::Types::Witness.new(data: %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000)), CKB::Types::Witness.new(data: %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d360a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000))]
+      tx.witnesses = %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000)
 
       node_data_processor.process_block(node_block)
 
@@ -197,7 +197,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", index: "0x0"))
       tx.inputs.unshift(input)
       tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
-      tx.witnesses = [CKB::Types::Witness.new(data: %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000)), CKB::Types::Witness.new(data: %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d360a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000))]
+      tx.witnesses = %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x0000000000000000)
 
       node_data_processor.process_block(node_block)
 

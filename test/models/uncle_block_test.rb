@@ -12,7 +12,6 @@ class UncleBlockTest < ActiveSupport::TestCase
     should validate_presence_of(:timestamp).on(:create)
     should validate_presence_of(:transactions_root).on(:create)
     should validate_presence_of(:proposals_hash).on(:create)
-    should validate_presence_of(:uncles_count).on(:create)
     should validate_presence_of(:uncles_hash).on(:create)
     should validate_presence_of(:version).on(:create)
   end
@@ -60,7 +59,7 @@ class UncleBlockTest < ActiveSupport::TestCase
   test "#proposals should decodes packed string" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        difficulty: "0x1000",
+        compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
         start_number: "0x0"
