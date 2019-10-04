@@ -32,17 +32,24 @@ class CkbUtils
   end
 
   def self.generate_lock_script_from_cellbase(cellbase)
-    witness = cellbase.witnesses.first.delete_prefix("0x")
-    code_hash_length = 64
-    header_length = 32
-    code_hash_end_index = header_length + code_hash_length - 1
-    code_hash = "0x#{witness[header_length..code_hash_end_index]}"
-    hash_type_end_index = code_hash_end_index + 2
-    hash_type_hex = witness[code_hash_end_index + 1 .. hash_type_end_index]
-    items_count_length = 8
-    args = "0x#{witness[hash_type_end_index + 1 + items_count_length .. -1]}"
+    cellbase_witness = cellbase.witnesses.first.delete_prefix("0x")
+    cellbase_witness_serialization = [cellbase_witness].pack("H*")
+    script_offset = [cellbase_witness_serialization[4..7].unpack1("H*")].pack("H*").unpack1("V")
+    message_offset = [cellbase_witness_serialization[8..11].unpack1("H*")].pack("H*").unpack1("V")
+    script_serialization = cellbase_witness_serialization[script_offset...message_offset]
+    code_hash_offset = [script_serialization[4..7].unpack1("H*")].pack("H*").unpack1("V")
+    hash_type_offset = [script_serialization[8..11].unpack1("H*")].pack("H*").unpack1("V")
+    args_offset = [script_serialization[12..15].unpack1("H*")].pack("H*").unpack1("V")
+    code_hash_serialization = script_serialization[code_hash_offset...hash_type_offset]
+    hash_type_serialization = script_serialization[hash_type_offset...args_offset]
+    args_serialization = script_serialization[hash_type_offset + 1..-1]
+    args_serialization = args_serialization[4..-1]
 
-    hash_type = hash_type_hex == "00" ? "data" : "type"
+    code_hash = "0x#{code_hash_serialization.unpack1("H*")}"
+    hash_type_hex = "0x#{hash_type_serialization.unpack1("H*")}"
+    args = "0x#{args_serialization.unpack1("H*")}"
+
+    hash_type = hash_type_hex == "0x00" ? "data" : "type"
     CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: hash_type)
   end
 
