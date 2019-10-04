@@ -1,3 +1,35 @@
+# [](https://github.com/shaojunda/ckb-explorer/compare/v0.4.1...v) (2019-10-04)
+
+
+### Bug Fixes
+
+* display input out of order ([6bdefcc](https://github.com/shaojunda/ckb-explorer/commit/6bdefcc))
+
+
+### Features
+
+* adapt mainnet address ([fdd30ea](https://github.com/shaojunda/ckb-explorer/commit/fdd30ea))
+* add chain root ([70c603b](https://github.com/shaojunda/ckb-explorer/commit/70c603b))
+* add chain_root to block serializer ([ef3227d](https://github.com/shaojunda/ckb-explorer/commit/ef3227d))
+* add codecov and telegram group badge ([769b0f5](https://github.com/shaojunda/ckb-explorer/commit/769b0f5))
+* add license badge ([d39bf5a](https://github.com/shaojunda/ckb-explorer/commit/d39bf5a))
+* analyze the epoch number from the epoch ([3682d92](https://github.com/shaojunda/ckb-explorer/commit/3682d92))
+* Bump sdk to v0.21.0 ([8570c44](https://github.com/shaojunda/ckb-explorer/commit/8570c44))
+* change args type to string ([773954d](https://github.com/shaojunda/ckb-explorer/commit/773954d))
+* change columns type to decimal ([e23eb53](https://github.com/shaojunda/ckb-explorer/commit/e23eb53))
+* change generate lock from cellbase method logic ([d8e0ee1](https://github.com/shaojunda/ckb-explorer/commit/d8e0ee1))
+* change use default lock verification rule ([b67057a](https://github.com/shaojunda/ckb-explorer/commit/b67057a))
+* create short payload blake160 address when use correct matches ([c9bba68](https://github.com/shaojunda/ckb-explorer/commit/c9bba68))
+* generate full payload address ([2e49198](https://github.com/shaojunda/ckb-explorer/commit/2e49198))
+* implement difficulty on blocks and uncle blocks ([376ee37](https://github.com/shaojunda/ckb-explorer/commit/376ee37))
+* replace difficulty with compact_target ([bfa6efc](https://github.com/shaojunda/ckb-explorer/commit/bfa6efc))
+* update columns ([214067d](https://github.com/shaojunda/ckb-explorer/commit/214067d))
+* update fixtures ([78e312c](https://github.com/shaojunda/ckb-explorer/commit/78e312c))
+* update uncles_count calculation method ([7a492d0](https://github.com/shaojunda/ckb-explorer/commit/7a492d0))
+* use github actions ([88cc30f](https://github.com/shaojunda/ckb-explorer/commit/88cc30f))
+
+
+
 # [](https://github.com/shaojunda/ckb-explorer/compare/v0.4.1...v) (2019-09-21)
 
 
