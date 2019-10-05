@@ -121,13 +121,13 @@ module CkbSync
 
     def build_block(node_block)
       header = node_block.header
-      epoch_info = CkbUtils.get_epoch_info(header.epoch)
+      epoch_info = CkbUtils.parse_epoch_info(header)
       cellbase = node_block.transactions.first
 
       generate_address_in_advance(cellbase)
 
       Block.new(
-        difficulty: header.difficulty,
+        compact_target: header.compact_target,
         block_hash: header.hash,
         number: header.number,
         parent_hash: header.parent_hash,
@@ -135,7 +135,7 @@ module CkbSync
         timestamp: header.timestamp,
         transactions_root: header.transactions_root,
         proposals_hash: header.proposals_hash,
-        uncles_count: header.uncles_count,
+        uncles_count: node_block.uncles.count,
         uncles_hash: header.uncles_hash,
         uncle_block_hashes: uncle_block_hashes(node_block.uncles),
         version: header.version,
@@ -145,13 +145,12 @@ module CkbSync
         total_cell_capacity: CkbUtils.total_cell_capacity(node_block.transactions),
         miner_hash: CkbUtils.miner_hash(cellbase),
         miner_lock_hash: CkbUtils.miner_lock_hash(cellbase),
-        reward: CkbUtils.base_reward(header.number, header.epoch, cellbase),
-        primary_reward: CkbUtils.base_reward(header.number, header.epoch, cellbase),
+        reward: CkbUtils.base_reward(header.number, epoch_info.number, cellbase),
+        primary_reward: CkbUtils.base_reward(header.number, epoch_info.number, cellbase),
         secondary_reward: 0,
         reward_status: header.number.to_i == 0 ? "issued" : "pending",
         total_transaction_fee: 0,
-        witnesses_root: header.witnesses_root,
-        epoch: header.epoch,
+        epoch: epoch_info.number,
         start_number: epoch_info.start_number,
         length: epoch_info.length,
         dao: header.dao
@@ -160,8 +159,9 @@ module CkbSync
 
     def build_uncle_block(uncle_block, local_block)
       header = uncle_block.header
+      epoch_info = CkbUtils.parse_epoch_info(header)
       local_block.uncle_blocks.build(
-        difficulty: header.difficulty,
+        compact_target: header.compact_target,
         block_hash: header.hash,
         number: header.number,
         parent_hash: header.parent_hash,
@@ -169,13 +169,11 @@ module CkbSync
         timestamp: header.timestamp,
         transactions_root: header.transactions_root,
         proposals_hash: header.proposals_hash,
-        uncles_count: header.uncles_count,
         uncles_hash: header.uncles_hash,
         version: header.version,
         proposals: uncle_block.proposals,
         proposals_count: uncle_block.proposals.count,
-        witnesses_root: header.witnesses_root,
-        epoch: header.epoch,
+        epoch: epoch_info.number,
         dao: header.dao
       )
     end
@@ -202,7 +200,7 @@ module CkbSync
         block_number: local_block.number,
         block_timestamp: local_block.timestamp,
         transaction_fee: 0,
-        witnesses: transaction.witnesses.map(&:to_h),
+        witnesses: transaction.witnesses,
         is_cellbase: transaction_index.zero?
       )
     end

@@ -1,7 +1,7 @@
 class UncleBlock < ApplicationRecord
   belongs_to :block
 
-  validates_presence_of :difficulty, :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version
+  validates_presence_of :compact_target, :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_hash, :version
 
   attribute :block_hash, :ckb_hash
   attribute :parent_hash, :ckb_hash
@@ -9,6 +9,11 @@ class UncleBlock < ApplicationRecord
   attribute :proposals_hash, :ckb_hash
   attribute :uncles_hash, :ckb_hash
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
+
+
+  def difficulty
+    CkbUtils.compact_to_difficulty(compact_target)
+  end
 end
 
 # == Schema Information
@@ -22,19 +27,17 @@ end
 #  timestamp         :decimal(30, )
 #  transactions_root :binary
 #  proposals_hash    :binary
-#  uncles_count      :integer
 #  uncles_hash       :binary
 #  version           :integer
 #  proposals         :binary
 #  proposals_count   :integer
 #  block_id          :bigint
-#  witnesses_root    :binary
 #  epoch             :decimal(30, )
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #  dao               :string
-#  difficulty        :decimal(80, )    default(0)
-#  nonce             :decimal(30, )    default(0)
+#  nonce             :decimal(50, )    default(0)
+#  compact_target    :decimal(20, )
 #
 # Indexes
 #

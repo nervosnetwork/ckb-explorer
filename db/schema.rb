@@ -2,15 +2,15 @@
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
 #
-# Note that this schema.rb definition is the authoritative source for your
-# database schema. If you need to create the application database on another
-# system, you should be using db:schema:load, not running all the migrations
-# from scratch. The latter is a flawed and unsustainable approach (the more migrations
-# you'll amass, the slower it'll run and the greater likelihood for issues).
+# This file is the source Rails uses to define your schema when running `rails
+# db:schema:load`. When creating a new database, `rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_09_16_094321) do
+ActiveRecord::Schema.define(version: 2019_10_04_060003) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -44,7 +44,6 @@ ActiveRecord::Schema.define(version: 2019_09_16_094321) do
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
-    t.integer "uncles_count"
     t.binary "uncles_hash"
     t.binary "uncle_block_hashes"
     t.integer "version"
@@ -56,7 +55,6 @@ ActiveRecord::Schema.define(version: 2019_09_16_094321) do
     t.decimal "total_transaction_fee", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
     t.decimal "total_cell_capacity", precision: 30
-    t.binary "witnesses_root"
     t.decimal "epoch", precision: 30
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -69,10 +67,11 @@ ActiveRecord::Schema.define(version: 2019_09_16_094321) do
     t.string "dao"
     t.decimal "primary_reward", precision: 30, default: "0"
     t.decimal "secondary_reward", precision: 30, default: "0"
-    t.decimal "difficulty", precision: 80, default: "0"
-    t.decimal "nonce", precision: 30, default: "0"
+    t.decimal "nonce", precision: 50, default: "0"
     t.decimal "start_number", precision: 30, default: "0"
     t.decimal "length", precision: 30, default: "0"
+    t.integer "uncles_count"
+    t.decimal "compact_target", precision: 20
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
@@ -140,7 +139,6 @@ ActiveRecord::Schema.define(version: 2019_09_16_094321) do
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
-    t.integer "uncles_count"
     t.binary "uncles_hash"
     t.binary "uncle_block_hashes"
     t.integer "version"
@@ -152,7 +150,6 @@ ActiveRecord::Schema.define(version: 2019_09_16_094321) do
     t.decimal "total_transaction_fee", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
     t.decimal "total_cell_capacity", precision: 30
-    t.binary "witnesses_root"
     t.decimal "epoch", precision: 30
     t.string "address_ids", array: true
     t.integer "reward_status", default: 0
@@ -165,14 +162,15 @@ ActiveRecord::Schema.define(version: 2019_09_16_094321) do
     t.datetime "updated_at", null: false
     t.decimal "primary_reward", precision: 30, default: "0"
     t.decimal "secondary_reward", precision: 30, default: "0"
-    t.decimal "difficulty", precision: 80, default: "0"
-    t.decimal "nonce", precision: 30, default: "0"
+    t.decimal "nonce", precision: 50, default: "0"
     t.decimal "start_number", precision: 30, default: "0"
     t.decimal "length", precision: 30, default: "0"
+    t.integer "uncles_count"
+    t.decimal "compact_target", precision: 20
   end
 
   create_table "lock_scripts", force: :cascade do |t|
-    t.string "args", array: true
+    t.string "args"
     t.binary "code_hash"
     t.bigint "cell_output_id"
     t.bigint "address_id"
@@ -184,7 +182,7 @@ ActiveRecord::Schema.define(version: 2019_09_16_094321) do
   end
 
   create_table "type_scripts", force: :cascade do |t|
-    t.string "args", array: true
+    t.string "args"
     t.binary "code_hash"
     t.bigint "cell_output_id"
     t.datetime "created_at", null: false
@@ -200,19 +198,17 @@ ActiveRecord::Schema.define(version: 2019_09_16_094321) do
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
-    t.integer "uncles_count"
     t.binary "uncles_hash"
     t.integer "version"
     t.binary "proposals"
     t.integer "proposals_count"
     t.bigint "block_id"
-    t.binary "witnesses_root"
     t.decimal "epoch", precision: 30
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "dao"
-    t.decimal "difficulty", precision: 80, default: "0"
-    t.decimal "nonce", precision: 30, default: "0"
+    t.decimal "nonce", precision: 50, default: "0"
+    t.decimal "compact_target", precision: 20
     t.index ["block_hash", "block_id"], name: "index_uncle_blocks_on_block_hash_and_block_id", unique: true
     t.index ["block_id"], name: "index_uncle_blocks_on_block_id"
   end
