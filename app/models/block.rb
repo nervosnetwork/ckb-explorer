@@ -12,7 +12,7 @@ class Block < ApplicationRecord
   has_many :cell_outputs
   has_many :cell_inputs
 
-  validates_presence_of :difficulty, :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
+  validates_presence_of :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
   validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed, numericality: { greater_than_or_equal_to: 0 }
 
   attribute :block_hash, :ckb_hash
@@ -47,6 +47,10 @@ class Block < ApplicationRecord
 
   def target_block
     @target_block ||= Block.find_by(number: target_block_number)
+  end
+
+  def difficulty
+    CkbUtils.compact_to_difficulty(compact_target)
   end
 
   def self.find_block!(query_key)
@@ -92,7 +96,6 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
-#  uncles_count               :integer
 #  uncles_hash                :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
@@ -104,7 +107,6 @@ end
 #  total_transaction_fee      :decimal(30, )
 #  ckb_transactions_count     :decimal(30, )    default(0)
 #  total_cell_capacity        :decimal(30, )
-#  witnesses_root             :binary
 #  epoch                      :decimal(30, )
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
@@ -117,10 +119,11 @@ end
 #  dao                        :string
 #  primary_reward             :decimal(30, )    default(0)
 #  secondary_reward           :decimal(30, )    default(0)
-#  difficulty                 :decimal(80, )    default(0)
-#  nonce                      :decimal(30, )    default(0)
+#  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
+#  uncles_count               :integer
+#  compact_target             :decimal(20, )
 #
 # Indexes
 #

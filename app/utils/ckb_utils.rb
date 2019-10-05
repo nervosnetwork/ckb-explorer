@@ -32,9 +32,25 @@ class CkbUtils
   end
 
   def self.generate_lock_script_from_cellbase(cellbase)
-    witnesses_data = cellbase.witnesses.first.data
-    hash_type = witnesses_data.first[-2..-1] == "00" ? "data" : "type"
-    CKB::Types::Script.new(code_hash: witnesses_data.first[0..-3], args: [witnesses_data.last], hash_type: hash_type)
+    cellbase_witness = cellbase.witnesses.first.delete_prefix("0x")
+    cellbase_witness_serialization = [cellbase_witness].pack("H*")
+    script_offset = [cellbase_witness_serialization[4..7].unpack1("H*")].pack("H*").unpack1("V")
+    message_offset = [cellbase_witness_serialization[8..11].unpack1("H*")].pack("H*").unpack1("V")
+    script_serialization = cellbase_witness_serialization[script_offset...message_offset]
+    code_hash_offset = [script_serialization[4..7].unpack1("H*")].pack("H*").unpack1("V")
+    hash_type_offset = [script_serialization[8..11].unpack1("H*")].pack("H*").unpack1("V")
+    args_offset = [script_serialization[12..15].unpack1("H*")].pack("H*").unpack1("V")
+    code_hash_serialization = script_serialization[code_hash_offset...hash_type_offset]
+    hash_type_serialization = script_serialization[hash_type_offset...args_offset]
+    args_serialization = script_serialization[hash_type_offset + 1..-1]
+    args_serialization = args_serialization[4..-1]
+
+    code_hash = "0x#{code_hash_serialization.unpack1("H*")}"
+    hash_type_hex = "0x#{hash_type_serialization.unpack1("H*")}"
+    args = "0x#{args_serialization.unpack1("H*")}"
+
+    hash_type = hash_type_hex == "0x00" ? "data" : "type"
+    CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: hash_type)
   end
 
   def self.generate_address(lock_script)
@@ -46,10 +62,10 @@ class CkbUtils
   end
 
   def self.short_payload_blake160_address(lock_script)
-    blake160 = lock_script.args.first
+    blake160 = lock_script.args
     return if blake160.blank? || !CKB::Utils.valid_hex_string?(blake160)
 
-    CKB::Address.new(blake160).generate
+    CKB::Address.new(blake160, mode: ENV["CKB_NET_MODE"]).generate
   end
 
   def self.full_payload_address(lock_script)
@@ -57,9 +73,9 @@ class CkbUtils
     args = lock_script.args
     format_type = lock_script.hash_type == "data" ? "0x02" : "0x04"
 
-    return unless args.all? { |arg| CKB::Utils.valid_hex_string?(arg) }
+    return unless CKB::Utils.valid_hex_string?(args)
 
-    CKB::Address.generate_full_payload_address(format_type, code_hash, args)
+    CKB::Address.generate_full_payload_address(format_type, code_hash, [args], mode: ENV["CKB_NET_MODE"])
   end
 
   def self.use_default_lock_script?(lock_script)
@@ -107,6 +123,22 @@ class CkbUtils
 
   def self.get_epoch_info(epoch)
     CkbSync::Api.instance.get_epoch_by_number(epoch)
+  end
+
+  #The lower 56 bits of the epoch number field are split into 3 parts(listed in the order from higher bits to lower bits):
+  #The highest 16 bits represent the epoch length
+  #The next 16 bits represent the current block index in the epoch
+  #The lowest 24 bits represent the current epoch number
+  def self.parse_epoch_info(header)
+    epoch = header.epoch
+    return get_epoch_info(epoch) if epoch.zero?
+
+    epoch_number = "0x#{CKB::Utils.to_hex(epoch).split(//)[-6..-1].join("")}".hex
+    block_index = "0x#{CKB::Utils.to_hex(epoch).split(//)[-10..-7].join("")}".hex
+    length = "0x#{CKB::Utils.to_hex(epoch).split(//)[2..-11].join("")}".hex
+    start_number = header.number - block_index
+
+    OpenStruct.new(number: epoch_number, length: length, start_number: start_number)
   end
 
   def self.ckb_transaction_fee(ckb_transaction)
@@ -191,7 +223,7 @@ class CkbUtils
     interests =
       dao_cells.reduce(0) do |memo, dao_cell|
         witness = witnesses[dao_cell.cell_index]
-        block_hash = header_deps[witness["data"].last.hex]
+        block_hash = header_deps[witness.last.hex]
         out_point = CKB::Types::OutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index)
 
         memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).to_i - dao_cell.capacity.to_i
@@ -200,5 +232,40 @@ class CkbUtils
     ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
   rescue CKB::RPCError
     0
+  end
+
+  def self.compact_to_difficulty(compact)
+    target, overflow = compact_to_target(compact)
+    if target.zero? || overflow
+      return 0
+    end
+
+    target_to_difficulty(target)
+  end
+
+  def self.compact_to_target(compact)
+    exponent = compact >> 24
+    mantissa = compact & 0x00ff_ffff
+
+    if exponent <= 3
+      mantissa >>= 8 * (3 - exponent)
+      ret = mantissa.dup
+    else
+      ret = mantissa.dup
+      ret <<= 8 * (exponent - 3)
+    end
+    overflow = !mantissa.zero? && exponent > 32
+
+    return ret, overflow
+  end
+
+  def self.target_to_difficulty(target)
+    u256_max_value = 2 ** 256 -1
+    hspace = "0x10000000000000000000000000000000000000000000000000000000000000000".hex
+    if target.zero?
+      u256_max_value
+    else
+      hspace / target
+    end
   end
 end

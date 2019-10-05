@@ -7,7 +7,7 @@ module Api
         CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(100)
         CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
           CKB::Types::Epoch.new(
-            difficulty: "0x1000",
+            compact_target: "0x1000",
             length: "0x07d0",
             number: "0x0",
             start_number: "0x0"
@@ -84,7 +84,7 @@ module Api
         ENV["MINER_RANKING_EVENT"] = "on"
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
-            difficulty: "0x1000",
+            compact_target: "0x1000",
             length: "0x07d0",
             number: "0x0",
             start_number: "0x0"
@@ -101,7 +101,7 @@ module Api
         ENV["MINER_RANKING_EVENT"] = "on"
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
-            difficulty: "0x1000",
+            compact_target: "0x1000",
             length: "0x07d0",
             number: "0x0",
             start_number: "0x0"
@@ -119,7 +119,7 @@ module Api
         ENV["MINER_RANKING_EVENT"] = "on"
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
-            difficulty: "0x1000",
+            compact_target: "0x1000",
             length: "0x07d0",
             number: "0x0",
             start_number: "0x0"

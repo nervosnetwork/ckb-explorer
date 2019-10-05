@@ -7,10 +7,10 @@ class AddressTest < ActiveSupport::TestCase
       through(:account_books)
   end
 
-  test "address_hash should be nil when args is empty" do
+  test "address_hash should not be nil when args is empty" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        difficulty: "0x1000",
+        compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
         start_number: "0x0"
@@ -20,20 +20,20 @@ class AddressTest < ActiveSupport::TestCase
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       tx = node_block.transactions.first
       output = tx.outputs.first
-      output.lock.instance_variable_set(:@args, [])
+      output.lock.instance_variable_set(:@args, "0x")
 
       CkbSync::NodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
       address = block.contained_addresses.first
 
-      assert_nil address.address_hash
+      assert_not_nil address.address_hash
     end
   end
 
   test ".find_or_create_address should return the address when the address_hash exists and use default lock script" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        difficulty: "0x1000",
+        compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
         start_number: "0x0"
@@ -43,7 +43,7 @@ class AddressTest < ActiveSupport::TestCase
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       tx = node_block.transactions.first
       output = tx.outputs.first
-      output.lock.instance_variable_set(:@args, ["0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6"])
+      output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
       output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
       CkbSync::NodeDataProcessor.new.process_block(node_block)
@@ -59,7 +59,7 @@ class AddressTest < ActiveSupport::TestCase
   test ".find_or_create_address should returned address's lock hash should equal with output's lock hash" do
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
-        difficulty: "0x1000",
+        compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
         start_number: "0x0"
@@ -69,7 +69,7 @@ class AddressTest < ActiveSupport::TestCase
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       tx = node_block.transactions.first
       output = tx.outputs.first
-      output.lock.instance_variable_set(:@args, ["0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6"])
+      output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
       output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
       CkbSync::NodeDataProcessor.new.process_block(node_block)

@@ -19,7 +19,7 @@ end
 # Table name: type_scripts
 #
 #  id             :bigint           not null, primary key
-#  args           :string           is an Array
+#  args           :string
 #  code_hash      :binary
 #  cell_output_id :bigint
 #  created_at     :datetime         not null
