@@ -116,13 +116,13 @@ class CkbTransactionTest < ActiveSupport::TestCase
   end
 
   test "#display_inputs should return dao display input when cell type is dao" do
-    prepare_node_data(11)
+    prepare_node_data
     CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
-    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, header_deps: %w(0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2 0x83dcd4378e31ed9426df6acfaf0f8d2a028bf3c479ec21430eb03d562bb5bde9))
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, header_deps: [DEFAULT_NODE_BLOCK_HASH, "0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2"])
     dao_input = ckb_transaction.cell_inputs.first.previous_cell_output
-    witness = ckb_transaction.witnesses.first
+    witness = ckb_transaction.witnesses[dao_input.cell_index]
     started_block_number = Block.find(dao_input.block_id).number
-    ended_block_hash = ckb_transaction.header_deps[witness["data"].last.hex]
+    ended_block_hash = ckb_transaction.header_deps[witness.hex]
     ended_block_number = Block.find_by(block_hash: ended_block_hash).number
     dao_input.update(cell_type: "dao")
     out_point = CKB::Types::OutPoint.new(tx_hash: dao_input.tx_hash, index: dao_input.cell_index)

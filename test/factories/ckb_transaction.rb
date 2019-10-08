@@ -50,12 +50,12 @@ FactoryBot.define do
     trait :with_multiple_inputs_and_outputs do
       after(:create) do |ckb_transaction|
         15.times do |index|
-          block = create(:block, :with_block_hash)
+          block = create(:block, :with_block_hash, number: 12)
           tx = create(:ckb_transaction, :with_cell_output_and_lock_script, block: block)
           create(:cell_output, capacity: 10**8 * 8, ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index, generated_by: ckb_transaction)
           previous_output = { tx_hash: tx.tx_hash, index: 0 }
           create(:cell_input, previous_output: previous_output, ckb_transaction: ckb_transaction, block: ckb_transaction.block)
-          ckb_transaction.update(witnesses: [CKB::Types::Witness.new(data: %W(0xe95e81a3cc6bf38cdd87a1d347e08927848c48e149314744ff086a1973ca1f4170b66cfce0141f0009b67b2c1088afbb534b5955bddab56afdb20cf54902405a0#{index} 0x0000000000000001))].map(&:to_h))
+          ckb_transaction.update(witnesses: %W(0x0x4e52933358ae2f26863b8c1c71bf20f17489328820f8f2cd84a070069f10ceef784bc3693c3c51b93475a7b5dbf652ba6532d0580ecc1faf909f9fd53c5f6405000000000000000000))
         end
       end
     end
