@@ -88,7 +88,8 @@ class CkbTransaction < ApplicationRecord
 
   def attributes_for_dao_input(input)
     witness = witnesses[input.cell_index]
-    withdraw_block_hash = header_deps[witness["data"].last.hex]
+    header_deps_index = CKB::Utils.bin_to_hex(CKB::Utils.hex_to_bin(witness)[-8..-1]).hex
+    withdraw_block_hash = header_deps[header_deps_index]
     started_block_number = Block.find(input.block_id).number
     ended_block_number = Block.find_by(block_hash: withdraw_block_hash).number
     subsidy = CkbUtils.dao_subsidy(input, header_deps, witnesses)
