@@ -36,7 +36,7 @@ end
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #  dao               :string
-#  nonce             :decimal(30, )    default(0)
+#  nonce             :decimal(50, )    default(0)
 #  compact_target    :decimal(20, )
 #
 # Indexes

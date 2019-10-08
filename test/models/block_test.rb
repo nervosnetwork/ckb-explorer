@@ -106,8 +106,8 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#invalid! delete cell outputs under the abandoned block" do
-    prepare_node_data(9)
-    local_block = Block.find_by(number: 9)
+    prepare_node_data(19)
+    local_block = Block.find_by(number: 19)
 
     assert_not_empty local_block.cell_outputs
 
@@ -119,8 +119,8 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#invalid! delete all lock script under the abandoned block" do
-    prepare_node_data(9)
-    local_block = Block.find_by(number: 9)
+    prepare_node_data(19)
+    local_block = Block.find_by(number: 19)
     origin_lock_scripts = local_block.cell_outputs.map(&:lock_script)
 
     assert_not_empty origin_lock_scripts
@@ -133,8 +133,8 @@ class BlockTest < ActiveSupport::TestCase
   end
 
   test "#invalid! delete all type script under the abandoned block" do
-    prepare_node_data(9)
-    local_block = Block.find_by(number: 9)
+    prepare_node_data(19)
+    local_block = Block.find_by(number: 19)
     origin_type_scripts = local_block.cell_outputs.map(&:type_script)
 
     assert_not_empty origin_type_scripts
