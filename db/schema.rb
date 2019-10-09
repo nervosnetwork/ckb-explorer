@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_09_081603) do
+ActiveRecord::Schema.define(version: 2019_10_09_083202) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -143,6 +143,19 @@ ActiveRecord::Schema.define(version: 2019_10_09_081603) do
     t.bigint "total_depositors_count", default: 0
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "dao_events", force: :cascade do |t|
+    t.bigint "block_id"
+    t.bigint "ckb_transaction_id"
+    t.bigint "address_id"
+    t.bigint "contract_id"
+    t.integer "event_type", limit: 2
+    t.decimal "value", precision: 30, default: "0"
+    t.integer "status", limit: 2, default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["block_id"], name: "index_dao_events_on_block_id"
   end
 
   create_table "forked_blocks", force: :cascade do |t|
