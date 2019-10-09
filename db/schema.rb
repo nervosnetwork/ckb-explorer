@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_09_075035) do
+ActiveRecord::Schema.define(version: 2019_10_09_081603) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -132,6 +132,17 @@ ActiveRecord::Schema.define(version: 2019_10_09_075035) do
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
+  end
+
+  create_table "dao_contracts", force: :cascade do |t|
+    t.decimal "total_deposit", precision: 30, default: "0"
+    t.decimal "subsidy_granted", precision: 30, default: "0"
+    t.bigint "deposit_transactions_count", default: 0
+    t.bigint "withdraw_transactions_count", default: 0
+    t.integer "depositors_count", default: 0
+    t.bigint "total_depositors_count", default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "forked_blocks", force: :cascade do |t|
