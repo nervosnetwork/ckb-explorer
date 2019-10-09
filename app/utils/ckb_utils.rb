@@ -220,16 +220,19 @@ class CkbUtils
     dao_cells = ckb_transaction.inputs.dao
     witnesses = ckb_transaction.witnesses
     header_deps = ckb_transaction.header_deps
-    interests =
-      dao_cells.reduce(0) do |memo, dao_cell|
-        witness = witnesses[dao_cell.cell_index]
-        block_hash = header_deps[witness.last.hex]
-        out_point = CKB::Types::OutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index)
-
-        memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).to_i - dao_cell.capacity.to_i
-      end
+    interests = dao_cells.reduce(0) { |memo, dao_cell| memo + dao_subsidy(dao_cell, header_deps, witnesses) }
 
     ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+  end
+
+  private
+
+  def self.dao_subsidy(dao_cell, header_deps, witnesses)
+    witness = witnesses[dao_cell.cell_index]
+    header_deps_index = CKB::Utils.bin_to_hex(CKB::Utils.hex_to_bin(witness)[-8..-1]).hex
+    block_hash = header_deps[header_deps_index]
+    out_point = CKB::Types::OutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index)
+    CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).hex - dao_cell.capacity.to_i
   rescue CKB::RPCError
     0
   end

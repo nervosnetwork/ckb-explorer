@@ -54,7 +54,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
   test "#display_inputs should contain correct attributes for normal transaction" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash)
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash cell_type)
 
     assert_equal [expected_attributes], ckb_transaction.display_inputs.map(&:keys).uniq
   end
@@ -68,9 +68,9 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
   test "#display_outputs should contain correct attributes for normal transaction" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
-    expected_attributes = %i(id capacity address_hash status consumed_tx_hash)
+    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type).sort
 
-    assert_equal [expected_attributes], ckb_transaction.display_outputs.map(&:keys).uniq
+    assert_equal [expected_attributes], ckb_transaction.display_outputs.map(&:keys).map(&:sort).uniq.sort
   end
 
   test "#display_outputs should contain correct attributes for cellbase" do
@@ -113,5 +113,37 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_output_is = ckb_transaction.cell_inputs.map(&:previous_cell_output).map(&:id).sort
 
     assert_equal expected_output_is, ckb_transaction.display_inputs.map{ |display_input| display_input[:id] }
+  end
+
+  test "#display_inputs should return dao display input when cell type is dao" do
+    prepare_node_data
+    CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, header_deps: [DEFAULT_NODE_BLOCK_HASH, "0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2"])
+    dao_input = ckb_transaction.cell_inputs.first.previous_cell_output
+    witness = ckb_transaction.witnesses[dao_input.cell_index]
+    started_block_number = Block.find(dao_input.block_id).number
+    ended_block_hash = ckb_transaction.header_deps[witness.hex]
+    ended_block_number = Block.find_by(block_hash: ended_block_hash).number
+    dao_input.update(cell_type: "dao")
+    out_point = CKB::Types::OutPoint.new(tx_hash: dao_input.tx_hash, index: dao_input.cell_index)
+    subsidy = CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, ended_block_hash).hex - dao_input.capacity.to_i
+
+    expected_display_input = { id: dao_input.id, from_cellbase: false, capacity: dao_input.capacity, address_hash: dao_input.address_hash, generated_tx_hash: dao_input.generated_by.tx_hash, started_block_number: started_block_number, ended_block_number: ended_block_number, subsidy: subsidy, cell_type: dao_input.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }.sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash started_block_number ended_block_number subsidy cell_type dao_type_hash).sort
+
+    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
+    assert_equal expected_display_input, ckb_transaction.display_inputs.first.sort
+  end
+
+  test "#display_outputs should contain dao attributes for dao transaction" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+    dao_output = ckb_transaction.outputs.first
+    dao_output.update(cell_type: "dao")
+    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type dao_type_hash).sort
+    consumed_tx_hash = dao_output.live? ? nil : dao_output.consumed_by.tx_hash
+    expected_display_output = { id: dao_output.id, capacity: dao_output.capacity, address_hash: dao_output.address_hash, status: dao_output.status, consumed_tx_hash: consumed_tx_hash, cell_type: dao_output.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }.sort
+
+    assert_equal expected_attributes, ckb_transaction.display_outputs.first.keys.sort
+    assert_equal expected_display_output, ckb_transaction.display_outputs.first.sort
   end
 end

@@ -172,7 +172,26 @@ types:
         required: false
       },
       "generated_tx_hash": {
-         type: "string",
+        type: "string",
+      },
+      "cell_type": {
+        type: "string"
+      },
+      "started_block_number": {
+        type: integer,
+        required: false
+      },
+      "ended_block_number": {
+        type: integer,
+        required: false
+      },
+      "subsidy": {
+        type: integer,
+        required: false
+      },
+      "dao_type_hash": {
+        type: "string"
+        required: false
       }
     }
   }
@@ -218,6 +237,13 @@ types:
       "status": {
         type: "string",
         enum: ["live", "dead"]
+      }，
+      "cell_type": {
+        type: "string"
+      },
+      "dao_type_hash": {
+        type: "string"
+        required: false
       }
     }
   }
@@ -802,14 +828,28 @@ types:
                           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                           "capacity": 100,
                           "target_block_number": 759，
-                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "cell_type": "normal"
                         },
                         {
                           "from_cellbase": false,
                           "input_id": 102,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
-                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"，
+                          "cell_type": "normal"
+                        },
+                        {
+                          "from_cellbase": false,
+                          "input_id": 103,
+                          "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "capacity": 100,
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                          "started_block_number": 10,
+                          "ended_block_number": 15,
+                          "subsidy": 100000,
+                          "cell_type": "dao",
+                          "dao_type_hash": "0xa20df8e80518e9b2eabc1a0efb0ebe1de83f8df9c867edf99d0c5895654fcde1",
                         }
                       ],
                       "display_outputs": [
@@ -817,19 +857,30 @@ types:
                           "output_id": 103,
                           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                           "capacity": 100,
-                         "base_reward": 125000000000,
-                         "commit_reward": 0,
-                         "proposal_reward": 0,
-                         "secondary_reward": 476623447,
-                         "consumed_by_tx_hash": null,
-                         "status": "live"
+                          "base_reward": 125000000000,
+                          "commit_reward": 0,
+                          "proposal_reward": 0,
+                          "secondary_reward": 476623447,
+                          "consumed_by_tx_hash": null,
+                          "status": "live",
+                          "cell_type": "normal"
                         },
                         {
                           "output_id": 104,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
                           "consumed_by_tx_hash": null,
-                          "status": "live"
+                          "status": "live",
+                          "cell_type": "normal"
+                        },
+                        {
+                          "output_id": 105,
+                          "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "capacity": 100,
+                          "consumed_by_tx_hash": null,
+                          "status": "live",
+                          "cell_type": "dao",
+                          "dao_type_hash": "0xa20df8e80518e9b2eabc1a0efb0ebe1de83f8df9c867edf99d0c5895654fcde1"
                         }
                       ]
                     }
@@ -902,6 +953,7 @@ types:
                             "capacity": 100,
                             "target_block_number": 759,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "cell_type": "normal"
                           },
                           {
                             "from_cellbase": false,
@@ -909,6 +961,7 @@ types:
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                            "cell_type": "normal"
                           }
                         ],
                         "display_outputs": [
@@ -921,14 +974,16 @@ types:
                             "proposal_reward": 0,
                             "secondary_reward": 476623447,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           }
                         ]
                       }
@@ -951,14 +1006,16 @@ types:
                             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                             "capacity": 100,
                             "target_block_number": 759,
-                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "cell_type": "normal"
                           },
                           {
                             "from_cellbase": false,
                             "input_id": 102,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
-                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                            "cell_type": "normal"
                           }
                         ],
                         "display_outputs": [
@@ -971,14 +1028,16 @@ types:
                             "proposal_reward": 0,
                             "secondary_reward": 476623447,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           }
                         ]
                       }
@@ -1057,6 +1116,7 @@ types:
                             "capacity": 100,
                             "target_block_number": 759,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "cell_type": "normal"
                           },
                           {
                             "from_cellbase": false,
@@ -1064,6 +1124,7 @@ types:
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                            "cell_type": "normal"
                           }
                         ],
                         "display_outputs": [
@@ -1076,14 +1137,16 @@ types:
                             "proposal_reward": 0,
                             "secondary_reward": 476623447,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           }
                         ]
                       }
@@ -1105,6 +1168,7 @@ types:
                             "capacity": 100,
                             "target_block_number": 759,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "cell_type": "normal"
                           },
                           {
                             "from_cellbase": true,
@@ -1112,6 +1176,7 @@ types:
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                            "cell_type": "normal"
                           }
                         ],
                         "display_outputs": [
@@ -1124,14 +1189,16 @@ types:
                             "proposal_reward": 0,
                             "secondary_reward": 476623447,
                             "consumed_by_tx_hash": "0x2bbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "status": "dead"
+                            "status": "dead",
+                            "cell_type": "normal"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "consumed_by_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "status": "dead"
+                            "status": "dead",
+                            "cell_type": "normal"
                           }
                         ]
                       }
@@ -1774,14 +1841,16 @@ types:
                           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                           "capacity": 100,
                           "target_block_number": 100,
-                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "cell_type": "normal"
                         },
                         {
                           "from_cellbase": false,
                           "input_id": 102,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
-                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                          "cell_type": "normal"
                         }
                       ],
                       "display_outputs": [
@@ -1795,14 +1864,16 @@ types:
                           "proposal_reward": 0,
                           "secondary_reward": 476623447,
                           "consumed_by_tx_hash": null,
-                          "status": "live"
+                          "status": "live",
+                          "cell_type": "normal"
                         },
                         {
                           "output_id": 104,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
                           "consumed_by_tx_hash": null,
-                          "status": "live"
+                          "status": "live",
+                          "cell_type": "normal"
                         }
                       ]
                     }
