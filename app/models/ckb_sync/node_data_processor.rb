@@ -44,6 +44,11 @@ module CkbSync
           dao_contract.increment!(:total_deposit, event.value)
           dao_contract.increment!(:deposit_transactions_count)
         end
+        new_dao_depositor_events = dao_events.where(event_type: "new_dao_depositor")
+        new_dao_depositor_events.each do
+          dao_contract.increment!(:depositors_count)
+          dao_contract.increment!(:total_depositors_count)
+        end
       end
     end
 
