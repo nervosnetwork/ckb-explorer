@@ -554,6 +554,47 @@ module CkbSync
       end
     end
 
+    test "#process_block should not update dao contract total depositors count when depositors is already has been recorded" do
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      address = create(:address)
+      block = create(:block, :with_block_hash)
+      ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+      ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+      create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, capacity: 10 ** 8 * 1000, address: address)
+      create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, capacity: 10 ** 8 * 1000, address: address)
+      tx1 = node_block.transactions.first
+      output1 = tx1.outputs.first
+      output1.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: ENV["DAO_TYPE_HASH"])
+      output1.capacity = 10**8 * 1000
+      tx1.outputs << output1
+      tx1.outputs_data << "0x"
+
+      assert_difference -> { DaoContract.find_or_create_by(id: 1).total_depositors_count }, 1 do
+        node_data_processor.process_block(node_block)
+      end
+    end
+
+    test "#process_block should not update dao contract depositors count when depositors is already has been recorded" do
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      address = create(:address)
+      block = create(:block, :with_block_hash)
+      ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+      ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+      create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, capacity: 10 ** 8 * 1000, address: address)
+      create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 0, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, capacity: 10 ** 8 * 1000, address: address)
+      tx1 = node_block.transactions.first
+      output1 = tx1.outputs.first
+      output1.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: ENV["DAO_TYPE_HASH"])
+      output1.capacity = 10**8 * 1000
+      tx1.outputs << output1
+      tx1.outputs_data << "0x"
+
+      assert_difference -> { DaoContract.find_or_create_by(id: 1).depositors_count }, 1 do
+        node_data_processor.process_block(node_block)
+      end
+    end
 
     test "#process_block should update cell status" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
