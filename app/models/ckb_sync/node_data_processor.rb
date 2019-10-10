@@ -23,7 +23,7 @@ module CkbSync
       ApplicationRecord.transaction do
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
         local_block.ckb_transactions_count = ckb_transactions.size
-        Block.import! [local_block], recursive: true, batch_size: 1000, validate: false
+        Block.import! [local_block], recursive: true, batch_size: 1000, validate: false, on_duplicate_key_update: [:id]
         local_block.reload
       end
 
@@ -248,7 +248,7 @@ module CkbSync
           dao_contract = DaoContract.find_or_create_by(id: 1)
           ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
           if address.dao_deposit.zero?
-            ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "new_dao_depositor", value: 1, contract_id: dao_contract.id)
+            DaoEvent.find_or_create_by(block: ckb_transaction.block, ckb_transaction: ckb_transaction, address_id: address.id, event_type: "new_dao_depositor", value: 1, contract_id: dao_contract.id)
           end
         end
         build_lock_script(cell_output, output.lock, address)
