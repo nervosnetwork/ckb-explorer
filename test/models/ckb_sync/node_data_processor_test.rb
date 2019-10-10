@@ -508,7 +508,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
 
-        assert_difference -> { DaoContract.find_or_create_by(id: 1).total_deposit }, 10**8 * 1000 do
+        assert_difference -> { DaoContract.default_contract.total_deposit }, 10**8 * 1000 do
           node_data_processor.process_block(node_block)
         end
       end
@@ -520,7 +520,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
 
-        assert_difference -> { DaoContract.find_or_create_by(id: 1).deposit_transactions_count }, 1 do
+        assert_difference -> { DaoContract.default_contract.deposit_transactions_count }, 1 do
           node_data_processor.process_block(node_block)
         end
       end
@@ -533,7 +533,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
 
-        assert_difference -> { DaoContract.find_or_create_by(id: 1).depositors_count }, 1 do
+        assert_difference -> { DaoContract.default_contract.depositors_count }, 1 do
           node_data_processor.process_block(node_block)
         end
       end
@@ -548,7 +548,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
 
-        assert_difference -> { DaoContract.find_or_create_by(id: 1).total_depositors_count }, 1 do
+        assert_difference -> { DaoContract.default_contract.total_depositors_count }, 1 do
           node_data_processor.process_block(node_block)
         end
       end
@@ -570,7 +570,7 @@ module CkbSync
       tx1.outputs << output1
       tx1.outputs_data << "0x"
 
-      assert_difference -> { DaoContract.find_or_create_by(id: 1).total_depositors_count }, 1 do
+      assert_difference -> { DaoContract.default_contract.total_depositors_count }, 1 do
         node_data_processor.process_block(node_block)
       end
     end
@@ -591,7 +591,7 @@ module CkbSync
       tx1.outputs << output1
       tx1.outputs_data << "0x"
 
-      assert_difference -> { DaoContract.find_or_create_by(id: 1).depositors_count }, 1 do
+      assert_difference -> { DaoContract.default_contract.depositors_count }, 1 do
         node_data_processor.process_block(node_block)
       end
     end

@@ -35,7 +35,7 @@ module CkbSync
       update_block_reward_info(local_block)
 
       ApplicationRecord.transaction do
-        dao_contract = DaoContract.find_or_create_by(id: 1)
+        dao_contract = DaoContract.default_contract
         dao_events = DaoEvent.where(block: local_block)
         deposit_to_dao_events = dao_events.where(event_type: "deposit_to_dao")
         deposit_to_dao_events.each do |event|
@@ -50,6 +50,8 @@ module CkbSync
           dao_contract.increment!(:total_depositors_count)
         end
       end
+
+      local_block
     end
 
     private
