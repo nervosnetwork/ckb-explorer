@@ -33,6 +33,18 @@ module CkbSync
       update_miner_pending_rewards(local_block.miner_address)
       update_block_contained_address_info(local_block)
       update_block_reward_info(local_block)
+
+      ApplicationRecord.transaction do
+        dao_contract = DaoContract.find_or_create_by(id: 1)
+        dao_events = DaoEvent.where(block: local_block)
+        deposit_to_dao_events = dao_events.where(event_type: "deposit_to_dao")
+        deposit_to_dao_events.each do |event|
+          address = event.address
+          address.increment!(:dao_deposit, event.value)
+          dao_contract.increment!(:total_deposit, event.value)
+          dao_contract.increment!(:deposit_transactions_count)
+        end
+      end
     end
 
     private
