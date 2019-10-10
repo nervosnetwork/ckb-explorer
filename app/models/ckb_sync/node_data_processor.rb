@@ -246,17 +246,22 @@ module CkbSync
         address = Address.find_or_create_address(output.lock)
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
-        if cell_output.dao?
-          dao_contract = DaoContract.find_or_create_by(id: 1)
-          ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
-          if address.dao_deposit.zero?
-            DaoEvent.find_or_create_by(block: ckb_transaction.block, ckb_transaction: ckb_transaction, address_id: address.id, event_type: "new_dao_depositor", value: 1, contract_id: dao_contract.id)
-          end
-        end
+
+        build_dao_events(address, cell_output, ckb_transaction)
         build_lock_script(cell_output, output.lock, address)
         build_type_script(cell_output, output.type)
 
         cell_output
+      end
+    end
+
+    def build_dao_events(address, cell_output, ckb_transaction)
+      if cell_output.dao?
+        dao_contract = DaoContract.find_or_create_by(id: 1)
+        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
+        if address.dao_deposit.zero?
+          DaoEvent.find_or_create_by(block: ckb_transaction.block, ckb_transaction: ckb_transaction, address_id: address.id, event_type: "new_dao_depositor", value: 1, contract_id: dao_contract.id)
+        end
       end
     end
 
