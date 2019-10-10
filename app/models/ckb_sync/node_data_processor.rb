@@ -230,6 +230,9 @@ module CkbSync
         if cell_output.dao?
           dao_contract = DaoContract.find_or_create_by(id: 1)
           ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
+          if address.dao_deposit.zero?
+            ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "new_dao_depositor", value: 1, contract_id: dao_contract.id)
+          end
         end
         build_lock_script(cell_output, output.lock, address)
         build_type_script(cell_output, output.type)
