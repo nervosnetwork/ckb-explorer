@@ -33,8 +33,6 @@ module CkbSync
       update_miner_pending_rewards(local_block.miner_address)
       update_block_contained_address_info(local_block)
       update_block_reward_info(local_block)
-
-      local_block
     end
 
     private
@@ -229,6 +227,10 @@ module CkbSync
         address = Address.find_or_create_address(output.lock)
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
+        if cell_output.dao?
+          dao_contract = DaoContract.find_or_create_by(id: 1)
+          ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
+        end
         build_lock_script(cell_output, output.lock, address)
         build_type_script(cell_output, output.type)
 

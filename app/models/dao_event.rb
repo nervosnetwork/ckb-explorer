@@ -1,5 +1,6 @@
 class DaoEvent < ApplicationRecord
   enum event_type: { deposit_to_dao: 0, new_dao_depositor: 1 }
+  enum status: { pending: 0, processed: 1, reverted: 2 }
   validates :value, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   belongs_to :block
@@ -18,7 +19,7 @@ end
 #  contract_id        :bigint
 #  event_type         :integer
 #  value              :decimal(30, )    default(0)
-#  status             :integer          default(0)
+#  status             :integer          default("pending")
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #
