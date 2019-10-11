@@ -656,7 +656,7 @@ module CkbSync
       prepare_node_data(12)
       target_block = Block.find_by(number: 2)
       VCR.use_cassette("blocks/12", record: :new_episodes) do
-        assert_changes -> { target_block.reload.received_tx_fee_status }, from: "calculating", to: "calculated" do
+        assert_changes -> { target_block.reload.received_tx_fee_status }, from: "pending", to: "calculated" do
           node_data_processor.call
         end
       end
@@ -980,7 +980,7 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       target_block = local_block.target_block
       VCR.use_cassette("blocks/12", record: :new_episodes) do
-        assert_changes -> { target_block.reload.received_tx_fee_status }, from: "calculated", to: "calculating" do
+        assert_changes -> { target_block.reload.received_tx_fee_status }, from: "calculated", to: "pending" do
           node_data_processor.call
         end
       end
