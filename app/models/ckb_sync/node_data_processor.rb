@@ -71,7 +71,7 @@ module CkbSync
 
     def revert_reward_status(target_block)
       target_block.update!(reward_status: "pending")
-      target_block.update!(received_tx_fee_status: "calculating")
+      target_block.update!(received_tx_fee_status: "pending")
     end
 
     def revert_miner_pending_reward_blocks_count(local_tip_block)
