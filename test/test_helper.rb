@@ -256,7 +256,9 @@ module ActiveSupport
     # fixtures :all
     include FactoryBot::Syntax::Methods
     include ::RequestHelpers
-    parallelize(workers: 2, with: :processes)
+    if ENV["CI"] != "true"
+      parallelize(workers: 2, with: :processes)
+    end
 
     # Add more helper methods to be used by all tests here...
     def before_setup
