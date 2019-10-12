@@ -620,6 +620,21 @@ module CkbSync
       end
     end
 
+    test "#process_block should create dao_event which event_type is take away all deposit when previous output is a dao cell and address subsidy change to zero" do
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        tx = fake_dao_withdraw_transaction(node_block)
+        output = tx.cell_outputs.first
+        address = output.address
+        address.update(dao_deposit: output.capacity)
+
+        assert_difference -> { DaoEvent.where(event_type: "take_away_all_deposit").count }, 1 do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
     test "#process_block should update cell status" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
@@ -1162,7 +1177,7 @@ module CkbSync
       tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
       tx.witnesses = %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef 0x4e52933358ae2f26863b8c1c71bf20f17489328820f8f2cd84a070069f10ceef784bc3693c3c51b93475a7b5dbf652ba6532d0580ecc1faf909f9fd53c5f6405000000000000000000)
 
-      ckb_transaction2
+      ckb_transaction1
     end
 
     def fake_dao_deposit_transaction(node_block)
