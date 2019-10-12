@@ -608,6 +608,18 @@ module CkbSync
       end
     end
 
+    test "#process_block should create dao_event which event_type is issue subsidy when previous output is a dao cell" do
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        fake_dao_withdraw_transaction(node_block)
+
+        assert_difference -> { DaoEvent.where(event_type: "issue_subsidy").count }, 1 do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
     test "#process_block should update cell status" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
