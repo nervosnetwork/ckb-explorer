@@ -746,6 +746,22 @@ module CkbSync
       end
     end
 
+    test "should do nothing on address when block is invalid but there is no dao cell" do
+      prepare_node_data(HAS_UNCLES_BLOCK_NUMBER)
+      local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
+      addresses = local_block.contained_addresses
+      dao_deposits = addresses.map(&:dao_deposit)
+      dao_subsidies = addresses.map(&:subsidy)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+      VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
+        local_block = node_data_processor.call
+
+        assert_equal dao_deposits, local_block.contained_addresses.map(&:dao_deposit)
+        assert_equal dao_subsidies, local_block.contained_addresses.map(&:subsidy)
+      end
+    end
+
     test "#process_block should update cell status" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
