@@ -597,7 +597,7 @@ module CkbSync
     end
 
     test "#process_block should create dao_event which event_type is withdraw_from_dao when previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_withdraw_transaction(node_block)
@@ -656,6 +656,19 @@ module CkbSync
         DaoContract.default_contract.update(total_deposit: withdraw_amount)
 
         assert_difference -> { DaoContract.default_contract.total_deposit }, -withdraw_amount do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
+    test "#process_block should increase dao contract subsidy granted when previous output is a dao cell" do
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        tx = fake_dao_withdraw_transaction(node_block)
+        withdraw_amount = tx.cell_outputs.dao.first.capacity
+
+        assert_difference -> { DaoContract.default_contract.reload.subsidy_granted }, "0x174876ebe8".hex - withdraw_amount do
           node_data_processor.process_block(node_block)
         end
       end
