@@ -674,6 +674,22 @@ module CkbSync
       end
     end
 
+    test "#process_block should decrease dao contract depositors count when previous output is a dao cell and address subsidy change to zero" do
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        tx = fake_dao_withdraw_transaction(node_block)
+        output = tx.cell_outputs.first
+        address = output.address
+        address.update(dao_deposit: output.capacity)
+        DaoContract.default_contract.update(depositors_count: 1)
+
+        assert_difference -> { DaoContract.default_contract.reload.depositors_count }, -1 do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
     test "#process_block should update cell status" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
