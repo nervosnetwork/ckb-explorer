@@ -225,8 +225,6 @@ class CkbUtils
     ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
   end
 
-  private
-
   def self.dao_subsidy(dao_cell, header_deps, witnesses)
     witness = witnesses[dao_cell.cell_index]
     header_deps_index = CKB::Utils.bin_to_hex(CKB::Utils.hex_to_bin(witness)[-8..-1]).hex

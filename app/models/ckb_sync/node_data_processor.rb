@@ -327,7 +327,11 @@ module CkbSync
 
           update_previous_cell_output_status(ckb_transaction, previous_cell_output)
           if previous_cell_output.dao?
-            ckb_transaction.dao_events.create(block: local_block, address_id: address.id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, contract_id: DaoContract.default_contract.id)
+            ckb_transaction.dao_events.create!(block: local_block, address_id: address.id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, contract_id: DaoContract.default_contract.id)
+            header_deps = ckb_transaction.header_deps
+            witnesses = ckb_transaction.witnesses
+            subsidy = CkbUtils.dao_subsidy(previous_cell_output, header_deps, witnesses)
+            ckb_transaction.dao_events.create!(block: local_block, address_id: address.id, event_type: "issue_subsidy", value: subsidy, contract_id: DaoContract.default_contract.id)
           end
         end
       end
