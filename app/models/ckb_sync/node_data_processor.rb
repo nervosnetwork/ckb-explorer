@@ -315,9 +315,9 @@ module CkbSync
       )
     end
 
-    def update_tx_fee_related_data(lock_block)
+    def update_tx_fee_related_data(local_block)
       ApplicationRecord.transaction do
-        lock_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_each do |cell_input|
+        local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_each do |cell_input|
           ckb_transaction = cell_input.ckb_transaction
           previous_cell_output = cell_input.previous_cell_output
           address = previous_cell_output.address
@@ -326,6 +326,9 @@ module CkbSync
           link_payer_address_to_ckb_transaction(ckb_transaction, address)
 
           update_previous_cell_output_status(ckb_transaction, previous_cell_output)
+          if previous_cell_output.dao?
+            ckb_transaction.dao_events.create(block: local_block, address_id: address.id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, contract_id: DaoContract.default_contract.id)
+          end
         end
       end
     end
