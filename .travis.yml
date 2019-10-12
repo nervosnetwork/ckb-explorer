@@ -27,4 +27,4 @@ jobs:
         - cp .env.test.local.travis .env.test.local
       script:
         - bundle exec rails db:migrate
-        - bundle exec rails test
+        - CI=true bundle exec rails test

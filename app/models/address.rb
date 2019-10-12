@@ -61,6 +61,8 @@ end
 #  updated_at                  :datetime         not null
 #  lock_hash                   :binary
 #  pending_reward_blocks_count :integer          default(0)
+#  dao_deposit                 :decimal(30, )    default(0)
+#  subsidy                     :decimal(30, )    default(0)
 #
 # Indexes
 #

@@ -23,7 +23,7 @@ module CkbSync
       ApplicationRecord.transaction do
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
         local_block.ckb_transactions_count = ckb_transactions.size
-        Block.import! [local_block], recursive: true, batch_size: 1000, validate: false
+        Block.import! [local_block], recursive: true, batch_size: 1000, validate: false, on_duplicate_key_update: [:id]
         local_block.reload
       end
 
@@ -34,10 +34,39 @@ module CkbSync
       update_block_contained_address_info(local_block)
       update_block_reward_info(local_block)
 
+      update_dao_contract_related_info(local_block)
+
       local_block
     end
 
     private
+
+    def update_dao_contract_related_info(local_block)
+      ApplicationRecord.transaction do
+        dao_contract = DaoContract.default_contract
+        dao_events = DaoEvent.where(block: local_block)
+        process_deposit_to_dao(dao_contract, dao_events)
+        process_new_dao_depositor(dao_contract, dao_events)
+      end
+    end
+
+    def process_new_dao_depositor(dao_contract, dao_events)
+      new_dao_depositor_events = dao_events.where(event_type: "new_dao_depositor")
+      new_dao_depositor_events.each do
+        dao_contract.increment!(:depositors_count)
+        dao_contract.increment!(:total_depositors_count)
+      end
+    end
+
+    def process_deposit_to_dao(dao_contract, dao_events)
+      deposit_to_dao_events = dao_events.where(event_type: "deposit_to_dao")
+      deposit_to_dao_events.each do |event|
+        address = event.address
+        address.increment!(:dao_deposit, event.value)
+        dao_contract.increment!(:total_deposit, event.value)
+        dao_contract.increment!(:deposit_transactions_count)
+      end
+    end
 
     def update_block_reward_info(current_block)
       target_block_number = current_block.target_block_number
@@ -229,10 +258,22 @@ module CkbSync
         address = Address.find_or_create_address(output.lock)
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
+
+        build_dao_events(address, cell_output, ckb_transaction)
         build_lock_script(cell_output, output.lock, address)
         build_type_script(cell_output, output.type)
 
         cell_output
+      end
+    end
+
+    def build_dao_events(address, cell_output, ckb_transaction)
+      if cell_output.dao?
+        dao_contract = DaoContract.find_or_create_by(id: 1)
+        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
+        if address.dao_deposit.zero?
+          DaoEvent.find_or_create_by(block: ckb_transaction.block, ckb_transaction: ckb_transaction, address_id: address.id, event_type: "new_dao_depositor", value: 1, contract_id: dao_contract.id)
+        end
       end
     end
 
