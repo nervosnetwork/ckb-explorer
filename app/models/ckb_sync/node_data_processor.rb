@@ -52,6 +52,8 @@ module CkbSync
         withdraw_from_dao_events.each do |event|
           dao_contract.increment!(:withdraw_transactions_count)
           dao_contract.decrement!(:total_deposit, event.value)
+          address = event.address
+          address.decrement!(:dao_deposit, event.value)
         end
 
         issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
@@ -59,7 +61,7 @@ module CkbSync
           dao_contract.increment!(:subsidy_granted, event.value)
         end
 
-        take_away_all_deposit_dao_events = dao_events.where(event_type: "issue_subsidy")
+        take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
         take_away_all_deposit_dao_events.each do
           dao_contract.decrement!(:depositors_count)
         end
