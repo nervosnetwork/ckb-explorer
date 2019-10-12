@@ -44,7 +44,7 @@ module CkbSync
     def update_dao_contract_related_info(local_block)
       ApplicationRecord.transaction do
         dao_contract = DaoContract.default_contract
-        dao_events = DaoEvent.where(block: local_block)
+        dao_events = DaoEvent.where(block: local_block).pending
         process_deposit_to_dao(dao_contract, dao_events)
         process_new_dao_depositor(dao_contract, dao_events)
         process_withdraw_from_dao(dao_contract, dao_events)
