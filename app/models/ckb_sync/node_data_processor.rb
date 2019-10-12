@@ -50,6 +50,7 @@ module CkbSync
         withdraw_from_dao_events = dao_events.where(event_type: "withdraw_from_dao")
         withdraw_from_dao_events.each do |event|
           dao_contract.increment!(:withdraw_transactions_count)
+          dao_contract.decrement!(:total_deposit, event.value)
         end
       end
     end
