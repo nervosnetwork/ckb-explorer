@@ -58,6 +58,11 @@ module CkbSync
         issue_subsidy_dao_events.each do |event|
           dao_contract.increment!(:subsidy_granted, event.value)
         end
+
+        take_away_all_deposit_dao_events = dao_events.where(event_type: "issue_subsidy")
+        take_away_all_deposit_dao_events.each do
+          dao_contract.decrement!(:depositors_count)
+        end
       end
     end
 
