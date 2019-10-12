@@ -47,26 +47,35 @@ module CkbSync
         dao_events = DaoEvent.where(block: local_block)
         process_deposit_to_dao(dao_contract, dao_events)
         process_new_dao_depositor(dao_contract, dao_events)
+        process_withdraw_from_dao(dao_contract, dao_events)
+        process_issue_subsidy(dao_contract, dao_events)
+        process_take_away_all_deposit(dao_contract, dao_events)
+      end
+    end
 
-        withdraw_from_dao_events = dao_events.where(event_type: "withdraw_from_dao")
-        withdraw_from_dao_events.each do |event|
-          dao_contract.increment!(:withdraw_transactions_count)
-          dao_contract.decrement!(:total_deposit, event.value)
-          address = event.address
-          address.decrement!(:dao_deposit, event.value)
-        end
+    def process_take_away_all_deposit(dao_contract, dao_events)
+      take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
+      take_away_all_deposit_dao_events.each do
+        dao_contract.decrement!(:depositors_count)
+      end
+    end
 
-        issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
-        issue_subsidy_dao_events.each do |event|
-          dao_contract.increment!(:subsidy_granted, event.value)
-          address = event.address
-          address.increment!(:subsidy, event.value)
-        end
+    def process_issue_subsidy(dao_contract, dao_events)
+      issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
+      issue_subsidy_dao_events.each do |event|
+        dao_contract.increment!(:subsidy_granted, event.value)
+        address = event.address
+        address.increment!(:subsidy, event.value)
+      end
+    end
 
-        take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
-        take_away_all_deposit_dao_events.each do
-          dao_contract.decrement!(:depositors_count)
-        end
+    def process_withdraw_from_dao(dao_contract, dao_events)
+      withdraw_from_dao_events = dao_events.where(event_type: "withdraw_from_dao")
+      withdraw_from_dao_events.each do |event|
+        dao_contract.increment!(:withdraw_transactions_count)
+        dao_contract.decrement!(:total_deposit, event.value)
+        address = event.address
+        address.decrement!(:dao_deposit, event.value)
       end
     end
 
