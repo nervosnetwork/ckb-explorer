@@ -721,6 +721,31 @@ module CkbSync
       end
     end
 
+    test "should do nothing on dao contract when block is invalid but there is no dao cell" do
+      dao_contract = DaoContract.default_contract
+      init_total_deposit = 10**8 * 10000
+      init_depositors_count = 3
+      init_subsidy_granted = 10**8 * 100
+      init_deposit_transactions_count = 2
+      init_withdraw_transactions_count = 1
+      init_total_depositors_count = 2
+      dao_contract.update(total_deposit: init_total_deposit, depositors_count: init_depositors_count, subsidy_granted: init_subsidy_granted, deposit_transactions_count: init_deposit_transactions_count, withdraw_transactions_count: init_withdraw_transactions_count, total_depositors_count: init_total_depositors_count)
+      prepare_node_data(HAS_UNCLES_BLOCK_NUMBER)
+      local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+      VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
+        node_data_processor.call
+        dao_contract.reload
+        assert_equal init_total_deposit, dao_contract.total_deposit
+        assert_equal init_depositors_count, dao_contract.depositors_count
+        assert_equal init_subsidy_granted, dao_contract.subsidy_granted
+        assert_equal init_deposit_transactions_count, dao_contract.deposit_transactions_count
+        assert_equal init_withdraw_transactions_count, dao_contract.withdraw_transactions_count
+        assert_equal init_total_depositors_count, dao_contract.total_depositors_count
+      end
+    end
+
     test "#process_block should update cell status" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
