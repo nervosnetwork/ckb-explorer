@@ -47,6 +47,10 @@ module CkbSync
         dao_events = DaoEvent.where(block: local_block)
         process_deposit_to_dao(dao_contract, dao_events)
         process_new_dao_depositor(dao_contract, dao_events)
+        withdraw_from_dao_events = dao_events.where(event_type: "withdraw_from_dao")
+        withdraw_from_dao_events.each do |event|
+          dao_contract.increment!(:withdraw_transactions_count)
+        end
       end
     end
 
