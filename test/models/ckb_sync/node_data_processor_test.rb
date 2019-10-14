@@ -830,6 +830,27 @@ module CkbSync
       end
     end
 
+    test "should revert dao contract total deposit when block is invalid and there is dao cell" do
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
+      node_block = fake_node_block
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        fake_dao_deposit_transaction(node_block)
+        node_data_processor.process_block(node_block)
+      end
+      dao_contract = DaoContract.default_contract
+      local_block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
+        assert_difference -> { dao_contract.reload.total_deposit }, -(10**8 * 1000) do
+          node_data_processor.call
+        end
+
+        deposit_to_dao_events = local_block.dao_events.where(event_type: "deposit_to_dao")
+        assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
+      end
+    end
+
     test "#process_block should update cell status" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
