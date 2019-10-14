@@ -179,6 +179,12 @@ module CkbSync
           event.reverted!
         end
 
+        take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
+        take_away_all_deposit_dao_events.each do |event|
+          dao_contract.increment!(:depositors_count)
+          event.reverted!
+        end
+
         local_tip_block.invalid!
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
