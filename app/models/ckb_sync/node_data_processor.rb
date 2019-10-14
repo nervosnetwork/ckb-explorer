@@ -174,6 +174,8 @@ module CkbSync
         issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
         issue_subsidy_dao_events.each do |event|
           dao_contract.decrement!(:subsidy_granted, event.value)
+          address = event.address
+          address.decrement!(:subsidy, event.value)
           event.reverted!
         end
 
