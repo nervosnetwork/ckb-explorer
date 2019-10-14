@@ -166,6 +166,8 @@ module CkbSync
         withdraw_from_dao_events.each do |event|
           dao_contract.decrement!(:withdraw_transactions_count)
           dao_contract.increment!(:total_deposit, event.value)
+          address = event.address
+          address.increment!(:dao_deposit, event.value)
           event.reverted!
         end
 
