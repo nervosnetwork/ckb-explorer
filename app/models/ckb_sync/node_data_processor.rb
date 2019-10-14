@@ -144,8 +144,9 @@ module CkbSync
 
     def invalid_block(local_tip_block)
       ApplicationRecord.transaction do
-        deposit_to_dao_events = local_tip_block.dao_events.where(event_type: "deposit_to_dao")
+        dao_events = DaoEvent.where(block: local_tip_block).processed
         dao_contract = DaoContract.default_contract
+        deposit_to_dao_events = dao_events.where(event_type: "deposit_to_dao")
         deposit_to_dao_events.each do |event|
           address = event.address
           address.decrement!(:dao_deposit, event.value)
@@ -153,6 +154,14 @@ module CkbSync
           dao_contract.decrement!(:deposit_transactions_count)
           event.reverted!
         end
+
+        new_dao_depositor_events = dao_events.where(event_type: "new_dao_depositor")
+        new_dao_depositor_events.each do |event|
+          dao_contract.decrement!(:depositors_count)
+          dao_contract.decrement!(:total_depositors_count)
+          event.reverted!
+        end
+
         local_tip_block.invalid!
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
