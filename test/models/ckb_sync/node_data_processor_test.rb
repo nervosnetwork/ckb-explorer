@@ -499,6 +499,9 @@ module CkbSync
         assert_difference -> { address.reload.dao_deposit }, 10**8 * 1000 do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "deposit_to_dao")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -511,6 +514,9 @@ module CkbSync
         assert_difference -> { DaoContract.default_contract.total_deposit }, 10**8 * 1000 do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "deposit_to_dao")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -523,6 +529,9 @@ module CkbSync
         assert_difference -> { DaoContract.default_contract.deposit_transactions_count }, 1 do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "deposit_to_dao")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -538,6 +547,8 @@ module CkbSync
         end
       end
 
+      deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "new_dao_depositor")
+      assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       assert_not_empty DaoEvent.where(event_type: "new_dao_depositor")
     end
 
@@ -551,6 +562,9 @@ module CkbSync
         assert_difference -> { DaoContract.default_contract.total_depositors_count }, 1 do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "new_dao_depositor")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -605,6 +619,9 @@ module CkbSync
         assert_difference -> { DaoEvent.where(event_type: "withdraw_from_dao").count }, 1 do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -617,6 +634,9 @@ module CkbSync
         assert_difference -> { DaoEvent.where(event_type: "issue_subsidy").count }, 1 do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -632,6 +652,9 @@ module CkbSync
         assert_difference -> { DaoEvent.where(event_type: "take_away_all_deposit").count }, 1 do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "take_away_all_deposit")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -644,6 +667,9 @@ module CkbSync
         assert_difference -> { DaoContract.default_contract.withdraw_transactions_count }, 1 do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -658,6 +684,9 @@ module CkbSync
         assert_difference -> { DaoContract.default_contract.total_deposit }, -withdraw_amount do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -671,6 +700,9 @@ module CkbSync
         assert_difference -> { DaoContract.default_contract.reload.subsidy_granted }, "0x174876ebe8".hex - withdraw_amount do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_subsidy")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -687,6 +719,9 @@ module CkbSync
         assert_difference -> { DaoContract.default_contract.reload.depositors_count }, -1 do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "take_away_all_deposit")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -702,6 +737,9 @@ module CkbSync
         assert_difference -> { address.reload.dao_deposit }, -output.capacity do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
@@ -718,6 +756,9 @@ module CkbSync
         assert_difference -> { address.reload.subsidy }, "0x174876ebe8".hex - withdraw_amount do
           node_data_processor.process_block(node_block)
         end
+
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_subsidy")
+        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
