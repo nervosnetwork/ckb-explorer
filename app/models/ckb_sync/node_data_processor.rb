@@ -142,6 +142,11 @@ module CkbSync
         local_tip_block.invalid!
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
+        deposit_to_dao_events = local_tip_block.dao_events.where(event_type: "deposit_to_dao")
+        deposit_to_dao_events.each do |event|
+          address = event.address
+          address.decrement!(:dao_deposit, event.value)
+        end
 
         local_tip_block
       end
