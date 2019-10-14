@@ -150,6 +150,7 @@ module CkbSync
           address = event.address
           address.decrement!(:dao_deposit, event.value)
           dao_contract.decrement!(:total_deposit, event.value)
+          dao_contract.decrement!(:deposit_transactions_count)
           event.reverted!
         end
         local_tip_block.invalid!
