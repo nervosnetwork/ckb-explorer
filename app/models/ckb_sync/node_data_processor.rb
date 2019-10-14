@@ -146,50 +146,70 @@ module CkbSync
       ApplicationRecord.transaction do
         dao_events = DaoEvent.where(block: local_tip_block).processed
         dao_contract = DaoContract.default_contract
-        deposit_to_dao_events = dao_events.where(event_type: "deposit_to_dao")
-        deposit_to_dao_events.each do |event|
-          address = event.address
-          address.decrement!(:dao_deposit, event.value)
-          dao_contract.decrement!(:total_deposit, event.value)
-          dao_contract.decrement!(:deposit_transactions_count)
-          event.reverted!
-        end
-
-        new_dao_depositor_events = dao_events.where(event_type: "new_dao_depositor")
-        new_dao_depositor_events.each do |event|
-          dao_contract.decrement!(:depositors_count)
-          dao_contract.decrement!(:total_depositors_count)
-          event.reverted!
-        end
-
-        withdraw_from_dao_events = dao_events.where(event_type: "withdraw_from_dao")
-        withdraw_from_dao_events.each do |event|
-          dao_contract.decrement!(:withdraw_transactions_count)
-          dao_contract.increment!(:total_deposit, event.value)
-          address = event.address
-          address.increment!(:dao_deposit, event.value)
-          event.reverted!
-        end
-
-        issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
-        issue_subsidy_dao_events.each do |event|
-          dao_contract.decrement!(:subsidy_granted, event.value)
-          address = event.address
-          address.decrement!(:subsidy, event.value)
-          event.reverted!
-        end
-
-        take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
-        take_away_all_deposit_dao_events.each do |event|
-          dao_contract.increment!(:depositors_count)
-          event.reverted!
-        end
+        revert_dao_contract_related_operations(dao_contract, dao_events)
 
         local_tip_block.invalid!
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
 
         local_tip_block
+      end
+    end
+
+    def revert_dao_contract_related_operations(dao_contract, dao_events)
+      revert_deposit_to_dao(dao_contract, dao_events)
+      revert_new_dao_depositor(dao_contract, dao_events)
+      revert_withdraw_from_dao(dao_contract, dao_events)
+      revert_issue_subsidy(dao_contract, dao_events)
+      revert_take_away_all_deposit(dao_contract, dao_events)
+    end
+
+    def revert_take_away_all_deposit(dao_contract, dao_events)
+      take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
+      take_away_all_deposit_dao_events.each do |event|
+        dao_contract.increment!(:depositors_count)
+        event.reverted!
+      end
+    end
+
+    def revert_issue_subsidy(dao_contract, dao_events)
+      issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
+      issue_subsidy_dao_events.each do |event|
+        dao_contract.decrement!(:subsidy_granted, event.value)
+        address = event.address
+        address.decrement!(:subsidy, event.value)
+        event.reverted!
+      end
+    end
+
+    def revert_withdraw_from_dao(dao_contract, dao_events)
+      withdraw_from_dao_events = dao_events.where(event_type: "withdraw_from_dao")
+      withdraw_from_dao_events.each do |event|
+        dao_contract.decrement!(:withdraw_transactions_count)
+        dao_contract.increment!(:total_deposit, event.value)
+        address = event.address
+        address.increment!(:dao_deposit, event.value)
+        event.reverted!
+      end
+    end
+
+    def revert_new_dao_depositor(dao_contract, dao_events)
+      new_dao_depositor_events = dao_events.where(event_type: "new_dao_depositor")
+      new_dao_depositor_events.each do |event|
+        dao_contract.decrement!(:depositors_count)
+        dao_contract.decrement!(:total_depositors_count)
+        event.reverted!
+      end
+    end
+
+    def revert_deposit_to_dao(dao_contract, dao_events)
+      deposit_to_dao_events = dao_events.where(event_type: "deposit_to_dao")
+      deposit_to_dao_events.each do |event|
+        address = event.address
+        address.decrement!(:dao_deposit, event.value)
+        dao_contract.decrement!(:total_deposit, event.value)
+        dao_contract.decrement!(:deposit_transactions_count)
+        event.reverted!
       end
     end
 
