@@ -145,9 +145,11 @@ module CkbSync
     def invalid_block(local_tip_block)
       ApplicationRecord.transaction do
         deposit_to_dao_events = local_tip_block.dao_events.where(event_type: "deposit_to_dao")
+        dao_contract = DaoContract.default_contract
         deposit_to_dao_events.each do |event|
           address = event.address
           address.decrement!(:dao_deposit, event.value)
+          dao_contract.decrement!(:total_deposit, event.value)
           event.reverted!
         end
         local_tip_block.invalid!
