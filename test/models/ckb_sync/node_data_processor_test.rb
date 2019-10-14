@@ -824,6 +824,9 @@ module CkbSync
         local_block = node_data_processor.call
         assert target_address.in?(local_block.contained_addresses)
         assert_equal [0], local_block.contained_addresses.map(&:dao_deposit).uniq
+
+        deposit_to_dao_events = local_block.dao_events.where(event_type: "deposit_to_dao")
+        assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
