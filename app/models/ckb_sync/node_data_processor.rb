@@ -171,6 +171,12 @@ module CkbSync
           event.reverted!
         end
 
+        issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
+        issue_subsidy_dao_events.each do |event|
+          dao_contract.decrement!(:subsidy_granted, event.value)
+          event.reverted!
+        end
+
         local_tip_block.invalid!
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
