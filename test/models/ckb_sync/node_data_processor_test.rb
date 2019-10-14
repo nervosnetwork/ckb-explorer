@@ -1040,6 +1040,30 @@ module CkbSync
       end
     end
 
+    test "should increase dao contract depositors_count when block is invalid and previous output is a dao cell" do
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        tx = fake_dao_withdraw_transaction(node_block)
+        output = tx.cell_outputs.first
+        address = output.address
+        address.update(dao_deposit: output.capacity)
+        node_data_processor.process_block(node_block)
+      end
+
+      local_block = Block.find_by(block_hash: "0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
+        assert_difference -> { DaoContract.default_contract.depositors_count }, 1 do
+          node_data_processor.call
+        end
+
+        deposit_to_dao_events = local_block.dao_events.where(event_type: "take_away_all_deposit")
+        assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
+      end
+    end
+
     test "#process_block should update cell status" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
