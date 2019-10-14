@@ -55,8 +55,9 @@ module CkbSync
 
     def process_take_away_all_deposit(dao_contract, dao_events)
       take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
-      take_away_all_deposit_dao_events.each do
+      take_away_all_deposit_dao_events.each do |event|
         dao_contract.decrement!(:depositors_count)
+        event.processed!
       end
     end
 
@@ -66,6 +67,7 @@ module CkbSync
         dao_contract.increment!(:subsidy_granted, event.value)
         address = event.address
         address.increment!(:subsidy, event.value)
+        event.processed!
       end
     end
 
@@ -76,14 +78,16 @@ module CkbSync
         dao_contract.decrement!(:total_deposit, event.value)
         address = event.address
         address.decrement!(:dao_deposit, event.value)
+        event.processed!
       end
     end
 
     def process_new_dao_depositor(dao_contract, dao_events)
       new_dao_depositor_events = dao_events.where(event_type: "new_dao_depositor")
-      new_dao_depositor_events.each do
+      new_dao_depositor_events.each do |event|
         dao_contract.increment!(:depositors_count)
         dao_contract.increment!(:total_depositors_count)
+        event.processed!
       end
     end
 
@@ -94,6 +98,7 @@ module CkbSync
         address.increment!(:dao_deposit, event.value)
         dao_contract.increment!(:total_deposit, event.value)
         dao_contract.increment!(:deposit_transactions_count)
+        event.processed!
       end
     end
 
