@@ -1915,3 +1915,50 @@ types:
                   }
                 ]
               }
+
+/contracts:
+  /{contract_name}:
+    uriParameters:
+      contract_name:
+        description: The Contract name
+        required: true
+        type: string
+    get:
+      description: Returns a contract by contract name
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: dao_contract_response
+              example: |
+                {
+                  "data": {
+                    "id": 1,
+                    "type": "dao_contract",
+                    "attributes": {
+                      "total_deposit": 1000000,
+                      "subsidy_granted": 1000,
+                      "deposit_transactions_count": 10,
+                      "withdraw_transactions_count": 1,
+                      "depositors_count": 3,
+                      "total_depositors_count": 10
+                    }
+                  }
+                }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "message": "Record Not Found",
+                  "errors": [
+                    {
+                      "code": "1021",
+                      "status": "404",
+                      "title": "Contract not fund",
+                      "detail": "No matching contract record found",
+                      "href": "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html#contracts_get"
+                    }
+                  ]
+                }
