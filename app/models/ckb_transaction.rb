@@ -50,6 +50,10 @@ class CkbTransaction < ApplicationRecord
     outputs.where(address: address).sum(:capacity) - inputs.where(address: address).sum(:capacity)
   end
 
+  def dao_transaction?
+    inputs.dao.present? || outputs.dao.present?
+  end
+
   private
 
   def normal_tx_display_outputs(previews)
