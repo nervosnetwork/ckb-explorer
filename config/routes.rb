@@ -25,6 +25,7 @@ Rails.application.routes.draw do
       resources :statistic_info_charts, only: :index
       resources :contract_transactions, only: :show
       resources :contracts, only: :show
+      resources :dao_contract_transactions, only: :show
     end
   end
 
