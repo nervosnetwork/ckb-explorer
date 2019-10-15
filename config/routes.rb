@@ -24,6 +24,7 @@ Rails.application.routes.draw do
       resources :nets, only: %i(index show)
       resources :statistic_info_charts, only: :index
       resources :contract_transactions, only: :show
+      resources :contracts, only: :show
     end
   end
 

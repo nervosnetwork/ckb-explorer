@@ -132,6 +132,12 @@ module Api
           super code: 1020, status: 422, title: "URI parameters is invalid", detail: "Given net info name is invalid", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
         end
       end
+
+      class ContractNotFoundError < Error
+        def initialize
+          super code: 1021, status: 404, title: "Contract Not Found", detail: "No contract records found by given contract name", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
     end
   end
 end
