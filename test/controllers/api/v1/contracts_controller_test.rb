@@ -38,6 +38,41 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should get success code when call show" do
+        valid_get api_v1_contract_url("dao_contract")
+
+        assert_response :success
+      end
+
+      test "the returned dao contract when param is dao_contract" do
+        valid_get api_v1_contract_url("dao_contract")
+
+        assert_equal "dao_contract", json.dig("data", "type")
+      end
+
+      test "should contain right keys in the serialized object when visit show" do
+        valid_get api_v1_contract_url("dao_contract")
+
+        response_contract = json["data"]
+        assert_equal %w(total_deposit subsidy_granted deposit_transactions_count withdraw_transactions_count
+           depositors_count total_depositors_count).sort, response_contract["attributes"].keys.sort
+      end
+
+      test "should return corresponding contract with given contract name" do
+        valid_get api_v1_contract_url("dao_contract")
+
+        assert_equal JSON.parse(DaoContractSerializer.new(DaoContract.default_contract).serialized_json), json
+      end
+
+      test "should return error object when no records found by id" do
+        error_object = Api::V1::Exceptions::ContractNotFoundError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get api_v1_contract_url("Bitcoin")
+
+        assert_equal response_json, response.body
+      end
     end
   end
 end
