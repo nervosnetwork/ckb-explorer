@@ -38,6 +38,45 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should get serialized dao depositors" do
+        addresses = create_list(:address, 10, dao_deposit: 1000)
+
+        valid_get api_v1_dao_depositors_url
+
+        assert_equal DaoDepositorSerializer.new(addresses).serialized_json, response.body
+      end
+
+      test "serialized dao depositors should order by dao deposit" do
+        create_list(:address, 3, dao_deposit: 1000)
+        addresses = Address.where("dao_deposit > 0").order("dao_deposit desc")
+
+        valid_get api_v1_dao_depositors_url
+
+        assert_equal JSON.parse(DaoDepositorSerializer.new(addresses).serialized_json), json
+      end
+
+      test "should contain right keys in the serialized dao depositors" do
+        create(:address, dao_deposit: 1000)
+
+        valid_get api_v1_dao_depositors_url
+
+        assert_equal %w(address_hash dao_deposit).sort, json["data"].first["attributes"].keys.sort
+      end
+
+      test "should return up to 100 records" do
+        create_list(:address, 103, dao_deposit: 1000)
+
+        valid_get api_v1_dao_depositors_url
+
+        assert_equal 100, json["data"].size
+      end
+
+      test "should return empty array when there is no depositors" do
+        valid_get api_v1_dao_depositors_url
+
+        assert_equal [], json["data"]
+      end
     end
   end
 end
