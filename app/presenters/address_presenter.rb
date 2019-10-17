@@ -32,6 +32,12 @@ class AddressPresenter
     CkbTransaction.where(id: ckb_transaction_ids).recent
   end
 
+  def ckb_dao_transactions
+    address_ids = object.pluck(:id)
+    ckb_transaction_ids = CellOutput.where(address_id: address_ids).dao.select("ckb_transaction_id")
+    CkbTransaction.where(id: ckb_transaction_ids)
+  end
+
   private
 
   attr_reader :object
