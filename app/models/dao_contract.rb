@@ -4,6 +4,11 @@ class DaoContract < ApplicationRecord
   def self.default_contract
     find_or_create_by(id: 1)
   end
+
+  def ckb_transactions
+    ckb_transaction_ids = CellOutput.dao.select("ckb_transaction_id")
+    CkbTransaction.where(id: ckb_transaction_ids)
+  end
 end
 
 # == Schema Information
