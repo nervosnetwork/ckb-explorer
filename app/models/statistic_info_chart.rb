@@ -12,6 +12,14 @@ class StatisticInfoChart
     Rails.cache.fetch("hash_rate_chart_data_#{to}")&.uniq || []
   end
 
+  def uncle_rate
+    blocks_count = Block.group(:epoch).order(:epoch).count
+    uncles_count = Block.group(:epoch).order(:epoch).sum(:uncles_count)
+    blocks_count.map do |key, value|
+      { epoch_number: key, uncle_rate: uncles_count[key] / value.to_f }
+    end
+  end
+
   def difficulty
     current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
 
