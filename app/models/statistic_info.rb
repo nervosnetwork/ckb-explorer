@@ -38,7 +38,7 @@ class StatisticInfo
     total_difficulties.to_d / total_time
   end
 
-  def miner_ranking
+  def miner_ranking·
     MinerRanking.new.ranking
   end
 

@@ -426,17 +426,23 @@ module CkbSync
     end
 
     def update_tx_fee_related_data(local_block)
-      ApplicationRecord.transaction do
-        local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_each do |cell_input|
-          ckb_transaction = cell_input.ckb_transaction
-          previous_cell_output = cell_input.previous_cell_output
-          address = previous_cell_output.address
+      local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches do |inputs|
+        Parallel.each([inputs], in_threads: threads_count(inputs.count)) do |cell_inputs|
+          ActiveRecord::Base.connection_pool.with_connection do
+            ApplicationRecord.transaction do
+              cell_inputs.each do |cell_input|
+                ckb_transaction = cell_input.ckb_transaction
+                previous_cell_output = cell_input.previous_cell_output
+                address = previous_cell_output.address
 
-          link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
-          link_payer_address_to_ckb_transaction(ckb_transaction, address)
+                link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
+                link_payer_address_to_ckb_transaction(ckb_transaction, address)
 
-          update_previous_cell_output_status(ckb_transaction, previous_cell_output)
-          build_withdraw_dao_events(address, ckb_transaction, local_block, previous_cell_output)
+                update_previous_cell_output_status(ckb_transaction, previous_cell_output)
+                build_withdraw_dao_events(address, ckb_transaction, local_block, previous_cell_output)
+              end
+            end
+          end
         end
       end
     end
@@ -463,11 +469,13 @@ module CkbSync
       ckb_transactions = local_block.ckb_transactions.where(is_cellbase: false)
       return if ckb_transactions.blank?
 
-      ApplicationRecord.transaction do
-        ckb_transactions.each(&method(:update_transaction_fee))
-        local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
-        local_block.save!
+      Parallel.each(ckb_transactions, in_threads: threads_count(ckb_transactions.count)) do |ckb_transaction|
+        ActiveRecord::Base.connection_pool.with_connection do
+          update_transaction_fee(ckb_transaction)
+        end
       end
+      local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
+      local_block.save!
     rescue ActiveRecord::RecordInvalid
       local_block.update(total_transaction_fee: 0)
       Rails.logger.error "tx_fee is negative"
@@ -481,6 +489,10 @@ module CkbSync
 
     def update_miner_pending_rewards(miner_address)
       CkbUtils.update_current_block_miner_address_pending_rewards(miner_address)
+    end
+
+    def threads_count(records_count)
+      records_count / 500
     end
   end
 end
