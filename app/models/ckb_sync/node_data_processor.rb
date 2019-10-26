@@ -23,7 +23,7 @@ module CkbSync
       ApplicationRecord.transaction do
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
         local_block.ckb_transactions_count = ckb_transactions.size
-        Block.import! [local_block], recursive: true, batch_size: 1000, validate: false, on_duplicate_key_update: [:id]
+        Block.import!([local_block], recursive: true, validate: false, on_duplicate_key_update: [:id])
         local_block.reload
       end
 
@@ -426,37 +426,43 @@ module CkbSync
     end
 
     def update_tx_fee_related_data(local_block)
-      local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches do |inputs|
-        Parallel.each([inputs], in_threads: threads_count(inputs.count)) do |cell_inputs|
-          ActiveRecord::Base.connection_pool.with_connection do
-            ApplicationRecord.transaction do
-              cell_inputs.each do |cell_input|
-                ckb_transaction = cell_input.ckb_transaction
-                previous_cell_output = cell_input.previous_cell_output
-                address = previous_cell_output.address
+      inputs = []
+      outputs = []
+      account_books = []
+      local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 3000) do |cell_inputs|
+        ApplicationRecord.transaction do
+          cell_inputs.each do |cell_input|
+            ckb_transaction = cell_input.ckb_transaction
+            previous_cell_output = cell_input.previous_cell_output
+            address = previous_cell_output.address
 
-                link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
-                link_payer_address_to_ckb_transaction(ckb_transaction, address)
+            link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
+            account_book = link_payer_address_to_ckb_transaction(ckb_transaction, address)
 
-                update_previous_cell_output_status(ckb_transaction, previous_cell_output)
-                build_withdraw_dao_events(address, ckb_transaction, local_block, previous_cell_output)
-              end
-            end
+            update_previous_cell_output_status(ckb_transaction, previous_cell_output)
+            build_withdraw_dao_events(address, ckb_transaction, local_block, previous_cell_output)
+            inputs << cell_input
+            outputs << previous_cell_output
+            account_books << account_book
           end
+          CellInput.import!(inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
+          CellOutput.import!(outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status] )
+          AccountBook.import!(account_books, validate: false)
         end
       end
     end
 
     def link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
-      cell_input.update!(previous_cell_output_id: previous_cell_output.id)
+      cell_input.previous_cell_output_id = previous_cell_output.id
     end
 
     def link_payer_address_to_ckb_transaction(ckb_transaction, address)
-      ckb_transaction.addresses << address
+      { ckb_transaction_id: ckb_transaction.id, address_id: address.id }
     end
 
     def update_previous_cell_output_status(ckb_transaction, previous_cell_output)
-      previous_cell_output.update!(consumed_by: ckb_transaction, status: :dead)
+      previous_cell_output.consumed_by = ckb_transaction
+      previous_cell_output.status = "dead"
     end
 
     def update_address_balance_and_ckb_transactions_count(address)
@@ -468,12 +474,13 @@ module CkbSync
     def calculate_tx_fee(local_block)
       ckb_transactions = local_block.ckb_transactions.where(is_cellbase: false)
       return if ckb_transactions.blank?
-
-      Parallel.each(ckb_transactions, in_threads: threads_count(ckb_transactions.count)) do |ckb_transaction|
-        ActiveRecord::Base.connection_pool.with_connection do
-          update_transaction_fee(ckb_transaction)
-        end
+      txs = []
+      ckb_transactions.each do |ckb_transaction|
+        update_transaction_fee(ckb_transaction)
+        txs << ckb_transaction
       end
+
+      CkbTransaction.import!(txs, validate: false, on_duplicate_key_update: [:transaction_fee])
       local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
       local_block.save!
     rescue ActiveRecord::RecordInvalid
@@ -483,8 +490,9 @@ module CkbSync
 
     def update_transaction_fee(ckb_transaction)
       transaction_fee = CkbUtils.ckb_transaction_fee(ckb_transaction)
-      ckb_transaction.transaction_fee = transaction_fee
-      ckb_transaction.save!
+      Rails.logger.error "tx_fee is negative" if transaction_fee < 0
+
+      ckb_transaction.transaction_fee = [transaction_fee, 0].max
     end
 
     def update_miner_pending_rewards(miner_address)
