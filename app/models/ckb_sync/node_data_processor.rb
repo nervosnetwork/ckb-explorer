@@ -372,17 +372,18 @@ module CkbSync
       end
     end
 
-    def build_withdraw_dao_events(address, ckb_transaction, local_block, previous_cell_output)
+    def build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
       if previous_cell_output.dao?
         withdraw_amount = previous_cell_output.capacity
-        ckb_transaction.dao_events.create!(block: local_block, address_id: address.id, event_type: "withdraw_from_dao", value: withdraw_amount, contract_id: DaoContract.default_contract.id)
+        ckb_transaction = CkbTransaction.find(ckb_transaction_id)
+        ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "withdraw_from_dao", value: withdraw_amount, contract_id: DaoContract.default_contract.id)
         header_deps = ckb_transaction.header_deps
         witnesses = ckb_transaction.witnesses
         subsidy = CkbUtils.dao_subsidy(previous_cell_output, header_deps, witnesses)
-        ckb_transaction.dao_events.create!(block: local_block, address_id: address.id, event_type: "issue_subsidy", value: subsidy, contract_id: DaoContract.default_contract.id)
-
+        ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "issue_subsidy", value: subsidy, contract_id: DaoContract.default_contract.id)
+        address = Address.find(address_id)
         if (address.dao_deposit - withdraw_amount).zero?
-          ckb_transaction.dao_events.create!(block: local_block, address_id: address.id, event_type: "take_away_all_deposit", value: 1, contract_id: DaoContract.default_contract.id)
+          ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "take_away_all_deposit", value: 1, contract_id: DaoContract.default_contract.id)
         end
       end
     end
@@ -432,15 +433,15 @@ module CkbSync
       local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 3000) do |cell_inputs|
         ApplicationRecord.transaction do
           cell_inputs.each do |cell_input|
-            ckb_transaction = cell_input.ckb_transaction
+            ckb_transaction_id = cell_input.ckb_transaction_id
             previous_cell_output = cell_input.previous_cell_output
-            address = previous_cell_output.address
+            address_id = previous_cell_output.address_id
 
             link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
-            account_book = link_payer_address_to_ckb_transaction(ckb_transaction, address)
+            update_previous_cell_output_status(ckb_transaction_id, previous_cell_output)
+            account_book = link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
+            build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
 
-            update_previous_cell_output_status(ckb_transaction, previous_cell_output)
-            build_withdraw_dao_events(address, ckb_transaction, local_block, previous_cell_output)
             inputs << cell_input
             outputs << previous_cell_output
             account_books << account_book
@@ -456,12 +457,12 @@ module CkbSync
       cell_input.previous_cell_output_id = previous_cell_output.id
     end
 
-    def link_payer_address_to_ckb_transaction(ckb_transaction, address)
-      { ckb_transaction_id: ckb_transaction.id, address_id: address.id }
+    def link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
+      { ckb_transaction_id: ckb_transaction_id, address_id: address_id }
     end
 
-    def update_previous_cell_output_status(ckb_transaction, previous_cell_output)
-      previous_cell_output.consumed_by = ckb_transaction
+    def update_previous_cell_output_status(ckb_transaction_id, previous_cell_output)
+      previous_cell_output.consumed_by_id = ckb_transaction_id
       previous_cell_output.status = "dead"
     end
 
@@ -497,10 +498,6 @@ module CkbSync
 
     def update_miner_pending_rewards(miner_address)
       CkbUtils.update_current_block_miner_address_pending_rewards(miner_address)
-    end
-
-    def threads_count(records_count)
-      records_count / 500
     end
   end
 end
