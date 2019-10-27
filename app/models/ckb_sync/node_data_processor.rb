@@ -433,31 +433,24 @@ module CkbSync
       updated_inputs = []
       updated_outputs = []
       account_books = []
-      local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 3000) do |cell_inputs|
+      local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 4000) do |cell_inputs|
         ApplicationRecord.transaction do
-          tasks = cell_inputs.each_slice(1000).map do |internal_cell_inputs|
-            Concurrent::Promises.future(internal_cell_inputs) do
-              internal_cell_inputs.each do |cell_input|
-                ckb_transaction_id = cell_input.ckb_transaction_id
-                previous_cell_output = cell_input.previous_cell_output
-                address_id = previous_cell_output.address_id
-                input_capacities[ckb_transaction_id] << previous_cell_output.capacity
+          cell_inputs.each do |cell_input|
+            ckb_transaction_id = cell_input.ckb_transaction_id
+            previous_cell_output = cell_input.previous_cell_output
+            address_id = previous_cell_output.address_id
+            input_capacities[ckb_transaction_id] << previous_cell_output.capacity
 
-                link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
-                update_previous_cell_output_status(ckb_transaction_id, previous_cell_output)
-                account_book = link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
-                build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
+            link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
+            update_previous_cell_output_status(ckb_transaction_id, previous_cell_output)
+            account_book = link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
+            build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
 
-                updated_inputs << cell_input
-                updated_outputs << previous_cell_output
-                account_books << account_book
-              end
-            end
+            updated_inputs << cell_input
+            updated_outputs << previous_cell_output
+            account_books << account_book
           end
-          Concurrent::Promises.zip(*tasks).value!
-          # puts "inputs count: #{inputs.count}"
-          # puts "outputs count: #{outputs.count}"
-          # puts "account_books count: #{account_books.count}"
+
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
           CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status] )
           AccountBook.import!(account_books, validate: false)
@@ -486,19 +479,14 @@ module CkbSync
 
     def calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs)
       output_capacities = outputs.each { |k, v| outputs[k] = v.map(&:capacity)}
-
       ckb_transactions = ckb_transactions.reject(&:is_cellbase)
       return if ckb_transactions.blank?
+
       txs = []
-      tasks = ckb_transactions.each_slice(1000).map do |internal_ckb_transactions|
-        Concurrent::Promises.future(internal_ckb_transactions) do
-          internal_ckb_transactions.each do |ckb_transaction|
-            update_transaction_fee(ckb_transaction, input_capacities[ckb_transaction.id].sum, output_capacities[ckb_transaction.id].sum)
-            txs << ckb_transaction
-          end
-        end
+      ckb_transactions.each do |ckb_transaction|
+        update_transaction_fee(ckb_transaction, input_capacities[ckb_transaction.id].sum, output_capacities[ckb_transaction.id].sum)
+        txs << ckb_transaction
       end
-      Concurrent::Promises.zip(*tasks).value!
 
       CkbTransaction.import!(txs, validate: false, on_duplicate_key_update: [:transaction_fee])
       local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
