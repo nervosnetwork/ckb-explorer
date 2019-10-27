@@ -25,7 +25,7 @@ module CkbSync
       ApplicationRecord.transaction do
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs)
         local_block.ckb_transactions_count = ckb_transactions.size
-        Block.import!([local_block], recursive: true, validate: false, on_duplicate_key_update: [:id])
+        Block.import!([local_block], recursive: true, batch_size: 3500, validate: false, on_duplicate_key_update: [:id])
         local_block.reload
         input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h {|id| [id, []] }
       end
@@ -433,7 +433,7 @@ module CkbSync
       updated_inputs = []
       updated_outputs = []
       account_books = []
-      local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 4000) do |cell_inputs|
+      local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 3500) do |cell_inputs|
         ApplicationRecord.transaction do
           cell_inputs.each do |cell_input|
             ckb_transaction_id = cell_input.ckb_transaction_id
