@@ -58,8 +58,6 @@ gem "kaminari"
 
 gem "ruby-progressbar", require: false
 
-gem "parallel"
-
 # Deployment
 gem "mina", require: false
 gem "mina-multistage", require: false

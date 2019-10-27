@@ -375,7 +375,6 @@ DEPENDENCIES
   minitest-reporters
   mocha
   newrelic_rpm
-  parallel
   pg (>= 0.18, < 2.0)
   pry
   pry-nav
