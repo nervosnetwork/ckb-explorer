@@ -19,16 +19,19 @@ module CkbSync
       node_block.uncles.each do |uncle_block|
         build_uncle_block(uncle_block, local_block)
       end
-
+      input_capacities = nil
+      outputs = []
+      ckb_transactions = nil
       ApplicationRecord.transaction do
-        ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
+        ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs)
         local_block.ckb_transactions_count = ckb_transactions.size
         Block.import!([local_block], recursive: true, validate: false, on_duplicate_key_update: [:id])
         local_block.reload
+        input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h {|id| [id, []] }
       end
 
-      update_tx_fee_related_data(local_block)
-      calculate_tx_fee(local_block)
+      update_tx_fee_related_data(local_block, input_capacities)
+      calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
 
       update_miner_pending_rewards(local_block.miner_address)
       update_block_contained_address_info(local_block)
@@ -302,12 +305,12 @@ module CkbSync
       )
     end
 
-    def build_ckb_transactions(local_block, transactions)
+    def build_ckb_transactions(local_block, transactions, outputs)
       transactions.each_with_index.map do |transaction, transaction_index|
         addresses = Set.new
         ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
         build_cell_inputs(transaction.inputs, ckb_transaction)
-        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data)
+        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data, outputs)
         addresses_arr = addresses.to_a
         ckb_transaction.addresses << addresses_arr
 
@@ -348,12 +351,12 @@ module CkbSync
       node_input.previous_output.tx_hash == CellOutput::SYSTEM_TX_HASH
     end
 
-    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data)
+    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs)
       node_outputs.each_with_index.map do |output, cell_index|
         address = Address.find_or_create_address(output.lock)
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
-
+        outputs << cell_output
         build_deposit_dao_events(address, cell_output, ckb_transaction)
         build_lock_script(cell_output, output.lock, address)
         build_type_script(cell_output, output.type)
@@ -426,28 +429,37 @@ module CkbSync
       )
     end
 
-    def update_tx_fee_related_data(local_block)
-      inputs = []
-      outputs = []
+    def update_tx_fee_related_data(local_block, input_capacities)
+      updated_inputs = []
+      updated_outputs = []
       account_books = []
       local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 3000) do |cell_inputs|
         ApplicationRecord.transaction do
-          cell_inputs.each do |cell_input|
-            ckb_transaction_id = cell_input.ckb_transaction_id
-            previous_cell_output = cell_input.previous_cell_output
-            address_id = previous_cell_output.address_id
+          tasks = cell_inputs.each_slice(1000).map do |internal_cell_inputs|
+            Concurrent::Promises.future(internal_cell_inputs) do
+              internal_cell_inputs.each do |cell_input|
+                ckb_transaction_id = cell_input.ckb_transaction_id
+                previous_cell_output = cell_input.previous_cell_output
+                address_id = previous_cell_output.address_id
+                input_capacities[ckb_transaction_id] << previous_cell_output.capacity
 
-            link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
-            update_previous_cell_output_status(ckb_transaction_id, previous_cell_output)
-            account_book = link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
-            build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
+                link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
+                update_previous_cell_output_status(ckb_transaction_id, previous_cell_output)
+                account_book = link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
+                build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
 
-            inputs << cell_input
-            outputs << previous_cell_output
-            account_books << account_book
+                updated_inputs << cell_input
+                updated_outputs << previous_cell_output
+                account_books << account_book
+              end
+            end
           end
-          CellInput.import!(inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
-          CellOutput.import!(outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status] )
+          Concurrent::Promises.zip(*tasks).value!
+          # puts "inputs count: #{inputs.count}"
+          # puts "outputs count: #{outputs.count}"
+          # puts "account_books count: #{account_books.count}"
+          CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
+          CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status] )
           AccountBook.import!(account_books, validate: false)
         end
       end
@@ -472,14 +484,21 @@ module CkbSync
       address.save!
     end
 
-    def calculate_tx_fee(local_block)
-      ckb_transactions = local_block.ckb_transactions.where(is_cellbase: false)
+    def calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs)
+      output_capacities = outputs.each { |k, v| outputs[k] = v.map(&:capacity)}
+
+      ckb_transactions = ckb_transactions.reject(&:is_cellbase)
       return if ckb_transactions.blank?
       txs = []
-      ckb_transactions.each do |ckb_transaction|
-        update_transaction_fee(ckb_transaction)
-        txs << ckb_transaction
+      tasks = ckb_transactions.each_slice(1000).map do |internal_ckb_transactions|
+        Concurrent::Promises.future(internal_ckb_transactions) do
+          internal_ckb_transactions.each do |ckb_transaction|
+            update_transaction_fee(ckb_transaction, input_capacities[ckb_transaction.id].sum, output_capacities[ckb_transaction.id].sum)
+            txs << ckb_transaction
+          end
+        end
       end
+      Concurrent::Promises.zip(*tasks).value!
 
       CkbTransaction.import!(txs, validate: false, on_duplicate_key_update: [:transaction_fee])
       local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
@@ -489,8 +508,8 @@ module CkbSync
       Rails.logger.error "tx_fee is negative"
     end
 
-    def update_transaction_fee(ckb_transaction)
-      transaction_fee = CkbUtils.ckb_transaction_fee(ckb_transaction)
+    def update_transaction_fee(ckb_transaction, input_capacities, output_capacities)
+      transaction_fee = CkbUtils.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
       Rails.logger.error "tx_fee is negative" if transaction_fee < 0
 
       ckb_transaction.transaction_fee = [transaction_fee, 0].max
