@@ -19,25 +19,23 @@ module CkbSync
       node_block.uncles.each do |uncle_block|
         build_uncle_block(uncle_block, local_block)
       end
-      input_capacities = nil
-      outputs = []
-      ckb_transactions = nil
+
       ApplicationRecord.transaction do
+        outputs = []
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs)
         local_block.ckb_transactions_count = ckb_transactions.size
         Block.import!([local_block], recursive: true, batch_size: 3500, validate: false, on_duplicate_key_update: [:id])
         local_block.reload
         input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h {|id| [id, []] }
+        update_tx_fee_related_data(local_block, input_capacities)
+        calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
+
+        update_miner_pending_rewards(local_block.miner_address)
+        update_block_contained_address_info(local_block)
+        update_block_reward_info(local_block)
+
+        update_dao_contract_related_info(local_block)
       end
-
-      update_tx_fee_related_data(local_block, input_capacities)
-      calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
-
-      update_miner_pending_rewards(local_block.miner_address)
-      update_block_contained_address_info(local_block)
-      update_block_reward_info(local_block)
-
-      update_dao_contract_related_info(local_block)
 
       local_block
     end
@@ -493,12 +491,12 @@ module CkbSync
       local_block.save!
     rescue ActiveRecord::RecordInvalid
       local_block.update(total_transaction_fee: 0)
-      Rails.logger.error "tx_fee is negative"
+      Rails.logger.error "block number: #{local_block.number}, tx_fee is negative"
     end
 
     def update_transaction_fee(ckb_transaction, input_capacities, output_capacities)
       transaction_fee = CkbUtils.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
-      Rails.logger.error "tx_fee is negative" if transaction_fee < 0
+      Rails.logger.error "ckb_transaction_id: #{ckb_transaction.id}, tx_fee is negative" if transaction_fee < 0
 
       ckb_transaction.transaction_fee = [transaction_fee, 0].max
     end
