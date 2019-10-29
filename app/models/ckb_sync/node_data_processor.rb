@@ -22,10 +22,11 @@ module CkbSync
 
       ApplicationRecord.transaction do
         outputs = []
+        local_block.save!
+
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs)
         local_block.ckb_transactions_count = ckb_transactions.size
-        Block.import!([local_block], recursive: true, batch_size: 3500, validate: false, on_duplicate_key_update: [:id])
-        local_block.reload
+        CkbTransaction.import!(ckb_transactions, recursive: true, batch_size: 3500, validate: false)
         input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h {|id| [id, []] }
         update_tx_fee_related_data(local_block, input_capacities)
         calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
