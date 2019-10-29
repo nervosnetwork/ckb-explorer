@@ -22,9 +22,10 @@ module CkbSync
 
       ApplicationRecord.transaction do
         outputs = []
+        new_dao_depositor_events = Set.new
         local_block.save!
 
-        ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs)
+        ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs, new_dao_depositor_events)
         local_block.ckb_transactions_count = ckb_transactions.size
         CkbTransaction.import!(ckb_transactions, recursive: true, batch_size: 3500, validate: false)
         input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h {|id| [id, []] }
@@ -34,6 +35,8 @@ module CkbSync
         update_miner_pending_rewards(local_block.miner_address)
         update_block_contained_address_info(local_block)
         update_block_reward_info(local_block)
+        dao_events = build_new_dao_depositor_events(new_dao_depositor_events)
+        DaoEvent.import!(dao_events, validate: false)
 
         update_dao_contract_related_info(local_block)
       end
@@ -42,6 +45,13 @@ module CkbSync
     end
 
     private
+
+    def build_new_dao_depositor_events(new_dao_depositor_events)
+      new_dao_depositor_events.map do |event|
+        ckb_transaction = CkbTransaction.find_by(tx_hash: event[:tx_hash])
+        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: event[:address_id], event_type: "new_dao_depositor", value: 1, contract_id: DaoContract.default_contract.id)
+      end
+    end
 
     def update_dao_contract_related_info(local_block)
       ApplicationRecord.transaction do
@@ -304,12 +314,12 @@ module CkbSync
       )
     end
 
-    def build_ckb_transactions(local_block, transactions, outputs)
+    def build_ckb_transactions(local_block, transactions, outputs, new_dao_depositor_events)
       transactions.each_with_index.map do |transaction, transaction_index|
         addresses = Set.new
         ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
         build_cell_inputs(transaction.inputs, ckb_transaction)
-        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data, outputs)
+        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data, outputs, new_dao_depositor_events)
         addresses_arr = addresses.to_a
         ckb_transaction.addresses << addresses_arr
 
@@ -350,13 +360,13 @@ module CkbSync
       node_input.previous_output.tx_hash == CellOutput::SYSTEM_TX_HASH
     end
 
-    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs)
+    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs, new_dao_depositor_events)
       node_outputs.each_with_index.map do |output, cell_index|
         address = Address.find_or_create_address(output.lock)
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
         outputs << cell_output
-        build_deposit_dao_events(address, cell_output, ckb_transaction)
+        build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
         build_lock_script(cell_output, output.lock, address)
         build_type_script(cell_output, output.type)
 
@@ -364,12 +374,12 @@ module CkbSync
       end
     end
 
-    def build_deposit_dao_events(address, cell_output, ckb_transaction)
+    def build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
       if cell_output.dao?
         dao_contract = DaoContract.find_or_create_by(id: 1)
         ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
         if address.dao_deposit.zero?
-          DaoEvent.find_or_create_by(block: ckb_transaction.block, ckb_transaction: ckb_transaction, address_id: address.id, event_type: "new_dao_depositor", value: 1, contract_id: dao_contract.id)
+          new_dao_depositor_events << { "address_id": address.id, "tx_hash": ckb_transaction.tx_hash }
         end
       end
     end
