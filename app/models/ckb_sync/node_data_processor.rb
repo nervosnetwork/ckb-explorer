@@ -22,7 +22,7 @@ module CkbSync
 
       ApplicationRecord.transaction do
         outputs = []
-        new_dao_depositor_events = Set.new
+        new_dao_depositor_events = {}
         local_block.save!
 
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs, new_dao_depositor_events)
@@ -47,22 +47,20 @@ module CkbSync
     private
 
     def build_new_dao_depositor_events(new_dao_depositor_events)
-      new_dao_depositor_events.map do |event|
-        ckb_transaction = CkbTransaction.find_by(tx_hash: event[:tx_hash])
-        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: event[:address_id], event_type: "new_dao_depositor", value: 1, contract_id: DaoContract.default_contract.id)
+      new_dao_depositor_events.map do |address_id, tx_hash|
+        ckb_transaction = CkbTransaction.find_by(tx_hash: tx_hash)
+        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address_id, event_type: "new_dao_depositor", value: 1, contract_id: DaoContract.default_contract.id)
       end
     end
 
     def update_dao_contract_related_info(local_block)
-      ApplicationRecord.transaction do
-        dao_contract = DaoContract.default_contract
-        dao_events = DaoEvent.where(block: local_block).pending
-        process_deposit_to_dao(dao_contract, dao_events)
-        process_new_dao_depositor(dao_contract, dao_events)
-        process_withdraw_from_dao(dao_contract, dao_events)
-        process_issue_subsidy(dao_contract, dao_events)
-        process_take_away_all_deposit(dao_contract, dao_events)
-      end
+      dao_contract = DaoContract.default_contract
+      dao_events = DaoEvent.where(block: local_block).pending
+      process_deposit_to_dao(dao_contract, dao_events)
+      process_new_dao_depositor(dao_contract, dao_events)
+      process_withdraw_from_dao(dao_contract, dao_events)
+      process_issue_subsidy(dao_contract, dao_events)
+      process_take_away_all_deposit(dao_contract, dao_events)
     end
 
     def process_take_away_all_deposit(dao_contract, dao_events)
@@ -378,8 +376,8 @@ module CkbSync
       if cell_output.dao?
         dao_contract = DaoContract.find_or_create_by(id: 1)
         ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
-        if address.dao_deposit.zero?
-          new_dao_depositor_events << { "address_id": address.id, "tx_hash": ckb_transaction.tx_hash }
+        if address.dao_deposit.zero? && !new_dao_depositor_events.key?(address.id)
+          new_dao_depositor_events[address.id] = ckb_transaction.tx_hash
         end
       end
     end
