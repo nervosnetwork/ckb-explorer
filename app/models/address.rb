@@ -16,10 +16,7 @@ class Address < ApplicationRecord
   def self.find_or_create_address(lock_script)
     address_hash = CkbUtils.generate_address(lock_script)
     lock_hash = lock_script.compute_hash
-
-    Rails.cache.fetch(lock_hash, expires_in: 1.day, race_condition_ttl: 3.seconds) do
-      Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
-    end
+    Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
   end
 
   def self.find_address!(query_key)

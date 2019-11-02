@@ -141,11 +141,11 @@ class CkbUtils
     OpenStruct.new(number: epoch_number, length: length, start_number: start_number)
   end
 
-  def self.ckb_transaction_fee(ckb_transaction)
+  def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
     if ckb_transaction.inputs.dao.present?
       dao_withdraw_tx_fee(ckb_transaction)
     else
-      normal_tx_fee(ckb_transaction)
+      normal_tx_fee(input_capacities, output_capacities)
     end
   end
 
@@ -212,8 +212,8 @@ class CkbUtils
     Address.decrement_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
   end
 
-  def self.normal_tx_fee(ckb_transaction)
-    ckb_transaction.inputs.sum(:capacity) - ckb_transaction.outputs.sum(:capacity)
+  def self.normal_tx_fee(input_capacities, output_capacities)
+    input_capacities - output_capacities
   end
 
   def self.dao_withdraw_tx_fee(ckb_transaction)
