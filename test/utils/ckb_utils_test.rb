@@ -90,15 +90,13 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal parsed_result, CkbUtils.parse_address(full_payload_address)
   end
 
-  test ".base_reward should return cellbase's first output's capacity for genesis block" do
+  test ".base_reward should return 0 for genesis block" do
     VCR.use_cassette("genesis_block", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(0)
 
       local_block = CkbSync::NodeDataProcessor.new.process_block(node_block)
-      cellbase = node_block.transactions.first
-      output = cellbase.outputs.first
 
-      assert_equal output.capacity.to_i, local_block.reward
+      assert_equal 0, local_block.reward
     end
   end
 
