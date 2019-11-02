@@ -46,7 +46,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".generate_address should return full payload data address when do not use default lock script and hash type is data" do
-    full_payload_address = "ckt1qgvf96jqmq4483ncl7yrzfzshwchu9jd0glq4yy5r2jcsw04d7xly9pkcv576ccddnn4quf2ga65xee2m26h7nqyypkl0"
+    full_payload_address = "ckt1qgvf96jqmq4483ncl7yrzfzshwchu9jd0glq4yy5r2jcsw04d7xlydkr98kkxrtvuag8z2j8w4pkw2k6k4l5csspk07"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
       "0x1892ea40d82b53c678ff88312450bbb17e164d7a3e0a90941aa58839f56f8df2",
@@ -57,7 +57,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".generate_address should return full payload data address when do not use default lock script and hash type is type" do
-    full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhv9pkcv576ccddnn4quf2ga65xee2m26h7nq0n3krt"
+    full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhvdkr98kkxrtvuag8z2j8w4pkw2k6k4l5ca2tat0"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
       "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176",
@@ -67,7 +67,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".generate_address should return nil when do not use default lock script and args is empty" do
-    full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhvqqm5f36w"
+    full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhv77zeg7"
     lock_script = CKB::Types::Script.generate_lock(
       "0x",
       "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176",
@@ -80,11 +80,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     blake160 = "0x36c329ed630d6ce750712a477543672adab57f4c"
     short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
 
-    assert_equal blake160, CkbUtils.parse_address(short_payload_blake160_address)
+    assert_equal blake160, CkbUtils.parse_address(short_payload_blake160_address)[:arg]
   end
 
   test ".parse_address should return an array that contains format type, code hash and args when target is full payload address" do
-    parsed_result = ["0x02", "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176", ["0x36c329ed630d6ce750712a477543672adab57f4c"]]
+    parsed_result = { format_type: "0x02", code_hash: "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176", arg: "0x1436c329ed630d6ce750712a477543672adab57f4c"}
     full_payload_address = "ckt1q2n9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhv9pkcv576ccddnn4quf2ga65xee2m26h7nq2rtnac"
 
     assert_equal parsed_result, CkbUtils.parse_address(full_payload_address)

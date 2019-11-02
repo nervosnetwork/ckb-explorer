@@ -75,7 +75,7 @@ class CkbUtils
 
     return unless CKB::Utils.valid_hex_string?(args)
 
-    CKB::Address.generate_full_payload_address(format_type, code_hash, [args], mode: ENV["CKB_NET_MODE"])
+    CKB::Address.generate_full_payload_address(format_type, code_hash, args, mode: ENV["CKB_NET_MODE"])
   end
 
   def self.use_default_lock_script?(lock_script)
