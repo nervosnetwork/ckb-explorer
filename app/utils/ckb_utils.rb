@@ -54,11 +54,21 @@ class CkbUtils
   end
 
   def self.generate_address(lock_script)
-    if address_type(lock_script)
+    case address_type(lock_script)
+    when "sig"
       short_payload_blake160_address(lock_script)
+    when "multisig"
+      short_payload_multisig_address(lock_script)
     else
       full_payload_address(lock_script)
     end
+  end
+
+  def self.short_payload_multisig_address(lock_script)
+    multisig_script_hash = lock_script.args
+    return if multisig_script_hash.blank? || !CKB::Utils.valid_hex_string?(multisig_script_hash)
+
+    CKB::Address.generate_short_payload_multisig_address(multisig_script_hash, mode: ENV["CKB_NET_MODE"])
   end
 
   def self.short_payload_blake160_address(lock_script)
@@ -81,6 +91,9 @@ class CkbUtils
   def self.address_type(lock_script)
     code_hash = lock_script.code_hash
     hash_type = lock_script.hash_type
+    args = lock_script.args
+    return "full" if args&.size != 42
+
     correct_sig_code_match = "#{ENV["CODE_HASH"]}data"
     correct_sig_type_match = "#{ENV["SECP_CELL_TYPE_HASH"]}type"
     correct_multisig_code_match = "#{ENV["SECP_MULTISIG_CELL_CODE_HASH"]}data"
