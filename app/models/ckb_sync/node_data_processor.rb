@@ -115,6 +115,7 @@ module CkbSync
       LockScript.find_or_create_by(
         args: lock_script.args,
         code_hash: lock_script.code_hash,
+        hash_type: lock_script.hash_type,
         address: address
       )
     end
