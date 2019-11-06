@@ -1,9 +1,9 @@
 GIT
   remote: https://github.com/nervosnetwork/ckb-sdk-ruby.git
-  revision: 7c048d3f6eb0c5f21ecec9ebd03601d75873790a
-  branch: shaojunda-shaojunda-add-serialize-witness-args
+  revision: f8387840f3253c441b9fdf09a159fa614e7b1e9e
+  branch: rc/v0.24.0
   specs:
-    ckb-sdk-ruby (0.23.1)
+    ckb-sdk-ruby (0.24.0)
       bitcoin-secp256k1 (~> 0.5.2)
       net-http-persistent (~> 3.0.0)
       rbnacl (~> 6.0, >= 6.0.1)
