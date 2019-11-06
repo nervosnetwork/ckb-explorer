@@ -94,15 +94,13 @@ class CkbUtils
     args = lock_script.args
     return "full" if args&.size != 42
 
-    correct_sig_code_match = "#{ENV["CODE_HASH"]}data"
     correct_sig_type_match = "#{ENV["SECP_CELL_TYPE_HASH"]}type"
-    correct_multisig_code_match = "#{ENV["SECP_MULTISIG_CELL_CODE_HASH"]}data"
     correct_multisig_type_match = "#{ENV["SECP_MULTISIG_CELL_TYPE_HASH"]}type"
 
     case "#{code_hash}#{hash_type}"
-    when correct_sig_code_match, correct_sig_type_match
+    when correct_sig_type_match
       "sig"
-    when correct_multisig_code_match, correct_multisig_type_match
+    when correct_multisig_type_match
       "multisig"
     else
       "full"
