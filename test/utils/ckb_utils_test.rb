@@ -24,8 +24,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
     ENV["CKB_NET_MODE"] = "testnet"
   end
 
-  test ".generate_address should return short payload blake160 address when use correct sig code match" do
-    short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
+  test ".generate_address should return full payload address when use correct sig code match" do
+    short_payload_blake160_address = "ckt1q2tnhkeh8ja36aftftqqdc4mt0wtvdp3a54kuw2tyfepezgx52khydkr98kkxrtvuag8z2j8w4pkw2k6k4l5cwfw473"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
       ENV["CODE_HASH"],
@@ -45,8 +45,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
   end
 
-  test ".generate_address should return short payload multisig address when use correct multisig code match" do
-    short_payload_blake160_address = "ckt1qyqndsefa43s6m882pcj53m4gdnj4k440axqyz2gg9"
+  test ".generate_address should return full payload address when use correct multisig code match" do
+    short_payload_blake160_address = "ckt1qtqlkzhxj9wn6nk76dyc4m04ltwa330khkyjrc8ch74at67t7fvmcdkr98kkxrtvuag8z2j8w4pkw2k6k4l5ce7s8yp"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
       ENV["SECP_MULTISIG_CELL_CODE_HASH"],
@@ -230,10 +230,10 @@ class CkbUtilsTest < ActiveSupport::TestCase
     end
   end
 
-  test ".address_type should return sig when data_hash matches secp256k1 blake160 sighash all data hash" do
+  test ".address_type should return full when data_hash matches secp256k1 blake160 sighash all data hash" do
     lock_script = CKB::Types::Script.new(code_hash: ENV["CODE_HASH"], args: "0x5282764c8cf8677148969758a183c9cdcdf207dd")
 
-    assert_equal "sig", CkbUtils.address_type(lock_script)
+    assert_equal "full", CkbUtils.address_type(lock_script)
   end
 
   test ".address_type should return full when data_hash matches type" do
