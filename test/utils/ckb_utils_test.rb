@@ -24,7 +24,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     ENV["CKB_NET_MODE"] = "testnet"
   end
 
-  test ".generate_address should return short payload blake160 address when use correct code match" do
+  test ".generate_address should return short payload blake160 address when use correct sig code match" do
     short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -35,11 +35,32 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
   end
 
-  test ".generate_address should return short payload blake160 address when use correct type match" do
+  test ".generate_address should return short payload blake160 address when use correct sig type match" do
     short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
       ENV["SECP_CELL_TYPE_HASH"]
+    )
+
+    assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+  end
+
+  test ".generate_address should return short payload multisig address when use correct multisig code match" do
+    short_payload_blake160_address = "ckt1qyqndsefa43s6m882pcj53m4gdnj4k440axqyz2gg9"
+    lock_script = CKB::Types::Script.generate_lock(
+      "0x36c329ed630d6ce750712a477543672adab57f4c",
+      ENV["SECP_MULTISIG_CELL_CODE_HASH"],
+      "data"
+    )
+
+    assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+  end
+
+  test ".generate_address should return short payload multisig address when use correct multisig type match" do
+    short_payload_blake160_address = "ckt1qyqndsefa43s6m882pcj53m4gdnj4k440axqyz2gg9"
+    lock_script = CKB::Types::Script.generate_lock(
+      "0x36c329ed630d6ce750712a477543672adab57f4c",
+      ENV["SECP_MULTISIG_CELL_TYPE_HASH"]
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
@@ -230,7 +251,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   test ".address_type? should return full when type_hash matches data" do
     lock_script = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x5282764c8cf8677148969758a183c9cdcdf207dd")
 
-    assert_not CkbUtils.address_type(lock_script)
+    assert_equal "full", CkbUtils.address_type(lock_script)
   end
 
   test ".parse_epoch_info should return epoch 0 info if epoch is equal to 0" do
