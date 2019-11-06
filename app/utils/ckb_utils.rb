@@ -54,7 +54,7 @@ class CkbUtils
   end
 
   def self.generate_address(lock_script)
-    if use_default_lock_script?(lock_script)
+    if address_type(lock_script)
       short_payload_blake160_address(lock_script)
     else
       full_payload_address(lock_script)
@@ -78,15 +78,22 @@ class CkbUtils
     CKB::Address.generate_full_payload_address(format_type, code_hash, args, mode: ENV["CKB_NET_MODE"])
   end
 
-  def self.use_default_lock_script?(lock_script)
+  def self.address_type(lock_script)
     code_hash = lock_script.code_hash
     hash_type = lock_script.hash_type
-    correct_code_match = "#{ENV["CODE_HASH"]}data"
-    correct_type_match = "#{ENV["SECP_CELL_TYPE_HASH"]}type"
+    correct_sig_code_match = "#{ENV["CODE_HASH"]}data"
+    correct_sig_type_match = "#{ENV["SECP_CELL_TYPE_HASH"]}type"
+    correct_multisig_code_match = "#{ENV["SECP_MULTISIG_CELL_CODE_HASH"]}data"
+    correct_multisig_type_match = "#{ENV["SECP_MULTISIG_CELL_TYPE_HASH"]}type"
 
-    return false if code_hash.blank?
-
-    "#{code_hash}#{hash_type}".in?([correct_code_match, correct_type_match])
+    case "#{code_hash}#{hash_type}"
+    when correct_sig_code_match, correct_sig_type_match
+      "sig"
+    when correct_multisig_code_match, correct_multisig_type_match
+      "multisig"
+    else
+      "full"
+    end
   end
 
   def self.parse_address(address_hash)
