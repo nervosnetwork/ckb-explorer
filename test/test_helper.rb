@@ -141,10 +141,11 @@ def build_display_input_from_node_input(input)
   end
 end
 
-def fake_node_block(block_hash = DEFAULT_NODE_BLOCK_HASH, number = "0xa")
+def fake_node_block(block_hash = DEFAULT_NODE_BLOCK_HASH, number = "0xc")
   json_block = "{\"header\":{\"dao\":\"0x01000000000000000000c16ff286230000a3a65e97fd03000057c138586f0000\",\"compact_target\":\"0x1000\",\"epoch\":\"0x0\",\"hash\":\"#{block_hash}\",\"number\":\"#{number}\",\"parent_hash\":\"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\",\"proposals_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"nonce\":\"0x2cfb33aba57e0338\",\"timestamp\":\"0x16aa12ea9e3\",\"transactions_root\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"uncles_hash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"version\":\"0x0\"},\"proposals\":[],
     \"transactions\":[
-      {\"header_deps\":[],\"cell_deps\":[],\"outputs_data\":[\"0x\"],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"inputs\":[{\"previous_output\":{\"tx_hash\": \"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0x0\"},\"since\":\"0x0\"}],\"outputs\":[{\"capacity\":\"0x23c34600\",\"data\":\"0x\",\"lock\":{\"args\":\"0xb2e61ff569acf041b3c2c17724e2379c581eeac3\",\"code_hash\":\"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794\",\"hash_type\":\"data\"},\"type\":null}],\"version\":\"0x0\",\"witnesses\":[\"0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd80400000012345678\"]},
+      {\"header_deps\":[],\"cell_deps\":[],\"outputs_data\":[\"0x\"],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3\",\"inputs\":[{\"previous_output\":{\"tx_hash\": \"0x0000000000000000000000000000000000000000000000000000000000000000\", \"index\": \"0x0\"},\"since\":\"0x0\"}],\"outputs\":[{\"capacity\":\"0x23c34600\",\"data\":\"0x\",\"lock\":{\"args\":\"0xb2e61ff569acf041b3c2c17724e2379c581eeac3\",\"code_hash\":\"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794\",\"hash_type\":\"data\"},\"type\":null}],\"version\":\"0x0\",\"witnesses\":[\"0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000\"]},
+      {\"header_deps\":[],\"cell_deps\":[],\"outputs_data\":[\"0x\"],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf2\",\"inputs\":[{\"previous_output\":{\"tx_hash\": \"0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0x2\"},\"since\":\"0x0\"}],\"outputs\":[{\"capacity\":\"0x23c34600\",\"data\":\"0x\",\"lock\":{\"args\":\"0xb2e61ff569acf041b3c2c17724e2379c581eeac3\",\"code_hash\":\"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794\",\"hash_type\":\"data\"},\"type\":null}],\"version\":\"0x0\",\"witnesses\":[\"0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000\"]},
       {\"header_deps\":[],\"cell_deps\":[],\"outputs_data\":[\"0x\"],\"hash\":\"0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23\",\"inputs\":[{\"previous_output\":{\"tx_hash\": \"0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3\", \"index\": \"0x1\"},\"since\":\"0x0\"}],\"outputs\":[{\"capacity\":\"0x1dcd6500\",\"data\":\"0x\",\"lock\":{\"args\":\"0xb2e61ff569acf041b3c2c17724e2379c581eeac3\",\"code_hash\":\"0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794\",\"hash_type\":\"data\"},\"type\":null}],\"version\":\"0x0\",\"witnesses\":[\"0x\"]}
     ]
     ,\"uncles\":[]}"
@@ -188,9 +189,10 @@ def create_cell_output(trait_type: :with_full_transaction, status: "live")
 end
 
 def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
-  blocks = create_list(:block, 10, :with_block_hash)
+  blocks = create_list(:block, 10, :with_block_hash, number: 12)
   cellbases = []
-  blocks.each do |block|
+  blocks.each_with_index do |block, index|
+    block.update(number: block.number + index)
     cellbase = block.ckb_transactions.create(is_cellbase: true, block_timestamp: block_timestamp, block_number: 10)
     cellbases << cellbase
   end
@@ -256,7 +258,9 @@ module ActiveSupport
     # fixtures :all
     include FactoryBot::Syntax::Methods
     include ::RequestHelpers
-    parallelize(workers: 2, with: :processes)
+    if ENV["CI"] != "true"
+      parallelize(workers: 2, with: :processes)
+    end
 
     # Add more helper methods to be used by all tests here...
     def before_setup

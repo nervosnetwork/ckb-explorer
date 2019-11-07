@@ -10,6 +10,7 @@ class CkbTransaction < ApplicationRecord
   has_many :cell_outputs, dependent: :delete_all
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
+  has_many :dao_events
 
   attribute :tx_hash, :ckb_hash
   attribute :header_deps, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]
@@ -49,6 +50,10 @@ class CkbTransaction < ApplicationRecord
     outputs.where(address: address).sum(:capacity) - inputs.where(address: address).sum(:capacity)
   end
 
+  def dao_transaction?
+    inputs.dao.present? || outputs.dao.present?
+  end
+
   private
 
   def normal_tx_display_outputs(previews)
@@ -56,7 +61,10 @@ class CkbTransaction < ApplicationRecord
       cell_outputs_for_display = previews ? outputs.limit(10) : outputs
       cell_outputs_for_display.order(:id).map do |output|
         consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-        { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash }
+        display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
+        display_output.merge!({ dao_type_hash: ENV["DAO_TYPE_HASH"] }) if output.dao?
+
+        display_output
       end
     end
   end
@@ -75,9 +83,23 @@ class CkbTransaction < ApplicationRecord
       cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
       cell_inputs_for_display.order(:id).map do |cell_input|
         previous_cell_output = cell_input.previous_cell_output
-        { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash }
+        display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_type: previous_cell_output.cell_type }
+        display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.dao?
+
+        display_input
       end
     end
+  end
+
+  def attributes_for_dao_input(input)
+    witness = witnesses[input.cell_index]
+    header_deps_index = CKB::Utils.bin_to_hex(CKB::Utils.hex_to_bin(witness)[-8..-1]).hex
+    withdraw_block_hash = header_deps[header_deps_index]
+    started_block_number = Block.find(input.block_id).number
+    ended_block_number = Block.find_by(block_hash: withdraw_block_hash).number
+    subsidy = CkbUtils.dao_subsidy(input, header_deps, witnesses)
+
+    { started_block_number: started_block_number, ended_block_number: ended_block_number, subsidy: subsidy, dao_type_hash: ENV["DAO_TYPE_HASH"] }
   end
 
   def cellbase_display_inputs

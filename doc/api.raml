@@ -40,16 +40,16 @@ types:
     type: object,
     properties: {
       "block_number": {
-        type: "integer"
+        type: "string"
       },
       "transaction_hash": {
         type: "string"
       },
       "block_timestamp": {
-        type: "integer"
+        type: "string"
       }
       "transaction_fee": {
-        type: "integer"
+        type: "string"
       },
       "is_cellbase": {
         type: "boolean"
@@ -58,7 +58,7 @@ types:
         type: "string"
       },
       "version": {
-        type: "integer"
+        type: "string"
       },
       "display_inputs": {
         type: "display_input[]"
@@ -159,7 +159,7 @@ types:
         type: "boolean"
       },
       "id": {
-        type: "integer"
+        type: "string"
       },
       "address_hash": {
         type: "string"
@@ -172,7 +172,26 @@ types:
         required: false
       },
       "generated_tx_hash": {
-         type: "string",
+        type: "string",
+      },
+      "cell_type": {
+        type: "string"
+      },
+      "started_block_number": {
+        type: integer,
+        required: false
+      },
+      "ended_block_number": {
+        type: integer,
+        required: false
+      },
+      "subsidy": {
+        type: integer,
+        required: false
+      },
+      "dao_type_hash": {
+        type: "string"
+        required: false
       }
     }
   }
@@ -183,7 +202,7 @@ types:
     require: true,
     properties: {
       "id": {
-        type: "integer"
+        type: "string"
       },
       "address_hash": {
         type: "string"
@@ -218,6 +237,13 @@ types:
       "status": {
         type: "string",
         enum: ["live", "dead"]
+      }，
+      "cell_type": {
+        type: "string"
+      },
+      "dao_type_hash": {
+        type: "string"
+        required: false
       }
     }
   }
@@ -232,31 +258,31 @@ types:
           "maxLength": 66,
       },
       "number": {
-        "type": "integer"
+        "type": "string"
       },
       "transactions_count": {
-        "type": "integer"
+        "type": "string"
       },
       "proposals_count": {
-        "type": "integer"
+        "type": "string"
       },
       "uncles_count": {
-        "type": "integer"
+        "type": "string"
       },
       "uncle_block_hashes": {
         "type": "string[]"
       },
       "reward": {
-        "type": "integer"
+        "type": "string"
       },
       "total_transaction_fee": {
-        "type": "integer"
+        "type": "string"
       },
       "cell_consumed": {
-        "type": "integer"
+        "type": "string"
       },
       "total_cell_capacity": {
-        "type": "integer"
+        "type": "string"
       },
       "miner_hash": {
         "type": "string",
@@ -265,16 +291,16 @@ types:
         "maxLength": 66,
       },
       "timestamp": {
-        "type": "integer"
+        "type": "string"
       },
       "difficulty": {
         "type": "string"
       },
       "version": {
-        "type": "integer"
+        "type": "string"
       },
       "nonce": {
-        "type": "integer"
+        "type": "string"
       },
       "proof": {
         "type": "string"
@@ -288,7 +314,7 @@ types:
         "enum": ["pending", "calculated"]
       },
       "received_tx_fee": {
-        "type": "integer"
+        "type": "string"
       }
     }
   }
@@ -318,7 +344,7 @@ types:
         type: "string",
       },
       "average_difficulty": {
-        type: "integer",
+        type: "string",
       },
       "hash_rate": {
         type: "string",
@@ -336,7 +362,7 @@ types:
         type: "string",
       },
       "average_difficulty": {
-        type: "integer",
+        type: "string",
       },
       "hash_rate": {
         type: "string",
@@ -372,6 +398,18 @@ types:
         type: "integer",
       },
       "version": {
+        type: "string",
+      }
+    }
+  }
+
+  dao_depositor_attributes: {
+    type: "object",
+    properties: {
+      "address_hash": {
+        type: "string"
+      },
+      "dao_deposit": {
         type: "string",
       }
     }
@@ -467,6 +505,21 @@ types:
     }
   }
 
+  transactions_response: {
+    type: object,
+    properties: {
+      "meta": {
+        "type": "pagination_meta"
+      },
+      "data": {
+        "type": "transaction[]"
+      },
+      "links": {
+        "type": "pagination_link"
+      }
+    }
+  }
+
   block_transactions_response: {
     type: object,
     properties: {
@@ -547,6 +600,15 @@ types:
     properties: {
       "data": {
         "type": net_info_attributes
+      }
+    }
+  }
+
+  dao_depositor_response: {
+    type: object,
+    properties: {
+      "data": {
+        "type": dao_depositor_attributes
       }
     }
   }
@@ -802,14 +864,28 @@ types:
                           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                           "capacity": 100,
                           "target_block_number": 759，
-                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "cell_type": "normal"
                         },
                         {
                           "from_cellbase": false,
                           "input_id": 102,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
-                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"，
+                          "cell_type": "normal"
+                        },
+                        {
+                          "from_cellbase": false,
+                          "input_id": 103,
+                          "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "capacity": 100,
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                          "started_block_number": 10,
+                          "ended_block_number": 15,
+                          "subsidy": 100000,
+                          "cell_type": "dao",
+                          "dao_type_hash": "0xa20df8e80518e9b2eabc1a0efb0ebe1de83f8df9c867edf99d0c5895654fcde1",
                         }
                       ],
                       "display_outputs": [
@@ -817,19 +893,30 @@ types:
                           "output_id": 103,
                           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                           "capacity": 100,
-                         "base_reward": 125000000000,
-                         "commit_reward": 0,
-                         "proposal_reward": 0,
-                         "secondary_reward": 476623447,
-                         "consumed_by_tx_hash": null,
-                         "status": "live"
+                          "base_reward": 125000000000,
+                          "commit_reward": 0,
+                          "proposal_reward": 0,
+                          "secondary_reward": 476623447,
+                          "consumed_by_tx_hash": null,
+                          "status": "live",
+                          "cell_type": "normal"
                         },
                         {
                           "output_id": 104,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
                           "consumed_by_tx_hash": null,
-                          "status": "live"
+                          "status": "live",
+                          "cell_type": "normal"
+                        },
+                        {
+                          "output_id": 105,
+                          "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "capacity": 100,
+                          "consumed_by_tx_hash": null,
+                          "status": "live",
+                          "cell_type": "dao",
+                          "dao_type_hash": "0xa20df8e80518e9b2eabc1a0efb0ebe1de83f8df9c867edf99d0c5895654fcde1"
                         }
                       ]
                     }
@@ -902,6 +989,7 @@ types:
                             "capacity": 100,
                             "target_block_number": 759,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "cell_type": "normal"
                           },
                           {
                             "from_cellbase": false,
@@ -909,6 +997,7 @@ types:
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                            "cell_type": "normal"
                           }
                         ],
                         "display_outputs": [
@@ -921,14 +1010,16 @@ types:
                             "proposal_reward": 0,
                             "secondary_reward": 476623447,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           }
                         ]
                       }
@@ -951,14 +1042,16 @@ types:
                             "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                             "capacity": 100,
                             "target_block_number": 759,
-                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "cell_type": "normal"
                           },
                           {
                             "from_cellbase": false,
                             "input_id": 102,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
-                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                            "cell_type": "normal"
                           }
                         ],
                         "display_outputs": [
@@ -971,14 +1064,16 @@ types:
                             "proposal_reward": 0,
                             "secondary_reward": 476623447,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           }
                         ]
                       }
@@ -1057,6 +1152,7 @@ types:
                             "capacity": 100,
                             "target_block_number": 759,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "cell_type": "normal"
                           },
                           {
                             "from_cellbase": false,
@@ -1064,6 +1160,7 @@ types:
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                            "cell_type": "normal"
                           }
                         ],
                         "display_outputs": [
@@ -1076,14 +1173,16 @@ types:
                             "proposal_reward": 0,
                             "secondary_reward": 476623447,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "consumed_by_tx_hash": null,
-                            "status": "live"
+                            "status": "live",
+                            "cell_type": "normal"
                           }
                         ]
                       }
@@ -1105,6 +1204,7 @@ types:
                             "capacity": 100,
                             "target_block_number": 759,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "cell_type": "normal"
                           },
                           {
                             "from_cellbase": true,
@@ -1112,6 +1212,7 @@ types:
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                            "cell_type": "normal"
                           }
                         ],
                         "display_outputs": [
@@ -1124,14 +1225,16 @@ types:
                             "proposal_reward": 0,
                             "secondary_reward": 476623447,
                             "consumed_by_tx_hash": "0x2bbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "status": "dead"
+                            "status": "dead",
+                            "cell_type": "normal"
                           },
                           {
                             "output_id": 104,
                             "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                             "capacity": 100,
                             "consumed_by_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
-                            "status": "dead"
+                            "status": "dead",
+                            "cell_type": "normal"
                           }
                         ]
                       }
@@ -1502,7 +1605,7 @@ types:
                   }
                 ]
               }
-/statistics:
+
   /{info_name}:
     uriParameters:
       info_name:
@@ -1774,14 +1877,16 @@ types:
                           "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
                           "capacity": 100,
                           "target_block_number": 100,
-                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323"
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "cell_type": "normal"
                         },
                         {
                           "from_cellbase": false,
                           "input_id": 102,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
-                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321"
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                          "cell_type": "normal"
                         }
                       ],
                       "display_outputs": [
@@ -1795,14 +1900,16 @@ types:
                           "proposal_reward": 0,
                           "secondary_reward": 476623447,
                           "consumed_by_tx_hash": null,
-                          "status": "live"
+                          "status": "live",
+                          "cell_type": "normal"
                         },
                         {
                           "output_id": 104,
                           "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
                           "capacity": 100,
                           "consumed_by_tx_hash": null,
-                          "status": "live"
+                          "status": "live",
+                          "cell_type": "normal"
                         }
                       ]
                     }
@@ -1841,6 +1948,491 @@ types:
                     "title": "Record not fund",
                     "detail": "No matching record were found",
                     "href": "http://shaojunda.coding.me/doc/api_doc.html#suggestqueries_get"
+                  }
+                ]
+              }
+
+/contract_transactions:
+  /{contract_name}:
+    uriParameters:
+      contract_name:
+        description: The contract name
+        required: true
+        type: string
+    get:
+      description: Returns transactions under the contract
+      queryParameters:
+        page_size:
+          type: integer
+          default: 10
+        page:
+          type: integer
+          default: 1
+      responses:
+          200:
+            body:
+              application/vnd.api+json:
+                type: transactions_response
+                example: |
+                  {
+                    "meta": {
+                      "total": 100,
+                    },
+                    "data": [
+                      {
+                        "id": 11,
+                        "type": "transaction",
+                        "attributes": {
+                          "transaction_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                          "block_number": "770",
+                          "block_timestamp": 1553068833785,
+                          "transaction_fee": 666,
+                          "version": 0,
+                          "display_inputs": [
+                            {
+                              "from_cellbase": true,
+                              "input_id": 101,
+                              "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                              "capacity": 100,
+                              "target_block_number": 759,
+                              "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                              "cell_type": "normal"
+                            },
+                            {
+                              "from_cellbase": false,
+                              "input_id": 102,
+                              "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                              "capacity": 100,
+                              "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                              "cell_type": "normal"
+                            }
+                          ],
+                          "display_outputs": [
+                            {
+                              "output_id": 103,
+                              "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                              "capacity": 100,
+                              "base_reward": 125000000000,
+                              "commit_reward": 0,
+                              "proposal_reward": 0,
+                              "secondary_reward": 476623447,
+                              "consumed_by_tx_hash": null,
+                              "status": "live",
+                              "cell_type": "normal"
+                            },
+                            {
+                              "output_id": 104,
+                              "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                              "capacity": 100,
+                              "consumed_by_tx_hash": null,
+                              "status": "live",
+                              "cell_type": "normal"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "id": 11,
+                        "type": "transaction",
+                        "attributes": {
+                          "transaction_hash": "0xmk8721e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                          "block_number": "770",
+                          "block_timestamp": 1553068833785,
+                          "transaction_fee": 666,
+                          "version": 0,
+                          "display_inputs": [
+                            {
+                              "from_cellbase": true,
+                              "input_id": 101,
+                              "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                              "capacity": 100,
+                              "target_block_number": 759,
+                              "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                              "cell_type": "normal"
+                            },
+                            {
+                              "from_cellbase": true,
+                              "input_id": 102,
+                              "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                              "capacity": 100,
+                              "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                              "cell_type": "normal"
+                            }
+                          ],
+                          "display_outputs": [
+                            {
+                              "output_id": 103,
+                              "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                              "capacity": 100,
+                              "base_reward": 125000000000,
+                              "commit_reward": 0,
+                              "proposal_reward": 0,
+                              "secondary_reward": 476623447,
+                              "consumed_by_tx_hash": "0x2bbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                              "status": "dead",
+                              "cell_type": "normal"
+                            },
+                            {
+                              "output_id": 104,
+                              "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                              "capacity": 100,
+                              "consumed_by_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                              "status": "dead",
+                              "cell_type": "normal"
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "links": {
+                      "self": "https://explorer.nervos.org/contract_transactions/dao_contract?page=3&page_size=10",
+                      "first": "https://explorer.nervos.org/contract_transactions/dao_contract?page=1&page_size=10",
+                      "prev": "https://explorer.nervos.org/contract_transactions/dao_contract?page=2&page_size=10",
+                      "next": "https://explorer.nervos.org/contract_transactions/dao_contract?page=4&page_size=10",
+                      "last": "https://explorer.nervos.org/contract_transactions/dao_contract?page=13&page_size=10"
+                    }
+                  }
+          404:
+            body:
+              application/vnd.api+json:
+                type: error_response
+                example: |
+                  {
+                    "errors": [
+                      {
+                        "code": "1022",
+                        "status": "404",
+                        "title": "Dao Contract transactions not found",
+                        "detail": "No transaction records found by given contract name",
+                        "href": "http://explorer.nervos.org/doc/api_doc.html#contract_transactions__contract_name__get"
+                      }
+                    ]
+                  }
+
+/contracts:
+  /{contract_name}:
+    uriParameters:
+      contract_name:
+        description: The Contract name
+        required: true
+        type: string
+    get:
+      description: Returns a contract by contract name
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: dao_contract_response
+              example: |
+                {
+                  "data": {
+                    "id": 1,
+                    "type": "dao_contract",
+                    "attributes": {
+                      "total_deposit": 1000000,
+                      "subsidy_granted": 1000,
+                      "deposit_transactions_count": 10,
+                      "withdraw_transactions_count": 1,
+                      "depositors_count": 3,
+                      "total_depositors_count": 10
+                    }
+                  }
+                }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "message": "Record Not Found",
+                  "errors": [
+                    {
+                      "code": "1021",
+                      "status": "404",
+                      "title": "Contract not fund",
+                      "detail": "No matching contract record found",
+                      "href": "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html#contracts_get"
+                    }
+                  ]
+                }
+
+/dao_contract_transactions:
+  /{tx_hash}:
+    uriParameters:
+      tx_hash:
+        description: transaction hash
+        required: true
+        type: string
+    get:
+      description: Returns the transaction related to dao contract by given transaction hash
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: transaction_response
+              example: |
+                {
+                  "data": {
+                    "id": "1",
+                    "type": "transaction",
+                    "attributes": {
+                      "transaction_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                      "block_number": "770",
+                      "block_timestamp": 1553068833785,
+                      "transaction_fee": 666,
+                      "version": 0,
+                      "is_cellbase": true,
+                      "income": "0.0",
+                      "display_inputs": [
+                        {
+                          "from_cellbase": true,
+                          "input_id": 101,
+                          "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                          "capacity": 100,
+                          "target_block_number": 100,
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "cell_type": "normal"
+                        },
+                        {
+                          "from_cellbase": false,
+                          "input_id": 102,
+                          "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "capacity": 100,
+                          "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                          "cell_type": "normal"
+                        }
+                      ],
+                      "display_outputs": [
+                        {
+                          "output_id": 103,
+                          "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                          "capacity": 100,
+                          "target_block_number": 100,
+                          "base_reward": 125000000000,
+                          "commit_reward": 0,
+                          "proposal_reward": 0,
+                          "secondary_reward": 476623447,
+                          "consumed_by_tx_hash": null,
+                          "status": "live",
+                          "cell_type": "normal"
+                        },
+                        {
+                          "output_id": 104,
+                          "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                          "capacity": 100,
+                          "consumed_by_tx_hash": null,
+                          "status": "live",
+                          "cell_type": "normal"
+                        }
+                      ]
+                    }
+                  }
+                }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "errors": [
+                    {
+                      "code": "1006",
+                      "status": "404",
+                      "title": "Transaction Not Found",
+                      "detail": "No transaction records found by given transaction hash",
+                      "href": "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html#dao_contract_transactions__hash__get"
+                    }
+                  ]
+                }
+
+/address_dao_transactions:
+  /{address_hash}:
+    uriParameters:
+      address_hash:
+        description: address hash
+        required: true
+        type: string
+    get:
+      description: Returns transactions under the address by given address hash
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: transactions_response
+              example: |
+                {
+                  "meta": {
+                    "total": 100
+                  },
+                  "data": [
+                    {
+                      "id": 11,
+                      "type": "transaction",
+                      "attributes": {
+                        "transaction_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                        "block_number": "770",
+                        "block_timestamp": 1553068833785,
+                        "transaction_fee": 666,
+                        "version": 0,
+                        "is_cellbase": true,
+                        "income": "0.0",
+                        "display_inputs": [
+                          {
+                            "from_cellbase": true,
+                            "input_id": 101,
+                            "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                            "capacity": 100,
+                            "target_block_number": 759,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "cell_type": "normal"
+                          },
+                          {
+                            "from_cellbase": false,
+                            "input_id": 102,
+                            "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "capacity": 100,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                            "cell_type": "normal"
+                          }
+                        ],
+                        "display_outputs": [
+                          {
+                            "output_id": 103,
+                            "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                            "capacity": 100,
+                            "base_reward": 125000000000,
+                            "commit_reward": 0,
+                            "proposal_reward": 0,
+                            "secondary_reward": 476623447,
+                            "consumed_by_tx_hash": null,
+                            "status": "live",
+                            "cell_type": "normal"
+                          },
+                          {
+                            "output_id": 104,
+                            "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "capacity": 100,
+                            "consumed_by_tx_hash": null,
+                            "status": "live",
+                            "cell_type": "normal"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": 11,
+                      "type": "transaction",
+                      "attributes": {
+                        "transaction_hash": "0xmk8721e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                        "block_number": "770",
+                        "block_timestamp": 1553068833785,
+                        "transaction_fee": 666,
+                        "version": 0,
+                        "is_cellbase": true,
+                        "income": "0.0",
+                        "display_inputs": [
+                          {
+                            "from_cellbase": true,
+                            "input_id": 101,
+                            "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                            "capacity": 100,
+                            "target_block_number": 759,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "cell_type": "normal"
+                          },
+                          {
+                            "from_cellbase": false,
+                            "input_id": 102,
+                            "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "capacity": 100,
+                            "generated_tx_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae321",
+                            "cell_type": "normal"
+                          }
+                        ],
+                        "display_outputs": [
+                          {
+                            "output_id": 103,
+                            "address_hash": "0x3abd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae324",
+                            "capacity": 100,
+                            "base_reward": 125000000000,
+                            "commit_reward": 0,
+                            "proposal_reward": 0,
+                            "secondary_reward": 476623447,
+                            "consumed_by_tx_hash": null,
+                            "status": "live",
+                            "cell_type": "normal"
+                          },
+                          {
+                            "output_id": 104,
+                            "address_hash": "0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323",
+                            "capacity": 100,
+                            "consumed_by_tx_hash": null,
+                            "status": "live",
+                            "cell_type": "normal"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "links": {
+                    "self": "https://explorer.nervos.org/address_dao_transactions/0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323?page=3&page_size=10",
+                    "first": "https://explorer.nervos.org/address_dao_transactions/0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323?page=1&page_size=10",
+                    "prev": "https://explorer.nervos.org/address_dao_transactions/0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323?page=2&page_size=10",
+                    "next": "https://explorer.nervos.org/address_dao_transactions/0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323?page=4&page_size=10",
+                    "last": "https://explorer.nervos.org/address_dao_transactions/0xddbd21e6e51674bb961bb4c5f3cee9faa5da30e64be10628dc1cef292cbae323?page=13&page_size=10"
+                  }
+                }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "errors": [
+                    {
+                      "code": "1010",
+                      "status": "404",
+                      "title": "Address Not Found",
+                      "detail": "No address found by given address hash or lock hash",
+                      "href": "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html#dao_contract_transactions__hash__get"
+                    }
+                  ]
+                }
+
+/dao_depositors:
+  get:
+    description: Returns top 100 depositors order by deposit
+    responses:
+      200:
+        body:
+          application/vnd.api+json:
+            type: dao_depositor_response
+            example: |
+              {
+                "data": [
+                  {
+                    "id": 1,
+                    "type": "dao_depositor",
+                    "attributes": {
+                      "address_hash": "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83",
+                      "dao_deposit": 1000
+                    }
+                  },
+                  {
+                    "id": 2,
+                    "type": "dao_depositor",
+                    "attributes": {
+                      "address_hash": "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu82",
+                      "dao_deposit": 1000
+                    }
+                  },
+                  {
+                    "id": 3,
+                    "type": "dao_depositor",
+                    "attributes": {
+                      "address_hash": "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu82",
+                      "dao_deposit": 1000
+                    }
                   }
                 ]
               }

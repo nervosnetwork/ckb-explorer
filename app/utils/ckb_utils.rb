@@ -54,11 +54,21 @@ class CkbUtils
   end
 
   def self.generate_address(lock_script)
-    if use_default_lock_script?(lock_script)
+    case address_type(lock_script)
+    when "sig"
       short_payload_blake160_address(lock_script)
+    when "multisig"
+      short_payload_multisig_address(lock_script)
     else
       full_payload_address(lock_script)
     end
+  end
+
+  def self.short_payload_multisig_address(lock_script)
+    multisig_script_hash = lock_script.args
+    return if multisig_script_hash.blank? || !CKB::Utils.valid_hex_string?(multisig_script_hash)
+
+    CKB::Address.generate_short_payload_multisig_address(multisig_script_hash, mode: ENV["CKB_NET_MODE"])
   end
 
   def self.short_payload_blake160_address(lock_script)
@@ -75,18 +85,26 @@ class CkbUtils
 
     return unless CKB::Utils.valid_hex_string?(args)
 
-    CKB::Address.generate_full_payload_address(format_type, code_hash, [args], mode: ENV["CKB_NET_MODE"])
+    CKB::Address.generate_full_payload_address(format_type, code_hash, args, mode: ENV["CKB_NET_MODE"])
   end
 
-  def self.use_default_lock_script?(lock_script)
+  def self.address_type(lock_script)
     code_hash = lock_script.code_hash
     hash_type = lock_script.hash_type
-    correct_code_match = "#{ENV["CODE_HASH"]}data"
-    correct_type_match = "#{ENV["SECP_CELL_TYPE_HASH"]}type"
+    args = lock_script.args
+    return "full" if args&.size != 42
 
-    return false if code_hash.blank?
+    correct_sig_type_match = "#{ENV["SECP_CELL_TYPE_HASH"]}type"
+    correct_multisig_type_match = "#{ENV["SECP_MULTISIG_CELL_TYPE_HASH"]}type"
 
-    "#{code_hash}#{hash_type}".in?([correct_code_match, correct_type_match])
+    case "#{code_hash}#{hash_type}"
+    when correct_sig_type_match
+      "sig"
+    when correct_multisig_type_match
+      "multisig"
+    else
+      "full"
+    end
   end
 
   def self.parse_address(address_hash)
@@ -98,8 +116,8 @@ class CkbUtils
     primary_reward(node_block_header, cellbase_output_capacity_details) + secondary_reward(node_block_header, cellbase_output_capacity_details)
   end
 
-  def self.base_reward(block_number, epoch_number, cellbase = nil)
-    return cellbase.outputs.first.capacity.to_i if block_number.to_i == 0 && cellbase.present?
+  def self.base_reward(block_number, epoch_number)
+    return 0 if block_number.to_i < 12
 
     epoch_info = get_epoch_info(epoch_number)
     start_number = epoch_info.start_number.to_i
@@ -141,11 +159,11 @@ class CkbUtils
     OpenStruct.new(number: epoch_number, length: length, start_number: start_number)
   end
 
-  def self.ckb_transaction_fee(ckb_transaction)
+  def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
     if ckb_transaction.inputs.dao.present?
       dao_withdraw_tx_fee(ckb_transaction)
     else
-      normal_tx_fee(ckb_transaction)
+      normal_tx_fee(input_capacities, output_capacities)
     end
   end
 
@@ -212,24 +230,25 @@ class CkbUtils
     Address.decrement_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
   end
 
-  def self.normal_tx_fee(ckb_transaction)
-    ckb_transaction.inputs.sum(:capacity) - ckb_transaction.outputs.sum(:capacity)
+  def self.normal_tx_fee(input_capacities, output_capacities)
+    input_capacities - output_capacities
   end
 
   def self.dao_withdraw_tx_fee(ckb_transaction)
     dao_cells = ckb_transaction.inputs.dao
     witnesses = ckb_transaction.witnesses
     header_deps = ckb_transaction.header_deps
-    interests =
-      dao_cells.reduce(0) do |memo, dao_cell|
-        witness = witnesses[dao_cell.cell_index]
-        block_hash = header_deps[witness.last.hex]
-        out_point = CKB::Types::OutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index)
-
-        memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).to_i - dao_cell.capacity.to_i
-      end
+    interests = dao_cells.reduce(0) { |memo, dao_cell| memo + dao_subsidy(dao_cell, header_deps, witnesses) }
 
     ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+  end
+
+  def self.dao_subsidy(dao_cell, header_deps, witnesses)
+    witness = witnesses[dao_cell.cell_index]
+    header_deps_index = CKB::Utils.bin_to_hex(CKB::Utils.hex_to_bin(witness)[-8..-1]).hex
+    block_hash = header_deps[header_deps_index]
+    out_point = CKB::Types::OutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index)
+    CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).hex - dao_cell.capacity.to_i
   rescue CKB::RPCError
     0
   end
