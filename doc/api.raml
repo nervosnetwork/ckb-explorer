@@ -40,16 +40,16 @@ types:
     type: object,
     properties: {
       "block_number": {
-        type: "integer"
+        type: "string"
       },
       "transaction_hash": {
         type: "string"
       },
       "block_timestamp": {
-        type: "integer"
+        type: "string"
       }
       "transaction_fee": {
-        type: "integer"
+        type: "string"
       },
       "is_cellbase": {
         type: "boolean"
@@ -58,7 +58,7 @@ types:
         type: "string"
       },
       "version": {
-        type: "integer"
+        type: "string"
       },
       "display_inputs": {
         type: "display_input[]"
@@ -159,7 +159,7 @@ types:
         type: "boolean"
       },
       "id": {
-        type: "integer"
+        type: "string"
       },
       "address_hash": {
         type: "string"
@@ -183,7 +183,7 @@ types:
     require: true,
     properties: {
       "id": {
-        type: "integer"
+        type: "string"
       },
       "address_hash": {
         type: "string"
@@ -232,31 +232,31 @@ types:
           "maxLength": 66,
       },
       "number": {
-        "type": "integer"
+        "type": "string"
       },
       "transactions_count": {
-        "type": "integer"
+        "type": "string"
       },
       "proposals_count": {
-        "type": "integer"
+        "type": "string"
       },
       "uncles_count": {
-        "type": "integer"
+        "type": "string"
       },
       "uncle_block_hashes": {
         "type": "string[]"
       },
       "reward": {
-        "type": "integer"
+        "type": "string"
       },
       "total_transaction_fee": {
-        "type": "integer"
+        "type": "string"
       },
       "cell_consumed": {
-        "type": "integer"
+        "type": "string"
       },
       "total_cell_capacity": {
-        "type": "integer"
+        "type": "string"
       },
       "miner_hash": {
         "type": "string",
@@ -265,16 +265,16 @@ types:
         "maxLength": 66,
       },
       "timestamp": {
-        "type": "integer"
+        "type": "string"
       },
       "difficulty": {
         "type": "string"
       },
       "version": {
-        "type": "integer"
+        "type": "string"
       },
       "nonce": {
-        "type": "integer"
+        "type": "string"
       },
       "proof": {
         "type": "string"
@@ -288,7 +288,7 @@ types:
         "enum": ["pending", "calculated"]
       },
       "received_tx_fee": {
-        "type": "integer"
+        "type": "string"
       }
     }
   }
@@ -318,7 +318,7 @@ types:
         type: "string",
       },
       "average_difficulty": {
-        type: "integer",
+        type: "string",
       },
       "hash_rate": {
         type: "string",
@@ -336,7 +336,7 @@ types:
         type: "string",
       },
       "average_difficulty": {
-        type: "integer",
+        type: "string",
       },
       "hash_rate": {
         type: "string",
