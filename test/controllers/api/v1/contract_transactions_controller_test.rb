@@ -211,7 +211,7 @@ module Api
           ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x#{SecureRandom.hex(32)}", block: block)
           ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x#{SecureRandom.hex(32)}", block: block)
           generated_by = number % 2 == 0 ? ckb_transaction2 : ckb_transaction1
-          create(:cell_output, ckb_transaction: generated_by, cell_index: number, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: generated_by, block: block, capacity: 10**8 * 1000, cell_type: "dao")
+          create(:cell_output, ckb_transaction: generated_by, cell_index: number, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: generated_by, block: block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit")
         end
       end
     end
