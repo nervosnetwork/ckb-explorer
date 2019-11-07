@@ -6,7 +6,7 @@ class DaoContract < ApplicationRecord
   end
 
   def ckb_transactions
-    ckb_transaction_ids = CellOutput.dao.select("ckb_transaction_id")
+    ckb_transaction_ids = CellOutput.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id")
     CkbTransaction.where(id: ckb_transaction_ids)
   end
 end
