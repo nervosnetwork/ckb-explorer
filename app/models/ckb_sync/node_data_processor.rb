@@ -239,6 +239,7 @@ module CkbSync
       LockScript.find_or_create_by(
         args: lock_script.args,
         code_hash: lock_script.code_hash,
+        hash_type: lock_script.hash_type,
         address: address
       )
     end
@@ -269,8 +270,8 @@ module CkbSync
         total_cell_capacity: CkbUtils.total_cell_capacity(node_block.transactions),
         miner_hash: CkbUtils.miner_hash(cellbase),
         miner_lock_hash: CkbUtils.miner_lock_hash(cellbase),
-        reward: CkbUtils.base_reward(header.number, epoch_info.number, cellbase),
-        primary_reward: CkbUtils.base_reward(header.number, epoch_info.number, cellbase),
+        reward: CkbUtils.base_reward(header.number, epoch_info.number),
+        primary_reward: CkbUtils.base_reward(header.number, epoch_info.number),
         secondary_reward: 0,
         reward_status: header.number.to_i == 0 ? "issued" : "pending",
         total_transaction_fee: 0,
