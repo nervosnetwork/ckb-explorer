@@ -189,9 +189,10 @@ def create_cell_output(trait_type: :with_full_transaction, status: "live")
 end
 
 def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
-  blocks = create_list(:block, 10, :with_block_hash)
+  blocks = create_list(:block, 10, :with_block_hash, number: 12)
   cellbases = []
-  blocks.each do |block|
+  blocks.each_with_index do |block, index|
+    block.update(number: block.number + index)
     cellbase = block.ckb_transactions.create(is_cellbase: true, block_timestamp: block_timestamp, block_number: 10)
     cellbases << cellbase
   end
