@@ -5,7 +5,7 @@ class Address < ApplicationRecord
   has_many :cell_outputs
   has_many :account_books
   has_many :ckb_transactions, through: :account_books
-  validates :balance, :cell_consumed, :ckb_transactions_count, :subsidy, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   after_commit :flush_cache
 
@@ -24,7 +24,7 @@ class Address < ApplicationRecord
   end
 
   def self.cached_find(query_key)
-    Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds) do
+    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
       if QueryKeyUtils.valid_hex?(query_key)
         find_by(lock_hash: query_key)
       else
@@ -34,7 +34,7 @@ class Address < ApplicationRecord
   end
 
   def cached_lock_script
-    Rails.cache.fetch([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
+    Rails.cache.realize([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
       lock_script.to_node_lock
     end
   end
@@ -59,7 +59,7 @@ end
 #  lock_hash                   :binary
 #  pending_reward_blocks_count :integer          default(0)
 #  dao_deposit                 :decimal(30, )    default(0)
-#  subsidy                     :decimal(30, )    default(0)
+#  interest                    :decimal(30, )    default(0)
 #
 # Indexes
 #

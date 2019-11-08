@@ -160,7 +160,7 @@ class CkbUtils
   end
 
   def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
-    if ckb_transaction.inputs.dao.present?
+    if ckb_transaction.inputs.where(cell_type: "nervos_dao_withdrawing").present?
       dao_withdraw_tx_fee(ckb_transaction)
     else
       normal_tx_fee(input_capacities, output_capacities)
@@ -235,20 +235,18 @@ class CkbUtils
   end
 
   def self.dao_withdraw_tx_fee(ckb_transaction)
-    dao_cells = ckb_transaction.inputs.dao
-    witnesses = ckb_transaction.witnesses
-    header_deps = ckb_transaction.header_deps
-    interests = dao_cells.reduce(0) { |memo, dao_cell| memo + dao_subsidy(dao_cell, header_deps, witnesses) }
+    nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
+    interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
 
     ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
   end
 
-  def self.dao_subsidy(dao_cell, header_deps, witnesses)
-    witness = witnesses[dao_cell.cell_index]
-    header_deps_index = CKB::Utils.bin_to_hex(CKB::Utils.hex_to_bin(witness)[-8..-1]).hex
-    block_hash = header_deps[header_deps_index]
-    out_point = CKB::Types::OutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index)
-    CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).hex - dao_cell.capacity.to_i
+  def self.dao_interest(nervos_dao_withdrawing_cell)
+    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+    nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.inputs.where(cell_index: nervos_dao_withdrawing_cell.cell_index).first
+    deposit_out_point = CKB::Types::OutPoint.new(tx_hash: nervos_dao_deposit_cell.tx_hash, index: nervos_dao_deposit_cell.cell_index)
+    withdrawing_dao_cell_block_hash = nervos_dao_withdrawing_cell.block.block_hash
+    CkbSync::Api.instance.calculate_dao_maximum_withdraw(deposit_out_point, withdrawing_dao_cell_block_hash).hex - nervos_dao_deposit_cell.capacity.to_i
   rescue CKB::RPCError
     0
   end

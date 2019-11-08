@@ -59,7 +59,7 @@ module CkbSync
       process_deposit_to_dao(dao_contract, dao_events)
       process_new_dao_depositor(dao_contract, dao_events)
       process_withdraw_from_dao(dao_contract, dao_events)
-      process_issue_subsidy(dao_contract, dao_events)
+      process_issue_interest(dao_contract, dao_events)
       process_take_away_all_deposit(dao_contract, dao_events)
     end
 
@@ -71,12 +71,12 @@ module CkbSync
       end
     end
 
-    def process_issue_subsidy(dao_contract, dao_events)
-      issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
-      issue_subsidy_dao_events.each do |event|
-        dao_contract.increment!(:subsidy_granted, event.value)
+    def process_issue_interest(dao_contract, dao_events)
+      issue_interest_dao_events = dao_events.where(event_type: "issue_interest")
+      issue_interest_dao_events.each do |event|
+        dao_contract.increment!(:interest_granted, event.value)
         address = event.address
-        address.increment!(:subsidy, event.value)
+        address.increment!(:interest, event.value)
         event.processed!
       end
     end
@@ -170,7 +170,7 @@ module CkbSync
       revert_deposit_to_dao(dao_contract, dao_events)
       revert_new_dao_depositor(dao_contract, dao_events)
       revert_withdraw_from_dao(dao_contract, dao_events)
-      revert_issue_subsidy(dao_contract, dao_events)
+      revert_issue_interest(dao_contract, dao_events)
       revert_take_away_all_deposit(dao_contract, dao_events)
     end
 
@@ -182,12 +182,12 @@ module CkbSync
       end
     end
 
-    def revert_issue_subsidy(dao_contract, dao_events)
-      issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
-      issue_subsidy_dao_events.each do |event|
-        dao_contract.decrement!(:subsidy_granted, event.value)
+    def revert_issue_interest(dao_contract, dao_events)
+      issue_interest_dao_events = dao_events.where(event_type: "issue_interest")
+      issue_interest_dao_events.each do |event|
+        dao_contract.decrement!(:interest_granted, event.value)
         address = event.address
-        address.decrement!(:subsidy, event.value)
+        address.decrement!(:interest, event.value)
         event.reverted!
       end
     end
@@ -374,7 +374,7 @@ module CkbSync
     end
 
     def build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
-      if cell_output.dao?
+      if cell_output.nervos_dao_deposit?
         dao_contract = DaoContract.find_or_create_by(id: 1)
         ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
         if address.dao_deposit.zero? && !new_dao_depositor_events.key?(address.id)
@@ -384,14 +384,12 @@ module CkbSync
     end
 
     def build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
-      if previous_cell_output.dao?
+      if previous_cell_output.nervos_dao_withdrawing?
         withdraw_amount = previous_cell_output.capacity
         ckb_transaction = CkbTransaction.find(ckb_transaction_id)
         ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "withdraw_from_dao", value: withdraw_amount, contract_id: DaoContract.default_contract.id)
-        header_deps = ckb_transaction.header_deps
-        witnesses = ckb_transaction.witnesses
-        subsidy = CkbUtils.dao_subsidy(previous_cell_output, header_deps, witnesses)
-        ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "issue_subsidy", value: subsidy, contract_id: DaoContract.default_contract.id)
+        interest = CkbUtils.dao_interest(previous_cell_output)
+        ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "issue_interest", value: interest, contract_id: DaoContract.default_contract.id)
         address = Address.find(address_id)
         if (address.dao_deposit - withdraw_amount).zero?
           ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "take_away_all_deposit", value: 1, contract_id: DaoContract.default_contract.id)
@@ -399,10 +397,14 @@ module CkbSync
       end
     end
 
-    def cell_type(type_script)
-      return "normal" if type_script.blank?
+    def cell_type(type_script, output_data)
+      return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]].include?(type_script&.code_hash)
 
-      [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]].include?(type_script.code_hash) ? "dao" : "normal"
+      if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
+        "nervos_dao_deposit"
+      else
+        "nervos_dao_withdrawing"
+      end
     end
 
     def build_cell_output(ckb_transaction, output, address, cell_index, output_data)
@@ -414,7 +416,7 @@ module CkbSync
         tx_hash: ckb_transaction.tx_hash,
         cell_index: cell_index,
         generated_by: ckb_transaction,
-        cell_type: cell_type(output.type)
+        cell_type: cell_type(output.type, output_data)
       )
     end
 
