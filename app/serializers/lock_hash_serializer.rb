@@ -16,4 +16,10 @@ class LockHashSerializer
   attribute :balance do |object|
     object.balance.to_s
   end
+  attribute :dao_deposit do |object|
+    object.dao_deposit.to_s
+  end
+  attribute :interest do |object|
+    object.interest.to_s
+  end
 end

@@ -15,6 +15,14 @@ class AddressPresenter
     object.reduce(0) { |sum, addr| sum + addr.balance.to_i }
   end
 
+  def dao_deposit
+    object.reduce(0) { |sum, addr| sum + addr.dao_deposit.to_i }
+  end
+
+  def interest
+    object.reduce(0) { |sum, addr| sum + addr.interest.to_i }
+  end
+
   def lock_script
     object.first.cached_lock_script
   end
