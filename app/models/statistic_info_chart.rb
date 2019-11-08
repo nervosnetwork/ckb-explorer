@@ -9,7 +9,7 @@ class StatisticInfoChart
 
   def hash_rate
     to = Rails.cache.read("hash_rate_to")
-    Rails.cache.fetch("hash_rate_chart_data_#{to}")&.uniq || []
+    Rails.cache.realize("hash_rate_chart_data_#{to}")&.uniq || []
   end
 
   def uncle_rate
@@ -23,7 +23,7 @@ class StatisticInfoChart
   def difficulty
     current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
 
-    Rails.cache.fetch("statistic_info_difficulty_#{current_epoch_number}", expires_in: 10.minutes, race_condition_ttl: 10.seconds) do
+    Rails.cache.realize("statistic_info_difficulty_#{current_epoch_number}", expires_in: 10.minutes, race_condition_ttl: 10.seconds) do
       from = Block.where(epoch: 0).recent.first&.number.to_i
       to = Block.maximum(:number).to_i
       hash_rate_block_numbers = (from + 1).step(to, 100).to_a
@@ -37,8 +37,8 @@ class StatisticInfoChart
 
   def calculate_hash_rate
     max_block_number = Block.maximum(:number).to_i
-    from = Rails.cache.fetch("hash_rate_from") { last_epoch0_block_number }
-    to = Rails.cache.fetch("hash_rate_to") { max_block_number }
+    from = Rails.cache.realize("hash_rate_from") { last_epoch0_block_number }
+    to = Rails.cache.realize("hash_rate_to") { max_block_number }
 
     epoch_first_block_numbers = Block.order(:epoch, :timestamp).select("distinct on (epoch) number").to_a.pluck(:number)
     result =

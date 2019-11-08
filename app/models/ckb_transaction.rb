@@ -21,7 +21,7 @@ class CkbTransaction < ApplicationRecord
   after_commit :flush_cache
 
   def self.cached_find(query_key)
-    Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds) do
+    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
       find_by(tx_hash: query_key)
     end
   end
@@ -57,7 +57,7 @@ class CkbTransaction < ApplicationRecord
   private
 
   def normal_tx_display_outputs(previews)
-    Rails.cache.fetch("normal_tx_display_outputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
+    Rails.cache.realize("normal_tx_display_outputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
       cell_outputs_for_display = previews ? outputs.limit(10) : outputs
       cell_outputs_for_display.order(:id).map do |output|
         consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
@@ -79,7 +79,7 @@ class CkbTransaction < ApplicationRecord
   end
 
   def normal_tx_display_inputs(previews)
-    Rails.cache.fetch("normal_tx_display_inputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
+    Rails.cache.realize("normal_tx_display_inputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
       cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
       cell_inputs_for_display.order(:id).map do |cell_input|
         previous_cell_output = cell_input.previous_cell_output

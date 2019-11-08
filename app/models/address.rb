@@ -24,7 +24,7 @@ class Address < ApplicationRecord
   end
 
   def self.cached_find(query_key)
-    Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds) do
+    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
       if QueryKeyUtils.valid_hex?(query_key)
         find_by(lock_hash: query_key)
       else
@@ -34,7 +34,7 @@ class Address < ApplicationRecord
   end
 
   def cached_lock_script
-    Rails.cache.fetch([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
+    Rails.cache.realize([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
       lock_script.to_node_lock
     end
   end
