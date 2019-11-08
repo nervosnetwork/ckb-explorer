@@ -53,6 +53,7 @@ end
 #  generated_by_id    :decimal(30, )
 #  consumed_by_id     :decimal(30, )
 #  cell_type          :integer          default("normal")
+#  data_size          :integer
 #
 # Indexes
 #
