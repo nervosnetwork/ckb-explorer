@@ -65,6 +65,15 @@ types:
       },
       "display_outputs": {
         type: "display_output[]"
+      },
+      "witnesses": {
+        type: "string[]"
+      },
+      "cell_deps": {
+        type: "cell_dep[]"
+      },
+      "header_deps": {
+        type: "string[]"
       }
     }
   }
@@ -321,6 +330,31 @@ types:
       },
       "received_tx_fee": {
         "type": "string"
+      }
+    }
+  }
+
+  out_point: {
+    type: object,
+    properties: {
+      "index": {
+        type: "integer"
+      },
+      "tx_hash": {
+        type: "string"
+      }
+    }
+  }
+
+  cell_dep: {
+    type: object,
+    properties: {
+      "dep_type": {
+        type: "string",
+        "enum": ["dep_group", "code"]
+      },
+      "out_point": {
+        type: "out_point"
       }
     }
   }
@@ -861,6 +895,29 @@ types:
                       "block_timestamp": 1553068833785,
                       "transaction_fee": 666,
                       "version": 0,
+                      "witnesses": [
+                          "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                          "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                      ],
+                      "cell_deps": [
+                          {
+                              "dep_type": "dep_group",
+                              "out_point": {
+                                  "index": 0,
+                                  "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                              }
+                          },
+                          {
+                              "dep_type": "code",
+                              "out_point": {
+                                  "index": 2,
+                                  "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                              }
+                          }
+                      ],
+                      "header_deps": [
+                        "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                      ],
                       "is_cellbase": true,
                       "income": "0.0",
                       "display_inputs": [
@@ -987,6 +1044,29 @@ types:
                         "version": 0,
                         "is_cellbase": true,
                         "income": "0.0",
+                        "witnesses": [
+                            "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                            "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "cell_deps": [
+                            {
+                                "dep_type": "dep_group",
+                                "out_point": {
+                                    "index": 0,
+                                    "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                                }
+                            },
+                            {
+                                "dep_type": "code",
+                                "out_point": {
+                                    "index": 2,
+                                    "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                                }
+                            }
+                        ],
+                        "header_deps": [
+                          "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                        ],
                         "display_inputs": [
                           {
                             "from_cellbase": true,
@@ -1041,6 +1121,29 @@ types:
                         "version": 0,
                         "is_cellbase": true,
                         "income": "0.0",
+                        "witnesses": [
+                            "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                            "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "cell_deps": [
+                            {
+                                "dep_type": "dep_group",
+                                "out_point": {
+                                    "index": 0,
+                                    "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                                }
+                            },
+                            {
+                                "dep_type": "code",
+                                "out_point": {
+                                    "index": 2,
+                                    "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                                }
+                            }
+                        ],
+                        "header_deps": [
+                          "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                        ],
                         "display_inputs": [
                           {
                             "from_cellbase": true,
@@ -1150,6 +1253,29 @@ types:
                         "block_timestamp": 1553068833785,
                         "transaction_fee": 666,
                         "version": 0,
+                        "witnesses": [
+                            "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                            "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "cell_deps": [
+                            {
+                                "dep_type": "dep_group",
+                                "out_point": {
+                                    "index": 0,
+                                    "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                                }
+                            },
+                            {
+                                "dep_type": "code",
+                                "out_point": {
+                                    "index": 2,
+                                    "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                                }
+                            }
+                        ],
+                        "header_deps": [
+                          "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                        ],
                         "display_inputs": [
                           {
                             "from_cellbase": true,
@@ -1202,6 +1328,29 @@ types:
                         "block_timestamp": 1553068833785,
                         "transaction_fee": 666,
                         "version": 0,
+                        "witnesses": [
+                            "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                            "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "cell_deps": [
+                            {
+                                "dep_type": "dep_group",
+                                "out_point": {
+                                    "index": 0,
+                                    "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                                }
+                            },
+                            {
+                                "dep_type": "code",
+                                "out_point": {
+                                    "index": 2,
+                                    "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                                }
+                            }
+                        ],
+                        "header_deps": [
+                          "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                        ],
                         "display_inputs": [
                           {
                             "from_cellbase": true,
@@ -1878,6 +2027,29 @@ types:
                       "version": 0,
                       "is_cellbase": true,
                       "income": "0.0",
+                      "witnesses": [
+                          "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                          "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                      ],
+                      "cell_deps": [
+                          {
+                              "dep_type": "dep_group",
+                              "out_point": {
+                                  "index": 0,
+                                  "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                              }
+                          },
+                          {
+                              "dep_type": "code",
+                              "out_point": {
+                                  "index": 2,
+                                  "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                              }
+                          }
+                      ],
+                      "header_deps": [
+                        "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                      ],
                       "display_inputs": [
                         {
                           "from_cellbase": true,
@@ -1998,6 +2170,29 @@ types:
                           "block_timestamp": 1553068833785,
                           "transaction_fee": 666,
                           "version": 0,
+                          "witnesses": [
+                              "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                              "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                          ],
+                          "cell_deps": [
+                              {
+                                  "dep_type": "dep_group",
+                                  "out_point": {
+                                      "index": 0,
+                                      "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                                  }
+                              },
+                              {
+                                  "dep_type": "code",
+                                  "out_point": {
+                                      "index": 2,
+                                      "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                                  }
+                              }
+                          ],
+                          "header_deps": [
+                            "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                          ],
                           "display_inputs": [
                             {
                               "from_cellbase": true,
@@ -2050,6 +2245,29 @@ types:
                           "block_timestamp": 1553068833785,
                           "transaction_fee": 666,
                           "version": 0,
+                          "witnesses": [
+                              "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                              "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                          ],
+                          "cell_deps": [
+                              {
+                                  "dep_type": "dep_group",
+                                  "out_point": {
+                                      "index": 0,
+                                      "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                                  }
+                              },
+                              {
+                                  "dep_type": "code",
+                                  "out_point": {
+                                      "index": 2,
+                                      "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                                  }
+                              }
+                          ],
+                          "header_deps": [
+                            "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                          ],
                           "display_inputs": [
                             {
                               "from_cellbase": true,
@@ -2193,6 +2411,29 @@ types:
                       "version": 0,
                       "is_cellbase": true,
                       "income": "0.0",
+                      "witnesses": [
+                          "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                          "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                      ],
+                      "cell_deps": [
+                          {
+                              "dep_type": "dep_group",
+                              "out_point": {
+                                  "index": 0,
+                                  "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                              }
+                          },
+                          {
+                              "dep_type": "code",
+                              "out_point": {
+                                  "index": 2,
+                                  "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                              }
+                          }
+                      ],
+                      "header_deps": [
+                        "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                      ],
                       "display_inputs": [
                         {
                           "from_cellbase": true,
@@ -2286,6 +2527,29 @@ types:
                         "version": 0,
                         "is_cellbase": true,
                         "income": "0.0",
+                        "witnesses": [
+                            "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                            "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "cell_deps": [
+                            {
+                                "dep_type": "dep_group",
+                                "out_point": {
+                                    "index": 0,
+                                    "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                                }
+                            },
+                            {
+                                "dep_type": "code",
+                                "out_point": {
+                                    "index": 2,
+                                    "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                                }
+                            }
+                        ],
+                        "header_deps": [
+                          "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                        ],
                         "display_inputs": [
                           {
                             "from_cellbase": true,
@@ -2340,6 +2604,29 @@ types:
                         "version": 0,
                         "is_cellbase": true,
                         "income": "0.0",
+                        "witnesses": [
+                            "0x5500000010000000550000005500000041000000765eab3a413093258b1f37566616844b86d8f69e21926fefdca8cae424fd56f93b340f192725e37b251cf110bb3f138008c0376e216e9f369aa0b2c61d4ae33901",
+                            "0x55000000100000005500000055000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "cell_deps": [
+                            {
+                                "dep_type": "dep_group",
+                                "out_point": {
+                                    "index": 0,
+                                    "tx_hash": "0xcb77d6dd01abde6dde8cd3fffaa9811399309ae47e18162096b7ae45e5e69f14"
+                                }
+                            },
+                            {
+                                "dep_type": "code",
+                                "out_point": {
+                                    "index": 2,
+                                    "tx_hash": "0xb5724acb4f5f82afb717c3ec3fe025d3b6e45ff48f4ffbb6162c950399cbcabe"
+                                }
+                            }
+                        ],
+                        "header_deps": [
+                          "0x32a1c7ea0f6c2091a1512eaf4dda12683d28bce1573011a211213163c588cf27"
+                        ],
                         "display_inputs": [
                           {
                             "from_cellbase": true,
