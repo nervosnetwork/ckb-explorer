@@ -24,7 +24,7 @@ class CellOutput < ApplicationRecord
 
   def node_output
     lock = CKB::Types::Script.new(lock_script.to_node_lock)
-    type = type_script.present? ? CKB::Types::Script.new(type_script.to_node_lock) : nil
+    type = type_script.present? ? CKB::Types::Script.new(type_script.to_node_type) : nil
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
   end
 
@@ -54,6 +54,7 @@ end
 #  consumed_by_id     :decimal(30, )
 #  cell_type          :integer          default("normal")
 #  data_size          :integer
+#  occupied_capacity  :decimal(30, )
 #
 # Indexes
 #

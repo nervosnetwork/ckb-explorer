@@ -1,4 +1,10 @@
 class CkbUtils
+  def self.occupied_capacity(output, data)
+    serialized_output_size = CKB::Serializers::OutputSerializer.new(output).capacity
+    data_size = CKB::Utils.hex_to_bin(data).bytesize
+    serialized_output_size + data_size
+  end
+
   def self.calculate_cell_min_capacity(output, data)
     output.calculate_min_capacity(data)
   end
