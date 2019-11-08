@@ -1,6 +1,6 @@
 class CellOutput < ApplicationRecord
   SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
-
+  MAXIMUM_DOWNLOADABLE_SIZE = 64000
   enum status: { live: 0, dead: 1 }
   enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2 }
 

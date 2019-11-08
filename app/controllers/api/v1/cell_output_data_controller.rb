@@ -5,6 +5,7 @@ module Api
 
       def show
         cell_output = CellOutput.where(id: params[:id]).take!
+        raise Api::V1::Exceptions::CellOutputDataSizeExceedsLimitError if cell_output.data_size > CellOutput::MAXIMUM_DOWNLOADABLE_SIZE
 
         render json: CellOutputDataSerializer.new(cell_output)
       rescue ActiveRecord::RecordNotFound
