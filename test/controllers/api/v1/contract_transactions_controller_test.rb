@@ -4,13 +4,13 @@ module Api
   module V1
     class ContractTransactionsControllerTest < ActionDispatch::IntegrationTest
       test "should set right content type when call index" do
-        valid_get api_v1_contract_transaction_url("dao")
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
         assert_equal "application/vnd.api+json", response.media_type
       end
 
       test "should respond with 415 Unsupported Media Type when Content-Type is wrong" do
-        get api_v1_contract_transaction_url("dao"), headers: { "Content-Type": "text/plain" }
+        get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), headers: { "Content-Type": "text/plain" }
 
         assert_equal 415, response.status
       end
@@ -19,13 +19,13 @@ module Api
         error_object = Api::V1::Exceptions::WrongContentTypeError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_contract_transaction_url("dao"), headers: { "Content-Type": "text/plain" }
+        get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), headers: { "Content-Type": "text/plain" }
 
         assert_equal response_json, response.body
       end
 
       test "should respond with 406 Not Acceptable when Accept is wrong" do
-        get api_v1_contract_transaction_url("dao"), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal 406, response.status
       end
@@ -34,7 +34,7 @@ module Api
         error_object = Api::V1::Exceptions::WrongAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_contract_transaction_url("dao"), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -45,7 +45,7 @@ module Api
         dao_contract = DaoContract.default_contract
         ckb_transactions = dao_contract.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
 
-        valid_get api_v1_contract_transaction_url("dao")
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
 
@@ -54,7 +54,7 @@ module Api
 
       test "should contain right keys in the serialized transaction when call show" do
         fake_dao_deposit_transaction(5)
-        valid_get api_v1_contract_transaction_url("dao")
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
         response_tx_transaction = json["data"].first
 
@@ -74,7 +74,7 @@ module Api
         error_object = Api::V1::Exceptions::PageParamError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        valid_get api_v1_contract_transaction_url("dao"), params: { page: "aaa" }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: "aaa" }
 
         assert_equal response_json, response.body
       end
@@ -83,7 +83,7 @@ module Api
         error_object = Api::V1::Exceptions::PageSizeParamError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        valid_get api_v1_contract_transaction_url("dao"), params: { page_size: "aaa" }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page_size: "aaa" }
 
         assert_equal response_json, response.body
       end
@@ -94,14 +94,14 @@ module Api
         errors << Api::V1::Exceptions::PageSizeParamError.new
         response_json = RequestErrorSerializer.new(errors, message: errors.first.title).serialized_json
 
-        valid_get api_v1_contract_transaction_url("dao"), params: { page: "bbb", page_size: "aaa" }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: "bbb", page_size: "aaa" }
 
         assert_equal response_json, response.body
       end
 
       test "should return 10 records when page and page_size are not set" do
         fake_dao_deposit_transaction(30)
-        valid_get api_v1_contract_transaction_url("dao")
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
         assert_equal 10, json["data"].size
       end
@@ -113,7 +113,7 @@ module Api
         dao_contract = DaoContract.default_contract
         contract_ckb_transactions = dao_contract.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_contract_transaction_url("dao"), params: { page: page }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: page }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
         response_transaction = CkbTransactionSerializer.new(contract_ckb_transactions, options).serialized_json
@@ -129,7 +129,7 @@ module Api
         dao_contract = DaoContract.default_contract
         contract_ckb_transactions = dao_contract.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_contract_transaction_url("dao"), params: { page_size: page_size }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
         response_transaction = CkbTransactionSerializer.new(contract_ckb_transactions, options).serialized_json
@@ -145,7 +145,7 @@ module Api
         dao_contract = DaoContract.default_contract
         contract_ckb_transactions = dao_contract.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_contract_transaction_url("dao"), params: { page: page, page_size: page_size }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: page, page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
         response_transaction = CkbTransactionSerializer.new(contract_ckb_transactions, options).serialized_json
@@ -159,7 +159,7 @@ module Api
         dao_contract = DaoContract.default_contract
         contract_ckb_transactions = dao_contract.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_contract_transaction_url("dao"), params: { page: page, page_size: page_size }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: page, page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
         response_transaction = CkbTransactionSerializer.new(contract_ckb_transactions, options).serialized_json
@@ -174,14 +174,14 @@ module Api
         page_size = 3
 
         links = {
-          self: "#{api_v1_contract_transaction_url("dao")}?page=2&page_size=3",
-          first: "#{api_v1_contract_transaction_url("dao")}?page_size=3",
-          prev: "#{api_v1_contract_transaction_url("dao")}?page_size=3",
-          next: "#{api_v1_contract_transaction_url("dao")}?page=3&page_size=3",
-          last: "#{api_v1_contract_transaction_url("dao")}?page=10&page_size=3"
+          self: "#{api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)}?page=2&page_size=3",
+          first: "#{api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)}?page_size=3",
+          prev: "#{api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)}?page_size=3",
+          next: "#{api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)}?page=3&page_size=3",
+          last: "#{api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)}?page=10&page_size=3"
         }
 
-        valid_get api_v1_contract_transaction_url("dao"), params: { page: page, page_size: page_size }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: page, page_size: page_size }
 
         assert_equal links.stringify_keys.sort, json["links"].sort
       end
@@ -189,17 +189,17 @@ module Api
       test "should return meta that contained total in response body" do
         fake_dao_deposit_transaction(3)
 
-        valid_get api_v1_contract_transaction_url("dao")
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
         assert_equal 3, json.dig("meta", "total")
       end
 
       test "should return pagination links that only contain self in response bod when there is no transactions" do
         links = {
-          self: "#{api_v1_contract_transaction_url("dao")}?page_size=10"
+          self: "#{api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)}?page_size=10"
         }
 
-        valid_get api_v1_contract_transaction_url("dao")
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
         assert_equal links.stringify_keys.sort, json["links"].sort
       end
 

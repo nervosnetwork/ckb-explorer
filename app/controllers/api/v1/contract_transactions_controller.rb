@@ -4,7 +4,7 @@ module Api
       before_action :validate_pagination_params, :pagination_params
 
       def show
-        raise Api::V1::Exceptions::ContractNotFoundError if params[:id] != "dao"
+        raise Api::V1::Exceptions::ContractNotFoundError if params[:id] != DaoContract::CONTRACT_NAME
         dao_contract = DaoContract.default_contract
         ckb_transactions = dao_contract.ckb_transactions.distinct.recent.page(@page).per(@page_size)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
