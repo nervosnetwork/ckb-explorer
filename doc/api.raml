@@ -102,6 +102,12 @@ types:
       "lock_hash": {
         "type": script
       },
+     "dao_deposit": {
+        "type": string
+      },
+      "interest": {
+        "type": string
+      },
       "pending_reward_blocks_count": {
         "type": integer
       }
@@ -1544,6 +1550,8 @@ types:
                         "args": [],
                         "code_hash": "0x0000000000000000000000000000000000000000000000000000000000000001"
                       },
+                      "dao_deposit": "10000",
+                      "interest": "100",
                       "pending_reward_blocks_count": 3
                     }
                   }
@@ -1929,7 +1937,9 @@ types:
                       "lock_script": {
                         "args": [],
                         "code_hash": "0x0000000000000000000000000000000000000000000000000000000000000001"
-                      }
+                      },
+                      "dao_deposit": "10000",
+                      "interest": "100"
                     }
                   }
                 }
