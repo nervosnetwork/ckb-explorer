@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_09_083202) do
+ActiveRecord::Schema.define(version: 2019_11_08_023656) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -34,7 +34,7 @@ ActiveRecord::Schema.define(version: 2019_10_09_083202) do
     t.binary "lock_hash"
     t.integer "pending_reward_blocks_count", default: 0
     t.decimal "dao_deposit", precision: 30, default: "0"
-    t.decimal "subsidy", precision: 30, default: "0"
+    t.decimal "interest", precision: 30, default: "0"
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
   end
@@ -136,7 +136,7 @@ ActiveRecord::Schema.define(version: 2019_10_09_083202) do
 
   create_table "dao_contracts", force: :cascade do |t|
     t.decimal "total_deposit", precision: 30, default: "0"
-    t.decimal "subsidy_granted", precision: 30, default: "0"
+    t.decimal "interest_granted", precision: 30, default: "0"
     t.bigint "deposit_transactions_count", default: 0
     t.bigint "withdraw_transactions_count", default: 0
     t.integer "depositors_count", default: 0

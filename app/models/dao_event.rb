@@ -1,5 +1,5 @@
 class DaoEvent < ApplicationRecord
-  enum event_type: { deposit_to_dao: 0, new_dao_depositor: 1, withdraw_from_dao: 2, issue_subsidy: 3, take_away_all_deposit: 4 }
+  enum event_type: { deposit_to_dao: 0, new_dao_depositor: 1, withdraw_from_dao: 2, issue_interest: 3, take_away_all_deposit: 4 }
   enum status: { pending: 0, processed: 1, reverted: 2 }
   validates :value, presence: true, numericality: { greater_than_or_equal_to: 0 }
 

@@ -59,7 +59,7 @@ module CkbSync
       process_deposit_to_dao(dao_contract, dao_events)
       process_new_dao_depositor(dao_contract, dao_events)
       process_withdraw_from_dao(dao_contract, dao_events)
-      process_issue_subsidy(dao_contract, dao_events)
+      process_issue_interest(dao_contract, dao_events)
       process_take_away_all_deposit(dao_contract, dao_events)
     end
 
@@ -71,12 +71,12 @@ module CkbSync
       end
     end
 
-    def process_issue_subsidy(dao_contract, dao_events)
-      issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
-      issue_subsidy_dao_events.each do |event|
-        dao_contract.increment!(:subsidy_granted, event.value)
+    def process_issue_interest(dao_contract, dao_events)
+      issue_interest_dao_events = dao_events.where(event_type: "issue_interest")
+      issue_interest_dao_events.each do |event|
+        dao_contract.increment!(:interest_granted, event.value)
         address = event.address
-        address.increment!(:subsidy, event.value)
+        address.increment!(:interest, event.value)
         event.processed!
       end
     end
@@ -170,7 +170,7 @@ module CkbSync
       revert_deposit_to_dao(dao_contract, dao_events)
       revert_new_dao_depositor(dao_contract, dao_events)
       revert_withdraw_from_dao(dao_contract, dao_events)
-      revert_issue_subsidy(dao_contract, dao_events)
+      revert_issue_interest(dao_contract, dao_events)
       revert_take_away_all_deposit(dao_contract, dao_events)
     end
 
@@ -182,12 +182,12 @@ module CkbSync
       end
     end
 
-    def revert_issue_subsidy(dao_contract, dao_events)
-      issue_subsidy_dao_events = dao_events.where(event_type: "issue_subsidy")
-      issue_subsidy_dao_events.each do |event|
-        dao_contract.decrement!(:subsidy_granted, event.value)
+    def revert_issue_interest(dao_contract, dao_events)
+      issue_interest_dao_events = dao_events.where(event_type: "issue_interest")
+      issue_interest_dao_events.each do |event|
+        dao_contract.decrement!(:interest_granted, event.value)
         address = event.address
-        address.decrement!(:subsidy, event.value)
+        address.decrement!(:interest, event.value)
         event.reverted!
       end
     end
@@ -389,7 +389,7 @@ module CkbSync
         ckb_transaction = CkbTransaction.find(ckb_transaction_id)
         ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "withdraw_from_dao", value: withdraw_amount, contract_id: DaoContract.default_contract.id)
         interest = CkbUtils.dao_interest(previous_cell_output)
-        ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "issue_subsidy", value: interest, contract_id: DaoContract.default_contract.id)
+        ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "issue_interest", value: interest, contract_id: DaoContract.default_contract.id)
         address = Address.find(address_id)
         if (address.dao_deposit - withdraw_amount).zero?
           ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "take_away_all_deposit", value: 1, contract_id: DaoContract.default_contract.id)

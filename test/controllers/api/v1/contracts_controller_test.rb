@@ -55,7 +55,7 @@ module Api
         valid_get api_v1_contract_url("dao")
 
         response_contract = json["data"]
-        assert_equal %w(total_deposit subsidy_granted deposit_transactions_count withdraw_transactions_count
+        assert_equal %w(dao_type_hash total_deposit interest_granted deposit_transactions_count withdraw_transactions_count
            depositors_count total_depositors_count).sort, response_contract["attributes"].keys.sort
       end
 

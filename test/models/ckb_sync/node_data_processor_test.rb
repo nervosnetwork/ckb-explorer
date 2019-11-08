@@ -639,22 +639,22 @@ module CkbSync
       end
     end
 
-    test "#process_block should create dao_event which event_type is issue subsidy when previous output is a dao cell" do
+    test "#process_block should create dao_event which event_type is issue interest when previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_withdraw_transaction(node_block)
 
-        assert_difference -> { DaoEvent.where(event_type: "issue_subsidy").count }, 1 do
+        assert_difference -> { DaoEvent.where(event_type: "issue_interest").count }, 1 do
           node_data_processor.process_block(node_block)
         end
 
-        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_subsidy")
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_interest")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
-    test "#process_block should create dao_event which event_type is take away all deposit when previous output is a dao cell and address subsidy change to zero" do
+    test "#process_block should create dao_event which event_type is take away all deposit when previous output is a dao cell and address interest change to zero" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -704,23 +704,23 @@ module CkbSync
       end
     end
 
-    test "#process_block should increase dao contract subsidy granted when previous output is a withdrawing cell" do
+    test "#process_block should increase dao contract interest granted when previous output is a withdrawing cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         withdraw_amount = tx.cell_outputs.nervos_dao_withdrawing.first.capacity
 
-        assert_difference -> { DaoContract.default_contract.reload.subsidy_granted }, "0x174876ebe8".hex - withdraw_amount do
+        assert_difference -> { DaoContract.default_contract.reload.interest_granted }, "0x174876ebe8".hex - withdraw_amount do
           node_data_processor.process_block(node_block)
         end
 
-        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_subsidy")
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_interest")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
-    test "#process_block should decrease dao contract depositors count when previous output is a dao cell and address subsidy change to zero" do
+    test "#process_block should decrease dao contract depositors count when previous output is a dao cell and address interest change to zero" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -757,7 +757,7 @@ module CkbSync
       end
     end
 
-    test "#process_block should increase address subsidy when previous output is a withdrawing cell" do
+    test "#process_block should increase address interest when previous output is a withdrawing cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -767,11 +767,11 @@ module CkbSync
         address = output.address
         address.update(dao_deposit: output.capacity)
 
-        assert_difference -> { address.reload.subsidy }, "0x174876ebe8".hex - withdraw_amount do
+        assert_difference -> { address.reload.interest }, "0x174876ebe8".hex - withdraw_amount do
           node_data_processor.process_block(node_block)
         end
 
-        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_subsidy")
+        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_interest")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
@@ -780,11 +780,11 @@ module CkbSync
       dao_contract = DaoContract.default_contract
       init_total_deposit = 10**8 * 10000
       init_depositors_count = 3
-      init_subsidy_granted = 10**8 * 100
+      init_interest_granted = 10**8 * 100
       init_deposit_transactions_count = 2
       init_withdraw_transactions_count = 1
       init_total_depositors_count = 2
-      dao_contract.update(total_deposit: init_total_deposit, depositors_count: init_depositors_count, subsidy_granted: init_subsidy_granted, deposit_transactions_count: init_deposit_transactions_count, withdraw_transactions_count: init_withdraw_transactions_count, total_depositors_count: init_total_depositors_count)
+      dao_contract.update(total_deposit: init_total_deposit, depositors_count: init_depositors_count, interest_granted: init_interest_granted, deposit_transactions_count: init_deposit_transactions_count, withdraw_transactions_count: init_withdraw_transactions_count, total_depositors_count: init_total_depositors_count)
       prepare_node_data(HAS_UNCLES_BLOCK_NUMBER)
       local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
@@ -794,7 +794,7 @@ module CkbSync
         dao_contract.reload
         assert_equal init_total_deposit, dao_contract.total_deposit
         assert_equal init_depositors_count, dao_contract.depositors_count
-        assert_equal init_subsidy_granted, dao_contract.subsidy_granted
+        assert_equal init_interest_granted, dao_contract.interest_granted
         assert_equal init_deposit_transactions_count, dao_contract.deposit_transactions_count
         assert_equal init_withdraw_transactions_count, dao_contract.withdraw_transactions_count
         assert_equal init_total_depositors_count, dao_contract.total_depositors_count
@@ -806,14 +806,14 @@ module CkbSync
       local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       addresses = local_block.contained_addresses
       dao_deposits = addresses.map(&:dao_deposit)
-      dao_subsidies = addresses.map(&:subsidy)
+      dao_subsidies = addresses.map(&:interest)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
         local_block = node_data_processor.call
 
         assert_equal dao_deposits, local_block.contained_addresses.map(&:dao_deposit)
-        assert_equal dao_subsidies, local_block.contained_addresses.map(&:subsidy)
+        assert_equal dao_subsidies, local_block.contained_addresses.map(&:interest)
       end
     end
 
@@ -1003,7 +1003,7 @@ module CkbSync
       end
     end
 
-    test "should decrease dao contract subsidy_granted when block is invalid and previous output is a dao cell" do
+    test "should decrease dao contract interest_granted when block is invalid and previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -1019,16 +1019,16 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
-        assert_difference -> { DaoContract.default_contract.reload.subsidy_granted }, -1000 do
+        assert_difference -> { DaoContract.default_contract.reload.interest_granted }, -1000 do
           node_data_processor.call
         end
 
-        deposit_to_dao_events = local_block.dao_events.where(event_type: "issue_subsidy")
+        deposit_to_dao_events = local_block.dao_events.where(event_type: "issue_interest")
         assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
-    test "should decrease address subsidy when block is invalid and previous output is a dao cell" do
+    test "should decrease address interest when block is invalid and previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       target_address = nil
@@ -1045,11 +1045,11 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
-        assert_difference -> { target_address.reload.subsidy }, -1000 do
+        assert_difference -> { target_address.reload.interest }, -1000 do
           node_data_processor.call
         end
 
-        deposit_to_dao_events = local_block.dao_events.where(event_type: "issue_subsidy")
+        deposit_to_dao_events = local_block.dao_events.where(event_type: "issue_interest")
         assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
