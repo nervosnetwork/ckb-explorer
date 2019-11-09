@@ -411,6 +411,8 @@ module CkbSync
       ckb_transaction.cell_outputs.build(
         capacity: output.capacity,
         data: output_data,
+        data_size: CKB::Utils.hex_to_bin(output_data).bytesize,
+        occupied_capacity: CkbUtils.calculate_cell_min_capacity(output, output_data),
         address: address,
         block: ckb_transaction.block,
         tx_hash: ckb_transaction.tx_hash,

@@ -138,6 +138,12 @@ module Api
           super code: 1021, status: 404, title: "Contract Not Found", detail: "No contract records found by given contract name", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
         end
       end
+
+      class CellOutputDataSizeExceedsLimitError < Error
+        def initialize
+          super code: 1022, status: 400, title: "Output Data is Too Large", detail: "You can download output data up to #{CellOutput::MAXIMUM_DOWNLOADABLE_SIZE / 1000} KB", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
     end
   end
 end
