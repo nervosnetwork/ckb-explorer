@@ -412,7 +412,7 @@ module CkbSync
         capacity: output.capacity,
         data: output_data,
         data_size: CKB::Utils.hex_to_bin(output_data).bytesize,
-        occupied_capacity: CkbUtils.occupied_capacity(output, output_data),
+        occupied_capacity: CkbUtils.calculate_cell_min_capacity(output, output_data),
         address: address,
         block: ckb_transaction.block,
         tx_hash: ckb_transaction.tx_hash,
