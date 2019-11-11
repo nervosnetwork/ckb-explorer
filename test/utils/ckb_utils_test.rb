@@ -24,6 +24,21 @@ class CkbUtilsTest < ActiveSupport::TestCase
     ENV["CKB_NET_MODE"] = "testnet"
   end
 
+  test ".parse_address raise error when address is mainnet address and mode is testnet" do
+    assert_raises CKB::Address::InvalidPrefixError do
+      CkbUtils.parse_address("ckb1qyqpr9t74uzvr6wrlenw44lfjzcne8ksl64s279w4l")
+    end
+  end
+
+  test ".parse_address should not raise error when address is mainnet address and mode is mainnet" do
+    ENV["CKB_NET_MODE"] = "mainnet"
+    assert_nothing_raised  do
+      CkbUtils.parse_address("ckb1qyqpr9t74uzvr6wrlenw44lfjzcne8ksl64s279w4l")
+    end
+
+    ENV["CKB_NET_MODE"] = "testnet"
+  end
+
   test ".generate_address should return full payload address when use correct sig code match" do
     short_payload_blake160_address = "ckt1q2tnhkeh8ja36aftftqqdc4mt0wtvdp3a54kuw2tyfepezgx52khydkr98kkxrtvuag8z2j8w4pkw2k6k4l5cwfw473"
     lock_script = CKB::Types::Script.generate_lock(
