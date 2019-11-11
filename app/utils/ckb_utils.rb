@@ -108,7 +108,7 @@ class CkbUtils
   end
 
   def self.parse_address(address_hash)
-    CKB::Address.parse(address_hash)
+    CKB::Address.parse(address_hash, mode: ENV["CKB_NET_MODE"])
   end
 
   def self.block_reward(node_block_header)
