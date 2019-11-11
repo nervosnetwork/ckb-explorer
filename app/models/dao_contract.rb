@@ -7,7 +7,7 @@ class DaoContract < ApplicationRecord
   end
 
   def ckb_transactions
-    ckb_transaction_ids = CellOutput.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id")
+    ckb_transaction_ids = CellOutput.nervos_dao_deposit.pluck("generated_by_id") + CellOutput.nervos_dao_withdrawing.pluck("consumed_by_id").compact
     CkbTransaction.where(id: ckb_transaction_ids)
   end
 end
