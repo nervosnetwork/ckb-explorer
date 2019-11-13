@@ -16,6 +16,24 @@ class LockScript < ApplicationRecord
       hash_type: hash_type
     }
   end
+
+  def lock_info
+    bin_args = CKB::Utils.hex_to_bin(args)
+    if code_hash == ENV["SECP_MULTISIG_CELL_TYPE_HASH"] && bin_args.bytesize == 28
+      since = CKB::Utils.bin_to_hex(bin_args[-8..-1]).delete_prefix("0x")
+      begin
+        since_value = SinceParser.new(since).parse
+        if since_value.present?
+          tip_epoch_number = CkbSync::Api.instance.get_current_epoch.number
+          lock_status = tip_epoch_number > since_value.number ? "locked" : "unlocked"
+
+          { status: lock_status, epoch_number: since_value.number.to_s, epoch_index: since_value.index.to_s }
+        end
+      ensure SinceParser::IncorrectSinceFlagsError
+        nil
+      end
+    end
+  end
 end
 
 # == Schema Information

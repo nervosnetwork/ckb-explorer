@@ -31,7 +31,7 @@ class AddressPresenter
     [object.reduce(0) { |sum, addr| sum + addr.pending_reward_blocks_count }, 0].max
   end
 
-  def transactions_count
+  def ckb_transactions_count
     ckb_transactions.count
   end
 
@@ -44,6 +44,10 @@ class AddressPresenter
     address_ids = object.pluck(:id)
     ckb_transaction_ids = CellOutput.where(address_id: address_ids).where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id")
     CkbTransaction.where(id: ckb_transaction_ids)
+  end
+
+  def lock_info
+    object.first.lock_script.lock_info
   end
 
   private

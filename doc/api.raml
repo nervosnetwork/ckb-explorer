@@ -120,6 +120,25 @@ types:
       "pending_reward_blocks_count": {
         "type": integer
       }
+      "lock_info": {
+        "type": lock_info_attributes
+      }
+    }
+  }
+
+  lock_info_attributes: {
+    type: object,
+    properties: {
+      "status": {
+        "type": string
+        "enum": ["locked", "unlocked"]
+      },
+      "epoch_number": {
+        "type": string
+      },
+      "epoch_index": {
+       "type": string
+      }
     }
   }
 
@@ -1701,7 +1720,12 @@ types:
                       },
                       "dao_deposit": "10000",
                       "interest": "100",
-                      "pending_reward_blocks_count": 3
+                      "pending_reward_blocks_count": 3,
+                      "lock_info": {
+                        "status": "locked",
+                        "epoch_number": "1000",
+                        "epoch_index": "789"
+                      }
                     }
                   }
                 }

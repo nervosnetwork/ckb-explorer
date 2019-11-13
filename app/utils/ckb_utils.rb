@@ -101,12 +101,18 @@ class CkbUtils
     epoch = header.epoch
     return get_epoch_info(epoch) if epoch.zero?
 
-    epoch_number = "0x#{CKB::Utils.to_hex(epoch).split(//)[-6..-1].join("")}".hex
-    block_index = "0x#{CKB::Utils.to_hex(epoch).split(//)[-10..-7].join("")}".hex
-    length = "0x#{CKB::Utils.to_hex(epoch).split(//)[2..-11].join("")}".hex
-    start_number = header.number - block_index
+    parsed_epoch = parse_epoch(epoch)
+    start_number = header.number - parsed_epoch.index
 
-    OpenStruct.new(number: epoch_number, length: length, start_number: start_number)
+    OpenStruct.new(number: parsed_epoch.number, length: parsed_epoch.length, start_number: start_number)
+  end
+
+  def self.parse_epoch(epoch)
+    OpenStruct.new(
+      length: (epoch >> 40) & 0xFFFF,
+      index: (epoch >> 24) & 0xFFFF,
+      number: (epoch) & 0xFFFFFF
+    )
   end
 
   def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
