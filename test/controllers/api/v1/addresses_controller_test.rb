@@ -86,7 +86,7 @@ module Api
 
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal %w(address_hash balance transactions_count lock_script pending_reward_blocks_count dao_deposit interest).sort, json["data"]["attributes"].keys.sort
+        assert_equal %w(address_hash balance transactions_count lock_script pending_reward_blocks_count dao_deposit interest lock_info).sort, json["data"]["attributes"].keys.sort
       end
 
       test "should return error object when no cell output found by id" do
