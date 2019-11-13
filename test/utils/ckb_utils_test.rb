@@ -25,8 +25,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".parse_address raise error when address is mainnet address and mode is testnet" do
-    assert_raises CKB::Address::InvalidPrefixError do
-      CkbUtils.parse_address("ckb1qyqpr9t74uzvr6wrlenw44lfjzcne8ksl64s279w4l")
+    assert_raises CKB::AddressParser::InvalidPrefixError do
+      CkbUtils.parse_address("haha1qygndsefa43s6m882pcj53m4gdnj4k440axqsm2hnz")
     end
   end
 
@@ -116,14 +116,17 @@ class CkbUtilsTest < ActiveSupport::TestCase
     blake160 = "0x36c329ed630d6ce750712a477543672adab57f4c"
     short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
 
-    assert_equal blake160, CkbUtils.parse_address(short_payload_blake160_address)[:arg]
+    assert_equal blake160, CkbUtils.parse_address(short_payload_blake160_address).script.args
   end
 
   test ".parse_address should return an hash that contains format type, code hash and args when target is full payload address" do
-    parsed_result = { format_type: "0x02", code_hash: "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176", arg: "0x1436c329ed630d6ce750712a477543672adab57f4c"}
     full_payload_address = "ckt1q2n9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhv9pkcv576ccddnn4quf2ga65xee2m26h7nq2rtnac"
+    parsed_result = CkbUtils.parse_address(full_payload_address)
 
-    assert_equal parsed_result, CkbUtils.parse_address(full_payload_address)
+    assert_equal "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176", parsed_result.script.code_hash
+    assert_equal "0x1436c329ed630d6ce750712a477543672adab57f4c", parsed_result.script.args
+    assert_equal "data", parsed_result.script.hash_type
+    assert_equal "FULL", parsed_result.address_type
   end
 
   test ".base_reward should return 0 for genesis block" do
@@ -249,30 +252,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
 
       assert_equal expected_tx_fee, CkbUtils.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
     end
-  end
-
-  test ".address_type should return full when data_hash matches secp256k1 blake160 sighash all data hash" do
-    lock_script = CKB::Types::Script.new(code_hash: ENV["CODE_HASH"], args: "0x5282764c8cf8677148969758a183c9cdcdf207dd")
-
-    assert_equal "full", CkbUtils.address_type(lock_script)
-  end
-
-  test ".address_type should return full when data_hash matches type" do
-    lock_script = CKB::Types::Script.new(code_hash: ENV["CODE_HASH"], args: "0x5282764c8cf8677148969758a183c9cdcdf207dd", hash_type: "type")
-
-    assert_equal "full", CkbUtils.address_type(lock_script)
-  end
-
-  test ".use_default_lock_script? should return sig when type_hash matches secp256k1 blake160 sighash all type hash" do
-    lock_script = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x5282764c8cf8677148969758a183c9cdcdf207dd", hash_type: "type")
-
-    assert_equal "sig", CkbUtils.address_type(lock_script)
-  end
-
-  test ".address_type? should return full when type_hash matches data" do
-    lock_script = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x5282764c8cf8677148969758a183c9cdcdf207dd")
-
-    assert_equal "full", CkbUtils.address_type(lock_script)
   end
 
   test ".parse_epoch_info should return epoch 0 info if epoch is equal to 0" do

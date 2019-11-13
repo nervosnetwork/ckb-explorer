@@ -1,10 +1,10 @@
 FactoryBot.define do
   factory :address do
     address_hash do
-      privkey = SecureRandom.hex(33)
-      pubkey = CKB::Key.pubkey(privkey)
-      CKB::Address.from_pubkey(pubkey).generate
+      script = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x#{SecureRandom.hex(20)}", hash_type: "type")
+      CKB::Address.new(script).generate
     end
+
     balance { 0 }
     cell_consumed { 0 }
     ckb_transactions_count { 0 }
