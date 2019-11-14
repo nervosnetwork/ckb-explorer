@@ -24,15 +24,24 @@ class LockScript < ApplicationRecord
       begin
         since_value = SinceParser.new(since).parse
         if since_value.present?
-          tip_epoch_number = CkbSync::Api.instance.get_current_epoch.number
-          lock_status = tip_epoch_number > since_value.number ? "locked" : "unlocked"
+          tip_epoch = CkbUtils.parse_epoch(CkbSync::Api.instance.get_tip_header.epoch)
 
-          { status: lock_status, epoch_number: since_value.number.to_s, epoch_index: since_value.index.to_s }
+          { status: lock_info_status(since_value, tip_epoch), epoch_number: since_value.number.to_s, epoch_index: since_value.index.to_s }
         end
       ensure SinceParser::IncorrectSinceFlagsError
         nil
       end
     end
+  end
+
+  private
+
+  def lock_info_status(since_value, tip_epoch)
+    after_lock_epoch_number = tip_epoch.number > since_value.number
+    at_lock_epoch_number_but_exceeded_index = (tip_epoch.number == since_value.number &&
+      tip_epoch.index * since_value.length > since_value.index * tip_epoch.length)
+
+    after_lock_epoch_number || at_lock_epoch_number_but_exceeded_index ? "unlocked" : "locked"
   end
 end
 
