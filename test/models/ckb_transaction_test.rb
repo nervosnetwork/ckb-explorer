@@ -119,17 +119,15 @@ class CkbTransactionTest < ActiveSupport::TestCase
     prepare_node_data
     CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x177825f000")
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, header_deps: [DEFAULT_NODE_BLOCK_HASH, "0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2"])
-    dao_input = ckb_transaction.cell_inputs.first.previous_cell_output
-    witness = ckb_transaction.witnesses[dao_input.cell_index]
-    started_block_number = Block.find(dao_input.block_id).number
-    ended_block_hash = ckb_transaction.header_deps[witness.hex]
-    ended_block_number = Block.find_by(block_hash: ended_block_hash).number
-    dao_input.update(cell_type: "nervos_dao_withdrawing")
-    deposit_cell = create(:cell_output, ckb_transaction: dao_input.generated_by, cell_index: 0, tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", generated_by: dao_input.generated_by, block: dao_input.generated_by.block, consumed_by: dao_input.generated_by, cell_type: "nervos_dao_deposit", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x00" * 8))
-    out_point = CKB::Types::OutPoint.new(tx_hash: dao_input.tx_hash, index: dao_input.cell_index)
-    interest = CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, ended_block_hash).hex - deposit_cell.capacity.to_i
-
-    expected_display_input = { id: dao_input.id, from_cellbase: false, capacity: dao_input.capacity, address_hash: dao_input.address_hash, generated_tx_hash: dao_input.generated_by.tx_hash, started_block_number: started_block_number, ended_block_number: ended_block_number, interest: interest, cell_type: dao_input.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }.sort
+    nervos_dao_withdrawing_cell = ckb_transaction.cell_inputs.first.previous_cell_output
+    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+    ended_block_number = Block.find(ckb_transaction.block_id).number
+    nervos_dao_withdrawing_cell.update(cell_type: "nervos_dao_withdrawing")
+    deposit_cell = create(:cell_output, ckb_transaction: nervos_dao_withdrawing_cell.generated_by, cell_index: 0, tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", generated_by: nervos_dao_withdrawing_cell.generated_by, block: nervos_dao_withdrawing_cell.generated_by.block, consumed_by: nervos_dao_withdrawing_cell.generated_by, cell_type: "nervos_dao_deposit", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x00" * 8))
+    nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.inputs.nervos_dao_deposit.first
+    started_block_number = Block.find(nervos_dao_deposit_cell.block_id).number
+    interest = CkbSync::Api.instance.calculate_dao_maximum_withdraw(deposit_cell, nervos_dao_deposit_cell).hex - deposit_cell.capacity.to_i
+    expected_display_input = { id: nervos_dao_withdrawing_cell.id, from_cellbase: false, capacity: nervos_dao_withdrawing_cell.capacity, address_hash: nervos_dao_withdrawing_cell.address_hash, generated_tx_hash: nervos_dao_withdrawing_cell.generated_by.tx_hash, started_block_number: started_block_number, ended_block_number: ended_block_number, interest: interest, cell_type: nervos_dao_withdrawing_cell.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }.sort
     expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash started_block_number ended_block_number interest cell_type dao_type_hash).sort
 
     assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
