@@ -2,8 +2,8 @@ class Address < ApplicationRecord
   PREFIX_MAINNET = "ckb".freeze
   PREFIX_TESTNET = "ckt".freeze
 
-  has_many :cell_outputs
-  has_many :account_books
+  has_many :cell_outputs, dependent: :destroy
+  has_many :account_books, dependent: :destroy
   has_many :ckb_transactions, through: :account_books
   validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 

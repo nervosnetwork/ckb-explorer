@@ -4,7 +4,7 @@ class CkbTransaction < ApplicationRecord
   max_paginates_per MAX_PAGINATES_PER
 
   belongs_to :block
-  has_many :account_books
+  has_many :account_books, dependent: :destroy
   has_many :addresses, through: :account_books
   has_many :cell_inputs, dependent: :delete_all
   has_many :cell_outputs, dependent: :delete_all
