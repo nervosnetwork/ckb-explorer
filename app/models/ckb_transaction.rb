@@ -91,12 +91,12 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
-  def attributes_for_dao_input(input)
-    withdraw_block_hash = input.block.block_hash
-    nervos_dao_withdrawing_cell_generated_tx = input.generated_by
-    started_block_number = Block.find(nervos_dao_withdrawing_cell_generated_tx.block.id).number
-    ended_block_number = Block.find_by(block_hash: withdraw_block_hash).number
-    interest = CkbUtils.dao_interest(input)
+  def attributes_for_dao_input(nervos_dao_withdrawing_cell)
+    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+    nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.inputs.nervos_dao_deposit.first
+    started_block_number = Block.find(nervos_dao_deposit_cell.block.id).number
+    ended_block_number = Block.find(block_id).number
+    interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
 
     { started_block_number: started_block_number, ended_block_number: ended_block_number, interest: interest, dao_type_hash: ENV["DAO_TYPE_HASH"] }
   end
