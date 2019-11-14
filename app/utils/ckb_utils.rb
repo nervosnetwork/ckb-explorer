@@ -241,4 +241,8 @@ class CkbUtils
       hspace / target
     end
   end
+
+  def self.hash_value_to_s(hash)
+    hash.each { |key, value| hash[key] = value.to_s unless !!value == value }
+  end
 end
