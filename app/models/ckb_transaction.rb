@@ -93,7 +93,7 @@ class CkbTransaction < ApplicationRecord
 
   def attributes_for_dao_input(nervos_dao_withdrawing_cell)
     nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
-    nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.inputs.nervos_dao_deposit.first
+    nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
     started_block_number = Block.find(nervos_dao_deposit_cell.block.id).number
     ended_block_number = Block.find(block_id).number
     interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)

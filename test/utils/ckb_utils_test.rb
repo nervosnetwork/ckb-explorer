@@ -210,6 +210,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, cell_type: "nervos_dao_withdrawing")
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 1, tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", generated_by: ckb_transaction1, block: block, consumed_by: ckb_transaction2, cell_type: "nervos_dao_deposit", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x00" * 8))
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
+      create(:cell_input, block: ckb_transaction2.block, ckb_transaction: ckb_transaction2, previous_output: {"tx_hash": "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", "index": "1"})
+      create(:cell_input, block: ckb_transaction2.block, ckb_transaction: ckb_transaction2, previous_output: {"tx_hash": "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "2"})
       tx = node_block.transactions.last
       tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
       tx.witnesses = %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x4e52933358ae2f26863b8c1c71bf20f17489328820f8f2cd84a070069f10ceef784bc3693c3c51b93475a7b5dbf652ba6532d0580ecc1faf909f9fd53c5f6405000000000000000000)
@@ -218,10 +220,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
 
       node_tx = node_block.transactions.last
       ckb_transaction = CkbTransaction.find_by(tx_hash: node_tx.hash)
-      input_capacities = { ckb_transaction.id => [800000000] }
-      output_capacities = { ckb_transaction.id => [500000000] }
+      input_capacities = ckb_transaction.inputs.sum(:capacity)
+      output_capacities = ckb_transaction.outputs.sum(:capacity)
+      expected_tx_fee =  ckb_transaction.inputs.sum(:capacity) + "0x177825f000".hex - 10**8 * 8 - ckb_transaction.outputs.sum(:capacity)
 
-      assert_equal 10**8 * 3 + 10**8 * 8, CkbUtils.ckb_transaction_fee(ckb_transaction, input_capacities[ckb_transaction.id].sum, output_capacities[ckb_transaction.id].sum)
+      assert_equal expected_tx_fee, CkbUtils.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
     end
   end
 
@@ -236,6 +239,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, cell_type: "nervos_dao_withdrawing")
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 1, tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", generated_by: ckb_transaction1, block: block, consumed_by: ckb_transaction2, cell_type: "nervos_dao_deposit", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x00" * 8))
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
+      create(:cell_input, block: ckb_transaction2.block, ckb_transaction: ckb_transaction2, previous_output: {"tx_hash": "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", "index": "1"})
+      create(:cell_input, block: ckb_transaction2.block, ckb_transaction: ckb_transaction2, previous_output: {"tx_hash": "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "2"})
       tx = node_block.transactions.last
       input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", index: "0x0"))
       tx.inputs.unshift(input)
@@ -243,12 +248,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
       tx.witnesses = %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x4e52933358ae2f26863b8c1c71bf20f17489328820f8f2cd84a070069f10ceef784bc3693c3c51b93475a7b5dbf652ba6532d0580ecc1faf909f9fd53c5f6405000000000000000000)
 
       node_data_processor.process_block(node_block)
-
       node_tx = node_block.transactions.last
       ckb_transaction = CkbTransaction.find_by(tx_hash: node_tx.hash)
-      input_capacities = { ckb_transaction.id => [800000000] }
-      output_capacities = { ckb_transaction.id => [500000000] }
-      expected_tx_fee = 10**8 * 16 + 10**8 * 8 - 10**8 * 5
+      input_capacities = ckb_transaction.inputs.sum(:capacity)
+      output_capacities = ckb_transaction.outputs.sum(:capacity)
+      expected_tx_fee =  ckb_transaction.inputs.sum(:capacity) + "0x177825f000".hex - 10**8 * 8 - ckb_transaction.outputs.sum(:capacity)
 
       assert_equal expected_tx_fee, CkbUtils.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
     end
