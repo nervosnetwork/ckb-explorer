@@ -121,6 +121,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, header_deps: [DEFAULT_NODE_BLOCK_HASH, "0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2"])
     nervos_dao_withdrawing_cell = ckb_transaction.cell_inputs.first.previous_cell_output
     nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+    create(:cell_input, block: nervos_dao_withdrawing_cell_generated_tx.block, ckb_transaction: nervos_dao_withdrawing_cell_generated_tx, previous_output: {"tx_hash": "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", "index": "0"})
     ended_block_number = Block.find(ckb_transaction.block_id).number
     nervos_dao_withdrawing_cell.update(cell_type: "nervos_dao_withdrawing")
     deposit_cell = create(:cell_output, ckb_transaction: nervos_dao_withdrawing_cell.generated_by, cell_index: 0, tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", generated_by: nervos_dao_withdrawing_cell.generated_by, block: nervos_dao_withdrawing_cell.generated_by.block, consumed_by: nervos_dao_withdrawing_cell.generated_by, cell_type: "nervos_dao_deposit", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x00" * 8))

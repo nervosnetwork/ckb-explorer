@@ -762,12 +762,13 @@ module CkbSync
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
-        withdraw_amount = tx.cell_outputs.nervos_dao_withdrawing.first.capacity
+        nervos_dao_withdrawing_cell = tx.cell_outputs.nervos_dao_withdrawing.first
+        nervos_dao_deposit_cell = tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
         output = tx.cell_outputs.first
         address = output.address
         address.update(dao_deposit: output.capacity)
 
-        assert_difference -> { address.reload.interest }, "0x174876ebe8".hex - withdraw_amount do
+        assert_difference -> { address.reload.interest }, "0x174876ebe8".hex - nervos_dao_deposit_cell.capacity do
           node_data_processor.process_block(node_block)
         end
 
@@ -1614,9 +1615,13 @@ module CkbSync
       block = create(:block, :with_block_hash)
       ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
       ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
-      create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, cell_type: "nervos_dao_withdrawing", capacity: 10 ** 8 * 1000, data: CKB::Utils.bin_to_hex("\x02" * 8))
+      create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, cell_type: "nervos_dao_withdrawing", capacity: 10 ** 8 * 1000, data: CKB::Utils.bin_to_hex("\x02" * 8))
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 1, tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", generated_by: ckb_transaction1, block: block, consumed_by: ckb_transaction2, cell_type: "nervos_dao_deposit", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x00" * 8))
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
+      create(:cell_input, block: ckb_transaction2.block, ckb_transaction: ckb_transaction2, previous_output: {"tx_hash": "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", "index": "1"})
+      create(:cell_input, block: ckb_transaction2.block, ckb_transaction: ckb_transaction2, previous_output: {"tx_hash": "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "2"})
+      create(:cell_input, block: ckb_transaction1.block, ckb_transaction: ckb_transaction1, previous_output: {"tx_hash": "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "1"})
+      create(:cell_input, block: ckb_transaction1.block, ckb_transaction: ckb_transaction1, previous_output: {"tx_hash": "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "1"})
 
       tx = node_block.transactions.last
       tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
