@@ -169,10 +169,10 @@ module CkbSync
     end
 
     def revert_dao_contract_related_operations(dao_contract, dao_events)
-      revert_deposit_to_dao(dao_contract, dao_events)
-      revert_new_dao_depositor(dao_contract, dao_events)
       revert_withdraw_from_dao(dao_contract, dao_events)
       revert_issue_interest(dao_contract, dao_events)
+      revert_deposit_to_dao(dao_contract, dao_events)
+      revert_new_dao_depositor(dao_contract, dao_events)
       revert_take_away_all_deposit(dao_contract, dao_events)
     end
 

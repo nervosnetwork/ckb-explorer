@@ -19,6 +19,7 @@ class CkbTransaction < ApplicationRecord
   scope :cellbase, -> { where(is_cellbase: true) }
 
   after_commit :flush_cache
+  before_destroy :recover_dead_cell
 
   def self.cached_find(query_key)
     Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
@@ -104,6 +105,10 @@ class CkbTransaction < ApplicationRecord
   def cellbase_display_inputs
     cellbase = Cellbase.new(block)
     [CkbUtils.hash_value_to_s({ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number, generated_tx_hash: tx_hash })]
+  end
+
+  def recover_dead_cell
+    inputs.update_all(status: "live")
   end
 end
 
