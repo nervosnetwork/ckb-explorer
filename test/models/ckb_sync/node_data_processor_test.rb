@@ -1499,6 +1499,7 @@ module CkbSync
     end
 
     test "should process the genesis block correctly when there is no local block" do
+      CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(0)
       VCR.use_cassette("genesis_block", record: :new_episodes) do
         assert_difference -> { Block.count }, 1 do
           local_block = node_data_processor.call

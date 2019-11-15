@@ -2,9 +2,11 @@ module CkbSync
   class NodeDataProcessor
     def call
       local_tip_block = Block.recent.first
+      tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
+      return if target_block_number > tip_block_number
+
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
-      return if target_block.blank?
 
       if !forked?(target_block, local_tip_block)
         process_block(target_block)
