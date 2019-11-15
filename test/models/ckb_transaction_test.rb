@@ -96,7 +96,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
   test "#display_outputs should not return consumed_tx_hash when cell not be consumed" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
 
-    assert_equal [nil], ckb_transaction.display_outputs.pluck(:consumed_tx_hash).uniq
+    assert_equal [""], ckb_transaction.display_outputs.pluck(:consumed_tx_hash).uniq
   end
 
   test "#display_outputs should return dead when cell be consumed" do
@@ -111,8 +111,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
   test "#display_inputs order should be the same as inputs in the tx" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
     expected_output_is = ckb_transaction.cell_inputs.map(&:previous_cell_output).map(&:id).sort
-
-    assert_equal expected_output_is, ckb_transaction.display_inputs.map{ |display_input| display_input[:id] }
+    assert_equal expected_output_is.map(&:to_s), ckb_transaction.display_inputs.map{ |display_input| display_input[:id] }
   end
 
   test "#display_inputs should return dao display input when cell type is nervos_dao_withdrawing" do
@@ -127,7 +126,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.inputs.nervos_dao_deposit.first
     started_block_number = Block.find(nervos_dao_deposit_cell.block_id).number
     interest = CkbSync::Api.instance.calculate_dao_maximum_withdraw(deposit_cell, nervos_dao_deposit_cell).hex - deposit_cell.capacity.to_i
-    expected_display_input = { id: nervos_dao_withdrawing_cell.id, from_cellbase: false, capacity: nervos_dao_withdrawing_cell.capacity, address_hash: nervos_dao_withdrawing_cell.address_hash, generated_tx_hash: nervos_dao_withdrawing_cell.generated_by.tx_hash, started_block_number: started_block_number, ended_block_number: ended_block_number, interest: interest, cell_type: nervos_dao_withdrawing_cell.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }.sort
+    expected_display_input = CkbUtils.hash_value_to_s({ id: nervos_dao_withdrawing_cell.id, from_cellbase: false, capacity: nervos_dao_withdrawing_cell.capacity, address_hash: nervos_dao_withdrawing_cell.address_hash, generated_tx_hash: nervos_dao_withdrawing_cell.generated_by.tx_hash, started_block_number: started_block_number, ended_block_number: ended_block_number, interest: interest, cell_type: nervos_dao_withdrawing_cell.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }).sort
     expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash started_block_number ended_block_number interest cell_type dao_type_hash).sort
 
     assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
@@ -140,7 +139,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     dao_output.update(cell_type: "nervos_dao_withdrawing")
     expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type dao_type_hash).sort
     consumed_tx_hash = dao_output.live? ? nil : dao_output.consumed_by.tx_hash
-    expected_display_output = { id: dao_output.id, capacity: dao_output.capacity, address_hash: dao_output.address_hash, status: dao_output.status, consumed_tx_hash: consumed_tx_hash, cell_type: dao_output.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }.sort
+    expected_display_output = CkbUtils.hash_value_to_s({ id: dao_output.id, capacity: dao_output.capacity, address_hash: dao_output.address_hash, status: dao_output.status, consumed_tx_hash: consumed_tx_hash, cell_type: dao_output.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }).sort
 
     assert_equal expected_attributes, ckb_transaction.display_outputs.first.keys.sort
     assert_equal expected_display_output, ckb_transaction.display_outputs.first.sort

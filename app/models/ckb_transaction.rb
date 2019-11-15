@@ -64,7 +64,7 @@ class CkbTransaction < ApplicationRecord
         display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
         display_output.merge!({ dao_type_hash: ENV["DAO_TYPE_HASH"] }) unless output.normal?
 
-        display_output
+        CkbUtils.hash_value_to_s(display_output)
       end
     end
   end
@@ -74,7 +74,7 @@ class CkbTransaction < ApplicationRecord
     cellbase = Cellbase.new(block)
     cell_outputs_for_display.map do |output|
       consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-      { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash }
+      CkbUtils.hash_value_to_s({ id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash })
     end
   end
 
@@ -86,7 +86,7 @@ class CkbTransaction < ApplicationRecord
         display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_type: previous_cell_output.cell_type }
         display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
 
-        display_input
+        CkbUtils.hash_value_to_s(display_input)
       end
     end
   end
@@ -98,12 +98,12 @@ class CkbTransaction < ApplicationRecord
     ended_block_number = Block.find(block_id).number
     interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
 
-    { started_block_number: started_block_number, ended_block_number: ended_block_number, interest: interest, dao_type_hash: ENV["DAO_TYPE_HASH"] }
+    CkbUtils.hash_value_to_s({ started_block_number: started_block_number, ended_block_number: ended_block_number, interest: interest, dao_type_hash: ENV["DAO_TYPE_HASH"] })
   end
 
   def cellbase_display_inputs
     cellbase = Cellbase.new(block)
-    [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number, generated_tx_hash: tx_hash }]
+    [CkbUtils.hash_value_to_s({ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number, generated_tx_hash: tx_hash })]
   end
 end
 
