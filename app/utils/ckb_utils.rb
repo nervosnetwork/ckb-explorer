@@ -54,61 +54,11 @@ class CkbUtils
   end
 
   def self.generate_address(lock_script)
-    case address_type(lock_script)
-    when "sig"
-      short_payload_blake160_address(lock_script)
-    when "multisig"
-      short_payload_multisig_address(lock_script)
-    else
-      full_payload_address(lock_script)
-    end
-  end
-
-  def self.short_payload_multisig_address(lock_script)
-    multisig_script_hash = lock_script.args
-    return if multisig_script_hash.blank? || !CKB::Utils.valid_hex_string?(multisig_script_hash)
-
-    CKB::Address.generate_short_payload_multisig_address(multisig_script_hash, mode: ENV["CKB_NET_MODE"])
-  end
-
-  def self.short_payload_blake160_address(lock_script)
-    blake160 = lock_script.args
-    return if blake160.blank? || !CKB::Utils.valid_hex_string?(blake160)
-
-    CKB::Address.new(blake160, mode: ENV["CKB_NET_MODE"]).generate
-  end
-
-  def self.full_payload_address(lock_script)
-    code_hash = lock_script.code_hash
-    args = lock_script.args
-    format_type = lock_script.hash_type == "data" ? "0x02" : "0x04"
-
-    return unless CKB::Utils.valid_hex_string?(args)
-
-    CKB::Address.generate_full_payload_address(format_type, code_hash, args, mode: ENV["CKB_NET_MODE"])
-  end
-
-  def self.address_type(lock_script)
-    code_hash = lock_script.code_hash
-    hash_type = lock_script.hash_type
-    args = lock_script.args
-    return "full" if args&.size != 42
-
-    correct_sig_type_match = "#{ENV["SECP_CELL_TYPE_HASH"]}type"
-    correct_multisig_type_match = "#{ENV["SECP_MULTISIG_CELL_TYPE_HASH"]}type"
-
-    case "#{code_hash}#{hash_type}"
-    when correct_sig_type_match
-      "sig"
-    when correct_multisig_type_match
-      "multisig"
-    else
-      "full"
-    end
+    CKB::Address.new(lock_script, mode: ENV["CKB_NET_MODE"]).generate
   end
 
   def self.parse_address(address_hash)
-    CKB::Address.parse(address_hash)
+    CKB::AddressParser.new(address_hash).parse
   end
 
   def self.block_reward(node_block_header)
@@ -151,19 +101,25 @@ class CkbUtils
     epoch = header.epoch
     return get_epoch_info(epoch) if epoch.zero?
 
-    epoch_number = "0x#{CKB::Utils.to_hex(epoch).split(//)[-6..-1].join("")}".hex
-    block_index = "0x#{CKB::Utils.to_hex(epoch).split(//)[-10..-7].join("")}".hex
-    length = "0x#{CKB::Utils.to_hex(epoch).split(//)[2..-11].join("")}".hex
-    start_number = header.number - block_index
+    parsed_epoch = parse_epoch(epoch)
+    start_number = header.number - parsed_epoch.index
 
-    OpenStruct.new(number: epoch_number, length: length, start_number: start_number)
+    OpenStruct.new(number: parsed_epoch.number, length: parsed_epoch.length, start_number: start_number)
   end
 
-  def self.ckb_transaction_fee(ckb_transaction)
-    if ckb_transaction.inputs.dao.present?
+  def self.parse_epoch(epoch)
+    OpenStruct.new(
+      length: (epoch >> 40) & 0xFFFF,
+      index: (epoch >> 24) & 0xFFFF,
+      number: (epoch) & 0xFFFFFF
+    )
+  end
+
+  def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
+    if ckb_transaction.inputs.where(cell_type: "nervos_dao_withdrawing").present?
       dao_withdraw_tx_fee(ckb_transaction)
     else
-      normal_tx_fee(ckb_transaction)
+      normal_tx_fee(input_capacities, output_capacities)
     end
   end
 
@@ -230,24 +186,23 @@ class CkbUtils
     Address.decrement_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
   end
 
-  def self.normal_tx_fee(ckb_transaction)
-    ckb_transaction.inputs.sum(:capacity) - ckb_transaction.outputs.sum(:capacity)
+  def self.normal_tx_fee(input_capacities, output_capacities)
+    input_capacities - output_capacities
   end
 
   def self.dao_withdraw_tx_fee(ckb_transaction)
-    dao_cells = ckb_transaction.inputs.dao
-    witnesses = ckb_transaction.witnesses
-    header_deps = ckb_transaction.header_deps
-    interests =
-      dao_cells.reduce(0) do |memo, dao_cell|
-        witness = witnesses[dao_cell.cell_index]
-        block_hash = header_deps[witness.last.hex]
-        out_point = CKB::Types::OutPoint.new(tx_hash: dao_cell.tx_hash, index: dao_cell.cell_index)
-
-        memo + CkbSync::Api.instance.calculate_dao_maximum_withdraw(out_point, block_hash).to_i - dao_cell.capacity.to_i
-      end
+    nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
+    interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
 
     ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+  end
+
+  def self.dao_interest(nervos_dao_withdrawing_cell)
+    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+    nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
+    deposit_out_point = CKB::Types::OutPoint.new(tx_hash: nervos_dao_deposit_cell.tx_hash, index: nervos_dao_deposit_cell.cell_index)
+    withdrawing_dao_cell_block_hash = nervos_dao_withdrawing_cell.block.block_hash
+    CkbSync::Api.instance.calculate_dao_maximum_withdraw(deposit_out_point, withdrawing_dao_cell_block_hash).hex - nervos_dao_deposit_cell.capacity.to_i
   rescue CKB::RPCError
     0
   end
@@ -285,5 +240,9 @@ class CkbUtils
     else
       hspace / target
     end
+  end
+
+  def self.hash_value_to_s(hash)
+    hash.each { |key, value| hash[key] = value.to_s unless !!value == value }
   end
 end

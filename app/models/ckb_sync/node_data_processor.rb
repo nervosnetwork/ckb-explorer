@@ -2,9 +2,11 @@ module CkbSync
   class NodeDataProcessor
     def call
       local_tip_block = Block.recent.first
+      tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
+      return if target_block_number > tip_block_number
+
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
-      return if target_block.blank?
 
       if !forked?(target_block, local_tip_block)
         process_block(target_block)
@@ -21,23 +23,96 @@ module CkbSync
       end
 
       ApplicationRecord.transaction do
-        ckb_transactions = build_ckb_transactions(local_block, node_block.transactions)
+        outputs = []
+        new_dao_depositor_events = {}
+        local_block.save!
+
+        ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs, new_dao_depositor_events)
         local_block.ckb_transactions_count = ckb_transactions.size
-        Block.import! [local_block], recursive: true, batch_size: 1000, validate: false
-        local_block.reload
+        CkbTransaction.import!(ckb_transactions, recursive: true, batch_size: 3500, validate: false)
+        input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h {|id| [id, []] }
+        update_tx_fee_related_data(local_block, input_capacities)
+        calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
+
+        update_miner_pending_rewards(local_block.miner_address)
+        update_block_contained_address_info(local_block)
+        update_block_reward_info(local_block)
+        dao_events = build_new_dao_depositor_events(new_dao_depositor_events)
+        DaoEvent.import!(dao_events, validate: false)
+
+        update_dao_contract_related_info(local_block)
       end
-
-      update_tx_fee_related_data(local_block)
-      calculate_tx_fee(local_block)
-
-      update_miner_pending_rewards(local_block.miner_address)
-      update_block_contained_address_info(local_block)
-      update_block_reward_info(local_block)
 
       local_block
     end
 
     private
+
+    def build_new_dao_depositor_events(new_dao_depositor_events)
+      new_dao_depositor_events.map do |address_id, tx_hash|
+        ckb_transaction = CkbTransaction.find_by(tx_hash: tx_hash)
+        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address_id, event_type: "new_dao_depositor", value: 1, contract_id: DaoContract.default_contract.id)
+      end
+    end
+
+    def update_dao_contract_related_info(local_block)
+      dao_contract = DaoContract.default_contract
+      dao_events = DaoEvent.where(block: local_block).pending
+      process_deposit_to_dao(dao_contract, dao_events)
+      process_new_dao_depositor(dao_contract, dao_events)
+      process_withdraw_from_dao(dao_contract, dao_events)
+      process_issue_interest(dao_contract, dao_events)
+      process_take_away_all_deposit(dao_contract, dao_events)
+    end
+
+    def process_take_away_all_deposit(dao_contract, dao_events)
+      take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
+      take_away_all_deposit_dao_events.each do |event|
+        dao_contract.decrement!(:depositors_count)
+        event.processed!
+      end
+    end
+
+    def process_issue_interest(dao_contract, dao_events)
+      issue_interest_dao_events = dao_events.where(event_type: "issue_interest")
+      issue_interest_dao_events.each do |event|
+        dao_contract.increment!(:interest_granted, event.value)
+        address = event.address
+        address.increment!(:interest, event.value)
+        event.processed!
+      end
+    end
+
+    def process_withdraw_from_dao(dao_contract, dao_events)
+      withdraw_from_dao_events = dao_events.where(event_type: "withdraw_from_dao")
+      withdraw_from_dao_events.each do |event|
+        dao_contract.increment!(:withdraw_transactions_count)
+        dao_contract.decrement!(:total_deposit, event.value)
+        address = event.address
+        address.decrement!(:dao_deposit, event.value)
+        event.processed!
+      end
+    end
+
+    def process_new_dao_depositor(dao_contract, dao_events)
+      new_dao_depositor_events = dao_events.where(event_type: "new_dao_depositor")
+      new_dao_depositor_events.each do |event|
+        dao_contract.increment!(:depositors_count)
+        dao_contract.increment!(:total_depositors_count)
+        event.processed!
+      end
+    end
+
+    def process_deposit_to_dao(dao_contract, dao_events)
+      deposit_to_dao_events = dao_events.where(event_type: "deposit_to_dao")
+      deposit_to_dao_events.each do |event|
+        address = event.address
+        address.increment!(:dao_deposit, event.value)
+        dao_contract.increment!(:total_deposit, event.value)
+        dao_contract.increment!(:deposit_transactions_count)
+        event.processed!
+      end
+    end
 
     def update_block_reward_info(current_block)
       target_block_number = current_block.target_block_number
@@ -81,11 +156,72 @@ module CkbSync
 
     def invalid_block(local_tip_block)
       ApplicationRecord.transaction do
+        dao_events = DaoEvent.where(block: local_tip_block).processed
+        dao_contract = DaoContract.default_contract
+        revert_dao_contract_related_operations(dao_contract, dao_events)
+
         local_tip_block.invalid!
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
 
         local_tip_block
+      end
+    end
+
+    def revert_dao_contract_related_operations(dao_contract, dao_events)
+      revert_withdraw_from_dao(dao_contract, dao_events)
+      revert_issue_interest(dao_contract, dao_events)
+      revert_deposit_to_dao(dao_contract, dao_events)
+      revert_new_dao_depositor(dao_contract, dao_events)
+      revert_take_away_all_deposit(dao_contract, dao_events)
+    end
+
+    def revert_take_away_all_deposit(dao_contract, dao_events)
+      take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
+      take_away_all_deposit_dao_events.each do |event|
+        dao_contract.increment!(:depositors_count)
+        event.reverted!
+      end
+    end
+
+    def revert_issue_interest(dao_contract, dao_events)
+      issue_interest_dao_events = dao_events.where(event_type: "issue_interest")
+      issue_interest_dao_events.each do |event|
+        dao_contract.decrement!(:interest_granted, event.value)
+        address = event.address
+        address.decrement!(:interest, event.value)
+        event.reverted!
+      end
+    end
+
+    def revert_withdraw_from_dao(dao_contract, dao_events)
+      withdraw_from_dao_events = dao_events.where(event_type: "withdraw_from_dao")
+      withdraw_from_dao_events.each do |event|
+        dao_contract.decrement!(:withdraw_transactions_count)
+        dao_contract.increment!(:total_deposit, event.value)
+        address = event.address
+        address.increment!(:dao_deposit, event.value)
+        event.reverted!
+      end
+    end
+
+    def revert_new_dao_depositor(dao_contract, dao_events)
+      new_dao_depositor_events = dao_events.where(event_type: "new_dao_depositor")
+      new_dao_depositor_events.each do |event|
+        dao_contract.decrement!(:depositors_count)
+        dao_contract.decrement!(:total_depositors_count)
+        event.reverted!
+      end
+    end
+
+    def revert_deposit_to_dao(dao_contract, dao_events)
+      deposit_to_dao_events = dao_events.where(event_type: "deposit_to_dao")
+      deposit_to_dao_events.each do |event|
+        address = event.address
+        address.decrement!(:dao_deposit, event.value)
+        dao_contract.decrement!(:total_deposit, event.value)
+        dao_contract.decrement!(:deposit_transactions_count)
+        event.reverted!
       end
     end
 
@@ -179,12 +315,12 @@ module CkbSync
       )
     end
 
-    def build_ckb_transactions(local_block, transactions)
+    def build_ckb_transactions(local_block, transactions, outputs, new_dao_depositor_events)
       transactions.each_with_index.map do |transaction, transaction_index|
         addresses = Set.new
         ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
         build_cell_inputs(transaction.inputs, ckb_transaction)
-        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data)
+        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data, outputs, new_dao_depositor_events)
         addresses_arr = addresses.to_a
         ckb_transaction.addresses << addresses_arr
 
@@ -225,11 +361,13 @@ module CkbSync
       node_input.previous_output.tx_hash == CellOutput::SYSTEM_TX_HASH
     end
 
-    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data)
+    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs, new_dao_depositor_events)
       node_outputs.each_with_index.map do |output, cell_index|
         address = Address.find_or_create_address(output.lock)
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
+        outputs << cell_output
+        build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
         build_lock_script(cell_output, output.lock, address)
         build_type_script(cell_output, output.type)
 
@@ -237,22 +375,52 @@ module CkbSync
       end
     end
 
-    def cell_type(type_script)
-      return "normal" if type_script.blank?
+    def build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
+      if cell_output.nervos_dao_deposit?
+        dao_contract = DaoContract.find_or_create_by(id: 1)
+        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
+        if address.dao_deposit.zero? && !new_dao_depositor_events.key?(address.id)
+          new_dao_depositor_events[address.id] = ckb_transaction.tx_hash
+        end
+      end
+    end
 
-      [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]].include?(type_script.code_hash) ? "dao" : "normal"
+    def build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
+      if previous_cell_output.nervos_dao_withdrawing?
+        withdraw_amount = previous_cell_output.capacity
+        ckb_transaction = CkbTransaction.find(ckb_transaction_id)
+        ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "withdraw_from_dao", value: withdraw_amount, contract_id: DaoContract.default_contract.id)
+        interest = CkbUtils.dao_interest(previous_cell_output)
+        ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "issue_interest", value: interest, contract_id: DaoContract.default_contract.id)
+        address = Address.find(address_id)
+        if (address.dao_deposit - withdraw_amount).zero?
+          ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "take_away_all_deposit", value: 1, contract_id: DaoContract.default_contract.id)
+        end
+      end
+    end
+
+    def cell_type(type_script, output_data)
+      return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]].include?(type_script&.code_hash)
+
+      if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
+        "nervos_dao_deposit"
+      else
+        "nervos_dao_withdrawing"
+      end
     end
 
     def build_cell_output(ckb_transaction, output, address, cell_index, output_data)
       ckb_transaction.cell_outputs.build(
         capacity: output.capacity,
         data: output_data,
+        data_size: CKB::Utils.hex_to_bin(output_data).bytesize,
+        occupied_capacity: CkbUtils.calculate_cell_min_capacity(output, output_data),
         address: address,
         block: ckb_transaction.block,
         tx_hash: ckb_transaction.tx_hash,
         cell_index: cell_index,
         generated_by: ckb_transaction,
-        cell_type: cell_type(output.type)
+        cell_type: cell_type(output.type, output_data)
       )
     end
 
@@ -275,57 +443,78 @@ module CkbSync
       )
     end
 
-    def update_tx_fee_related_data(lock_block)
-      ApplicationRecord.transaction do
-        lock_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_each do |cell_input|
-          ckb_transaction = cell_input.ckb_transaction
-          previous_cell_output = cell_input.previous_cell_output
-          address = previous_cell_output.address
+    def update_tx_fee_related_data(local_block, input_capacities)
+      updated_inputs = []
+      updated_outputs = []
+      account_books = []
+      local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 3500) do |cell_inputs|
+        ApplicationRecord.transaction do
+          cell_inputs.each do |cell_input|
+            ckb_transaction_id = cell_input.ckb_transaction_id
+            previous_cell_output = cell_input.previous_cell_output
+            address_id = previous_cell_output.address_id
+            input_capacities[ckb_transaction_id] << previous_cell_output.capacity
 
-          link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
-          link_payer_address_to_ckb_transaction(ckb_transaction, address)
+            link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
+            update_previous_cell_output_status(ckb_transaction_id, previous_cell_output)
+            account_book = link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
+            build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
 
-          update_previous_cell_output_status(ckb_transaction, previous_cell_output)
+            updated_inputs << cell_input
+            updated_outputs << previous_cell_output
+            account_books << account_book
+          end
+
+          CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
+          CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status] )
+          AccountBook.import!(account_books, validate: false)
         end
       end
     end
 
     def link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
-      cell_input.update!(previous_cell_output_id: previous_cell_output.id)
+      cell_input.previous_cell_output_id = previous_cell_output.id
     end
 
-    def link_payer_address_to_ckb_transaction(ckb_transaction, address)
-      ckb_transaction.addresses << address
+    def link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
+      { ckb_transaction_id: ckb_transaction_id, address_id: address_id }
     end
 
-    def update_previous_cell_output_status(ckb_transaction, previous_cell_output)
-      previous_cell_output.update!(consumed_by: ckb_transaction, status: :dead)
+    def update_previous_cell_output_status(ckb_transaction_id, previous_cell_output)
+      previous_cell_output.consumed_by_id = ckb_transaction_id
+      previous_cell_output.status = "dead"
     end
 
     def update_address_balance_and_ckb_transactions_count(address)
       address.balance = address.cell_outputs.live.sum(:capacity)
-      address.ckb_transactions_count = address.ckb_transactions.distinct.count
+      address.ckb_transactions_count = AccountBook.where(address: address).select(:ckb_transaction_id).distinct.count
       address.save!
     end
 
-    def calculate_tx_fee(local_block)
-      ckb_transactions = local_block.ckb_transactions.where(is_cellbase: false)
+    def calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs)
+      output_capacities = outputs.each { |k, v| outputs[k] = v.map(&:capacity)}
+      ckb_transactions = ckb_transactions.reject(&:is_cellbase)
       return if ckb_transactions.blank?
 
-      ApplicationRecord.transaction do
-        ckb_transactions.each(&method(:update_transaction_fee))
-        local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
-        local_block.save!
+      txs = []
+      ckb_transactions.each do |ckb_transaction|
+        update_transaction_fee(ckb_transaction, input_capacities[ckb_transaction.id].sum, output_capacities[ckb_transaction.id].sum)
+        txs << ckb_transaction
       end
+
+      CkbTransaction.import!(txs, validate: false, on_duplicate_key_update: [:transaction_fee])
+      local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
+      local_block.save!
     rescue ActiveRecord::RecordInvalid
       local_block.update(total_transaction_fee: 0)
-      Rails.logger.error "tx_fee is negative"
+      Rails.logger.error "block number: #{local_block.number}, tx_fee is negative"
     end
 
-    def update_transaction_fee(ckb_transaction)
-      transaction_fee = CkbUtils.ckb_transaction_fee(ckb_transaction)
-      ckb_transaction.transaction_fee = transaction_fee
-      ckb_transaction.save!
+    def update_transaction_fee(ckb_transaction, input_capacities, output_capacities)
+      transaction_fee = CkbUtils.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
+      Rails.logger.error "ckb_transaction_id: #{ckb_transaction.id}, tx_fee is negative" if transaction_fee < 0
+
+      ckb_transaction.transaction_fee = [transaction_fee, 0].max
     end
 
     def update_miner_pending_rewards(miner_address)

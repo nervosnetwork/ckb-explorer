@@ -1,8 +1,8 @@
 class CellOutput < ApplicationRecord
   SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
-
+  MAXIMUM_DOWNLOADABLE_SIZE = 64000
   enum status: { live: 0, dead: 1 }
-  enum cell_type: { normal: 0, dao: 1 }
+  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2 }
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
@@ -24,7 +24,7 @@ class CellOutput < ApplicationRecord
 
   def node_output
     lock = CKB::Types::Script.new(lock_script.to_node_lock)
-    type = type_script.present? ? CKB::Types::Script.new(type_script.to_node_lock) : nil
+    type = type_script.present? ? CKB::Types::Script.new(type_script.to_node_type) : nil
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
   end
 
@@ -53,6 +53,8 @@ end
 #  generated_by_id    :decimal(30, )
 #  consumed_by_id     :decimal(30, )
 #  cell_type          :integer          default("normal")
+#  data_size          :integer
+#  occupied_capacity  :decimal(30, )
 #
 # Indexes
 #

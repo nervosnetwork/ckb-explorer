@@ -11,6 +11,7 @@ class Block < ApplicationRecord
   has_many :uncle_blocks
   has_many :cell_outputs
   has_many :cell_inputs
+  has_many :dao_events
 
   validates_presence_of :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
   validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed, numericality: { greater_than_or_equal_to: 0 }
@@ -58,7 +59,7 @@ class Block < ApplicationRecord
   end
 
   def self.cached_find(query_key)
-    Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds) do
+    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
       if QueryKeyUtils.valid_hex?(query_key)
         block = where(block_hash: query_key).first
       else

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_04_060003) do
+ActiveRecord::Schema.define(version: 2019_11_08_122048) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -33,6 +33,8 @@ ActiveRecord::Schema.define(version: 2019_10_04_060003) do
     t.datetime "updated_at", null: false
     t.binary "lock_hash"
     t.integer "pending_reward_blocks_count", default: 0
+    t.decimal "dao_deposit", precision: 30, default: "0"
+    t.decimal "interest", precision: 30, default: "0"
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
   end
@@ -105,6 +107,8 @@ ActiveRecord::Schema.define(version: 2019_10_04_060003) do
     t.decimal "generated_by_id", precision: 30
     t.decimal "consumed_by_id", precision: 30
     t.integer "cell_type", default: 0
+    t.integer "data_size"
+    t.decimal "occupied_capacity", precision: 30
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
@@ -130,6 +134,30 @@ ActiveRecord::Schema.define(version: 2019_10_04_060003) do
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
+  end
+
+  create_table "dao_contracts", force: :cascade do |t|
+    t.decimal "total_deposit", precision: 30, default: "0"
+    t.decimal "interest_granted", precision: 30, default: "0"
+    t.bigint "deposit_transactions_count", default: 0
+    t.bigint "withdraw_transactions_count", default: 0
+    t.integer "depositors_count", default: 0
+    t.bigint "total_depositors_count", default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "dao_events", force: :cascade do |t|
+    t.bigint "block_id"
+    t.bigint "ckb_transaction_id"
+    t.bigint "address_id"
+    t.bigint "contract_id"
+    t.integer "event_type", limit: 2
+    t.decimal "value", precision: 30, default: "0"
+    t.integer "status", limit: 2, default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["block_id"], name: "index_dao_events_on_block_id"
   end
 
   create_table "forked_blocks", force: :cascade do |t|

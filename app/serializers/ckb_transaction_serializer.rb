@@ -1,7 +1,7 @@
 class CkbTransactionSerializer
   include FastJsonapi::ObjectSerializer
 
-  attributes  :is_cellbase
+  attributes  :is_cellbase, :witnesses, :cell_deps, :header_deps
 
   attribute :transaction_hash, &:tx_hash
 

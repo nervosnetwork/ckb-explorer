@@ -105,6 +105,17 @@ module Api
         assert_nil json.dig("data", "attributes", "data")
         assert_equal CellOutputDataSerializer.new(cell_output).serialized_json, response.body
       end
+
+      test "should return error object when cell output data size exceeds limit" do
+        output = create_cell_output(trait_type: :with_full_transaction_but_no_type_script)
+        output.update(data_size: 10**8)
+        error_object = Api::V1::Exceptions::CellOutputDataSizeExceedsLimitError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get api_v1_cell_output_datum_url(output.id)
+
+        assert_equal response_json, response.body
+      end
     end
   end
 end

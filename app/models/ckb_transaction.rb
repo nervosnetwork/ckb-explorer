@@ -4,12 +4,13 @@ class CkbTransaction < ApplicationRecord
   max_paginates_per MAX_PAGINATES_PER
 
   belongs_to :block
-  has_many :account_books
+  has_many :account_books, dependent: :destroy
   has_many :addresses, through: :account_books
   has_many :cell_inputs, dependent: :delete_all
   has_many :cell_outputs, dependent: :delete_all
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
+  has_many :dao_events
 
   attribute :tx_hash, :ckb_hash
   attribute :header_deps, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]
@@ -18,9 +19,10 @@ class CkbTransaction < ApplicationRecord
   scope :cellbase, -> { where(is_cellbase: true) }
 
   after_commit :flush_cache
+  before_destroy :recover_dead_cell
 
   def self.cached_find(query_key)
-    Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds) do
+    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
       find_by(tx_hash: query_key)
     end
   end
@@ -49,14 +51,21 @@ class CkbTransaction < ApplicationRecord
     outputs.where(address: address).sum(:capacity) - inputs.where(address: address).sum(:capacity)
   end
 
+  def dao_transaction?
+    inputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing))
+  end
+
   private
 
   def normal_tx_display_outputs(previews)
-    Rails.cache.fetch("normal_tx_display_outputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
+    Rails.cache.realize("normal_tx_display_outputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
       cell_outputs_for_display = previews ? outputs.limit(10) : outputs
       cell_outputs_for_display.order(:id).map do |output|
         consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-        { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash }
+        display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
+        display_output.merge!({ dao_type_hash: ENV["DAO_TYPE_HASH"] }) unless output.normal?
+
+        CkbUtils.hash_value_to_s(display_output)
       end
     end
   end
@@ -66,23 +75,40 @@ class CkbTransaction < ApplicationRecord
     cellbase = Cellbase.new(block)
     cell_outputs_for_display.map do |output|
       consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-      { id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash }
+      CkbUtils.hash_value_to_s({ id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash })
     end
   end
 
   def normal_tx_display_inputs(previews)
-    Rails.cache.fetch("normal_tx_display_inputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
+    Rails.cache.realize("normal_tx_display_inputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
       cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
       cell_inputs_for_display.order(:id).map do |cell_input|
         previous_cell_output = cell_input.previous_cell_output
-        { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash }
+        display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_type: previous_cell_output.cell_type }
+        display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
+
+        CkbUtils.hash_value_to_s(display_input)
       end
     end
   end
 
+  def attributes_for_dao_input(nervos_dao_withdrawing_cell)
+    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+    nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
+    started_block_number = Block.find(nervos_dao_deposit_cell.block.id).number
+    ended_block_number = Block.find(block_id).number
+    interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
+
+    CkbUtils.hash_value_to_s({ started_block_number: started_block_number, ended_block_number: ended_block_number, interest: interest, dao_type_hash: ENV["DAO_TYPE_HASH"] })
+  end
+
   def cellbase_display_inputs
     cellbase = Cellbase.new(block)
-    [{ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number, generated_tx_hash: tx_hash }]
+    [CkbUtils.hash_value_to_s({ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number, generated_tx_hash: tx_hash })]
+  end
+
+  def recover_dead_cell
+    inputs.update_all(status: "live")
   end
 end
 
