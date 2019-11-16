@@ -107,12 +107,12 @@ module Api
         assert_equal response_json, response.body
       end
 
-      test "should return 10 records when page and page_size are not set" do
-        create_list(:block, 15, :with_block_hash)
+      test "should return 15 records when page and page_size are not set" do
+        create_list(:block, 20, :with_block_hash)
 
         valid_get api_v1_blocks_url
 
-        assert_equal 10, json["data"].size
+        assert_equal 15, json["data"].size
       end
 
       test "should return accepted records" do
