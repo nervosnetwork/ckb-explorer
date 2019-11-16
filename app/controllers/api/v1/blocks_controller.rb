@@ -6,7 +6,7 @@ module Api
 
       def index
         if from_home_page?
-          blocks = Block.recent.limit(Block.default_per_page)
+          blocks = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
           options = {}
         else
           blocks = Block.recent.page(@page).per(@page_size)
