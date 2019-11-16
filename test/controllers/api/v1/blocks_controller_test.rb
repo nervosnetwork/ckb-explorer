@@ -48,7 +48,7 @@ module Api
       test "should get serialized objects" do
         create_list(:block, 15, :with_block_hash)
 
-        blocks = Block.recent.limit(Block.default_per_page)
+        blocks = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
 
         valid_get api_v1_blocks_url
 
@@ -131,26 +131,26 @@ module Api
 
       test "should return corresponding page's records when page is set and page_size is not set" do
         page = 2
-        create_list(:block, 15, :with_block_hash)
-        blocks = Block.order(timestamp: :desc).limit(Block.default_per_page)
+        create_list(:block, 20, :with_block_hash)
+        blocks = Block.order(timestamp: :desc).limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
 
         valid_get api_v1_blocks_url, params: { page: page }
 
         response_blocks = BlockSerializer.new(blocks, {}).serialized_json
 
         assert_equal response_blocks, response.body
-        assert_equal 10, json["data"].size
+        assert_equal 15, json["data"].size
       end
 
       test "should return the corresponding number of blocks when page is not set and page_size is set" do
-        create_list(:block, 15, :with_block_hash)
+        create_list(:block, 20, :with_block_hash)
 
         valid_get api_v1_blocks_url, params: { page_size: 12 }
 
-        blocks = Block.order(timestamp: :desc).limit(Block.default_per_page)
+        blocks = Block.order(timestamp: :desc).limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
         response_blocks = BlockSerializer.new(blocks, {}).serialized_json
         assert_equal response_blocks, response.body
-        assert_equal 10, json["data"].size
+        assert_equal 15, json["data"].size
       end
 
       test "should return the corresponding blocks when page and page_size are set" do
