@@ -1,3 +1,12 @@
+# [](https://github.com/shaojunda/ckb-explorer/compare/v0.7.0...v) (2019-11-17)
+
+
+### Bug Fixes
+
+* cell output cache bug ([9ad7b9e](https://github.com/shaojunda/ckb-explorer/commit/9ad7b9e))
+
+
+
 # [v0.7.0](https://github.com/shaojunda/ckb-explorer/compare/v0.6.0...v0.7.0) (2019-11-16)
 
 
