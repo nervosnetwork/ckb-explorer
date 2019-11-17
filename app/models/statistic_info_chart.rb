@@ -36,9 +36,8 @@ class StatisticInfoChart
   end
 
   def calculate_hash_rate
-    max_block_number = Block.maximum(:number).to_i
-    from = Rails.cache.realize("hash_rate_from") { last_epoch0_block_number }
-    to = Rails.cache.realize("hash_rate_to") { max_block_number }
+    from = last_epoch0_block_number
+    to = Block.maximum(:number).to_i
 
     epoch_first_block_numbers = Block.order(:epoch, :timestamp).select("distinct on (epoch) number").to_a.pluck(:number)
     result =
@@ -47,7 +46,6 @@ class StatisticInfoChart
         { block_number: number.to_i, hash_rate: hash_rate }
       end
 
-    Rails.cache.write("hash_rate_from", from)
     Rails.cache.write("hash_rate_to", to)
     Rails.cache.write("hash_rate_chart_data_#{to}", result.compact.uniq)
   end
