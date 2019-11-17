@@ -31,7 +31,9 @@ class CellOutput < ApplicationRecord
   def flush_cache
     Rails.cache.delete("previous_cell_output/#{tx_hash}/#{cell_index}")
     Rails.cache.delete_matched("normal_tx_display_inputs_previews_*_#{ckb_transaction_id}")
+    Rails.cache.delete_matched("normal_tx_display_inputs_previews_*_#{consumed_by_id}")
     Rails.cache.delete_matched("normal_tx_display_outputs_previews_*_#{ckb_transaction_id}")
+    Rails.cache.delete_matched("normal_tx_display_outputs_previews_*_#{consumed_by_id}")
   end
 end
 
