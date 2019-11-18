@@ -89,9 +89,9 @@ module Api
         assert_equal %w(address_hash balance transactions_count lock_script pending_reward_blocks_count dao_deposit interest lock_info).sort, json["data"]["attributes"].keys.sort
       end
 
-      test "should return error object when no cell output found by id" do
-        error_object = Api::V1::Exceptions::AddressNotFoundError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+      test "should return NullAddress when address no found by id" do
+        address = NullAddress.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
+        response_json = AddressSerializer.new(address).serialized_json
 
         valid_get api_v1_address_url("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
 

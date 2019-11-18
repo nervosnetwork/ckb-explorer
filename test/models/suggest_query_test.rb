@@ -41,10 +41,10 @@ class SuggestQueryTest < ActiveSupport::TestCase
     end
   end
 
-  test "should raise AddressNotFoundError when query key is a address that doesn't exist" do
+  test "should return serialized NullAddress when query key is a address that doesn't exist" do
     create(:address, :with_lock_script)
-    assert_raises Api::V1::Exceptions::AddressNotFoundError do
-      SuggestQuery.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83").find!
-    end
+    address = NullAddress.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
+
+    assert_equal AddressSerializer.new(address).serialized_json, SuggestQuery.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83").find!.serialized_json
   end
 end
