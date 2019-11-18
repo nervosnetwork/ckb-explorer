@@ -6,6 +6,8 @@ module Api
 
       def show
         address = Address.find_address!(params[:id])
+        raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
+
         presented_address = AddressPresenter.new(address)
         ckb_dao_transactions = presented_address.ckb_dao_transactions.recent.distinct.page(@page).per(@page_size)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: @page, page_size: @page_size).call

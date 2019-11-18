@@ -137,8 +137,8 @@ module Api
       end
 
       test "should return error object when no records found by a address query key" do
-        error_object = Api::V1::Exceptions::AddressNotFoundError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        address = NullAddress.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
+        response_json = AddressSerializer.new(address).serialized_json
 
         valid_get api_v1_suggest_queries_url, params: { q: "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83" }
 
