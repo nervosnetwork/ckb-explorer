@@ -10,7 +10,7 @@ class StatisticInfoTest < ActiveSupport::TestCase
   test "the default statistical interval should equal to env config" do
     statistic_info = StatisticInfo.new
 
-    assert_equal ENV["HASH_RATE_STATISTICAL_INTERVAL"], statistic_info.instance_variable_get(:@hash_rate_statistical_interval)
+    assert_equal 100, statistic_info.instance_variable_get(:@hash_rate_statistical_interval)
   end
 
   test "id should present" do
