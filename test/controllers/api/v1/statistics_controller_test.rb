@@ -17,12 +17,14 @@ module Api
       end
 
       test "should get success code when call index" do
+        create(:block)
         valid_get api_v1_statistics_url
 
         assert_response :success
       end
 
       test "should set right content type when call index" do
+        create(:block)
         valid_get api_v1_statistics_url
 
         assert_equal "application/vnd.api+json", response.media_type
@@ -59,12 +61,14 @@ module Api
       end
 
       test "the returned statistic info should contain right keys" do
+        create_list(:block, 15, :with_block_hash)
         valid_get api_v1_statistics_url
 
-        assert_equal %w(current_epoch_average_block_time current_epoch_difficulty hash_rate tip_block_number), json.dig("data", "attributes").keys.sort
+        assert_equal %w(average_block_time current_epoch_difficulty hash_rate tip_block_number), json.dig("data", "attributes").keys.sort
       end
 
       test "should return right index statistic info" do
+        create_list(:block, 15, :with_block_hash)
         StatisticInfo.any_instance.stubs(:id).returns(1)
         statistic_info = StatisticInfo.new
 
@@ -145,20 +149,20 @@ module Api
 
       test "should return tip block number when param is tip_block_number" do
         tip_block_number = 101
-        CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(tip_block_number)
-
+        create(:block, number: tip_block_number)
         valid_get api_v1_statistic_url("tip_block_number")
 
         assert_equal tip_block_number, json.dig("data", "attributes", "tip_block_number")
       end
 
-      test "should return average block time when param is current_epoch_average_block_time" do
+      test "should return average block time when param is average_block_time" do
         average_block_time = "10000"
-        StatisticInfo.any_instance.stubs(:current_epoch_average_block_time).returns(average_block_time)
+        create_list(:block, 15, :with_block_hash)
+        StatisticInfo.any_instance.stubs(:average_block_time).returns(average_block_time)
 
-        valid_get api_v1_statistic_url("current_epoch_average_block_time")
+        valid_get api_v1_statistic_url("average_block_time")
 
-        assert_equal average_block_time, json.dig("data", "attributes", "current_epoch_average_block_time")
+        assert_equal average_block_time, json.dig("data", "attributes", "average_block_time")
       end
 
       test "should return current epoch difficulty when param is current_epoch_difficulty" do
