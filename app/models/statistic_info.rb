@@ -1,5 +1,5 @@
 class StatisticInfo
-  def initialize(hash_rate_statistical_interval: nil)
+  def initialize(hash_rate_statistical_interval: 100)
     @hash_rate_statistical_interval = hash_rate_statistical_interval.presence || ENV["HASH_RATE_STATISTICAL_INTERVAL"]
   end
 
@@ -21,11 +21,10 @@ class StatisticInfo
   end
 
   def current_epoch_average_block_time
-    current_epoch_number = Block.recent.first&.epoch
-    blocks = Block.where(epoch: current_epoch_number).order(:timestamp)
+    blocks = Block.order(timestamp: :desc).limit(hash_rate_statistical_interval.to_i)
     return if blocks.empty?
 
-    total_block_time(blocks, current_epoch_number) / blocks.size
+    total_block_time(blocks) / blocks.size
   end
 
   def hash_rate(block_number = tip_block_number)
@@ -50,13 +49,7 @@ class StatisticInfo
 
   attr_reader :hash_rate_statistical_interval
 
-  def total_block_time(blocks, current_epoch_number)
-    prev_epoch_nubmer = [current_epoch_number.to_i - 1, 0].max
-    if prev_epoch_nubmer.zero?
-      prev_epoch_last_block = Block.find_by(number: 0)
-    else
-      prev_epoch_last_block = Block.where(epoch: prev_epoch_nubmer).recent.first
-    end
-    (blocks.last.timestamp - prev_epoch_last_block.timestamp).to_d
+  def total_block_time(blocks)
+    (blocks.first.timestamp - blocks.last.timestamp).to_d
   end
 end
