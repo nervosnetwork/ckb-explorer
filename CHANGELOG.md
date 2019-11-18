@@ -1,4 +1,13 @@
-# [](https://github.com/shaojunda/ckb-explorer/compare/v0.7.0...v) (2019-11-17)
+# [](https://github.com/shaojunda/ckb-explorer/compare/v0.7.1...v.7.2) (2019-11-18)
+
+### Features
+
+* add null address ([154bdf8](https://github.com/shaojunda/ckb-explorer/commit/154bdf8))
+* use NullAddress ([d3d464b](https://github.com/shaojunda/ckb-explorer/commit/d3d464b))
+
+
+
+# [](https://github.com/shaojunda/ckb-explorer/compare/v0.7.0...v0.7.1) (2019-11-17)
 
 
 ### Bug Fixes
