@@ -47,6 +47,7 @@ class NullAddressTest < ActiveSupport::TestCase
   end
 
   test ".lock_script should return LockScript" do
+    ENV["CKB_NET_MODE"] = "mainnet"
     address_hash = "ckb1qyqxfde320py026hwvsev240t35mjjvsccgq5dugeg"
     null_address = NullAddress.new(address_hash)
     script = CKB::AddressParser.new(address_hash).parse.script
