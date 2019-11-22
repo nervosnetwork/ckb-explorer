@@ -1,6 +1,7 @@
 class StatisticInfo
-  def initialize(hash_rate_statistical_interval: nil)
-    @hash_rate_statistical_interval = hash_rate_statistical_interval.presence || ENV["HASH_RATE_STATISTICAL_INTERVAL"]
+  def initialize(hash_rate_statistical_interval: ENV["HASH_RATE_STATISTICAL_INTERVAL"], average_block_time_interval: ENV["AVERAGE_BLOCK_TIME_INTERVAL"])
+    @hash_rate_statistical_interval = hash_rate_statistical_interval.to_i
+    @average_block_time_interval = average_block_time_interval.to_i
   end
 
   def cache_key
@@ -12,7 +13,7 @@ class StatisticInfo
   end
 
   def tip_block_number
-    @tip_block_number ||= CkbSync::Api.instance.get_tip_block_number
+    @tip_block_number ||= Block.order(timestamp: :desc).pick(:number)
   end
 
   def current_epoch_difficulty
@@ -20,16 +21,16 @@ class StatisticInfo
     CkbUtils.compact_to_difficulty(compact_target)
   end
 
-  def current_epoch_average_block_time
-    current_epoch_number = Block.recent.first&.epoch
-    blocks = Block.where(epoch: current_epoch_number).order(:timestamp)
-    return if blocks.empty?
+  def average_block_time
+    start_block_number = [tip_block_number.to_i - average_block_time_interval + 1, 0].max
+    timestamps = Block.where(number: [start_block_number, tip_block_number]).order(timestamp: :desc).pluck(:timestamp)
+    return if timestamps.empty?
 
-    total_block_time(blocks, current_epoch_number) / blocks.size
+    total_block_time(timestamps) / blocks_count
   end
 
   def hash_rate(block_number = tip_block_number)
-    blocks = Block.where("number <= ?", block_number).recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval.to_i)
+    blocks = Block.where("number <= ?", block_number).recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval)
     return if blocks.blank?
 
     total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty }
@@ -48,15 +49,13 @@ class StatisticInfo
 
   private
 
-  attr_reader :hash_rate_statistical_interval
+  attr_reader :hash_rate_statistical_interval, :average_block_time_interval
 
-  def total_block_time(blocks, current_epoch_number)
-    prev_epoch_nubmer = [current_epoch_number.to_i - 1, 0].max
-    if prev_epoch_nubmer.zero?
-      prev_epoch_last_block = Block.find_by(number: 0)
-    else
-      prev_epoch_last_block = Block.where(epoch: prev_epoch_nubmer).recent.first
-    end
-    (blocks.last.timestamp - prev_epoch_last_block.timestamp).to_d
+  def total_block_time(timestamps)
+    (timestamps.first - timestamps.last).to_d
+  end
+
+  def blocks_count
+    tip_block_number > average_block_time_interval ? average_block_time_interval : tip_block_number
   end
 end

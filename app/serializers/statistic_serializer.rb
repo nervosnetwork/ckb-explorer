@@ -5,8 +5,8 @@ class StatisticSerializer
     params && params[:info_name] == "tip_block_number"
   }
 
-  attribute :current_epoch_average_block_time, if: Proc.new { |_record, params|
-    params && params[:info_name] == "current_epoch_average_block_time"
+  attribute :average_block_time, if: Proc.new { |_record, params|
+    params && params[:info_name] == "average_block_time"
   }
 
   attribute :current_epoch_difficulty, if: Proc.new { |_record, params|
