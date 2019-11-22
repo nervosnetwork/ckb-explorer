@@ -5,8 +5,8 @@ class IndexStatisticSerializer
   attribute :tip_block_number do |object|
     object.tip_block_number&.to_s
   end
-  attribute :current_epoch_average_block_time do |object|
-    object.current_epoch_average_block_time&.to_s
+  attribute :average_block_time do |object|
+    object.average_block_time&.to_s
   end
   attribute :current_epoch_difficulty do |object|
     object.current_epoch_difficulty&.to_s
