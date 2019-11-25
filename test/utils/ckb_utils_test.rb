@@ -40,6 +40,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".generate_address should return full payload address when use correct sig code match" do
+    ENV["CKB_NET_MODE"] = "testnet"
     short_payload_blake160_address = "ckt1q2tnhkeh8ja36aftftqqdc4mt0wtvdp3a54kuw2tyfepezgx52khydkr98kkxrtvuag8z2j8w4pkw2k6k4l5cwfw473"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -48,9 +49,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return short payload blake160 address when use correct sig type match" do
+    ENV["CKB_NET_MODE"] = "testnet"
     short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -58,9 +61,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return full payload address when use correct multisig code match" do
+    ENV["CKB_NET_MODE"] = "testnet"
     short_payload_blake160_address = "ckt1qtqlkzhxj9wn6nk76dyc4m04ltwa330khkyjrc8ch74at67t7fvmcdkr98kkxrtvuag8z2j8w4pkw2k6k4l5ce7s8yp"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -69,9 +74,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return short payload multisig address when use correct multisig type match" do
+    ENV["CKB_NET_MODE"] = "testnet"
     short_payload_blake160_address = "ckt1qyqndsefa43s6m882pcj53m4gdnj4k440axqyz2gg9"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -79,9 +86,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return full payload data address when do not use default lock script and hash type is data" do
+    ENV["CKB_NET_MODE"] = "testnet"
     full_payload_address = "ckt1qgvf96jqmq4483ncl7yrzfzshwchu9jd0glq4yy5r2jcsw04d7xlydkr98kkxrtvuag8z2j8w4pkw2k6k4l5csspk07"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -90,9 +99,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return full payload data address when do not use default lock script and hash type is type" do
+    ENV["CKB_NET_MODE"] = "testnet"
     full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhvdkr98kkxrtvuag8z2j8w4pkw2k6k4l5ca2tat0"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -100,9 +111,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return nil when do not use default lock script and args is empty" do
+    ENV["CKB_NET_MODE"] = "testnet"
     full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhv77zeg7"
     lock_script = CKB::Types::Script.generate_lock(
       "0x",
@@ -110,6 +123,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       )
 
     assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".parse_address should return block160 when target is short payload blake160 address" do

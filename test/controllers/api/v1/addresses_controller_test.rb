@@ -90,12 +90,14 @@ module Api
       end
 
       test "should return NullAddress when address no found by id" do
+        ENV["CKB_NET_MODE"] = "testnet"
         address = NullAddress.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
         response_json = AddressSerializer.new(address).serialized_json
 
         valid_get api_v1_address_url("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
 
         assert_equal response_json, response.body
+        ENV["CKB_NET_MODE"] = "mainnet"
       end
     end
   end
