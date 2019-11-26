@@ -13,10 +13,13 @@ class Address < ApplicationRecord
     LockScript.where(address: self).first
   end
 
-  def self.find_or_create_address(lock_script)
+  def self.find_or_create_address(lock_script, block_timestamp)
     address_hash = CkbUtils.generate_address(lock_script)
     lock_hash = lock_script.compute_hash
-    Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
+    address = Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
+    address.update(block_timestamp: block_timestamp) if address.block_timestamp.blank?
+
+    address
   end
 
   def self.find_address!(query_key)
