@@ -1606,6 +1606,26 @@ module CkbSync
       end
     end
 
+    test "#process_block created address's block_timestamp should be the same as block's timestamp" do
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        block = node_data_processor.process_block(node_block)
+        address_block_timestamp = block.contained_addresses.pluck(:block_timestamp).uniq
+
+        assert_equal [block.timestamp], address_block_timestamp
+      end
+    end
+
+    test "#process_block created cell_output's block_timestamp should be the same as block's timestamp" do
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        block = node_data_processor.process_block(node_block)
+        cell_outputs_block_timestamp = block.cell_outputs.pluck(:block_timestamp).uniq
+
+        assert_equal [block.timestamp], cell_outputs_block_timestamp
+      end
+    end
+
     private
 
     def node_data_processor
