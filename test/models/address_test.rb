@@ -51,7 +51,7 @@ class AddressTest < ActiveSupport::TestCase
       lock_script = node_block.transactions.first.outputs.first.lock
 
       assert_difference "Address.count", 0 do
-        Address.find_or_create_address(lock_script)
+        Address.find_or_create_address(lock_script, node_block.header.timestamp)
       end
     end
   end
@@ -75,7 +75,7 @@ class AddressTest < ActiveSupport::TestCase
       CkbSync::NodeDataProcessor.new.process_block(node_block)
 
       lock_script = node_block.transactions.first.outputs.first.lock
-      address = Address.find_or_create_address(lock_script)
+      address = Address.find_or_create_address(lock_script, node_block.header.timestamp)
 
       assert_equal output.lock.compute_hash, address.lock_hash
     end

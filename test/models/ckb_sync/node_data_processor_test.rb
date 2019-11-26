@@ -367,7 +367,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         locks = node_block.transactions.map(&:outputs).flatten.map(&:lock)
         local_block = node_data_processor.process_block(node_block)
-        expected_lock_address = locks.map { |lock| Address.find_or_create_address(lock) }
+        expected_lock_address = locks.map { |lock| Address.find_or_create_address(lock, node_block.header.timestamp) }
 
         assert_equal expected_lock_address, local_block.cell_outputs.map(&:address)
       end
@@ -378,7 +378,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         locks = node_block.transactions.map(&:outputs).flatten.map(&:lock)
         local_block = node_data_processor.process_block(node_block)
-        expected_lock_address = locks.map { |lock| Address.find_or_create_address(lock) }
+        expected_lock_address = locks.map { |lock| Address.find_or_create_address(lock, node_block.header.timestamp) }
 
         assert_equal expected_lock_address, local_block.ckb_transactions.map(&:addresses).flatten
       end
@@ -508,7 +508,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_deposit_transaction(node_block)
         output = tx.outputs.first
-        address = Address.find_or_create_address(output.lock)
+        address = Address.find_or_create_address(output.lock, node_block.header.timestamp)
 
         assert_difference -> { address.reload.dao_deposit }, 10**8 * 1000 do
           node_data_processor.process_block(node_block)
@@ -825,7 +825,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_deposit_transaction(node_block)
         output = tx.outputs.first
-        address = Address.find_or_create_address(output.lock)
+        address = Address.find_or_create_address(output.lock, node_block.header.timestamp)
         target_address = address
         assert_difference -> { address.reload.dao_deposit }, 10**8 * 1000 do
           node_data_processor.process_block(node_block)
@@ -1114,7 +1114,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(25)
         cellbase = node_block.transactions.first
         lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-        miner_address = Address.find_or_create_address(lock_script)
+        miner_address = Address.find_or_create_address(lock_script, node_block.header.timestamp)
 
         assert_difference -> { miner_address.reload.pending_reward_blocks_count }, 1 do
           node_data_processor.process_block(node_block)
@@ -1155,7 +1155,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(25)
         cellbase = node_block.transactions.first
         lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-        miner_address = Address.find_or_create_address(lock_script)
+        miner_address = Address.find_or_create_address(lock_script, node_block.header.timestamp)
       end
 
       VCR.use_cassette("blocks/25", record: :new_episodes) do

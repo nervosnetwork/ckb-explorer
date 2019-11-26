@@ -188,7 +188,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       node_block = CkbSync::Api.instance.get_block_by_number(13)
       cellbase = node_block.transactions.first
       lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-      miner_address = Address.find_or_create_address(lock_script)
+      miner_address = Address.find_or_create_address(lock_script, node_block.header.timestamp)
       unspent_cells = miner_address.cell_outputs.live
       expected_address_cell_consumed = unspent_cells.reduce(0) { |memo, cell| memo + cell.node_output.calculate_min_capacity(cell.data) }
 
