@@ -60,6 +60,7 @@ end
 #  pending_reward_blocks_count :integer          default(0)
 #  dao_deposit                 :decimal(30, )    default(0)
 #  interest                    :decimal(30, )    default(0)
+#  block_timestamp             :decimal(30, )
 #
 # Indexes
 #
