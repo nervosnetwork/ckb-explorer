@@ -30,7 +30,7 @@ module CkbSync
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs, new_dao_depositor_events)
         local_block.ckb_transactions_count = ckb_transactions.size
         CkbTransaction.import!(ckb_transactions, recursive: true, batch_size: 3500, validate: false)
-        input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h {|id| [id, []] }
+        input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h { |id| [id, []] }
         update_tx_fee_related_data(local_block, input_capacities)
         calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
 
@@ -467,7 +467,7 @@ module CkbSync
           end
 
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
-          CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status] )
+          CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status])
           AccountBook.import!(account_books, validate: false)
         end
       end
@@ -493,7 +493,7 @@ module CkbSync
     end
 
     def calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs)
-      output_capacities = outputs.each { |k, v| outputs[k] = v.map(&:capacity)}
+      output_capacities = outputs.each { |k, v| outputs[k] = v.map(&:capacity) }
       ckb_transactions = ckb_transactions.reject(&:is_cellbase)
       return if ckb_transactions.blank?
 

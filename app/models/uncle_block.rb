@@ -10,7 +10,6 @@ class UncleBlock < ApplicationRecord
   attribute :uncles_hash, :ckb_hash
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
 
-
   def difficulty
     CkbUtils.compact_to_difficulty(compact_target)
   end

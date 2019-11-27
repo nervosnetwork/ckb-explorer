@@ -101,7 +101,7 @@ def format_node_block(node_block)
   header["timestamp"] = header["timestamp"].hex
   header["version"] = header["version"].hex
   header["nonce"] = header["nonce"].hex
-  header["epoch"] = "0x#{CKB::Utils.to_hex(header["epoch"]).split(//).last(6).join("")}".hex
+  header["epoch"] = "0x#{CKB::Utils.to_hex(header['epoch']).split(//).last(6).join('')}".hex
   proposals = node_block["proposals"].presence
   header.merge({ proposals: proposals }.deep_stringify_keys)
 end
