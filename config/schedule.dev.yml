@@ -1,0 +1,4 @@
+daily_statistic:
+  cron: "5 0 * * *"
+  class: "Charts::DailyStatistic"
+  queue: critical
