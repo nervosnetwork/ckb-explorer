@@ -28,7 +28,8 @@ class Address < ApplicationRecord
       if QueryKeyUtils.valid_hex?(query_key)
         find_by(lock_hash: query_key)
       else
-        where(address_hash: query_key).to_a.presence || NullAddress.new(query_key)
+        processed_query_key = Settings.special_addresses[query_key] || query_key
+        where(address_hash: processed_query_key).to_a.presence || NullAddress.new(query_key)
       end
     end
   end
