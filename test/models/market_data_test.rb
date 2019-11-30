@@ -78,4 +78,32 @@ class MarketDataTest < ActiveSupport::TestCase
 
     assert_equal 0, MarketData.new.send(:team_locked)
   end
+
+  test "founding_partners_locked should return full of founding_partners quota when current time is before first released time" do
+    create(:block, dao: "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007")
+    MarketData.any_instance.stubs(:current_time).returns(Time.zone.parse("2019-11-30"))
+
+    assert_equal MarketData::FOUNDING_PARTNER_QUOTA, MarketData.new.send(:founding_partners_locked)
+  end
+
+  test "founding_partners_locked should return 75% of founding partners quota when current time is after first released time but before second released time" do
+    create(:block, dao: "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007")
+    MarketData.any_instance.stubs(:current_time).returns(Time.zone.parse("2020-08-02"))
+
+    assert_equal MarketData::FOUNDING_PARTNER_QUOTA * 0.75, MarketData.new.send(:founding_partners_locked)
+  end
+
+  test "founding_partners_locked should return 50% of founding partners quota when current time is after second released time but before third released time" do
+    create(:block, dao: "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007")
+    MarketData.any_instance.stubs(:current_time).returns(Time.zone.parse("2021-08-02"))
+
+    assert_equal MarketData::FOUNDING_PARTNER_QUOTA * 0.5, MarketData.new.send(:founding_partners_locked)
+  end
+
+  test "founding_partners_locked should return zero when current time is after third released time" do
+    create(:block, dao: "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007")
+    MarketData.any_instance.stubs(:current_time).returns(Time.zone.parse("2023-08-02"))
+
+    assert_equal 0, MarketData.new.send(:founding_partners_locked)
+  end
 end
