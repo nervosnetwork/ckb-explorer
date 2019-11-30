@@ -38,6 +38,30 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should return transactions count and timestamp" do
+        daily_statistic_data = create_list(:daily_statistic, 15)
+        valid_get api_v1_daily_statistic_url("transactions_count")
+
+        assert_equal [%w(transactions_count created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal DailyStatisticSerializer.new(daily_statistic_data, { params: { indicator: "transactions_count" } }).serialized_json, response.body
+      end
+
+      test "should return addresses count and timestamp" do
+        daily_statistic_data = create_list(:daily_statistic, 15)
+        valid_get api_v1_daily_statistic_url("addresses_count")
+
+        assert_equal [%w(addresses_count created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal DailyStatisticSerializer.new(daily_statistic_data, { params: { indicator: "addresses_count" } }).serialized_json, response.body
+      end
+
+      test "should return total dao deposit and timestamp" do
+        daily_statistic_data = create_list(:daily_statistic, 15)
+        valid_get api_v1_daily_statistic_url("total_dao_deposit")
+
+        assert_equal [%w(total_dao_deposit created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal DailyStatisticSerializer.new(daily_statistic_data, { params: { indicator: "total_dao_deposit" } }).serialized_json, response.body
+      end
     end
   end
 end
