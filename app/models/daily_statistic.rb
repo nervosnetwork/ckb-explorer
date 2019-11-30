@@ -1,4 +1,5 @@
 class DailyStatistic < ApplicationRecord
+  VALID_INDICATORS = %w(transactions_count addresses_count total_dao_deposit)
 end
 
 # == Schema Information

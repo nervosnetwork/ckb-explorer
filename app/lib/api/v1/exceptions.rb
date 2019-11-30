@@ -150,6 +150,12 @@ module Api
           super code: 1023, status: 422, title: "URI parameters is invalid", detail: "This address is not the #{ckb_net_mode} address", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
         end
       end
+
+      class IndicatorNameInvalidError < Error
+        def initialize
+          super code: 1024, status: 422, title: "URI parameters is invalid", detail: "Given indicator name is invalid", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
     end
   end
 end
