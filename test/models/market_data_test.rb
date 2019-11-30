@@ -120,4 +120,18 @@ class MarketDataTest < ActiveSupport::TestCase
 
     assert_equal 0, MarketData.new.send(:private_sale_locked)
   end
+
+  test "foundation_reserve_locked should return full of foundation_reserve quota when current time is before released time" do
+    create(:block, dao: "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007")
+    MarketData.any_instance.stubs(:current_time).returns(Time.zone.parse("2019-11-30"))
+
+    assert_equal MarketData::FOUNDATION_RESERVE_QUOTA, MarketData.new.send(:foundation_reserve_locked)
+  end
+
+  test "foundation_reserve_locked should return zero when current time is after released time" do
+    create(:block, dao: "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007")
+    MarketData.any_instance.stubs(:current_time).returns(Time.zone.parse("2023-08-02"))
+
+    assert_equal 0, MarketData.new.send(:private_sale_locked)
+  end
 end
