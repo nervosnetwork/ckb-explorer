@@ -5,7 +5,6 @@ module Api
 
       def show
         daily_statistics = DailyStatistic.limit(365)
-        binding.pry
         render json: DailyStatisticSerializer.new(daily_statistics, { params: { indicator: params[:id] } })
       end
 
