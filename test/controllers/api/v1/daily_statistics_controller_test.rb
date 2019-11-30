@@ -62,6 +62,15 @@ module Api
         assert_equal [%w(total_dao_deposit created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
         assert_equal DailyStatisticSerializer.new(daily_statistic_data, { params: { indicator: "total_dao_deposit" } }).serialized_json, response.body
       end
+
+      test "should respond with error object when indicator name is invalid" do
+        error_object = Api::V1::Exceptions::IndicatorNameInvalidError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get api_v1_daily_statistic_url("dao")
+
+        assert_equal response_json, response.body
+      end
     end
   end
 end
