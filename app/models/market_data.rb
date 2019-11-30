@@ -12,7 +12,7 @@ class MarketData
 
   def initialize(indicator = nil)
     @indicator = indicator
-    @current_time = Time.zone.now
+    @current_time = Time.find_zone("UTC").now
   end
 
   def call
@@ -43,9 +43,9 @@ class MarketData
   end
 
   def ecosystem_locked
-    first_released_time = Time.zone.parse("2020-07-01")
-    second_released_time = Time.zone.parse("2020-12-31")
-    third_released_time = Time.zone.parse("2022-12-31")
+    first_released_time = Time.find_zone("UTC").parse("2020-07-01")
+    second_released_time = Time.find_zone("UTC").parse("2020-12-31")
+    third_released_time = Time.find_zone("UTC").parse("2022-12-31")
 
     if current_time < first_released_time
       ECOSYSTEM_QUOTA * 0.97
@@ -59,9 +59,9 @@ class MarketData
   end
 
   def team_locked
-    first_released_time = Time.zone.parse("2020-05-01")
-    second_released_time = Time.zone.parse("2021-05-01")
-    third_released_time = Time.zone.parse("2022-05-01")
+    first_released_time = Time.find_zone("UTC").parse("2020-05-01")
+    second_released_time = Time.find_zone("UTC").parse("2021-05-01")
+    third_released_time = Time.find_zone("UTC").parse("2022-05-01")
 
     if current_time < first_released_time
       TEAM_QUOTA * (2 / 3.to_d)
@@ -81,9 +81,9 @@ class MarketData
   end
 
   def founding_partners_locked
-    first_released_time = Time.zone.parse("2020-05-01")
-    second_released_time = Time.zone.parse("2021-05-01")
-    third_released_time = Time.zone.parse("2022-05-01")
+    first_released_time = Time.find_zone("UTC").parse("2020-05-01")
+    second_released_time = Time.find_zone("UTC").parse("2021-05-01")
+    third_released_time = Time.find_zone("UTC").parse("2022-05-01")
     if current_time < first_released_time
       FOUNDING_PARTNER_QUOTA
     elsif current_time >= first_released_time && current_time < second_released_time
