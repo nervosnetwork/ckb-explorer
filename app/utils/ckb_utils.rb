@@ -245,4 +245,16 @@ class CkbUtils
   def self.hash_value_to_s(hash)
     hash.each { |key, value| hash[key] = value.to_s unless !!value == value }
   end
+
+  def self.parse_dao(dao)
+    return if dao.blank?
+
+    bin_dao = CKB::Utils.hex_to_bin(dao)
+    c_i = bin_dao[0..7].unpack("Q<").pack("Q>").unpack1("H*").hex
+    ar_i = bin_dao[8..15].unpack("Q<").pack("Q>").unpack1("H*").hex
+    s_i = bin_dao[16..23].unpack("Q<").pack("Q>").unpack1("H*").hex
+    u_i = bin_dao[24..-1].unpack("Q<").pack("Q>").unpack1("H*").hex
+
+    OpenStruct.new(c_i: c_i, ar_i: ar_i, s_i: s_i, u_i: u_i)
+  end
 end

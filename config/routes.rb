@@ -28,6 +28,7 @@ Rails.application.routes.draw do
       resources :dao_contract_transactions, only: :show
       resources :address_dao_transactions, only: :show
       resources :dao_depositors, only: :index
+      resources :market_data, only: :show
     end
   end
 

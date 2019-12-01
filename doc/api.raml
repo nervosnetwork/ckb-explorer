@@ -5,6 +5,10 @@ baseUri: https://explorer.nervos.org
 mediaType:  application/vnd.api+json
 
 types:
+  indicator: {
+    type: string,
+    enum: ["total_supply", "circulating_supply"]
+  }
   error: {
     type: object,
     properties: {
@@ -2761,3 +2765,22 @@ types:
                   }
                 ]
               }
+
+/market_data:
+  /{indicator}:
+    uriParameters:
+      indicator:
+        description: market indicator name
+        required: true
+        type: indicator
+    get:
+      description: Returns market data by given indicator
+      responses:
+        200:
+          body:
+            application/json:
+              type: string
+              example: |
+                {
+                  "25374730228.31050194"
+                }
