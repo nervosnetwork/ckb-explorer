@@ -37,7 +37,7 @@ class MarketData
   end
 
   def circulating_supply
-    result = parsed_dao.c_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked
+    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked
 
     (result / 10**8).truncate(8)
   end
