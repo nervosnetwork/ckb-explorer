@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_11_27_045149) do
+ActiveRecord::Schema.define(version: 2019_12_01_023327) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -38,6 +38,16 @@ ActiveRecord::Schema.define(version: 2019_11_27_045149) do
     t.decimal "block_timestamp", precision: 30
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
+  end
+
+  create_table "block_statistics", force: :cascade do |t|
+    t.string "difficulty"
+    t.string "hash_rate"
+    t.string "live_cell_count", default: "0"
+    t.string "dead_cell_count", default: "0"
+    t.string "block_number"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "blocks", force: :cascade do |t|
