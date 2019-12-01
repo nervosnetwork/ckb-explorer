@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_01_023327) do
+ActiveRecord::Schema.define(version: 2019_12_01_111810) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -180,6 +180,14 @@ ActiveRecord::Schema.define(version: 2019_12_01_023327) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["block_id"], name: "index_dao_events_on_block_id"
+  end
+
+  create_table "epoch_statistics", force: :cascade do |t|
+    t.string "difficulty"
+    t.string "uncle_rate"
+    t.string "epoch_number"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "forked_blocks", force: :cascade do |t|
