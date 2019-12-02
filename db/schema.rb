@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_01_111810) do
+ActiveRecord::Schema.define(version: 2019_12_02_080732) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -149,9 +149,9 @@ ActiveRecord::Schema.define(version: 2019_12_01_111810) do
   end
 
   create_table "daily_statistics", force: :cascade do |t|
-    t.integer "transactions_count", default: 0
-    t.integer "addresses_count", default: 0
-    t.decimal "total_dao_deposit", precision: 30, default: "0"
+    t.string "transactions_count", default: "0"
+    t.string "addresses_count", default: "0"
+    t.string "total_dao_deposit", default: "0.0"
     t.decimal "block_timestamp", precision: 30
     t.integer "created_at_unixtimestamp"
     t.datetime "created_at", precision: 6, null: false

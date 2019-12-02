@@ -7,13 +7,13 @@ class DailyStatisticSerializer
 
   attribute :transactions_count, if: Proc.new {|_record, params|
     params && params[:indicator] == "transactions_count"
-  }, &:transactions_count
+  }
 
   attribute :addresses_count, if: Proc.new {|_record, params|
     params && params[:indicator] == "addresses_count"
-  }, &:addresses_count
+  }
 
   attribute :total_dao_deposit, if: Proc.new {|_record, params|
     params && params[:indicator] == "total_dao_deposit"
-  }, &:total_dao_deposit
+  }
 end

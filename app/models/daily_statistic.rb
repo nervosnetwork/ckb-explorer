@@ -7,9 +7,9 @@ end
 # Table name: daily_statistics
 #
 #  id                       :bigint           not null, primary key
-#  transactions_count       :integer          default(0)
-#  addresses_count          :integer          default(0)
-#  total_dao_deposit        :decimal(30, )    default(0)
+#  transactions_count       :string           default("0")
+#  addresses_count          :string           default("0")
+#  total_dao_deposit        :string           default("0.0")
 #  block_timestamp          :decimal(30, )
 #  created_at_unixtimestamp :integer
 #  created_at               :datetime         not null
