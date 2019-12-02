@@ -36,7 +36,10 @@ class NullAddress
   end
 
   def lock_script
-    script = CKB::AddressParser.new(address_hash).parse.script
+    parsed_address = CKB::AddressParser.new(address_hash).parse
+    raise Api::V1::Exceptions::AddressNotMatchEnvironmentError.new(ENV["CKB_NET_MODE"]) if parsed_address.mode != ENV["CKB_NET_MODE"]
+
+    script = parsed_address.script
     LockScript.new(code_hash: script.code_hash, args: script.args, hash_type: script.hash_type)
   end
 end
