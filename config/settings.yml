@@ -1,2 +1,5 @@
 hosts:
   - "http://localhost:8114"
+
+special_addresses:
+  short_address: "0x"
