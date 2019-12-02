@@ -57,10 +57,13 @@ module Api
         assert_equal BlockStatisticSerializer.new(block_statistic_data, { params: { indicator: "live_cell_count-dead_cell_count" } }).serialized_json, response.body
       end
 
-      test "should return empty array when query key is invalid" do
-        valid_get api_v1_block_statistic_url("live_cell_count-dead_cell_counts")
+      test "should respond with error object when indicator name is invalid" do
+        error_object = Api::V1::Exceptions::IndicatorNameInvalidError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        assert_empty json["data"]
+        valid_get api_v1_block_statistic_url("hash_rates")
+
+        assert_equal response_json, response.body
       end
     end
   end
