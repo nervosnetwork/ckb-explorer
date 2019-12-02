@@ -25,8 +25,11 @@ class LockScript < ApplicationRecord
         since_value = SinceParser.new(since).parse
         if since_value.present?
           tip_epoch = CkbUtils.parse_epoch(CkbSync::Api.instance.get_tip_header.epoch)
+          genesis_block = Block.find_by(number: 0)
+          genesis_block_time = DateTime.strptime(genesis_block.timestamp.to_s, "%Q")
+          estimated_unlock_time = genesis_block_time + (since_value.number * 4 + since_value.index * 4 / since_value.length).hours
 
-          { status: lock_info_status(since_value, tip_epoch), epoch_number: since_value.number.to_s, epoch_index: since_value.index.to_s }
+          { status: lock_info_status(since_value, tip_epoch), epoch_number: since_value.number.to_s, epoch_index: since_value.index.to_s, estimated_unlock_time: estimated_unlock_time.strftime("%Q") }
         end
       ensure SinceParser::IncorrectSinceFlagsError
         nil

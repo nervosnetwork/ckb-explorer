@@ -5,6 +5,10 @@ baseUri: https://explorer.nervos.org
 mediaType:  application/vnd.api+json
 
 types:
+  indicator: {
+    type: string,
+    enum: ["total_supply", "circulating_supply"]
+  }
   error: {
     type: object,
     properties: {
@@ -138,6 +142,9 @@ types:
       },
       "epoch_index": {
        "type": string
+      }
+      "estimated_unlock_time": {
+        "type": string
       }
     }
   }
@@ -1805,7 +1812,8 @@ types:
                       "lock_info": {
                         "status": "locked",
                         "epoch_number": "1000",
-                        "epoch_index": "789"
+                        "epoch_index": "789",
+                        "estimated_unlock_time": "1588259390000"
                       }
                     }
                   }
@@ -3008,4 +3016,23 @@ types:
                       "href": "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
                     }
                   ]
+                }
+
+/market_data:
+  /{indicator}:
+    uriParameters:
+      indicator:
+        description: market indicator name
+        required: true
+        type: indicator
+    get:
+      description: Returns market data by given indicator
+      responses:
+        200:
+          body:
+            application/json:
+              type: string
+              example: |
+                {
+                  "25374730228.31050194"
                 }

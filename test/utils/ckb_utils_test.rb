@@ -291,6 +291,25 @@ class CkbUtilsTest < ActiveSupport::TestCase
     end
   end
 
+  test ".parse_dao should return nil whne dao is blank" do
+    assert_nil CkbUtils.parse_dao(nil)
+  end
+
+  test ".parse_dao should return one open sturct with right attributes" do
+    dao = "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007"
+    bin_dao = CKB::Utils.hex_to_bin(dao)
+    c_i = bin_dao[0..7].unpack("Q<").pack("Q>").unpack1("H*").hex
+    ar_i = bin_dao[8..15].unpack("Q<").pack("Q>").unpack1("H*").hex
+    s_i = bin_dao[16..23].unpack("Q<").pack("Q>").unpack1("H*").hex
+    u_i = bin_dao[24..-1].unpack("Q<").pack("Q>").unpack1("H*").hex
+    parsed_dao = CkbUtils.parse_dao("0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007")
+
+    assert_equal c_i, parsed_dao.c_i
+    assert_equal ar_i, parsed_dao.ar_i
+    assert_equal s_i, parsed_dao.s_i
+    assert_equal u_i, parsed_dao.u_i
+  end
+
   private
 
   def node_data_processor
