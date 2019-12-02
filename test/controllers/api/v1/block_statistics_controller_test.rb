@@ -38,6 +38,30 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should return difficulty, hash_rate and block number" do
+        create_list(:block_statistic, 15)
+        block_statistic_data = BlockStatistic.order(id: :desc)
+        valid_get api_v1_block_statistic_url("difficulty-hash_rate")
+
+        assert_equal [%w(difficulty hash_rate block_number).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal BlockStatisticSerializer.new(block_statistic_data, { params: { indicator: "difficulty-hash_rate" } }).serialized_json, response.body
+      end
+
+      test "should return live_cell_count, dead_cell_count and block number" do
+        create_list(:block_statistic, 15)
+        block_statistic_data = BlockStatistic.order(id: :desc)
+        valid_get api_v1_block_statistic_url("live_cell_count-dead_cell_count")
+
+        assert_equal [%w(live_cell_count dead_cell_count block_number).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal BlockStatisticSerializer.new(block_statistic_data, { params: { indicator: "live_cell_count-dead_cell_count" } }).serialized_json, response.body
+      end
+
+      test "should return empty array when query key is invalid" do
+        valid_get api_v1_block_statistic_url("live_cell_count-dead_cell_counts")
+
+        assert_empty json["data"]
+      end
     end
   end
 end
