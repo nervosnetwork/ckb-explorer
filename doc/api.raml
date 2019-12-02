@@ -480,6 +480,42 @@ types:
     }
   }
 
+  block_statistic_attributes: {
+      type: object,
+      properties: {
+        "difficulty": {
+          type: "string",
+        },
+        "hash_rate": {
+          type: "string",
+        },
+        "live_cell_count": {
+          type: "string",
+        },
+        "dead_cell_count": {
+          type: "string",
+        },
+        "block_number": {
+          type: "string",
+        }
+      }
+    }
+
+  epoch_statistic_attributes: {
+    type: object,
+    properties: {
+      "difficulty": {
+        type: "string",
+      },
+      "uncle_rate": {
+        type: "string",
+      },
+      "epoch_number": {
+        type: "string",
+      }
+    }
+  }
+
   dao_depositor_attributes: {
     type: "object",
     properties: {
@@ -688,6 +724,24 @@ types:
         "type": daily_statistic_attributes
       }
     }
+  }
+
+  block_statistic_response: {
+     type: object,
+     properties: {
+       "data": {
+         "type": block_statistic_attributes
+       }
+     }
+  }
+
+  epoch_statistic_response: {
+     type: object,
+     properties: {
+       "data": {
+         "type": epoch_statistic_attributes
+       }
+     }
   }
 
   dao_depositor_response: {
@@ -2830,6 +2884,110 @@ types:
                       "attributes": {
                         "total_dao_deposit": "125844045545544578",
                         "created_at_unixtimestamp": "1575093709"
+                      }
+                    }
+                  }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "message": "Record Not Found",
+                  "errors": [
+                    {
+                      "id": "ActiveRecord::RecordNotFound",
+                      "code": "1141",
+                      "status": "404",
+                      "title": "Record not fund",
+                      "detail": "No matching address record were found",
+                      "href": "http://shaojunda.coding.me/doc/api_doc.html#statistics__info_name__get"
+                    }
+                  ]
+                }
+
+/block_statistics:
+  /{indicator}:
+    uriParameters:
+      indicator:
+        description: The indicator name
+        required: true
+        type: string
+    get:
+      description: Returns the block statistic data
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: block_statistic_response
+              examples:
+                difficulty-hash_rate: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "block_statistic",
+                      "attributes": {
+                        "difficulty": "100",
+                        "hash_rate": "157509370923232323",
+                        "block_number": "1000"
+                      }
+                    }
+                  }
+                live_cell_count-dead_cell_count: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "block_statistic",
+                      "attributes": {
+                        "live_cell_count": "100",
+                        "dead_cell_count": "50",
+                        "block_number": "1000"
+                      }
+                    }
+                  }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "message": "Record Not Found",
+                  "errors": [
+                    {
+                      "id": "ActiveRecord::RecordNotFound",
+                      "code": "1141",
+                      "status": "404",
+                      "title": "Record not fund",
+                      "detail": "No matching address record were found",
+                      "href": "http://shaojunda.coding.me/doc/api_doc.html#statistics__info_name__get"
+                    }
+                  ]
+                }
+
+/epoch_statistics:
+  /{indicator}:
+    uriParameters:
+      indicator:
+        description: The indicator name
+        required: true
+        type: string
+    get:
+      description: Returns the epoch statistic data
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: epoch_statistic_response
+              examples:
+                difficulty-uncle_rate: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "epoch_statistic",
+                      "attributes": {
+                        "difficulty": "100",
+                        "uncle_rate": "157509370923232323",
+                        "epoch_number": "100"
                       }
                     }
                   }
