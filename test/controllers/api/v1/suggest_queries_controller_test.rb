@@ -137,12 +137,14 @@ module Api
       end
 
       test "should return error object when no records found by a address query key" do
+        ENV["CKB_NET_MODE"] = "testnet"
         address = NullAddress.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
         response_json = AddressSerializer.new(address).serialized_json
 
         valid_get api_v1_suggest_queries_url, params: { q: "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83" }
 
         assert_equal response_json, response.body
+        ENV["CKB_NET_MODE"] = "mainnet"
       end
     end
   end

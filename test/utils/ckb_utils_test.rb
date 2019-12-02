@@ -40,6 +40,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".generate_address should return full payload address when use correct sig code match" do
+    ENV["CKB_NET_MODE"] = "testnet"
     short_payload_blake160_address = "ckt1q2tnhkeh8ja36aftftqqdc4mt0wtvdp3a54kuw2tyfepezgx52khydkr98kkxrtvuag8z2j8w4pkw2k6k4l5cwfw473"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -48,9 +49,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return short payload blake160 address when use correct sig type match" do
+    ENV["CKB_NET_MODE"] = "testnet"
     short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -58,9 +61,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return full payload address when use correct multisig code match" do
+    ENV["CKB_NET_MODE"] = "testnet"
     short_payload_blake160_address = "ckt1qtqlkzhxj9wn6nk76dyc4m04ltwa330khkyjrc8ch74at67t7fvmcdkr98kkxrtvuag8z2j8w4pkw2k6k4l5ce7s8yp"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -69,9 +74,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return short payload multisig address when use correct multisig type match" do
+    ENV["CKB_NET_MODE"] = "testnet"
     short_payload_blake160_address = "ckt1qyqndsefa43s6m882pcj53m4gdnj4k440axqyz2gg9"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -79,9 +86,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return full payload data address when do not use default lock script and hash type is data" do
+    ENV["CKB_NET_MODE"] = "testnet"
     full_payload_address = "ckt1qgvf96jqmq4483ncl7yrzfzshwchu9jd0glq4yy5r2jcsw04d7xlydkr98kkxrtvuag8z2j8w4pkw2k6k4l5csspk07"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -90,9 +99,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return full payload data address when do not use default lock script and hash type is type" do
+    ENV["CKB_NET_MODE"] = "testnet"
     full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhvdkr98kkxrtvuag8z2j8w4pkw2k6k4l5ca2tat0"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
@@ -100,9 +111,11 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
 
     assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".generate_address should return nil when do not use default lock script and args is empty" do
+    ENV["CKB_NET_MODE"] = "testnet"
     full_payload_address = "ckt1qjn9dutjk669cfznq7httfar0gtk7qp0du3wjfvzck9l0w3k9eqhv77zeg7"
     lock_script = CKB::Types::Script.generate_lock(
       "0x",
@@ -110,6 +123,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       )
 
     assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 
   test ".parse_address should return block160 when target is short payload blake160 address" do
@@ -275,6 +289,25 @@ class CkbUtilsTest < ActiveSupport::TestCase
       assert_equal expected_epoch_info.start_number, epoch_info.start_number
       assert_equal expected_epoch_info.length, epoch_info.length
     end
+  end
+
+  test ".parse_dao should return nil whne dao is blank" do
+    assert_nil CkbUtils.parse_dao(nil)
+  end
+
+  test ".parse_dao should return one open sturct with right attributes" do
+    dao = "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007"
+    bin_dao = CKB::Utils.hex_to_bin(dao)
+    c_i = bin_dao[0..7].unpack("Q<").pack("Q>").unpack1("H*").hex
+    ar_i = bin_dao[8..15].unpack("Q<").pack("Q>").unpack1("H*").hex
+    s_i = bin_dao[16..23].unpack("Q<").pack("Q>").unpack1("H*").hex
+    u_i = bin_dao[24..-1].unpack("Q<").pack("Q>").unpack1("H*").hex
+    parsed_dao = CkbUtils.parse_dao("0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007")
+
+    assert_equal c_i, parsed_dao.c_i
+    assert_equal ar_i, parsed_dao.ar_i
+    assert_equal s_i, parsed_dao.s_i
+    assert_equal u_i, parsed_dao.u_i
   end
 
   private

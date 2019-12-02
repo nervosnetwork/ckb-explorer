@@ -144,6 +144,12 @@ module Api
           super code: 1022, status: 400, title: "Output Data is Too Large", detail: "You can download output data up to #{CellOutput::MAXIMUM_DOWNLOADABLE_SIZE / 1000} KB", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
         end
       end
+
+      class AddressNotMatchEnvironmentError < Error
+        def initialize(ckb_net_mode)
+          super code: 1023, status: 422, title: "URI parameters is invalid", detail: "This address is not the #{ckb_net_mode} address", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
     end
   end
 end
