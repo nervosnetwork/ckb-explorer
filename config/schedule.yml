@@ -2,3 +2,13 @@ daily_statistic:
   cron: "5 0 * * *"
   class: "Charts::DailyStatistic"
   queue: critical
+
+blockstatistic:
+  cron: "*/10 * * * *"
+  class: "Charts::BlockStatistic"
+  queue: critical
+
+epoch_statistic:
+  cron: "*/30 * * * *"
+  class: "Charts::EpochStatistic"
+  queue: critical
