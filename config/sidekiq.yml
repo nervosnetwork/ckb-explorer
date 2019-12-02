@@ -1,14 +1,11 @@
 ---
 :concurrency: 5
 :queues:
-  - [inauthentic_sync, 4]
-  - [tx_fee_updater, 4]
-  - [block_reward_updater, 4]
-  - [authentic_sync, 3]
-  - [transaction_status_updater, 3]
+  - critical
   - default
+  - low
 
 production:
-  :concurrency: 40
+  :concurrency: 10
 staging:
-  :concurrency: 15
+  :concurrency: 10

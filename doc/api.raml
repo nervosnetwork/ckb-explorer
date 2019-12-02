@@ -462,6 +462,24 @@ types:
     }
   }
 
+  daily_statistic_attributes: {
+    type: object,
+    properties: {
+      "transactions_count": {
+        type: "string",
+      },
+      "addresses_count": {
+        type: "string",
+      },
+      "total_dao_deposit": {
+        type: "string",
+      },
+      "created_at_unixtimestamp": {
+        type: "string",
+      }
+    }
+  }
+
   dao_depositor_attributes: {
     type: "object",
     properties: {
@@ -659,6 +677,15 @@ types:
     properties: {
       "data": {
         "type": net_info_attributes
+      }
+    }
+  }
+
+  daily_statistic_response: {
+    type: object,
+    properties: {
+      "data": {
+        "type": daily_statistic_attributes
       }
     }
   }
@@ -2757,3 +2784,70 @@ types:
                   }
                 ]
               }
+
+/daily_statistics:
+  /{indicator}:
+    uriParameters:
+      indicator:
+        description: The indicator name
+        required: true
+        type: string
+    get:
+      description: Returns the daily statistic data
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: daily_statistic_response
+              examples:
+                transactions_count: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "daily_statistic",
+                      "attributes": {
+                        "transactions_count": "100",
+                        "created_at_unixtimestamp": "1575093709"
+                      }
+                    }
+                  }
+                addresses_count: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "daily_statistic",
+                      "attributes": {
+                        "addresses_count": "100",
+                        "created_at_unixtimestamp": "1575093709"
+                      }
+                    }
+                  }
+                total_dao_deposit: |
+                  {
+                    "data": {
+                      "id": "1",
+                      "type": "daily_statistic",
+                      "attributes": {
+                        "total_dao_deposit": "125844045545544578",
+                        "created_at_unixtimestamp": "1575093709"
+                      }
+                    }
+                  }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "message": "Record Not Found",
+                  "errors": [
+                    {
+                      "id": "ActiveRecord::RecordNotFound",
+                      "code": "1141",
+                      "status": "404",
+                      "title": "Record not fund",
+                      "detail": "No matching address record were found",
+                      "href": "http://shaojunda.coding.me/doc/api_doc.html#statistics__info_name__get"
+                    }
+                  ]
+                }
