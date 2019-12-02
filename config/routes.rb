@@ -31,6 +31,7 @@ Rails.application.routes.draw do
       resources :dao_depositors, only: :index
       resources :daily_statistics, only: :show
       resources :block_statistics, only: :show
+      resources :epoch_statistics, only: :show
     end
   end
 

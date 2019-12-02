@@ -1,4 +1,5 @@
 class EpochStatistic < ApplicationRecord
+  VALID_INDICATORS = %w(difficulty uncle_rate)
 end
 
 # == Schema Information
