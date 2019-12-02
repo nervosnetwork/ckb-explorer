@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_02_080732) do
+ActiveRecord::Schema.define(version: 2019_12_02_081157) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -43,8 +43,8 @@ ActiveRecord::Schema.define(version: 2019_12_02_080732) do
   create_table "block_statistics", force: :cascade do |t|
     t.string "difficulty"
     t.string "hash_rate"
-    t.string "live_cell_count", default: "0"
-    t.string "dead_cell_count", default: "0"
+    t.string "live_cells_count", default: "0"
+    t.string "dead_cells_count", default: "0"
     t.string "block_number"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
