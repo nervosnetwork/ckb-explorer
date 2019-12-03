@@ -400,20 +400,47 @@ types:
     }
   }
 
+  epoch_info_attributes: {
+    type: object,
+    properties: {
+      "epoch_number": {
+        type: "string"
+      },
+      "epoch_length": {
+        type: "string"
+      },
+      "index": {
+        type: "string"
+      }
+    }
+  }
+
   index_statistic_attributes: {
     type: object,
     properties: {
       "tip_block_number": {
-        type: "string",
+        type: "string"
       },
       "average_block_time": {
-        type: "string",
+        type: "string"
       },
       "average_difficulty": {
-        type: "string",
+        type: "string"
       },
       "hash_rate": {
-        type: "string",
+        type: "string"
+      },
+      "epoch_info": {
+        type: "epoch_info_attributes"
+      },
+      "estimated_epoch_time": {
+        type: "string"
+      },
+      "transactions_last_24hrs": {
+        type: "string"
+      },
+      "transactions_count_per_minute": {
+        type: "string"
       }
     }
   }
@@ -1872,7 +1899,15 @@ types:
                     "tip_block_number": "29795",
                     "average_block_time": 20000,
                     "average_difficulty": 10024,
-                    "hash_rate": "1.562224830086230946"
+                    "hash_rate": "1.562224830086230946",
+                    "epoch_info": {
+                      "epoch_number": "10",
+                      "epoch_length": "1000",
+                      "index": "100"
+                    },
+                    "estimated_epoch_time": "24988300",
+                    "transactions_last_24hrs": "100",
+                    "transactions_count_per_minute": "9.77"
                 }
               }
       404:
