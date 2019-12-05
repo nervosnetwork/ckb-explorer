@@ -489,6 +489,7 @@ module CkbSync
     def update_address_balance_and_ckb_transactions_count(address)
       address.balance = address.cell_outputs.live.sum(:capacity)
       address.ckb_transactions_count = AccountBook.where(address: address).select(:ckb_transaction_id).distinct.count
+      address.live_cells_count = address.cell_outputs.live.count
       address.save!
     end
 

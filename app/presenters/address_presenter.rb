@@ -23,6 +23,10 @@ class AddressPresenter
     object.reduce(0) { |sum, addr| sum + addr.interest.to_i }
   end
 
+  def live_cells_count
+    object.reduce(0) { |sum, addr| sum + addr.live_cells_count.to_i }
+  end
+
   def lock_script
     object.first.cached_lock_script
   end

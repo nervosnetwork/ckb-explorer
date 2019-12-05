@@ -42,6 +42,10 @@ class NullAddress
     Settings.special_addresses[address_hash].present?
   end
 
+  def live_cells_count
+    0
+  end
+
   def lock_script
     parsed_address = CKB::AddressParser.new(address_hash).parse
     raise Api::V1::Exceptions::AddressNotMatchEnvironmentError.new(ENV["CKB_NET_MODE"]) if parsed_address.mode != ENV["CKB_NET_MODE"]
