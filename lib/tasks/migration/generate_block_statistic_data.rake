@@ -12,10 +12,10 @@ namespace :migration do
       hash_rate = statistic_info.hash_rate(block.number)
       total_cells = CellOutput.where("block_timestamp <= ?", block.timestamp)
       ckb_transaction_ids = CkbTransaction.where("block_number <= ?", block.number).ids
-      dead_cell_count = total_cells.where(consumed_by_id: ckb_transaction_ids).count
-      live_cell_count = total_cells.count - dead_cell_count
+      dead_cells_count = total_cells.where(consumed_by_id: ckb_transaction_ids).count
+      live_cells_count = total_cells.count - dead_cells_count
 
-      BlockStatistic.create(block_number: block.number, difficulty: block.difficulty, hash_rate: hash_rate, live_cell_count: live_cell_count, dead_cell_count: dead_cell_count)
+      BlockStatistic.create(block_number: block.number, difficulty: block.difficulty, hash_rate: hash_rate, live_cell_count: live_cells_count, dead_cell_count: live_cells_count)
       progress_bar.increment
     end
 

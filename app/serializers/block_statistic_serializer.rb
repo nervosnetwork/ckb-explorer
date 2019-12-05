@@ -11,11 +11,11 @@ class BlockStatisticSerializer
     params && params[:indicator].include?("hash_rate")
   }
 
-  attribute :live_cell_count, if: Proc.new {|_record, params|
-    params && params[:indicator].include?("live_cell_count")
+  attribute :live_cells_count, if: Proc.new {|_record, params|
+    params && params[:indicator].include?("live_cells_count")
   }
 
-  attribute :dead_cell_count, if: Proc.new {|_record, params|
-    params && params[:indicator].include?("dead_cell_count")
+  attribute :dead_cells_count, if: Proc.new {|_record, params|
+    params && params[:indicator].include?("dead_cells_count")
   }
 end

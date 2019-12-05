@@ -48,13 +48,13 @@ module Api
         assert_equal BlockStatisticSerializer.new(block_statistic_data, { params: { indicator: "difficulty-hash_rate" } }).serialized_json, response.body
       end
 
-      test "should return live_cell_count, dead_cell_count and block number" do
+      test "should return live_cells_count, dead_cells_count and block number" do
         create_list(:block_statistic, 15)
         block_statistic_data = BlockStatistic.order(id: :desc)
-        valid_get api_v1_block_statistic_url("live_cell_count-dead_cell_count")
+        valid_get api_v1_block_statistic_url("live_cells_count-dead_cells_count")
 
-        assert_equal [%w(live_cell_count dead_cell_count block_number).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
-        assert_equal BlockStatisticSerializer.new(block_statistic_data, { params: { indicator: "live_cell_count-dead_cell_count" } }).serialized_json, response.body
+        assert_equal [%w(live_cells_count dead_cells_count block_number).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal BlockStatisticSerializer.new(block_statistic_data, { params: { indicator: "live_cells_count-dead_cells_count" } }).serialized_json, response.body
       end
 
       test "should respond with error object when indicator name is invalid" do
