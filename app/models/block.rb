@@ -55,6 +55,10 @@ class Block < ApplicationRecord
     CkbUtils.compact_to_difficulty(compact_target)
   end
 
+  def block_index_in_epoch
+     number - start_number
+  end
+
   def self.find_block!(query_key)
     cached_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
   end
