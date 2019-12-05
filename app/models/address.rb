@@ -71,6 +71,7 @@ end
 #  interest                    :decimal(30, )    default(0)
 #  block_timestamp             :decimal(30, )
 #  visible                     :boolean          default(TRUE)
+#  live_cells_count            :decimal(30, )    default(0)
 #
 # Indexes
 #
