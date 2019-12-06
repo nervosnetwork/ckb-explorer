@@ -26,4 +26,7 @@ class AddressSerializer
   attribute :live_cells_count do |object|
     object.live_cells_count.to_s
   end
+  attribute :mined_blocks_count do |object|
+    object.mined_blocks_count.to_s
+  end
 end

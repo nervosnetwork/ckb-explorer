@@ -38,6 +38,7 @@ ActiveRecord::Schema.define(version: 2019_12_13_030520) do
     t.decimal "block_timestamp", precision: 30
     t.boolean "visible", default: true
     t.decimal "live_cells_count", precision: 30, default: "0"
+    t.integer "mined_blocks_count", default: 0
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
   end
