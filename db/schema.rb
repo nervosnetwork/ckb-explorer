@@ -245,6 +245,14 @@ ActiveRecord::Schema.define(version: 2019_12_13_030520) do
     t.index ["cell_output_id"], name: "index_lock_scripts_on_cell_output_id"
   end
 
+  create_table "mining_infos", force: :cascade do |t|
+    t.bigint "address_id"
+    t.bigint "block_id"
+    t.integer "status", limit: 2, default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "type_scripts", force: :cascade do |t|
     t.string "args"
     t.binary "code_hash"
