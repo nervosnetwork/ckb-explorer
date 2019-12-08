@@ -435,6 +435,24 @@ types:
       },
       "blockchain_info": {
         type: "object"
+      },
+      "address_balance_ranking": {
+        type: "address_balance_ranking"
+      }
+    }
+  }
+
+  address_balance_ranking: {
+    type: object,
+    properties: {
+      "ranking": {
+        type: "string"
+      },
+      "address": {
+        type: "string"
+      },
+      "balance": {
+        type: "string"
       }
     }
   }
@@ -1959,6 +1977,67 @@ types:
                              }
                          }
                      }
+                  }
+                address_balance_ranking: |
+                  {
+                    "data": {
+                      "id": "1562726172",
+                      "type": "statistic",
+                      "attributes": {
+                        "address_balance_ranking": [
+                          {"ranking":"1", "address":"ckt1qyqtu3g0lwdwxu7r2wkt7q6le7unz0dlq6uq0822nh", "balance":"10000"},
+                          {"ranking":"2", "address":"ckt1qyqgn24g6mg8dznvrgkqp37weu8at5kzznmsded3ek", "balance":"9900"},
+                          {"ranking":"3", "address":"ckt1qyq2fjdqgm5mgtww3xl7qx3f8ru0z6lx904qdq60sd", "balance":"9800"},
+                          {"ranking":"4", "address":"ckt1qyqqy87f5napydhwmgatgf9yfnrc6k630jtq3r4zk9", "balance":"9700"},
+                          {"ranking":"5", "address":"ckt1qyqt3mdndszp5nucf4yeesjewuwcgxh9avpqtj4hdl", "balance":"9600"},
+                          {"ranking":"6", "address":"ckt1qyqvq0gckkjvcm8myxz6pw3ckc33ees5m7hsg7teeh", "balance":"9500"},
+                          {"ranking":"7", "address":"ckt1qyqy2try39mq89eejlct69yxmjn8r86sny3qlnw8cf", "balance":"9400"},
+                          {"ranking":"8", "address":"ckt1qyqy9vt53ce3vxgcltp9dnqgcaj20l7wqf8q5r5mhz", "balance":"9300"},
+                          {"ranking":"9", "address":"ckt1qyqtqjmam63p593n5rp909lm6ny7qqm3jsgqzsj3qf", "balance":"9200"},
+                          {"ranking":"10", "address":"ckt1qyq82n2wa7rmjvaqf7567s83m7f6u0dtef5q39xfct", "balance":"9100"},
+                          {"ranking":"11", "address":"ckt1qyqrd83raa8kw44h6tsv6rmhzlp7h35pqjlsj4xk0e", "balance":"9000"},
+                          {"ranking":"12", "address":"ckt1qyqyvx74nafe8zpu0xncx3gvhfxjcmj8tcyqq4p6dz", "balance":"8900"},
+                          {"ranking":"13", "address":"ckt1qyqzzewv9xxf7nrdd9vx3x589r9c4k60gymqw46fff", "balance":"8800"},
+                          {"ranking":"14", "address":"ckt1qyq9s3s4ur455ms4mzrautgmvrl7efc5vxgqhq2hw6", "balance":"8700"},
+                          {"ranking":"15", "address":"ckt1qyqyt96g7q92lkce5u4xu9m32edp23gpk4vqrl9frn", "balance":"8600"},
+                          {"ranking":"16", "address":"ckt1qyqpsxw9qzx29ygvyryxjkp3g3nwl9cj4yzshlc696", "balance":"8500"},
+                          {"ranking":"17", "address":"ckt1qyqq89scfehzaj267phstxde2ac2rkqewp8s2d7lse", "balance":"8400"},
+                          {"ranking":"18", "address":"ckt1qyqdg524tgt02rppelwtu5acuect283d76tqrn4lw6", "balance":"8300"},
+                          {"ranking":"19", "address":"ckt1qyqxndcp7yzazr09m9trg8kn62txtukr7emslyc8up", "balance":"8200"},
+                          {"ranking":"20", "address":"ckt1qyqx0fgahwenhucre0hwcr4kja0cv226n24qeqsakc", "balance":"8100"},
+                          {"ranking":"21", "address":"ckt1qyqyzklzf92cqznyv2p8ngrnfl5xsa8jrfjszudfwp", "balance":"8000"},
+                          {"ranking":"22", "address":"ckt1qyqr8cx9n039srvheyhxknsxwjd5ypc9wu9qy7n3lq", "balance":"7900"},
+                          {"ranking":"23", "address":"ckt1qyq28wfnn5jl4cps63s2399czzum9n6a88vqn2j4rt", "balance":"7800"},
+                          {"ranking":"24", "address":"ckt1qyqfgd03hnjwt5zf7mtxq083lsq403nuzvjq5vrxfc", "balance":"7700"},
+                          {"ranking":"25", "address":"ckt1qyqvxuazfa5hsm6cnqrum9jyvdh2mag94jnqzn6tus", "balance":"7600"},
+                          {"ranking":"26", "address":"ckt1qyqz5qpv5tv0aec3knkpz48pc4f5hhy7xy6qlqc4kr", "balance":"7500"},
+                          {"ranking":"27", "address":"ckt1qyq085uc3avusuusacy83w7xeref3zynaewq5wxgna", "balance":"7400"},
+                          {"ranking":"28", "address":"ckt1qyqz049unqpugkmdqcg7p04ldr5p9qsrzzzqkwxvsk", "balance":"7300"},
+                          {"ranking":"29", "address":"ckt1qyq825s22tjhnm733umyerlv2rlu6nj9705qgj7wsu", "balance":"7200"},
+                          {"ranking":"30", "address":"ckt1qyqpqvrkkuszupj25mqzgwguspsu9dkzstgsalnjcv", "balance":"7100"},
+                          {"ranking":"31", "address":"ckt1qyqdzy8ham0e95wa33njce29323mkyre3wmspmy5mh", "balance":"7000"},
+                          {"ranking":"32", "address":"ckt1qyqgndvc5sj5v0r52yamnterhuqm0xxzwnhq4n040y", "balance":"6900"},
+                          {"ranking":"33", "address":"ckt1qyqgpw80twlv66vq2jyydnwh5waymsjg7tmq3d3zj9", "balance":"6800"},
+                          {"ranking":"34", "address":"ckt1qyqr2xqlnev76vnqmlzjzru44kuh6wsra4hqq0lm54", "balance":"6700"},
+                          {"ranking":"35", "address":"ckt1qyqdcunrwkezmnjkq9u3nvmsw6qa4th4g5ushkd7ja", "balance":"6600"},
+                          {"ranking":"36", "address":"ckt1qyqdgerqtjadpk73l8maxk8d8wedvfrf0asqmlenfy", "balance":"6500"},
+                          {"ranking":"37", "address":"ckt1qyqp9vynswume28t8zxqen9wzlv72tytlwtsayrtls", "balance":"6400"},
+                          {"ranking":"38", "address":"ckt1qyq8cxq2vlukheglcsla4fkqv992ftd354asx73qy8", "balance":"6300"},
+                          {"ranking":"39", "address":"ckt1qyqt4rtyqvddpdpsdgf0hsqg533gvcqg5unsj2sy33", "balance":"6200"},
+                          {"ranking":"40", "address":"ckt1qyqwwtlty2nfs2ez03l9uzywjmu74evs2ajsezq37t", "balance":"6100"},
+                          {"ranking":"41", "address":"ckt1qyqx9r7ndpzcvscnpmdh9kyvfdr968zjzxkqpul8qz", "balance":"6000"},
+                          {"ranking":"42", "address":"ckt1qyqydrmtymt5dr2s3yq7xc7t2n7n6vyrhzlsmk76yl", "balance":"5900"},
+                          {"ranking":"43", "address":"ckt1qyq0gedvz22l3fdcdjd8ahyd7vpk9luwh8wsgv68my", "balance":"5800"},
+                          {"ranking":"44", "address":"ckt1qyqr0datf8usfumva0v03r45uzqs26hph3xscmuv2n", "balance":"5700"},
+                          {"ranking":"45", "address":"ckt1qyq2zhqklk4p5k0vs9vmqw4uvnt0mvqvzlpqhts6nm", "balance":"5600"},
+                          {"ranking":"46", "address":"ckt1qyqgtxed4kyufll22ldzaafveh889kh5nads9rf82e", "balance":"5500"},
+                          {"ranking":"47", "address":"ckt1qyq8x0k8jlzdea5cv950q8mntkd9hxkt848q0a6wf7", "balance":"5400"},
+                          {"ranking":"48", "address":"ckt1qyq9xd7whm8r4es8fmc5e9aa3fuy49lv86qs3cm5es", "balance":"5300"},
+                          {"ranking":"49", "address":"ckt1qyqtga6vsvkzf95z4hpjzmm74x9pxtcqk62quldk58", "balance":"5200"},
+                          {"ranking":"50", "address":"ckt1qyqq7wjkvst2r7r24w67227xqy3d9ffkng7su2vw3j", "balance":"5100"}
+                        ]
+                      }
+                    }
                   }
         404:
           body:
