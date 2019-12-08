@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_02_081157) do
+ActiveRecord::Schema.define(version: 2019_12_08_071607) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -45,9 +45,10 @@ ActiveRecord::Schema.define(version: 2019_12_02_081157) do
     t.string "hash_rate"
     t.string "live_cells_count", default: "0"
     t.string "dead_cells_count", default: "0"
-    t.string "block_number"
+    t.decimal "block_number", precision: 30
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["block_number"], name: "index_block_statistics_on_block_number", unique: true
   end
 
   create_table "blocks", force: :cascade do |t|
@@ -185,9 +186,10 @@ ActiveRecord::Schema.define(version: 2019_12_02_081157) do
   create_table "epoch_statistics", force: :cascade do |t|
     t.string "difficulty"
     t.string "uncle_rate"
-    t.string "epoch_number"
+    t.decimal "epoch_number", precision: 30
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["epoch_number"], name: "index_epoch_statistics_on_epoch_number", unique: true
   end
 
   create_table "forked_blocks", force: :cascade do |t|
