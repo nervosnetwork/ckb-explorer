@@ -173,17 +173,25 @@ class CkbUtils
     target_block.update!(received_tx_fee: received_tx_fee, received_tx_fee_status: "calculated")
   end
 
-  def self.update_current_block_miner_address_pending_rewards(miner_address)
-    Address.increment_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
+  def self.update_current_block_mining_info(block)
+    return if block.blank?
+
+    miner_address = block.miner_address
+    MiningInfo.create!(block: block, block_number:block.number, address: miner_address, status: "mined")
+    mined_blocks_count = miner_address.mining_infos.where.not(status: "reverted").count
+    pending_reward_blocks_count = miner_address.mining_infos.mined.count
+    miner_address.update!(mined_blocks_count: mined_blocks_count, pending_reward_blocks_count: pending_reward_blocks_count)
   end
 
-  def self.update_target_block_miner_address_pending_rewards(current_block)
+  def self.update_target_block_mining_info(current_block)
     target_block_number = current_block.target_block_number
     target_block = current_block.target_block
     return if target_block_number < 1 || target_block.blank?
 
     miner_address = target_block.miner_address
-    Address.decrement_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
+    miner_address.mining_infos.find_by(block_id: target_block.id).issued!
+    pending_reward_blocks_count = miner_address.mining_infos.mined.count
+    miner_address.update!(pending_reward_blocks_count: pending_reward_blocks_count)
   end
 
   def self.normal_tx_fee(input_capacities, output_capacities)

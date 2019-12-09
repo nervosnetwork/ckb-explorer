@@ -34,7 +34,7 @@ module CkbSync
         update_tx_fee_related_data(local_block, input_capacities)
         calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
 
-        update_miner_pending_rewards(local_block.miner_address)
+        update_miner_pending_rewards(local_block)
         update_block_contained_address_info(local_block)
         update_block_reward_info(local_block)
         dao_events = build_new_dao_depositor_events(new_dao_depositor_events)
@@ -121,7 +121,7 @@ module CkbSync
 
       ApplicationRecord.transaction do
         issue_block_reward!(current_block)
-        CkbUtils.update_target_block_miner_address_pending_rewards(current_block)
+        CkbUtils.update_target_block_mining_info(current_block)
       end
     end
 
@@ -519,8 +519,8 @@ module CkbSync
       ckb_transaction.transaction_fee = [transaction_fee, 0].max
     end
 
-    def update_miner_pending_rewards(miner_address)
-      CkbUtils.update_current_block_miner_address_pending_rewards(miner_address)
+    def update_miner_pending_rewards(block)
+      CkbUtils.update_current_block_mining_info(block)
     end
   end
 end
