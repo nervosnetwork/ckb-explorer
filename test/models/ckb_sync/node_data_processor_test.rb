@@ -1110,6 +1110,33 @@ module CkbSync
       end
     end
 
+    test "#process_block should create mining info" do
+      prepare_node_data(24)
+      VCR.use_cassette("blocks/25", record: :new_episodes) do
+        node_block = CkbSync::Api.instance.get_block_by_number(25)
+        cellbase = node_block.transactions.first
+        lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+        miner_address = Address.find_or_create_address(lock_script, node_block.header.timestamp)
+
+        assert_difference -> { MiningInfo.count }, 1 do
+          node_data_processor.process_block(node_block)
+        end
+        assert_equal "mined", MiningInfo.find_by(block_number: 25, address_id: miner_address.id).status
+      end
+    end
+
+    test "#process_block should update target block mining info" do
+      prepare_node_data(24)
+      VCR.use_cassette("blocks/25", record: :new_episodes) do
+        node_block = CkbSync::Api.instance.get_block_by_number(25)
+
+        assert_difference -> { MiningInfo.count }, 1 do
+          node_data_processor.process_block(node_block)
+        end
+        assert_equal "issued", MiningInfo.find_by(block_number: 14).status
+      end
+    end
+
     test "#process_block should update current block's miner address pending reward blocks count" do
       prepare_node_data(24)
       VCR.use_cassette("blocks/25", record: :new_episodes) do
