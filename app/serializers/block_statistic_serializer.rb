@@ -1,7 +1,9 @@
 class BlockStatisticSerializer
   include FastJsonapi::ObjectSerializer
 
-  attributes :block_number
+  attribute :block_number do |object|
+    object.block_number.to_s
+  end
 
   attribute :difficulty, if: Proc.new {|_record, params|
     params && params[:indicator].include?("difficulty")

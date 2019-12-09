@@ -4,7 +4,7 @@ module Api
       before_action :validate_query_params
 
       def show
-        block_statistics = BlockStatistic.order(id: :desc).limit(1000)
+        block_statistics = BlockStatistic.where("epoch_number > 2").order(id: :desc).reverse
         render json: BlockStatisticSerializer.new(block_statistics, { params: { indicator: params[:id] } })
       end
 

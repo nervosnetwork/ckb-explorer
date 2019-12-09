@@ -6,9 +6,9 @@ module Charts
     sidekiq_options queue: "critical"
 
     def perform
-      latest_epoch_statistic = ::EpochStatistic.order(:id).last
-      target_epoch_number = latest_epoch_statistic.epoch_number.to_i + 1
-      return unless Block.where(epoch: target_epoch_number).exists?
+      latest_epoch_number = ::EpochStatistic.order(epoch_number: :desc).pick(:epoch_number)
+      target_epoch_number = latest_epoch_number + 1
+      return if Block.where(epoch: target_epoch_number + 1).blank? || ::EpochStatistic.where(epoch_number: target_epoch_number).exists?
 
       blocks_count = Block.where(epoch: target_epoch_number).count
       uncles_count = Block.where(epoch: target_epoch_number).sum(:uncles_count)
