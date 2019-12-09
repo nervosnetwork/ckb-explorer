@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_08_071607) do
+ActiveRecord::Schema.define(version: 2019_12_09_054145) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -48,6 +48,7 @@ ActiveRecord::Schema.define(version: 2019_12_08_071607) do
     t.decimal "block_number", precision: 30
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.decimal "epoch_number", precision: 30
     t.index ["block_number"], name: "index_block_statistics_on_block_number", unique: true
   end
 
