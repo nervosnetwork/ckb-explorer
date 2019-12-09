@@ -40,8 +40,10 @@ module Api
       end
 
       test "should return difficulty, uncle_rate and epoch number" do
-        create_list(:epoch_statistic, 15)
-        block_statistic_data = EpochStatistic.order(id: :desc)
+        (1..15).each do |number|
+          EpochStatistic.create(epoch_number: number)
+        end
+        block_statistic_data = EpochStatistic.order(epoch_number: :desc)
         valid_get api_v1_epoch_statistic_url("difficulty-uncle_rate")
 
         assert_equal [%w(difficulty uncle_rate epoch_number).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
