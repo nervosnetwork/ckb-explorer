@@ -43,7 +43,7 @@ module Api
         (1..15).each do |number|
           BlockStatistic.create(block_number: number)
         end
-        block_statistic_data = BlockStatistic.order(block_number: :desc)
+        block_statistic_data = BlockStatistic.order(block_number: :desc).reverse
         valid_get api_v1_block_statistic_url("difficulty-hash_rate")
 
         assert_equal [%w(difficulty hash_rate block_number).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
@@ -54,7 +54,7 @@ module Api
         (1..15).each do |number|
           BlockStatistic.create(block_number: number)
         end
-        block_statistic_data = BlockStatistic.order(block_number: :desc)
+        block_statistic_data = BlockStatistic.order(block_number: :desc).reverse
         valid_get api_v1_block_statistic_url("live_cells_count-dead_cells_count")
 
         assert_equal [%w(live_cells_count dead_cells_count block_number).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq

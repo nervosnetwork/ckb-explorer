@@ -43,7 +43,7 @@ module Api
         (1..15).each do |number|
           EpochStatistic.create(epoch_number: number)
         end
-        block_statistic_data = EpochStatistic.order(epoch_number: :desc)
+        block_statistic_data = EpochStatistic.order(epoch_number: :desc).reverse
         valid_get api_v1_epoch_statistic_url("difficulty-uncle_rate")
 
         assert_equal [%w(difficulty uncle_rate epoch_number).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
