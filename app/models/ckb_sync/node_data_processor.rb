@@ -131,7 +131,6 @@ module CkbSync
     end
 
     def revert_block_rewards(local_tip_block)
-      revert_miner_pending_reward_blocks_count(local_tip_block)
       target_block = local_tip_block.target_block
       target_block_number = local_tip_block.target_block_number
       return if target_block_number < 1 || target_block.blank?
@@ -149,11 +148,6 @@ module CkbSync
       target_block.update!(received_tx_fee_status: "pending")
     end
 
-    def revert_miner_pending_reward_blocks_count(local_tip_block)
-      miner_address = local_tip_block.miner_address
-      Address.decrement_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
-    end
-
     def invalid_block(local_tip_block)
       ApplicationRecord.transaction do
         revert_dao_contract_related_operations(local_tip_block)
@@ -168,7 +162,16 @@ module CkbSync
 
     def revert_mining_info(local_tip_block)
       local_tip_block.mining_infos.first.reverted!
-      miner_address = local_tip_block.miner_address
+      update_miner_mining_info(local_tip_block)
+      target_block = local_tip_block.target_block
+      return if target_block.blank?
+
+      target_block.mining_infos.issued.first.mined!
+      update_miner_mining_info(target_block)
+    end
+
+    def update_miner_mining_info(target_block)
+      miner_address = target_block.miner_address
       mined_blocks_count = miner_address.mining_infos.where.not(status: "reverted").count
       pending_reward_blocks_count = miner_address.mining_infos.mined.count
       miner_address.update!(mined_blocks_count: mined_blocks_count, pending_reward_blocks_count: pending_reward_blocks_count)
