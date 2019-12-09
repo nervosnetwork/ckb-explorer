@@ -248,9 +248,12 @@ ActiveRecord::Schema.define(version: 2019_12_13_030520) do
   create_table "mining_infos", force: :cascade do |t|
     t.bigint "address_id"
     t.bigint "block_id"
+    t.decimal "block_number", precision: 30
     t.integer "status", limit: 2, default: 0
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["block_id"], name: "index_mining_infos_on_block_id"
+    t.index ["block_number"], name: "index_mining_infos_on_block_number"
   end
 
   create_table "type_scripts", force: :cascade do |t|
