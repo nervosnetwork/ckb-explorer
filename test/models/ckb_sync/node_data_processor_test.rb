@@ -1137,6 +1137,61 @@ module CkbSync
       end
     end
 
+    test "should revert current block mining info when block is invalid" do
+      prepare_node_data(24)
+      local_block = Block.find_by(number: 24)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+
+      VCR.use_cassette("blocks/25") do
+        assert_changes -> { MiningInfo.find_by(block_number: 24).status }, from: "mined", to: "reverted" do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should revert current block miner's mined blocks count when block is invalid" do
+      prepare_node_data(24)
+      local_block = Block.find_by(number: 24)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      addr = create(:address)
+      local_block.target_block.update(miner_hash: addr.address_hash)
+
+      VCR.use_cassette("blocks/25") do
+        assert_difference -> { local_block.miner_address.reload.mined_blocks_count }, -1 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should revert current block miner's pending rewards blocks count when block is invalid" do
+      prepare_node_data(24)
+      local_block = Block.find_by(number: 24)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      addr = create(:address)
+      local_block.target_block.update(miner_hash: addr.address_hash)
+      local_block.target_block.mining_infos.issued.first.update(address_id: addr.id)
+
+      VCR.use_cassette("blocks/25") do
+        assert_difference -> { local_block.miner_address.reload.pending_reward_blocks_count }, -1 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should change target block mining info to mined when block is invalid" do
+      prepare_node_data(24)
+      local_block = Block.find_by(number: 24)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+
+      VCR.use_cassette("blocks/25") do
+        assert_changes -> { MiningInfo.find_by(block_number: 13).status }, from: "issued", to: "mined" do
+          node_data_processor.call
+        end
+      end
+    end
+
     test "#process_block should update current block's miner address pending reward blocks count" do
       prepare_node_data(24)
       VCR.use_cassette("blocks/25", record: :new_episodes) do
