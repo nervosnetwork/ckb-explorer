@@ -1124,6 +1124,20 @@ module CkbSync
       end
     end
 
+    test "#process_block should update current block's miner address mined blocks count" do
+      prepare_node_data(24)
+      VCR.use_cassette("blocks/25", record: :new_episodes) do
+        node_block = CkbSync::Api.instance.get_block_by_number(25)
+        cellbase = node_block.transactions.first
+        lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
+        miner_address = Address.find_or_create_address(lock_script, node_block.header.timestamp)
+
+        assert_difference -> { miner_address.reload.mined_blocks_count }, 1 do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
     test "#process_block should update abandoned block's contained address's transactions count" do
       prepare_node_data(12)
       local_block = Block.find_by(number: 12)
