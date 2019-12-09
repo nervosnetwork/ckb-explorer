@@ -41,7 +41,7 @@ module Api
 
       test "should return difficulty, hash_rate and block number" do
         (1..15).each do |number|
-          BlockStatistic.create(block_number: number)
+          BlockStatistic.create(block_number: number, epoch_number: 4)
         end
         block_statistic_data = BlockStatistic.order(block_number: :desc).reverse
         valid_get api_v1_block_statistic_url("difficulty-hash_rate")
@@ -52,7 +52,7 @@ module Api
 
       test "should return live_cells_count, dead_cells_count and block number" do
         (1..15).each do |number|
-          BlockStatistic.create(block_number: number)
+          BlockStatistic.create(block_number: number, epoch_number: 4)
         end
         block_statistic_data = BlockStatistic.order(block_number: :desc).reverse
         valid_get api_v1_block_statistic_url("live_cells_count-dead_cells_count")
