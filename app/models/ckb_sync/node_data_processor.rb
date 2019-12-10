@@ -30,7 +30,7 @@ module CkbSync
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs, new_dao_depositor_events)
         local_block.ckb_transactions_count = ckb_transactions.size
         CkbTransaction.import!(ckb_transactions, recursive: true, batch_size: 3500, validate: false)
-        input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h {|id| [id, []] }
+        input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h { |id| [id, []] }
         update_tx_fee_related_data(local_block, input_capacities)
         calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
 
@@ -243,11 +243,11 @@ module CkbSync
       node_block_uncles.map { |uncle| uncle.header.hash }
     end
 
-    def generate_address_in_advance(cellbase)
+    def generate_address_in_advance(cellbase, block_timestamp)
       return if cellbase.witnesses.blank?
 
       lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-      address = Address.find_or_create_address(lock_script)
+      address = Address.find_or_create_address(lock_script, block_timestamp)
       LockScript.find_or_create_by(
         args: lock_script.args,
         code_hash: lock_script.code_hash,
@@ -261,7 +261,7 @@ module CkbSync
       epoch_info = CkbUtils.parse_epoch_info(header)
       cellbase = node_block.transactions.first
 
-      generate_address_in_advance(cellbase)
+      generate_address_in_advance(cellbase, header.timestamp)
 
       Block.new(
         compact_target: header.compact_target,
@@ -363,7 +363,7 @@ module CkbSync
 
     def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs, new_dao_depositor_events)
       node_outputs.each_with_index.map do |output, cell_index|
-        address = Address.find_or_create_address(output.lock)
+        address = Address.find_or_create_address(output.lock, ckb_transaction.block_timestamp)
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
         outputs << cell_output
@@ -420,7 +420,8 @@ module CkbSync
         tx_hash: ckb_transaction.tx_hash,
         cell_index: cell_index,
         generated_by: ckb_transaction,
-        cell_type: cell_type(output.type, output_data)
+        cell_type: cell_type(output.type, output_data),
+        block_timestamp: ckb_transaction.block_timestamp
       )
     end
 
@@ -466,7 +467,7 @@ module CkbSync
           end
 
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
-          CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status] )
+          CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status])
           AccountBook.import!(account_books, validate: false)
         end
       end
@@ -492,7 +493,7 @@ module CkbSync
     end
 
     def calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs)
-      output_capacities = outputs.each { |k, v| outputs[k] = v.map(&:capacity)}
+      output_capacities = outputs.each { |k, v| outputs[k] = v.map(&:capacity) }
       ckb_transactions = ckb_transactions.reject(&:is_cellbase)
       return if ckb_transactions.blank?
 

@@ -44,10 +44,16 @@ gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", re
 gem "hiredis", "~> 0.6.1"
 gem "redis", "~> 4.0", ">= 4.0.3"
 
-# Sidekiq
-gem "sidekiq", "~> 5.2", ">= 5.2.3"
-gem "sidekiq-unique-jobs"
-gem "sidekiq-failures"
+# Backgroud Jobs
+
+group :production, :staging, :development do
+  gem "sidekiq"
+  gem "sidekiq-statistic"
+  gem "sidekiq-cron"
+  gem "sidekiq-unique-jobs"
+  gem "sidekiq-status"
+  gem "sidekiq-failures"
+end
 
 # bulk insertion of data into database using ActiveRecord
 gem "activerecord-import"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_11_08_122048) do
+ActiveRecord::Schema.define(version: 2019_12_09_054145) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -35,8 +35,21 @@ ActiveRecord::Schema.define(version: 2019_11_08_122048) do
     t.integer "pending_reward_blocks_count", default: 0
     t.decimal "dao_deposit", precision: 30, default: "0"
     t.decimal "interest", precision: 30, default: "0"
+    t.decimal "block_timestamp", precision: 30
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
+  end
+
+  create_table "block_statistics", force: :cascade do |t|
+    t.string "difficulty"
+    t.string "hash_rate"
+    t.string "live_cells_count", default: "0"
+    t.string "dead_cells_count", default: "0"
+    t.decimal "block_number", precision: 30
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.decimal "epoch_number", precision: 30
+    t.index ["block_number"], name: "index_block_statistics_on_block_number", unique: true
   end
 
   create_table "blocks", force: :cascade do |t|
@@ -109,6 +122,7 @@ ActiveRecord::Schema.define(version: 2019_11_08_122048) do
     t.integer "cell_type", default: 0
     t.integer "data_size"
     t.decimal "occupied_capacity", precision: 30
+    t.decimal "block_timestamp", precision: 30
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
@@ -136,6 +150,16 @@ ActiveRecord::Schema.define(version: 2019_11_08_122048) do
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
   end
 
+  create_table "daily_statistics", force: :cascade do |t|
+    t.string "transactions_count", default: "0"
+    t.string "addresses_count", default: "0"
+    t.string "total_dao_deposit", default: "0.0"
+    t.decimal "block_timestamp", precision: 30
+    t.integer "created_at_unixtimestamp"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "dao_contracts", force: :cascade do |t|
     t.decimal "total_deposit", precision: 30, default: "0"
     t.decimal "interest_granted", precision: 30, default: "0"
@@ -158,6 +182,15 @@ ActiveRecord::Schema.define(version: 2019_11_08_122048) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["block_id"], name: "index_dao_events_on_block_id"
+  end
+
+  create_table "epoch_statistics", force: :cascade do |t|
+    t.string "difficulty"
+    t.string "uncle_rate"
+    t.decimal "epoch_number", precision: 30
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["epoch_number"], name: "index_epoch_statistics_on_epoch_number", unique: true
   end
 
   create_table "forked_blocks", force: :cascade do |t|
