@@ -1,3 +1,44 @@
+# [](https://github.com/shaojunda/ckb-explorer/compare/v0.7.2...v.8.0) (2019-12-09)
+
+
+### Features
+
+* add address_balance_ranking to serializer ([4956257](https://github.com/shaojunda/ckb-explorer/commit/4956257))
+* add background job related gems ([5360c91](https://github.com/shaojunda/ckb-explorer/commit/5360c91))
+* add block statistic ([23d38f2](https://github.com/shaojunda/ckb-explorer/commit/23d38f2))
+* add block statistics controller ([77b100f](https://github.com/shaojunda/ckb-explorer/commit/77b100f))
+* add daily statistics api ([0d82a57](https://github.com/shaojunda/ckb-explorer/commit/0d82a57))
+* add daily transactions count worker ([4adc33f](https://github.com/shaojunda/ckb-explorer/commit/4adc33f))
+* add daily_statistic model ([c42ef94](https://github.com/shaojunda/ckb-explorer/commit/c42ef94))
+* add epoch statistic ([6b62bc1](https://github.com/shaojunda/ckb-explorer/commit/6b62bc1))
+* add epoch statistic worker ([0dc3101](https://github.com/shaojunda/ckb-explorer/commit/0dc3101))
+* add generate block statistic data task ([1c9612a](https://github.com/shaojunda/ckb-explorer/commit/1c9612a))
+* add generate epoch statistic data task ([607281c](https://github.com/shaojunda/ckb-explorer/commit/607281c))
+* add historical daily statistic data generation task ([5de0e20](https://github.com/shaojunda/ckb-explorer/commit/5de0e20))
+* add market data controller ([5b81ad3](https://github.com/shaojunda/ckb-explorer/commit/5b81ad3))
+* add market data model ([adc8983](https://github.com/shaojunda/ckb-explorer/commit/adc8983))
+* add parse dao method ([87b7a15](https://github.com/shaojunda/ckb-explorer/commit/87b7a15))
+* add timestamp to addresses and cell_outputs ([a6cf36f](https://github.com/shaojunda/ckb-explorer/commit/a6cf36f))
+* add total_supply to market data ([8d1ad75](https://github.com/shaojunda/ckb-explorer/commit/8d1ad75))
+* add update block timestamp task ([e6484c9](https://github.com/shaojunda/ckb-explorer/commit/e6484c9))
+* address balance ranking ([4fd300d](https://github.com/shaojunda/ckb-explorer/commit/4fd300d))
+* block statistic worker ([96ec143](https://github.com/shaojunda/ckb-explorer/commit/96ec143))
+* check indicator name ([91ff417](https://github.com/shaojunda/ckb-explorer/commit/91ff417))
+* config daily statistic schedule ([3173e64](https://github.com/shaojunda/ckb-explorer/commit/3173e64))
+* implement daily statistic show action ([67b86c2](https://github.com/shaojunda/ckb-explorer/commit/67b86c2))
+* implement epoch statistic controller show action ([84de3f6](https://github.com/shaojunda/ckb-explorer/commit/84de3f6))
+* implement show action ([c5a6d6c](https://github.com/shaojunda/ckb-explorer/commit/c5a6d6c))
+* process query key ([615d6b0](https://github.com/shaojunda/ckb-explorer/commit/615d6b0))
+* raise error when address is not match current environment ([e8604fd](https://github.com/shaojunda/ckb-explorer/commit/e8604fd))
+* returns ascending data ([5932ef9](https://github.com/shaojunda/ckb-explorer/commit/5932ef9))
+* save block_timestamp to address and cell_output when process data ([9771f84](https://github.com/shaojunda/ckb-explorer/commit/9771f84))
+* set origin ([1e4940a](https://github.com/shaojunda/ckb-explorer/commit/1e4940a))
+* show estimated unlock time on lock info ([3419df2](https://github.com/shaojunda/ckb-explorer/commit/3419df2))
+* skip the first 4 epoch ([3ccffaf](https://github.com/shaojunda/ckb-explorer/commit/3ccffaf))
+* use rack attack ([219b23f](https://github.com/shaojunda/ckb-explorer/commit/219b23f))
+
+
+
 # [](https://github.com/shaojunda/ckb-explorer/compare/v0.7.1...v.7.2) (2019-11-18)
 
 ### Features

@@ -45,9 +45,9 @@ class CkbUtils
     args_serialization = script_serialization[hash_type_offset + 1..-1]
     args_serialization = args_serialization[4..-1]
 
-    code_hash = "0x#{code_hash_serialization.unpack1("H*")}"
-    hash_type_hex = "0x#{hash_type_serialization.unpack1("H*")}"
-    args = "0x#{args_serialization.unpack1("H*")}"
+    code_hash = "0x#{code_hash_serialization.unpack1('H*')}"
+    hash_type_hex = "0x#{hash_type_serialization.unpack1('H*')}"
+    args = "0x#{args_serialization.unpack1('H*')}"
 
     hash_type = hash_type_hex == "0x00" ? "data" : "type"
     CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: hash_type)
@@ -93,10 +93,10 @@ class CkbUtils
     CkbSync::Api.instance.get_epoch_by_number(epoch)
   end
 
-  #The lower 56 bits of the epoch number field are split into 3 parts(listed in the order from higher bits to lower bits):
-  #The highest 16 bits represent the epoch length
-  #The next 16 bits represent the current block index in the epoch
-  #The lowest 24 bits represent the current epoch number
+  # The lower 56 bits of the epoch number field are split into 3 parts(listed in the order from higher bits to lower bits):
+  # The highest 16 bits represent the epoch length
+  # The next 16 bits represent the current block index in the epoch
+  # The lowest 24 bits represent the current epoch number
   def self.parse_epoch_info(header)
     epoch = header.epoch
     return get_epoch_info(epoch) if epoch.zero?
@@ -233,7 +233,7 @@ class CkbUtils
   end
 
   def self.target_to_difficulty(target)
-    u256_max_value = 2 ** 256 -1
+    u256_max_value = 2**256 - 1
     hspace = "0x10000000000000000000000000000000000000000000000000000000000000000".hex
     if target.zero?
       u256_max_value

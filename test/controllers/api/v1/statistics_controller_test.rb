@@ -200,6 +200,18 @@ module Api
         assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "blockchain_info" } }).serialized_json, response.body
       end
 
+      test "should return top 50 addresses balance list when param is address balance ranking" do
+        create_list(:address, 100).each.with_index(1) do |address, index|
+          address.update(balance: index * 100)
+        end
+        statistic_info = StatisticInfo.new
+
+        valid_get api_v1_statistic_url("address_balance_ranking")
+
+        assert_equal %w(ranking address balance), json.dig("data", "attributes", "address_balance_ranking").map(&:keys).uniq.flatten
+        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "address_balance_ranking" } }).serialized_json, response.body
+      end
+
       test "should respond with error object when statistic info name is invalid" do
         error_object = Api::V1::Exceptions::StatisticInfoNameInvalidError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json

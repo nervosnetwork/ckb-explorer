@@ -57,6 +57,7 @@ end
 #  cell_type          :integer          default("normal")
 #  data_size          :integer
 #  occupied_capacity  :decimal(30, )
+#  block_timestamp    :decimal(30, )
 #
 # Indexes
 #

@@ -32,8 +32,6 @@ class SinceParser
       CkbUtils.parse_epoch(value)
     when 0x4000_0000_0000_0000
       value * 1000
-    else
-      nil
     end
   end
 

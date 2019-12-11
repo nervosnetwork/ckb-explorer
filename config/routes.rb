@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   require "sidekiq/web"
   require "sidekiq_unique_jobs/web"
+  require "sidekiq/cron/web"
   mount Sidekiq::Web => "/sidekiq"
 
   root "application#homepage"
@@ -28,6 +29,9 @@ Rails.application.routes.draw do
       resources :dao_contract_transactions, only: :show
       resources :address_dao_transactions, only: :show
       resources :dao_depositors, only: :index
+      resources :daily_statistics, only: :show
+      resources :block_statistics, only: :show
+      resources :epoch_statistics, only: :show
       resources :market_data, only: :show
     end
   end
