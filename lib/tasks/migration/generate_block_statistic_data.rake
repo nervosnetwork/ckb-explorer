@@ -16,7 +16,7 @@ namespace :migration do
       dead_cells_count = total_cells.where(consumed_by_id: ckb_transaction_ids).count
       live_cells_count = total_cells.count - dead_cells_count
 
-      BlockStatistic.create(block_number: block.number, epoch_number: block.epoch, difficulty: block.difficulty, hash_rate: hash_rate, live_cells_count: live_cells_count, dead_cells_count: live_cells_count)
+      BlockStatistic.create(block_number: block.number, epoch_number: block.epoch, difficulty: block.difficulty, hash_rate: hash_rate, live_cells_count: live_cells_count, dead_cells_count: dead_cells_count)
       progress_bar.increment
     end
 
