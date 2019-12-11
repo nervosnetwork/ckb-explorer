@@ -1,5 +1,5 @@
 class BlockStatistic < ApplicationRecord
-  VALID_INDICATORS = %w(difficulty hash_rate live_cells_count dead_cells_count)
+  VALID_INDICATORS = %w(difficulty hash_rate live_cells_count dead_cells_count).freeze
 end
 
 # == Schema Information

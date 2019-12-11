@@ -12,11 +12,11 @@ namespace :migration do
     Block.where(number: range.to_a).each do |block|
       hash_rate = statistic_info.hash_rate(block.number)
       total_cells = CellOutput.where("block_timestamp <= ?", block.timestamp)
-      ckb_transaction_ids = CkbTransaction.where("block_number <= ?", block.number).ids
-      dead_cells_count = total_cells.where(consumed_by_id: ckb_transaction_ids).count
+      ckb_transactions = CkbTransaction.where("block_number <= ?", block.number)
+      dead_cells_count = total_cells.where(consumed_by: ckb_transactions).count
       live_cells_count = total_cells.count - dead_cells_count
 
-      BlockStatistic.create(block_number: block.number, epoch_number: block.epoch, difficulty: block.difficulty, hash_rate: hash_rate, live_cells_count: live_cells_count, dead_cells_count: live_cells_count)
+      BlockStatistic.create(block_number: block.number, epoch_number: block.epoch, difficulty: block.difficulty, hash_rate: hash_rate, live_cells_count: live_cells_count, dead_cells_count: dead_cells_count)
       progress_bar.increment
     end
 

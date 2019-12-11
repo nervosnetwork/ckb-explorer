@@ -1,4 +1,4 @@
-require 'test_helper'
+require "test_helper"
 
 class DailyStatisticTest < ActiveSupport::TestCase
   # test "the truth" do
