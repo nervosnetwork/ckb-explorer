@@ -44,7 +44,7 @@ class StatisticInfo
   end
 
   def address_balance_ranking
-    Rails.cache.realize("address_balance_ranking", expires_in: 4.hour) do
+    Rails.cache.realize("address_balance_ranking", expires_in: 4.hours) do
       addresses = Address.order(balance: :desc).limit(50)
       addresses.each.with_index(1).map do |address, index|
         { ranking: index.to_s, address: address.address_hash, balance: address.balance.to_s }

@@ -38,7 +38,7 @@ end
 schedule_file = "config/schedule.yml"
 
 if Rails.env.development?
-  dev_schedule_file= "config/schedule.dev.yml"
+  dev_schedule_file = "config/schedule.dev.yml"
   if File.exist?(dev_schedule_file)
     schedule_file = dev_schedule_file
   end

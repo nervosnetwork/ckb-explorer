@@ -68,12 +68,14 @@ class StatisticInfoTest < ActiveSupport::TestCase
   end
 
   test ".address_balance_ranking should return top 50 holders list" do
-    addresses = create_list(:address, 100).each.with_index(1) do |address, index|
-      address.update(balance: index * 100)
-    end
-    expected_address_balance_ranking = addresses.sort_by(&:balance).reverse[0..49].each.with_index(1).map do |address, index|
-      { ranking: index.to_s, address: address.address_hash.to_s, balance: address.balance.to_s }
-    end
+    addresses =
+      create_list(:address, 100).each.with_index(1) do |address, index|
+        address.update(balance: index * 100)
+      end
+    expected_address_balance_ranking =
+      addresses.sort_by(&:balance).reverse[0..49].each.with_index(1).map do |address, index|
+        { ranking: index.to_s, address: address.address_hash.to_s, balance: address.balance.to_s }
+      end
 
     assert_equal expected_address_balance_ranking, StatisticInfo.new.address_balance_ranking
   end

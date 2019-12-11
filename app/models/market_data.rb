@@ -1,5 +1,5 @@
 class MarketData
-  VALID_INDICATORS = %w(total_supply circulating_supply)
+  VALID_INDICATORS = %w(total_supply circulating_supply).freeze
   INITIAL_SUPPLY = BigDecimal(336 * 10**16)
   BURN_QUOTA = BigDecimal(84 * 10**16)
   ECOSYSTEM_QUOTA = INITIAL_SUPPLY * 0.17
@@ -24,10 +24,11 @@ class MarketData
   private
 
   def parsed_dao
-    @parsed_dao ||= begin
-      latest_dao = Block.recent.pick(:dao)
-      CkbUtils.parse_dao(latest_dao)
-    end
+    @parsed_dao ||=
+      begin
+        latest_dao = Block.recent.pick(:dao)
+        CkbUtils.parse_dao(latest_dao)
+      end
   end
 
   def total_supply
