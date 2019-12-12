@@ -17,6 +17,7 @@ Rails.application.routes.draw do
       resources :block_transactions, only: :show
       resources :addresses, only: :show
       get "/transactions/:id", to: "ckb_transactions#show", as: "ckb_transaction"
+      get "/transactions", to: "ckb_transactions#index", as: "ckb_transactions"
       resources :cell_input_lock_scripts, only: :show
       resources :cell_input_type_scripts, only: :show
       resources :cell_input_data, only: :show

@@ -3,6 +3,10 @@ module Api
     class CkbTransactionsController < ApplicationController
       before_action :validate_query_params, only: :show
 
+      def index
+        render json: {}
+      end
+
       def show
         ckb_transaction = CkbTransaction.cached_find(params[:id])
 
