@@ -170,6 +170,62 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should get serialized objects" do
+        block = create(:block, :with_block_hash)
+        create_list(:ckb_transaction, 15, block: block)
+
+        ckb_transactions = CkbTransaction.recent.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
+
+        valid_get api_v1_ckb_transactions_url
+
+        assert_equal CkbTransactionSerializer.new(ckb_transactions).serialized_json, response.body
+      end
+
+      test "serialized objects should in reverse order of timestamp" do
+        block = create(:block, :with_block_hash)
+        create_list(:ckb_transaction, 15, block: block)
+
+        valid_get api_v1_ckb_transactions_url
+
+        first_ckb_transaction = json["data"].first
+        last_ckb_transaction = json["data"].last
+
+        assert_operator first_ckb_transaction.dig("attributes", "block_timestamp"), :>, last_ckb_transaction.dig("attributes", "block_timestamp")
+      end
+
+      test "should contain right keys in the serialized object" do
+        block = create(:block, :with_block_hash)
+        create_list(:ckb_transaction, 15, block: block)
+
+        valid_get api_v1_ckb_transactions_url
+
+        response_ckb_transaction = json["data"].first
+        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps).sort, response_ckb_transaction["attributes"].keys.sort
+      end
+
+      test "should return the corresponding number of ckb transactions " do
+        block = create(:block, :with_block_hash)
+        create_list(:ckb_transaction, 30, block: block)
+
+        valid_get api_v1_ckb_transactions_url
+
+        ckb_transactions = CkbTransaction.order(block_timestamp: :desc).limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
+        response_ckb_transaction = CkbTransactionSerializer.new(ckb_transactions).serialized_json
+        assert_equal response_ckb_transaction, response.body
+        assert_equal 15, json["data"].size
+      end
+
+      test "should return empty array when there is no ckb_transactions" do
+        ckb_transactions = CkbTransaction.order(block_timestamp: :desc).limit(15)
+
+        valid_get api_v1_ckb_transactions_url
+
+        response_ckb_transaction = CkbTransactionSerializer.new(ckb_transactions).serialized_json
+
+        assert_equal [], json["data"]
+        assert_equal response_ckb_transaction, response.body
+      end
     end
   end
 end
