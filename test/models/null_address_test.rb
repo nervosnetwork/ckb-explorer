@@ -71,4 +71,58 @@ class NullAddressTest < ActiveSupport::TestCase
       null_address.lock_script
     end
   end
+
+  test ".lock_info should return estimated lock info for valid address with since" do
+    create(:block, :with_block_hash, epoch: 40, timestamp: 1576062594613)
+    CkbSync::Api.any_instance.stubs(:get_tip_header).returns(
+      CKB::Types::BlockHeader.new(
+        compact_target: "0x1a29391f",
+        hash: "0xc68b7a63e8b0ab82d7e13fe8c580e61d7c156d13d002f3283bf34fdbed5c0cb2",
+        number: "0x36330",
+        parent_hash: "0xff5b1f89d8672fed492ebb34be8b2f12ff6cdfb5347e41448d2710f8a7ba1517",
+        nonce: "0x7f22eaf01000000000000002c14a3d1",
+        timestamp: "0x16ef4a6ae35",
+        transactions_root: "0x304b48778593f4aa6677298289e05b0764e94a1f84c7b771e34138849ceeec3f",
+        proposals_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        uncles_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        version: "0x0",
+        epoch: "0x5590558000028",
+        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007"
+      )
+    )
+    null_address = NullAddress.new("ckt1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323k5v49yzmvm0q0kfqw0hk0kyal6z32nwjvcqqr7qyzq8yqtec2wj")
+    expected_lock_info = { status: "locked", epoch_number: "51", epoch_index: "764", estimated_unlock_time: "1576212722613" }
+
+    assert_equal expected_lock_info.to_a.sort, null_address.lock_info.to_a.sort
+  end
+
+  test ".lock_info should return real lock info for valid address with since" do
+    create(:block, :with_block_hash, epoch: 51, timestamp: 1574684878790, start_number: 79276, number: 80040)
+    CkbSync::Api.any_instance.stubs(:get_tip_header).returns(
+      CKB::Types::BlockHeader.new(
+        compact_target: "0x1a29391f",
+        hash: "0xc68b7a63e8b0ab82d7e13fe8c580e61d7c156d13d002f3283bf34fdbed5c0cb2",
+        number: "0x36330",
+        parent_hash: "0xff5b1f89d8672fed492ebb34be8b2f12ff6cdfb5347e41448d2710f8a7ba1517",
+        nonce: "0x7f22eaf01000000000000002c14a3d1",
+        timestamp: "0x16ef4a6ae35",
+        transactions_root: "0x304b48778593f4aa6677298289e05b0764e94a1f84c7b771e34138849ceeec3f",
+        proposals_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        uncles_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        version: "0x0",
+        epoch: "0x5eb00a3000089",
+        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007"
+      )
+    )
+    null_address = NullAddress.new("ckt1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323k5v49yzmvm0q0kfqw0hk0kyal6z32nwjvcqqr7qyzq8yqtec2wj")
+    expected_lock_info = { status: "unlocked", epoch_number: "51", epoch_index: "764", estimated_unlock_time: "1574684878790" }
+
+    assert_equal expected_lock_info.to_a.sort, null_address.lock_info.to_a.sort
+  end
+
+  test ".lock_info should return nil for normal address" do
+    null_address = NullAddress.new("ckb1qyqxfde320py026hwvsev240t35mjjvsccgq5dugeg")
+
+    assert_nil null_address.lock_info
+  end
 end

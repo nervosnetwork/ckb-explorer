@@ -38,7 +38,7 @@ class LockScript < ApplicationRecord
 
           { status: lock_info_status(since_value, tip_epoch), epoch_number: since_value.number.to_s, epoch_index: since_value.index.to_s, estimated_unlock_time: estimated_unlock_time.strftime("%Q") }
         end
-      ensure SinceParser::IncorrectSinceFlagsError
+      rescue SinceParser::IncorrectSinceFlagsError
         nil
       end
     end
