@@ -119,4 +119,10 @@ class NullAddressTest < ActiveSupport::TestCase
 
     assert_equal expected_lock_info.to_a.sort, null_address.lock_info.to_a.sort
   end
+
+  test ".lock_info should return nil for normal address" do
+    null_address = NullAddress.new("ckb1qyqxfde320py026hwvsev240t35mjjvsccgq5dugeg")
+
+    assert_nil null_address.lock_info
+  end
 end
