@@ -1,3 +1,26 @@
+x# [](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12-13)
+
+
+### Bug Fixes
+
+* should rescue since parse error ([1a2e8bf](https://github.com/shaojunda/ckb-explorer/commit/1a2e8bf))
+* wrong dead cells count ([beea8a6](https://github.com/shaojunda/ckb-explorer/commit/beea8a6))
+
+
+### Features
+
+* add more info to index statistic ([46f90ea](https://github.com/shaojunda/ckb-explorer/commit/46f90ea))
+* add visible to address ([61c5597](https://github.com/shaojunda/ckb-explorer/commit/61c5597))
+* null address return lock info ([6316ff8](https://github.com/shaojunda/ckb-explorer/commit/6316ff8))
+* use tip epoch info to calculate estimated unlock time ([5cc36e7](https://github.com/shaojunda/ckb-explorer/commit/5cc36e7))
+
+
+### Performance Improvements
+
+* dead cells count calculation speed ([1ade2f1](https://github.com/shaojunda/ckb-explorer/commit/1ade2f1))
+
+
+
 # [](https://github.com/shaojunda/ckb-explorer/compare/v0.7.2...v.8.0) (2019-12-09)
 
 
