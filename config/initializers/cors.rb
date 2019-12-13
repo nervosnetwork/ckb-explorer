@@ -17,7 +17,7 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins "https://explorer.nervos.org", "https://explorer.staging.nervos.org/", "http://localhost:3000"
+    origins "https://explorer.nervos.org", "https://explorer.staging.nervos.org/", "http://localhost:3000", "#{ENV["STAGING_DOMAIN"]}"
     resource "*", headers: :any, methods: [:get, :options]
   end
 end

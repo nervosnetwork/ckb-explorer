@@ -19,7 +19,10 @@ class NullAddress
 
   def lock_hash; end
 
-  def lock_info; end
+  def lock_info
+    parsed_address = CKB::AddressParser.new(address_hash).parse
+    LockScript.new(args: parsed_address.script.args, code_hash: parsed_address.script.code_hash).lock_info
+  end
 
   def cached_lock_script; end
 

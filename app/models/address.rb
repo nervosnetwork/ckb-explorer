@@ -7,6 +7,8 @@ class Address < ApplicationRecord
   has_many :ckb_transactions, through: :account_books
   validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
+  scope :visible, -> { where(visible: true) }
+
   after_commit :flush_cache
 
   def lock_script
@@ -65,6 +67,7 @@ end
 #  dao_deposit                 :decimal(30, )    default(0)
 #  interest                    :decimal(30, )    default(0)
 #  block_timestamp             :decimal(30, )
+#  visible                     :boolean          default(TRUE)
 #
 # Indexes
 #
