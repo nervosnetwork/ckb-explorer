@@ -99,6 +99,20 @@ module Api
         assert_equal response_json, response.body
         ENV["CKB_NET_MODE"] = "mainnet"
       end
+
+      test "should return special address when query address is special" do
+        address = create(:address, :with_lock_script, address_hash: "ckb1qyq0hcfpff4h8w8zvy44uurvlgdrr09tefwqx266dl")
+
+        valid_get api_v1_address_url(address.address_hash)
+        assert_equal Settings.special_addresses[address.address_hash], json.dig("data", "attributes", "special_address")
+      end
+
+      test "should not return special address when query address is not special" do
+        address = create(:address, :with_lock_script, address_hash: "ckb1qyqdmeuqrsrnm7e5vnrmruzmsp4m9wacf6vsxasryq")
+
+        valid_get api_v1_address_url(address.address_hash)
+        assert_nil json.dig("data", "attributes", "special_address")
+      end
     end
   end
 end
