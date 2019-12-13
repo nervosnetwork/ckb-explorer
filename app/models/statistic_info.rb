@@ -13,20 +13,43 @@ class StatisticInfo
   end
 
   def tip_block_number
-    @tip_block_number ||= Block.order(timestamp: :desc).pick(:number)
+    tip_block.number
   end
 
-  def current_epoch_difficulty
-    compact_target = CkbSync::Api.instance.get_current_epoch.compact_target
-    CkbUtils.compact_to_difficulty(compact_target)
+  def epoch_info
+    { epoch_number: tip_block.epoch.to_s, epoch_length: tip_block.length.to_s, index: (tip_block_number - tip_block.start_number).to_s }
   end
 
-  def average_block_time
-    start_block_number = [tip_block_number.to_i - average_block_time_interval + 1, 0].max
+  def estimated_epoch_time
+    Rails.cache.realize("estimated_epoch_time_#{tip_block.epoch}", expires_in: 4.hours) do
+      average_block_time(1000) * tip_block.length
+    end
+  end
+
+  def transactions_last_24hrs
+    Block.h24.sum(:ckb_transactions_count).to_i
+  end
+
+  def transactions_count_per_minute(interval = 100)
+    start_block_number = [tip_block_number.to_i - interval + 1, 0].max
     timestamps = Block.where(number: [start_block_number, tip_block_number]).order(timestamp: :desc).pluck(:timestamp)
     return if timestamps.empty?
 
-    total_block_time(timestamps) / blocks_count
+    transactions_count = Block.where(number: start_block_number..tip_block_number).sum(:ckb_transactions_count)
+
+    transactions_count / (total_block_time(timestamps) / 1000 / 60)
+  end
+
+  def current_epoch_difficulty
+    tip_block.difficulty
+  end
+
+  def average_block_time(interval = average_block_time_interval)
+    start_block_number = [tip_block_number.to_i - interval + 1, 0].max
+    timestamps = Block.where(number: [start_block_number, tip_block_number]).order(timestamp: :desc).pluck(:timestamp)
+    return if timestamps.empty?
+
+    total_block_time(timestamps) / blocks_count(interval)
   end
 
   def hash_rate(block_number = tip_block_number)
@@ -64,7 +87,11 @@ class StatisticInfo
     (timestamps.first - timestamps.last).to_d
   end
 
-  def blocks_count
-    tip_block_number > average_block_time_interval ? average_block_time_interval : tip_block_number
+  def blocks_count(interval = average_block_time_interval)
+    tip_block_number > interval ? interval : tip_block_number
+  end
+
+  def tip_block
+    @tip_block ||= Block.order(timestamp: :desc).first
   end
 end

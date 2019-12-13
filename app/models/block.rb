@@ -27,6 +27,7 @@ class Block < ApplicationRecord
   scope :recent, -> { order(timestamp: :desc) }
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
+  scope :h24, -> { where("timestamp > ?", 24.hours.ago.to_datetime.strftime("%Q")) }
 
   after_commit :flush_cache
 
