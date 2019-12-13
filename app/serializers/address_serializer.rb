@@ -20,4 +20,8 @@ class AddressSerializer
   attribute :is_special do |object|
     object.special?.to_s
   end
+
+  attribute :special_address, if: Proc.new { |record| record.special? } do |object|
+    Settings.special_addresses[object.address_hash]
+  end
 end
