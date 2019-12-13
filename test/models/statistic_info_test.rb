@@ -26,18 +26,11 @@ class StatisticInfoTest < ActiveSupport::TestCase
   end
 
   test ".current_epoch_difficulty should return current epoch difficulty" do
-    CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
-      CKB::Types::Epoch.new(
-        compact_target: "0x1000",
-        length: "0x07d0",
-        number: "0x0",
-        start_number: "0x0"
-      )
-    )
+    block = create(:block, epoch: 1, length: 1800, start_number: 1000)
     statistic_info = StatisticInfo.new
 
-    current_epoch_difficulty = CkbUtils.compact_to_difficulty(CkbSync::Api.instance.get_current_epoch.compact_target)
-    assert_equal current_epoch_difficulty, statistic_info.current_epoch_difficulty
+
+    assert_equal block.difficulty, statistic_info.current_epoch_difficulty
   end
 
   test ".average_block_time should return latest 100 average block time" do
