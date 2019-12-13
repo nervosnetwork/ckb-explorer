@@ -1,4 +1,4 @@
-x# [](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12-13)
+# [0.8.1](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12-13)
 
 
 ### Bug Fixes
@@ -21,7 +21,7 @@ x# [](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12
 
 
 
-# [](https://github.com/shaojunda/ckb-explorer/compare/v0.7.2...v.8.0) (2019-12-09)
+# [0.8.0](https://github.com/shaojunda/ckb-explorer/compare/v0.7.2...v.8.0) (2019-12-09)
 
 
 ### Features
@@ -62,7 +62,7 @@ x# [](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12
 
 
 
-# [](https://github.com/shaojunda/ckb-explorer/compare/v0.7.1...v.7.2) (2019-11-18)
+# [0.7.2](https://github.com/shaojunda/ckb-explorer/compare/v0.7.1...v.7.2) (2019-11-18)
 
 ### Features
 
@@ -71,7 +71,7 @@ x# [](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12
 
 
 
-# [](https://github.com/shaojunda/ckb-explorer/compare/v0.7.0...v0.7.1) (2019-11-17)
+# [0.7.1](https://github.com/shaojunda/ckb-explorer/compare/v0.7.0...v0.7.1) (2019-11-17)
 
 
 ### Bug Fixes
@@ -217,7 +217,7 @@ x# [](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12
 
 
 
-# [](https://github.com/shaojunda/ckb-explorer/compare/v0.4.1...v) (2019-09-21)
+# [0.4.1](https://github.com/shaojunda/ckb-explorer/compare/v0.4.0...v.4.1) (2019-09-21)
 
 
 ### Features
@@ -235,7 +235,7 @@ x# [](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12
 
 
 
-# [](https://github.com/shaojunda/ckb-explorer/compare/v0.4.0...v) (2019-09-16)
+# [0.4.0](https://github.com/shaojunda/ckb-explorer/compare/v0.4.0...v) (2019-09-16)
 
 
 ### Features
@@ -280,7 +280,7 @@ x# [](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12
 
 
 
-# [](https:/    /github.com/shaojunda/ckb-explorer/compare/v0.2.0...v) (2019-08-30)
+# [0.2.0](https:/    /github.com/shaojunda/ckb-explorer/compare/v0.2.0...v.1.0) (2019-08-30)
 
 
 ### Bug Fixes
@@ -315,7 +315,7 @@ x# [](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12
 
 
 
-# [](https://github.com/shaojunda/ckb-explorer/compare/v0.1.0...v) (2019-08-21)
+# [0.1.0](https://github.com/shaojunda/ckb-explorer/compare/v0.1.0...v) (2019-08-21)
 
 
 ### Bug Fixes
