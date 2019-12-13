@@ -35,6 +35,10 @@ class AddressPresenter
     ckb_transactions.count
   end
 
+  def special?
+    object.first.special?
+  end
+
   def ckb_transactions
     ckb_transaction_ids = AccountBook.where(address_id: object.pluck(:id)).select(:ckb_transaction_id).distinct
     CkbTransaction.where(id: ckb_transaction_ids).recent

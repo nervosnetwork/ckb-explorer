@@ -17,4 +17,7 @@ class AddressSerializer
   attribute :interest do |object|
     object.interest.to_s
   end
+  attribute :is_special do |object|
+    object.special?.to_s
+  end
 end
