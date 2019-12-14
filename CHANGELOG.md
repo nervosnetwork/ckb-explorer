@@ -1,3 +1,13 @@
+# [0.8.2](https://github.com/shaojunda/ckb-explorer/compare/v0.8.1...v.8.2) (2019-12-14)
+
+
+### Features
+
+* return special address when the address is special ([6afd77e](https://github.com/shaojunda/ckb-explorer/commit/6afd77e))
+* return special tag for special addresses ([c9d6b09](https://github.com/shaojunda/ckb-explorer/commit/c9d6b09))
+
+
+
 # [0.8.1](https://github.com/shaojunda/ckb-explorer/compare/v0.8.0...v.8.1) (2019-12-13)
 
 
