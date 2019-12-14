@@ -33,8 +33,7 @@ class Address < ApplicationRecord
       if QueryKeyUtils.valid_hex?(query_key)
         find_by(lock_hash: query_key)
       else
-        processed_query_key = Settings.special_addresses[query_key] || query_key
-        where(address_hash: processed_query_key).to_a.presence || NullAddress.new(query_key)
+        where(address_hash: query_key).to_a.presence || NullAddress.new(query_key)
       end
     end
   end
@@ -48,6 +47,10 @@ class Address < ApplicationRecord
   def flush_cache
     Rails.cache.delete([self.class.name, address_hash])
     Rails.cache.delete([self.class.name, lock_hash])
+  end
+
+  def special?
+    Settings.special_addresses[address_hash].present?
   end
 end
 
