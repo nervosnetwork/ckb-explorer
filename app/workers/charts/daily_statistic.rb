@@ -13,7 +13,7 @@ module Charts
       addresses_count = Address.where("block_timestamp <= ?", ended_at).count
       deposit_cells = CellOutput.where(cell_type: "nervos_dao_deposit").where("block_timestamp <= ?", ended_at)
       total_dao_deposit = datetime.blank? ? deposit_cells.where(status: "live").sum(:capacity) : deposit_cells.sum(:capacity)
-      doc/api.raml
+
       block_timestamp = Block.created_after(started_at).created_before(ended_at).recent.pick(:timestamp)
       daily_statistic = ::DailyStatistic.create_or_find_by!(block_timestamp: block_timestamp)
       daily_statistic.update(created_at_unixtimestamp: to_be_counted_date.to_i, transactions_count: daily_ckb_transactions_count,
