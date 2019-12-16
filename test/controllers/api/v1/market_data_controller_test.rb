@@ -5,6 +5,7 @@ module Api
     class MarketDataControllerTest < ActionDispatch::IntegrationTest
       test "should set right content type when call index" do
         create(:block, dao: "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007")
+        create(:address, address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
         valid_get api_v1_market_datum_url("circulating_supply")
 
         assert_equal "application/vnd.api+json", response.media_type
@@ -23,6 +24,7 @@ module Api
 
       test "should return current circulating supply" do
         create(:block, dao: "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007")
+        create(:address, address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
         valid_get api_v1_market_datum_url("circulating_supply")
         MarketData.new("circulating_supply").call
 

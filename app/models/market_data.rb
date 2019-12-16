@@ -38,7 +38,7 @@ class MarketData
   end
 
   def circulating_supply
-    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked
+    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked - bug_bounty_locked
 
     (result / 10**8).truncate(8)
   end
@@ -100,5 +100,9 @@ class MarketData
     released_time = Time.zone.parse("2020-07-01")
 
     current_time < released_time ? FOUNDATION_RESERVE_QUOTA : 0
+  end
+
+  def bug_bounty_locked
+    Address.find_by(address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc").balance
   end
 end
