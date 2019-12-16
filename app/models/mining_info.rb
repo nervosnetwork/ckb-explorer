@@ -1,5 +1,5 @@
 class MiningInfo < ApplicationRecord
-  enum status: { mined: 0, issued: 1, reverted: 2 }
+  enum status: { mined: 0, reverted: 2 }
 
   belongs_to :block
   belongs_to :address

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_13_030520) do
+ActiveRecord::Schema.define(version: 2019_12_16_080206) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -32,7 +32,6 @@ ActiveRecord::Schema.define(version: 2019_12_13_030520) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.binary "lock_hash"
-    t.integer "pending_reward_blocks_count", default: 0
     t.decimal "dao_deposit", precision: 30, default: "0"
     t.decimal "interest", precision: 30, default: "0"
     t.decimal "block_timestamp", precision: 30

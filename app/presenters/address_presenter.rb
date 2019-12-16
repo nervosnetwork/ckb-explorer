@@ -35,10 +35,6 @@ class AddressPresenter
     object.first.cached_lock_script
   end
 
-  def pending_reward_blocks_count
-    [object.reduce(0) { |sum, addr| sum + addr.pending_reward_blocks_count }, 0].max
-  end
-
   def ckb_transactions_count
     ckb_transactions.count
   end

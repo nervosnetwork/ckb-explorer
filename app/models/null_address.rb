@@ -26,10 +26,6 @@ class NullAddress
 
   def cached_lock_script; end
 
-  def pending_reward_blocks_count
-    0
-  end
-
   def dao_deposit
     0
   end

@@ -8,9 +8,6 @@ class AddressSerializer
   attribute :transactions_count do |object|
     object.ckb_transactions_count.to_s
   end
-  attribute :pending_reward_blocks_count do |object|
-    object.pending_reward_blocks_count.to_s
-  end
   attribute :dao_deposit do |object|
     object.dao_deposit.to_s
   end
