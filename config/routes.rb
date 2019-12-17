@@ -9,6 +9,9 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      namespace :external do
+        resources :stats, only: :show
+      end
       resources :blocks, only: %i(index show)
       resources :address_transactions, only: :show
       resources :block_transactions, only: :show
