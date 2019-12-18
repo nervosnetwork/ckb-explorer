@@ -29,4 +29,76 @@ class LockScriptTest < ActiveSupport::TestCase
       assert_equal unpack_attribute(lock_script, "code_hash"), lock_script.code_hash
     end
   end
+
+  test "#lock_info should return nil when code hash is not secp multisig cell type hash" do
+    CkbSync::Api.any_instance.stubs(:get_tip_header).returns(
+      CKB::Types::BlockHeader.new(
+        compact_target: "0x1a29391f",
+        hash: "0xc68b7a63e8b0ab82d7e13fe8c580e61d7c156d13d002f3283bf34fdbed5c0cb2",
+        number: "0x36330",
+        parent_hash: "0xff5b1f89d8672fed492ebb34be8b2f12ff6cdfb5347e41448d2710f8a7ba1517",
+        nonce: "0x7f22eaf01000000000000002c14a3d1",
+        timestamp: "0x16ef4a6ae35",
+        transactions_root: "0x304b48778593f4aa6677298289e05b0764e94a1f84c7b771e34138849ceeec3f",
+        proposals_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        uncles_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        version: "0x0",
+        epoch: "0x5eb00a3000089",
+        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007"
+      )
+    )
+    address = create(:address)
+    lock_script = create(:lock_script, address: address, args: "0xda648442dbb7347e467d1d09da13e5cd3a0ef0e1", code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8")
+
+    assert_nil lock_script.lock_info
+  end
+
+  test "#lock_info should return nil when args size is not equal to 28" do
+    CkbSync::Api.any_instance.stubs(:get_tip_header).returns(
+      CKB::Types::BlockHeader.new(
+        compact_target: "0x1a29391f",
+        hash: "0xc68b7a63e8b0ab82d7e13fe8c580e61d7c156d13d002f3283bf34fdbed5c0cb2",
+        number: "0x36330",
+        parent_hash: "0xff5b1f89d8672fed492ebb34be8b2f12ff6cdfb5347e41448d2710f8a7ba1517",
+        nonce: "0x7f22eaf01000000000000002c14a3d1",
+        timestamp: "0x16ef4a6ae35",
+        transactions_root: "0x304b48778593f4aa6677298289e05b0764e94a1f84c7b771e34138849ceeec3f",
+        proposals_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        uncles_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        version: "0x0",
+        epoch: "0x317025a000077",
+        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007"
+      )
+    )
+    address = create(:address)
+    lock_script = create(:lock_script, address: address, args: "0xda648442dbb7347e467d1d09da13e5cd3a0ef0e1", code_hash: ENV["SECP_MULTISIG_CELL_TYPE_HASH"] )
+
+    assert_nil lock_script.lock_info
+  end
+
+  test "#lock_info should return specific unlock time when since index is larger than epoch length" do
+    CkbSync::Api.any_instance.stubs(:get_tip_header).returns(
+      CKB::Types::BlockHeader.new(
+        compact_target: "0x1a29391f",
+        hash: "0xc68b7a63e8b0ab82d7e13fe8c580e61d7c156d13d002f3283bf34fdbed5c0cb2",
+        number: "0x1a4cd",
+        parent_hash: "0xff5b1f89d8672fed492ebb34be8b2f12ff6cdfb5347e41448d2710f8a7ba1517",
+        nonce: "0x7f22eaf01000000000000002c14a3d1",
+        timestamp: "0x16ef4a6ae35",
+        transactions_root: "0x304b48778593f4aa6677298289e05b0764e94a1f84c7b771e34138849ceeec3f",
+        proposals_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        uncles_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        version: "0x0",
+        epoch: "0x317025a000077",
+        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007"
+      )
+    )
+    address = create(:address)
+    create(:block, number: 107036, start_number: 106327, epoch: 118, timestamp: 1576648516881, length: 796)
+    lock_script = create(:lock_script, address: address, args: "0x691fdcdc80ca82a4cb15826dcb7f0cf04cd821367600004506080720", code_hash: ENV["SECP_MULTISIG_CELL_TYPE_HASH"] )
+    expected_lock_info = { status: "unlocked", epoch_number: "118", epoch_index: "1605", estimated_unlock_time: "1576648516881" }
+
+    assert_equal expected_lock_info, lock_script.lock_info
+  end
+
 end
