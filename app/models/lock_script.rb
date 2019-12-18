@@ -28,7 +28,7 @@ class LockScript < ApplicationRecord
           block_interval = (since_value.number * 1800 + since_value.index * 1800 / since_value.length) - (tip_epoch.number * 1800 + tip_epoch.index * 1800 / tip_epoch.length)
           if block_interval.negative?
             block = Block.where(epoch: since_value.number).recent.first
-            since_value_index = since_value.index <= block.length ? since_value.index : since_value.index * block.length / since_value.length
+            since_value_index = since_value.index < block.length ? since_value.index : since_value.index * block.length / since_value.length
             block_timestamp = Block.where(number: block.start_number + since_value_index).pick(:timestamp)
             estimated_unlock_time = DateTime.strptime(block_timestamp.to_s, "%Q")
           else
