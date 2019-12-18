@@ -27,8 +27,9 @@ class LockScript < ApplicationRecord
           tip_epoch = CkbUtils.parse_epoch(CkbSync::Api.instance.get_tip_header.epoch)
           block_interval = (since_value.number * 1800 + since_value.index * 1800 / since_value.length) - (tip_epoch.number * 1800 + tip_epoch.index * 1800 / tip_epoch.length)
           if block_interval.negative?
-            start_number = Block.where(epoch: since_value.number).recent.pick(:start_number)
-            block_timestamp = Block.where(number: start_number + since_value.index).pick(:timestamp)
+            block = Block.where(epoch: since_value.number).recent.first
+            since_value_index = since_value.index <= block.length ? since_value.index : since_value.index * block.length / since_value.length
+            block_timestamp = Block.where(number: block.start_number + since_value_index).pick(:timestamp)
             estimated_unlock_time = DateTime.strptime(block_timestamp.to_s, "%Q")
           else
             tip_block_timestamp = Block.recent.where(epoch: tip_epoch.number).pick(:timestamp)
