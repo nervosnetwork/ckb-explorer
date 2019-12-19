@@ -59,8 +59,8 @@ class CkbTransaction < ApplicationRecord
 
   def normal_tx_display_outputs(previews)
     Rails.cache.realize("normal_tx_display_outputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
-      cell_outputs_for_display = previews ? outputs.limit(10) : outputs
-      cell_outputs_for_display.order(:id).map do |output|
+      cell_outputs_for_display = previews ? outputs.order(:id).limit(10) : outputs.order(:id)
+      cell_outputs_for_display.map do |output|
         consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
         display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
         display_output[:dao_type_hash] = ENV["DAO_TYPE_HASH"] unless output.normal?
@@ -81,11 +81,12 @@ class CkbTransaction < ApplicationRecord
 
   def normal_tx_display_inputs(previews)
     Rails.cache.realize("normal_tx_display_inputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
-      cell_inputs_for_display = previews ? cell_inputs.limit(10) : cell_inputs
-      cell_inputs_for_display.order(:id).map do |cell_input|
+      cell_inputs_for_display = previews ? cell_inputs.order(:id).limit(10) : cell_inputs.order(:id)
+      cell_inputs_for_display.each_with_index.map do |cell_input, index|
         previous_cell_output = cell_input.previous_cell_output
         display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_type: previous_cell_output.cell_type }
         display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
+        display_input.merge!(attributes_for_dao_input(cell_outputs[index])) if previous_cell_output.nervos_dao_deposit?
 
         CkbUtils.hash_value_to_s(display_input)
       end

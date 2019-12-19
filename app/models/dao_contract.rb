@@ -7,8 +7,8 @@ class DaoContract < ApplicationRecord
   end
 
   def ckb_transactions
-    ckb_transaction_ids = CellOutput.nervos_dao_deposit.pluck("generated_by_id") + CellOutput.nervos_dao_withdrawing.pluck("consumed_by_id").compact
-    CkbTransaction.where(id: ckb_transaction_ids)
+    ckb_transaction_ids = CellOutput.nervos_dao_deposit.pluck("generated_by_id") + CellOutput.nervos_dao_withdrawing.pluck("generated_by_id") + CellOutput.nervos_dao_withdrawing.pluck("consumed_by_id").compact
+    CkbTransaction.where(id: ckb_transaction_ids.uniq)
   end
 end
 
