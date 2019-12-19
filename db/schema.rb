@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_13_030520) do
+ActiveRecord::Schema.define(version: 2019_12_16_080206) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -32,11 +32,12 @@ ActiveRecord::Schema.define(version: 2019_12_13_030520) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.binary "lock_hash"
-    t.integer "pending_reward_blocks_count", default: 0
     t.decimal "dao_deposit", precision: 30, default: "0"
     t.decimal "interest", precision: 30, default: "0"
     t.decimal "block_timestamp", precision: 30
     t.boolean "visible", default: true
+    t.decimal "live_cells_count", precision: 30, default: "0"
+    t.integer "mined_blocks_count", default: 0
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
   end
@@ -241,6 +242,17 @@ ActiveRecord::Schema.define(version: 2019_12_13_030520) do
     t.string "hash_type"
     t.index ["address_id"], name: "index_lock_scripts_on_address_id"
     t.index ["cell_output_id"], name: "index_lock_scripts_on_cell_output_id"
+  end
+
+  create_table "mining_infos", force: :cascade do |t|
+    t.bigint "address_id"
+    t.bigint "block_id"
+    t.decimal "block_number", precision: 30
+    t.integer "status", limit: 2, default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["block_id"], name: "index_mining_infos_on_block_id"
+    t.index ["block_number"], name: "index_mining_infos_on_block_number"
   end
 
   create_table "type_scripts", force: :cascade do |t|

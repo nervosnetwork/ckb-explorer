@@ -12,6 +12,7 @@ class Block < ApplicationRecord
   has_many :cell_outputs
   has_many :cell_inputs
   has_many :dao_events
+  has_many :mining_infos
 
   validates_presence_of :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
   validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed, numericality: { greater_than_or_equal_to: 0 }
@@ -53,6 +54,10 @@ class Block < ApplicationRecord
 
   def difficulty
     CkbUtils.compact_to_difficulty(compact_target)
+  end
+
+  def block_index_in_epoch
+     number - start_number
   end
 
   def self.find_block!(query_key)
