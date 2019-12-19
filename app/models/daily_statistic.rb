@@ -14,4 +14,12 @@ end
 #  created_at_unixtimestamp :integer
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
+#  dao_depositors_count     :string           default("0")
+#  unclaimed_compensation   :string           default("0")
+#  claimed_compensation     :string           default("0")
+#  average_deposit_time     :string           default("0")
+#  estimated_apc            :string           default("0")
+#  mining_reward            :string           default("0")
+#  deposit_compensation     :string           default("0")
+#  treasury_amount          :string           default("0")
 #

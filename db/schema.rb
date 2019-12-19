@@ -163,6 +163,14 @@ ActiveRecord::Schema.define(version: 2019_12_26_084920) do
     t.integer "created_at_unixtimestamp"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "dao_depositors_count", default: "0"
+    t.string "unclaimed_compensation", default: "0"
+    t.string "claimed_compensation", default: "0"
+    t.string "average_deposit_time", default: "0"
+    t.string "estimated_apc", default: "0"
+    t.string "mining_reward", default: "0"
+    t.string "deposit_compensation", default: "0"
+    t.string "treasury_amount", default: "0"
   end
 
   create_table "dao_contracts", force: :cascade do |t|
