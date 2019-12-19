@@ -22,6 +22,7 @@ end
 #  status             :integer          default("pending")
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
+#  block_timestamp    :decimal(30, )
 #
 # Indexes
 #
