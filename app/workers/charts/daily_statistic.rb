@@ -5,7 +5,7 @@ module Charts
     sidekiq_options retry: false
     sidekiq_options queue: "critical"
 
-    MILLISECONDS_IN_DAY = BigDecimal.new(24 * 60 * 60 * 1000)
+    MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
 
     def perform(datetime = nil)
       to_be_counted_date = datetime.presence || DateTime.now - 1.day
