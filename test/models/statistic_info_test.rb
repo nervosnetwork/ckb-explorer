@@ -29,7 +29,6 @@ class StatisticInfoTest < ActiveSupport::TestCase
     block = create(:block, epoch: 1, length: 1800, start_number: 1000)
     statistic_info = StatisticInfo.new
 
-
     assert_equal block.difficulty, statistic_info.current_epoch_difficulty
   end
 
