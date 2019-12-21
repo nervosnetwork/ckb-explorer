@@ -1,3 +1,32 @@
+# [0.8.3](https://github.com/shaojunda/ckb-explorer/compare/v0.8.2...v.8.3) (2019-12-19)
+
+
+### Bug Fixes
+
+* wrong lock info after the lockout period ([69697c0](https://github.com/shaojunda/ckb-explorer/commit/69697c0))
+
+
+### Features
+
+* add block index ([2361df5](https://github.com/shaojunda/ckb-explorer/commit/2361df5))
+* add live cells count to address serializer ([f9bd5b4](https://github.com/shaojunda/ckb-explorer/commit/f9bd5b4))
+* add live_cells_count to addresses ([34de215](https://github.com/shaojunda/ckb-explorer/commit/34de215))
+* add mined_blocks_count to addresses ([838802c](https://github.com/shaojunda/ckb-explorer/commit/838802c))
+* add mining info ([4e4d1e9](https://github.com/shaojunda/ckb-explorer/commit/4e4d1e9))
+* add mining info generation task ([55eb569](https://github.com/shaojunda/ckb-explorer/commit/55eb569))
+* add mining info model ([06f914f](https://github.com/shaojunda/ckb-explorer/commit/06f914f))
+* add new attributes to lock hash serializer ([e96d119](https://github.com/shaojunda/ckb-explorer/commit/e96d119))
+* add update addresses live cells count task ([dac2584](https://github.com/shaojunda/ckb-explorer/commit/dac2584))
+* return special address when the address is special ([29afdfb](https://github.com/shaojunda/ckb-explorer/commit/29afdfb))
+* return special address when the address is special ([6afd77e](https://github.com/shaojunda/ckb-explorer/commit/6afd77e))
+* return special tag for special addresses ([02bf4a6](https://github.com/shaojunda/ckb-explorer/commit/02bf4a6))
+* return special tag for special addresses ([c9d6b09](https://github.com/shaojunda/ckb-explorer/commit/c9d6b09))
+* revert mining info when fork ([190125f](https://github.com/shaojunda/ckb-explorer/commit/190125f))
+* revert mining infos ([4210f9e](https://github.com/shaojunda/ckb-explorer/commit/4210f9e))
+* save mining info on process block data ([b637784](https://github.com/shaojunda/ckb-explorer/commit/b637784))
+
+
+
 # [0.8.2](https://github.com/shaojunda/ckb-explorer/compare/v0.8.1...v.8.2) (2019-12-14)
 
 

@@ -163,7 +163,7 @@ GEM
       raabro (~> 1.1)
     globalid (0.4.2)
       activesupport (>= 4.2.0)
-    hashdiff (0.4.0)
+    hashdiff (1.0.0)
     hiredis (0.6.3)
     i18n (1.7.0)
       concurrent-ruby (~> 1.0)
@@ -214,7 +214,7 @@ GEM
     net-http-persistent (3.0.1)
       connection_pool (~> 2.2)
     newrelic_rpm (6.4.0.356)
-    nio4r (2.4.0)
+    nio4r (2.5.2)
     nokogiri (1.10.5)
       mini_portile2 (~> 2.4.0)
     numerizer (0.1.1)
@@ -232,10 +232,10 @@ GEM
     pry-nav (0.3.0)
       pry (>= 0.9.10, < 0.13.0)
     public_suffix (3.1.0)
-    puma (4.1.1)
+    puma (4.3.1)
       nio4r (~> 2.0)
     raabro (1.1.6)
-    rack (2.0.7)
+    rack (2.0.8)
     rack-accept (0.4.5)
       rack (>= 0.4)
     rack-attack (6.2.1)
@@ -399,7 +399,7 @@ DEPENDENCIES
   pg (>= 0.18, < 2.0)
   pry
   pry-nav
-  puma (~> 4.1.1)
+  puma (~> 4.3.1)
   rack-attack
   rack-cors
   rails (~> 6.0.0)

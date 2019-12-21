@@ -34,7 +34,7 @@ module CkbSync
         update_tx_fee_related_data(local_block, input_capacities)
         calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
 
-        update_miner_pending_rewards(local_block.miner_address)
+        update_current_block_mining_info(local_block)
         update_block_contained_address_info(local_block)
         update_block_reward_info(local_block)
         dao_events = build_new_dao_depositor_events(new_dao_depositor_events)
@@ -121,7 +121,6 @@ module CkbSync
 
       ApplicationRecord.transaction do
         issue_block_reward!(current_block)
-        CkbUtils.update_target_block_miner_address_pending_rewards(current_block)
       end
     end
 
@@ -131,7 +130,6 @@ module CkbSync
     end
 
     def revert_block_rewards(local_tip_block)
-      revert_miner_pending_reward_blocks_count(local_tip_block)
       target_block = local_tip_block.target_block
       target_block_number = local_tip_block.target_block_number
       return if target_block_number < 1 || target_block.blank?
@@ -149,17 +147,10 @@ module CkbSync
       target_block.update!(received_tx_fee_status: "pending")
     end
 
-    def revert_miner_pending_reward_blocks_count(local_tip_block)
-      miner_address = local_tip_block.miner_address
-      Address.decrement_counter(:pending_reward_blocks_count, miner_address.id, touch: true) if miner_address.present?
-    end
-
     def invalid_block(local_tip_block)
       ApplicationRecord.transaction do
-        dao_events = DaoEvent.where(block: local_tip_block).processed
-        dao_contract = DaoContract.default_contract
-        revert_dao_contract_related_operations(dao_contract, dao_events)
-
+        revert_dao_contract_related_operations(local_tip_block)
+        revert_mining_info(local_tip_block)
         local_tip_block.invalid!
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
@@ -168,7 +159,15 @@ module CkbSync
       end
     end
 
-    def revert_dao_contract_related_operations(dao_contract, dao_events)
+    def revert_mining_info(local_tip_block)
+      local_tip_block.mining_infos.first.reverted!
+      miner_address = local_tip_block.miner_address
+      miner_address.decrement!(:mined_blocks_count)
+    end
+
+    def revert_dao_contract_related_operations(local_tip_block)
+      dao_events = DaoEvent.where(block: local_tip_block).processed
+      dao_contract = DaoContract.default_contract
       revert_withdraw_from_dao(dao_contract, dao_events)
       revert_issue_interest(dao_contract, dao_events)
       revert_deposit_to_dao(dao_contract, dao_events)
@@ -489,6 +488,7 @@ module CkbSync
     def update_address_balance_and_ckb_transactions_count(address)
       address.balance = address.cell_outputs.live.sum(:capacity)
       address.ckb_transactions_count = AccountBook.where(address: address).select(:ckb_transaction_id).distinct.count
+      address.live_cells_count = address.cell_outputs.live.count
       address.save!
     end
 
@@ -518,8 +518,8 @@ module CkbSync
       ckb_transaction.transaction_fee = [transaction_fee, 0].max
     end
 
-    def update_miner_pending_rewards(miner_address)
-      CkbUtils.update_current_block_miner_address_pending_rewards(miner_address)
+    def update_current_block_mining_info(block)
+      CkbUtils.update_current_block_mining_info(block)
     end
   end
 end
