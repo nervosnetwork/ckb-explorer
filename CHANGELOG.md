@@ -1,3 +1,17 @@
+# [0.8.4](https://github.com/shaojunda/ckb-explorer/compare/v0.8.3...v0.8.4) (2019-12-21)
+
+
+### Bug Fixes
+
+* wrong lock info after the lockout period ([69697c0](https://github.com/shaojunda/ckb-explorer/commit/69697c0))
+
+
+### Features
+* add external stats api ([d9a3fdb](https://github.com/shaojunda/ckb-explorer/commit/d9a3fdb))
+* show nervos dao phase1 cells ([09ebc1b](https://github.com/shaojunda/ckb-explorer/commit/09ebc1b))
+
+
+
 # [0.8.3](https://github.com/shaojunda/ckb-explorer/compare/v0.8.2...v.8.3) (2019-12-19)
 
 

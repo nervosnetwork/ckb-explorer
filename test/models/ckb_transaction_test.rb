@@ -134,6 +134,24 @@ class CkbTransactionTest < ActiveSupport::TestCase
     assert_equal expected_display_input, ckb_transaction.display_inputs.first.sort
   end
 
+  test "#display_inputs should return dao display input when previous cell type is nervos_dao_deposit" do
+    CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x177825f000")
+    ckb_transaction = create(:ckb_transaction, tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042")
+    deposit_output_cell = create(:cell_output, block: ckb_transaction.block, capacity: 138 * 10**8, tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042", cell_index: 0, ckb_transaction: ckb_transaction, generated_by: ckb_transaction, consumed_by: ckb_transaction, cell_type: "nervos_dao_deposit", data: "0x0000000000000000")
+    phase1_block = create(:block, block_hash: "0x2ef70da7151f06c26810ea63afa133951e83eb80f85e001a408eac2f34366452")
+    phase1_transaction = create(:ckb_transaction, block: phase1_block, header_deps: ["0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2"], is_cellbase: false, tx_hash: "0xf9aca16b49c7d037920ad9e5aecdac272412a5fbe0396f7d95b112bf790dd39f")
+    create(:cell_input, block: phase1_transaction.block, ckb_transaction: phase1_transaction, previous_output: { index: 0, tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042" }, from_cell_base: false)
+    nervos_dao_withdrawing_cell = create(:cell_output, ckb_transaction: phase1_transaction, block: phase1_transaction.block, capacity: 13800000000, data: "0x7512000000000000", tx_hash: "0xf9aca16b49c7d037920ad9e5aecdac272412a5fbe0396f7d95b112bf790dd39f", cell_index: 0, generated_by: phase1_transaction, cell_type: "nervos_dao_withdrawing")
+    started_block_number = Block.find(deposit_output_cell.block_id).number
+    interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
+    ended_block_number = Block.find(phase1_transaction.block_id).number
+    expected_display_input = CkbUtils.hash_value_to_s({ id: deposit_output_cell.id, from_cellbase: false, capacity: deposit_output_cell.capacity, address_hash: deposit_output_cell.address_hash, generated_tx_hash: deposit_output_cell.generated_by.tx_hash, started_block_number: started_block_number, ended_block_number: ended_block_number, interest: interest, cell_type: deposit_output_cell.cell_type, dao_type_hash: ENV["DAO_TYPE_HASH"] }).sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash started_block_number ended_block_number interest cell_type dao_type_hash).sort
+
+    assert_equal expected_attributes, phase1_transaction.display_inputs.first.keys.sort
+    assert_equal expected_display_input, phase1_transaction.display_inputs.first.sort
+  end
+
   test "#display_outputs should contain dao attributes for dao transaction" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
     dao_output = ckb_transaction.outputs.first
