@@ -21,13 +21,19 @@ class DaoContract < ApplicationRecord
   def estimated_apc(deposit_epoch, deposited_epochs = EPOCHS_IN_ONE_NATURAL_YEAR)
     start_epoch_number = deposit_epoch.number
     end_epoch_number = start_epoch_number + deposited_epochs - 1
-    checkpoint_start =(start_epoch_number / EPOCHS_IN_PERIOD).ceil * EPOCHS_IN_PERIOD
-    checkpoint_end = (end_epoch_number / EPOCHS_IN_PERIOD).floor * EPOCHS_IN_PERIOD
+    scaled_end_epoch_number = end_epoch_number
+    ratio = (end_epoch_number - start_epoch_number) / EPOCHS_IN_ONE_NATURAL_YEAR
+    if ratio < 1
+      scaled_end_epoch_number = start_epoch_number + EPOCHS_IN_ONE_NATURAL_YEAR - 1
+      ratio = 1
+    end
+    checkpoint_start = ((start_epoch_number + 1) / EPOCHS_IN_PERIOD).ceil * EPOCHS_IN_PERIOD
+    checkpoint_end = ((scaled_end_epoch_number + 1) / EPOCHS_IN_PERIOD).floor * EPOCHS_IN_PERIOD
     checkpoints_size = (checkpoint_end - checkpoint_start) / EPOCHS_IN_PERIOD + 1
     checkpoints = checkpoints_size.to_i.times.map { |index| (index * EPOCHS_IN_PERIOD + checkpoint_start - 1).to_i }
 
     checkpoints.unshift(start_epoch_number.to_i) if checkpoints.empty? || checkpoints[0] > start_epoch_number
-    checkpoints.push(end_epoch_number.to_i) if checkpoints.last < end_epoch_number
+    checkpoints.push(scaled_end_epoch_number.to_i) if checkpoints.last < scaled_end_epoch_number
     end_epoch_numbers = checkpoints[1..-1]
     rates = end_epoch_numbers.each_with_index.map do |inner_end_epoch_number, index|
       epoch_index = deposit_epoch.index * 1800 / deposit_epoch.length
@@ -35,8 +41,8 @@ class DaoContract < ApplicationRecord
       end_epoch = OpenStruct.new(number: inner_end_epoch_number, index: epoch_index, length: 1800)
       rate(start_epoch, end_epoch)
     end
-
-    rates.reduce(1) { |memo, rate| memo * (1 + rate) } - 1
+    rate = rates.reduce(1) { |memo, rate| memo * (1 + rate) } - 1
+    (rate * 100) / ratio
   end
 
   private
