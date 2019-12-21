@@ -20,14 +20,15 @@ module Charts
       current_tip_block = Block.where("timestamp <= ?", ended_at).recent.first
       mining_reward = Block.where("timestamp <= ?", ended_at).sum(:secondary_reward)
       deposit_compensation = unclaimed_compensation(cell_outputs, current_tip_block) + claimed_compensation(cell_outputs)
-
+      estimated_apc = DaoContract.default_contract.estimated_apc(current_tip_block.fraction_epoch)
       block_timestamp = Block.created_after(started_at).created_before(ended_at).recent.pick(:timestamp)
       daily_statistic = ::DailyStatistic.create_or_find_by!(block_timestamp: block_timestamp)
       daily_statistic.update(created_at_unixtimestamp: to_be_counted_date.to_i, transactions_count: daily_ckb_transactions_count,
                              addresses_count: addresses_count, total_dao_deposit: total_dao_deposit,
                              dao_depositors_count: dao_depositors_count, unclaimed_compensation: unclaimed_compensation(cell_outputs, current_tip_block),
                              claimed_compensation: claimed_compensation(cell_outputs), average_deposit_time: average_deposit_time(cell_outputs),
-                             mining_reward: mining_reward, deposit_compensation: deposit_compensation, treasury_amount: treasury_amount(cell_outputs, current_tip_block))
+                             mining_reward: mining_reward, deposit_compensation: deposit_compensation, treasury_amount: treasury_amount(cell_outputs, current_tip_block),
+                             estimated_apc: estimated_apc)
     end
 
     private
