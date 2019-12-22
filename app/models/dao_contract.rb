@@ -45,7 +45,55 @@ class DaoContract < ApplicationRecord
     (rate * 100) / ratio
   end
 
+  def deposit_changes
+    total_deposit - latest_daily_statistic.total_dao_deposit.to_i
+  end
+
+  def depositor_changes
+    depositors_count - latest_daily_statistic.dao_depositors_count.to_i
+  end
+
+  def unclaimed_compensation_changes
+    latest_daily_statistic.unclaimed_compensation.to_i - penultimate_daily_statistic.unclaimed_compensation.to_i
+  end
+
+  def claimed_compensation_changes
+    latest_daily_statistic.claimed_compensation.to_i - penultimate_daily_statistic.claimed_compensation.to_i
+  end
+
+  def unclaimed_compensation
+    latest_daily_statistic.unclaimed_compensation
+  end
+
+  def claimed_compensation
+    latest_daily_statistic.claimed_compensation
+  end
+
+  def average_deposit_time
+    latest_daily_statistic.average_deposit_time
+  end
+
+  def mining_reward
+    latest_daily_statistic.mining_reward
+  end
+
+  def deposit_compensation
+    latest_daily_statistic.deposit_compensation
+  end
+
+  def treasury_amount
+    latest_daily_statistic.treasury_amount
+  end
+
   private
+
+  def latest_daily_statistic
+    @latest_daily_statistic ||= DailyStatistic.order(id: :desc).first || OpenStruct.new(total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0)
+  end
+
+  def penultimate_daily_statistic
+    @penultimate_daily_statistic ||= DailyStatistic.order(id: :desc).second || OpenStruct.new(total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0)
+  end
 
   def alpha(start_epoch_number)
     i = ((start_epoch_number + 1) / EPOCHS_IN_PERIOD).floor
