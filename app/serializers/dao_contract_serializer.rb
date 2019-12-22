@@ -1,9 +1,6 @@
 class DaoContractSerializer
   include FastJsonapi::ObjectSerializer
   set_type :nervos_dao
-  attribute :dao_type_hash do
-    ENV["DAO_TYPE_HASH"]
-  end
   attribute :total_deposit do |object|
     object.total_deposit.to_s
   end
@@ -39,5 +36,8 @@ class DaoContractSerializer
   end
   attribute :treasury_amount do |object|
     object.treasury_amount.to_s
+  end
+  attribute :estimated_apc do |object|
+    object.estimated_apc.to_s
   end
 end

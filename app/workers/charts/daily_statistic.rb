@@ -22,7 +22,7 @@ module Charts
       deposit_compensation = unclaimed_compensation(cell_outputs, current_tip_block) + claimed_compensation(cell_outputs)
       estimated_apc = DaoContract.default_contract.estimated_apc(current_tip_block.fraction_epoch)
       block_timestamp = Block.created_after(started_at).created_before(ended_at).recent.pick(:timestamp)
-      daily_statistic = ::DailyStatistic.create_or_find_by!(block_timestamp: block_timestamp)
+      daily_statistic = ::DailyStatistic.find_or_create_by!(block_timestamp: block_timestamp)
       daily_statistic.update(created_at_unixtimestamp: to_be_counted_date.to_i, transactions_count: daily_ckb_transactions_count,
                              addresses_count: addresses_count, total_dao_deposit: total_dao_deposit,
                              dao_depositors_count: dao_depositors_count, unclaimed_compensation: unclaimed_compensation(cell_outputs, current_tip_block),
@@ -63,7 +63,7 @@ module Charts
             tip_dao = current_tip_block.dao
             parse_dao = CkbUtils.parse_dao(dao)
             tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-            memo + cell_output.capacity * tip_parse_dao.ar_i / parse_dao.ar_i
+            memo + (cell_output.capacity * tip_parse_dao.ar_i / parse_dao.ar_i) - cell_output.capacity
           end
         end
     end

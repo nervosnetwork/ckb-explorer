@@ -18,7 +18,7 @@ class DaoContract < ApplicationRecord
     CkbTransaction.where(id: ckb_transaction_ids.uniq)
   end
 
-  def estimated_apc(deposit_epoch, deposited_epochs = EPOCHS_IN_ONE_NATURAL_YEAR)
+  def estimated_apc(deposit_epoch = tip_block_fraction_epoch, deposited_epochs = EPOCHS_IN_ONE_NATURAL_YEAR)
     start_epoch_number = deposit_epoch.number
     end_epoch_number = start_epoch_number + deposited_epochs - 1
     scaled_end_epoch_number = end_epoch_number
@@ -46,19 +46,19 @@ class DaoContract < ApplicationRecord
   end
 
   def deposit_changes
-    total_deposit - latest_daily_statistic.total_dao_deposit.to_i
+    total_deposit - latest_daily_statistic.total_dao_deposit.to_d
   end
 
   def depositor_changes
-    depositors_count - latest_daily_statistic.dao_depositors_count.to_i
+    depositors_count - latest_daily_statistic.dao_depositors_count.to_d
   end
 
   def unclaimed_compensation_changes
-    latest_daily_statistic.unclaimed_compensation.to_i - penultimate_daily_statistic.unclaimed_compensation.to_i
+    latest_daily_statistic.unclaimed_compensation.to_d - penultimate_daily_statistic.unclaimed_compensation.to_d
   end
 
   def claimed_compensation_changes
-    latest_daily_statistic.claimed_compensation.to_i - penultimate_daily_statistic.claimed_compensation.to_i
+    latest_daily_statistic.claimed_compensation.to_d - penultimate_daily_statistic.claimed_compensation.to_d
   end
 
   def unclaimed_compensation
@@ -86,6 +86,10 @@ class DaoContract < ApplicationRecord
   end
 
   private
+
+  def tip_block_fraction_epoch
+    Block.recent.first.fraction_epoch
+  end
 
   def latest_daily_statistic
     @latest_daily_statistic ||= DailyStatistic.order(id: :desc).first || OpenStruct.new(total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0)
