@@ -88,7 +88,7 @@ class DaoContract < ApplicationRecord
   private
 
   def tip_block_fraction_epoch
-    Block.recent.first.fraction_epoch
+    Block.recent.first&.fraction_epoch || OpenStruct.new(number: 0, index: 0, length: 1800)
   end
 
   def latest_daily_statistic
