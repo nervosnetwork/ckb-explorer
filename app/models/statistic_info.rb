@@ -21,9 +21,7 @@ class StatisticInfo
   end
 
   def estimated_epoch_time
-    Rails.cache.realize("estimated_epoch_time_#{tip_block.epoch}", expires_in: 4.hours) do
-      average_block_time(1000) * tip_block.length
-    end
+    tip_block.difficulty * tip_block.length / hash_rate
   end
 
   def transactions_last_24hrs
