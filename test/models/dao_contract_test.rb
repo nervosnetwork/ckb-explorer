@@ -59,4 +59,13 @@ class DaoContractTest < ActiveSupport::TestCase
 
     assert_equal expected_deposit_changes, dao_contract.deposit_changes
   end
+
+  test "depositor_changes should return difference between yesterday and today" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+    create(:daily_statistic)
+    latest_daily_statistic = DailyStatistic.order(id: :desc).first
+    expected_depositor_changes = dao_contract.depositors_count - latest_daily_statistic.dao_depositors_count.to_d
+
+    assert_equal expected_depositor_changes, dao_contract.depositor_changes
+  end
 end
