@@ -57,15 +57,17 @@ class DaoContractTest < ActiveSupport::TestCase
     latest_daily_statistic = DailyStatistic.order(id: :desc).first
     expected_deposit_changes = dao_contract.total_deposit - latest_daily_statistic.total_dao_deposit.to_d
 
+    assert_not_equal dao_contract.total_deposit, dao_contract.deposit_changes
     assert_equal expected_deposit_changes, dao_contract.deposit_changes
   end
 
   test "depositor_changes should return difference between beginning of today and current" do
     dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
-    create(:daily_statistic)
+    create(:daily_statistic, dao_depositors_count: 80)
     latest_daily_statistic = DailyStatistic.order(id: :desc).first
     expected_depositor_changes = dao_contract.depositors_count - latest_daily_statistic.dao_depositors_count.to_d
 
+    assert_not_equal dao_contract.depositors_count, dao_contract.depositor_changes
     assert_equal expected_depositor_changes, dao_contract.depositor_changes
   end
 
@@ -135,5 +137,29 @@ class DaoContractTest < ActiveSupport::TestCase
     latest_daily_statistic = DailyStatistic.order(id: :desc).first
 
     assert_equal latest_daily_statistic.treasury_amount, dao_contract.treasury_amount
+  end
+
+  test "deposit_changes should return current value when there is no daily_statistic" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+
+    assert_equal dao_contract.total_deposit, dao_contract.deposit_changes
+  end
+
+  test "depositor_changes should return current value when there is no daily_statistic" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+
+    assert_equal dao_contract.depositors_count, dao_contract.depositor_changes
+  end
+
+  test "unclaimed_compensation_changes should return zero when there is no daily_statistic" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+
+    assert_equal 0, dao_contract.unclaimed_compensation_changes
+  end
+
+  test "claimed_compensation_changes should return zero when there is no daily_statistic" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+
+    assert_equal 0, dao_contract.claimed_compensation_changes
   end
 end
