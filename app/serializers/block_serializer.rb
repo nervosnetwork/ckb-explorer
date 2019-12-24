@@ -46,6 +46,9 @@ class BlockSerializer
   attribute :epoch do |object|
     object.epoch.to_s
   end
+  attribute :block_index_in_epoch do |object|
+    object.block_index_in_epoch.to_s
+  end
   attribute :nonce do |object|
     object.nonce.to_s
   end

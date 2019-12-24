@@ -31,11 +31,6 @@ class NullAddressTest < ActiveSupport::TestCase
     assert_nil null_address.cached_lock_script
   end
 
-  test ".pending_reward_blocks_count should return zero" do
-    null_address = NullAddress.new("ckb1qyqxfde320py026hwvsev240t35mjjvsccgq5dugeg")
-    assert_equal 0, null_address.pending_reward_blocks_count
-  end
-
   test ".dao_deposit should return zero" do
     null_address = NullAddress.new("ckb1qyqxfde320py026hwvsev240t35mjjvsccgq5dugeg")
     assert_equal 0, null_address.dao_deposit

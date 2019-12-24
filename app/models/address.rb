@@ -5,6 +5,7 @@ class Address < ApplicationRecord
   has_many :cell_outputs, dependent: :destroy
   has_many :account_books, dependent: :destroy
   has_many :ckb_transactions, through: :account_books
+  has_many :mining_infos
   validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   scope :visible, -> { where(visible: true) }
@@ -58,19 +59,20 @@ end
 #
 # Table name: addresses
 #
-#  id                          :bigint           not null, primary key
-#  balance                     :decimal(30, )
-#  address_hash                :binary
-#  cell_consumed               :decimal(30, )
-#  ckb_transactions_count      :decimal(30, )    default(0)
-#  created_at                  :datetime         not null
-#  updated_at                  :datetime         not null
-#  lock_hash                   :binary
-#  pending_reward_blocks_count :integer          default(0)
-#  dao_deposit                 :decimal(30, )    default(0)
-#  interest                    :decimal(30, )    default(0)
-#  block_timestamp             :decimal(30, )
-#  visible                     :boolean          default(TRUE)
+#  id                     :bigint           not null, primary key
+#  balance                :decimal(30, )
+#  address_hash           :binary
+#  cell_consumed          :decimal(30, )
+#  ckb_transactions_count :decimal(30, )    default(0)
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  lock_hash              :binary
+#  dao_deposit            :decimal(30, )    default(0)
+#  interest               :decimal(30, )    default(0)
+#  block_timestamp        :decimal(30, )
+#  visible                :boolean          default(TRUE)
+#  live_cells_count       :decimal(30, )    default(0)
+#  mined_blocks_count     :integer          default(0)
 #
 # Indexes
 #

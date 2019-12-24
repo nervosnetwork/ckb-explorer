@@ -23,12 +23,16 @@ class AddressPresenter
     object.reduce(0) { |sum, addr| sum + addr.interest.to_i }
   end
 
-  def lock_script
-    object.first.cached_lock_script
+  def live_cells_count
+    object.reduce(0) { |sum, addr| sum + addr.live_cells_count.to_i }
   end
 
-  def pending_reward_blocks_count
-    [object.reduce(0) { |sum, addr| sum + addr.pending_reward_blocks_count }, 0].max
+  def mined_blocks_count
+    object.reduce(0) { |sum, addr| sum + addr.mined_blocks_count.to_i }
+  end
+
+  def lock_script
+    object.first.cached_lock_script
   end
 
   def ckb_transactions_count
