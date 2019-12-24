@@ -88,4 +88,52 @@ class DaoContractTest < ActiveSupport::TestCase
 
     assert_equal expected_claimed_compensation_changes, dao_contract.claimed_compensation_changes
   end
+
+  test "unclaimed_compensation should return beginning of today value" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+    create(:daily_statistic)
+    latest_daily_statistic = DailyStatistic.order(id: :desc).first
+
+    assert_equal latest_daily_statistic.unclaimed_compensation, dao_contract.unclaimed_compensation
+  end
+
+  test "claimed_compensation should return beginning of today value" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+    create(:daily_statistic)
+    latest_daily_statistic = DailyStatistic.order(id: :desc).first
+
+    assert_equal latest_daily_statistic.claimed_compensation, dao_contract.claimed_compensation
+  end
+
+  test "average_deposit_time should return beginning of today value" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+    create(:daily_statistic)
+    latest_daily_statistic = DailyStatistic.order(id: :desc).first
+
+    assert_equal latest_daily_statistic.average_deposit_time, dao_contract.average_deposit_time
+  end
+
+  test "mining_reward should return beginning of today value" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+    create(:daily_statistic)
+    latest_daily_statistic = DailyStatistic.order(id: :desc).first
+
+    assert_equal latest_daily_statistic.mining_reward, dao_contract.mining_reward
+  end
+
+  test "deposit_compensation should return beginning of today value" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+    create(:daily_statistic)
+    latest_daily_statistic = DailyStatistic.order(id: :desc).first
+
+    assert_equal latest_daily_statistic.deposit_compensation, dao_contract.deposit_compensation
+  end
+
+  test "treasury_amount should return beginning of today value" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+    create(:daily_statistic)
+    latest_daily_statistic = DailyStatistic.order(id: :desc).first
+
+    assert_equal latest_daily_statistic.treasury_amount, dao_contract.treasury_amount
+  end
 end
