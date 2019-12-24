@@ -51,7 +51,7 @@ class DaoContractTest < ActiveSupport::TestCase
     assert_equal expected_estimated_apc, dao_contract.estimated_apc(deposit_epoch, 2190 * 5.5).round(2)
   end
 
-  test "deposit_changes should return difference between yesterday and today" do
+  test "deposit_changes should return difference between beginning of today and current" do
     dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
     create(:daily_statistic)
     latest_daily_statistic = DailyStatistic.order(id: :desc).first
@@ -60,12 +60,22 @@ class DaoContractTest < ActiveSupport::TestCase
     assert_equal expected_deposit_changes, dao_contract.deposit_changes
   end
 
-  test "depositor_changes should return difference between yesterday and today" do
+  test "depositor_changes should return difference between beginning of today and current" do
     dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
     create(:daily_statistic)
     latest_daily_statistic = DailyStatistic.order(id: :desc).first
     expected_depositor_changes = dao_contract.depositors_count - latest_daily_statistic.dao_depositors_count.to_d
 
     assert_equal expected_depositor_changes, dao_contract.depositor_changes
+  end
+
+  test "unclaimed_compensation_changes should return difference within 24 hours" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+    create_list(:daily_statistic, 2)
+    latest_daily_statistic = DailyStatistic.order(id: :desc).first
+    penultimate_daily_statistic = DailyStatistic.order(id: :desc).second
+    expected_unclaimed_compensation_changes = penultimate_daily_statistic.unclaimed_compensation.to_d - latest_daily_statistic.unclaimed_compensation.to_d
+
+    assert_equal expected_unclaimed_compensation_changes, dao_contract.unclaimed_compensation_changes
   end
 end
