@@ -78,4 +78,14 @@ class DaoContractTest < ActiveSupport::TestCase
 
     assert_equal expected_unclaimed_compensation_changes, dao_contract.unclaimed_compensation_changes
   end
+
+  test "claimed_compensation_changes should return difference within 24 hours" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+    create_list(:daily_statistic, 2)
+    latest_daily_statistic = DailyStatistic.order(id: :desc).first
+    penultimate_daily_statistic = DailyStatistic.order(id: :desc).second
+    expected_claimed_compensation_changes = penultimate_daily_statistic.claimed_compensation.to_d - latest_daily_statistic.claimed_compensation.to_d
+
+    assert_equal expected_claimed_compensation_changes, dao_contract.claimed_compensation_changes
+  end
 end
