@@ -5,7 +5,7 @@ module Api
 
       def index
         ckb_transactions = CkbTransaction.recent.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
-        render json: CkbTransactionSerializer.new(ckb_transactions)
+        render json: CkbTransactionListSerializer.new(ckb_transactions)
       end
 
       def show
