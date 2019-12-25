@@ -132,6 +132,7 @@ end
 #  header_deps       :binary
 #  cell_deps         :jsonb
 #  live_cell_changes :integer
+#  capacity_involved :decimal(30, )
 #
 # Indexes
 #
