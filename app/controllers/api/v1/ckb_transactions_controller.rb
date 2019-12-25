@@ -6,10 +6,10 @@ module Api
 
       def index
         if from_home_page?
-          ckb_transactions = CkbTransaction.recent.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
+          ckb_transactions = CkbTransaction.recent.normal.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
           options = {}
         else
-          ckb_transactions = CkbTransaction.recent.page(@page).per(@page_size)
+          ckb_transactions = CkbTransaction.recent.normal.page(@page).per(@page_size)
           options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
         end
 
