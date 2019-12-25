@@ -502,7 +502,7 @@ module CkbSync
       txs = []
       ckb_transactions.each do |ckb_transaction|
         update_transaction_fee(ckb_transaction, input_capacities[ckb_transaction.id].sum, output_capacities[ckb_transaction.id].sum)
-        ckb_transaction.capacity_involved = input_capacities[ckb_transaction.id].sum
+        ckb_transaction.capacity_involved = input_capacities[ckb_transaction.id].sum unless ckb_transaction.is_cellbase
         txs << ckb_transaction
       end
 
