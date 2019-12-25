@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_25_131337) do
+ActiveRecord::Schema.define(version: 2019_12_25_153746) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -233,6 +233,7 @@ ActiveRecord::Schema.define(version: 2019_12_25_131337) do
     t.decimal "length", precision: 30, default: "0"
     t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
+    t.integer "live_cell_changes"
   end
 
   create_table "lock_scripts", force: :cascade do |t|
