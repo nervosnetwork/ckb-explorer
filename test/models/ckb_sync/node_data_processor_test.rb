@@ -263,9 +263,9 @@ module CkbSync
         create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block)
         create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
         local_block = node_data_processor.process_block(node_block)
-        expected_capacity_involved = local_block.ckb_transactions.map(&:capacity_involved)
+        expected_capacity_involved = local_block.ckb_transactions.normal.map(&:capacity_involved)
 
-        assert_equal expected_capacity_involved, local_block.ckb_transactions.map { |transaction| transaction.inputs.sum(:capacity) }
+        assert_equal expected_capacity_involved, local_block.ckb_transactions.normal.map { |transaction| transaction.inputs.sum(:capacity) }
       end
     end
 
