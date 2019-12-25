@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_16_080206) do
+ActiveRecord::Schema.define(version: 2019_12_25_110229) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -89,6 +89,7 @@ ActiveRecord::Schema.define(version: 2019_12_16_080206) do
     t.decimal "length", precision: 30, default: "0"
     t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
+    t.integer "live_cell_changes"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
@@ -147,6 +148,7 @@ ActiveRecord::Schema.define(version: 2019_12_16_080206) do
     t.jsonb "witnesses"
     t.binary "header_deps"
     t.jsonb "cell_deps"
+    t.integer "live_cell_changes"
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
