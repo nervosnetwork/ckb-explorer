@@ -293,7 +293,9 @@ module Api
 
         ckb_transactions = CkbTransaction.order(block_timestamp: :desc).limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
         response_ckb_transactions = CkbTransactionListSerializer.new(ckb_transactions, {}).serialized_json
+
         assert_equal response_ckb_transactions, response.body
+        assert_equal [false], CkbTransaction.where(id: json["data"].map { |tx| tx.dig("id") }).pluck(:is_cellbase).uniq
         assert_equal 15, json["data"].size
       end
 
