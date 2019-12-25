@@ -179,7 +179,7 @@ module Api
 
         valid_get api_v1_ckb_transactions_url
 
-        assert_equal CkbTransactionSerializer.new(ckb_transactions).serialized_json, response.body
+        assert_equal CkbTransactionListSerializer.new(ckb_transactions).serialized_json, response.body
       end
 
       test "serialized objects should in reverse order of timestamp" do
@@ -201,7 +201,7 @@ module Api
         valid_get api_v1_ckb_transactions_url
 
         response_ckb_transaction = json["data"].first
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps).sort, response_ckb_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp capacity_involved live_cell_changes).sort, response_ckb_transaction["attributes"].keys.sort
       end
 
       test "should return the corresponding number of ckb transactions " do
@@ -211,7 +211,7 @@ module Api
         valid_get api_v1_ckb_transactions_url
 
         ckb_transactions = CkbTransaction.order(block_timestamp: :desc).limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
-        response_ckb_transaction = CkbTransactionSerializer.new(ckb_transactions).serialized_json
+        response_ckb_transaction = CkbTransactionListSerializer.new(ckb_transactions).serialized_json
         assert_equal response_ckb_transaction, response.body
         assert_equal 15, json["data"].size
       end
@@ -221,7 +221,7 @@ module Api
 
         valid_get api_v1_ckb_transactions_url
 
-        response_ckb_transaction = CkbTransactionSerializer.new(ckb_transactions).serialized_json
+        response_ckb_transaction = CkbTransactionListSerializer.new(ckb_transactions).serialized_json
 
         assert_equal [], json["data"]
         assert_equal response_ckb_transaction, response.body
