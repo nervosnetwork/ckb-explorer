@@ -2,7 +2,7 @@ module Charts
   class DailyStatisticGenerator
     MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
 
-    def initialize(datetime)
+    def initialize(datetime = nil)
       @datetime = datetime
     end
 
