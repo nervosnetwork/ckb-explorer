@@ -261,6 +261,55 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should return 15 records when page and page_size are not set" do
+        block = create(:block, :with_block_hash)
+        create_list(:ckb_transaction, 20, block: block)
+
+        valid_get api_v1_ckb_transactions_url
+
+        assert_equal 15, json["data"].size
+      end
+
+      test "should return corresponding page's records when page is set and page_size is not set" do
+        page = 2
+        block = create(:block, :with_block_hash)
+        create_list(:ckb_transaction, 20, block: block)
+        ckb_transactions = CkbTransaction.order(block_timestamp: :desc).limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
+
+        valid_get api_v1_ckb_transactions_url, params: { page: page }
+
+        response_ckb_transactions = CkbTransactionListSerializer.new(ckb_transactions, {}).serialized_json
+
+        assert_equal response_ckb_transactions, response.body
+        assert_equal 15, json["data"].size
+      end
+
+      test "should return the corresponding number of ckb_transactions when page is not set and page_size is set" do
+        block = create(:block, :with_block_hash)
+        create_list(:ckb_transaction, 20, block: block)
+
+        valid_get api_v1_ckb_transactions_url, params: { page_size: 12 }
+
+        ckb_transactions = CkbTransaction.order(block_timestamp: :desc).limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
+        response_ckb_transactions = CkbTransactionListSerializer.new(ckb_transactions, {}).serialized_json
+        assert_equal response_ckb_transactions, response.body
+        assert_equal 15, json["data"].size
+      end
+
+      test "should return the corresponding blocks when page and page_size are set" do
+        block = create(:block, :with_block_hash)
+        create_list(:ckb_transaction, 15, block: block)
+        page = 2
+        page_size = 5
+        ckb_transactions =  CkbTransaction.order(block_timestamp: :desc).page(page).per(page_size)
+
+        valid_get api_v1_ckb_transactions_url, params: { page: page, page_size: page_size }
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
+        response_ckb_transactions = CkbTransactionListSerializer.new(ckb_transactions, options).serialized_json
+        assert_equal response_ckb_transactions, response.body
+      end
     end
   end
 end
