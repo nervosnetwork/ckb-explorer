@@ -1084,54 +1084,54 @@ types:
           application/vnd.api+json:
             type: ckb_transaction_list_response
             example: |
-            {
-              "data": [
-                 {
-                    "id": "519759",
-                    "type": "ckb_transaction_list",
-                    "attributes": {
-                      "transaction_hash": "0x51c4008aecf7b32762f8de7b1e0db97b0b99af6dfbedacddca4723e4e3469735",
-                      "block_number": "355801",
-                      "block_timestamp": "1577284662673",
-                      "capacity_involved": "",
-                      "live_cell_changes": "0"
-                    }
-                 },
-                 {
-                   "id": "519760",
-                   "type": "ckb_transaction_list",
-                   "attributes": {
-                     "transaction_hash": "0x93dcd049c02c94a4f8b83ed86e6dfdd662bb381585f6294e5cc316f301ed688d",
-                     "block_number": "355801",
-                     "block_timestamp": "1577284662673",
-                     "capacity_involved": "",
-                     "live_cell_changes": "0"
-                   }
-                 },
-                  {
-                    "id": "519757",
-                    "type": "ckb_transaction_list",
-                    "attributes": {
-                      "transaction_hash": "0xfe642e494030e77c46753f7ac2d29c38d6780e38c1a3a7accb6b4adf415a511b",
-                      "block_number": "355800",
-                      "block_timestamp": "1577284656255",
-                      "capacity_involved": "",
-                      "live_cell_changes": "0"
-                    }
-                 },
-              ]
-              "meta": {
-                "total": 100,
-                "page_size": 15,
-              },
-              links: {
-                "self": "https://explorer.nervos.org/api/v1/transactions?page_size=15",
-                "first": "https://explorer.nervos.org/api/v1/transactions?page=1&page_size=10",
-                "prev": "https://explorer.nervos.org/api/v1/transactions?page=2&page_size=10",
-                "next": "https://explorer.nervos.org/api/v1/transactions?page=2&page_size=15",
-                "last": "https://explorer.nervos.org/api/v1/transactions?page=28909&page_size=15"
+              {
+                "data": [
+                   {
+                      "id": "519759",
+                      "type": "ckb_transaction_list",
+                      "attributes": {
+                        "transaction_hash": "0x51c4008aecf7b32762f8de7b1e0db97b0b99af6dfbedacddca4723e4e3469735",
+                        "block_number": "355801",
+                        "block_timestamp": "1577284662673",
+                        "capacity_involved": "",
+                        "live_cell_changes": "0"
+                      }
+                   },
+                   {
+                     "id": "519760",
+                     "type": "ckb_transaction_list",
+                     "attributes": {
+                       "transaction_hash": "0x93dcd049c02c94a4f8b83ed86e6dfdd662bb381585f6294e5cc316f301ed688d",
+                       "block_number": "355801",
+                       "block_timestamp": "1577284662673",
+                       "capacity_involved": "",
+                       "live_cell_changes": "0"
+                     }
+                   },
+                    {
+                      "id": "519757",
+                      "type": "ckb_transaction_list",
+                      "attributes": {
+                        "transaction_hash": "0xfe642e494030e77c46753f7ac2d29c38d6780e38c1a3a7accb6b4adf415a511b",
+                        "block_number": "355800",
+                        "block_timestamp": "1577284656255",
+                        "capacity_involved": "",
+                        "live_cell_changes": "0"
+                      }
+                   },
+                ]
+                "meta": {
+                  "total": 100,
+                  "page_size": 15,
+                },
+                links: {
+                  "self": "https://explorer.nervos.org/api/v1/transactions?page_size=15",
+                  "first": "https://explorer.nervos.org/api/v1/transactions?page=1&page_size=10",
+                  "prev": "https://explorer.nervos.org/api/v1/transactions?page=2&page_size=10",
+                  "next": "https://explorer.nervos.org/api/v1/transactions?page=2&page_size=15",
+                  "last": "https://explorer.nervos.org/api/v1/transactions?page=28909&page_size=15"
+                }
               }
-            }
 
   /{tx_hash}:
     uriParameters:
