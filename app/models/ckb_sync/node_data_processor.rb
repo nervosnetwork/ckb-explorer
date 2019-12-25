@@ -337,7 +337,8 @@ module CkbSync
         block_timestamp: local_block.timestamp,
         transaction_fee: 0,
         witnesses: transaction.witnesses,
-        is_cellbase: transaction_index.zero?
+        is_cellbase: transaction_index.zero?,
+        live_cell_changes: transaction.outputs.count - transaction.inputs.count
       )
     end
 
