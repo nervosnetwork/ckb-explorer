@@ -502,10 +502,11 @@ module CkbSync
       txs = []
       ckb_transactions.each do |ckb_transaction|
         update_transaction_fee(ckb_transaction, input_capacities[ckb_transaction.id].sum, output_capacities[ckb_transaction.id].sum)
+        ckb_transaction.capacity_involved = input_capacities[ckb_transaction.id].sum
         txs << ckb_transaction
       end
 
-      CkbTransaction.import!(txs, validate: false, on_duplicate_key_update: [:transaction_fee])
+      CkbTransaction.import!(txs, validate: false, on_duplicate_key_update: [:transaction_fee, :capacity_involved])
       local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
       local_block.save!
     rescue ActiveRecord::RecordInvalid
