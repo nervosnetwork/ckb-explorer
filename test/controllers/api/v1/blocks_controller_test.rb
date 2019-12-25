@@ -72,7 +72,7 @@ module Api
         valid_get api_v1_blocks_url
 
         response_block = json["data"].first
-        assert_equal %w(number transactions_count reward miner_hash timestamp ).sort, response_block["attributes"].keys.sort
+        assert_equal %w(number transactions_count reward miner_hash timestamp live_cell_changes).sort, response_block["attributes"].keys.sort
       end
 
       test "should return error object when page param is invalid" do

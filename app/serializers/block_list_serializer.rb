@@ -15,4 +15,7 @@ class BlockListSerializer
   attribute :transactions_count do |object|
     object.ckb_transactions_count.to_s
   end
+  attribute :live_cell_changes do |object|
+    object.live_cell_changes.to_s
+  end
 end
