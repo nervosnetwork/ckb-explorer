@@ -12,6 +12,7 @@ end
 #  epoch_number :decimal(30, )
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
+#  hash_rate    :string
 #
 # Indexes
 #
