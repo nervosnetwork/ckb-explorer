@@ -309,7 +309,7 @@ module Api
         valid_get api_v1_ckb_transactions_url, params: { page: page, page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
-        response_ckb_transactions = CkbTransactionSerializer.new(ckb_transactions, options).serialized_json
+        response_ckb_transactions = CkbTransactionListSerializer.new(ckb_transactions, options).serialized_json
         assert_equal response_ckb_transactions, response.body
       end
     end

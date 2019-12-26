@@ -11,7 +11,7 @@ module Api
         else
           ckb_transactions = CkbTransaction.recent.normal.page(@page).per(@page_size)
           options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
-          render json: CkbTransactionSerializer.new(ckb_transactions, options)
+          render json: CkbTransactionListSerializer.new(ckb_transactions, options)
         end
       end
 
