@@ -1,5 +1,5 @@
 class EpochStatistic < ApplicationRecord
-  VALID_INDICATORS = %w(difficulty uncle_rate).freeze
+  VALID_INDICATORS = %w(difficulty uncle_rate hash_rate).freeze
 end
 
 # == Schema Information
