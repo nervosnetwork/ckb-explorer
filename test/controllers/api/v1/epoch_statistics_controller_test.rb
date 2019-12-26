@@ -50,6 +50,17 @@ module Api
         assert_equal EpochStatisticSerializer.new(block_statistic_data, { params: { indicator: "difficulty-uncle_rate" } }).serialized_json, response.body
       end
 
+      test "should return difficulty, hash_rate and epoch number" do
+        (1..15).each do |number|
+          EpochStatistic.create(epoch_number: number)
+        end
+        block_statistic_data = EpochStatistic.order(epoch_number: :desc).reverse
+        valid_get api_v1_epoch_statistic_url("difficulty-hash_rate")
+
+        assert_equal [%w(difficulty hash_rate epoch_number).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal EpochStatisticSerializer.new(block_statistic_data, { params: { indicator: "difficulty-hash_rate" } }).serialized_json, response.body
+      end
+
       test "should respond with error object when indicator name is invalid" do
         error_object = Api::V1::Exceptions::IndicatorNameInvalidError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json

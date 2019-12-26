@@ -8,11 +8,11 @@ namespace :migration do
         first_block_in_epoch = Block.where(epoch: epoch_number).order(:number).first
         last_lock_in_epoch = Block.where(epoch: epoch_number).order(:number).last
         block_time = last_lock_in_epoch.timestamp - first_block_in_epoch.timestamp
-        hash_rate = first_block_in_epoch.difficulty * first_block_in_epoch.length / block_time
+        hash_rate = BigDecimal(first_block_in_epoch.difficulty * first_block_in_epoch.length) / block_time
         progress_bar.increment
         [epoch_number, hash_rate]
       end
-    ::EpochStatistic.import(columns, values, validate: false, on_duplicate_key_update: [:hash_rate])
+    ::EpochStatistic.import(columns, values, validate: false, on_duplicate_key_update: { conflict_target: [:epoch_number], columns: [:hash_rate] })
 
     puts "done"
   end
