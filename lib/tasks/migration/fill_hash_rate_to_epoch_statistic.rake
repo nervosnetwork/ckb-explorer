@@ -1,0 +1,19 @@
+namespace :migration do
+  task fill_hash_rate_to_epoch_static: :environment do
+    max_epoch_number = Block.maximum(:epoch)
+    progress_bar = ProgressBar.create({ total: max_epoch_number + 1, format: "%e %B %p%% %c/%C" })
+    columns = [:epoch_number, :hash_rate]
+    values =
+      (0..max_epoch_number).map do |epoch_number|
+        first_block_in_epoch = Block.where(epoch: epoch_number).order(:number).first
+        last_lock_in_epoch = Block.where(epoch: epoch_number).order(:number).last
+        block_time = last_lock_in_epoch.timestamp - first_block_in_epoch.timestamp
+        hash_rate = first_block_in_epoch.difficulty * first_block_in_epoch.length / block_time
+        progress_bar.increment
+        [epoch_number, hash_rate]
+      end
+    ::EpochStatistic.import(columns, values, validate: false, on_duplicate_key_update: [:hash_rate])
+
+    puts "done"
+  end
+end
