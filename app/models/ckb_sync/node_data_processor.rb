@@ -156,6 +156,7 @@ module CkbSync
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
         ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch, block_timestamp: local_tip_block.timestamp)
+        Charts::BlockStatisticGenerator.new(local_tip_block.number).call
 
         local_tip_block
       end
