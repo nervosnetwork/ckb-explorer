@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_26_084920) do
+ActiveRecord::Schema.define(version: 2019_12_30_012431) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -244,6 +244,16 @@ ActiveRecord::Schema.define(version: 2019_12_26_084920) do
     t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
     t.integer "live_cell_changes"
+  end
+
+  create_table "forked_events", force: :cascade do |t|
+    t.decimal "block_number", precision: 30
+    t.decimal "epoch_number", precision: 30
+    t.decimal "block_timestamp", precision: 30
+    t.integer "status", limit: 2, default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["status"], name: "index_forked_events_on_status"
   end
 
   create_table "lock_scripts", force: :cascade do |t|
