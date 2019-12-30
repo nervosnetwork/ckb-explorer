@@ -11,12 +11,7 @@ module Charts
       target_block = Block.find_by(number: target_block_number)
       return if target_block.blank? || ::BlockStatistic.where(block_number: target_block_number).exists?
 
-      statistic_info = StatisticInfo.new
-      hash_rate = statistic_info.hash_rate(target_block_number)
-      live_cells_count = CellOutput.live.count
-      dead_cells_count = CellOutput.dead.count
-
-      ::BlockStatistic.create(epoch_number: target_block.epoch,block_number: target_block.number, difficulty: target_block.difficulty, hash_rate: hash_rate, live_cells_count: live_cells_count, dead_cells_count: dead_cells_count)
+      Charts::BlockStatisticGenerator.new(target_block_number).call
     end
   end
 end
