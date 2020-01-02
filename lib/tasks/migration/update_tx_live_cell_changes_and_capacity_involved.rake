@@ -6,7 +6,7 @@ namespace :migration do
       values =
         ckb_transactions.map do |ckb_transaction|
           progress_bar.increment
-          live_cell_changes = ckb_transaction.outputs.count - ckb_transaction.inputs.count
+          live_cell_changes = ckb_transaction.is_cellbase ? 1 : ckb_transaction.outputs.count - ckb_transaction.inputs.count
           capacity_involved = ckb_transaction.inputs.sum(:capacity)
           [ckb_transaction.id, ckb_transaction.block_id, live_cell_changes, capacity_involved]
         end

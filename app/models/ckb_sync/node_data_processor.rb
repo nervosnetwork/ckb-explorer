@@ -339,8 +339,12 @@ module CkbSync
         transaction_fee: 0,
         witnesses: transaction.witnesses,
         is_cellbase: transaction_index.zero?,
-        live_cell_changes: transaction.outputs.count - transaction.inputs.count
+        live_cell_changes: live_cell_changes(transaction, transaction_index)
       )
+    end
+
+    def live_cell_changes(transaction, transaction_index)
+      transaction_index.zero? ? 1 : transaction.outputs.count - transaction.inputs.count
     end
 
     def build_cell_inputs(node_inputs, ckb_transaction)
