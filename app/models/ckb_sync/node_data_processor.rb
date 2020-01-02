@@ -478,6 +478,8 @@ module CkbSync
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
           CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status])
           AccountBook.import!(account_books, validate: false)
+          updated_inputs.map(&:flush_cache)
+          updated_outputs.map(&:flush_cache)
         end
       end
     end
