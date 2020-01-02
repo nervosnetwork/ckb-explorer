@@ -60,6 +60,10 @@ class Block < ApplicationRecord
      number - start_number
   end
 
+  def fraction_epoch
+    OpenStruct.new(number: epoch, index: block_index_in_epoch, length: length)
+  end
+
   def self.find_block!(query_key)
     cached_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
   end

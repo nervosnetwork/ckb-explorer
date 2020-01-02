@@ -52,7 +52,8 @@ module CkbSync
     def build_new_dao_depositor_events(new_dao_depositor_events)
       new_dao_depositor_events.map do |address_id, tx_hash|
         ckb_transaction = CkbTransaction.find_by(tx_hash: tx_hash)
-        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address_id, event_type: "new_dao_depositor", value: 1, contract_id: DaoContract.default_contract.id)
+        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address_id, event_type: "new_dao_depositor",
+                                         value: 1, contract_id: DaoContract.default_contract.id, block_timestamp: ckb_transaction.block_timestamp)
       end
     end
 
@@ -155,6 +156,8 @@ module CkbSync
         local_tip_block.invalid!
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
+        ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch, block_timestamp: local_tip_block.timestamp)
+        Charts::BlockStatisticGenerator.new(local_tip_block.number).call
 
         local_tip_block
       end
@@ -383,7 +386,8 @@ module CkbSync
     def build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
       if cell_output.nervos_dao_deposit?
         dao_contract = DaoContract.find_or_create_by(id: 1)
-        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao", value: cell_output.capacity, contract_id: dao_contract.id)
+        ckb_transaction.dao_events.build(block: ckb_transaction.block, address_id: address.id, event_type: "deposit_to_dao",
+                                         value: cell_output.capacity, contract_id: dao_contract.id, block_timestamp: ckb_transaction.block_timestamp)
         if address.dao_deposit.zero? && !new_dao_depositor_events.key?(address.id)
           new_dao_depositor_events[address.id] = ckb_transaction.tx_hash
         end
@@ -394,12 +398,12 @@ module CkbSync
       if previous_cell_output.nervos_dao_withdrawing?
         withdraw_amount = previous_cell_output.capacity
         ckb_transaction = CkbTransaction.find(ckb_transaction_id)
-        ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "withdraw_from_dao", value: withdraw_amount, contract_id: DaoContract.default_contract.id)
+        ckb_transaction.dao_events.create!(block: local_block, block_timestamp: local_block.timestamp, address_id: address_id, event_type: "withdraw_from_dao", value: withdraw_amount, contract_id: DaoContract.default_contract.id)
         interest = CkbUtils.dao_interest(previous_cell_output)
-        ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "issue_interest", value: interest, contract_id: DaoContract.default_contract.id)
+        ckb_transaction.dao_events.create!(block: local_block, block_timestamp: local_block.timestamp, address_id: address_id, event_type: "issue_interest", value: interest, contract_id: DaoContract.default_contract.id)
         address = Address.find(address_id)
         if (address.dao_deposit - withdraw_amount).zero?
-          ckb_transaction.dao_events.create!(block: local_block, address_id: address_id, event_type: "take_away_all_deposit", value: 1, contract_id: DaoContract.default_contract.id)
+          ckb_transaction.dao_events.create!(block: local_block, block_timestamp: local_block.timestamp, address_id: address_id, event_type: "take_away_all_deposit", value: 1, contract_id: DaoContract.default_contract.id)
         end
       end
     end

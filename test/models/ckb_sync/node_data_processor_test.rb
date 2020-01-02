@@ -626,6 +626,7 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "new_dao_depositor")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
+        assert_equal %w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp), deposit_to_dao_events.first.attribute_names.reject { |attribute| attribute.in?(%w(created_at updated_at id)) }
       end
     end
 
@@ -683,6 +684,7 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
+        assert_equal %w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp), deposit_to_dao_events.first.attribute_names.reject { |attribute| attribute.in?(%w(created_at updated_at id)) }
       end
     end
 
@@ -731,6 +733,7 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
+        assert_equal %w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp), deposit_to_dao_events.first.attribute_names.reject { |attribute| attribute.in?(%w(created_at updated_at id)) }
       end
     end
 
@@ -951,6 +954,22 @@ module CkbSync
 
         deposit_to_dao_events = local_block.dao_events.where(event_type: "new_dao_depositor")
         assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
+      end
+    end
+
+    test "should create forked event when block is invalid " do
+      node_block = fake_node_block
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        fake_dao_deposit_transaction(node_block)
+        node_data_processor.process_block(node_block)
+      end
+      local_block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
+        assert_difference -> { ForkedEvent.count }, 1 do
+          node_data_processor.call
+        end
+        assert_equal "pending", ForkedEvent.first.status
       end
     end
 
