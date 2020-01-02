@@ -626,6 +626,7 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "new_dao_depositor")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
+        assert_equal %w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp), deposit_to_dao_events.first.attribute_names.reject { |attribute| attribute.in?(%w(created_at updated_at id)) }
       end
     end
 
@@ -683,6 +684,7 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
+        assert_equal %w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp), deposit_to_dao_events.first.attribute_names.reject { |attribute| attribute.in?(%w(created_at updated_at id)) }
       end
     end
 
@@ -731,6 +733,7 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
+        assert_equal %w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp), deposit_to_dao_events.first.attribute_names.reject { |attribute| attribute.in?(%w(created_at updated_at id)) }
       end
     end
 
