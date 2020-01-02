@@ -55,4 +55,7 @@ class BlockSerializer
   attribute :difficulty do |object|
     object.difficulty.to_s
   end
+  attribute :miner_reward do |object|
+    (object.received_tx_fee + object.reward).to_s
+  end
 end
