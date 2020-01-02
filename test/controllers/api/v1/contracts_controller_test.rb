@@ -56,8 +56,7 @@ module Api
 
         response_contract = json["data"]
         assert_equal %w(
-          dao_type_hash total_deposit interest_granted deposit_transactions_count withdraw_transactions_count
-          depositors_count total_depositors_count
+           average_deposit_time claimed_compensation claimed_compensation_changes deposit_changes deposit_compensation depositor_changes depositors_count estimated_apc mining_reward total_deposit treasury_amount unclaimed_compensation unclaimed_compensation_changes
         ).sort, response_contract["attributes"].keys.sort
       end
 

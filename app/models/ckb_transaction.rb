@@ -17,6 +17,7 @@ class CkbTransaction < ApplicationRecord
 
   scope :recent, -> { order(block_timestamp: :desc) }
   scope :cellbase, -> { where(is_cellbase: true) }
+  scope :normal, -> { where(is_cellbase: false) }
 
   after_commit :flush_cache
   before_destroy :recover_dead_cell
@@ -117,20 +118,22 @@ end
 #
 # Table name: ckb_transactions
 #
-#  id              :bigint           not null, primary key
-#  tx_hash         :binary
-#  deps            :jsonb
-#  block_id        :bigint
-#  block_number    :decimal(30, )
-#  block_timestamp :decimal(30, )
-#  transaction_fee :decimal(30, )
-#  version         :integer
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  is_cellbase     :boolean          default(FALSE)
-#  header_deps     :binary
-#  cell_deps       :jsonb
-#  witnesses       :jsonb
+#  id                :bigint           not null, primary key
+#  tx_hash           :binary
+#  deps              :jsonb
+#  block_id          :bigint
+#  block_number      :decimal(30, )
+#  block_timestamp   :decimal(30, )
+#  transaction_fee   :decimal(30, )
+#  version           :integer
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  is_cellbase       :boolean          default(FALSE)
+#  witnesses         :jsonb
+#  header_deps       :binary
+#  cell_deps         :jsonb
+#  live_cell_changes :integer
+#  capacity_involved :decimal(30, )
 #
 # Indexes
 #

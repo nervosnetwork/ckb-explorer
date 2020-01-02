@@ -596,6 +596,69 @@ types:
     }
   }
 
+  ckb_transaction_list_attributes: {
+    type: "object",
+    properties: {
+      "transaction_hash": {
+        type: "string"
+      },
+      "block_number": {
+        type: "string"
+      },
+      "block_timestamp": {
+        type: "string"
+      },
+      "capacity_involved": {
+        type: "string"
+      },
+      "live_cell_changes": {
+        type: "string"
+      }
+    }
+  }
+
+  dao_contract_attributes: {
+    type: "object",
+    properties: {
+      "total_deposit": {
+        type: "string"
+      },
+      "deposit_changes": {
+        type: "string"
+      },
+      "depositors_count": {
+        type: "string"
+      },
+      "depositor_changes": {
+        type: "string"
+      },
+      "unclaimed_compensation": {
+        type: "string"
+      },
+      "unclaimed_compensation_changes": {
+        type: "string"
+      },
+      "claimed_compensation": {
+        type: "string"
+      },
+      "claimed_compensation_changes": {
+        type: "string"
+      },
+      "average_deposit_time": {
+        type: "string"
+      },
+      "mining_reward": {
+        type: "string"
+      },
+      "deposit_compensation": {
+        type: "string"
+      },
+      "treasury_amount": {
+        type: "string"
+      }
+    }
+  }
+
   index_statistic_info: {
     type: object,
     properties: {
@@ -662,6 +725,15 @@ types:
     }
   }
 
+  ckb_transaction_list_response: {
+    type: object,
+    properties: {
+      "data": {
+        "type": "ckb_transaction_list_attributes"
+      }
+    }
+  }
+
   blocks_response: {
     type: object,
     properties: {
@@ -673,6 +745,15 @@ types:
       },
       "links": {
         "type": "pagination_link"
+      }
+    }
+  }
+
+  dao_contract_response: {
+    type: object,
+    properties: {
+      "data": {
+        type: dao_contract_attributes
       }
     }
   }
@@ -1039,6 +1120,70 @@ types:
                 }
 
 /transactions:
+  get:
+    description: Returns blocks in reverse chronological order.
+    queryParameters:
+      page_size:
+        type: integer
+        default: 10
+      page:
+        type: integer
+        default: 1
+    responses:
+      200:
+        body:
+          application/vnd.api+json:
+            type: ckb_transaction_list_response
+            example: |
+              {
+                "data": [
+                   {
+                      "id": "519759",
+                      "type": "ckb_transaction_list",
+                      "attributes": {
+                        "transaction_hash": "0x51c4008aecf7b32762f8de7b1e0db97b0b99af6dfbedacddca4723e4e3469735",
+                        "block_number": "355801",
+                        "block_timestamp": "1577284662673",
+                        "capacity_involved": "",
+                        "live_cell_changes": "0"
+                      }
+                   },
+                   {
+                     "id": "519760",
+                     "type": "ckb_transaction_list",
+                     "attributes": {
+                       "transaction_hash": "0x93dcd049c02c94a4f8b83ed86e6dfdd662bb381585f6294e5cc316f301ed688d",
+                       "block_number": "355801",
+                       "block_timestamp": "1577284662673",
+                       "capacity_involved": "",
+                       "live_cell_changes": "0"
+                     }
+                   },
+                    {
+                      "id": "519757",
+                      "type": "ckb_transaction_list",
+                      "attributes": {
+                        "transaction_hash": "0xfe642e494030e77c46753f7ac2d29c38d6780e38c1a3a7accb6b4adf415a511b",
+                        "block_number": "355800",
+                        "block_timestamp": "1577284656255",
+                        "capacity_involved": "",
+                        "live_cell_changes": "0"
+                      }
+                   },
+                ]
+                "meta": {
+                  "total": 100,
+                  "page_size": 15,
+                },
+                links: {
+                  "self": "https://explorer.nervos.org/api/v1/transactions?page_size=15",
+                  "first": "https://explorer.nervos.org/api/v1/transactions?page=1&page_size=10",
+                  "prev": "https://explorer.nervos.org/api/v1/transactions?page=2&page_size=10",
+                  "next": "https://explorer.nervos.org/api/v1/transactions?page=2&page_size=15",
+                  "last": "https://explorer.nervos.org/api/v1/transactions?page=28909&page_size=15"
+                }
+              }
+
   /{tx_hash}:
     uriParameters:
       tx_hash:
@@ -2603,12 +2748,19 @@ types:
                     "id": 1,
                     "type": "dao_contract",
                     "attributes": {
-                      "total_deposit": 1000000,
-                      "interest_granted": 1000,
-                      "deposit_transactions_count": 10,
-                      "withdraw_transactions_count": 1,
-                      "depositors_count": 3,
-                      "total_depositors_count": 10
+                      "average_deposit_time": "22.713185749893621618961218396792431688516315506487629618865127513103881141164341287",
+                      "claimed_compensation": "15011368431049",
+                      "claimed_compensation_changes": "15011368431049.0",
+                      "deposit_changes": "849537119739722.0",
+                      "deposit_compensation": "352265740710938.342252952052525667520572168005043521142110644336070405",
+                      "depositor_changes": "774",
+                      "depositors_count": "774",
+                      "mining_reward": "1814175662411888.0",
+                      "total_deposit": "142247249542395069",
+                      "treasury_amount": "10008525246180062.657747047947474332479427831994956478857889355663929595",
+                      "unclaimed_compensation": "337254372279889.342252952052525667520572168005043521142110644336070405",
+                      "unclaimed_compensation_changes": "337254372279889.342252952052525667520572168005043521142110644336070405",
+                      "estimated_apc": "3.6500101241879927272727272727272723668144763717481197667116764738292367"
                     }
                   }
                 }

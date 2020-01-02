@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_16_080206) do
+ActiveRecord::Schema.define(version: 2019_12_30_012431) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -89,6 +89,7 @@ ActiveRecord::Schema.define(version: 2019_12_16_080206) do
     t.decimal "length", precision: 30, default: "0"
     t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
+    t.integer "live_cell_changes"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
@@ -147,6 +148,8 @@ ActiveRecord::Schema.define(version: 2019_12_16_080206) do
     t.jsonb "witnesses"
     t.binary "header_deps"
     t.jsonb "cell_deps"
+    t.integer "live_cell_changes"
+    t.decimal "capacity_involved", precision: 30
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
@@ -160,6 +163,14 @@ ActiveRecord::Schema.define(version: 2019_12_16_080206) do
     t.integer "created_at_unixtimestamp"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "dao_depositors_count", default: "0"
+    t.string "unclaimed_compensation", default: "0"
+    t.string "claimed_compensation", default: "0"
+    t.string "average_deposit_time", default: "0"
+    t.string "estimated_apc", default: "0"
+    t.string "mining_reward", default: "0"
+    t.string "deposit_compensation", default: "0"
+    t.string "treasury_amount", default: "0"
   end
 
   create_table "dao_contracts", force: :cascade do |t|
@@ -183,6 +194,7 @@ ActiveRecord::Schema.define(version: 2019_12_16_080206) do
     t.integer "status", limit: 2, default: 0
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.decimal "block_timestamp", precision: 30
     t.index ["block_id"], name: "index_dao_events_on_block_id"
   end
 
@@ -192,6 +204,7 @@ ActiveRecord::Schema.define(version: 2019_12_16_080206) do
     t.decimal "epoch_number", precision: 30
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "hash_rate"
     t.index ["epoch_number"], name: "index_epoch_statistics_on_epoch_number", unique: true
   end
 
@@ -230,6 +243,17 @@ ActiveRecord::Schema.define(version: 2019_12_16_080206) do
     t.decimal "length", precision: 30, default: "0"
     t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
+    t.integer "live_cell_changes"
+  end
+
+  create_table "forked_events", force: :cascade do |t|
+    t.decimal "block_number", precision: 30
+    t.decimal "epoch_number", precision: 30
+    t.decimal "block_timestamp", precision: 30
+    t.integer "status", limit: 2, default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["status"], name: "index_forked_events_on_status"
   end
 
   create_table "lock_scripts", force: :cascade do |t|

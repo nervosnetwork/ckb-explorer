@@ -52,7 +52,7 @@ module Api
 
         valid_get api_v1_blocks_url
 
-        assert_equal BlockSerializer.new(blocks, {}).serialized_json, response.body
+        assert_equal BlockListSerializer.new(blocks, {}).serialized_json, response.body
       end
 
       test "serialized objects should in reverse order of timestamp" do
@@ -72,7 +72,7 @@ module Api
         valid_get api_v1_blocks_url
 
         response_block = json["data"].first
-        assert_equal %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp difficulty version nonce epoch start_number length transactions_root reward_status received_tx_fee received_tx_fee_status block_index_in_epoch).sort, response_block["attributes"].keys.sort
+        assert_equal %w(number transactions_count reward miner_hash timestamp live_cell_changes).sort, response_block["attributes"].keys.sort
       end
 
       test "should return error object when page param is invalid" do
@@ -123,10 +123,10 @@ module Api
 
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
-        block_hashes = Block.recent.map(&:block_hash)
-        search_result_block_hashes = json["data"].map { |ckb_transaction| ckb_transaction.dig("attributes", "block_hash") }
+        block_hashes = Block.recent.map(&:number).map(&:to_s)
+        search_result_block_numbers = json["data"].map { |block| block.dig("attributes", "number")}
 
-        assert_equal block_hashes, search_result_block_hashes
+        assert_equal block_hashes, search_result_block_numbers
       end
 
       test "should return corresponding page's records when page is set and page_size is not set" do
@@ -136,7 +136,7 @@ module Api
 
         valid_get api_v1_blocks_url, params: { page: page }
 
-        response_blocks = BlockSerializer.new(blocks, {}).serialized_json
+        response_blocks = BlockListSerializer.new(blocks, {}).serialized_json
 
         assert_equal response_blocks, response.body
         assert_equal 15, json["data"].size
@@ -148,7 +148,7 @@ module Api
         valid_get api_v1_blocks_url, params: { page_size: 12 }
 
         blocks = Block.order(timestamp: :desc).limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
-        response_blocks = BlockSerializer.new(blocks, {}).serialized_json
+        response_blocks = BlockListSerializer.new(blocks, {}).serialized_json
         assert_equal response_blocks, response.body
         assert_equal 15, json["data"].size
       end
@@ -162,7 +162,7 @@ module Api
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: page, page_size: page_size).call
-        response_blocks = BlockSerializer.new(blocks, options).serialized_json
+        response_blocks = BlockListSerializer.new(blocks, options).serialized_json
         assert_equal response_blocks, response.body
       end
 
@@ -301,7 +301,7 @@ module Api
         valid_get api_v1_block_url(block.block_hash)
 
         response_block = json["data"]
-        assert_equal %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp difficulty version nonce epoch start_number length transactions_root reward_status received_tx_fee received_tx_fee_status block_index_in_epoch).sort, response_block["attributes"].keys.sort
+        assert_equal %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp difficulty version nonce epoch start_number length transactions_root reward_status received_tx_fee received_tx_fee_status block_index_in_epoch miner_reward).sort, response_block["attributes"].keys.sort
       end
 
       test "should return error object when no records found by id" do

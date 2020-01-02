@@ -13,7 +13,7 @@ module Api
           options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: @page, page_size: @page_size).call
         end
 
-        render json: BlockSerializer.new(blocks, options)
+        render json: BlockListSerializer.new(blocks, options)
       end
 
       def show
