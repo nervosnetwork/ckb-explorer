@@ -249,8 +249,8 @@ module CkbSync
         node_block_transactions = node_block.transactions
 
         local_block = node_data_processor.process_block(node_block)
-        expected_live_cell_changes = node_block_transactions.map { |transaction| transaction.outputs.count - transaction.inputs.count }
-        assert_equal expected_live_cell_changes, local_block.ckb_transactions.map(&:live_cell_changes)
+        expected_live_cell_changes = node_block_transactions.each_with_index.map { |transaction, index| index.zero? ? 1 : transaction.outputs.count - transaction.inputs.count }
+        assert_equal expected_live_cell_changes, local_block.ckb_transactions.order(:id).map(&:live_cell_changes)
       end
     end
 
