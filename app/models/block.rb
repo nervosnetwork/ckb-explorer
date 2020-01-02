@@ -131,6 +131,7 @@ end
 #  length                     :decimal(30, )    default(0)
 #  uncles_count               :integer
 #  compact_target             :decimal(20, )
+#  live_cell_changes          :integer
 #
 # Indexes
 #

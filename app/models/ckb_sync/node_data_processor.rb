@@ -29,6 +29,7 @@ module CkbSync
 
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs, new_dao_depositor_events)
         local_block.ckb_transactions_count = ckb_transactions.size
+        local_block.live_cell_changes = ckb_transactions.sum(&:live_cell_changes)
         CkbTransaction.import!(ckb_transactions, recursive: true, batch_size: 3500, validate: false)
         input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h { |id| [id, []] }
         update_tx_fee_related_data(local_block, input_capacities)
@@ -337,8 +338,13 @@ module CkbSync
         block_timestamp: local_block.timestamp,
         transaction_fee: 0,
         witnesses: transaction.witnesses,
-        is_cellbase: transaction_index.zero?
+        is_cellbase: transaction_index.zero?,
+        live_cell_changes: live_cell_changes(transaction, transaction_index)
       )
+    end
+
+    def live_cell_changes(transaction, transaction_index)
+      transaction_index.zero? ? 1 : transaction.outputs.count - transaction.inputs.count
     end
 
     def build_cell_inputs(node_inputs, ckb_transaction)
@@ -500,10 +506,11 @@ module CkbSync
       txs = []
       ckb_transactions.each do |ckb_transaction|
         update_transaction_fee(ckb_transaction, input_capacities[ckb_transaction.id].sum, output_capacities[ckb_transaction.id].sum)
+        ckb_transaction.capacity_involved = input_capacities[ckb_transaction.id].sum unless ckb_transaction.is_cellbase
         txs << ckb_transaction
       end
 
-      CkbTransaction.import!(txs, validate: false, on_duplicate_key_update: [:transaction_fee])
+      CkbTransaction.import!(txs, validate: false, on_duplicate_key_update: [:transaction_fee, :capacity_involved])
       local_block.total_transaction_fee = local_block.ckb_transactions.sum(:transaction_fee)
       local_block.save!
     rescue ActiveRecord::RecordInvalid
