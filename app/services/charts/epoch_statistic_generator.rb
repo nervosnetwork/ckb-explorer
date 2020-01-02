@@ -7,7 +7,7 @@ module Charts
     def call
       return if Block.where(epoch: target_epoch_number).blank?
 
-      blocks_count = Block.where(epoch: epoch_number).count
+      blocks_count = Block.where(epoch: target_epoch_number).count
       uncles_count = Block.where(epoch: target_epoch_number).sum(:uncles_count)
       uncle_rate = uncles_count / blocks_count.to_d
       difficulty = Block.where(epoch: target_epoch_number).first.difficulty
