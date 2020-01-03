@@ -41,23 +41,24 @@ end
 #
 # Table name: cell_outputs
 #
-#  id                 :bigint           not null, primary key
-#  capacity           :decimal(64, 2)
-#  data               :binary
-#  ckb_transaction_id :bigint
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
-#  status             :integer          default("live")
-#  address_id         :decimal(30, )
-#  block_id           :decimal(30, )
-#  tx_hash            :binary
-#  cell_index         :integer
-#  generated_by_id    :decimal(30, )
-#  consumed_by_id     :decimal(30, )
-#  cell_type          :integer          default("normal")
-#  data_size          :integer
-#  occupied_capacity  :decimal(30, )
-#  block_timestamp    :decimal(30, )
+#  id                       :bigint           not null, primary key
+#  capacity                 :decimal(64, 2)
+#  data                     :binary
+#  ckb_transaction_id       :bigint
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
+#  status                   :integer          default("live")
+#  address_id               :decimal(30, )
+#  block_id                 :decimal(30, )
+#  tx_hash                  :binary
+#  cell_index               :integer
+#  generated_by_id          :decimal(30, )
+#  consumed_by_id           :decimal(30, )
+#  cell_type                :integer          default("normal")
+#  data_size                :integer
+#  occupied_capacity        :decimal(30, )
+#  block_timestamp          :decimal(30, )
+#  consumed_block_timestamp :decimal(30, )
 #
 # Indexes
 #

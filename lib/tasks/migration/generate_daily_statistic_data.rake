@@ -6,7 +6,7 @@ namespace :migration do
     progress_bar = ProgressBar.create({ total: date_range.count, format: "%e %B %p%% %c/%C" })
 
     date_range.each do |datetime|
-      Charts::DailyStatistic.new.perform(datetime)
+      Charts::DailyStatistic.new.perform(datetime.in_time_zone("Beijing").to_datetime)
       progress_bar.increment
     end
 

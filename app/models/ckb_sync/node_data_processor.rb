@@ -460,13 +460,14 @@ module CkbSync
       local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 3500) do |cell_inputs|
         ApplicationRecord.transaction do
           cell_inputs.each do |cell_input|
-            ckb_transaction_id = cell_input.ckb_transaction_id
+            consumed_tx = cell_input.ckb_transaction
+            ckb_transaction_id = consumed_tx.id
             previous_cell_output = cell_input.previous_cell_output
             address_id = previous_cell_output.address_id
             input_capacities[ckb_transaction_id] << previous_cell_output.capacity
 
             link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
-            update_previous_cell_output_status(ckb_transaction_id, previous_cell_output)
+            update_previous_cell_output_status(ckb_transaction_id, previous_cell_output, consumed_tx.block_timestamp)
             account_book = link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
             build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
 
@@ -476,7 +477,7 @@ module CkbSync
           end
 
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
-          CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status])
+          CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status, :consumed_block_timestamp])
           AccountBook.import!(account_books, validate: false)
           updated_inputs.map(&:flush_cache)
           updated_outputs.map(&:flush_cache)
@@ -492,8 +493,9 @@ module CkbSync
       { ckb_transaction_id: ckb_transaction_id, address_id: address_id }
     end
 
-    def update_previous_cell_output_status(ckb_transaction_id, previous_cell_output)
+    def update_previous_cell_output_status(ckb_transaction_id, previous_cell_output, consumed_block_timestamp)
       previous_cell_output.consumed_by_id = ckb_transaction_id
+      previous_cell_output.consumed_block_timestamp = consumed_block_timestamp
       previous_cell_output.status = "dead"
     end
 
