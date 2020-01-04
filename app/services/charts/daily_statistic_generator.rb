@@ -3,6 +3,8 @@ module Charts
     MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
 
     def initialize(datetime = nil)
+      raise "datetime must be a Time" if datetime.present? && !datetime.is_a?(Time)
+
       @datetime = datetime
     end
 
@@ -11,7 +13,6 @@ module Charts
       addresses_count = Address.where("block_timestamp <= ?", ended_at).count
       deposit_cells = CellOutput.where(cell_type: "nervos_dao_deposit").where("block_timestamp <= ?", ended_at)
       total_dao_deposit = datetime.blank? ? deposit_cells.where(status: "live").sum(:capacity) : deposit_cells.sum(:capacity)
-      dao_depositors_count = DaoEvent.processed.where(event_type: "new_dao_depositor").where("block_timestamp <= ?", ended_at).count
       cell_outputs = CellOutput.where.not(cell_type: "normal")
       current_tip_block = Block.where("timestamp <= ?", ended_at).recent.first
       mining_reward = Block.where("timestamp <= ?", ended_at).sum(:secondary_reward)
@@ -29,16 +30,26 @@ module Charts
 
     private
 
+    def total_dao_deposit
+      deposit_amount = DaoEvent.processed.where("block_timestamp <= ?", ended_at).where(event_type: "deposit_to_dao").sum(:value)
+      withdraw_amount = DaoEvent.processed.where("block_timestamp <= ?", ended_at).where(event_type: "withdraw_from_dao").sum(:value)
+      deposit_amount - withdraw_amount
+    end
+
+    def dao_depositors_count
+      DaoEvent.processed.where(event_type: "new_dao_depositor").where("block_timestamp <= ?", ended_at).count - DaoEvent.processed.where(event_type: "take_away_all_deposit").where("block_timestamp <= ?", ended_at).count
+    end
+
     def to_be_counted_date
-      @to_be_counted_date ||= datetime.presence || (DateTime.now - 1.day).beginning_of_day
+      @to_be_counted_date ||= datetime.presence || Time.current.yesterday.beginning_of_day
     end
 
     def started_at
-      @started_at ||= to_be_counted_date.beginning_of_day.strftime("%Q")
+      @started_at ||= time_in_milliseconds(to_be_counted_date.beginning_of_day)
     end
 
     def ended_at
-      @ended_at ||= to_be_counted_date.end_of_day.strftime("%Q")
+      @ended_at ||= time_in_milliseconds(to_be_counted_date.end_of_day)
     end
 
     attr_reader :datetime
@@ -88,7 +99,7 @@ module Charts
         memo + nervos_dao_deposit_cell.capacity * (nervos_dao_withdrawing_cell.block_timestamp - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
       end
       sum_uninterest_bearing = cell_outputs.where("block_timestamp <= ?", ended_at).nervos_dao_deposit.live.reduce(0) do |memo, nervos_dao_deposit_cell|
-        current_time = DateTime.now.strftime("%Q").to_i
+        current_time = time_in_milliseconds(Time.current)
         uninterest_bearing_deposits += nervos_dao_deposit_cell.capacity
 
         memo + nervos_dao_deposit_cell.capacity * (current_time - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
@@ -100,6 +111,10 @@ module Charts
     def treasury_amount(cell_outputs, current_tip_block)
       parse_dao = CkbUtils.parse_dao(current_tip_block.dao)
       parse_dao.s_i - unmade_dao_interests(cell_outputs, current_tip_block)
+    end
+
+    def time_in_milliseconds(time)
+      (time.to_f * 1000).floor
     end
   end
 end

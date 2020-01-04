@@ -10,11 +10,12 @@ module Charts
       epoch_numbers = forked_events.pluck(:epoch_number).uniq
       epoch_numbers.each { |epoch_number| Charts::EpochStatisticGenerator.new(epoch_number).call }
       block_timestamps = forked_events.pluck(:block_timestamp).uniq
-      latest_daily_statistic = ::DailyStatistic.last
+      latest_daily_statistic = ::DailyStatistic.order(:created_at_unixtimestamp).last
       if block_timestamps.any? { |block_timestamp| block_timestamp < latest_daily_statistic.block_timestamp }
-        datetime = DateTime.strptime(latest_daily_statistic.created_at_unixtimestamp.to_s, "%s")
+        datetime = Time.at(latest_daily_statistic.created_at_unixtimestamp).to_datetime
         Charts::DailyStatisticGenerator.new(datetime).call
       end
+      forked_events.update_all(status: "processed")
     end
   end
 end
