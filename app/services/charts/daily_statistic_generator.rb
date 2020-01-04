@@ -11,8 +11,6 @@ module Charts
     def call
       daily_ckb_transactions_count = CkbTransaction.where("block_timestamp >= ? and block_timestamp <= ?", started_at, ended_at).count
       addresses_count = Address.where("block_timestamp <= ?", ended_at).count
-      deposit_cells = CellOutput.where(cell_type: "nervos_dao_deposit").where("block_timestamp <= ?", ended_at)
-      total_dao_deposit = datetime.blank? ? deposit_cells.where(status: "live").sum(:capacity) : deposit_cells.sum(:capacity)
       cell_outputs = CellOutput.where.not(cell_type: "normal")
       current_tip_block = Block.where("timestamp <= ?", ended_at).recent.first
       mining_reward = Block.where("timestamp <= ?", ended_at).sum(:secondary_reward)
