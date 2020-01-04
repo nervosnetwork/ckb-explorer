@@ -8,7 +8,7 @@ namespace :migration do
     progress_bar = ProgressBar.create({ total: total, format: "%e %B %p%% %c/%C" })
 
     while current_time <= ended_at
-      Charts::DailyStatistic.new.perform(current_time)
+      Charts::DailyStatistic.new.perform(current_time.beginning_of_day)
       current_time = current_time + 1.days
       progress_bar.increment
     end
