@@ -18,6 +18,8 @@ class CkbTransaction < ApplicationRecord
   scope :recent, -> { order(block_timestamp: :desc) }
   scope :cellbase, -> { where(is_cellbase: true) }
   scope :normal, -> { where(is_cellbase: false) }
+  scope :created_after, -> (block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
+  scope :created_before, -> (block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
 
   after_commit :flush_cache
   before_destroy :recover_dead_cell
