@@ -454,10 +454,10 @@ module CkbSync
     end
 
     def update_tx_fee_related_data(local_block, input_capacities)
-      updated_inputs = []
-      updated_outputs = []
-      account_books = []
       local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 3500) do |cell_inputs|
+        updated_inputs = []
+        updated_outputs = []
+        account_books = []
         ApplicationRecord.transaction do
           cell_inputs.each do |cell_input|
             consumed_tx = cell_input.ckb_transaction
@@ -479,8 +479,17 @@ module CkbSync
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
           CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status, :consumed_block_timestamp])
           AccountBook.import!(account_books, validate: false)
-          updated_inputs.map(&:flush_cache)
-          updated_outputs.map(&:flush_cache)
+        end
+        input_cache_keys = updated_inputs.map(&:cache_keys)
+        output_cache_keys = updated_outputs.map(&:cache_keys)
+        flush_caches(input_cache_keys + output_cache_keys)
+      end
+    end
+
+    def flush_caches(cache_keys)
+      cache_keys.each_slice(400) do |keys|
+        $redis.pipelined do
+          $redis.del(*keys)
         end
       end
     end

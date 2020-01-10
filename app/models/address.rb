@@ -46,8 +46,13 @@ class Address < ApplicationRecord
   end
 
   def flush_cache
-    Rails.cache.delete([self.class.name, address_hash])
-    Rails.cache.delete([self.class.name, lock_hash])
+    $redis.pipelined do
+      $redis.del(*cache_keys)
+    end
+  end
+
+  def cache_keys
+    %W(#{self.class.name}/#{address_hash} #{self.class.name}/#{lock_hash})
   end
 
   def special?

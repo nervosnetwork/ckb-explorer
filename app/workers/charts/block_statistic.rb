@@ -1,8 +1,6 @@
 module Charts
   class BlockStatistic
     include Sidekiq::Worker
-    sidekiq_options unique: :until_executed
-    sidekiq_options retry: false
     sidekiq_options queue: "critical"
 
     def perform

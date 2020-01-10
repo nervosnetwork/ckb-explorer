@@ -84,8 +84,13 @@ class Block < ApplicationRecord
   end
 
   def flush_cache
-    Rails.cache.delete([self.class.name, block_hash])
-    Rails.cache.delete([self.class.name, number])
+    $redis.pipelined do
+      $redis.del(*cache_keys)
+    end
+  end
+
+  def cache_keys
+    %W(#{self.class.name}/#{block_hash} #{self.class.name}/#{number})
   end
 
   def invalid!
