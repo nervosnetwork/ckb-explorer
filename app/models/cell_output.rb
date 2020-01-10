@@ -28,12 +28,19 @@ class CellOutput < ApplicationRecord
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
   end
 
+  def cache_keys
+    %W(previous_cell_output/#{tx_hash}/#{cell_index} normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
+        normal_tx_display_inputs_previews_false_#{ckb_transaction_id} normal_tx_display_inputs_previews_true_#{consumed_by_id}
+        normal_tx_display_inputs_previews_false_#{consumed_by_id} normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
+        normal_tx_display_outputs_previews_false_#{ckb_transaction_id} normal_tx_display_outputs_previews_true_#{consumed_by_id}
+        normal_tx_display_outputs_previews_false_#{consumed_by_id}
+    )
+  end
+
   def flush_cache
-    Rails.cache.delete("previous_cell_output/#{tx_hash}/#{cell_index}")
-    Rails.cache.delete_matched("normal_tx_display_inputs_previews_*_#{ckb_transaction_id}")
-    Rails.cache.delete_matched("normal_tx_display_inputs_previews_*_#{consumed_by_id}")
-    Rails.cache.delete_matched("normal_tx_display_outputs_previews_*_#{ckb_transaction_id}")
-    Rails.cache.delete_matched("normal_tx_display_outputs_previews_*_#{consumed_by_id}")
+    $redis.pipelined do
+      $redis.del(*cache_keys)
+    end
   end
 end
 
