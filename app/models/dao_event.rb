@@ -26,5 +26,7 @@ end
 #
 # Indexes
 #
-#  index_dao_events_on_block_id  (block_id)
+#  index_dao_events_on_block_id               (block_id)
+#  index_dao_events_on_block_timestamp        (block_timestamp)
+#  index_dao_events_on_status_and_event_type  (status,event_type)
 #
