@@ -6,6 +6,8 @@ class DaoEvent < ApplicationRecord
   belongs_to :block
   belongs_to :ckb_transaction
   belongs_to :address
+
+  scope :created_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
 end
 
 # == Schema Information
@@ -26,5 +28,7 @@ end
 #
 # Indexes
 #
-#  index_dao_events_on_block_id  (block_id)
+#  index_dao_events_on_block_id               (block_id)
+#  index_dao_events_on_block_timestamp        (block_timestamp)
+#  index_dao_events_on_status_and_event_type  (status,event_type)
 #

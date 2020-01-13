@@ -1,3 +1,45 @@
+# [0.9.1](https://github.com/shaojunda/ckb-explorer/compare/v0.8.4...v0.9.0) (2020-01-13)
+
+
+### Features
+
+* add block list serializer ([8d729d7](https://github.com/shaojunda/ckb-explorer/commit/8d729d7))
+* add block statistic generator service ([db91614](https://github.com/shaojunda/ckb-explorer/commit/db91614))
+* add block timestamp to dao event ([a40453b](https://github.com/shaojunda/ckb-explorer/commit/a40453b))
+* add capacity_involved column to ckb transaction ([7bcd7a5](https://github.com/shaojunda/ckb-explorer/commit/7bcd7a5))
+* add chart forked event processor ([83927bf](https://github.com/shaojunda/ckb-explorer/commit/83927bf))
+* add consumed block timestamp to cell output ([0f4986f](https://github.com/shaojunda/ckb-explorer/commit/0f4986f))
+* add epoch statistic generator service ([a99926c](https://github.com/shaojunda/ckb-explorer/commit/a99926c))
+* add estimated_apc to dao contract ([cb31d1c](https://github.com/shaojunda/ckb-explorer/commit/cb31d1c))
+* add forked event model ([2cf8bff](https://github.com/shaojunda/ckb-explorer/commit/2cf8bff))
+* add hash rate to epoch statistic ([e0746df](https://github.com/shaojunda/ckb-explorer/commit/e0746df))
+* add index action to ckb transactions controller ([e71fef7](https://github.com/shaojunda/ckb-explorer/commit/e71fef7))
+* add live_cell_changes to block and ckb_transaction ([2f04c62](https://github.com/shaojunda/ckb-explorer/commit/2f04c62))
+* add live_cell_changes to forked blocks ([a2d42b2](https://github.com/shaojunda/ckb-explorer/commit/a2d42b2))
+* add miner reward to block ([efe97fa](https://github.com/shaojunda/ckb-explorer/commit/efe97fa))
+* add more field to daily statistics ([3912139](https://github.com/shaojunda/ckb-explorer/commit/3912139))
+* add pagination to ckb transactions controller ([2251ba2](https://github.com/shaojunda/ckb-explorer/commit/2251ba2))
+* add ratio scale ([3b68742](https://github.com/shaojunda/ckb-explorer/commit/3b68742))
+* calculate estimated apc ([4a4f04f](https://github.com/shaojunda/ckb-explorer/commit/4a4f04f))
+* create forked event when forked ([ce61a1f](https://github.com/shaojunda/ckb-explorer/commit/ce61a1f))
+* implement ckb transactions index action ([26e5a36](https://github.com/shaojunda/ckb-explorer/commit/26e5a36))
+* regenerate block statistic data when block forked ([c5a444e](https://github.com/shaojunda/ckb-explorer/commit/c5a444e))
+* return hash_rate ([354ebf1](https://github.com/shaojunda/ckb-explorer/commit/354ebf1))
+* save capacity involved to ckb_transaction ([61fc5ba](https://github.com/shaojunda/ckb-explorer/commit/61fc5ba))
+* save hash rate on epoch statistic worker ([48be8e4](https://github.com/shaojunda/ckb-explorer/commit/48be8e4))
+* save live_cell_changes to block ([76f3efc](https://github.com/shaojunda/ckb-explorer/commit/76f3efc))
+* save live_cell_changes to ckb_transaction ([0c5589f](https://github.com/shaojunda/ckb-explorer/commit/0c5589f))
+* show more attributes on dao contract ([6369a86](https://github.com/shaojunda/ckb-explorer/commit/6369a86))
+* use ckb transaction list serializer ([7d12caa](https://github.com/shaojunda/ckb-explorer/commit/7d12caa))
+
+
+### Performance Improvements
+
+* add index on block timestamp, status and event type ([bce28f4](https://github.com/shaojunda/ckb-explorer/commit/bce28f4))
+* use redis pipeline and use delete replace delete_matched ([da666e0](https://github.com/shaojunda/ckb-explorer/commit/da666e0))
+
+
+
 # [0.9.0](https://github.com/shaojunda/ckb-explorer/compare/v0.8.3...v0.9.0) (2020-01-02)
 
 
