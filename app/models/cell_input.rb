@@ -33,9 +33,14 @@ class CellInput < ApplicationRecord
     Rails.cache.realize([name, id], race_condition_ttl: 3.seconds) { find(id) }
   end
 
+  def cache_keys
+    %W(CellInput/#{id}/lock_script CellInput/#{id}/type_script)
+  end
+
   def flush_cache
-    Rails.cache.delete_matched("CellInput/#{id}*")
-    Rails.cache.delete_matched("previous_cell_output*")
+    $redis.pipelined do
+      $redis.del(*cache_keys)
+    end
   end
 
   private
@@ -46,7 +51,7 @@ class CellInput < ApplicationRecord
     tx_hash = previous_output["tx_hash"]
     cell_index = previous_output["index"].to_i
 
-    Rails.cache.realize("previous_cell_output/#{tx_hash}/#{cell_index}", race_condition_ttl: 3.seconds) do
+    Rails.cache.realize("cell_input_#{id}/previous_cell_output/#{tx_hash}/#{cell_index}", race_condition_ttl: 3.seconds) do
       CellOutput.find_by!(tx_hash: tx_hash, cell_index: cell_index)
     end
   end

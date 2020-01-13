@@ -16,6 +16,11 @@ class CellOutput < ApplicationRecord
 
   attribute :tx_hash, :ckb_hash
 
+  scope :consumed_before, -> (block_timestamp) { where("consumed_block_timestamp <= ?", block_timestamp) }
+  scope :unconsumed_at, -> (block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp is null", block_timestamp) }
+  scope :generated_after, -> (block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
+  scope :generated_before, -> (block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+
   after_commit :flush_cache
 
   def address_hash
@@ -28,12 +33,19 @@ class CellOutput < ApplicationRecord
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
   end
 
+  def cache_keys
+    %W(previous_cell_output/#{tx_hash}/#{cell_index} normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
+        normal_tx_display_inputs_previews_false_#{ckb_transaction_id} normal_tx_display_inputs_previews_true_#{consumed_by_id}
+        normal_tx_display_inputs_previews_false_#{consumed_by_id} normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
+        normal_tx_display_outputs_previews_false_#{ckb_transaction_id} normal_tx_display_outputs_previews_true_#{consumed_by_id}
+        normal_tx_display_outputs_previews_false_#{consumed_by_id}
+    )
+  end
+
   def flush_cache
-    Rails.cache.delete("previous_cell_output/#{tx_hash}/#{cell_index}")
-    Rails.cache.delete_matched("normal_tx_display_inputs_previews_*_#{ckb_transaction_id}")
-    Rails.cache.delete_matched("normal_tx_display_inputs_previews_*_#{consumed_by_id}")
-    Rails.cache.delete_matched("normal_tx_display_outputs_previews_*_#{ckb_transaction_id}")
-    Rails.cache.delete_matched("normal_tx_display_outputs_previews_*_#{consumed_by_id}")
+    $redis.pipelined do
+      $redis.del(*cache_keys)
+    end
   end
 end
 
@@ -41,23 +53,24 @@ end
 #
 # Table name: cell_outputs
 #
-#  id                 :bigint           not null, primary key
-#  capacity           :decimal(64, 2)
-#  data               :binary
-#  ckb_transaction_id :bigint
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
-#  status             :integer          default("live")
-#  address_id         :decimal(30, )
-#  block_id           :decimal(30, )
-#  tx_hash            :binary
-#  cell_index         :integer
-#  generated_by_id    :decimal(30, )
-#  consumed_by_id     :decimal(30, )
-#  cell_type          :integer          default("normal")
-#  data_size          :integer
-#  occupied_capacity  :decimal(30, )
-#  block_timestamp    :decimal(30, )
+#  id                       :bigint           not null, primary key
+#  capacity                 :decimal(64, 2)
+#  data                     :binary
+#  ckb_transaction_id       :bigint
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
+#  status                   :integer          default("live")
+#  address_id               :decimal(30, )
+#  block_id                 :decimal(30, )
+#  tx_hash                  :binary
+#  cell_index               :integer
+#  generated_by_id          :decimal(30, )
+#  consumed_by_id           :decimal(30, )
+#  cell_type                :integer          default("normal")
+#  data_size                :integer
+#  occupied_capacity        :decimal(30, )
+#  block_timestamp          :decimal(30, )
+#  consumed_block_timestamp :decimal(30, )
 #
 # Indexes
 #

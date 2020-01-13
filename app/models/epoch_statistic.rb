@@ -1,5 +1,5 @@
 class EpochStatistic < ApplicationRecord
-  VALID_INDICATORS = %w(difficulty uncle_rate).freeze
+  VALID_INDICATORS = %w(difficulty uncle_rate hash_rate).freeze
 end
 
 # == Schema Information
@@ -12,6 +12,7 @@ end
 #  epoch_number :decimal(30, )
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
+#  hash_rate    :string
 #
 # Indexes
 #

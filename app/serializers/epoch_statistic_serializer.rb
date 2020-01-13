@@ -12,4 +12,8 @@ class EpochStatisticSerializer
   attribute :uncle_rate, if: Proc.new { |_record, params|
     params && params[:indicator].include?("uncle_rate")
   }
+
+  attribute :hash_rate, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("hash_rate")
+  }
 end

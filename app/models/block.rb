@@ -60,6 +60,10 @@ class Block < ApplicationRecord
      number - start_number
   end
 
+  def fraction_epoch
+    OpenStruct.new(number: epoch, index: block_index_in_epoch, length: length)
+  end
+
   def self.find_block!(query_key)
     cached_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
   end
@@ -80,8 +84,13 @@ class Block < ApplicationRecord
   end
 
   def flush_cache
-    Rails.cache.delete([self.class.name, block_hash])
-    Rails.cache.delete([self.class.name, number])
+    $redis.pipelined do
+      $redis.del(*cache_keys)
+    end
+  end
+
+  def cache_keys
+    %W(#{self.class.name}/#{block_hash} #{self.class.name}/#{number})
   end
 
   def invalid!
@@ -131,6 +140,7 @@ end
 #  length                     :decimal(30, )    default(0)
 #  uncles_count               :integer
 #  compact_target             :decimal(20, )
+#  live_cell_changes          :integer
 #
 # Indexes
 #

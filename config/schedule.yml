@@ -12,3 +12,8 @@ epoch_statistic:
   cron: "*/30 * * * *"
   class: "Charts::EpochStatistic"
   queue: critical
+
+chart_forked_event_processor:
+  cron: "30 0 * * *"
+  class: "Charts::ForkedEventProcessor"
+  queue: critical

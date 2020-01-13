@@ -9,6 +9,8 @@ class Address < ApplicationRecord
   validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   scope :visible, -> { where(visible: true) }
+  scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
+  scope :created_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
 
   after_commit :flush_cache
 
@@ -46,8 +48,13 @@ class Address < ApplicationRecord
   end
 
   def flush_cache
-    Rails.cache.delete([self.class.name, address_hash])
-    Rails.cache.delete([self.class.name, lock_hash])
+    $redis.pipelined do
+      $redis.del(*cache_keys)
+    end
+  end
+
+  def cache_keys
+    %W(#{self.class.name}/#{address_hash} #{self.class.name}/#{lock_hash})
   end
 
   def special?
