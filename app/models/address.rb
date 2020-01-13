@@ -9,6 +9,8 @@ class Address < ApplicationRecord
   validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   scope :visible, -> { where(visible: true) }
+  scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
+  scope :created_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
 
   after_commit :flush_cache
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_03_051008) do
+ActiveRecord::Schema.define(version: 2020_01_10_123617) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -197,6 +197,8 @@ ActiveRecord::Schema.define(version: 2020_01_03_051008) do
     t.datetime "updated_at", precision: 6, null: false
     t.decimal "block_timestamp", precision: 30
     t.index ["block_id"], name: "index_dao_events_on_block_id"
+    t.index ["block_timestamp"], name: "index_dao_events_on_block_timestamp"
+    t.index ["status", "event_type"], name: "index_dao_events_on_status_and_event_type"
   end
 
   create_table "epoch_statistics", force: :cascade do |t|
