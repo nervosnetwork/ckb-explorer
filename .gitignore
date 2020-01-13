@@ -32,3 +32,4 @@ config/master.key
 
 # Ignore coverage results
 coverage/*
+TAGS
