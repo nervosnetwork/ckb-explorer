@@ -54,10 +54,12 @@ class Address < ApplicationRecord
         if cached_ckb_transactions.blank?
           paginated_ckb_transactions = self.ckb_transactions.recent.distinct.page(page).per(page_size)
         else
-          paginated_ckb_transactions =
+          ckb_transactions =
             cached_ckb_transactions.map do |ckb_transaction|
               CkbTransaction.new.from_json(ckb_transaction)
             end
+
+          paginated_ckb_transactions = Kaminari.paginate_array(ckb_transactions).page(page).per(page_size)
         end
       else
         cached_ckb_transactions = initCkbTransactionsCache
