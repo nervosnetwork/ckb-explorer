@@ -50,7 +50,7 @@ class Address < ApplicationRecord
       if conn.zcard(ckb_transaction_cache_key) > 0
         start = (page.to_i - 1) * page_size.to_i
         stop = start + page_size.to_i - 1
-        cached_ckb_transactions = conn.zrange(ckb_transaction_cache_key, start, stop)
+        cached_ckb_transactions = conn.zrevrange(ckb_transaction_cache_key, start, stop)
         if cached_ckb_transactions.blank?
           paginated_ckb_transactions = self.ckb_transactions.recent.distinct.page(page).per(page_size)
         else
@@ -63,7 +63,7 @@ class Address < ApplicationRecord
         end
       else
         cached_ckb_transactions = initCkbTransactionsCache
-        paginated_ckb_transactions = cached_ckb_transactions.recent.distinct.page(page).per(page_size)
+        paginated_ckb_transactions = cached_ckb_transactions.page(page).per(page_size)
       end
 
       options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: paginated_ckb_transactions, page: page, page_size: page_size).call
