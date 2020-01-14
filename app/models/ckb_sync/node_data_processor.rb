@@ -487,9 +487,11 @@ module CkbSync
     end
 
     def flush_caches(cache_keys)
-      cache_keys.each_slice(400) do |keys|
-        $redis.pipelined do
-          $redis.del(*keys)
+      $redis.with do |conn|
+        conn.pipelined do
+          cache_keys.each_slice(400) do |keys|
+            conn.del(*keys)
+          end
         end
       end
     end
