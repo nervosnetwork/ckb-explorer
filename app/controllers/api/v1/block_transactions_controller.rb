@@ -6,7 +6,7 @@ module Api
 
       def show
         block = Block.find_block!(params[:id])
-        ckb_transactions = block.cached_ckb_transactions(params[:id], @page, @page_size, request)
+        ckb_transactions = block.cached_ckb_transactions(@page, @page_size, request)
 
         render json: ckb_transactions
       end

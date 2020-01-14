@@ -84,17 +84,47 @@ class Block < ApplicationRecord
   end
 
   def cached_ckb_transactions(block_hash, page, page_size, request)
-    Rails.cache.fetch([self.class.name, block_hash, "ckb_transactions", page, page_size], race_condition_ttl: 3.seconds) do
-      paginated_ckb_transactions = ckb_transactions.order(:id).page(page).per(page_size)
-      options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: paginated_ckb_transactions, page: page, page_size: page_size).call
-      CkbTransactionSerializer.new(paginated_ckb_transactions, options).serialized_json
+    if $redis.zcard(ckb_transaction_cache_key) > 0
+      start = (page - 1) * page_size
+      stop = start + page_size - 1
+      cached_ckb_transactions = $redis.zrange(ckb_transaction_cache_key, start, stop)
+      if cached_ckb_transactions.blank?
+        paginated_ckb_transactions = self.ckb_transactions.order(:id).page(page).per(page_size)
+      else
+        paginated_ckb_transactions =
+          cached_ckb_transactions.map do |ckb_transaction|
+            CkbTransaction.new.from_json(ckb_transaction)
+          end
+      end
+    else
+      cached_ckb_transactions = initCkbTransactionsCache
+      paginated_ckb_transactions = cached_ckb_transactions.order(:id).page(page).per(page_size)
     end
+
+    options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: paginated_ckb_transactions, page: page, page_size: page_size).call
+    CkbTransactionSerializer.new(paginated_ckb_transactions, options).serialized_json
+  end
+
+  def initCkbTransactionsCache
+    cached_ckb_transactions = self.ckb_transactions.order(:id).limit(100)
+    $redis.pipelined do
+      $redis.zremrangebyrank(ckb_transaction_cache_key, 0, -1)
+      cached_ckb_transactions.each do |ckb_transaction|
+        $redis.zadd(ckb_transaction_cache_key, ckb_transaction.id, ckb_transaction.to_json)
+      end
+    end
+
+    cached_ckb_transactions
   end
 
   def flush_cache
     $redis.pipelined do
       $redis.del(*cache_keys)
     end
+  end
+
+  def ckb_transaction_cache_key
+    "Block/#{block_hash}/ckb_transactions"
   end
 
   def cache_keys
