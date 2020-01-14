@@ -124,7 +124,7 @@ module Api
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
         block_hashes = Block.recent.map(&:number).map(&:to_s)
-        search_result_block_numbers = json["data"].map { |block| block.dig("attributes", "number")}
+        search_result_block_numbers = json["data"].map { |block| block.dig("attributes", "number") }
 
         assert_equal block_hashes, search_result_block_numbers
       end

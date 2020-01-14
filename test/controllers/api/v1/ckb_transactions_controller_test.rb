@@ -304,7 +304,7 @@ module Api
         create_list(:ckb_transaction, 15, block: block)
         page = 2
         page_size = 5
-        ckb_transactions =  CkbTransaction.order(block_timestamp: :desc).page(page).per(page_size)
+        ckb_transactions = CkbTransaction.order(block_timestamp: :desc).page(page).per(page_size)
 
         valid_get api_v1_ckb_transactions_url, params: { page: page, page_size: page_size }
 

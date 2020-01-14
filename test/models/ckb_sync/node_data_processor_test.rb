@@ -1207,7 +1207,6 @@ module CkbSync
       local_block = Block.find_by(number: 24)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
-
       VCR.use_cassette("blocks/25") do
         assert_changes -> { MiningInfo.find_by(block_number: 24).status }, from: "mined", to: "reverted" do
           node_data_processor.call

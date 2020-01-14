@@ -29,11 +29,12 @@ class CellOutput < ApplicationRecord
   end
 
   def cache_keys
-    %W(previous_cell_output/#{tx_hash}/#{cell_index} normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
-        normal_tx_display_inputs_previews_false_#{ckb_transaction_id} normal_tx_display_inputs_previews_true_#{consumed_by_id}
-        normal_tx_display_inputs_previews_false_#{consumed_by_id} normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
-        normal_tx_display_outputs_previews_false_#{ckb_transaction_id} normal_tx_display_outputs_previews_true_#{consumed_by_id}
-        normal_tx_display_outputs_previews_false_#{consumed_by_id} #{self.class.name}/#{tx_hash}/type_script #{self.class.name}/#{tx_hash}/lock_script
+    %W(
+      previous_cell_output/#{tx_hash}/#{cell_index} normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
+      normal_tx_display_inputs_previews_false_#{ckb_transaction_id} normal_tx_display_inputs_previews_true_#{consumed_by_id}
+      normal_tx_display_inputs_previews_false_#{consumed_by_id} normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
+      normal_tx_display_outputs_previews_false_#{ckb_transaction_id} normal_tx_display_outputs_previews_true_#{consumed_by_id}
+      normal_tx_display_outputs_previews_false_#{consumed_by_id} #{self.class.name}/#{tx_hash}/type_script #{self.class.name}/#{tx_hash}/lock_script
     )
   end
 

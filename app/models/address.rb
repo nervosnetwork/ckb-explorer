@@ -48,8 +48,8 @@ class Address < ApplicationRecord
   def cached_ckb_transactions(page, page_size, request)
     $redis.with do |conn|
       if conn.zcard(ckb_transaction_cache_key) > 0
-        start = (page - 1) * page_size
-        stop = start + page_size - 1
+        start = (page.to_i - 1) * page_size.to_i
+        stop = start + page_size.to_i - 1
         cached_ckb_transactions = conn.zrange(ckb_transaction_cache_key, start, stop)
         if cached_ckb_transactions.blank?
           paginated_ckb_transactions = self.ckb_transactions.recent.distinct.page(page).per(page_size)
