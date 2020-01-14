@@ -53,11 +53,15 @@ module FastJsonapi
     end
 
     def limit_page_size(records, page_size)
-      if page_size > records.klass::MAX_PAGINATES_PER
-        records.klass::MAX_PAGINATES_PER
+      if page_size > max_paginates_per(records)
+        max_paginates_per(records)
       else
         page_size
       end
+    end
+
+    def max_paginates_per(records)
+      records.is_a?(Array) ? records.first.class::MAX_PAGINATES_PER : records.klass::MAX_PAGINATES_PER
     end
   end
 end
