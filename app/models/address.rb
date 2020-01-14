@@ -59,10 +59,10 @@ class Address < ApplicationRecord
               CkbTransaction.new.from_json(ckb_transaction)
             end
 
-          paginated_ckb_transactions = Kaminari.paginate_array(ckb_transactions).page(page).per(page_size)
+          paginated_ckb_transactions = Kaminari.paginate_array(ckb_transactions)
         end
       else
-        cached_ckb_transactions = initCkbTransactionsCache
+        cached_ckb_transactions = init_ckb_transactions_cache
         paginated_ckb_transactions = cached_ckb_transactions.page(page).per(page_size)
       end
 
@@ -71,7 +71,7 @@ class Address < ApplicationRecord
     end
   end
 
-  def initCkbTransactionsCache
+  def init_ckb_transactions_cache
     cached_ckb_transactions = self.ckb_transactions.recent.distinct.limit(100)
     $redis.with do |conn|
       conn.pipelined do
@@ -85,7 +85,7 @@ class Address < ApplicationRecord
     cached_ckb_transactions
   end
 
-  def addCkbTransactionToCache(ckb_transaction)
+  def add_ckb_transaction_to_cache(ckb_transaction)
     $redis.with do |conn|
       total_count = conn.zcard(ckb_transaction_cache_key)
       if total_count > ENV["CACHED_ADDRESS_TRANSACTIONS_MAX_COUNT"].to_i

@@ -28,9 +28,7 @@ class SuggestQuery
 
   def find_cached_block
     block = Block.cached_find(query_key)
-    raise Api::V1::Exceptions::BlockNotFoundError if block.blank?
-
-    block
+    BlockSerializer.new(block) if block.present?
   end
 
   def find_ckb_transaction_by_hash

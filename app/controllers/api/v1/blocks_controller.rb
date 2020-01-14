@@ -17,9 +17,9 @@ module Api
       end
 
       def show
-        json_block = Block.find_block!(params[:id])
+        block = Block.find_block!(params[:id])
 
-        render json: json_block
+        render json: BlockSerializer.new(block)
       end
 
       private

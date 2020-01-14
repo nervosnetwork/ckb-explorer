@@ -71,11 +71,10 @@ class Block < ApplicationRecord
   def self.cached_find(query_key)
     Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
       if QueryKeyUtils.valid_hex?(query_key)
-        block = where(block_hash: query_key).first
+        find_by(block_hash: query_key)
       else
-        block = where(number: query_key).first
+        find_by(number: query_key)
       end
-      BlockSerializer.new(block) if block.present?
     end
   end
 
@@ -83,7 +82,7 @@ class Block < ApplicationRecord
     Address.find_by(address_hash: miner_hash)
   end
 
-  def cached_ckb_transactions(block_hash, page, page_size, request)
+  def cached_ckb_transactions(page, page_size, request)
     $redis.with do |conn|
       if conn.zcard(ckb_transaction_cache_key) > 0
         start = (page.to_i - 1) * page_size.to_i
@@ -96,11 +95,11 @@ class Block < ApplicationRecord
             cached_ckb_transactions.map do |ckb_transaction|
               CkbTransaction.new.from_json(ckb_transaction)
             end
-          paginated_ckb_transactions = Kaminari.paginate_array(ckb_transactions).page(page).per(page_size)
+          paginated_ckb_transactions = Kaminari.paginate_array(ckb_transactions)
         end
       else
-        cached_ckb_transactions = initCkbTransactionsCache
-        paginated_ckb_transactions = cached_ckb_transactions.order(:id).page(page).per(page_size)
+        cached_ckb_transactions = init_ckb_transactions_cache
+        paginated_ckb_transactions = cached_ckb_transactions.page(page).per(page_size)
       end
 
       options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: paginated_ckb_transactions, page: page, page_size: page_size).call
@@ -108,7 +107,7 @@ class Block < ApplicationRecord
     end
   end
 
-  def initCkbTransactionsCache
+  def init_ckb_transactions_cache
     cached_ckb_transactions = self.ckb_transactions.order(:id).limit(100)
     $redis.with do |conn|
       conn.pipelined do
