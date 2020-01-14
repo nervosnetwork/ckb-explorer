@@ -45,11 +45,46 @@ class Address < ApplicationRecord
     end
   end
 
-  def cached_ckb_transactions(address_or_lock_hash, page, page_size, request)
-    Rails.cache.fetch([self.class.name, address_or_lock_hash, "ckb_transactions", page, page_size], race_condition_ttl: 3.seconds, expires_in: 3.seconds) do
-      paginated_ckb_transactions = self.ckb_transactions.recent.distinct.page(page).per(page_size)
-      options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: paginated_ckb_transactions, page: page, page_size: page_size).call
-      CkbTransactionSerializer.new(paginated_ckb_transactions, options).serialized_json
+  def cached_ckb_transactions(page, page_size, request)
+    if $redis.zcard(ckb_transaction_cache_key) > 0
+      start = (page - 1) * page_size
+      stop = start + page_size - 1
+      cached_ckb_transactions = $redis.zrange(ckb_transaction_cache_key, start, stop)
+      if cached_ckb_transactions.blank?
+        paginated_ckb_transactions = self.ckb_transactions.recent.distinct.page(page).per(page_size)
+      else
+        paginated_ckb_transactions =
+          cached_ckb_transactions.map do |ckb_transaction|
+            CkbTransaction.new.from_json(ckb_transaction)
+          end
+      end
+    else
+      cached_ckb_transactions = initCkbTransactionsCache
+      paginated_ckb_transactions = cached_ckb_transactions.recent.distinct.page(page).per(page_size)
+    end
+
+    options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: paginated_ckb_transactions, page: page, page_size: page_size).call
+    CkbTransactionSerializer.new(paginated_ckb_transactions, options).serialized_json
+  end
+
+  def initCkbTransactionsCache
+    cached_ckb_transactions = self.ckb_transactions.recent.distinct.limit(100)
+    $redis.pipelined do
+      $redis.zremrangebyrank(ckb_transaction_cache_key, 0, -1)
+      cached_ckb_transactions.each do |ckb_transaction|
+        $redis.zadd(ckb_transaction_cache_key, ckb_transaction.block_timestamp, ckb_transaction.to_json)
+      end
+    end
+
+    cached_ckb_transactions
+  end
+
+  def addCkbTransactionToCache(ckb_transaction)
+    total_count = $redis.zcard(ckb_transaction_cache_key)
+    if total_count > ENV["CACHED_ADDRESS_TRANSACTIONS_MAX_COUNT"].to_i
+      $redis.zremrangebyrank(ckb_transaction_cache_key, 0, 0)
+    else
+      $redis.zadd(ckb_transaction_cache_key, ckb_transaction.block_timestamp, ckb_transaction.to_json)
     end
   end
 
@@ -57,6 +92,10 @@ class Address < ApplicationRecord
     $redis.pipelined do
       $redis.del(*cache_keys)
     end
+  end
+
+  def ckb_transaction_cache_key
+    "Address/#{lock_hash}/ckb_transactions"
   end
 
   def cache_keys

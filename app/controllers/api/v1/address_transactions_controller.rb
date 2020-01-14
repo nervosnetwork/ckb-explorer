@@ -8,7 +8,7 @@ module Api
         address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
 
-        ckb_transactions = address.cached_ckb_transactions(params[:id], @page, @page_size, request)
+        ckb_transactions = address.cached_ckb_transactions(@page, @page_size, request)
 
         render json: ckb_transactions
       rescue ActiveRecord::RecordNotFound
