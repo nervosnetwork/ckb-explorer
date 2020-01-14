@@ -47,7 +47,8 @@ class Address < ApplicationRecord
 
   def cached_ckb_transactions(page, page_size, request)
     $redis.with do |conn|
-      if conn.zcard(ckb_transaction_cache_key) > 0
+      total_count = conn.zcard(ckb_transaction_cache_key)
+      if total_count > 0
         start = (page.to_i - 1) * page_size.to_i
         stop = start + page_size.to_i - 1
         cached_ckb_transactions = conn.zrevrange(ckb_transaction_cache_key, start, stop)
@@ -58,8 +59,10 @@ class Address < ApplicationRecord
             cached_ckb_transactions.map do |ckb_transaction|
               CkbTransaction.new.from_json(ckb_transaction)
             end
+          page_data = PageData.new(records: ckb_transactions, klass: CkbTransaction, total_count: self.ckb_transactions.distinct.count, page_size: page_size.to_i, start: start)
+          options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: page_data, page: page, page_size: page_size).call
 
-          paginated_ckb_transactions = Kaminari.paginate_array(ckb_transactions)
+          return CkbTransactionSerializer.new(page_data.records, options).serialized_json
         end
       else
         cached_ckb_transactions = init_ckb_transactions_cache
