@@ -22,4 +22,10 @@ end
 #  mining_reward            :string           default("0")
 #  deposit_compensation     :string           default("0")
 #  treasury_amount          :string           default("0")
+#  live_cells_count         :string           default("0")
+#  dead_cells_count         :string           default("0")
+#  avg_hash_rate            :string           default("0")
+#  avg_difficulty           :string           default("0")
+#  uncle_rate               :string           default("0")
+#  total_depositors_count   :string           default("0")
 #
