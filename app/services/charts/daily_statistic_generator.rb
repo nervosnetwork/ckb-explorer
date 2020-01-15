@@ -11,6 +11,8 @@ module Charts
 
     def call
       daily_ckb_transactions_count = CkbTransaction.created_after(started_at).created_before(ended_at).count
+      return if daily_ckb_transactions_count.zero?
+
       cell_outputs = CellOutput.where.not(cell_type: "normal")
       mining_reward = Block.where("timestamp <= ?", ended_at).sum(:secondary_reward)
       deposit_compensation = unclaimed_compensation(cell_outputs, current_tip_block) + claimed_compensation(cell_outputs)
@@ -23,12 +25,61 @@ module Charts
                              dao_depositors_count: dao_depositors_count, unclaimed_compensation: unclaimed_compensation(cell_outputs, current_tip_block),
                              claimed_compensation: claimed_compensation(cell_outputs), average_deposit_time: average_deposit_time(cell_outputs),
                              mining_reward: mining_reward, deposit_compensation: deposit_compensation, treasury_amount: treasury_amount(cell_outputs, current_tip_block),
-                             estimated_apc: estimated_apc)
+                             estimated_apc: estimated_apc, live_cells_count: live_cells_count, dead_cells_count: dead_cells_count, avg_hash_rate: avg_hash_rate,
+                             avg_difficulty: avg_difficulty, uncle_rate: uncle_rate)
     end
 
     private
 
     attr_reader :datetime, :from_scratch
+
+    def live_cells_count
+      CellOutput.unconsumed_at(ended_at).count
+    end
+
+    def dead_cells_count
+      CellOutput.consumed_before(ended_at).count
+    end
+
+    def total_blocks_count
+      @total_blocks_count ||= Block.created_after(started_at).created_before(ended_at).count
+    end
+
+    def first_blocks_of_each_epoch
+      Block.created_after(started_at).created_before(ended_at).select("distinct on (epoch) * ").order(:epoch, :number).to_a
+    end
+
+    def avg_hash_rate
+      first_block_for_the_day = Block.created_after(started_at).created_before(ended_at).recent.last
+      last_block_for_the_day = Block.created_after(started_at).created_before(ended_at).recent.first
+      total_block_time = last_block_for_the_day.timestamp - first_block_for_the_day.timestamp
+
+      BigDecimal(total_difficulties_for_the_day) / total_block_time
+    end
+
+    def avg_difficulty
+      BigDecimal(total_difficulties_for_the_day) / total_blocks_count
+    end
+
+    def total_difficulties_for_the_day
+      @total_difficulties ||=
+        first_blocks_of_each_epoch.each_with_index.reduce(0) do |memo, (block, index)|
+          case index
+          when 0
+            last_block_number_in_epoch = block.number + block.length - 1
+            block.difficulty * (last_block_number_in_epoch - block.number + 1)
+          when first_blocks_of_each_epoch.size - 1
+            block.difficulty * (block.block_index_in_epoch + 1)
+          else
+            block.difficulty * block.length
+          end
+        end
+    end
+
+    def uncle_rate
+      uncles_count = Block.created_after(started_at).created_before(ended_at).sum(:uncles_count)
+      BigDecimal(uncles_count) / total_blocks_count
+    end
 
     def processed_addresses_count
       if from_scratch

@@ -1,5 +1,5 @@
 class DailyStatistic < ApplicationRecord
-  VALID_INDICATORS = %w(transactions_count addresses_count total_dao_deposit).freeze
+  VALID_INDICATORS = %w(transactions_count addresses_count total_dao_deposit live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate).freeze
 end
 
 # == Schema Information
