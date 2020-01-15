@@ -4,7 +4,7 @@ module Api
       before_action :validate_query_params
 
       def show
-        epoch_statistics = EpochStatistic.order(id: :desc).reverse
+        epoch_statistics = EpochStatistic.order(epoch_number: :desc).limit(90).reverse
         render json: EpochStatisticSerializer.new(epoch_statistics, { params: { indicator: params[:id] } })
       end
 
