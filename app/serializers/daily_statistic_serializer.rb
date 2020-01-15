@@ -18,22 +18,26 @@ class DailyStatisticSerializer
   }
 
   attribute :live_cells_count, if: Proc.new { |_record, params|
-    params && params[:indicator] == "live_cells_count"
+    params && params[:indicator].include?("live_cells_count")
   }
 
   attribute :dead_cells_count, if: Proc.new { |_record, params|
-    params && params[:indicator] == "dead_cells_count"
+    params && params[:indicator].include?("dead_cells_count")
   }
 
   attribute :avg_hash_rate, if: Proc.new { |_record, params|
-    params && params[:indicator] == "avg_hash_rate"
+    params && params[:indicator].include?("avg_hash_rate")
   }
 
   attribute :avg_difficulty, if: Proc.new { |_record, params|
-    params && params[:indicator] == "avg_difficulty"
+    params && params[:indicator].include?("avg_difficulty")
   }
 
   attribute :uncle_rate, if: Proc.new { |_record, params|
-    params && params[:indicator] == "uncle_rate"
+    params && params[:indicator].include?("uncle_rate")
+  }
+
+  attribute :total_depositors_count, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("total_depositors_count")
   }
 end

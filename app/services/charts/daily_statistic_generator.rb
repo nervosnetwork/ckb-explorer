@@ -26,7 +26,7 @@ module Charts
                              claimed_compensation: claimed_compensation(cell_outputs), average_deposit_time: average_deposit_time(cell_outputs),
                              mining_reward: mining_reward, deposit_compensation: deposit_compensation, treasury_amount: treasury_amount(cell_outputs, current_tip_block),
                              estimated_apc: estimated_apc, live_cells_count: live_cells_count, dead_cells_count: dead_cells_count, avg_hash_rate: avg_hash_rate,
-                             avg_difficulty: avg_difficulty, uncle_rate: uncle_rate)
+                             avg_difficulty: avg_difficulty, uncle_rate: uncle_rate, total_depositors_count: total_depositors_count)
     end
 
     private
@@ -107,7 +107,11 @@ module Charts
     end
 
     def dao_depositors_count
-      DaoEvent.processed.new_dao_depositor.created_before(ended_at).count - DaoEvent.processed.take_away_all_deposit.created_before(ended_at).count
+      total_depositors_count - DaoEvent.processed.take_away_all_deposit.created_before(ended_at).count
+    end
+
+    def total_depositors_count
+      @total_depositors_count ||= DaoEvent.processed.new_dao_depositor.created_before(ended_at).count
     end
 
     def to_be_counted_date
