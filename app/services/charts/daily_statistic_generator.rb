@@ -45,8 +45,8 @@ module Charts
       @total_blocks_count ||= Block.created_after(started_at).created_before(ended_at).count
     end
 
-    def first_blocks_of_each_epoch
-      Block.created_after(started_at).created_before(ended_at).select("distinct on (epoch) * ").order(:epoch, :number).to_a
+    def epoch_numbers_for_the_day
+      Block.created_after(started_at).created_before(ended_at).distinct(:epoch).pluck(:epoch)
     end
 
     def avg_hash_rate
@@ -63,16 +63,10 @@ module Charts
 
     def total_difficulties_for_the_day
       @total_difficulties ||=
-        first_blocks_of_each_epoch.each_with_index.reduce(0) do |memo, (block, index)|
-          case index
-          when 0
-            last_block_number_in_epoch = block.number + block.length - 1
-            block.difficulty * (last_block_number_in_epoch - block.number + 1)
-          when first_blocks_of_each_epoch.size - 1
-            block.difficulty * (block.block_index_in_epoch + 1)
-          else
-            block.difficulty * block.length
-          end
+        epoch_numbers_for_the_day.reduce(0) do |memo, epoch_number|
+          first_block_of_the_epoch = Block.created_after(started_at).created_before(ended_at).where(epoch: epoch_number).recent.last
+          last_block_of_the_epoch = Block.created_after(started_at).created_before(ended_at).where(epoch: epoch_number).recent.first
+          memo + first_block_of_the_epoch.difficulty * (last_block_of_the_epoch.number - first_block_of_the_epoch.number + 1)
         end
     end
 
@@ -123,7 +117,7 @@ module Charts
     end
 
     def ended_at
-      @ended_at ||= time_in_milliseconds(to_be_counted_date.end_of_day)
+      @ended_at ||= time_in_milliseconds(to_be_counted_date.end_of_day) - 1
     end
 
     def unclaimed_compensation(cell_outputs, current_tip_block)
