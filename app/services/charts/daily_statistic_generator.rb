@@ -143,7 +143,7 @@ module Charts
     end
 
     def phase1_dao_interests(cell_outputs)
-      cell_outputs.nervos_dao_withdrawing.generated_before(ended_at).unconsumed_at(ended_at).or().reduce(0) do |memo, nervos_dao_withdrawing_cell|
+      cell_outputs.nervos_dao_withdrawing.generated_before(ended_at).unconsumed_at(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
         memo + CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
       end
     end
