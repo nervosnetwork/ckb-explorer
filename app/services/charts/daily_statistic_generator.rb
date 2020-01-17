@@ -34,11 +34,23 @@ module Charts
     attr_reader :datetime, :from_scratch
 
     def live_cells_count
-      CellOutput.generated_before(ended_at).unconsumed_at(ended_at).count
+      if from_scratch
+        CellOutput.generated_before(ended_at).unconsumed_at(ended_at).count
+      else
+        CellOutput.generated_after(started_at).generated_before(ended_at).count + yesterday_daily_statistic.live_cells_count.to_i - dead_cells_count_today
+      end
+    end
+
+    def dead_cells_count_today
+      @dead_cells_count_today ||= CellOutput.consumed_after(started_at).consumed_before(ended_at).count
     end
 
     def dead_cells_count
-      CellOutput.generated_before(ended_at).consumed_before(ended_at).count
+      if from_scratch
+        CellOutput.generated_before(ended_at).consumed_before(ended_at).count
+      else
+        dead_cells_count_today + yesterday_daily_statistic.dead_cells_count.to_i
+      end
     end
 
     def total_blocks_count
@@ -79,7 +91,7 @@ module Charts
       if from_scratch
         Address.created_before(ended_at).count
       else
-        Address.created_after(started_at).created_before(ended_at).count + latest_daily_statistic.addresses_count.to_i
+        Address.created_after(started_at).created_before(ended_at).count + yesterday_daily_statistic.addresses_count.to_i
       end
     end
 
@@ -95,17 +107,37 @@ module Charts
     end
 
     def total_dao_deposit
-      deposit_amount = DaoEvent.processed.deposit_to_dao.created_before(ended_at).sum(:value)
-      withdraw_amount = DaoEvent.processed.withdraw_from_dao.created_before(ended_at).sum(:value)
-      deposit_amount - withdraw_amount
+      if from_scratch
+        deposit_amount = DaoEvent.processed.deposit_to_dao.created_before(ended_at).sum(:value)
+        withdraw_amount = DaoEvent.processed.withdraw_from_dao.created_before(ended_at).sum(:value)
+        deposit_amount - withdraw_amount
+      else
+        deposit_amount_today = DaoEvent.processed.deposit_to_dao.created_after(started_at).created_before(ended_at).sum(:value)
+        withdraw_amount_today = DaoEvent.processed.withdraw_from_dao.created_after(started_at).created_before(ended_at).sum(:value)
+        deposit_amount_today - withdraw_amount_today + yesterday_daily_statistic.total_dao_deposit.to_i
+      end
     end
 
     def dao_depositors_count
-      total_depositors_count - DaoEvent.processed.take_away_all_deposit.created_before(ended_at).count
+      if from_scratch
+        total_depositors_count - DaoEvent.processed.take_away_all_deposit.created_before(ended_at).count
+      else
+        withdrawals_today =  DaoEvent.processed.take_away_all_deposit.created_after(started_at).created_before(ended_at).count
+        new_depositors_today = DaoEvent.processed.new_dao_depositor.created_after(started_at).created_before(ended_at).count
+        new_depositors_today - withdrawals_today + yesterday_daily_statistic.dao_depositors_count.to_i
+      end
     end
 
     def total_depositors_count
-      @total_depositors_count ||= DaoEvent.processed.new_dao_depositor.created_before(ended_at).count
+      @total_depositors_count ||=
+        begin
+          if from_scratch
+            DaoEvent.processed.new_dao_depositor.created_before(ended_at).count
+          else
+            new_depositors_count_today = DaoEvent.processed.new_dao_depositor.created_after(started_at).created_before(ended_at).count
+            new_depositors_count_today + yesterday_daily_statistic.total_depositors_count.to_i
+          end
+        end
     end
 
     def to_be_counted_date
@@ -130,8 +162,17 @@ module Charts
     def claimed_compensation(cell_outputs)
       @claimed_compensation ||=
         begin
-          cell_outputs.nervos_dao_withdrawing.consumed_before(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
-            memo + CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
+          if from_scratch
+            cell_outputs.nervos_dao_withdrawing.consumed_before(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
+              memo + CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
+            end
+          else
+            claimed_compensation_today =
+              cell_outputs.nervos_dao_withdrawing.consumed_after(started_at).consumed_before(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
+                memo + CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
+              end
+
+            claimed_compensation_today + yesterday_daily_statistic.claimed_compensation.to_i
           end
         end
     end
@@ -182,8 +223,8 @@ module Charts
       (time.to_f * 1000).floor
     end
 
-    def latest_daily_statistic
-      ::DailyStatistic.order(created_at_unixtimestamp: :desc).first || OpenStruct.new(addresses_count: 0, total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0)
+    def yesterday_daily_statistic
+      @yesterday_daily_statistic ||= ::DailyStatistic.find_by(created_at_unixtimestamp: to_be_counted_date.yesterday.beginning_of_day.to_i) || OpenStruct.new(addresses_count: 0, total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0, total_depositors_count: 0, live_cells_count: 0, dead_cells_count: 0)
     end
   end
 end
