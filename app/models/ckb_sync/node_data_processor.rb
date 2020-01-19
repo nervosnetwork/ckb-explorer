@@ -42,6 +42,7 @@ module CkbSync
         DaoEvent.import!(dao_events, validate: false)
 
         update_dao_contract_related_info(local_block)
+        AddressCkbTransactionsCacheGenerator.perform_async(ckb_transactions.pluck(:id))
       end
 
       local_block
@@ -490,7 +491,7 @@ module CkbSync
       $redis.with do |conn|
         conn.pipelined do
           cache_keys.each_slice(400) do |keys|
-            conn.del(*keys)
+            conn.del(keys)
           end
         end
       end

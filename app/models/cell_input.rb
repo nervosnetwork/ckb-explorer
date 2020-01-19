@@ -40,7 +40,7 @@ class CellInput < ApplicationRecord
   def flush_cache
     $redis.with do |conn|
       conn.pipelined do
-        conn.del(*cache_keys)
+        conn.del(cache_keys)
       end
     end
   end

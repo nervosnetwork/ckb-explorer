@@ -128,7 +128,7 @@ class Block < ApplicationRecord
   def flush_cache
     $redis.with do |conn|
       conn.pipelined do
-        conn.del(*cache_keys)
+        conn.del(cache_keys)
       end
     end
   end
@@ -146,6 +146,7 @@ class Block < ApplicationRecord
     ckb_transactions.destroy_all
     ForkedBlock.create(attributes)
     flush_cache
+    AddressCkbTransactionsFlusher.perform_async(id)
     destroy
   end
 end
