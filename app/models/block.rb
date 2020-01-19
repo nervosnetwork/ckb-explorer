@@ -146,7 +146,7 @@ class Block < ApplicationRecord
     ckb_transactions.destroy_all
     ForkedBlock.create(attributes)
     flush_cache
-    AddressCkbTransactionsFlusher.perform_async(id)
+    AddressCkbTransactionsCacheFlusher.perform_async(id)
     destroy
   end
 end

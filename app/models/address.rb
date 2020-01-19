@@ -88,12 +88,14 @@ class Address < ApplicationRecord
     cached_ckb_transactions
   end
 
-  def add_ckb_transaction_to_cache(ckb_transaction, conn)
-    total_count = conn.zcard(ckb_transaction_cache_key)
-    if total_count > ENV["CACHED_ADDRESS_TRANSACTIONS_MAX_COUNT"].to_i
-      conn.zremrangebyrank(ckb_transaction_cache_key, 0, 0)
-    else
-      conn.zadd(ckb_transaction_cache_key, ckb_transaction.id, ckb_transaction.to_json, xx: true)
+  def add_ckb_transaction_to_cache(ckb_transaction)
+    $redis.with do |conn|
+      total_count = conn.zcard(ckb_transaction_cache_key)
+      if total_count > ENV["CACHED_ADDRESS_TRANSACTIONS_MAX_COUNT"].to_i
+        conn.zremrangebyrank(ckb_transaction_cache_key, 0, 0)
+      else
+        conn.zadd(ckb_transaction_cache_key, ckb_transaction.id, ckb_transaction.to_json)
+      end
     end
   end
 
