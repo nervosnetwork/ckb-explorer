@@ -80,7 +80,7 @@ class Address < ApplicationRecord
       conn.pipelined do
         conn.zremrangebyrank(ckb_transaction_cache_key, 0, -1)
         cached_ckb_transactions.each do |ckb_transaction|
-          conn.zadd(ckb_transaction_cache_key, ckb_transaction.block_timestamp, ckb_transaction.to_json)
+          conn.zadd(ckb_transaction_cache_key, ckb_transaction.id, ckb_transaction.to_json)
         end
       end
     end
@@ -94,7 +94,7 @@ class Address < ApplicationRecord
       if total_count > ENV["CACHED_ADDRESS_TRANSACTIONS_MAX_COUNT"].to_i
         conn.zremrangebyrank(ckb_transaction_cache_key, 0, 0)
       else
-        conn.zadd(ckb_transaction_cache_key, ckb_transaction.block_timestamp, ckb_transaction.to_json)
+        conn.zadd(ckb_transaction_cache_key, ckb_transaction.id, ckb_transaction.to_json, xx: true)
       end
     end
   end
