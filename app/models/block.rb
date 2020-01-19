@@ -138,13 +138,14 @@ class Block < ApplicationRecord
   end
 
   def cache_keys
-    %W(#{self.class.name}/#{block_hash} #{self.class.name}/#{number})
+    %W(#{self.class.name}/#{block_hash} #{self.class.name}/#{number} #{ckb_transaction_cache_key})
   end
 
   def invalid!
     uncle_blocks.delete_all
     ckb_transactions.destroy_all
     ForkedBlock.create(attributes)
+    flush_cache
     destroy
   end
 end
