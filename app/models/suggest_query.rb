@@ -52,6 +52,6 @@ class SuggestQuery
   end
 
   def find_by_hex
-    Block.cached_find(query_key) || find_ckb_transaction_by_hash || find_address_by_lock_hash
+    find_cached_block || find_ckb_transaction_by_hash || find_address_by_lock_hash
   end
 end
