@@ -62,7 +62,7 @@ class Address < ApplicationRecord
           page_data = PageData.new(records: ckb_transactions, klass: CkbTransaction, total_count: self.ckb_transactions.distinct.count, page_size: page_size.to_i, start: start)
           options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: page_data, page: page, page_size: page_size).call
 
-          return CkbTransactionSerializer.new(page_data.records, options).serialized_json
+          return CkbTransactionSerializer.new(page_data.records, options.merge({ params: { previews: true, address: self } })).serialized_json
         end
       else
         cached_ckb_transactions = init_ckb_transactions_cache
@@ -70,7 +70,7 @@ class Address < ApplicationRecord
       end
 
       options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: paginated_ckb_transactions, page: page, page_size: page_size).call
-      CkbTransactionSerializer.new(paginated_ckb_transactions, options).serialized_json
+      CkbTransactionSerializer.new(paginated_ckb_transactions, options.merge({ params: { previews: true, address: self } })).serialized_json
     end
   end
 
