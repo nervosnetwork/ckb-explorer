@@ -5,8 +5,8 @@ class DaoContractTest < ActiveSupport::TestCase
     should validate_presence_of(:total_deposit)
     should validate_numericality_of(:total_deposit).
       is_greater_than_or_equal_to(0)
-    should validate_presence_of(:interest_granted)
-    should validate_numericality_of(:interest_granted).
+    should validate_presence_of(:claimed_compensation)
+    should validate_numericality_of(:claimed_compensation).
       is_greater_than_or_equal_to(0)
     should validate_presence_of(:deposit_transactions_count)
     should validate_numericality_of(:deposit_transactions_count).
@@ -24,8 +24,8 @@ class DaoContractTest < ActiveSupport::TestCase
 
   test "should have correct columns" do
     dao_contract = create(:dao_contract)
-    expected_attributes = %w(created_at deposit_transactions_count depositors_count id interest_granted total_deposit total_depositors_count updated_at withdraw_transactions_count)
-    assert_equal expected_attributes, dao_contract.attributes.keys.sort
+    expected_attributes = %w(created_at deposit_transactions_count depositors_count id claimed_compensation total_deposit total_depositors_count updated_at withdraw_transactions_count unclaimed_compensation)
+    assert_equal expected_attributes.sort, dao_contract.attributes.keys.sort
   end
 
   test "estimated apc when deposit period is less than one year" do
@@ -97,14 +97,6 @@ class DaoContractTest < ActiveSupport::TestCase
     latest_daily_statistic = DailyStatistic.order(id: :desc).first
 
     assert_equal latest_daily_statistic.unclaimed_compensation, dao_contract.unclaimed_compensation
-  end
-
-  test "claimed_compensation should return beginning of today value" do
-    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
-    create(:daily_statistic)
-    latest_daily_statistic = DailyStatistic.order(id: :desc).first
-
-    assert_equal latest_daily_statistic.claimed_compensation, dao_contract.claimed_compensation
   end
 
   test "average_deposit_time should return beginning of today value" do
