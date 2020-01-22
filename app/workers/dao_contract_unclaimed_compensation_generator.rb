@@ -26,4 +26,16 @@ class DaoContractUnclaimedCompensationGenerator
       memo + (cell_output.capacity * tip_parse_dao.ar_i / parse_dao.ar_i) - cell_output.capacity
     end
   end
+
+  def ended_at
+    @ended_at ||= time_in_milliseconds(Time.current)
+  end
+
+  def time_in_milliseconds(time)
+    (time.to_f * 1000).floor
+  end
+
+  def current_tip_block
+    Block.recent.first
+  end
 end

@@ -66,7 +66,6 @@ class CkbTransaction < ApplicationRecord
       cell_outputs_for_display.map do |output|
         consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
         display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
-        display_output[:dao_type_hash] = ENV["DAO_TYPE_HASH"] unless output.normal?
 
         CkbUtils.hash_value_to_s(display_output)
       end
@@ -102,7 +101,7 @@ class CkbTransaction < ApplicationRecord
     compensation_started_block = Block.select(:number, :timestamp).find(nervos_dao_deposit_cell.block.id)
     compensation_ended_block = Block.select(:number, :timestamp).find(nervos_dao_withdrawing_cell_generated_tx.block_id)
     interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
-    attributes = { compensation_started_block_number: compensation_started_block.number, compensation_ended_block_number: compensation_ended_block.number, compensation_started_timestamp: compensation_ended_block.timestamp, compensation_ended_timestamp: compensation_ended_block.timestamp, interest: interest }
+    attributes = { compensation_started_block_number: compensation_started_block.number, compensation_ended_block_number: compensation_ended_block.number, compensation_started_timestamp: compensation_started_block.timestamp, compensation_ended_timestamp: compensation_ended_block.timestamp, interest: interest }
     if is_phase2
       locked_until_block = Block.select(:number, :timestamp).find(block_id)
       attributes.merge!({ locked_until_block_number: locked_until_block.number, locked_until_block_timestamp: locked_until_block.timestamp })

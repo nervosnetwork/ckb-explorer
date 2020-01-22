@@ -54,15 +54,11 @@ class DaoContract < ApplicationRecord
   end
 
   def unclaimed_compensation_changes
-    unclaimed_compensation - latest_daily_statistic.unclaimed_compensation.to_d
+    unclaimed_compensation.to_d - latest_daily_statistic.unclaimed_compensation.to_d
   end
 
   def claimed_compensation_changes
     claimed_compensation - latest_daily_statistic.claimed_compensation.to_d
-  end
-
-  def unclaimed_compensation
-    latest_daily_statistic.unclaimed_compensation
   end
 
   def average_deposit_time

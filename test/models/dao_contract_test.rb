@@ -71,22 +71,20 @@ class DaoContractTest < ActiveSupport::TestCase
     assert_equal expected_depositor_changes, dao_contract.depositor_changes
   end
 
-  test "unclaimed_compensation_changes should return difference within 24 hours" do
-    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
+  test "unclaimed_compensation_changes should return between beginning of today and current" do
+    dao_contract = create(:dao_contract, total_deposit: 10**21 * 100, unclaimed_compensation: 0)
     create_list(:daily_statistic, 2)
     latest_daily_statistic = DailyStatistic.order(id: :desc).first
-    penultimate_daily_statistic = DailyStatistic.order(id: :desc).second
-    expected_unclaimed_compensation_changes = penultimate_daily_statistic.unclaimed_compensation.to_d - latest_daily_statistic.unclaimed_compensation.to_d
+    expected_unclaimed_compensation_changes = dao_contract.unclaimed_compensation.to_d - latest_daily_statistic.unclaimed_compensation.to_d
 
     assert_equal expected_unclaimed_compensation_changes, dao_contract.unclaimed_compensation_changes
   end
 
-  test "claimed_compensation_changes should return difference within 24 hours" do
+  test "claimed_compensation_changes should return between beginning of today and current" do
     dao_contract = create(:dao_contract, total_deposit: 10**21 * 100)
     create_list(:daily_statistic, 2)
     latest_daily_statistic = DailyStatistic.order(id: :desc).first
-    penultimate_daily_statistic = DailyStatistic.order(id: :desc).second
-    expected_claimed_compensation_changes = penultimate_daily_statistic.claimed_compensation.to_d - latest_daily_statistic.claimed_compensation.to_d
+    expected_claimed_compensation_changes = dao_contract.claimed_compensation - latest_daily_statistic.claimed_compensation.to_d
 
     assert_equal expected_claimed_compensation_changes, dao_contract.claimed_compensation_changes
   end
@@ -96,7 +94,7 @@ class DaoContractTest < ActiveSupport::TestCase
     create(:daily_statistic)
     latest_daily_statistic = DailyStatistic.order(id: :desc).first
 
-    assert_equal latest_daily_statistic.unclaimed_compensation, dao_contract.unclaimed_compensation
+    assert_equal latest_daily_statistic.unclaimed_compensation.to_d, dao_contract.unclaimed_compensation
   end
 
   test "average_deposit_time should return beginning of today value" do
