@@ -54,11 +54,11 @@ class DaoContract < ApplicationRecord
   end
 
   def unclaimed_compensation_changes
-    latest_daily_statistic.unclaimed_compensation.to_d - penultimate_daily_statistic.unclaimed_compensation.to_d
+    unclaimed_compensation - latest_daily_statistic.unclaimed_compensation.to_d
   end
 
   def claimed_compensation_changes
-    latest_daily_statistic.claimed_compensation.to_d - penultimate_daily_statistic.claimed_compensation.to_d
+    claimed_compensation - latest_daily_statistic.claimed_compensation.to_d
   end
 
   def unclaimed_compensation
@@ -89,10 +89,6 @@ class DaoContract < ApplicationRecord
 
   def latest_daily_statistic
     @latest_daily_statistic ||= DailyStatistic.order(created_at_unixtimestamp: :desc).first || OpenStruct.new(total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0)
-  end
-
-  def penultimate_daily_statistic
-    @penultimate_daily_statistic ||= DailyStatistic.order(created_at_unixtimestamp: :desc).second || OpenStruct.new(total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0)
   end
 
   def alpha(start_epoch_number)
