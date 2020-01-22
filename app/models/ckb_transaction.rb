@@ -89,7 +89,7 @@ class CkbTransaction < ApplicationRecord
         previous_cell_output = cell_input.previous_cell_output
         display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_type: previous_cell_output.cell_type }
         display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
-        display_input.merge!(attributes_for_dao_input(cell_outputs[index]), false) if previous_cell_output.nervos_dao_deposit?
+        display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
 
         CkbUtils.hash_value_to_s(display_input)
       end
@@ -102,10 +102,10 @@ class CkbTransaction < ApplicationRecord
     compensation_started_block = Block.select(:number, :timestamp).find(nervos_dao_deposit_cell.block.id)
     compensation_ended_block = Block.select(:number, :timestamp).find(nervos_dao_withdrawing_cell_generated_tx.block_id)
     interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
-    attributes = { compensation_started_block_number: compensation_started_block.number, compensation_ended_block_number: compensation_ended_block.number, compensation_started_timestamp: compensation_ended_block.timestamp, compensation_ended_timestamp: compensation_started_timestamp.timestamp, interest: interest }
+    attributes = { compensation_started_block_number: compensation_started_block.number, compensation_ended_block_number: compensation_ended_block.number, compensation_started_timestamp: compensation_ended_block.timestamp, compensation_ended_timestamp: compensation_ended_block.timestamp, interest: interest }
     if is_phase2
       locked_until_block = Block.select(:number, :timestamp).find(block_id)
-      attributes.merge({ locked_until_block_number: locked_until_block.number, locked_until_block_timestamp: locked_until_block.timestamp })
+      attributes.merge!({ locked_until_block_number: locked_until_block.number, locked_until_block_timestamp: locked_until_block.timestamp })
     end
 
     CkbUtils.hash_value_to_s(attributes)
