@@ -3,12 +3,12 @@ class AddressAverageDepositTimeGenerator
 
   def perform(address_id)
     address = Address.find(address_id)
-    address.update(average_deposit_time: average_deposit_time)
+    address.update(average_deposit_time: cal_average_deposit_time(address))
   end
 
   private
 
-  def average_deposit_time
+  def cal_average_deposit_time(address)
     interest_bearing_deposits = 0
     uninterest_bearing_deposits = 0
     milliseconds_in_day = BigDecimal(24 * 60 * 60 * 1000)
