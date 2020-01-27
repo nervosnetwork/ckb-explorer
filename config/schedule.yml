@@ -3,7 +3,7 @@ daily_statistic:
   class: "Charts::DailyStatistic"
   queue: critical
 
-blockstatistic:
+block_statistic:
   cron: "*/10 * * * *"
   class: "Charts::BlockStatistic"
   queue: critical
@@ -21,3 +21,7 @@ chart_forked_event_processor:
 cal_unclaimed_compensation:
   cron: "0 */1 * * *"
   class: "DaoContractUnclaimedCompensationGenerator"
+
+cal_address_average_deposit_time:
+  cron: "0 */6 * * *"
+  class: "AddressAverageDepositTimeGenerator"
