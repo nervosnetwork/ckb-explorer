@@ -53,4 +53,8 @@ class NullAddress
     script = parsed_address.script
     LockScript.new(code_hash: script.code_hash, args: script.args, hash_type: script.hash_type)
   end
+
+  def average_deposit_time
+    0
+  end
 end

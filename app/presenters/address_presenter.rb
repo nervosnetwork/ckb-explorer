@@ -58,6 +58,10 @@ class AddressPresenter
     object.first.lock_script.lock_info
   end
 
+  def average_deposit_time
+    object.first.average_deposit_time
+  end
+
   private
 
   attr_reader :object

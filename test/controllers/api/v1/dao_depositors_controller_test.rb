@@ -16,7 +16,7 @@ module Api
       end
 
       test "should respond with error object when Content-Type is wrong" do
-        error_object = Api::V1::Exceptions::WrongContentTypeError.new
+        error_object = Api::V1::Exceptions::InvalidContentTypeError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         get api_v1_dao_depositors_url, headers: { "Content-Type": "text/plain" }
@@ -31,7 +31,7 @@ module Api
       end
 
       test "should respond with error object when Accept is wrong" do
-        error_object = Api::V1::Exceptions::WrongAcceptError.new
+        error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         get api_v1_dao_depositors_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
@@ -61,7 +61,7 @@ module Api
 
         valid_get api_v1_dao_depositors_url
 
-        assert_equal %w(address_hash dao_deposit).sort, json["data"].first["attributes"].keys.sort
+        assert_equal %w(address_hash dao_deposit average_deposit_time).sort, json["data"].first["attributes"].keys.sort
       end
 
       test "should return up to 100 records" do

@@ -29,7 +29,7 @@ module Api
 
       test "should respond with error object when Content-Type is wrong" do
         address = create(:address, :with_lock_script)
-        error_object = Api::V1::Exceptions::WrongContentTypeError.new
+        error_object = Api::V1::Exceptions::InvalidContentTypeError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         get api_v1_address_url(address.address_hash), headers: { "Content-Type": "text/plain" }
@@ -47,7 +47,7 @@ module Api
 
       test "should respond with error object when Accept is wrong" do
         address = create(:address, :with_lock_script)
-        error_object = Api::V1::Exceptions::WrongAcceptError.new
+        error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         get api_v1_address_url(address.address_hash), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
@@ -86,7 +86,7 @@ module Api
 
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal %w(address_hash balance transactions_count lock_script dao_deposit interest lock_info is_special live_cells_count mined_blocks_count).sort, json["data"]["attributes"].keys.sort
+        assert_equal %w(address_hash balance transactions_count lock_script dao_deposit interest lock_info is_special live_cells_count mined_blocks_count average_deposit_time).sort, json["data"]["attributes"].keys.sort
       end
 
       test "should return NullAddress when address no found by id" do

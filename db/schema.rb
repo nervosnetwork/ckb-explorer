@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_10_123617) do
+ActiveRecord::Schema.define(version: 2020_01_22_060907) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -38,6 +38,7 @@ ActiveRecord::Schema.define(version: 2020_01_10_123617) do
     t.boolean "visible", default: true
     t.decimal "live_cells_count", precision: 30, default: "0"
     t.integer "mined_blocks_count", default: 0
+    t.decimal "average_deposit_time"
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
   end
@@ -172,17 +173,24 @@ ActiveRecord::Schema.define(version: 2020_01_10_123617) do
     t.string "mining_reward", default: "0"
     t.string "deposit_compensation", default: "0"
     t.string "treasury_amount", default: "0"
+    t.string "live_cells_count", default: "0"
+    t.string "dead_cells_count", default: "0"
+    t.string "avg_hash_rate", default: "0"
+    t.string "avg_difficulty", default: "0"
+    t.string "uncle_rate", default: "0"
+    t.string "total_depositors_count", default: "0"
   end
 
   create_table "dao_contracts", force: :cascade do |t|
     t.decimal "total_deposit", precision: 30, default: "0"
-    t.decimal "interest_granted", precision: 30, default: "0"
+    t.decimal "claimed_compensation", precision: 30, default: "0"
     t.bigint "deposit_transactions_count", default: 0
     t.bigint "withdraw_transactions_count", default: 0
     t.integer "depositors_count", default: 0
     t.bigint "total_depositors_count", default: 0
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.decimal "unclaimed_compensation", precision: 30
   end
 
   create_table "dao_events", force: :cascade do |t|

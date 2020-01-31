@@ -761,7 +761,7 @@ module CkbSync
         tx = fake_dao_withdraw_transaction(node_block)
         withdraw_amount = tx.cell_outputs.nervos_dao_withdrawing.first.capacity
 
-        assert_difference -> { DaoContract.default_contract.reload.interest_granted }, "0x174876ebe8".hex - withdraw_amount do
+        assert_difference -> { DaoContract.default_contract.reload.claimed_compensation }, "0x174876ebe8".hex - withdraw_amount do
           node_data_processor.process_block(node_block)
         end
 
@@ -835,7 +835,7 @@ module CkbSync
       init_deposit_transactions_count = 2
       init_withdraw_transactions_count = 1
       init_total_depositors_count = 2
-      dao_contract.update(total_deposit: init_total_deposit, depositors_count: init_depositors_count, interest_granted: init_interest_granted, deposit_transactions_count: init_deposit_transactions_count, withdraw_transactions_count: init_withdraw_transactions_count, total_depositors_count: init_total_depositors_count)
+      dao_contract.update(total_deposit: init_total_deposit, depositors_count: init_depositors_count, claimed_compensation: init_interest_granted, deposit_transactions_count: init_deposit_transactions_count, withdraw_transactions_count: init_withdraw_transactions_count, total_depositors_count: init_total_depositors_count)
       prepare_node_data(HAS_UNCLES_BLOCK_NUMBER)
       local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
@@ -845,7 +845,7 @@ module CkbSync
         dao_contract.reload
         assert_equal init_total_deposit, dao_contract.total_deposit
         assert_equal init_depositors_count, dao_contract.depositors_count
-        assert_equal init_interest_granted, dao_contract.interest_granted
+        assert_equal init_interest_granted, dao_contract.claimed_compensation
         assert_equal init_deposit_transactions_count, dao_contract.deposit_transactions_count
         assert_equal init_withdraw_transactions_count, dao_contract.withdraw_transactions_count
         assert_equal init_total_depositors_count, dao_contract.total_depositors_count
@@ -1086,7 +1086,7 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
-        assert_difference -> { DaoContract.default_contract.reload.interest_granted }, -1000 do
+        assert_difference -> { DaoContract.default_contract.reload.claimed_compensation }, -1000 do
           node_data_processor.call
         end
 

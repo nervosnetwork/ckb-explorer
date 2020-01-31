@@ -78,7 +78,7 @@ module CkbSync
     def process_issue_interest(dao_contract, dao_events)
       issue_interest_dao_events = dao_events.where(event_type: "issue_interest")
       issue_interest_dao_events.each do |event|
-        dao_contract.increment!(:interest_granted, event.value)
+        dao_contract.increment!(:claimed_compensation, event.value)
         address = event.address
         address.increment!(:interest, event.value)
         event.processed!
@@ -190,7 +190,7 @@ module CkbSync
     def revert_issue_interest(dao_contract, dao_events)
       issue_interest_dao_events = dao_events.where(event_type: "issue_interest")
       issue_interest_dao_events.each do |event|
-        dao_contract.decrement!(:interest_granted, event.value)
+        dao_contract.decrement!(:claimed_compensation, event.value)
         address = event.address
         address.decrement!(:interest, event.value)
         event.reverted!

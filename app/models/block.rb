@@ -57,7 +57,7 @@ class Block < ApplicationRecord
   end
 
   def block_index_in_epoch
-     number - start_number
+    number - start_number
   end
 
   def fraction_epoch

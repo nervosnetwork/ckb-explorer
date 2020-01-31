@@ -1,3 +1,18 @@
+# [0.9.2](https://github.com/shaojunda/ckb-explorer/compare/v0.9.1...v0.9.2) (2020-01-31)
+
+
+### Features
+
+* add address average deposit time generator ([0618138](https://github.com/shaojunda/ckb-explorer/commit/0618138))
+* add average deposit time to address ([81469df](https://github.com/shaojunda/ckb-explorer/commit/81469df))
+* add claimed and unclaimed compensation ([268858d](https://github.com/shaojunda/ckb-explorer/commit/268858d))
+* add compensation and lock period ([e42b072](https://github.com/shaojunda/ckb-explorer/commit/e42b072))
+* add more elements to daily chart ([0e239b1](https://github.com/shaojunda/ckb-explorer/commit/0e239b1))
+* add new columns to daily statistic ([0a013c4](https://github.com/shaojunda/ckb-explorer/commit/0a013c4))
+* add unlaimed compenstaion generator worker ([ba0e105](https://github.com/shaojunda/ckb-explorer/commit/ba0e105))
+
+
+
 # [0.9.1](https://github.com/shaojunda/ckb-explorer/compare/v0.8.4...v0.9.0) (2020-01-13)
 
 

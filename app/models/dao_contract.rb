@@ -1,5 +1,5 @@
 class DaoContract < ApplicationRecord
-  validates :total_deposit, :interest_granted, :deposit_transactions_count, :withdraw_transactions_count, :depositors_count, :total_depositors_count, presence: true, numericality: { greater_than_or_equal_to: 0 }
+  validates :total_deposit, :claimed_compensation, :deposit_transactions_count, :withdraw_transactions_count, :depositors_count, :total_depositors_count, presence: true, numericality: { greater_than_or_equal_to: 0 }
   CONTRACT_NAME = "nervos_dao".freeze
   GENESIS_ISSUANCE = 336 * 10**8
   ANNUAL_PRIMARY_ISSUANCE_BASE = GENESIS_ISSUANCE / 8
@@ -54,19 +54,11 @@ class DaoContract < ApplicationRecord
   end
 
   def unclaimed_compensation_changes
-    latest_daily_statistic.unclaimed_compensation.to_d - penultimate_daily_statistic.unclaimed_compensation.to_d
+    unclaimed_compensation.to_d - latest_daily_statistic.unclaimed_compensation.to_d
   end
 
   def claimed_compensation_changes
-    latest_daily_statistic.claimed_compensation.to_d - penultimate_daily_statistic.claimed_compensation.to_d
-  end
-
-  def unclaimed_compensation
-    latest_daily_statistic.unclaimed_compensation
-  end
-
-  def claimed_compensation
-    latest_daily_statistic.claimed_compensation
+    claimed_compensation - latest_daily_statistic.claimed_compensation.to_d
   end
 
   def average_deposit_time
@@ -93,10 +85,6 @@ class DaoContract < ApplicationRecord
 
   def latest_daily_statistic
     @latest_daily_statistic ||= DailyStatistic.order(created_at_unixtimestamp: :desc).first || OpenStruct.new(total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0)
-  end
-
-  def penultimate_daily_statistic
-    @penultimate_daily_statistic ||= DailyStatistic.order(created_at_unixtimestamp: :desc).second || OpenStruct.new(total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0)
   end
 
   def alpha(start_epoch_number)
@@ -134,11 +122,12 @@ end
 #
 #  id                          :bigint           not null, primary key
 #  total_deposit               :decimal(30, )    default(0)
-#  interest_granted            :decimal(30, )    default(0)
+#  claimed_compensation        :decimal(30, )    default(0)
 #  deposit_transactions_count  :bigint           default(0)
 #  withdraw_transactions_count :bigint           default(0)
 #  depositors_count            :integer          default(0)
 #  total_depositors_count      :bigint           default(0)
 #  created_at                  :datetime         not null
 #  updated_at                  :datetime         not null
+#  unclaimed_compensation      :decimal(30, )
 #
