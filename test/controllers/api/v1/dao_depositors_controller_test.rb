@@ -61,7 +61,7 @@ module Api
 
         valid_get api_v1_dao_depositors_url
 
-        assert_equal %w(address_hash dao_deposit).sort, json["data"].first["attributes"].keys.sort
+        assert_equal %w(address_hash dao_deposit average_deposit_time).sort, json["data"].first["attributes"].keys.sort
       end
 
       test "should return up to 100 records" do

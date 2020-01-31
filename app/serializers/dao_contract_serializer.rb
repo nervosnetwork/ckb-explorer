@@ -40,4 +40,7 @@ class DaoContractSerializer
   attribute :estimated_apc do |object|
     object.estimated_apc.to_s
   end
+  attribute :claimed_compensation do |object|
+    object.claimed_compensation.to_s
+  end
 end
