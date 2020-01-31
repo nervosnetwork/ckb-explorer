@@ -1,6 +1,7 @@
 .DS_Store
 .vscode
 .idea/
+TAGS
 ckb-explorer.iml
 .generators
 .rakeTasks
