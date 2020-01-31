@@ -21,7 +21,7 @@ module Api
       test "should respond with error object when Content-Type is wrong" do
         ckb_transaction = create(:ckb_transaction)
 
-        error_object = Api::V1::Exceptions::WrongContentTypeError.new
+        error_object = Api::V1::Exceptions::InvalidContentTypeError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         get api_v1_dao_contract_transaction_url(ckb_transaction.tx_hash), headers: { "Content-Type": "text/plain" }
@@ -39,7 +39,7 @@ module Api
 
       test "should respond with error object when Accept is wrong" do
         ckb_transaction = create(:ckb_transaction)
-        error_object = Api::V1::Exceptions::WrongAcceptError.new
+        error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         get api_v1_dao_contract_transaction_url(ckb_transaction.tx_hash), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
