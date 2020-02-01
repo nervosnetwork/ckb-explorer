@@ -26,4 +26,7 @@ class AddressSerializer
   attribute :mined_blocks_count do |object|
     object.mined_blocks_count.to_s
   end
+  attribute :average_deposit_time do |object|
+    object.average_deposit_time.to_s
+  end
 end

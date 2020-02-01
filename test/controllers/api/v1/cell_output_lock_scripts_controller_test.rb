@@ -29,7 +29,7 @@ module Api
 
       test "should respond with error object when Content-Type is wrong" do
         cell_output = create_cell_output
-        error_object = Api::V1::Exceptions::WrongContentTypeError.new
+        error_object = Api::V1::Exceptions::InvalidContentTypeError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         get api_v1_cell_output_lock_script_url(cell_output.id), headers: { "Content-Type": "text/plain" }
@@ -47,7 +47,7 @@ module Api
 
       test "should respond with error object when Accept is wrong" do
         cell_output = create_cell_output
-        error_object = Api::V1::Exceptions::WrongAcceptError.new
+        error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         get api_v1_cell_output_lock_script_url(cell_output.id), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }

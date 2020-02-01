@@ -16,6 +16,7 @@ class CellOutput < ApplicationRecord
 
   attribute :tx_hash, :ckb_hash
 
+  scope :consumed_after, -> (block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
   scope :consumed_before, -> (block_timestamp) { where("consumed_block_timestamp <= ?", block_timestamp) }
   scope :unconsumed_at, -> (block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp is null", block_timestamp) }
   scope :generated_after, -> (block_timestamp) { where("block_timestamp >= ?", block_timestamp) }

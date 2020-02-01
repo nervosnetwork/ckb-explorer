@@ -80,6 +80,7 @@ end
 #  visible                :boolean          default(TRUE)
 #  live_cells_count       :decimal(30, )    default(0)
 #  mined_blocks_count     :integer          default(0)
+#  average_deposit_time   :decimal(, )
 #
 # Indexes
 #

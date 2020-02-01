@@ -25,7 +25,7 @@ module Validations
     attr_accessor :query_key
 
     def query_key_format_must_be_correct
-      if query_key.blank? || !query_key.in?(::DailyStatistic::VALID_INDICATORS)
+      if query_key.blank? || !(query_key.split("-") - ::DailyStatistic::VALID_INDICATORS).empty?
         errors.add(:query_key, "indicator name is invalid")
       end
     end
