@@ -86,7 +86,7 @@ class CkbTransaction < ApplicationRecord
       cell_inputs_for_display = previews ? cell_inputs.order(:id).limit(10) : cell_inputs.order(:id)
       cell_inputs_for_display.each_with_index.map do |cell_input, index|
         previous_cell_output = cell_input.previous_cell_output
-        display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_type: previous_cell_output.cell_type }
+        display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_index: previous_cell_output.cell_index, cell_type: previous_cell_output.cell_type }
         display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
         display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
 
