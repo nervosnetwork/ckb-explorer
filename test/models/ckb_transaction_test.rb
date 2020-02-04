@@ -54,9 +54,9 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
   test "#display_inputs should contain correct attributes for normal transaction" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash cell_type)
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash cell_type cell_index).sort
 
-    assert_equal [expected_attributes], ckb_transaction.display_inputs.map(&:keys).uniq
+    assert_equal [expected_attributes], ckb_transaction.display_inputs.map(&:keys).map(&:sort).uniq
   end
 
   test "#display_inputs should contain correct attributes for cellbase" do
@@ -132,8 +132,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
       compensation_started_block_number: started_block.number, compensation_ended_block_number: ended_block.number,
       compensation_started_timestamp: started_block.timestamp, compensation_ended_timestamp: ended_block.timestamp,
       locked_until_block_number: ckb_transaction.block.number, locked_until_block_timestamp: ckb_transaction.block.timestamp,
-      interest: interest, cell_type: nervos_dao_withdrawing_cell.cell_type }).sort
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash compensation_started_block_number compensation_ended_block_number compensation_started_timestamp compensation_ended_timestamp interest cell_type locked_until_block_number locked_until_block_timestamp).sort
+      interest: interest, cell_type: nervos_dao_withdrawing_cell.cell_type, cell_index: nervos_dao_withdrawing_cell.cell_index }).sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash compensation_started_block_number compensation_ended_block_number compensation_started_timestamp compensation_ended_timestamp interest cell_type locked_until_block_number locked_until_block_timestamp cell_index).sort
 
     assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
     assert_equal expected_display_input, ckb_transaction.display_inputs.first.sort
@@ -155,8 +155,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
       address_hash: deposit_output_cell.address_hash, generated_tx_hash: deposit_output_cell.generated_by.tx_hash,
       compensation_started_block_number: started_block.number, compensation_ended_block_number: ended_block.number,
       compensation_started_timestamp: started_block.timestamp, compensation_ended_timestamp: ended_block.timestamp,
-      interest: interest, cell_type: deposit_output_cell.cell_type }).sort
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash interest cell_type compensation_ended_block_number compensation_ended_timestamp compensation_started_block_number compensation_started_timestamp).sort
+      interest: interest, cell_type: deposit_output_cell.cell_type, cell_index: deposit_output_cell.cell_index }).sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash interest cell_type compensation_ended_block_number compensation_ended_timestamp compensation_started_block_number compensation_started_timestamp cell_index).sort
 
     assert_equal expected_attributes, phase1_transaction.display_inputs.first.keys.sort
     assert_equal expected_display_input, phase1_transaction.display_inputs.first.sort
