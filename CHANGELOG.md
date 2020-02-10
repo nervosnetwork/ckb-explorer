@@ -1,3 +1,12 @@
+# [v0.9.3](https://github.com/shaojunda/ckb-explorer/compare/v0.9.2...v0.9.3) (2020-02-06)
+
+
+### Features
+
+* add cell_index to display input ([c700eea](https://github.com/shaojunda/ckb-explorer/commit/c700eea))
+
+
+
 # [0.9.2](https://github.com/shaojunda/ckb-explorer/compare/v0.9.1...v0.9.2) (2020-01-31)
 
 
