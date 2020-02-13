@@ -14,6 +14,8 @@ class Address < ApplicationRecord
 
   after_commit :flush_cache
 
+  attr_accessor :query_address
+
   def lock_script
     LockScript.where(address: self).first
   end
@@ -38,9 +40,8 @@ class Address < ApplicationRecord
       else
         lock_hash = CkbUtils.parse_address(query_key).script.compute_hash
         address = find_by(lock_hash: lock_hash)
-
         if address.present?
-          address.address_hash = query_key
+          address.query_address = query_key
           address
         else
           NullAddress.new(query_key)

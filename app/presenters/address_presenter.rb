@@ -8,7 +8,7 @@ class AddressPresenter
   end
 
   def address_hash
-    object.first.address_hash
+    object.first.query_address
   end
 
   def balance
