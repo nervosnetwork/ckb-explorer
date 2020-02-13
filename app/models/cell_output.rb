@@ -16,11 +16,11 @@ class CellOutput < ApplicationRecord
 
   attribute :tx_hash, :ckb_hash
 
-  scope :consumed_after, -> (block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
-  scope :consumed_before, -> (block_timestamp) { where("consumed_block_timestamp <= ?", block_timestamp) }
-  scope :unconsumed_at, -> (block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp is null", block_timestamp) }
-  scope :generated_after, -> (block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
-  scope :generated_before, -> (block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+  scope :consumed_after, ->(block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
+  scope :consumed_before, ->(block_timestamp) { where("consumed_block_timestamp <= ?", block_timestamp) }
+  scope :unconsumed_at, ->(block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp is null", block_timestamp) }
+  scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
+  scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
 
   after_commit :flush_cache
 
@@ -35,11 +35,12 @@ class CellOutput < ApplicationRecord
   end
 
   def cache_keys
-    %W(previous_cell_output/#{tx_hash}/#{cell_index} normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
-        normal_tx_display_inputs_previews_false_#{ckb_transaction_id} normal_tx_display_inputs_previews_true_#{consumed_by_id}
-        normal_tx_display_inputs_previews_false_#{consumed_by_id} normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
-        normal_tx_display_outputs_previews_false_#{ckb_transaction_id} normal_tx_display_outputs_previews_true_#{consumed_by_id}
-        normal_tx_display_outputs_previews_false_#{consumed_by_id}
+    %W(
+      previous_cell_output/#{tx_hash}/#{cell_index} normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
+      normal_tx_display_inputs_previews_false_#{ckb_transaction_id} normal_tx_display_inputs_previews_true_#{consumed_by_id}
+      normal_tx_display_inputs_previews_false_#{consumed_by_id} normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
+      normal_tx_display_outputs_previews_false_#{ckb_transaction_id} normal_tx_display_outputs_previews_true_#{consumed_by_id}
+      normal_tx_display_outputs_previews_false_#{consumed_by_id}
     )
   end
 

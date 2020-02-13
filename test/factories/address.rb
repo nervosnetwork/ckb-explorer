@@ -14,6 +14,11 @@ FactoryBot.define do
       transactions_count { 3 }
     end
 
+    after(:create) do |address|
+      lock_hash = CkbUtils.parse_address(address.address_hash).script.compute_hash
+      address.update(lock_hash: lock_hash)
+    end
+
     trait :with_lock_script do
       after(:create) do |address, _evaluator|
         block = create(:block, :with_block_hash)

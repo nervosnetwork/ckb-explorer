@@ -167,7 +167,7 @@ module Charts
             end
           else
             claimed_compensation_today =
-            CellOutput.nervos_dao_withdrawing.consumed_after(started_at).consumed_before(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
+              CellOutput.nervos_dao_withdrawing.consumed_after(started_at).consumed_before(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
                 memo + CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
               end
 
@@ -198,17 +198,19 @@ module Charts
     def average_deposit_time
       interest_bearing_deposits = 0
       uninterest_bearing_deposits = 0
-      sum_interest_bearing = CellOutput.nervos_dao_withdrawing.generated_before(ended_at).unconsumed_at(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
-        nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
-        nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
-        interest_bearing_deposits += nervos_dao_deposit_cell.capacity
-        memo + nervos_dao_deposit_cell.capacity * (nervos_dao_withdrawing_cell.block_timestamp - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
-      end
-      sum_uninterest_bearing = CellOutput.nervos_dao_deposit.generated_before(ended_at).unconsumed_at(ended_at).reduce(0) do |memo, nervos_dao_deposit_cell|
-        uninterest_bearing_deposits += nervos_dao_deposit_cell.capacity
+      sum_interest_bearing =
+        CellOutput.nervos_dao_withdrawing.generated_before(ended_at).unconsumed_at(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
+          nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+          nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
+          interest_bearing_deposits += nervos_dao_deposit_cell.capacity
+          memo + nervos_dao_deposit_cell.capacity * (nervos_dao_withdrawing_cell.block_timestamp - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
+        end
+      sum_uninterest_bearing =
+        CellOutput.nervos_dao_deposit.generated_before(ended_at).unconsumed_at(ended_at).reduce(0) do |memo, nervos_dao_deposit_cell|
+          uninterest_bearing_deposits += nervos_dao_deposit_cell.capacity
 
-        memo + nervos_dao_deposit_cell.capacity * (ended_at - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
-      end
+          memo + nervos_dao_deposit_cell.capacity * (ended_at - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
+        end
 
       (sum_interest_bearing + sum_uninterest_bearing) / (interest_bearing_deposits + uninterest_bearing_deposits)
     end
