@@ -17,6 +17,7 @@ module Charts
     end
 
     private
+
     attr_reader :block_number
   end
 end

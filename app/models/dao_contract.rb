@@ -35,12 +35,13 @@ class DaoContract < ApplicationRecord
     checkpoints.unshift(start_epoch_number.to_i) if checkpoints.empty? || checkpoints[0] > start_epoch_number
     checkpoints.push(scaled_end_epoch_number.to_i) if checkpoints.last < scaled_end_epoch_number
     end_epoch_numbers = checkpoints[1..-1]
-    rates = end_epoch_numbers.each_with_index.map do |inner_end_epoch_number, index|
-      epoch_index = deposit_epoch.index * 1800 / deposit_epoch.length
-      start_epoch = OpenStruct.new(number: checkpoints[index], index: epoch_index, length: 1800)
-      end_epoch = OpenStruct.new(number: inner_end_epoch_number, index: epoch_index, length: 1800)
-      rate(start_epoch, end_epoch)
-    end
+    rates =
+      end_epoch_numbers.each_with_index.map do |inner_end_epoch_number, index|
+        epoch_index = deposit_epoch.index * 1800 / deposit_epoch.length
+        start_epoch = OpenStruct.new(number: checkpoints[index], index: epoch_index, length: 1800)
+        end_epoch = OpenStruct.new(number: inner_end_epoch_number, index: epoch_index, length: 1800)
+        rate(start_epoch, end_epoch)
+      end
     rate = rates.reduce(1) { |memo, rate| memo * (1 + rate) } - 1
     (rate * 100) / ratio
   end
@@ -89,7 +90,7 @@ class DaoContract < ApplicationRecord
 
   def alpha(start_epoch_number)
     i = ((start_epoch_number + 1) / EPOCHS_IN_PERIOD).floor
-    p = PRIMARY_ISSUANCE_PER_YEAR_BASE / 2 ** i / 2190
+    p = PRIMARY_ISSUANCE_PER_YEAR_BASE / 2**i / 2190
     p / SECONDARY_ISSUANCE_PER_EPOCH
   end
 
@@ -105,8 +106,8 @@ class DaoContract < ApplicationRecord
 
   def primary_issuance(start_epoch)
     epochs = (start_epoch.number / EPOCHS_IN_PERIOD).floor
-    epochs.times.reduce(GENESIS_ISSUANCE) { |memo, item| memo + (ANNUAL_PRIMARY_ISSUANCE_BASE * YEARS_IN_PERIOD) / 2 ** item } \
-      + (ANNUAL_PRIMARY_ISSUANCE_BASE * ((start_epoch.number + 1 - epochs * EPOCHS_IN_PERIOD) / EPOCHS_IN_ONE_NATURAL_YEAR)) / 2 ** epochs
+    epochs.times.reduce(GENESIS_ISSUANCE) { |memo, item| memo + (ANNUAL_PRIMARY_ISSUANCE_BASE * YEARS_IN_PERIOD) / 2**item } \
+      + (ANNUAL_PRIMARY_ISSUANCE_BASE * ((start_epoch.number + 1 - epochs * EPOCHS_IN_PERIOD) / EPOCHS_IN_ONE_NATURAL_YEAR)) / 2**epochs
   end
 
   def secondary_issuance(start_epoch)

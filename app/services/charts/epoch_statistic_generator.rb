@@ -22,6 +22,7 @@ module Charts
     end
 
     private
+
     attr_reader :target_epoch_number
   end
 end

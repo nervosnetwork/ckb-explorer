@@ -18,8 +18,8 @@ class CkbTransaction < ApplicationRecord
   scope :recent, -> { order(block_timestamp: :desc) }
   scope :cellbase, -> { where(is_cellbase: true) }
   scope :normal, -> { where(is_cellbase: false) }
-  scope :created_after, -> (block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
-  scope :created_before, -> (block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+  scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
+  scope :created_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
 
   after_commit :flush_cache
   before_destroy :recover_dead_cell
@@ -104,7 +104,8 @@ class CkbTransaction < ApplicationRecord
     attributes = { compensation_started_block_number: compensation_started_block.number, compensation_ended_block_number: compensation_ended_block.number, compensation_started_timestamp: compensation_started_block.timestamp, compensation_ended_timestamp: compensation_ended_block.timestamp, interest: interest }
     if is_phase2
       locked_until_block = Block.select(:number, :timestamp).find(block_id)
-      attributes.merge!({ locked_until_block_number: locked_until_block.number, locked_until_block_timestamp: locked_until_block.timestamp })
+      attributes[:locked_until_block_number] = locked_until_block.number
+      attributes[:locked_until_block_timestamp] = locked_until_block.timestamp
     end
 
     CkbUtils.hash_value_to_s(attributes)

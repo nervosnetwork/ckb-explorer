@@ -177,7 +177,7 @@ class CkbUtils
     return if block.blank?
 
     miner_address = block.miner_address
-    MiningInfo.create!(block: block, block_number:block.number, address: miner_address, status: "mined")
+    MiningInfo.create!(block: block, block_number: block.number, address: miner_address, status: "mined")
     miner_address.increment!(:mined_blocks_count)
   end
 
