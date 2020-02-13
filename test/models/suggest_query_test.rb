@@ -29,6 +29,7 @@ class SuggestQueryTest < ActiveSupport::TestCase
 
   test "should return Address by query key when query key is a exist address hash" do
     address = create(:address, :with_lock_script)
+    address.query_address = address.address_hash
     presented_address = AddressPresenter.new(address)
 
     assert_equal AddressSerializer.new(presented_address).serialized_json, SuggestQuery.new(presented_address.address_hash).find!.serialized_json

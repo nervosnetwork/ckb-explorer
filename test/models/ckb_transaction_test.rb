@@ -127,7 +127,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.inputs.nervos_dao_deposit.first
     started_block = Block.select(:number, :timestamp).find(nervos_dao_deposit_cell.block_id)
     interest = CkbSync::Api.instance.calculate_dao_maximum_withdraw(deposit_cell, nervos_dao_deposit_cell).hex - deposit_cell.capacity.to_i
-    expected_display_input = CkbUtils.hash_value_to_s({ id: nervos_dao_withdrawing_cell.id, from_cellbase: false, capacity: nervos_dao_withdrawing_cell.capacity,
+    expected_display_input = CkbUtils.hash_value_to_s({
+      id: nervos_dao_withdrawing_cell.id, from_cellbase: false, capacity: nervos_dao_withdrawing_cell.capacity,
       address_hash: nervos_dao_withdrawing_cell.address_hash, generated_tx_hash: nervos_dao_withdrawing_cell.generated_by.tx_hash,
       compensation_started_block_number: started_block.number, compensation_ended_block_number: ended_block.number,
       compensation_started_timestamp: started_block.timestamp, compensation_ended_timestamp: ended_block.timestamp,
@@ -151,7 +152,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
     started_block = Block.select(:number, :timestamp).find(ckb_transaction.block_id)
     interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
     ended_block = Block.select(:number, :timestamp).find(phase1_transaction.block_id)
-    expected_display_input = CkbUtils.hash_value_to_s({ id: deposit_output_cell.id, from_cellbase: false, capacity: deposit_output_cell.capacity,
+    expected_display_input = CkbUtils.hash_value_to_s({
+      id: deposit_output_cell.id, from_cellbase: false, capacity: deposit_output_cell.capacity,
       address_hash: deposit_output_cell.address_hash, generated_tx_hash: deposit_output_cell.generated_by.tx_hash,
       compensation_started_block_number: started_block.number, compensation_ended_block_number: ended_block.number,
       compensation_started_timestamp: started_block.timestamp, compensation_ended_timestamp: ended_block.timestamp,

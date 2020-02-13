@@ -5,14 +5,14 @@ module Api
       before_action :validate_pagination_params, :pagination_params
 
       def show
-        address = Address.find_address!(params[:id])
-        raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
+        @address = Address.find_address!(params[:id])
+        raise Api::V1::Exceptions::AddressNotFoundError if @address.is_a?(NullAddress)
 
-        presented_address = AddressPresenter.new(address)
-        ckb_transactions = presented_address.ckb_transactions.recent.distinct.page(@page).per(@page_size)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
+        presented_address = AddressPresenter.new(@address)
+        @ckb_transactions = presented_address.ckb_transactions.recent.distinct.page(@page).per(@page_size)
+        @options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: @ckb_transactions, page: @page, page_size: @page_size).call
 
-        render json: CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true, address: address } }))
+        render json: json_result
       end
 
       private
@@ -31,6 +31,20 @@ module Api
       def pagination_params
         @page = params[:page] || 1
         @page_size = params[:page_size] || CkbTransaction.default_per_page
+      end
+
+      def json_result
+        ckb_transaction_serializer = CkbTransactionSerializer.new(@ckb_transactions, @options.merge({ params: { previews: true, address: @address } }))
+
+        if QueryKeyUtils.valid_address?(params[:id])
+          if @address.address_hash == @address.query_address
+            ckb_transaction_serializer
+          else
+            ckb_transaction_serializer.serialized_json.gsub(@address.address_hash, @address.query_address)
+          end
+        else
+          ckb_transaction_serializer
+        end
       end
     end
   end
