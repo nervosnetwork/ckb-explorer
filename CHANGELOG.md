@@ -2,7 +2,7 @@
 
 ### Features
 
-- support query address by lock hash
+- support query address by lock hash ([be5bb93](https://github.com/nervosnetwork/ckb-explorer/pull/566/commits/be5bb93))
 
 # [v0.9.3](https://github.com/shaojunda/ckb-explorer/compare/v0.9.2...v0.9.3) (2020-02-06)
 
