@@ -212,7 +212,10 @@ module Charts
           memo + nervos_dao_deposit_cell.capacity * (ended_at - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
         end
 
-      (sum_interest_bearing + sum_uninterest_bearing) / (interest_bearing_deposits + uninterest_bearing_deposits)
+      total_deposits = interest_bearing_deposits + uninterest_bearing_deposits
+      return 0 if total_deposits.zero?
+
+      (sum_interest_bearing + sum_uninterest_bearing) / total_deposits
     end
 
     def treasury_amount
