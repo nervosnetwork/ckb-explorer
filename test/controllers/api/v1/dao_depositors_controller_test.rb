@@ -40,7 +40,8 @@ module Api
       end
 
       test "should get serialized dao depositors" do
-        addresses = create_list(:address, 10, dao_deposit: 1000)
+        create_list(:address, 10, dao_deposit: 1000)
+        addresses = Address.select(:id, :address_hash, :dao_deposit, :average_deposit_time).where("dao_deposit > 0").order(dao_deposit: :desc).limit(100)
 
         valid_get api_v1_dao_depositors_url
 
