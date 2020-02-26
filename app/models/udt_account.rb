@@ -19,6 +19,7 @@ end
 #  symbol     :string
 #  decimal    :integer
 #  amount     :decimal(40, )
+#  published  :boolean          default(FALSE)
 #  address_id :bigint
 #  created_at :datetime         not null
 #  updated_at :datetime         not null

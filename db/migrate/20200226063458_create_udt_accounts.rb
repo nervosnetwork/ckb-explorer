@@ -6,6 +6,7 @@ class CreateUdtAccounts < ActiveRecord::Migration[6.0]
       t.string :symbol
       t.integer :decimal
       t.decimal :amount, precision: 40
+      t.boolean :published, default: false
       t.references :address
 
       t.timestamps

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_02_26_063458) do
+ActiveRecord::Schema.define(version: 2020_02_26_072529) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -306,10 +306,29 @@ ActiveRecord::Schema.define(version: 2020_02_26_063458) do
     t.string "symbol"
     t.integer "decimal"
     t.decimal "amount", precision: 40
+    t.boolean "published", default: false
     t.bigint "address_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["address_id"], name: "index_udt_accounts_on_address_id"
+  end
+
+  create_table "udts", force: :cascade do |t|
+    t.binary "code_hash"
+    t.string "hash_type"
+    t.string "args"
+    t.string "full_name"
+    t.string "symbol"
+    t.integer "decimal"
+    t.string "description"
+    t.string "icon_file"
+    t.string "operator_website"
+    t.decimal "addresses_count", precision: 30
+    t.decimal "total_amount", precision: 40
+    t.integer "udt_type"
+    t.boolean "published", default: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "uncle_blocks", force: :cascade do |t|
