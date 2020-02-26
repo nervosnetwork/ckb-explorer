@@ -1,3 +1,7 @@
+# [v0.9.5](https://github.com/shaojunda/ckb-explorer/compare/v0.9.4...v0.9.5) (2020-02-26)
+
+- prevent divided by 0 on average deposit time ([cabfa48](https://github.com/nervosnetwork/ckb-explorer/commit/cabfa48))
+
 # [v0.9.4](https://github.com/shaojunda/ckb-explorer/compare/v0.9.3...v0.9.4) (2020-02-13)
 
 ### Features
