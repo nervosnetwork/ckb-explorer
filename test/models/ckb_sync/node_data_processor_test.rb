@@ -1743,6 +1743,17 @@ module CkbSync
       end
     end
 
+    test "#process_block created cell_outputs's cell_type should be equal to udt when it is a udt cell" do
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        node_output = node_block.transactions.first.outputs.first
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        local_block = node_data_processor.process_block(node_block)
+
+        assert_equal ["udt"], local_block.cell_outputs.pluck(:cell_type).uniq
+      end
+    end
+
     private
 
     def node_data_processor
