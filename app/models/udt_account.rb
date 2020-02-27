@@ -7,6 +7,8 @@ class UdtAccount < ApplicationRecord
   validates_length_of :symbol, minimum: 1, maximum: 16
   validates :decimal, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }
   validates :amount, numericality: { greater_than_or_equal_to: 0 }
+
+  attribute :code_hash, :ckb_hash
 end
 
 # == Schema Information
@@ -20,6 +22,7 @@ end
 #  decimal    :integer
 #  amount     :decimal(40, )
 #  published  :boolean          default(FALSE)
+#  code_hash  :binary
 #  address_id :bigint
 #  created_at :datetime         not null
 #  updated_at :datetime         not null

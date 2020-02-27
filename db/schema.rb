@@ -307,6 +307,7 @@ ActiveRecord::Schema.define(version: 2020_02_26_072529) do
     t.integer "decimal"
     t.decimal "amount", precision: 40
     t.boolean "published", default: false
+    t.binary "code_hash"
     t.bigint "address_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false

@@ -6,6 +6,8 @@ class Udt < ApplicationRecord
   validates_length_of :full_name, minimum: 1, maximum: 32
   validates :decimal, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }
   validates :total_amount, numericality: { greater_than_or_equal_to: 0 }
+
+  attribute :code_hash, :ckb_hash
 end
 
 # == Schema Information
