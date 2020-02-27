@@ -409,12 +409,19 @@ module CkbSync
     end
 
     def cell_type(type_script, output_data)
-      return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]].include?(type_script&.code_hash)
+      return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"]].include?(type_script&.code_hash)
 
-      if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
-        "nervos_dao_deposit"
+      case type_script&.code_hash
+      when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
+        if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
+          "nervos_dao_deposit"
+        else
+          "nervos_dao_withdrawing"
+        end
+      when ENV["SUDT_CELL_TYPE_HASH"]
+        "udt"
       else
-        "nervos_dao_withdrawing"
+        "normal"
       end
     end
 
