@@ -194,4 +194,20 @@ class CkbTransactionTest < ActiveSupport::TestCase
     assert_equal expected_udt_attributes, ckb_transaction.display_inputs.first[:udt_info].keys.sort
     assert_equal expected_display_input, ckb_transaction.display_inputs.first
   end
+
+  test "#display_outputs should contain udt attributes for udt transaction" do
+    udt_output_block = create(:block, :with_block_hash)
+    udt_output_transaction = create(:ckb_transaction, block: udt_output_block)
+    udt_cell_output = create(:cell_output, block: udt_output_block, ckb_transaction: udt_output_transaction, generated_by: udt_output_transaction, cell_type: "udt", cell_index: 0, tx_hash: udt_output_transaction.tx_hash, data: "000050ad321ea12e0000000000000000")
+    type_script = create(:type_script, cell_output: udt_cell_output)
+    create(:udt, code_hash: type_script.code_hash)
+
+    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type udt_info).sort
+    expected_udt_attributes = %i(symbol amount type_hash_short).sort
+    expected_display_input = CkbUtils.hash_value_to_s({ id: udt_cell_output.id, capacity: udt_cell_output.capacity, address_hash: udt_cell_output.address_hash, status: udt_cell_output.status, consumed_tx_hash: nil, cell_type: udt_cell_output.cell_type, udt_info: udt_cell_output.udt_info })
+
+    assert_equal expected_attributes, udt_output_transaction.display_outputs.first.keys.sort
+    assert_equal expected_udt_attributes, udt_output_transaction.display_outputs.first[:udt_info].keys.sort
+    assert_equal expected_display_input, udt_output_transaction.display_outputs.first
+  end
 end
