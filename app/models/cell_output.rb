@@ -48,10 +48,10 @@ class CellOutput < ApplicationRecord
     return unless udt?
 
     udt_info = Udt.find_by(code_hash: type_script.code_hash)
-    amount = [data.delete_prefix("0x")].pack("H*").reverse.unpack1("B*").to_i(2) / BigDecimal(10**BigDecimal(udt_info.decimal))
-    {
-      symbol: udt_info.symbol, amount: amount, type_hash_short: type_script.short_code_hash
-    }
+    amount = CkbUtils.parse_udt_cell_data(data)
+    CkbUtils.hash_value_to_s({
+      symbol: udt_info.symbol, amount: amount, decimal: udt_info.decimal, type_hash_short: type_script.short_code_hash
+    })
   end
 
   def flush_cache
