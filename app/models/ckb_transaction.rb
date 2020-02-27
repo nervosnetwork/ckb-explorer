@@ -66,6 +66,7 @@ class CkbTransaction < ApplicationRecord
       cell_outputs_for_display.map do |output|
         consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
         display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
+        display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
 
         CkbUtils.hash_value_to_s(display_output)
       end
