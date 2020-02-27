@@ -24,10 +24,11 @@ module CkbSync
 
       ApplicationRecord.transaction do
         outputs = []
+        udt_infos = Set.new
         new_dao_depositor_events = {}
         local_block.save!
 
-        ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs, new_dao_depositor_events)
+        ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs, new_dao_depositor_events, udt_infos)
         local_block.ckb_transactions_count = ckb_transactions.size
         local_block.live_cell_changes = ckb_transactions.sum(&:live_cell_changes)
         CkbTransaction.import!(ckb_transactions, recursive: true, batch_size: 3500, validate: false)
@@ -38,6 +39,7 @@ module CkbSync
         update_current_block_mining_info(local_block)
         update_block_contained_address_info(local_block)
         update_block_reward_info(local_block)
+        update_udt_accounts(udt_infos)
         dao_events = build_new_dao_depositor_events(new_dao_depositor_events)
         DaoEvent.import!(dao_events, validate: false)
 
@@ -48,6 +50,24 @@ module CkbSync
     end
 
     private
+
+    def update_udt_accounts(udt_infos)
+      return if udt_infos.blank?
+
+      udt_infos.each do |udt_output|
+        address = udt_output[:address]
+        udt_account = address.udt_accounts.find_by(code_hash: udt_output[:code_hash])
+        udt_live_cell_data = address.cell_outputs.live.udt.pluck(:data)
+        amount = udt_live_cell_data.map { |data| CkbUtils.parse_udt_cell_data(data) }.sum
+
+        if udt_account.present?
+          udt_account.update!(amount: amount)
+        else
+          udt = Udt.find_by(code_hash: udt_output[:code_hash])
+          address.udt_accounts.create!(udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, amount: amount)
+        end
+      end
+    end
 
     def build_new_dao_depositor_events(new_dao_depositor_events)
       new_dao_depositor_events.map do |address_id, tx_hash|
@@ -318,12 +338,12 @@ module CkbSync
       )
     end
 
-    def build_ckb_transactions(local_block, transactions, outputs, new_dao_depositor_events)
+    def build_ckb_transactions(local_block, transactions, outputs, new_dao_depositor_events, udt_infos)
       transactions.each_with_index.map do |transaction, transaction_index|
         addresses = Set.new
         ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
         build_cell_inputs(transaction.inputs, ckb_transaction)
-        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data, outputs, new_dao_depositor_events)
+        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data, outputs, new_dao_depositor_events, udt_infos)
         addresses_arr = addresses.to_a
         ckb_transaction.addresses << addresses_arr
 
@@ -369,12 +389,14 @@ module CkbSync
       node_input.previous_output.tx_hash == CellOutput::SYSTEM_TX_HASH
     end
 
-    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs, new_dao_depositor_events)
+    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs, new_dao_depositor_events, udt_infos)
       node_outputs.each_with_index.map do |output, cell_index|
         address = Address.find_or_create_address(output.lock, ckb_transaction.block_timestamp)
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
         outputs << cell_output
+        udt_infos << { code_hash: output.type.code_hash, address: address } if cell_output.udt?
+
         build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
         build_lock_script(cell_output, output.lock, address)
         build_type_script(cell_output, output.type)
