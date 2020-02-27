@@ -256,9 +256,24 @@ types:
         type: integer,
         required: false
       },
-      "dao_type_hash": {
-        type: "string"
+      "udt_info": {
+        type: "udt_info"
         required: false
+      }
+    }
+  }
+
+  udt_info: {
+    type: "object",
+    properties: {
+      "symbol": {
+        type: "string"
+      },
+      "amount": {
+        type: "string"
+      },
+      "type_hash_short": {
+        type: "string"
       }
     }
   }
@@ -308,8 +323,8 @@ types:
       "cell_type": {
         type: "string"
       },
-      "dao_type_hash": {
-        type: "string"
+      "udt_info": {
+        type: "udt_info"
         required: false
       }
     }
@@ -1292,7 +1307,6 @@ types:
                           "interest": 100000,
                           "cell_type": "dao",
                           "cell_index": "0"
-                          "dao_type_hash": "0xa20df8e80518e9b2eabc1a0efb0ebe1de83f8df9c867edf99d0c5895654fcde1",
                         }
                       ],
                       "display_outputs": [
@@ -1326,7 +1340,6 @@ types:
                           "status": "live",
                           "cell_type": "dao",
                           "cell_index": "0"
-                          "dao_type_hash": "0xa20df8e80518e9b2eabc1a0efb0ebe1de83f8df9c867edf99d0c5895654fcde1"
                         }
                       ]
                     }
