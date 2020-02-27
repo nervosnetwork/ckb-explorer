@@ -2,7 +2,7 @@ class CellOutput < ApplicationRecord
   SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   enum status: { live: 0, dead: 1 }
-  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2 }
+  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3 }
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
@@ -42,6 +42,16 @@ class CellOutput < ApplicationRecord
       normal_tx_display_outputs_previews_false_#{ckb_transaction_id} normal_tx_display_outputs_previews_true_#{consumed_by_id}
       normal_tx_display_outputs_previews_false_#{consumed_by_id}
     )
+  end
+
+  def udt_info
+    return unless udt?
+
+    udt_info = Udt.find_by(code_hash: type_script.code_hash)
+    amount = [data.delete_prefix("0x")].pack("H*").reverse.unpack1("B*").to_i(2) / BigDecimal(10**BigDecimal(udt_info.decimal))
+    {
+      symbol: udt_info.symbol, amount: amount, type_hash_short: type_script.short_code_hash
+    }
   end
 
   def flush_cache
