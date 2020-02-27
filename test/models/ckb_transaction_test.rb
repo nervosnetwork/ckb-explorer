@@ -180,7 +180,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
     udt_input_block = create(:block, :with_block_hash)
     udt_input_transaction = create(:ckb_transaction, block: udt_input_block)
-    udt_cell_output = create(:cell_output, block: udt_input_block, ckb_transaction: udt_input_transaction, consumed_by: ckb_transaction, generated_by: udt_input_transaction, cell_type: "udt", cell_index: 0, tx_hash: udt_input_transaction.tx_hash, data: "000050ad321ea12e0000000000000000")
+    udt_cell_output = create(:cell_output, block: udt_input_block, ckb_transaction: udt_input_transaction, consumed_by: ckb_transaction, generated_by: udt_input_transaction, cell_type: "udt", cell_index: 0, tx_hash: udt_input_transaction.tx_hash, data: "0x000050ad321ea12e0000000000000000")
     type_script = create(:type_script, cell_output: udt_cell_output)
     create(:udt, code_hash: type_script.code_hash)
 
@@ -198,7 +198,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
   test "#display_outputs should contain udt attributes for udt transaction" do
     udt_output_block = create(:block, :with_block_hash)
     udt_output_transaction = create(:ckb_transaction, block: udt_output_block)
-    udt_cell_output = create(:cell_output, block: udt_output_block, ckb_transaction: udt_output_transaction, generated_by: udt_output_transaction, cell_type: "udt", cell_index: 0, tx_hash: udt_output_transaction.tx_hash, data: "000050ad321ea12e0000000000000000")
+    udt_cell_output = create(:cell_output, block: udt_output_block, ckb_transaction: udt_output_transaction, generated_by: udt_output_transaction, cell_type: "udt", cell_index: 0, tx_hash: udt_output_transaction.tx_hash, data: "0x000050ad321ea12e0000000000000000")
     type_script = create(:type_script, cell_output: udt_cell_output)
     create(:udt, code_hash: type_script.code_hash)
 
