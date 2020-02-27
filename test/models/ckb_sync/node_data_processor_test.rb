@@ -1754,6 +1754,22 @@ module CkbSync
       end
     end
 
+    test "#process_block should create udt account for the address when it receive udt cell for the first time" do
+      prepare_node_data(10)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"])
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        node_output = node_block.transactions.first.outputs.first
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        address_hash = CkbUtils.generate_address(node_output.lock)
+        address = Address.find_by(address_hash: address_hash)
+        binding.pry
+        assert_difference -> { address.udt_accounts.count }, 1 do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
     private
 
     def node_data_processor
