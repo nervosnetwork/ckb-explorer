@@ -4,6 +4,7 @@ class CreateUdts < ActiveRecord::Migration[6.0]
       t.binary :code_hash
       t.string :hash_type
       t.string :args
+      t.string :type_hash
       t.string :full_name
       t.string :symbol
       t.integer :decimal

@@ -23,6 +23,7 @@ end
 #  amount     :decimal(40, )
 #  published  :boolean          default(FALSE)
 #  code_hash  :binary
+#  type_hash  :string
 #  address_id :bigint
 #  created_at :datetime         not null
 #  updated_at :datetime         not null

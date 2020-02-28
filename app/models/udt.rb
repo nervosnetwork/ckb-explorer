@@ -18,6 +18,7 @@ end
 #  code_hash        :binary
 #  hash_type        :string
 #  args             :string
+#  type_hash        :string
 #  full_name        :string
 #  symbol           :string
 #  decimal          :integer
