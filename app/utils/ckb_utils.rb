@@ -238,7 +238,15 @@ class CkbUtils
   end
 
   def self.hash_value_to_s(hash)
-    hash.each { |key, value| hash[key] = value.to_s unless !!value == value }
+    hash.each do |key, value|
+      next if !!value == value
+
+      if value.is_a?(Hash)
+        hash_value_to_s(value)
+      else
+        hash[key] = value.to_s
+      end
+    end
   end
 
   def self.parse_dao(dao)
