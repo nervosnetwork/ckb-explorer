@@ -56,15 +56,15 @@ module CkbSync
 
       udt_infos.each do |udt_output|
         address = udt_output[:address]
-        udt_account = address.udt_accounts.find_by(code_hash: udt_output[:code_hash])
+        udt_account = address.udt_accounts.find_by(type_hash: udt_output[:type_hash])
         udt_live_cell_data = address.cell_outputs.live.udt.pluck(:data)
         amount = udt_live_cell_data.map { |data| CkbUtils.parse_udt_cell_data(data) }.sum
 
         if udt_account.present?
           udt_account.update!(amount: amount)
         else
-          udt = Udt.find_by(code_hash: udt_output[:code_hash])
-          address.udt_accounts.create!(udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, amount: amount)
+          udt = Udt.find_by(type_hash: udt_output[:type_hash])
+          address.udt_accounts.create!(udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount)
         end
       end
     end
@@ -395,7 +395,7 @@ module CkbSync
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
         outputs << cell_output
-        udt_infos << { code_hash: output.type.code_hash, address: address } if cell_output.udt?
+        udt_infos << { type_hash: output.type.compute_hash, address: address } if cell_output.udt?
 
         build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
         build_lock_script(cell_output, output.lock, address)
@@ -459,7 +459,8 @@ module CkbSync
         cell_index: cell_index,
         generated_by: ckb_transaction,
         cell_type: cell_type(output.type, output_data),
-        block_timestamp: ckb_transaction.block_timestamp
+        block_timestamp: ckb_transaction.block_timestamp,
+        type_hash: output.type&.compute_hash
       )
     end
 
