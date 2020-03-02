@@ -57,7 +57,7 @@ module CkbSync
       udt_infos.each do |udt_output|
         address = udt_output[:address]
         udt_account = address.udt_accounts.find_by(type_hash: udt_output[:type_hash])
-        udt_live_cell_data = address.cell_outputs.live.udt.pluck(:data)
+        udt_live_cell_data = address.cell_outputs.live.udt.where(type_hash: udt_output[:type_hash]).pluck(:data)
         amount = udt_live_cell_data.map { |data| CkbUtils.parse_udt_cell_data(data) }.sum
 
         if udt_account.present?
@@ -173,13 +173,30 @@ module CkbSync
       ApplicationRecord.transaction do
         revert_dao_contract_related_operations(local_tip_block)
         revert_mining_info(local_tip_block)
+        udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq
         local_tip_block.invalid!
+        recalculate_udt_accounts(udt_type_hashes, local_tip_block)
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
         ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch, block_timestamp: local_tip_block.timestamp)
         Charts::BlockStatisticGenerator.new(local_tip_block.number).call
 
         local_tip_block
+      end
+    end
+
+    def recalculate_udt_accounts(udt_type_hashes, local_tip_block)
+      return if udt_type_hashes.blank?
+
+      local_tip_block.contained_addresses.find_each do |address|
+        udt_type_hashes.each do |type_hash|
+          udt_account = address.udt_accounts.find_by(type_hash: type_hash)
+          next if udt_account.blank?
+
+          udt_live_cell_data = address.cell_outputs.live.udt.where(type_hash: type_hash).pluck(:data)
+          amount = udt_live_cell_data.map { |data| CkbUtils.parse_udt_cell_data(data) }.sum
+          udt_account.update!(amount: amount)
+        end
       end
     end
 
