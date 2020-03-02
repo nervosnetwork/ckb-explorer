@@ -1745,10 +1745,10 @@ module CkbSync
 
     test "#process_block created cell_outputs's cell_type should be equal to udt when it is a udt cell" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"])
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
         local_block = node_data_processor.process_block(node_block)
 
         assert_equal ["udt"], local_block.cell_outputs.pluck(:cell_type).uniq
@@ -1758,10 +1758,10 @@ module CkbSync
     test "#process_block should create udt account for the address when it receive udt cell for the first time" do
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"])
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
         address_hash = CkbUtils.generate_address(node_output.lock)
         address = Address.find_by(address_hash: address_hash)
 
@@ -1774,13 +1774,13 @@ module CkbSync
     test "#process_block should not create udt account for the address when it already received udt cell" do
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"])
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
         address_hash = CkbUtils.generate_address(node_output.lock)
         address = Address.find_by(address_hash: address_hash)
-        create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address)
+        create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: node_output.type.compute_hash)
 
         assert_difference -> { address.udt_accounts.count }, 0 do
           node_data_processor.process_block(node_block)
@@ -1791,14 +1791,14 @@ module CkbSync
     test "#process_block should update udt account for the address when it already received udt cell" do
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"])
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         address_hash = CkbUtils.generate_address(node_output.lock)
         address = Address.find_by(address_hash: address_hash)
-        create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address)
+        create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: node_output.type.compute_hash)
         udt_account = address.udt_accounts.find_by(code_hash: ENV["SUDT_CELL_TYPE_HASH"])
 
         assert_changes -> { udt_account.reload.amount }, from: udt_account.amount, to: CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000") do
