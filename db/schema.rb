@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_02_26_072529) do
+ActiveRecord::Schema.define(version: 2020_03_02_075922) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -128,6 +128,7 @@ ActiveRecord::Schema.define(version: 2020_02_26_072529) do
     t.decimal "occupied_capacity", precision: 30
     t.decimal "block_timestamp", precision: 30
     t.decimal "consumed_block_timestamp", precision: 30
+    t.string "type_hash"
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
@@ -305,30 +306,35 @@ ActiveRecord::Schema.define(version: 2020_02_26_072529) do
     t.string "full_name"
     t.string "symbol"
     t.integer "decimal"
-    t.decimal "amount", precision: 40
+    t.decimal "amount", precision: 40, default: "0"
     t.boolean "published", default: false
+    t.binary "code_hash"
+    t.string "type_hash"
     t.bigint "address_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["address_id"], name: "index_udt_accounts_on_address_id"
+    t.index ["type_hash", "address_id"], name: "index_udt_accounts_on_type_hash_and_address_id", unique: true
   end
 
   create_table "udts", force: :cascade do |t|
     t.binary "code_hash"
     t.string "hash_type"
     t.string "args"
+    t.string "type_hash"
     t.string "full_name"
     t.string "symbol"
     t.integer "decimal"
     t.string "description"
     t.string "icon_file"
     t.string "operator_website"
-    t.decimal "addresses_count", precision: 30
-    t.decimal "total_amount", precision: 40
+    t.decimal "addresses_count", precision: 30, default: "0"
+    t.decimal "total_amount", precision: 40, default: "0"
     t.integer "udt_type"
     t.boolean "published", default: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["type_hash"], name: "index_udts_on_type_hash", unique: true
   end
 
   create_table "uncle_blocks", force: :cascade do |t|

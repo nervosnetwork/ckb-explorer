@@ -7,6 +7,8 @@ class UdtAccount < ApplicationRecord
   validates_length_of :symbol, minimum: 1, maximum: 16
   validates :decimal, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }
   validates :amount, numericality: { greater_than_or_equal_to: 0 }
+
+  attribute :code_hash, :ckb_hash
 end
 
 # == Schema Information
@@ -18,13 +20,16 @@ end
 #  full_name  :string
 #  symbol     :string
 #  decimal    :integer
-#  amount     :decimal(40, )
+#  amount     :decimal(40, )    default(0)
 #  published  :boolean          default(FALSE)
+#  code_hash  :binary
+#  type_hash  :string
 #  address_id :bigint
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
 # Indexes
 #
-#  index_udt_accounts_on_address_id  (address_id)
+#  index_udt_accounts_on_address_id                (address_id)
+#  index_udt_accounts_on_type_hash_and_address_id  (type_hash,address_id) UNIQUE
 #

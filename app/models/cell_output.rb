@@ -47,11 +47,11 @@ class CellOutput < ApplicationRecord
   def udt_info
     return unless udt?
 
-    udt_info = Udt.find_by(code_hash: type_script.code_hash)
-    amount = [data.delete_prefix("0x")].pack("H*").reverse.unpack1("B*").to_i(2) / BigDecimal(10**BigDecimal(udt_info.decimal))
-    {
-      symbol: udt_info.symbol, amount: amount, type_hash_short: type_script.short_code_hash
-    }
+    udt_info = Udt.find_by(type_hash: type_hash, published: true)
+    amount = CkbUtils.parse_udt_cell_data(data)
+    CkbUtils.hash_value_to_s({
+      symbol: udt_info&.symbol, amount: amount, decimal: udt_info&.decimal, type_hash_short: type_hash[-4..], published: !!udt_info&.published
+    })
   end
 
   def flush_cache
@@ -83,6 +83,7 @@ end
 #  occupied_capacity        :decimal(30, )
 #  block_timestamp          :decimal(30, )
 #  consumed_block_timestamp :decimal(30, )
+#  type_hash                :string
 #
 # Indexes
 #
