@@ -29,4 +29,7 @@ class AddressSerializer
   attribute :average_deposit_time do |object|
     object.average_deposit_time.to_s
   end
+  attribute :udt_accounts do |object|
+    object.udt_accounts.present? ? object.udt_accounts.published.pluck(:symbol, :decimal, :amount) : []
+  end
 end

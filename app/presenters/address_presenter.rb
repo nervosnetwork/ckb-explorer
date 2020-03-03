@@ -62,6 +62,10 @@ class AddressPresenter
     object.first.average_deposit_time
   end
 
+  def udt_accounts
+    object.first.udt_accounts
+  end
+
   private
 
   attr_reader :object

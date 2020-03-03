@@ -9,6 +9,8 @@ class UdtAccount < ApplicationRecord
   validates :amount, numericality: { greater_than_or_equal_to: 0 }
 
   attribute :code_hash, :ckb_hash
+
+  scope :published, -> { where(published: true) }
 end
 
 # == Schema Information
