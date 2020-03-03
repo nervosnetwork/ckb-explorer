@@ -1834,6 +1834,59 @@ module CkbSync
       end
     end
 
+    test "#process_block should update udt addresses_count and total_amount when there are udt cells" do
+      prepare_node_data(10)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        node_output = node_block.transactions.first.outputs.first
+        new_node_output = node_output.dup
+        node_block.transactions.first.outputs << new_node_output
+        new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2")
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2")
+        udt = create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, published: true)
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: new_node_output.type.compute_hash)
+        node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
+        node_block.transactions.first.outputs_data[1] = "0x0000909dceda82370000000000000000"
+        address_hash = CkbUtils.generate_address(node_output.lock)
+        address = Address.find_by(address_hash: address_hash)
+        create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: node_output.type.compute_hash, published: true)
+
+        node_data_processor.process_block(node_block)
+
+        expected_total_amount = CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000") + CkbUtils.parse_udt_cell_data("0x0000909dceda82370000000000000000")
+
+        assert_equal expected_total_amount, udt.total_amount
+        assert_equal 2, udt.addresses_count
+      end
+    end
+
+    test "#process_block should update multiple udt addresses_count and total_amount when there are multiple udt cells" do
+      prepare_node_data(10)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        node_output = node_block.transactions.first.outputs.first
+        new_node_output = node_output.dup
+        node_block.transactions.first.outputs << new_node_output
+        new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2")
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        udt1 = create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
+        udt2 = create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: new_node_output.type.compute_hash)
+        node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
+        node_block.transactions.first.outputs_data[1] = "0x0000909dceda82370000000000000000"
+        address_hash = CkbUtils.generate_address(node_output.lock)
+        address = Address.find_by(address_hash: address_hash)
+        create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: node_output.type.compute_hash)
+        create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: new_node_output.type.compute_hash)
+
+        node_data_processor.process_block(node_block)
+
+        assert_equal CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000"), udt1.reload.total_amount
+        assert_equal 1, udt1.addresses_count
+        assert_equal CkbUtils.parse_udt_cell_data("0x0000909dceda82370000000000000000"), udt2.reload.total_amount
+        assert_equal 1, udt2.addresses_count
+      end
+    end
+
     test "should recalculate udt accounts when block is invalid" do
       address = nil
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(22)
@@ -1887,6 +1940,8 @@ module CkbSync
         end
       end
     end
+
+
 
     private
 
