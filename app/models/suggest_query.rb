@@ -54,7 +54,7 @@ class SuggestQuery
   end
 
   def find_udt_by_type_hash
-    udt = Udt.find_by(type_hash: query_key)
+    udt = Udt.find_by(type_hash: query_key, published: true)
     UdtSerializer.new(udt) if udt.present?
   end
 
