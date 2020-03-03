@@ -314,7 +314,7 @@ ActiveRecord::Schema.define(version: 2020_03_02_075922) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["address_id"], name: "index_udt_accounts_on_address_id"
-    t.index ["type_hash"], name: "index_udt_accounts_on_type_hash", unique: true
+    t.index ["type_hash", "address_id"], name: "index_udt_accounts_on_type_hash_and_address_id", unique: true
   end
 
   create_table "udts", force: :cascade do |t|

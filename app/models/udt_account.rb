@@ -30,6 +30,6 @@ end
 #
 # Indexes
 #
-#  index_udt_accounts_on_address_id  (address_id)
-#  index_udt_accounts_on_type_hash   (type_hash) UNIQUE
+#  index_udt_accounts_on_address_id                (address_id)
+#  index_udt_accounts_on_type_hash_and_address_id  (type_hash,address_id) UNIQUE
 #
