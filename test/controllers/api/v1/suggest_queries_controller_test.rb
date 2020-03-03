@@ -167,6 +167,15 @@ module Api
 
         assert_equal AddressSerializer.new(presented_address).serialized_json, response.body
       end
+
+      test "should return a udt when query key is a exist udt type hash" do
+        udt = create(:udt)
+        response_json = UdtSerializer.new(udt).serialized_json
+
+        valid_get api_v1_suggest_queries_url, params: { q: udt.type_hash }
+
+        assert_equal response_json, response.body
+      end
     end
   end
 end

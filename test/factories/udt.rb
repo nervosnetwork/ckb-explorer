@@ -1,6 +1,7 @@
 FactoryBot.define do
   factory :udt do
     code_hash { "0x#{SecureRandom.hex(32)}" }
+    type_hash { "0x#{SecureRandom.hex(32)}" }
     hash_type { "type" }
     args { "0x" }
     udt_type { "sudt" }
