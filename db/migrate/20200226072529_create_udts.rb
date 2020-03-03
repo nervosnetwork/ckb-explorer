@@ -18,5 +18,7 @@ class CreateUdts < ActiveRecord::Migration[6.0]
 
       t.timestamps
     end
+
+    add_index :udts, :type_hash, unique: true
   end
 end

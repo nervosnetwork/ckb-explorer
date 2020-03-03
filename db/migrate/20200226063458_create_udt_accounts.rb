@@ -13,5 +13,7 @@ class CreateUdtAccounts < ActiveRecord::Migration[6.0]
 
       t.timestamps
     end
+
+    add_index :udt_accounts, :type_hash, unique: true
   end
 end

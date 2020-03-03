@@ -314,6 +314,7 @@ ActiveRecord::Schema.define(version: 2020_03_02_075922) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["address_id"], name: "index_udt_accounts_on_address_id"
+    t.index ["type_hash"], name: "index_udt_accounts_on_type_hash", unique: true
   end
 
   create_table "udts", force: :cascade do |t|
@@ -333,6 +334,7 @@ ActiveRecord::Schema.define(version: 2020_03_02_075922) do
     t.boolean "published", default: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["type_hash"], name: "index_udts_on_type_hash", unique: true
   end
 
   create_table "uncle_blocks", force: :cascade do |t|

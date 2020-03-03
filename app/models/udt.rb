@@ -32,3 +32,7 @@ end
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #
+# Indexes
+#
+#  index_udts_on_type_hash  (type_hash) UNIQUE
+#
