@@ -20,7 +20,7 @@ end
 #  full_name  :string
 #  symbol     :string
 #  decimal    :integer
-#  amount     :decimal(40, )
+#  amount     :decimal(40, )    default(0)
 #  published  :boolean          default(FALSE)
 #  code_hash  :binary
 #  type_hash  :string

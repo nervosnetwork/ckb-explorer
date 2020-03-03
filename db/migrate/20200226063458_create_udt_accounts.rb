@@ -5,7 +5,7 @@ class CreateUdtAccounts < ActiveRecord::Migration[6.0]
       t.string :full_name
       t.string :symbol
       t.integer :decimal
-      t.decimal :amount, precision: 40
+      t.decimal :amount, precision: 40, default: 0
       t.boolean :published, default: false
       t.binary :code_hash
       t.string :type_hash

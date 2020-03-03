@@ -25,8 +25,8 @@ end
 #  description      :string
 #  icon_file        :string
 #  operator_website :string
-#  addresses_count  :decimal(30, )
-#  total_amount     :decimal(40, )
+#  addresses_count  :decimal(30, )    default(0)
+#  total_amount     :decimal(40, )    default(0)
 #  udt_type         :integer
 #  published        :boolean          default(FALSE)
 #  created_at       :datetime         not null

@@ -306,7 +306,7 @@ ActiveRecord::Schema.define(version: 2020_03_02_075922) do
     t.string "full_name"
     t.string "symbol"
     t.integer "decimal"
-    t.decimal "amount", precision: 40
+    t.decimal "amount", precision: 40, default: "0"
     t.boolean "published", default: false
     t.binary "code_hash"
     t.string "type_hash"
@@ -327,8 +327,8 @@ ActiveRecord::Schema.define(version: 2020_03_02_075922) do
     t.string "description"
     t.string "icon_file"
     t.string "operator_website"
-    t.decimal "addresses_count", precision: 30
-    t.decimal "total_amount", precision: 40
+    t.decimal "addresses_count", precision: 30, default: "0"
+    t.decimal "total_amount", precision: 40, default: "0"
     t.integer "udt_type"
     t.boolean "published", default: false
     t.datetime "created_at", precision: 6, null: false

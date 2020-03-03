@@ -11,8 +11,8 @@ class CreateUdts < ActiveRecord::Migration[6.0]
       t.string :description
       t.string :icon_file
       t.string :operator_website
-      t.decimal :addresses_count, precision: 30
-      t.decimal :total_amount, precision: 40
+      t.decimal :addresses_count, precision: 30, default: 0
+      t.decimal :total_amount, precision: 40, default: 0
       t.integer :udt_type
       t.boolean :published, default: false
 
