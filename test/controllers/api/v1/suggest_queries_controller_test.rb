@@ -169,8 +169,18 @@ module Api
       end
 
       test "should return a udt when query key is a exist udt type hash" do
-        udt = create(:udt)
+        udt = create(:udt, published: true)
         response_json = UdtSerializer.new(udt).serialized_json
+
+        valid_get api_v1_suggest_queries_url, params: { q: udt.type_hash }
+
+        assert_equal response_json, response.body
+      end
+
+      test "should return error object when target udt is not published" do
+        udt = create(:udt)
+        error_object = Api::V1::Exceptions::SuggestQueryResultNotFoundError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         valid_get api_v1_suggest_queries_url, params: { q: udt.type_hash }
 

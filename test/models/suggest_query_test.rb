@@ -52,7 +52,14 @@ class SuggestQueryTest < ActiveSupport::TestCase
   end
 
   test "should return a udt when query key is a exist udt type hash" do
-    udt = create(:udt)
+    udt = create(:udt, published: true)
     assert_equal UdtSerializer.new(udt).serialized_json, SuggestQuery.new(udt.type_hash).find!.serialized_json
+  end
+
+  test "should raise RecordNotFound error when target udt is not published" do
+    udt = create(:udt)
+    assert_raises ActiveRecord::RecordNotFound do
+      SuggestQuery.new(udt.type_hash).find!
+    end
   end
 end
