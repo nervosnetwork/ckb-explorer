@@ -1842,9 +1842,9 @@ module CkbSync
         new_node_output = node_output.dup
         node_block.transactions.first.outputs << new_node_output
         new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2")
+        new_node_output.lock = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0xc2e61ff569acf041b3c2c17724e2379c581eeac2")
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2")
         udt = create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, published: true)
-        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: new_node_output.type.compute_hash)
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         node_block.transactions.first.outputs_data[1] = "0x0000909dceda82370000000000000000"
         address_hash = CkbUtils.generate_address(node_output.lock)
@@ -1855,7 +1855,7 @@ module CkbSync
 
         expected_total_amount = CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000") + CkbUtils.parse_udt_cell_data("0x0000909dceda82370000000000000000")
 
-        assert_equal expected_total_amount, udt.total_amount
+        assert_equal expected_total_amount, udt.reload.total_amount
         assert_equal 2, udt.addresses_count
       end
     end
