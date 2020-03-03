@@ -1,5 +1,15 @@
 class UdtSerializer
   include FastJsonapi::ObjectSerializer
 
-  attributes :symbol, :full_name, :total_amount, :addresses_count, :decimal
+  attributes :symbol, :full_name
+
+  attribute :total_amount do |object|
+    object.total_amount.to_s
+  end
+  attribute :addresses_count do |object|
+    object.addresses_count.to_s
+  end
+  attribute :decimal do |object|
+    object.decimal.to_s
+  end
 end
