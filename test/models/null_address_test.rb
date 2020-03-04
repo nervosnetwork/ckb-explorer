@@ -61,6 +61,7 @@ class NullAddressTest < ActiveSupport::TestCase
   end
 
   test ".lock_script should raise AddressNotMatchEnvironmentError when address does not match the mainnet" do
+    ENV["CKB_NET_MODE"] = "mainnet"
     null_address = NullAddress.new("ckt1qyq2cvlfef5kt043vcsy6rrt7snae2emda9spqvj6s")
     assert_raise Api::V1::Exceptions::AddressNotMatchEnvironmentError do
       null_address.lock_script
