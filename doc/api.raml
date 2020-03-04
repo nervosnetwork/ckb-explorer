@@ -921,7 +921,7 @@ types:
   udt_response: {
     type: object,
     properties: {
-      "data":
+      "data": {
         "type": udt
       }
     }
@@ -3468,4 +3468,53 @@ types:
               example: |
                 {
                   "25374730228.31050194"
+                }
+
+/udts:
+  /{type_hash}:
+    uriParameters:
+      type_hash:
+        description: The UDT type script hash
+        required: true
+        type: string
+        minLength: 66
+        maxLength: 66
+    get:
+      description: Returns a UDT by type hash
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: udt_response
+              example: |
+                {
+                  "data": {
+                    "id": "1",
+                    "type": "udt",
+                    "attributes": {
+                      "symbol": "kfc",
+                      "full_name": "kingdom fat coin",
+                      "total_amount": "10000000000000000",
+                      "addresses_count": "1",
+                      "decimal": "6"
+                    }
+                  }
+                }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "message": "Record Not Found",
+                  "errors": [
+                    {
+                      "id": "ActiveRecord::RecordNotFound",
+                      "code": "1026",
+                      "status": "404",
+                      "title": "UDT Not Found",
+                      "detail": "No UDT records found by given type hash",
+                      "href": "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+                    }
+                  ]
                 }
