@@ -8,6 +8,11 @@ class Udt < ApplicationRecord
   validates :total_amount, numericality: { greater_than_or_equal_to: 0 }
 
   attribute :code_hash, :ckb_hash
+
+  def ckb_transactions
+    ckb_transaction_ids = CellOutput.udt.where(type_hash: type_hash).pluck("generated_by_id") + CellOutput.udt.where(type_hash: type_hash).pluck("consumed_by_id").compact
+    CkbTransaction.where(id: ckb_transaction_ids.uniq)
+  end
 end
 
 # == Schema Information
