@@ -58,10 +58,11 @@ module CkbSync
       type_hashes = udt_infos.map { |udt_info| udt_info[:type_hash] }.uniq
       columns = %i(type_hash total_amount addresses_count)
       amount_hashes = UdtAccount.where(type_hash: type_hashes).group(:type_hash).sum(:amount)
-      addresses_count_hashes= UdtAccount.where(type_hash: type_hashes).group(:type_hash).count(:address_id)
-      import_values = type_hashes.map do |type_hash|
-        [type_hash, amount_hashes[type_hash], addresses_count_hashes[type_hash]]
-      end
+      addresses_count_hashes = UdtAccount.where(type_hash: type_hashes).group(:type_hash).count(:address_id)
+      import_values =
+        type_hashes.map do |type_hash|
+          [type_hash, amount_hashes[type_hash], addresses_count_hashes[type_hash]]
+        end
 
       Udt.import columns, import_values, validate: false, on_duplicate_key_update: { conflict_target: [:type_hash], columns: [:total_amount, :addresses_count] }
     end
