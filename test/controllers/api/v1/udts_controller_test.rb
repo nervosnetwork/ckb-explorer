@@ -4,7 +4,7 @@ module Api
   module V1
     class UdtsControllerTest < ActionDispatch::IntegrationTest
       test "should get success code when call show" do
-        udt = create(:udt)
+        udt = create(:udt, published: true)
 
         valid_get api_v1_udt_url(udt.type_hash)
 
@@ -82,8 +82,18 @@ module Api
         assert_equal response_json, response.body
       end
 
-      test "should return corresponding udt with given type hash" do
+      test "should return error object when target udt is not published" do
         udt = create(:udt)
+        error_object = Api::V1::Exceptions::UdtNotFoundError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get api_v1_udt_url(udt.type_hash)
+
+        assert_equal response_json, response.body
+      end
+
+      test "should return corresponding udt with given type hash" do
+        udt = create(:udt, published: true)
 
         valid_get api_v1_udt_url(udt.type_hash)
 
@@ -91,7 +101,7 @@ module Api
       end
 
       test "should contain right keys in the serialized object when call show" do
-        udt = create(:udt)
+        udt = create(:udt, published: true)
 
         valid_get api_v1_udt_url(udt.type_hash)
 
