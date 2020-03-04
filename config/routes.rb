@@ -39,6 +39,7 @@ Rails.application.routes.draw do
       resources :epoch_statistics, only: :show
       resources :market_data, only: :show
       resources :udts, only: :show
+      resources :udt_transactions, only: :show
     end
   end
 
