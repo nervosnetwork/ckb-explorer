@@ -29,4 +29,7 @@ class AddressSerializer
   attribute :average_deposit_time do |object|
     object.average_deposit_time.to_s
   end
+  attribute :udt_accounts do |object|
+    object.udt_accounts.present? ? object.udt_accounts.published.map {|udt_account| {symbol: udt_account.symbol, decimal: udt_account.decimal.to_s, amount: udt_account.amount.to_s} } : []
+  end
 end

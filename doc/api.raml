@@ -133,6 +133,24 @@ types:
       },
       "average_deposit_time": {
         "type": string
+      },
+      "udt_accounts": {
+        "type": "udt_account[]"
+      }
+    }
+  }
+
+  udt_account: {
+    type: object,
+    properties: {
+      "symbol": {
+        type: "string"
+      },
+      "decimal": {
+        type: "string"
+      },
+      "amount": {
+        type: "string"
       }
     }
   }
@@ -657,6 +675,27 @@ types:
     }
   }
 
+  udt: {
+    type: "object",
+    properties: {
+      "symbol": {
+        type: "string"
+      },
+      "full_name": {
+        type: "string"
+      }
+      "total_amount": {
+        type: "string"
+      }
+      "addresses_count": {
+        type: "string"
+      }
+      "decimal": {
+        type: "string"
+      }
+    }
+  }
+
   dao_contract_attributes: {
     type: "object",
     properties: {
@@ -875,6 +914,15 @@ types:
     properties: {
       "data": {
         "type": address
+      }
+    }
+  }
+
+  udt_response: {
+    type: object,
+    properties: {
+      "data":
+        "type": udt
       }
     }
   }
@@ -2080,7 +2128,14 @@ types:
                         "epoch_index": "789",
                         "estimated_unlock_time": "1588259390000"
                       },
-                      "average_deposit_time": "35.780193591686053852850446361429702611876162589037114569656468227898621305950821369"
+                      "average_deposit_time": "35.780193591686053852850446361429702611876162589037114569656468227898621305950821369",
+                      "udt_accounts": [
+                        {
+                          "symbol": "kfc",
+                          "decimal": "6",
+                          "amount": "100000000000000000"
+                        }
+                      ]
                     }
                   }
                 }
@@ -2432,7 +2487,7 @@ types:
       200:
         body:
           application/vnd.api+json:
-            type: block_response | transaction_response | address_response
+            type: block_response | transaction_response | address_response | udt_response
             examples:
               block: |
                 {
@@ -2563,7 +2618,29 @@ types:
                       },
                       "dao_deposit": "10000",
                       "interest": "100",
-                      "average_deposit_time": "35.780193591686053852850446361429702611876162589037114569656468227898621305950821369"
+                      "average_deposit_time": "35.780193591686053852850446361429702611876162589037114569656468227898621305950821369",
+                      "udt_accounts": [
+                        {
+                          "symbol": "kfc",
+                          "decimal": "6",
+                          "amount": "100000000000000000"
+                        }
+                      ]
+                    }
+                  }
+                }
+
+              udt: |
+                {
+                  "data": {
+                    "id": "1",
+                    "type": "udt",
+                    "attributes": {
+                      "symbol": "kfc",
+                      "full_name": "kingdom fat coin",
+                      "total_amount": "10000000000000000",
+                      "addresses_count": "1",
+                      "decimal": "6"
                     }
                   }
                 }
