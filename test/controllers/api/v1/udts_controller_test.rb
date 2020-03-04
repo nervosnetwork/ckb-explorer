@@ -54,6 +54,50 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should return error object when id is not a hex start with 0x" do
+        error_object = Api::V1::Exceptions::TypeHashInvalidError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get api_v1_udt_url("9034fwefwef")
+
+        assert_equal response_json, response.body
+      end
+
+      test "should return error object when id is a hex start with 0x but it's length is wrong" do
+        error_object = Api::V1::Exceptions::TypeHashInvalidError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get api_v1_udt_url("0x9034fwefwef")
+
+        assert_equal response_json, response.body
+      end
+
+      test "should return error object when no records found by id" do
+        error_object = Api::V1::Exceptions::UdtNotFoundError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get api_v1_udt_url("0x3b138b3126d10ec000417b68bc715f17e86293d6cdbcb3fd8a628ad4a0b756f6")
+
+        assert_equal response_json, response.body
+      end
+
+      test "should return corresponding udt with given type hash" do
+        udt = create(:udt)
+
+        valid_get api_v1_udt_url(udt.type_hash)
+
+        assert_equal UdtSerializer.new(udt).serialized_json, response.body
+      end
+
+      test "should contain right keys in the serialized object when call show" do
+        udt = create(:udt)
+
+        valid_get api_v1_udt_url(udt.type_hash)
+
+        response_tx_transaction = json["data"]
+        assert_equal %w(symbol full_name total_amount addresses_count decimal).sort, response_tx_transaction["attributes"].keys.sort
+      end
     end
   end
 end
