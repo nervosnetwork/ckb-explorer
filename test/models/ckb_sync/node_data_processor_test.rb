@@ -1918,7 +1918,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(21)
 
         node_output = node_block.transactions.first.outputs.first
-         new_node_output = node_output.dup
+        new_node_output = node_output.dup
         node_block.transactions.first.outputs << new_node_output
         new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2")
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
@@ -1940,8 +1940,6 @@ module CkbSync
         end
       end
     end
-
-
 
     private
 

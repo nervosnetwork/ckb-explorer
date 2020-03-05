@@ -156,6 +156,18 @@ module Api
           super code: 1024, status: 422, title: "URI parameters is invalid", detail: "Given indicator name is invalid", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
         end
       end
+
+      class TypeHashInvalidError < Error
+        def initialize
+          super code: 1025, status: 422, title: "URI parameters is invalid", detail: "URI parameters should be a type hash", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
+
+      class UdtNotFoundError < Error
+        def initialize
+          super code: 1026, status: 404, title: "UDT Not Found", detail: "No UDT records found by given type hash", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
     end
   end
 end
