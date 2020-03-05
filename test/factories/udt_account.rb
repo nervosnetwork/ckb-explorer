@@ -5,6 +5,6 @@ FactoryBot.define do
     full_name { "kingdom fat coin" }
     symbol { "kfc" }
     decimal { 6 }
-    amount { 100000000000 * 10**6 }
+    amount { 2**128 }
   end
 end
