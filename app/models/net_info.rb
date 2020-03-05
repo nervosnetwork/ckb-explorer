@@ -20,7 +20,7 @@ class NetInfo
   end
 
   def local_node_info
-    Rails.cache.realize("local_node_info") do
+    Rails.cache.realize("local_node_info", expires_in: 4.hours) do
       CkbSync::Api.instance.local_node_info
     end
   end
