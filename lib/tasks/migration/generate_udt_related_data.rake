@@ -77,12 +77,13 @@ class UdtRelatedDataGenerator
   end
 
   def udt_info
+    icon_file_data = Base64.encode64(File.read("#{Rails.root}/tmp/kfc.png")).gsub("\n", '')
     {
       "code_hash": "0x48dbf59b4c7ee1547238021b4869bceedf4eea6b43772e5d66ef8865b6ae7212",
       "hash_type": "data",
       "args": "0x6a242b57227484e904b4e08ba96f19a623c367dcbd18675ec6f2a71a0ff4ec26",
       "type_hash": "0x2c0da3548618bc98003075f2deabd3569c4c4a1a55e63b2e7677aeed9c45c2b7",
-      "full_name": "Kingdom Fly Coin", "symbol": "kfc", "decimal": "6", "description": "", "icon_file": "",
+      "full_name": "Kingdom Fly Coin", "symbol": "kfc", "decimal": "6", "description": "", "icon_file": "data:image/png;base64,#{icon_file_data}",
       "operator_website": "", "udt_type": "sudt", "published": "true"
     }
   end
