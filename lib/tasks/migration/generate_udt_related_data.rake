@@ -71,7 +71,9 @@ class UdtRelatedDataGenerator
   end
 
   def create_udt
-    puts "udt created" if Udt.create(udt_info)
+    Udt.create!(udt_info)
+
+    puts "udt created"
   end
 
   def udt_info
