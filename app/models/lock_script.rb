@@ -23,22 +23,24 @@ class LockScript < ApplicationRecord
       since = CKB::Utils.bin_to_hex(bin_args[-8..-1]).delete_prefix("0x")
       begin
         since_value = SinceParser.new(since).parse
-        if since_value.present?
-          tip_epoch = CkbUtils.parse_epoch(CkbSync::Api.instance.get_tip_header.epoch)
-          block_interval = (since_value.number * 1800 + since_value.index * 1800 / since_value.length) - (tip_epoch.number * 1800 + tip_epoch.index * 1800 / tip_epoch.length)
-          if block_interval.negative?
-            block = Block.where(epoch: since_value.number).recent.first
-            since_value_index = since_value.index < block.length ? since_value.index : since_value.index * block.length / since_value.length
-            block_timestamp = Block.where(number: block.start_number + since_value_index).pick(:timestamp)
-            estimated_unlock_time = DateTime.strptime(block_timestamp.to_s, "%Q")
-          else
-            tip_block_timestamp = Block.recent.where(epoch: tip_epoch.number).pick(:timestamp)
-            tip_block_time = DateTime.strptime(tip_block_timestamp.to_s, "%Q")
-            estimated_unlock_time = tip_block_time + (block_interval * 8).seconds
-          end
+        return if since_value.blank?
 
-          { status: lock_info_status(since_value, tip_epoch), epoch_number: since_value.number.to_s, epoch_index: since_value.index.to_s, estimated_unlock_time: estimated_unlock_time.strftime("%Q") }
+        tip_epoch = CkbUtils.parse_epoch(CkbSync::Api.instance.get_tip_header.epoch)
+        epoch_number, since_value_index = set_since_epoch_number_and_index(since_value)
+        block_interval = (epoch_number * 1800 + since_value_index * 1800 / since_value.length) - (tip_epoch.number * 1800 + tip_epoch.index * 1800 / tip_epoch.length)
+
+        if block_interval.negative?
+          block = Block.where(epoch: since_value.number).recent.first
+          new_index = since_value_index < block.length ? since_value_index : since_value_index * block.length / since_value.length
+          block_timestamp = Block.where(number: block.start_number + new_index).pick(:timestamp)
+          estimated_unlock_time = DateTime.strptime(block_timestamp.to_s, "%Q")
+        else
+          tip_block_timestamp = Block.recent.where(epoch: tip_epoch.number).pick(:timestamp)
+          tip_block_time = DateTime.strptime(tip_block_timestamp.to_s, "%Q")
+          estimated_unlock_time = tip_block_time + (block_interval * 8).seconds
         end
+
+        { status: lock_info_status(since_value, tip_epoch), epoch_number: epoch_number.to_s, epoch_index: since_value_index.to_s, estimated_unlock_time: estimated_unlock_time.strftime("%Q") }
       rescue SinceParser::IncorrectSinceFlagsError
         nil
       end
@@ -46,6 +48,18 @@ class LockScript < ApplicationRecord
   end
 
   private
+
+  def set_since_epoch_number_and_index(since_value)
+    if since_value.index > since_value.length
+      epoch_number = since_value.number + 1
+      since_value_index = 0
+    else
+      epoch_number = since_value.number
+      since_value_index = since_value.index
+    end
+
+    return epoch_number, since_value_index
+  end
 
   def lock_info_status(since_value, tip_epoch)
     after_lock_epoch_number = tip_epoch.number > since_value.number
