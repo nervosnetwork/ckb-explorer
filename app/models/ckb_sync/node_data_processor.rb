@@ -73,8 +73,7 @@ module CkbSync
       udt_infos.each do |udt_output|
         address = udt_output[:address]
         udt_account = address.udt_accounts.find_by(type_hash: udt_output[:type_hash])
-        udt_live_cell_data = address.cell_outputs.live.udt.where(type_hash: udt_output[:type_hash]).pluck(:data)
-        amount = udt_live_cell_data.map { |data| CkbUtils.parse_udt_cell_data(data) }.sum
+        amount = address.cell_outputs.live.udt.where(type_hash: udt_output[:type_hash]).sum(:udt_amount)
 
         if udt_account.present?
           udt_account.update!(amount: amount)
@@ -209,8 +208,7 @@ module CkbSync
           udt_account = address.udt_accounts.find_by(type_hash: type_hash)
           next if udt_account.blank?
 
-          udt_live_cell_data = address.cell_outputs.live.udt.where(type_hash: type_hash).pluck(:data)
-          amount = udt_live_cell_data.map { |data| CkbUtils.parse_udt_cell_data(data) }.sum
+          amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
           udt_account.update!(amount: amount)
         end
       end
@@ -481,7 +479,7 @@ module CkbSync
     end
 
     def build_cell_output(ckb_transaction, output, address, cell_index, output_data)
-      ckb_transaction.cell_outputs.build(
+      cell_output = ckb_transaction.cell_outputs.build(
         capacity: output.capacity,
         data: output_data,
         data_size: CKB::Utils.hex_to_bin(output_data).bytesize,
@@ -495,6 +493,10 @@ module CkbSync
         block_timestamp: ckb_transaction.block_timestamp,
         type_hash: output.type&.compute_hash
       )
+
+      cell_output.udt_amount = CkbUtils.parse_udt_cell_data(output_data) if cell_output.udt?
+
+      cell_output
     end
 
     def build_lock_script(cell_output, lock_script, address)

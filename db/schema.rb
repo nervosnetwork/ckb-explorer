@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_03_02_075922) do
+ActiveRecord::Schema.define(version: 2020_03_05_132554) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -129,6 +129,7 @@ ActiveRecord::Schema.define(version: 2020_03_02_075922) do
     t.decimal "block_timestamp", precision: 30
     t.decimal "consumed_block_timestamp", precision: 30
     t.string "type_hash"
+    t.decimal "udt_amount", precision: 40
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"

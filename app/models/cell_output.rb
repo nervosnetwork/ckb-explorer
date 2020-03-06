@@ -48,9 +48,8 @@ class CellOutput < ApplicationRecord
     return unless udt?
 
     udt_info = Udt.find_by(type_hash: type_hash, published: true)
-    amount = CkbUtils.parse_udt_cell_data(data)
     CkbUtils.hash_value_to_s({
-      symbol: udt_info&.symbol, amount: amount, decimal: udt_info&.decimal, type_hash_short: type_hash[-4..], published: !!udt_info&.published
+      symbol: udt_info&.symbol, amount: udt_amount, decimal: udt_info&.decimal, type_hash_short: type_hash[-4..], published: !!udt_info&.published
     })
   end
 
@@ -84,6 +83,7 @@ end
 #  block_timestamp          :decimal(30, )
 #  consumed_block_timestamp :decimal(30, )
 #  type_hash                :string
+#  udt_amount               :decimal(40, )
 #
 # Indexes
 #
