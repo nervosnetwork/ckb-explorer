@@ -106,7 +106,7 @@ module Api
         valid_get api_v1_udt_url(udt.type_hash)
 
         response_tx_transaction = json["data"]
-        assert_equal %w(symbol full_name total_amount addresses_count decimal).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(symbol full_name total_amount addresses_count decimal icon_file).sort, response_tx_transaction["attributes"].keys.sort
       end
     end
   end
