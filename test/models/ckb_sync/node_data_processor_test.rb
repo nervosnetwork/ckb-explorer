@@ -1941,6 +1941,34 @@ module CkbSync
       end
     end
 
+    test "should update udt account both input and output" do
+      prepare_node_data(10)
+      udt_type_script = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+      create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: udt_type_script.compute_hash)
+      block = create(:block, :with_block_hash)
+      address = create(:address)
+      udt_amount = 3360000000000000000
+      previous_udt_account = create(:udt_account, address: address, amount: udt_amount, type_hash: udt_type_script.compute_hash)
+      previous_cell_output = create(:cell_output, :with_full_transaction, block: block, cell_type: "udt", address: address, udt_amount: udt_amount, cell_index: 0)
+      previous_cell_output_type_script = create(:type_script, code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "data", cell_output: previous_cell_output)
+      previous_cell_output.type_script = previous_cell_output_type_script
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: previous_cell_output.tx_hash, index: 0))
+        output = CKB::Types::Output.new(capacity: 150*10**8, lock: CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x3954acece65096bfa81258983ddb83915fc56bd8", hash_type: "type"), type: udt_type_script)
+        tx = CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", inputs: [input], outputs: [output], outputs_data: ["0x000050ad321ea12e0000000000000000"])
+        node_block.transactions << tx
+        output_address_hash = CkbUtils.generate_address(output.lock)
+        output_address = Address.find_by(address_hash: output_address_hash)
+        create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: output_address, type_hash: output.type.compute_hash)
+        udt_account = output_address.udt_accounts.find_by(type_hash: output.type.compute_hash)
+        node_data_processor.process_block(node_block)
+
+        assert_equal CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000"), udt_account.reload.amount
+        assert_equal 0, previous_udt_account.reload.amount
+      end
+    end
+
     private
 
     def node_data_processor
