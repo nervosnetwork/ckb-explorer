@@ -33,7 +33,7 @@ module CkbSync
         local_block.live_cell_changes = ckb_transactions.sum(&:live_cell_changes)
         CkbTransaction.import!(ckb_transactions, recursive: true, batch_size: 3500, validate: false)
         input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h { |id| [id, []] }
-        update_tx_fee_related_data(local_block, input_capacities)
+        update_tx_fee_related_data(local_block, input_capacities, udt_infos)
         calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
 
         update_current_block_mining_info(local_block)
@@ -518,7 +518,7 @@ module CkbSync
       )
     end
 
-    def update_tx_fee_related_data(local_block, input_capacities)
+    def update_tx_fee_related_data(local_block, input_capacities, udt_infos)
       local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 3500) do |cell_inputs|
         updated_inputs = []
         updated_outputs = []
@@ -530,6 +530,9 @@ module CkbSync
             previous_cell_output = cell_input.previous_cell_output
             address_id = previous_cell_output.address_id
             input_capacities[ckb_transaction_id] << previous_cell_output.capacity
+            if previous_cell_output.udt?
+              udt_infos << { type_hash: previous_cell_output.node_output.type.compute_hash, address: previous_cell_output.address }
+            end
 
             link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
             update_previous_cell_output_status(ckb_transaction_id, previous_cell_output, consumed_tx.block_timestamp)

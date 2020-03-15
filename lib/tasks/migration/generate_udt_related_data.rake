@@ -3,7 +3,7 @@ class UdtRelatedDataGenerator
 
   def initialize
     namespace :migration do
-      desc "Usage bundle exec rake 'migration:generate_udt_related_data[true, true, true]'"
+      desc "Usage: bundle exec rake 'migration:generate_udt_related_data[true, true, true]'"
       task :generate_udt_related_data, [:create_udt, :fill_type_hash, :create_udt_accounts] => :environment do |_, args|
         create_udt if !!args[:create_udt]
         fill_type_hash_to_cell_output if !!args[:fill_type_hash]
@@ -37,17 +37,16 @@ class UdtRelatedDataGenerator
   end
 
   def create_udt_accounts(udt_infos)
-    udt_infos.each do |info|
-      address = Address.find(info[1])
-      udt_account = address.udt_accounts.find_by(type_hash: info[0])
-      udt_live_cell_data = address.cell_outputs.live.udt.where(type_hash: info[0]).pluck(:data)
-      amount = udt_live_cell_data.map { |data| CkbUtils.parse_udt_cell_data(data) }.sum
-      if udt_account.blank?
+    udt_accounts =
+      udt_infos.map do |info|
+        address = Address.find(info[1])
+        udt_live_cell_data = address.cell_outputs.live.udt.where(type_hash: info[0]).pluck(:data)
+        amount = udt_live_cell_data.map { |data| CkbUtils.parse_udt_cell_data(data) }.sum
         udt = Udt.find_or_create_by!(type_hash: info[0], code_hash: udt_info[:code_hash], udt_type: "sudt")
-        address.udt_accounts.create!(udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount)
+        { udt_type: Udt.udt_types[udt.udt_type], full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount, address_id: address.id, created_at: Time.now, updated_at: Time.now }
       end
-    end
 
+    UdtAccount.upsert_all(udt_accounts, unique_by: :index_udt_accounts_on_type_hash_and_address_id)
     puts "udt accounts created"
   end
 
@@ -65,26 +64,27 @@ class UdtRelatedDataGenerator
         [type_script.cell_output_id, node_type_script.compute_hash]
       end
 
-    CellOutput.import columns, values, validate: false, on_duplicate_key_update: [:hash_type]
+    CellOutput.import columns, values, validate: false, on_duplicate_key_update: [:type_hash]
 
     puts "type_hash filled"
   end
 
   def create_udt
-    Udt.create!(udt_info)
+    Udt.upsert(udt_info, unique_by: :type_hash)
 
     puts "udt created"
   end
 
   def udt_info
-    icon_file_data = Base64.encode64(File.read("#{Rails.root}/tmp/kfc.png")).gsub("\n", '')
+    icon_file_data = Base64.encode64(File.read("#{Rails.root}/tmp/kfc.png")).gsub("\n", "")
+    code_hash = ["0x48dbf59b4c7ee1547238021b4869bceedf4eea6b43772e5d66ef8865b6ae7212".delete_prefix(ENV["DEFAULT_HASH_PREFIX"])].pack("H*")
     {
-      "code_hash": "0x48dbf59b4c7ee1547238021b4869bceedf4eea6b43772e5d66ef8865b6ae7212",
+      "code_hash": code_hash,
       "hash_type": "data",
       "args": "0x6a242b57227484e904b4e08ba96f19a623c367dcbd18675ec6f2a71a0ff4ec26",
-      "type_hash": "0x2c0da3548618bc98003075f2deabd3569c4c4a1a55e63b2e7677aeed9c45c2b7",
+      "type_hash": "0x74c75caf537a69fcca80c1257672178f5f664573605ca109d9404b08c4251792",
       "full_name": "Kingdom Fly Coin", "symbol": "kfc", "decimal": "6", "description": "", "icon_file": "data:image/png;base64,#{icon_file_data}",
-      "operator_website": "", "udt_type": "sudt", "published": "true"
+      "operator_website": "", "udt_type": "0", "published": true, "created_at": Time.now, "updated_at": Time.now
     }
   end
 end
