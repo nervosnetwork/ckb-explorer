@@ -54,6 +54,12 @@ class AddressPresenter
     CkbTransaction.where(id: ckb_transaction_ids)
   end
 
+  def ckb_udt_transactions(type_hash)
+    address_ids = object.pluck(:id)
+    ckb_transaction_ids = CellOutput.udt.where(address_id: address_ids, type_hash: type_hash).pluck("generated_by_id") + CellOutput.udt.where(address_id: address_ids, type_hash: type_hash).pluck("consumed_by_id").compact
+    CkbTransaction.where(id: ckb_transaction_ids.uniq)
+  end
+
   def lock_info
     object.first.lock_script.lock_info
   end
