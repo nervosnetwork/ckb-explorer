@@ -57,11 +57,11 @@ class UdtRelatedDataGenerator
   end
 
   def fill_type_hash_to_cell_output
-    columns = %i(id type_hash, cell_type)
+    columns = %i(id type_hash cell_type)
     values =
       TypeScript.find_each.map do |type_script|
         node_type_script = CKB::Types::Script.new(code_hash: type_script.code_hash, args: type_script.args, hash_type: type_script.hash_type)
-        [type_script.cell_output_id, node_type_script.compute_hash, "udt"]
+        [type_script.cell_output_id, node_type_script.compute_hash, cell_type(node_type_script, type_script.cell_output.data)]
       end
 
     CellOutput.import columns, values, validate: false, on_duplicate_key_update: [:type_hash, :cell_type]
@@ -91,6 +91,23 @@ class UdtRelatedDataGenerator
       "operator_website": "", "udt_type": "0", "published": true, "created_at": Time.now, "updated_at": Time.now
     }
   end
+
+  def cell_type(type_script, output_data)
+      return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"]].include?(type_script&.code_hash)
+
+      case type_script&.code_hash
+      when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
+        if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
+          "nervos_dao_deposit"
+        else
+          "nervos_dao_withdrawing"
+        end
+      when ENV["SUDT_CELL_TYPE_HASH"]
+        "udt"
+      else
+        "normal"
+      end
+    end
 end
 
 UdtRelatedDataGenerator.new
