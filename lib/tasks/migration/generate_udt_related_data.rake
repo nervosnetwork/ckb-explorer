@@ -57,14 +57,14 @@ class UdtRelatedDataGenerator
   end
 
   def fill_type_hash_to_cell_output
-    columns = %i(id type_hash)
+    columns = %i(id type_hash, cell_type)
     values =
       TypeScript.find_each.map do |type_script|
         node_type_script = CKB::Types::Script.new(code_hash: type_script.code_hash, args: type_script.args, hash_type: type_script.hash_type)
-        [type_script.cell_output_id, node_type_script.compute_hash]
+        [type_script.cell_output_id, node_type_script.compute_hash, "udt"]
       end
 
-    CellOutput.import columns, values, validate: false, on_duplicate_key_update: [:type_hash]
+    CellOutput.import columns, values, validate: false, on_duplicate_key_update: [:type_hash, :cell_type]
 
     puts "type_hash filled"
   end
@@ -76,14 +76,18 @@ class UdtRelatedDataGenerator
   end
 
   def udt_info
-    icon_file_data = Base64.encode64(File.read("#{Rails.root}/tmp/kfc.png")).gsub("\n", "")
+    icon_file = nil
+    if File.exist?("#{Rails.root}/tmp/kfc2.png")
+      icon_file_data = Base64.encode64(File.read("#{Rails.root}/tmp/kfc.png")).gsub("\n", "")
+      icon_file = "data:image/png;base64,#{icon_file_data}"
+    end
     code_hash = ["0x48dbf59b4c7ee1547238021b4869bceedf4eea6b43772e5d66ef8865b6ae7212".delete_prefix(ENV["DEFAULT_HASH_PREFIX"])].pack("H*")
     {
       "code_hash": code_hash,
       "hash_type": "data",
       "args": "0x6a242b57227484e904b4e08ba96f19a623c367dcbd18675ec6f2a71a0ff4ec26",
       "type_hash": "0x74c75caf537a69fcca80c1257672178f5f664573605ca109d9404b08c4251792",
-      "full_name": "Kingdom Fly Coin", "symbol": "kfc", "decimal": "6", "description": "", "icon_file": "data:image/png;base64,#{icon_file_data}",
+      "full_name": "Kingdom Fly Coin", "symbol": "kfc", "decimal": "6", "description": "", "icon_file": icon_file,
       "operator_website": "", "udt_type": "0", "published": true, "created_at": Time.now, "updated_at": Time.now
     }
   end
