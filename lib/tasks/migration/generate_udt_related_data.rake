@@ -5,10 +5,10 @@ class UdtRelatedDataGenerator
     namespace :migration do
       desc "Usage: bundle exec rake 'migration:generate_udt_related_data[true, true, true]'"
       task :generate_udt_related_data, [:create_udt, :fill_type_hash, :create_udt_accounts] => :environment do |_, args|
-        create_udt if !!args[:create_udt]
-        fill_type_hash_to_cell_output if !!args[:fill_type_hash]
+        create_udt if args[:create_udt].downcase == "true"
+        fill_type_hash_to_cell_output if args[:fill_type_hash].downcase == "true"
         update_udt_cell_type
-        if !!args[:create_udt_accounts]
+        if args[:create_udt_accounts].downcase == "true"
           udt_infos = CellOutput.udt.pluck(:type_hash, :address_id).uniq
           create_udt_accounts(udt_infos)
           update_udt_info(udt_infos)
