@@ -1,5 +1,6 @@
 FactoryBot.define do
   factory :udt_account do
+    udt
     address
     udt_type { "sudt" }
     full_name { "kingdom fat coin" }

@@ -49,7 +49,7 @@ class CellOutput < ApplicationRecord
 
     udt_info = Udt.find_by(type_hash: type_hash, published: true)
     CkbUtils.hash_value_to_s({
-      symbol: udt_info&.symbol, amount: udt_amount, decimal: udt_info&.decimal, type_hash_short: type_hash[-4..], published: !!udt_info&.published
+      symbol: udt_info&.symbol, amount: udt_amount, decimal: udt_info&.decimal, type_hash: type_hash, published: !!udt_info&.published
     })
   end
 
