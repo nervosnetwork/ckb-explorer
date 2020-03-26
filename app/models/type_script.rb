@@ -12,6 +12,10 @@ class TypeScript < ApplicationRecord
       hash_type: hash_type
     }
   end
+
+  def short_code_hash
+    code_hash[-4..]
+  end
 end
 
 # == Schema Information

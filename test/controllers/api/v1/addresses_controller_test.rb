@@ -87,7 +87,7 @@ module Api
 
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal %w(address_hash balance transactions_count lock_script dao_deposit interest lock_info is_special live_cells_count mined_blocks_count average_deposit_time).sort, json["data"]["attributes"].keys.sort
+        assert_equal %w(address_hash balance transactions_count lock_script dao_deposit interest lock_info is_special live_cells_count mined_blocks_count average_deposit_time udt_accounts).sort, json["data"]["attributes"].keys.sort
       end
 
       test "should return NullAddress when address no found by id" do
@@ -133,6 +133,25 @@ module Api
         valid_get api_v1_address_url(query_key)
 
         assert_equal AddressSerializer.new(presented_address).serialized_json, response.body
+      end
+
+      test "should return published udt accounts with given address hash" do
+        address = create(:address, :with_lock_script)
+        udt_account = create(:udt_account, published: true, address: address)
+        address.query_address = address.address_hash
+        valid_get api_v1_address_url(address.address_hash)
+
+        assert_equal [{ "symbol" => udt_account.symbol, "decimal" => udt_account.decimal.to_s, "amount" => udt_account.amount.to_s, "type_hash" => udt_account.type_hash, "udt_icon_file" => udt_account.udt_icon_file }], json.dig("data", "attributes", "udt_accounts")
+      end
+
+      test "should not return unpublished udt accounts with given address hash" do
+        address = create(:address, :with_lock_script)
+        create(:udt_account, address: address)
+        address.query_address = address.address_hash
+
+        valid_get api_v1_address_url(address.address_hash)
+
+        assert_empty json.dig("data", "attributes", "udt_accounts")
       end
     end
   end

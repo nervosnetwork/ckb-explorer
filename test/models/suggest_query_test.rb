@@ -50,4 +50,16 @@ class SuggestQueryTest < ActiveSupport::TestCase
     assert_equal AddressSerializer.new(address).serialized_json, SuggestQuery.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83").find!.serialized_json
     ENV["CKB_NET_MODE"] = "mainnet"
   end
+
+  test "should return a udt when query key is a exist udt type hash" do
+    udt = create(:udt, published: true)
+    assert_equal UdtSerializer.new(udt).serialized_json, SuggestQuery.new(udt.type_hash).find!.serialized_json
+  end
+
+  test "should raise RecordNotFound error when target udt is not published" do
+    udt = create(:udt)
+    assert_raises ActiveRecord::RecordNotFound do
+      SuggestQuery.new(udt.type_hash).find!
+    end
+  end
 end

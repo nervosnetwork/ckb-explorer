@@ -57,4 +57,8 @@ class NullAddress
   def average_deposit_time
     0
   end
+
+  def udt_accounts
+    []
+  end
 end

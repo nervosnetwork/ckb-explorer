@@ -4,7 +4,7 @@ module FastJsonapi
     DEFAULT_PER_PAGE = 20
 
     def initialize(request:, records:, page:, page_size:)
-      @url = request.base_url + request.path
+      @url = request.base_url + request.path + query_string(request.query_parameters)
       @page = page.to_i
       @page_size = limit_page_size(records, page_size.to_i)
       @total_pages = records.total_pages
@@ -50,6 +50,10 @@ module FastJsonapi
 
     def include_page?(page)
       (page != 0) && (page != DEFAULT_PAGE)
+    end
+
+    def query_string(query_params)
+      query_params.reject{ |key| key.in?(%w(page page_size)) }.map{|k,v| "?#{k}=#{v}" }.join("?")
     end
 
     def limit_page_size(records, page_size)

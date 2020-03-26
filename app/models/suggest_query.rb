@@ -53,7 +53,12 @@ class SuggestQuery
     AddressSerializer.new(presented_address)
   end
 
+  def find_udt_by_type_hash
+    udt = Udt.find_by(type_hash: query_key, published: true)
+    UdtSerializer.new(udt) if udt.present?
+  end
+
   def find_by_hex
-    Block.cached_find(query_key) || find_ckb_transaction_by_hash || find_address_by_lock_hash
+    Block.cached_find(query_key) || find_ckb_transaction_by_hash || find_address_by_lock_hash || find_udt_by_type_hash
   end
 end
