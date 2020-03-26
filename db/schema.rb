@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_03_05_132554) do
+ActiveRecord::Schema.define(version: 2020_03_26_050752) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -314,8 +314,10 @@ ActiveRecord::Schema.define(version: 2020_03_05_132554) do
     t.bigint "address_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.bigint "udt_id"
     t.index ["address_id"], name: "index_udt_accounts_on_address_id"
     t.index ["type_hash", "address_id"], name: "index_udt_accounts_on_type_hash_and_address_id", unique: true
+    t.index ["udt_id"], name: "index_udt_accounts_on_udt_id"
   end
 
   create_table "udts", force: :cascade do |t|
