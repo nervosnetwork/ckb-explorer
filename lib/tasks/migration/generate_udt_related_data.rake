@@ -43,7 +43,7 @@ class UdtRelatedDataGenerator
         udt_live_cell_data = address.cell_outputs.live.udt.where(type_hash: info[0]).pluck(:data)
         amount = udt_live_cell_data.map { |data| CkbUtils.parse_udt_cell_data(data) }.sum
         udt = Udt.find_or_create_by!(type_hash: info[0], code_hash: udt_info[:code_hash], udt_type: "sudt")
-        { udt_type: Udt.udt_types[udt.udt_type], full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount, address_id: address.id, created_at: Time.now, updated_at: Time.now }
+        { udt_id: udt.id, udt_type: Udt.udt_types[udt.udt_type], full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount, address_id: address.id, created_at: Time.now, updated_at: Time.now }
       end
 
     UdtAccount.upsert_all(udt_accounts, unique_by: :index_udt_accounts_on_type_hash_and_address_id)
