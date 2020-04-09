@@ -63,6 +63,10 @@ module Charts
       end
     end
 
+    def total_tx_fee
+      Block.created_after(started_at).created_before(ended_at).sum(:total_transaction_fee)
+    end
+
     def live_cells_count
       if from_scratch
         CellOutput.generated_before(ended_at).unconsumed_at(ended_at).count
