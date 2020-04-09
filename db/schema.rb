@@ -184,6 +184,7 @@ ActiveRecord::Schema.define(version: 2020_04_15_022539) do
     t.string "uncle_rate", default: "0"
     t.string "total_depositors_count", default: "0"
     t.jsonb "address_balance_distribution"
+    t.decimal "total_tx_fee", precision: 30
   end
 
   create_table "dao_contracts", force: :cascade do |t|

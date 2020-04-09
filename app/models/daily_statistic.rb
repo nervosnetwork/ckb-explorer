@@ -29,4 +29,5 @@ end
 #  uncle_rate                   :string           default("0")
 #  total_depositors_count       :string           default("0")
 #  address_balance_distribution :jsonb
+#  total_tx_fee                 :decimal(30, )
 #

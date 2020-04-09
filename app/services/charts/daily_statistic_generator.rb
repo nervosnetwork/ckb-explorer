@@ -26,7 +26,7 @@ module Charts
                              mining_reward: mining_reward, deposit_compensation: deposit_compensation, treasury_amount: treasury_amount,
                              estimated_apc: estimated_apc, live_cells_count: live_cells_count, dead_cells_count: dead_cells_count, avg_hash_rate: avg_hash_rate,
                              avg_difficulty: avg_difficulty, uncle_rate: uncle_rate, total_depositors_count: total_depositors_count,
-                             address_balance_distribution: address_balance_distribution)
+                             address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee)
     end
 
     private
@@ -57,6 +57,10 @@ module Charts
 
         [range[1], addresses_count, total_addresses_count]
       end
+    end
+
+    def total_tx_fee
+      Block.created_after(started_at).created_before(ended_at).sum(:total_transaction_fee)
     end
 
     def live_cells_count
