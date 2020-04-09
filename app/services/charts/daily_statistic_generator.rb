@@ -25,12 +25,16 @@ module Charts
                              claimed_compensation: claimed_compensation, average_deposit_time: average_deposit_time,
                              mining_reward: mining_reward, deposit_compensation: deposit_compensation, treasury_amount: treasury_amount,
                              estimated_apc: estimated_apc, live_cells_count: live_cells_count, dead_cells_count: dead_cells_count, avg_hash_rate: avg_hash_rate,
-                             avg_difficulty: avg_difficulty, uncle_rate: uncle_rate, total_depositors_count: total_depositors_count)
+                             avg_difficulty: avg_difficulty, uncle_rate: uncle_rate, total_depositors_count: total_depositors_count, total_tx_fee: total_tx_fee)
     end
 
     private
 
     attr_reader :datetime, :from_scratch
+
+    def total_tx_fee
+      Block.created_after(started_at).created_before(ended_at).sum(:total_transaction_fee)
+    end
 
     def live_cells_count
       if from_scratch

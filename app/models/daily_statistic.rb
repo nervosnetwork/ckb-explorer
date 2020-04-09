@@ -28,4 +28,5 @@ end
 #  avg_difficulty           :string           default("0")
 #  uncle_rate               :string           default("0")
 #  total_depositors_count   :string           default("0")
+#  total_tx_fee             :decimal(30, )
 #
