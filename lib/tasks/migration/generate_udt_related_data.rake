@@ -107,7 +107,7 @@ class UdtRelatedDataGenerator
       else
         "normal"
       end
-    end
+  end
 end
 
 UdtRelatedDataGenerator.new
