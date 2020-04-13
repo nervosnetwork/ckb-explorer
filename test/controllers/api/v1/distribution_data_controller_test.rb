@@ -3,6 +3,11 @@ require "test_helper"
 module Api
   module V1
     class DistributionDataControllerTest < ActionDispatch::IntegrationTest
+      setup do
+        DistributionData.any_instance.stubs(:id).returns(1)
+        create(:daily_statistic, address_balance_distribution: [[100, 1314, 19702], [1000, 3112, 22814], [10000, 1818, 24632], [100000, 2201, 26833], [1000000, 1780, 28613], [10000000, 724, 29337], [100000000, 268, 29605], [1000000000, 42, 29647], [10000000000, 3, 29650]])
+      end
+
       test "should set right content type when call show" do
         valid_get api_v1_distribution_datum_url("address_balance_distribution")
 
@@ -35,6 +40,15 @@ module Api
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         get api_v1_distribution_datum_url("address_balance_distribution"), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+
+        assert_equal response_json, response.body
+      end
+
+      test "should return address balance distribution when indicator is address_balance_distribution" do
+        valid_get api_v1_distribution_datum_url("address_balance_distribution")
+        distribution_data = DistributionData.new
+
+        response_json = DistributionDataSerializer.new(distribution_data, params: { indicator: "address_balance_distribution" }).serialized_json
 
         assert_equal response_json, response.body
       end
