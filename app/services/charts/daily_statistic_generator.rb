@@ -48,9 +48,17 @@ module Charts
           end
         end
 
-      ranges.map do |range|
-        addresses_count = Address.visible.where("balance > ? and balance <= ?", range[0], range[1]).count
-        total_addresses_count = Address.visible.where("balance <= ?", range[1]).count
+      ranges.each_with_index.map do |range, index|
+        begin_value = range[0] * 10**8
+        end_value = range[1] * 10**8
+        if index == 8
+          addresses_count = Address.visible.where("balance > ?", begin_value).count
+          total_addresses_count = Address.visible.where("balance <= ?", end_value).count
+        else
+          addresses_count = Address.visible.where("balance > ? and balance <= ?", begin_value, end_value).count
+          total_addresses_count = Address.visible.where("balance <= ?", end_value).count
+        end
+
         [range[1], addresses_count, total_addresses_count]
       end
     end
