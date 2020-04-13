@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_22_060907) do
+ActiveRecord::Schema.define(version: 2020_04_13_030841) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -179,6 +179,7 @@ ActiveRecord::Schema.define(version: 2020_01_22_060907) do
     t.string "avg_difficulty", default: "0"
     t.string "uncle_rate", default: "0"
     t.string "total_depositors_count", default: "0"
+    t.jsonb "address_balance_distribution"
   end
 
   create_table "dao_contracts", force: :cascade do |t|
