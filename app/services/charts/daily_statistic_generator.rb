@@ -40,13 +40,13 @@ module Charts
     def address_balance_distribution
       max_n = 9
       ranges =
-       (1..max_n).map do |n|
+        (1..max_n).map do |n|
           if n == 1
             [0, 100]
           else
-            [10**n, 10**(n+1)]
+            [10**n, 10**(n + 1)]
           end
-       end
+        end
 
       ranges.map do |range|
         addresses_count = Address.visible.where("balance > ? and balance <= ?", range[0], range[1]).count
