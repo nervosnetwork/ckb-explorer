@@ -53,10 +53,10 @@ module Charts
         end_value = range[1] * 10**8
         if index == 8
           addresses_count = Address.visible.where("balance > ?", begin_value).count
-          total_addresses_count = Address.visible.count
+          total_addresses_count = Address.visible.where("balance > 0").count
         else
           addresses_count = Address.visible.where("balance > ? and balance <= ?", begin_value, end_value).count
-          total_addresses_count = Address.visible.where("balance <= ?", end_value).count
+          total_addresses_count = Address.visible.where("balance > 0 and balance <= ?", end_value).count
         end
 
         [range[1], addresses_count, total_addresses_count]
