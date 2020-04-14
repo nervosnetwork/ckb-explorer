@@ -141,6 +141,7 @@ end
 #  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
+#  block_time                 :decimal(13, )
 #
 # Indexes
 #
