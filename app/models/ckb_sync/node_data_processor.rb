@@ -344,8 +344,17 @@ module CkbSync
         epoch: epoch_info.number,
         start_number: epoch_info.start_number,
         length: epoch_info.length,
-        dao: header.dao
+        dao: header.dao,
+        block_time: block_time(header.timestamp, header.number)
       )
+    end
+
+    def block_time(timestamp, number)
+      target_block_number = [number - 1, 0].max
+      return 0 if target_block_number.zero?
+
+      previous_block_timestamp = Block.find_by(number: target_block_number).timestamp
+      timestamp - previous_block_timestamp
     end
 
     def build_uncle_block(uncle_block, local_block)
