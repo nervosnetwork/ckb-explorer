@@ -40,4 +40,8 @@ class DailyStatisticSerializer
   attribute :total_depositors_count, if: Proc.new { |_record, params|
     params && params[:indicator].include?("total_depositors_count")
   }
+
+  attribute :address_balance_distribution, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("address_balance_distribution")
+  }
 end

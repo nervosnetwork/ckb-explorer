@@ -43,9 +43,6 @@ Metrics/LineLength:
 Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
 
-Style/BracesAroundHashParameters:
-  Enabled: false
-
 Style/BlockDelimiters:
   EnforcedStyle: braces_for_chaining
 
