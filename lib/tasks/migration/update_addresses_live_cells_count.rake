@@ -5,7 +5,6 @@ namespace :migration do
     Address.where(live_cells_count: 0).find_each do |address|
       address.update_column(:live_cells_count, address.cell_outputs.live.count)
       address.flush_cache
-
       progress_bar.increment
     end
 
