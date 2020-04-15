@@ -612,6 +612,15 @@ types:
     }
   }
 
+  distribution_data_attributes: {
+    type: object,
+    properties: {
+      "address_balance_distribution": {
+        type: "[][]",
+      }
+    }
+  }
+
   block_statistic_attributes: {
       type: object,
       properties: {
@@ -968,6 +977,15 @@ types:
     properties: {
       "data": {
         "type": daily_statistic_attributes
+      }
+    }
+  }
+
+  distribution_data_response: {
+    type: object,
+    properties: {
+      "data": {
+        "type": distribution_data_attributes
       }
     }
   }
@@ -3341,6 +3359,59 @@ types:
                         "created_at_unixtimestamp": "1575093709"
                       }
                     }
+                  }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "message": "Record Not Found",
+                  "errors": [
+                    {
+                      "id": "ActiveRecord::RecordNotFound",
+                      "code": "1141",
+                      "status": "404",
+                      "title": "Record not fund",
+                      "detail": "No matching address record were found",
+                      "href": "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+                    }
+                  ]
+                }
+
+/distribution_data:
+  /{indicator}:
+    uriParameters:
+      indicator:
+        description: The indicator name
+        required: true
+        type: string
+    get:
+      description: Returns the distribution data
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: distribution_data_response
+              examples:
+                transactions_count: |
+                  {
+                    "id": "1",
+                    "type": "distribution_data",
+                    "attributes": {
+                      "address_balance_distribution": [
+                        ["100", "1314", "19702"],
+                        ["1000", "3112", "22814"],
+                        ["10000", "1818", "24632"],
+                        ["100000", "2201", "26833"],
+                        ["1000000", "1780", "28613"],
+                        ["10000000", "724", "29337"],
+                        ["100000000", "268", "29605"],
+                        ["1000000000", "42", "29647"],
+                        ["10000000000", "3", "29650"]
+                      ]
+                    }
+
                   }
         404:
           body:

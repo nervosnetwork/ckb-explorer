@@ -264,6 +264,6 @@ class CkbUtils
   def self.parse_udt_cell_data(data)
     return if data.delete_prefix("0x") == ""
 
-    [data.delete_prefix("0x")].pack("H*").reverse.unpack1("B*").to_i(2)
+    [data.delete_prefix("0x")].pack("H*")[0..15].reverse.unpack1("B*").to_i(2)
   end
 end
