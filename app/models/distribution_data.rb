@@ -1,11 +1,15 @@
 class DistributionData
-  VALID_INDICATORS = %w(address_balance_distribution)
+  VALID_INDICATORS = %w(address_balance_distribution block_time_distribution)
 
   def id
     Time.current.to_i
   end
 
   def address_balance_distribution
-    DailyStatistic.order(created_at_unixtimestamp: :desc).first.address_balance_distribution
+    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.address_balance_distribution || []
+  end
+
+  def block_time_distribution
+    EpochStatistic.order(epoch_number: :desc).first&.block_time_distribution || []
   end
 end
