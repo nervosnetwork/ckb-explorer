@@ -146,6 +146,7 @@ end
 # Indexes
 #
 #  index_blocks_on_block_hash  (block_hash) UNIQUE
+#  index_blocks_on_epoch       (epoch)
 #  index_blocks_on_number      (number)
 #  index_blocks_on_timestamp   (timestamp)
 #
