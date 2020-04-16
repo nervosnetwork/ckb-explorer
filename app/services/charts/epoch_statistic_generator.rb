@@ -13,12 +13,12 @@ module Charts
       difficulty = Block.where(epoch: target_epoch_number).first.difficulty
       first_block_in_epoch = Block.where(epoch: target_epoch_number).order(:number).first
       last_lock_in_epoch = Block.where(epoch: target_epoch_number).order(:number).last
-      block_time = last_lock_in_epoch.timestamp - first_block_in_epoch.timestamp
+      epoch_time = last_lock_in_epoch.timestamp - first_block_in_epoch.timestamp
       epoch_length = Block.where(epoch: target_epoch_number).count
-      hash_rate = difficulty * epoch_length / block_time
+      hash_rate = difficulty * epoch_length / epoch_time
 
       epoch_statistic = ::EpochStatistic.find_or_create_by(epoch_number: target_epoch_number)
-      epoch_statistic.update(difficulty: difficulty, uncle_rate: uncle_rate, hash_rate: hash_rate, block_time_distribution: block_time_distribution)
+      epoch_statistic.update(difficulty: difficulty, uncle_rate: uncle_rate, hash_rate: hash_rate, block_time_distribution: block_time_distribution, epoch_time: epoch_time)
     end
 
     private
