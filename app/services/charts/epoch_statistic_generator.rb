@@ -35,11 +35,7 @@ module Charts
       ranges.map do |range|
         millisecond_start = range[0] * 1000
         millisecond_end = range[1] * 1000
-<<<<<<< HEAD
-        block_count = Block.where(epoch: epoch_numbers).where("block_time > ? and block_time < ?", millisecond_start, millisecond_end).count
-=======
-        block_count = Block.where(epoch: epoch_numbers).where("block_time > ? and block_time < ?", millisecond_start, millisecond_end)
->>>>>>> abd70021... chore: change range from second to millisecond
+        block_count = Block.where(epoch: epoch_numbers).where("block_time > ? and block_time <= ?", millisecond_start, millisecond_end).count
         [range[1], block_count]
       end
     end
