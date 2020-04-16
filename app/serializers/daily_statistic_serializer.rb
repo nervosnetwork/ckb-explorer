@@ -47,5 +47,13 @@ class DailyStatisticSerializer
 
   attribute :total_tx_fee, if: Proc.new { |_record, params|
     params && params[:indicator].include?("total_tx_fee")
-  }
+  } do |object|
+    object.total_tx_fee.to_s
+  end
+
+  attribute :occupied_capacity, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("occupied_capacity")
+  } do |object|
+    object.occupied_capacity.to_s
+  end
 end

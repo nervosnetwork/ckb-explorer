@@ -1,6 +1,7 @@
 module Charts
   class DailyStatisticGenerator
     MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
+    GENESIS_TIMESTAMP = 1573852190812
 
     def initialize(datetime = nil, from_scratch = false)
       raise "datetime must be a Time" if datetime.present? && !datetime.is_a?(Time)
@@ -26,12 +27,24 @@ module Charts
                              mining_reward: mining_reward, deposit_compensation: deposit_compensation, treasury_amount: treasury_amount,
                              estimated_apc: estimated_apc, live_cells_count: live_cells_count, dead_cells_count: dead_cells_count, avg_hash_rate: avg_hash_rate,
                              avg_difficulty: avg_difficulty, uncle_rate: uncle_rate, total_depositors_count: total_depositors_count,
-                             address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee)
+                             address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity)
     end
 
     private
 
     attr_reader :datetime, :from_scratch
+
+    def occupied_capacity
+      if from_scratch
+        CellOutput.generated_before(ended_at).unconsumed_at(ended_at).sum(:occupied_capacity)
+      else
+        CellOutput.generated_after(started_at).generated_before(ended_at).sum(:occupied_capacity) + yesterday_daily_statistic.occupied_capacity - released_capacity_today
+      end
+    end
+
+    def released_capacity_today
+      CellOutput.consumed_after(started_at).consumed_before(ended_at).sum(:occupied_capacity)
+    end
 
     def address_balance_distribution
       max_n = 9
@@ -255,7 +268,15 @@ module Charts
     end
 
     def yesterday_daily_statistic
-      @yesterday_daily_statistic ||= ::DailyStatistic.find_by(created_at_unixtimestamp: to_be_counted_date.yesterday.beginning_of_day.to_i) || OpenStruct.new(addresses_count: 0, total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0, total_depositors_count: 0, live_cells_count: 0, dead_cells_count: 0)
+      @yesterday_daily_statistic ||=
+        begin
+          yesterday_statistic = ::DailyStatistic.find_by(created_at_unixtimestamp: to_be_counted_date.yesterday.beginning_of_day.to_i)
+          if to_be_counted_date.beginning_of_day.to_i == Time.at(GENESIS_TIMESTAMP).beginning_of_day.to_i
+            OpenStruct.new(addresses_count: 0, total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0, total_depositors_count: 0, live_cells_count: 0, dead_cells_count: 0)
+          else
+            yesterday_statistic
+          end
+        end
     end
   end
 end
