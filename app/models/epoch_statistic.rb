@@ -14,6 +14,7 @@ end
 #  updated_at              :datetime         not null
 #  hash_rate               :string
 #  block_time_distribution :jsonb
+#  epoch_time              :decimal(13, )
 #
 # Indexes
 #
