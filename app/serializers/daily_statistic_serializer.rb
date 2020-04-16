@@ -44,4 +44,8 @@ class DailyStatisticSerializer
   attribute :address_balance_distribution, if: Proc.new { |_record, params|
     params && params[:indicator].include?("address_balance_distribution")
   }
+
+  attribute :total_tx_fee, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("total_tx_fee")
+  }
 end
