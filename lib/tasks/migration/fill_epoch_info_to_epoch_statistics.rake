@@ -5,7 +5,7 @@ class EpochInfoGenerator
     namespace :migration do
       desc "Usage: RAILS_ENV=production bundle exec rake migration:fill_epoch_info_to_epoch_statistics"
       task fill_epoch_info_to_epoch_statistics: :environment do
-        max_epoch_number = Block.maximum(:epoch)
+        max_epoch_number = EpochStatistic.maximum(:epoch_number)
         progress_bar = ProgressBar.create({
           total: max_epoch_number + 1,
           format: "%e %B %p%% %c/%C"
@@ -16,7 +16,7 @@ class EpochInfoGenerator
             first_block_in_epoch = Block.where(epoch: epoch_number).order(:number).select(:timestamp)[0]
             last_lock_in_epoch = Block.where(epoch: epoch_number).order(number: :desc).select(:timestamp)[0]
             epoch_time = last_lock_in_epoch.timestamp - first_block_in_epoch.timestamp
-            epoch_length = Block.where(epoch: epoch_number).first.length
+            epoch_length = Block.where(epoch: epoch_number).limit(1)[0].length
             progress_bar.increment
             epoch_statistic = EpochStatistic.find_by(epoch_number: epoch_number)
 
