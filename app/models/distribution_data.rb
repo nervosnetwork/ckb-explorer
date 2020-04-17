@@ -16,4 +16,8 @@ class DistributionData
   def epoch_time_distribution
     EpochStatistic.order(epoch_number: :desc).first&.epoch_time_distribution || []
   end
+
+  def epoch_length_distribution
+    EpochStatistic.order(epoch_number: :desc).first&.epoch_length_distribution || []
+  end
 end

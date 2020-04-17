@@ -18,4 +18,10 @@ class DistributionDataSerializer
   } do |object|
     object.epoch_time_distribution.map { |distribution| distribution.map(&:to_s) }
   end
+
+  attribute :epoch_length_distribution, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("epoch_length_distribution")
+  } do |object|
+    object.epoch_length_distribution.map { |distribution| distribution.map(&:to_s) }
+  end
 end
