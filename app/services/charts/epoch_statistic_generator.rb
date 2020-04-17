@@ -18,12 +18,33 @@ module Charts
       hash_rate = difficulty * epoch_length / epoch_time
 
       epoch_statistic = ::EpochStatistic.find_or_create_by(epoch_number: target_epoch_number)
-      epoch_statistic.update(difficulty: difficulty, uncle_rate: uncle_rate, hash_rate: hash_rate, block_time_distribution: block_time_distribution, epoch_time: epoch_time)
+      epoch_statistic.update(difficulty: difficulty, uncle_rate: uncle_rate, hash_rate: hash_rate, block_time_distribution: block_time_distribution,
+                             epoch_time: epoch_time, epoch_time_distribution: epoch_time_distribution)
     end
 
     private
 
     attr_reader :target_epoch_number
+
+    def epoch_time_distribution
+      max_n = 119
+      ranges = [[0, 180]] + (180..(180 + max_n)).map { |n| [n, n + 1] }
+      ranges.each_with_index.map do |range, index|
+        next if index.zero?
+
+        milliseconds_start = range[0] * 60 * 1000
+        milliseconds_end = range[1] * 60 * 1000
+        if index == 1
+          epoch_count = ::EpochStatistic.where("epoch_time > 0 and epoch_time <= ?", milliseconds_start).count
+        elsif index == max_n + 1
+          epoch_count = ::EpochStatistic.where("epoch_time > ?", milliseconds_start).count
+        else
+          epoch_count = ::EpochStatistic.where("epoch_time > ? and epoch_time <= ?", milliseconds_start, milliseconds_end).count
+        end
+
+        [range[1], epoch_count]
+      end.compact
+    end
 
     def block_time_distribution
       max_n = 19
