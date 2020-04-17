@@ -30,9 +30,7 @@ module Charts
       max_n = 2400
       ranges = [[0, 1500]] + (1500..max_n).step(100).map { |n| [n, n + 100] }
       ranges.each_with_index.map do |range, index|
-        next if index.zero?
-
-        if index == 1
+        if index.zero?
           epoch_count = ::EpochStatistic.where("epoch_length > 0 and epoch_length <= ?", range[1]).count
         elsif index == max_n + 1
           epoch_count = ::EpochStatistic.where("epoch_length > ?", range[1]).count
@@ -48,12 +46,10 @@ module Charts
       max_n = 119
       ranges = [[0, 180]] + (180..(180 + max_n)).map { |n| [n, n + 1] }
       ranges.each_with_index.map do |range, index|
-        next if index.zero?
-
         milliseconds_start = range[0] * 60 * 1000
         milliseconds_end = range[1] * 60 * 1000
-        if index == 1
-          epoch_count = ::EpochStatistic.where("epoch_time > 0 and epoch_time <= ?", milliseconds_start).count
+        if index.zero?
+          epoch_count = ::EpochStatistic.where("epoch_time > 0 and epoch_time <= ?", milliseconds_end).count
         elsif index == max_n + 1
           epoch_count = ::EpochStatistic.where("epoch_time > ?", milliseconds_start).count
         else
