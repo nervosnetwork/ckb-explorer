@@ -1,5 +1,5 @@
 class DistributionData
-  VALID_INDICATORS = %w(address_balance_distribution block_time_distribution epoch_time_distribution)
+  VALID_INDICATORS = %w(address_balance_distribution block_time_distribution epoch_time_distribution epoch_length_distribution)
 
   def id
     Time.current.to_i
