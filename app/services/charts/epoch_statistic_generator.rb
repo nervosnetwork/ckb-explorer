@@ -19,12 +19,30 @@ module Charts
 
       epoch_statistic = ::EpochStatistic.find_or_create_by(epoch_number: target_epoch_number)
       epoch_statistic.update(difficulty: difficulty, uncle_rate: uncle_rate, hash_rate: hash_rate, block_time_distribution: block_time_distribution,
-                             epoch_time: epoch_time, epoch_time_distribution: epoch_time_distribution, epoch_length: epoch_length)
+                             epoch_time: epoch_time, epoch_time_distribution: epoch_time_distribution, epoch_length: epoch_length, epoch_length_distribution: epoch_length_distribution)
     end
 
     private
 
     attr_reader :target_epoch_number
+
+    def epoch_length_distribution
+      max_n = 2400
+      ranges = [[0, 1500]] + (1500..max_n).step(100).map { |n| [n, n + 100] }
+      ranges.each_with_index.map do |range, index|
+        next if index.zero?
+
+        if index == 1
+          epoch_count = ::EpochStatistic.where("epoch_length > 0 and epoch_length <= ?", range[1]).count
+        elsif index == max_n + 1
+          epoch_count = ::EpochStatistic.where("epoch_length > ?", range[1]).count
+        else
+          epoch_count = ::EpochStatistic.where("epoch_length > ? and epoch_length <= ?", range[0], range[1]).count
+        end
+
+        [range[1], epoch_count]
+      end.compact
+    end
 
     def epoch_time_distribution
       max_n = 119
