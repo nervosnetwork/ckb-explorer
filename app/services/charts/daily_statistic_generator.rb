@@ -60,7 +60,7 @@ module Charts
       ranges.each_with_index.map do |range, index|
         begin_value = range[0] * 10**8
         end_value = range[1] * 10**8
-        if index == 8
+        if index == max_n - 1
           addresses_count = Address.visible.where("balance > ?", begin_value).count
           total_addresses_count = Address.visible.where("balance > 0").count
         else

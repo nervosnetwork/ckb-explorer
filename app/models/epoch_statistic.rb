@@ -15,6 +15,7 @@ end
 #  hash_rate               :string
 #  block_time_distribution :jsonb
 #  epoch_time              :decimal(13, )
+#  epoch_time_distribution :jsonb
 #
 # Indexes
 #
