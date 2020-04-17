@@ -6,17 +6,18 @@ end
 #
 # Table name: epoch_statistics
 #
-#  id                      :bigint           not null, primary key
-#  difficulty              :string
-#  uncle_rate              :string
-#  epoch_number            :decimal(30, )
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
-#  hash_rate               :string
-#  block_time_distribution :jsonb
-#  epoch_time              :decimal(13, )
-#  epoch_time_distribution :jsonb
-#  epoch_length            :integer
+#  id                        :bigint           not null, primary key
+#  difficulty                :string
+#  uncle_rate                :string
+#  epoch_number              :decimal(30, )
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  hash_rate                 :string
+#  block_time_distribution   :jsonb
+#  epoch_time                :decimal(13, )
+#  epoch_time_distribution   :jsonb
+#  epoch_length              :integer
+#  epoch_length_distribution :json
 #
 # Indexes
 #
