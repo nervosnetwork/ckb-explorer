@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_17_020812) do
+ActiveRecord::Schema.define(version: 2020_04_17_092543) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -226,6 +226,7 @@ ActiveRecord::Schema.define(version: 2020_04_17_020812) do
     t.jsonb "block_time_distribution"
     t.decimal "epoch_time", precision: 13
     t.jsonb "epoch_time_distribution"
+    t.integer "epoch_length"
     t.index ["epoch_number"], name: "index_epoch_statistics_on_epoch_number", unique: true
   end
 
