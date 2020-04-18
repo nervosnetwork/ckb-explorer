@@ -68,7 +68,6 @@ gem "ruby-progressbar", require: false
 gem "mina", require: false
 gem "mina-multistage", require: false
 gem "newrelic_rpm"
-gem "turnout"
 gem "rack-attack"
 
 group :development, :test do
@@ -97,8 +96,8 @@ group :development do
   gem "spring"
   gem "spring-watcher-listen", "~> 2.0.0"
   gem "rubocop", require: false
-  gem "rubocop-rails"
-  gem "rubocop-performance"
+  gem "rubocop-rails", require: false
+  gem "rubocop-performance", require: false
   gem "awesome_print"
   gem "annotate"
 end
