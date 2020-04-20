@@ -35,15 +35,7 @@ module Charts
     attr_reader :datetime, :from_scratch
 
     def occupied_capacity
-      if from_scratch
-        CellOutput.generated_before(ended_at).unconsumed_at(ended_at).sum(:occupied_capacity)
-      else
-        CellOutput.generated_after(started_at).generated_before(ended_at).sum(:occupied_capacity) + yesterday_daily_statistic.occupied_capacity - released_capacity_today
-      end
-    end
-
-    def released_capacity_today
-      CellOutput.consumed_after(started_at).consumed_before(ended_at).sum(:occupied_capacity)
+      CellOutput.generated_before(ended_at).unconsumed_at(ended_at).sum(:occupied_capacity)
     end
 
     def address_balance_distribution
