@@ -27,8 +27,8 @@ module Charts
     attr_reader :target_epoch_number
 
     def epoch_length_distribution
-      max_n = 2400
-      ranges = [[0, 1500]] + (1500..max_n).step(100).map { |n| [n, n + 100] }
+      max_n = 1700
+      ranges = [[0, 300]] + (300..max_n).step(100).map { |n| [n, n + 100] }
       ranges.each_with_index.map do |range, index|
         if index.zero?
           epoch_count = ::EpochStatistic.where("epoch_length > 0 and epoch_length <= ?", range[1]).count
