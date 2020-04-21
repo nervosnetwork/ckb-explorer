@@ -53,4 +53,5 @@ end
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
+#  block_size                 :integer
 #

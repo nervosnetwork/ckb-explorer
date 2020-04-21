@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_17_095215) do
+ActiveRecord::Schema.define(version: 2020_04_21_013646) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -92,6 +92,7 @@ ActiveRecord::Schema.define(version: 2020_04_17_095215) do
     t.decimal "compact_target", precision: 20
     t.integer "live_cell_changes"
     t.decimal "block_time", precision: 13
+    t.integer "block_size"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["epoch"], name: "index_blocks_on_epoch"
     t.index ["number"], name: "index_blocks_on_number"
@@ -268,6 +269,7 @@ ActiveRecord::Schema.define(version: 2020_04_17_095215) do
     t.decimal "compact_target", precision: 20
     t.integer "live_cell_changes"
     t.decimal "block_time", precision: 13
+    t.integer "block_size"
   end
 
   create_table "forked_events", force: :cascade do |t|
