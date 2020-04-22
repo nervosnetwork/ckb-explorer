@@ -7,14 +7,16 @@ module Charts
     def call
       return if Block.where(epoch: target_epoch_number).blank?
 
+      return unless Block.where(epoch: target_epoch_number).count == Block.where(epoch: target_epoch_number).order(:number)[0].length
+
       blocks_count = Block.where(epoch: target_epoch_number).count
       uncles_count = Block.where(epoch: target_epoch_number).sum(:uncles_count)
       uncle_rate = uncles_count / blocks_count.to_d
-      difficulty = Block.where(epoch: target_epoch_number).first.difficulty
+      difficulty = Block.where(epoch: target_epoch_number).order(:number)[0].difficulty
       first_block_in_epoch = Block.where(epoch: target_epoch_number).order(:number).select(:timestamp)[0]
       last_lock_in_epoch = Block.where(epoch: target_epoch_number).order(number: :desc).select(:timestamp)[0]
       epoch_time = last_lock_in_epoch.timestamp - first_block_in_epoch.timestamp
-      epoch_length = Block.where(epoch: target_epoch_number).first.length
+      epoch_length = Block.where(epoch: target_epoch_number).order(:number)[0].length
       hash_rate = difficulty * epoch_length / epoch_time
 
       epoch_statistic = ::EpochStatistic.find_or_create_by(epoch_number: target_epoch_number)
