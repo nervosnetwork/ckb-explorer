@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_21_013646) do
+ActiveRecord::Schema.define(version: 2020_04_23_031220) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -94,6 +94,8 @@ ActiveRecord::Schema.define(version: 2020_04_21_013646) do
     t.decimal "block_time", precision: 13
     t.integer "block_size"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
+    t.index ["block_size"], name: "index_blocks_on_block_size"
+    t.index ["block_time"], name: "index_blocks_on_block_time"
     t.index ["epoch"], name: "index_blocks_on_epoch"
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
