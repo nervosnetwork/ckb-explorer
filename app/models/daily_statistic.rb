@@ -31,4 +31,7 @@ end
 #  address_balance_distribution :jsonb
 #  total_tx_fee                 :decimal(30, )
 #  occupied_capacity            :decimal(30, )
+#  daily_dao_deposit            :decimal(30, )
+#  daily_dao_depositors_count   :integer
+#  daily_dao_withdraw           :decimal(30, )
 #
