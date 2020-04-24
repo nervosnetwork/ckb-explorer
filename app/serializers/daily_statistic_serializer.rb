@@ -56,4 +56,22 @@ class DailyStatisticSerializer
   } do |object|
     object.occupied_capacity.to_s
   end
+
+  attribute :daily_dao_deposit, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("daily_dao_deposit")
+  } do |object|
+    object.daily_dao_deposit.to_s
+  end
+
+  attribute :daily_dao_depositors_count, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("daily_dao_depositors_count")
+  } do |object|
+    object.daily_dao_depositors_count.to_s
+  end
+
+  attribute :daily_dao_withdraw, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("daily_dao_withdraw")
+  } do |object|
+    object.daily_dao_withdraw.to_s
+  end
 end

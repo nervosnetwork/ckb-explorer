@@ -27,12 +27,25 @@ module Charts
                              mining_reward: mining_reward, deposit_compensation: deposit_compensation, treasury_amount: treasury_amount,
                              estimated_apc: estimated_apc, live_cells_count: live_cells_count, dead_cells_count: dead_cells_count, avg_hash_rate: avg_hash_rate,
                              avg_difficulty: avg_difficulty, uncle_rate: uncle_rate, total_depositors_count: total_depositors_count,
-                             address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity)
+                             address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity,
+                             daily_dao_deposit: daily_dao_deposit, daily_dao_depositors_count: daily_dao_depositors_count, daily_dao_withdraw: daily_dao_withdraw)
     end
 
     private
 
     attr_reader :datetime, :from_scratch
+
+    def daily_dao_deposit
+      @daily_dao_deposit ||= DaoEvent.processed.deposit_to_dao.created_after(started_at).created_before(ended_at).sum(:value)
+    end
+
+    def daily_dao_depositors_count
+      @daily_dao_depositors_count ||= DaoEvent.processed.new_dao_depositor.created_after(started_at).created_before(ended_at).count
+    end
+
+    def daily_dao_withdraw
+      @daily_dao_withdraw ||= DaoEvent.processed.withdraw_from_dao.created_after(started_at).created_before(ended_at).sum(:value)
+    end
 
     def occupied_capacity
       CellOutput.generated_before(ended_at).unconsumed_at(ended_at).sum(:occupied_capacity)
@@ -147,9 +160,7 @@ module Charts
         withdraw_amount = DaoEvent.processed.withdraw_from_dao.created_before(ended_at).sum(:value)
         deposit_amount - withdraw_amount
       else
-        deposit_amount_today = DaoEvent.processed.deposit_to_dao.created_after(started_at).created_before(ended_at).sum(:value)
-        withdraw_amount_today = DaoEvent.processed.withdraw_from_dao.created_after(started_at).created_before(ended_at).sum(:value)
-        deposit_amount_today - withdraw_amount_today + yesterday_daily_statistic.total_dao_deposit.to_i
+        daily_dao_deposit - daily_dao_withdraw + yesterday_daily_statistic.total_dao_deposit.to_i
       end
     end
 
@@ -158,8 +169,7 @@ module Charts
         total_depositors_count - DaoEvent.processed.take_away_all_deposit.created_before(ended_at).count
       else
         withdrawals_today =  DaoEvent.processed.take_away_all_deposit.created_after(started_at).created_before(ended_at).count
-        new_depositors_today = DaoEvent.processed.new_dao_depositor.created_after(started_at).created_before(ended_at).count
-        new_depositors_today - withdrawals_today + yesterday_daily_statistic.dao_depositors_count.to_i
+        daily_dao_depositors_count - withdrawals_today + yesterday_daily_statistic.dao_depositors_count.to_i
       end
     end
 
