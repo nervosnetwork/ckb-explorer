@@ -32,13 +32,13 @@ class MarketData
   end
 
   def total_supply
-    result = parsed_dao.c_i - BURN_QUOTA - yesterday_treasury_amount
+    result = parsed_dao.c_i - BURN_QUOTA - yesterday_treasury_amount.to_i
 
     (result / 10**8).truncate(8)
   end
 
   def circulating_supply
-    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked - bug_bounty_locked - yesterday_treasury_amount
+    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked - bug_bounty_locked - yesterday_treasury_amount.to_i
 
     (result / 10**8).truncate(8)
   end
