@@ -32,13 +32,13 @@ class MarketData
   end
 
   def total_supply
-    result = parsed_dao.c_i - BURN_QUOTA
+    result = parsed_dao.c_i - BURN_QUOTA - yesterday_treasury_amount
 
     (result / 10**8).truncate(8)
   end
 
   def circulating_supply
-    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked - bug_bounty_locked
+    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked - bug_bounty_locked - yesterday_treasury_amount
 
     (result / 10**8).truncate(8)
   end
@@ -119,5 +119,9 @@ class MarketData
   # 2022-12-31
   def third_released_timestamp_other
     @third_released_timestamp_other ||= Address.find_by(address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32sdufwedw7a0w9dkvhpsah4mdk2gkfq63e0q6qzzqxzq8yqnqq85p").lock_script.lock_info[:estimated_unlock_time].to_i
+  end
+
+  def yesterday_treasury_amount
+    DailyStatistic.find_by(created_at_unixtimestamp: Time.current.yesterday.beginning_of_day.to_i).treasury_amount
   end
 end
