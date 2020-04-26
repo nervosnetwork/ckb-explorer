@@ -38,6 +38,9 @@ Rails.application.routes.draw do
       resources :block_statistics, only: :show
       resources :epoch_statistics, only: :show
       resources :market_data, only: :show
+      resources :udts, only: :show
+      resources :udt_transactions, only: :show
+      resources :address_udt_transactions, only: :show
       resources :distribution_data, only: :show
     end
   end

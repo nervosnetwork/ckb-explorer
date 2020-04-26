@@ -238,7 +238,15 @@ class CkbUtils
   end
 
   def self.hash_value_to_s(hash)
-    hash.each { |key, value| hash[key] = value.to_s unless !!value == value }
+    hash.each do |key, value|
+      next if !!value == value
+
+      if value.is_a?(Hash)
+        hash_value_to_s(value)
+      else
+        hash[key] = value.to_s
+      end
+    end
   end
 
   def self.parse_dao(dao)
@@ -251,5 +259,11 @@ class CkbUtils
     u_i = bin_dao[24..-1].unpack("Q<").pack("Q>").unpack1("H*").hex
 
     OpenStruct.new(c_i: c_i, ar_i: ar_i, s_i: s_i, u_i: u_i)
+  end
+
+  def self.parse_udt_cell_data(data)
+    return if data.delete_prefix("0x") == ""
+
+    [data.delete_prefix("0x")].pack("H*")[0..15].reverse.unpack1("B*").to_i(2)
   end
 end

@@ -10,8 +10,9 @@ FactoryBot.define do
       before(:create) do |cell_output, _evaluator|
         ckb_transaction = create(:ckb_transaction, :with_cell_output_and_lock_script, block: cell_output.block)
         cell_output.update(ckb_transaction: ckb_transaction, generated_by: ckb_transaction)
-        create(:lock_script, cell_output_id: cell_output.id)
-        create(:type_script, cell_output_id: cell_output.id)
+        create(:lock_script, cell_output_id: cell_output.id, hash_type: "type")
+        create(:type_script, cell_output_id: cell_output.id, hash_type: "type")
+        cell_output.update(tx_hash: ckb_transaction.tx_hash)
       end
     end
 

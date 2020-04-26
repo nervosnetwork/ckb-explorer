@@ -2,7 +2,7 @@ class CellOutput < ApplicationRecord
   SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   enum status: { live: 0, dead: 1 }
-  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2 }
+  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3 }
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
@@ -44,6 +44,15 @@ class CellOutput < ApplicationRecord
     )
   end
 
+  def udt_info
+    return unless udt?
+
+    udt_info = Udt.find_by(type_hash: type_hash, published: true)
+    CkbUtils.hash_value_to_s({
+      symbol: udt_info&.symbol, amount: udt_amount, decimal: udt_info&.decimal, type_hash: type_hash, published: !!udt_info&.published
+    })
+  end
+
   def flush_cache
     $redis.pipelined do
       $redis.del(*cache_keys)
@@ -73,6 +82,8 @@ end
 #  occupied_capacity        :decimal(30, )
 #  block_timestamp          :decimal(30, )
 #  consumed_block_timestamp :decimal(30, )
+#  type_hash                :string
+#  udt_amount               :decimal(40, )
 #
 # Indexes
 #
