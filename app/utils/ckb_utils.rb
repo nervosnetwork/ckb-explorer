@@ -252,4 +252,8 @@ class CkbUtils
 
     OpenStruct.new(c_i: c_i, ar_i: ar_i, s_i: s_i, u_i: u_i)
   end
+
+  def self.time_in_milliseconds(time)
+    (time.to_f * 1000).floor
+  end
 end

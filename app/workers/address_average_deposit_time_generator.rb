@@ -18,7 +18,7 @@ class AddressAverageDepositTimeGenerator
     interest_bearing_deposits = 0
     uninterest_bearing_deposits = 0
     milliseconds_in_day = BigDecimal(24 * 60 * 60 * 1000)
-    ended_at = time_in_milliseconds(Time.current)
+    ended_at = CkbUtils.time_in_milliseconds(Time.current)
     sum_interest_bearing =
       address.cell_outputs.nervos_dao_withdrawing.unconsumed_at(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
         nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
@@ -34,9 +34,5 @@ class AddressAverageDepositTimeGenerator
       end
 
     (sum_interest_bearing + sum_uninterest_bearing) / (interest_bearing_deposits + uninterest_bearing_deposits)
-  end
-
-  def time_in_milliseconds(time)
-    (time.to_f * 1000).floor
   end
 end
