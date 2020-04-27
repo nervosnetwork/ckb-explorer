@@ -122,6 +122,6 @@ class MarketData
   end
 
   def yesterday_treasury_amount
-    DailyStatistic.find_by(created_at_unixtimestamp: Time.current.yesterday.beginning_of_day.to_i).treasury_amount
+    DailyStatistic.order(:created_at_unixtimestamp).last.treasury_amount
   end
 end
