@@ -31,7 +31,7 @@ module Charts
     def epoch_length_distribution
       max_n = 1700
       ranges = [[0, 300]] + (300..max_n).step(100).map { |n| [n, n + 100] }
-      ranges.each_with_index.map do |range, index|
+      ranges.each_with_index.map { |range, index|
         if index.zero?
           epoch_count = ::EpochStatistic.where("epoch_length > 0 and epoch_length <= ?", range[1]).count
         elsif index == max_n + 1
@@ -41,13 +41,13 @@ module Charts
         end
 
         [range[1], epoch_count]
-      end.compact
+      }.compact
     end
 
     def epoch_time_distribution
       max_n = 119
       ranges = [[0, 180]] + (180..(180 + max_n)).map { |n| [n, n + 1] }
-      ranges.each_with_index.map do |range, index|
+      ranges.each_with_index.map { |range, index|
         milliseconds_start = range[0] * 60 * 1000
         milliseconds_end = range[1] * 60 * 1000
         if index.zero?
@@ -59,7 +59,7 @@ module Charts
         end
 
         [range[1], epoch_count]
-      end.compact
+      }.compact
     end
 
     def block_time_distribution

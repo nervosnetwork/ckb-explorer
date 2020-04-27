@@ -179,7 +179,7 @@ module Charts
       if from_scratch
         total_depositors_count - DaoEvent.processed.take_away_all_deposit.created_before(ended_at).count
       else
-        withdrawals_today =  DaoEvent.processed.take_away_all_deposit.created_after(started_at).created_before(ended_at).count
+        withdrawals_today = DaoEvent.processed.take_away_all_deposit.created_after(started_at).created_before(ended_at).count
         daily_dao_depositors_count - withdrawals_today + yesterday_daily_statistic.dao_depositors_count.to_i
       end
     end
@@ -276,10 +276,11 @@ module Charts
     end
 
     def treasury_amount
-      @treasury_amount ||= begin
-        parse_dao = CkbUtils.parse_dao(current_tip_block.dao)
-        parse_dao.s_i - unmade_dao_interests
-      end
+      @treasury_amount ||=
+        begin
+               parse_dao = CkbUtils.parse_dao(current_tip_block.dao)
+               parse_dao.s_i - unmade_dao_interests
+             end
     end
 
     def yesterday_daily_statistic

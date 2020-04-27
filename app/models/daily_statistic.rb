@@ -1,7 +1,9 @@
 class DailyStatistic < ApplicationRecord
-  VALID_INDICATORS = %w(transactions_count addresses_count total_dao_deposit live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate
-                        total_depositors_count address_balance_distribution total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count
-                        circulation_ratio daily_dao_withdraw).freeze
+  VALID_INDICATORS = %w(
+    transactions_count addresses_count total_dao_deposit live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate
+    total_depositors_count address_balance_distribution total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count
+    circulation_ratio daily_dao_withdraw
+  ).freeze
 end
 
 # == Schema Information
