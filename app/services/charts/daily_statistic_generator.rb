@@ -28,12 +28,23 @@ module Charts
                              estimated_apc: estimated_apc, live_cells_count: live_cells_count, dead_cells_count: dead_cells_count, avg_hash_rate: avg_hash_rate,
                              avg_difficulty: avg_difficulty, uncle_rate: uncle_rate, total_depositors_count: total_depositors_count,
                              address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity,
-                             daily_dao_deposit: daily_dao_deposit, daily_dao_depositors_count: daily_dao_depositors_count, daily_dao_withdraw: daily_dao_withdraw)
+                             daily_dao_deposit: daily_dao_deposit, daily_dao_depositors_count: daily_dao_depositors_count, daily_dao_withdraw: daily_dao_withdraw,
+                             total_supply: total_supply, circulation_ratio: circulation_ratio)
     end
 
     private
 
     attr_reader :datetime, :from_scratch
+
+    def circulation_ratio
+      total_dao_deposit / BigDecimal(total_supply)
+    end
+
+    def total_supply
+      tip_dao = current_tip_block.dao
+      tip_parse_dao = CkbUtils.parse_dao(tip_dao)
+      tip_parse_dao.c_i - MarketData::BURN_QUOTA - treasury_amount
+    end
 
     def daily_dao_deposit
       @daily_dao_deposit ||= DaoEvent.processed.deposit_to_dao.created_after(started_at).created_before(ended_at).sum(:value)
@@ -265,8 +276,10 @@ module Charts
     end
 
     def treasury_amount
-      parse_dao = CkbUtils.parse_dao(current_tip_block.dao)
-      parse_dao.s_i - unmade_dao_interests
+      @treasury_amount ||= begin
+        parse_dao = CkbUtils.parse_dao(current_tip_block.dao)
+        parse_dao.s_i - unmade_dao_interests
+      end
     end
 
     def yesterday_daily_statistic
