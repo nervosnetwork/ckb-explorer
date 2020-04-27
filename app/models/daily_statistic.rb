@@ -40,4 +40,5 @@ end
 #  daily_dao_withdraw           :decimal(30, )
 #  circulation_ratio            :decimal(, )
 #  total_supply                 :decimal(30, )
+#  circulating_supply           :decimal(, )
 #
