@@ -33,8 +33,19 @@ class MarketDataTest < ActiveSupport::TestCase
     create(:block, :with_block_hash, epoch: 69, timestamp: 1575090866093, dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
   end
 
-  test "total_supply should return right value" do
+  test "total_supply should not sub treasury amount when current timestamp before first release timestamp" do
+    MarketData.any_instance.stubs(:current_timestamp).returns(CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-03-03")))
+    latest_dao = Block.recent.pick(:dao)
+    parsed_dao = CkbUtils.parse_dao(latest_dao)
+    result = parsed_dao.c_i - (336 * 10**16 * 0.25).to_d
+    expected_circulating_supply = result / 10**8
+
+    assert_equal expected_circulating_supply, MarketData.new.send(:total_supply)
+  end
+
+  test "total_supply should sub treasury amount when current timestamp after first release timestamp" do
     daily_statistic = create(:daily_statistic, treasury_amount: "45507635189304330.674891957030103511696912093394364431189654516859837775", created_at_unixtimestamp: Time.current.yesterday.beginning_of_day.to_i)
+    MarketData.any_instance.stubs(:current_timestamp).returns(CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-06-03")))
     latest_dao = Block.recent.pick(:dao)
     parsed_dao = CkbUtils.parse_dao(latest_dao)
     result = parsed_dao.c_i - (336 * 10**16 * 0.25).to_d - daily_statistic.treasury_amount.to_i
@@ -44,13 +55,12 @@ class MarketDataTest < ActiveSupport::TestCase
   end
 
   test "circulating_supply should return right value" do
-    daily_statistic = create(:daily_statistic, treasury_amount: "45507635189304330.674891957030103511696912093394364431189654516859837775", created_at_unixtimestamp: Time.current.yesterday.beginning_of_day.to_i)
     bug_bounty_address = create(:address, address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
     MarketData.any_instance.stubs(:current_timestamp).returns(CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2019-11-30")))
     latest_dao = Block.recent.pick(:dao)
     parsed_dao = CkbUtils.parse_dao(latest_dao)
     result = parsed_dao.c_i - parsed_dao.s_i - MarketData::BURN_QUOTA - MarketData::ECOSYSTEM_QUOTA * 0.97 -
-      MarketData::TEAM_QUOTA * (2 / 3.to_d) - MarketData::PRIVATE_SALE_QUOTA * (1 / 3.to_d) - MarketData::FOUNDING_PARTNER_QUOTA - MarketData::FOUNDATION_RESERVE_QUOTA - bug_bounty_address.balance - daily_statistic.treasury_amount.to_i
+      MarketData::TEAM_QUOTA * (2 / 3.to_d) - MarketData::PRIVATE_SALE_QUOTA * (1 / 3.to_d) - MarketData::FOUNDING_PARTNER_QUOTA - MarketData::FOUNDATION_RESERVE_QUOTA - bug_bounty_address.balance
     expected_circulating_supply = (result / 10**8).truncate(8)
 
     assert_equal expected_circulating_supply, MarketData.new.send(:circulating_supply)
