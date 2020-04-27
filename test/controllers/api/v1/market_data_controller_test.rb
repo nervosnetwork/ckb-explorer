@@ -43,7 +43,19 @@ module Api
         assert_equal "application/vnd.api+json", response.media_type
       end
 
-      test "should return current total supply" do
+      test "should return total supply that not sub treasury amount when current timestamp before first release timestamp" do
+        MarketData.any_instance.stubs(:current_timestamp).returns(CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-03-03")))
+        valid_get api_v1_market_datum_url("total_supply")
+        latest_dao = Block.recent.pick(:dao)
+        parsed_dao = CkbUtils.parse_dao(latest_dao)
+        result = parsed_dao.c_i - (336 * 10**16 * 0.25).to_d
+        expected_total_supply = (result / 10**8).to_s
+
+        assert_equal expected_total_supply, json
+      end
+
+      test "should return total supply that sub treasury amount when current timestamp after first release timestamp" do
+        MarketData.any_instance.stubs(:current_timestamp).returns(CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-06-03")))
         treasury_amount = DailyStatistic.find_by(created_at_unixtimestamp: Time.current.yesterday.beginning_of_day.to_i).treasury_amount.to_i
         valid_get api_v1_market_datum_url("total_supply")
         latest_dao = Block.recent.pick(:dao)
