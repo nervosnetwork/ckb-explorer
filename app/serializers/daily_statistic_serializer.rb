@@ -58,7 +58,7 @@ class DailyStatisticSerializer
   end
 
   attribute :daily_dao_deposit, if: Proc.new { |_record, params|
-    params && params[:indicator].include?("daily_dao_deposit")
+    params && params[:indicator].split("-").any? {|item| item == "daily_dao_deposit"}
   } do |object|
     object.daily_dao_deposit.to_s
   end
