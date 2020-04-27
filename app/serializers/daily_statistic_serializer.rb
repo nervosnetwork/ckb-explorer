@@ -74,4 +74,10 @@ class DailyStatisticSerializer
   } do |object|
     object.daily_dao_withdraw.to_s
   end
+
+  attribute :circulation_ratio, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("circulation_ratio")
+  } do |object|
+    object.circulation_ratio.to_s
+  end
 end
