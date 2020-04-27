@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_24_084519) do
+ActiveRecord::Schema.define(version: 2020_04_27_041823) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -192,6 +192,8 @@ ActiveRecord::Schema.define(version: 2020_04_24_084519) do
     t.decimal "daily_dao_deposit", precision: 30
     t.integer "daily_dao_depositors_count"
     t.decimal "daily_dao_withdraw", precision: 30
+    t.decimal "circulation_ratio"
+    t.decimal "total_supply", precision: 30
   end
 
   create_table "dao_contracts", force: :cascade do |t|

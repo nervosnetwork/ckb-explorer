@@ -35,4 +35,6 @@ end
 #  daily_dao_deposit            :decimal(30, )
 #  daily_dao_depositors_count   :integer
 #  daily_dao_withdraw           :decimal(30, )
+#  circulation_ratio            :decimal(, )
+#  total_supply                 :decimal(30, )
 #
