@@ -29,12 +29,28 @@ module Charts
                              avg_difficulty: avg_difficulty, uncle_rate: uncle_rate, total_depositors_count: total_depositors_count,
                              address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity,
                              daily_dao_deposit: daily_dao_deposit, daily_dao_depositors_count: daily_dao_depositors_count, daily_dao_withdraw: daily_dao_withdraw,
-                             total_supply: total_supply, circulation_ratio: circulation_ratio)
+                             total_supply: total_supply, circulation_ratio: circulation_ratio, block_time_distribution: block_time_distribution)
     end
 
     private
 
     attr_reader :datetime, :from_scratch
+
+    def block_time_distribution
+      step = 0.1
+      max_n = 50 - step
+      ranges = (0..max_n).step(0.1).map { |n| [n.round(2), (n + step).round(2)] }
+
+      ranges.map do |range|
+        millisecond_start = range[0] * 1000
+        millisecond_end = range[1] * 1000
+        tip_block_number = current_tip_block.number
+        interval = 49999
+        start_block_number = [0, tip_block_number - interval].max
+        block_count = Block.where("number >= ? and number <= ?", start_block_number, tip_block_number).where("block_time > ? and block_time <= ?", millisecond_start, millisecond_end).count
+        [range[1], block_count]
+      end
+    end
 
     def circulating_supply
       MarketData.new("circulating_supply", current_tip_block.number).call

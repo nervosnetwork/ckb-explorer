@@ -10,7 +10,7 @@ class DistributionData
   end
 
   def block_time_distribution
-    EpochStatistic.order(epoch_number: :desc).first&.block_time_distribution || []
+    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.block_time_distribution || []
   end
 
   def epoch_time_distribution
