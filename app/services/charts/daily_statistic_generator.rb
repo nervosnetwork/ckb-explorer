@@ -36,8 +36,12 @@ module Charts
 
     attr_reader :datetime, :from_scratch
 
+    def circulating_supply
+      MarketData.new("circulating_supply", current_tip_block.number).call
+    end
+
     def circulation_ratio
-      total_dao_deposit / BigDecimal(total_supply)
+      total_dao_deposit / circulating_supply
     end
 
     def total_supply
@@ -278,9 +282,9 @@ module Charts
     def treasury_amount
       @treasury_amount ||=
         begin
-               parse_dao = CkbUtils.parse_dao(current_tip_block.dao)
-               parse_dao.s_i - unmade_dao_interests
-             end
+          parse_dao = CkbUtils.parse_dao(current_tip_block.dao)
+          parse_dao.s_i - unmade_dao_interests
+        end
     end
 
     def yesterday_daily_statistic

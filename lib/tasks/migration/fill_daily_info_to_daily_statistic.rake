@@ -20,8 +20,9 @@ class DailyInfoGenerator
           occupied_capacity = daily_statistic_generator.send(:occupied_capacity)
           circulation_ratio = daily_statistic_generator.send(:circulation_ratio)
           total_supply = daily_statistic_generator.send(:total_supply)
+          circulating_supply = daily_statistic_generator.send(:circulating_supply)
           values << { id: daily_statistic.id, occupied_capacity: occupied_capacity, created_at: daily_statistic.created_at,
-                      updated_at: Time.current, circulation_ratio: circulation_ratio, total_supply: total_supply }
+                      updated_at: Time.current, circulation_ratio: circulation_ratio, total_supply: total_supply, circulating_supply: circulating_supply }
           current_time = current_time + 1.days
           progress_bar.increment
         end

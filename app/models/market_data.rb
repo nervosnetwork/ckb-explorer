@@ -8,11 +8,12 @@ class MarketData
   FOUNDING_PARTNER_QUOTA = INITIAL_SUPPLY * 0.05
   FOUNDATION_RESERVE_QUOTA = INITIAL_SUPPLY * 0.02
 
-  attr_reader :indicator, :current_timestamp
+  attr_reader :indicator, :current_timestamp, :tip_block_number
 
-  def initialize(indicator = nil)
+  def initialize(indicator = nil, tip_block_number = nil)
     @indicator = indicator
     @current_timestamp = CkbUtils.time_in_milliseconds(Time.find_zone("UTC").now)
+    @tip_block_number = tip_block_number
   end
 
   def call
@@ -26,8 +27,8 @@ class MarketData
   def parsed_dao
     @parsed_dao ||=
       begin
-        latest_dao = Block.recent.pick(:dao)
-        CkbUtils.parse_dao(latest_dao)
+        tip_block = tip_block_number.present? ? Block.find_by(number: tip_block_number) : Block.recent.first
+        CkbUtils.parse_dao(tip_block.dao)
       end
   end
 
