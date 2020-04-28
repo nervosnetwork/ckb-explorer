@@ -41,7 +41,7 @@ module Charts
     end
 
     def circulation_ratio
-      total_dao_deposit / circulating_supply
+      total_dao_deposit / 10**8 / circulating_supply
     end
 
     def total_supply
