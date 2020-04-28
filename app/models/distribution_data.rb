@@ -14,10 +14,10 @@ class DistributionData
   end
 
   def epoch_time_distribution
-    EpochStatistic.order(epoch_number: :desc).first&.epoch_time_distribution || []
+    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.epoch_time_distribution || []
   end
 
   def epoch_length_distribution
-    EpochStatistic.order(epoch_number: :desc).first&.epoch_length_distribution || []
+    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.epoch_length_distribution || []
   end
 end

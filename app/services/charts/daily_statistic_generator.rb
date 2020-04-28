@@ -29,24 +29,57 @@ module Charts
                              avg_difficulty: avg_difficulty, uncle_rate: uncle_rate, total_depositors_count: total_depositors_count,
                              address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity,
                              daily_dao_deposit: daily_dao_deposit, daily_dao_depositors_count: daily_dao_depositors_count, daily_dao_withdraw: daily_dao_withdraw,
-                             total_supply: total_supply, circulation_ratio: circulation_ratio, block_time_distribution: block_time_distribution)
+                             total_supply: total_supply, circulation_ratio: circulation_ratio, block_time_distribution: block_time_distribution,
+                             epoch_time_distribution: epoch_time_distribution, epoch_length_distribution: epoch_length_distribution)
     end
 
     private
 
     attr_reader :datetime, :from_scratch
 
+    def epoch_length_distribution
+      max_n = 1700
+      ranges = (700..max_n).step(100).map { |n| [n, n + 100] }
+      tip_epoch_number = current_tip_block.epoch
+      interval = 499
+      start_epoch_number = [0, tip_epoch_number - interval].max
+
+      ranges.each_with_index.map { |range, index|
+        epoch_count = ::EpochStatistic.where("epoch_number >= ? and epoch_number <= ?", start_epoch_number, tip_epoch_number).where("epoch_length > ? and epoch_length <= ?", range[0], range[1]).count
+
+        [range[1], epoch_count]
+      }.compact
+    end
+
+    def epoch_time_distribution
+      max_n = 119
+      ranges = [[0, 180]] + (180..(180 + max_n)).map { |n| [n, n + 1] }
+      ranges.each_with_index.map { |range, index|
+        milliseconds_start = range[0] * 60 * 1000
+        milliseconds_end = range[1] * 60 * 1000
+        if index.zero?
+          epoch_count = ::EpochStatistic.where("epoch_time > 0 and epoch_time <= ?", milliseconds_end).count
+        elsif index == max_n + 1
+          epoch_count = ::EpochStatistic.where("epoch_time > ?", milliseconds_start).count
+        else
+          epoch_count = ::EpochStatistic.where("epoch_time > ? and epoch_time <= ?", milliseconds_start, milliseconds_end).count
+        end
+
+        [range[1], epoch_count]
+      }.compact
+    end
+
     def block_time_distribution
       step = 0.1
       max_n = 50 - step
       ranges = (0..max_n).step(0.1).map { |n| [n.round(2), (n + step).round(2)] }
+      tip_block_number = current_tip_block.number
+      interval = 49999
+      start_block_number = [0, tip_block_number - interval].max
 
       ranges.map do |range|
         millisecond_start = range[0] * 1000
         millisecond_end = range[1] * 1000
-        tip_block_number = current_tip_block.number
-        interval = 49999
-        start_block_number = [0, tip_block_number - interval].max
         block_count = Block.where("number >= ? and number <= ?", start_block_number, tip_block_number).where("block_time > ? and block_time <= ?", millisecond_start, millisecond_end).count
         [range[1], block_count]
       end

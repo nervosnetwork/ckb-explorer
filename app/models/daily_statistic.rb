@@ -41,4 +41,7 @@ end
 #  circulation_ratio            :decimal(, )
 #  total_supply                 :decimal(30, )
 #  circulating_supply           :decimal(, )
+#  block_time_distribution      :jsonb
+#  epoch_time_distribution      :jsonb
+#  epoch_length_distribution    :jsonb
 #
