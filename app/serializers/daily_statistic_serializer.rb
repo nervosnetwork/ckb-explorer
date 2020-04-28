@@ -78,6 +78,6 @@ class DailyStatisticSerializer
   attribute :circulation_ratio, if: Proc.new { |_record, params|
     params && params[:indicator].include?("circulation_ratio")
   } do |object|
-    object.circulation_ratio.to_s
+    object.circulation_ratio.truncate(4).to_s
   end
 end
