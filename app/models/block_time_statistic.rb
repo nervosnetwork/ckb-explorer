@@ -1,7 +1,7 @@
 class BlockTimeStatistic < ApplicationRecord
   def generate_monthly
     started_at = 30.days.ago.beginning_of_day
-    ended_at = 30.days.ago.end_of_day
+    ended_at = Time.current.yesterday.end_of_day
 
     generate(started_at, ended_at)
   end
@@ -16,14 +16,19 @@ class BlockTimeStatistic < ApplicationRecord
   private
 
   def generate(started_at, ended_at)
-    values =
-      (started_at..ended_at).map do |datetime|
-        BlockTimeStatistic.connection.select_all(avg_block_time_sql).to_a.map do |item|
-          item["created_at"] = Time.current
-          item["updated_at"] = Time.current
-          item
-        end
+    current_time = started_at
+    values = []
+    while current_time <= ended_at
+      BlockTimeStatistic.connection.select_all(avg_block_time_sql(CkbUtils.time_in_milliseconds(current_time.beginning_of_day), CkbUtils.time_in_milliseconds(current_time.end_of_day))).to_a.each do |item|
+        item["created_at"] = Time.current
+        item["updated_at"] = Time.current
+
+        values << item
       end
+
+      current_time = current_time + 1.days
+    end
+
 
     BlockTimeStatistic.upsert_all(values, unique_by: :stat_timestamp)
   end
