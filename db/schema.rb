@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_27_101449) do
+ActiveRecord::Schema.define(version: 2020_04_30_110951) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -53,6 +53,14 @@ ActiveRecord::Schema.define(version: 2020_04_27_101449) do
     t.datetime "updated_at", precision: 6, null: false
     t.decimal "epoch_number", precision: 30
     t.index ["block_number"], name: "index_block_statistics_on_block_number", unique: true
+  end
+
+  create_table "block_time_statistics", force: :cascade do |t|
+    t.decimal "stat_timestamp", precision: 30
+    t.decimal "avg_block_time_per_hour"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["stat_timestamp"], name: "index_block_time_statistics_on_stat_timestamp", unique: true
   end
 
   create_table "blocks", force: :cascade do |t|
@@ -195,6 +203,9 @@ ActiveRecord::Schema.define(version: 2020_04_27_101449) do
     t.decimal "circulation_ratio"
     t.decimal "total_supply", precision: 30
     t.decimal "circulating_supply"
+    t.jsonb "block_time_distribution"
+    t.jsonb "epoch_time_distribution"
+    t.jsonb "epoch_length_distribution"
   end
 
   create_table "dao_contracts", force: :cascade do |t|
@@ -232,11 +243,8 @@ ActiveRecord::Schema.define(version: 2020_04_27_101449) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.string "hash_rate"
-    t.jsonb "block_time_distribution"
     t.decimal "epoch_time", precision: 13
-    t.jsonb "epoch_time_distribution"
     t.integer "epoch_length"
-    t.json "epoch_length_distribution"
     t.index ["epoch_number"], name: "index_epoch_statistics_on_epoch_number", unique: true
   end
 
