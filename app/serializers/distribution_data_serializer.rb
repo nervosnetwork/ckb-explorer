@@ -24,4 +24,10 @@ class DistributionDataSerializer
   } do |object|
     object.epoch_length_distribution.map { |distribution| distribution.map(&:to_s) }
   end
+
+  attribute :average_block_time_distribution, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("average_block_time_distribution")
+  } do |object|
+    object.average_block_time_distribution.map { |distribution| distribution.map(&:to_s) }
+  end
 end

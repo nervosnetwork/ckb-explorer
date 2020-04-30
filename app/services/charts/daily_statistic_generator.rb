@@ -30,12 +30,30 @@ module Charts
                              address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity,
                              daily_dao_deposit: daily_dao_deposit, daily_dao_depositors_count: daily_dao_depositors_count, daily_dao_withdraw: daily_dao_withdraw,
                              total_supply: total_supply, circulation_ratio: circulation_ratio, block_time_distribution: block_time_distribution,
-                             epoch_time_distribution: epoch_time_distribution, epoch_length_distribution: epoch_length_distribution)
+                             epoch_time_distribution: epoch_time_distribution, epoch_length_distribution: epoch_length_distribution, average_block_time: average_block_time)
     end
 
     private
 
     attr_reader :datetime, :from_scratch
+
+    def average_block_time
+      Block.connection.select_all(avg_block_time_rolling_by_hour_sql).to_a.map do |item|
+        { timestamp: item.avg_block_time_per_hour.to_i, avg_block_time_daily: item["avg_bt1"], avg_block_time_weekly: item["avg_bt2"] }
+      end
+    end
+
+    def avg_block_time_rolling_by_hour_sql
+      <<-SQL
+        with avg_block_time_24_hours_rolling_by_hour as (
+          select stat_timestamp,
+          avg(avg_block_time_per_hour) over(order by stat_timestamp rows between 24 preceding and current row) as avg_bt,
+          avg(avg_block_time_per_hour) over(order by stat_timestamp rows between 7 * 24 preceding and current row) as avg_bt1
+          from block_time_statistics
+        )
+        select stat_timestamp, round(avg_bt, 2) avg_bt1, round(avg_bt1, 2) avg_bt2 from avg_block_time_24_hours_rolling_by_hour limit 30
+      SQL
+    end
 
     def epoch_length_distribution
       max_n = 1700
