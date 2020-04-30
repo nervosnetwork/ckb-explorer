@@ -1,5 +1,5 @@
 class DistributionData
-  VALID_INDICATORS = %w(address_balance_distribution block_time_distribution epoch_time_distribution epoch_length_distribution average_block_time_distribution).freeze
+  VALID_INDICATORS = %w(address_balance_distribution block_time_distribution epoch_time_distribution epoch_length_distribution average_block_time).freeze
 
   def id
     Time.current.to_i
@@ -21,7 +21,7 @@ class DistributionData
     DailyStatistic.order(created_at_unixtimestamp: :desc).first&.epoch_length_distribution || []
   end
 
-  def average_block_time_distribution
-    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.average_block_time_distribution || []
+  def average_block_time
+    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.average_block_time || []
   end
 end

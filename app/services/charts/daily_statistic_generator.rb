@@ -39,7 +39,7 @@ module Charts
 
     def average_block_time
       Block.connection.select_all(avg_block_time_rolling_by_hour_sql).to_a.map do |item|
-        { timestamp: item.avg_block_time_per_hour.to_i, avg_block_time_daily: item["avg_bt1"], avg_block_time_weekly: item["avg_bt2"] }
+        { timestamp: item["stat_timestamp"].to_i, avg_block_time_daily: item["avg_bt1"], avg_block_time_weekly: item["avg_bt2"] }
       end
     end
 
@@ -51,7 +51,7 @@ module Charts
           avg(avg_block_time_per_hour) over(order by stat_timestamp rows between 7 * 24 preceding and current row) as avg_bt1
           from block_time_statistics
         )
-        select stat_timestamp, round(avg_bt, 2) avg_bt1, round(avg_bt1, 2) avg_bt2 from avg_block_time_24_hours_rolling_by_hour limit 30
+        select stat_timestamp, round(avg_bt, 2) avg_bt1, round(avg_bt1, 2) avg_bt2 from avg_block_time_24_hours_rolling_by_hour where stat_timestamp >= #{35.days.ago.to_i} order by stat_timestamp limit 720
       SQL
     end
 
