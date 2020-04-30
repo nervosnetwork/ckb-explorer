@@ -171,11 +171,11 @@ module Charts
     end
 
     def started_at
-      @started_at ||= time_in_milliseconds(to_be_counted_date.beginning_of_day)
+      @started_at ||= CkbUtils.time_in_milliseconds(to_be_counted_date.beginning_of_day)
     end
 
     def ended_at
-      @ended_at ||= time_in_milliseconds(to_be_counted_date.end_of_day) - 1
+      @ended_at ||= CkbUtils.time_in_milliseconds(to_be_counted_date.end_of_day) - 1
     end
 
     def unclaimed_compensation
@@ -248,10 +248,6 @@ module Charts
     def treasury_amount
       parse_dao = CkbUtils.parse_dao(current_tip_block.dao)
       parse_dao.s_i - unmade_dao_interests
-    end
-
-    def time_in_milliseconds(time)
-      (time.to_f * 1000).floor
     end
 
     def yesterday_daily_statistic
