@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_30_124336) do
+ActiveRecord::Schema.define(version: 2020_05_06_043401) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -207,6 +207,8 @@ ActiveRecord::Schema.define(version: 2020_04_30_124336) do
     t.jsonb "epoch_time_distribution"
     t.jsonb "epoch_length_distribution"
     t.jsonb "average_block_time"
+    t.jsonb "nodes_distribution"
+    t.integer "nodes_count"
   end
 
   create_table "dao_contracts", force: :cascade do |t|
