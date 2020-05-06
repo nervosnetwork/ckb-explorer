@@ -80,4 +80,10 @@ class DailyStatisticSerializer
   } do |object|
     object.circulation_ratio.truncate(4).to_s
   end
+
+  attribute :nodes_count, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("nodes_count")
+  } do |object|
+    object.nodes_count.to_s
+  end
 end

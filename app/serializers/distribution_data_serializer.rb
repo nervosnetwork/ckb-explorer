@@ -30,4 +30,10 @@ class DistributionDataSerializer
   } do |object|
     object.average_block_time
   end
+
+  attribute :nodes_distribution, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("nodes_distribution")
+  } do |object|
+    object.nodes_distribution
+  end
 end
