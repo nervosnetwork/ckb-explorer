@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_06_043401) do
+ActiveRecord::Schema.define(version: 2020_05_09_144539) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -41,6 +41,15 @@ ActiveRecord::Schema.define(version: 2020_05_06_043401) do
     t.decimal "average_deposit_time"
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
+  end
+
+  create_table "block_propagation_delays", force: :cascade do |t|
+    t.string "block_hash"
+    t.integer "created_at_unixtimestamp"
+    t.jsonb "durations"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["created_at_unixtimestamp"], name: "index_block_propagation_delays_on_created_at_unixtimestamp"
   end
 
   create_table "block_statistics", force: :cascade do |t|
