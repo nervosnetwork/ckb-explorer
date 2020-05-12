@@ -36,4 +36,10 @@ class DistributionDataSerializer
   } do |object|
     object.nodes_distribution
   end
+
+  attribute :block_propagation_delay_history, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("block_propagation_delay_history")
+  } do |object|
+    object.block_propagation_delay_history
+  end
 end
