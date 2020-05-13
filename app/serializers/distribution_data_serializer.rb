@@ -42,4 +42,10 @@ class DistributionDataSerializer
   } do |object|
     object.block_propagation_delay_history
   end
+
+  attribute :transaction_propagation_delay_history, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("transaction_propagation_delay_history")
+  } do |object|
+    object.transaction_propagation_delay_history
+  end
 end
