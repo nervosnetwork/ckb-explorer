@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_09_144539) do
+ActiveRecord::Schema.define(version: 2020_05_13_032346) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -331,6 +331,15 @@ ActiveRecord::Schema.define(version: 2020_05_09_144539) do
     t.datetime "updated_at", precision: 6, null: false
     t.index ["block_id"], name: "index_mining_infos_on_block_id"
     t.index ["block_number"], name: "index_mining_infos_on_block_number"
+  end
+
+  create_table "transaction_propagation_delays", force: :cascade do |t|
+    t.string "tx_hash"
+    t.integer "created_at_unixtimestamp"
+    t.jsonb "durations"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["created_at_unixtimestamp"], name: "index_tx_propagation_timestamp"
   end
 
   create_table "type_scripts", force: :cascade do |t|
