@@ -141,10 +141,15 @@ end
 #  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
+#  block_time                 :decimal(13, )
+#  block_size                 :integer
 #
 # Indexes
 #
 #  index_blocks_on_block_hash  (block_hash) UNIQUE
+#  index_blocks_on_block_size  (block_size)
+#  index_blocks_on_block_time  (block_time)
+#  index_blocks_on_epoch       (epoch)
 #  index_blocks_on_number      (number)
 #  index_blocks_on_timestamp   (timestamp)
 #

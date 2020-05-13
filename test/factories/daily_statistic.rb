@@ -4,5 +4,6 @@ FactoryBot.define do
     transactions_count { Faker::Number.number(4) }
     addresses_count { Faker::Number.number(4) }
     total_dao_deposit { Faker::Number.number(20) }
+    occupied_capacity { Faker::Number.number(4) }
   end
 end

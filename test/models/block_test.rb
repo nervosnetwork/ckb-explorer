@@ -201,6 +201,7 @@ class BlockTest < ActiveSupport::TestCase
     )
     VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(HAS_UNCLES_BLOCK_NUMBER)
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       CkbSync::NodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       uncle_block_hashes = block.uncle_block_hashes
@@ -227,6 +228,7 @@ class BlockTest < ActiveSupport::TestCase
     )
     VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(HAS_UNCLES_BLOCK_NUMBER)
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       node_block.instance_variable_set(:@proposals, ["0x98a4e0c18c"])
       CkbSync::NodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)

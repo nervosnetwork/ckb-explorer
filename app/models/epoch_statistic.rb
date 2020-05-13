@@ -13,6 +13,8 @@ end
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
 #  hash_rate    :string
+#  epoch_time   :decimal(13, )
+#  epoch_length :integer
 #
 # Indexes
 #
