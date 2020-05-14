@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_13_030841) do
+ActiveRecord::Schema.define(version: 2020_05_13_032346) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -43,6 +43,15 @@ ActiveRecord::Schema.define(version: 2020_04_13_030841) do
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
   end
 
+  create_table "block_propagation_delays", force: :cascade do |t|
+    t.string "block_hash"
+    t.integer "created_at_unixtimestamp"
+    t.jsonb "durations"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["created_at_unixtimestamp"], name: "index_block_propagation_delays_on_created_at_unixtimestamp"
+  end
+
   create_table "block_statistics", force: :cascade do |t|
     t.string "difficulty"
     t.string "hash_rate"
@@ -53,6 +62,14 @@ ActiveRecord::Schema.define(version: 2020_04_13_030841) do
     t.datetime "updated_at", precision: 6, null: false
     t.decimal "epoch_number", precision: 30
     t.index ["block_number"], name: "index_block_statistics_on_block_number", unique: true
+  end
+
+  create_table "block_time_statistics", force: :cascade do |t|
+    t.decimal "stat_timestamp", precision: 30
+    t.decimal "avg_block_time_per_hour"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["stat_timestamp"], name: "index_block_time_statistics_on_stat_timestamp", unique: true
   end
 
   create_table "blocks", force: :cascade do |t|
@@ -91,7 +108,12 @@ ActiveRecord::Schema.define(version: 2020_04_13_030841) do
     t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
     t.integer "live_cell_changes"
+    t.decimal "block_time", precision: 13
+    t.integer "block_size"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
+    t.index ["block_size"], name: "index_blocks_on_block_size"
+    t.index ["block_time"], name: "index_blocks_on_block_time"
+    t.index ["epoch"], name: "index_blocks_on_epoch"
     t.index ["number"], name: "index_blocks_on_number"
     t.index ["timestamp"], name: "index_blocks_on_timestamp"
   end
@@ -182,6 +204,20 @@ ActiveRecord::Schema.define(version: 2020_04_13_030841) do
     t.string "uncle_rate", default: "0"
     t.string "total_depositors_count", default: "0"
     t.jsonb "address_balance_distribution"
+    t.decimal "total_tx_fee", precision: 30
+    t.decimal "occupied_capacity", precision: 30
+    t.decimal "daily_dao_deposit", precision: 30
+    t.integer "daily_dao_depositors_count"
+    t.decimal "daily_dao_withdraw", precision: 30
+    t.decimal "circulation_ratio"
+    t.decimal "total_supply", precision: 30
+    t.decimal "circulating_supply"
+    t.jsonb "block_time_distribution"
+    t.jsonb "epoch_time_distribution"
+    t.jsonb "epoch_length_distribution"
+    t.jsonb "average_block_time"
+    t.jsonb "nodes_distribution"
+    t.integer "nodes_count"
   end
 
   create_table "dao_contracts", force: :cascade do |t|
@@ -219,6 +255,8 @@ ActiveRecord::Schema.define(version: 2020_04_13_030841) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.string "hash_rate"
+    t.decimal "epoch_time", precision: 13
+    t.integer "epoch_length"
     t.index ["epoch_number"], name: "index_epoch_statistics_on_epoch_number", unique: true
   end
 
@@ -258,6 +296,8 @@ ActiveRecord::Schema.define(version: 2020_04_13_030841) do
     t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
     t.integer "live_cell_changes"
+    t.decimal "block_time", precision: 13
+    t.integer "block_size"
   end
 
   create_table "forked_events", force: :cascade do |t|
@@ -291,6 +331,15 @@ ActiveRecord::Schema.define(version: 2020_04_13_030841) do
     t.datetime "updated_at", precision: 6, null: false
     t.index ["block_id"], name: "index_mining_infos_on_block_id"
     t.index ["block_number"], name: "index_mining_infos_on_block_number"
+  end
+
+  create_table "transaction_propagation_delays", force: :cascade do |t|
+    t.string "tx_hash"
+    t.integer "created_at_unixtimestamp"
+    t.jsonb "durations"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["created_at_unixtimestamp"], name: "index_tx_propagation_timestamp"
   end
 
   create_table "type_scripts", force: :cascade do |t|

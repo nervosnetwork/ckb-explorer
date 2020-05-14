@@ -28,11 +28,7 @@ class DaoContractUnclaimedCompensationGenerator
   end
 
   def ended_at
-    @ended_at ||= time_in_milliseconds(Time.current)
-  end
-
-  def time_in_milliseconds(time)
-    (time.to_f * 1000).floor
+    @ended_at ||= CkbUtils.time_in_milliseconds(Time.current)
   end
 
   def current_tip_block

@@ -38,7 +38,7 @@ gem "config"
 gem "daemons", "~> 1.2", ">= 1.2.6"
 
 # CKB SDK
-gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", branch: "rc/v0.25.0"
+gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", branch: "develop"
 
 # Redis
 gem "hiredis", "~> 0.6.1"
@@ -68,7 +68,6 @@ gem "ruby-progressbar", require: false
 gem "mina", require: false
 gem "mina-multistage", require: false
 gem "newrelic_rpm"
-gem "turnout"
 gem "rack-attack"
 
 group :development, :test do
@@ -97,8 +96,8 @@ group :development do
   gem "spring"
   gem "spring-watcher-listen", "~> 2.0.0"
   gem "rubocop", require: false
-  gem "rubocop-rails"
-  gem "rubocop-performance"
+  gem "rubocop-rails", require: false
+  gem "rubocop-performance", require: false
   gem "awesome_print"
   gem "annotate"
 end

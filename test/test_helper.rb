@@ -55,7 +55,7 @@ def prepare_node_data(node_tip_block_number = 30)
     )
   )
   local_tip_block_number = 0
-  ((local_tip_block_number + 1)..node_tip_block_number).each do |number|
+  ((local_tip_block_number)..node_tip_block_number).each do |number|
     VCR.use_cassette("genesis_block") do
       VCR.use_cassette("blocks/#{number}", record: :new_episodes) do
         node_block = CkbSync::Api.instance.get_block_by_number(number)
@@ -269,6 +269,7 @@ module ActiveSupport
 
     def after_setup
       prepare_api_wrapper
+      CKB::Types::Block.any_instance.stubs(:serialized_size_without_uncle_proposals).returns(400)
     end
 
     def after_teardown

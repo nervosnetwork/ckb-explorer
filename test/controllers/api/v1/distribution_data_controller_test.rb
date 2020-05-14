@@ -53,6 +53,15 @@ module Api
         assert_equal response_json, response.body
       end
 
+      test "should return block time distribution when indicator is block_time_distribution" do
+        valid_get api_v1_distribution_datum_url("block_time_distribution")
+        distribution_data = DistributionData.new
+
+        response_json = DistributionDataSerializer.new(distribution_data, params: { indicator: "block_time_distribution" }).serialized_json
+
+        assert_equal response_json, response.body
+      end
+
       test "should respond with error object when indicator name is invalid" do
         error_object = Api::V1::Exceptions::IndicatorNameInvalidError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
@@ -64,4 +73,3 @@ module Api
     end
   end
 end
-

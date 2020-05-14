@@ -14,9 +14,10 @@ module CkbSync
     end
 
     test "#process_block should create one block" do
-      assert_difference -> { Block.count }, 1 do
-        VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-          node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        assert_difference -> { Block.count }, 1 do
           node_data_processor.process_block(node_block)
         end
       end
@@ -33,6 +34,7 @@ module CkbSync
       )
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         local_block = node_data_processor.process_block(node_block)
 
         node_block = node_block.to_h.deep_stringify_keys
@@ -55,6 +57,7 @@ module CkbSync
     test "#process_block created block's proposals_count should equal with the node block's proposals size" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
 
         local_block = node_data_processor.process_block(node_block)
 
@@ -73,6 +76,7 @@ module CkbSync
       )
       VCR.use_cassette("blocks/11") do
         node_block = CkbSync::Api.instance.get_block_by_number(11)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         local_block = node_data_processor.process_block(node_block)
         expected_miner_hash = CkbUtils.miner_hash(node_block.transactions.first)
         expected_miner_address = Address.find_by(address_hash: expected_miner_hash)
@@ -93,6 +97,7 @@ module CkbSync
       )
       VCR.use_cassette("blocks/11") do
         node_block = CkbSync::Api.instance.get_block_by_number(11)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         expected_miner_lock_hash = CkbUtils.miner_lock_hash(node_block.transactions.first)
         block = node_data_processor.process_block(node_block)
 
@@ -103,6 +108,7 @@ module CkbSync
     test "#process_block generated block's total_cell_capacity should equal to the sum of transactions output capacity" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
 
         local_block = node_data_processor.process_block(node_block)
         expected_total_capacity = CkbUtils.total_cell_capacity(node_block.transactions)
@@ -114,6 +120,7 @@ module CkbSync
     test "#process_block generated block should has correct reward" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block.transactions.first
         local_block = node_data_processor.process_block(node_block)
 
@@ -124,6 +131,7 @@ module CkbSync
     test "#process_block generated block should has correct primary reward" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
 
         local_block = node_data_processor.process_block(node_block)
 
@@ -134,6 +142,7 @@ module CkbSync
     test "#process_block generated block should has correct secondary reward" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
 
         local_block = node_data_processor.process_block(node_block)
 
@@ -144,6 +153,7 @@ module CkbSync
     test "#process_block generated block should has correct cell consumed" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
 
         local_block = node_data_processor.process_block(node_block)
 
@@ -154,6 +164,7 @@ module CkbSync
     test "#process_block should create uncle_blocks" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block_uncle_blocks = node_block.uncles
 
         assert_difference -> { UncleBlock.count }, node_block_uncle_blocks.size do
@@ -165,6 +176,7 @@ module CkbSync
     test "#process_block created uncle_block's attribute value should equal with the node uncle_block's attribute value" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_uncle_blocks = node_block.uncles.map { |uncle| uncle.to_h.deep_stringify_keys }
         formatted_node_uncle_blocks = node_uncle_blocks.map { |uncle_block| format_node_block(uncle_block).sort }
 
@@ -186,6 +198,7 @@ module CkbSync
     test "#process_block created unlce_block's proposals_count should equal with the node uncle_block's proposals size" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_uncle_blocks = node_block.uncles
         node_uncle_blocks_count = node_uncle_blocks.reduce(0) { |memo, uncle_block| memo + uncle_block.proposals.size }
 
@@ -200,6 +213,7 @@ module CkbSync
     test "#process_block should create ckb_transactions" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block_transactions = node_block.transactions
 
         assert_difference -> { CkbTransaction.count }, node_block_transactions.count do
@@ -211,6 +225,7 @@ module CkbSync
     test "#process_block created block's ckb_transactions_count should equal to transactions count" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
 
         local_block = node_data_processor.process_block(node_block)
 
@@ -221,6 +236,7 @@ module CkbSync
     test "#process_block created ckb_transaction's attribute value should equal with the node commit_transaction's attribute value" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block_transactions = node_block.transactions
         formatted_node_block_transactions = node_block_transactions.map { |commit_transaction| format_node_block_commit_transaction(commit_transaction).sort }
 
@@ -241,6 +257,7 @@ module CkbSync
     test "#process_block created ckb_transaction's live cell changes should equal to outputs count minus inputs count" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         block = create(:block, :with_block_hash)
         ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
         ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -257,6 +274,7 @@ module CkbSync
     test "#process_block created ckb_transaction's capacity_involved should equal to outputs count minus inputs count" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         block = create(:block, :with_block_hash)
         ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
         ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -272,6 +290,7 @@ module CkbSync
     test "#process_block created block's live cell changes should equal to sum of ckb_transaction's live cell changes" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         block = create(:block, :with_block_hash)
         ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
         ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -286,6 +305,7 @@ module CkbSync
     test "#process_block should create cell_inputs" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block_transactions = node_block.transactions
         node_cell_inputs_count = node_block_transactions.reduce(0) { |memo, commit_transaction| memo + commit_transaction.inputs.size }
 
@@ -298,6 +318,7 @@ module CkbSync
     test ".save_block created cell_inputs's attribute value should equal with the node cell_inputs's attribute value" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_transactions = node_block.transactions.map(&:to_h).map(&:deep_stringify_keys)
         node_block_cell_inputs = node_transactions.map { |commit_transaction|
           commit_transaction["inputs"].each { |input|
@@ -323,6 +344,7 @@ module CkbSync
     test "#process_block should create cell_outputs" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block_transactions = node_block.transactions
         node_cell_outputs_count = node_block_transactions.reduce(0) { |memo, commit_transaction| memo + commit_transaction.outputs.size }
 
@@ -335,6 +357,7 @@ module CkbSync
     test "#process_block created cell_outputs's attribute value should equal with the node cell_outputs's attribute value" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block_transactions = node_block.transactions
         node_block_cell_outputs = node_block_transactions.map { |commit_transaction| commit_transaction.to_h.deep_stringify_keys["outputs"].map { |output| format_node_block_cell_output(output).sort } }.flatten
 
@@ -355,6 +378,7 @@ module CkbSync
     test "cell output's data should equal with transaction's outputs_data" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_transaction = node_block.transactions.first
         node_transaction.outputs_data = %w(0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063 0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815062)
         local_block = node_data_processor.process_block(node_block)
@@ -367,6 +391,7 @@ module CkbSync
     test "#process_block created cell_outputs's cell_type should be equal to normal when cell is not dao cell" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         local_block = node_data_processor.process_block(node_block)
 
         assert_equal ["normal"], local_block.cell_outputs.pluck(:cell_type).uniq
@@ -376,6 +401,7 @@ module CkbSync
     test "#process_block created cell_outputs's cell_type should be equal to nervos_dao_deposit_cell when cell is dao cell, output data is 8 byte 0 and use dao code hash" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_CODE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         node_block.transactions.first.outputs_data[0] = CKB::Utils.bin_to_hex("\x00" * 8)
@@ -388,6 +414,7 @@ module CkbSync
     test "#process_block created cell_outputs's cell_type should be equal to nervos_dao_deposit when cell is dao cell, output data is 8 byte 0 and use dao type hash" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         node_block.transactions.first.outputs_data[0] = CKB::Utils.bin_to_hex("\x00" * 8)
@@ -400,6 +427,7 @@ module CkbSync
     test "#process_block created cell_outputs's cell_type should be equal to nervos_dao_withdrawing when cell is dao cell, output data is 8 byte non-zero number and use dao type hash" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         node_block.transactions.first.outputs_data[0] = CKB::Utils.bin_to_hex("\x02" * 8)
@@ -412,6 +440,7 @@ module CkbSync
     test "#process_block should create addresses for cell_output" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         locks = node_block.transactions.map(&:outputs).flatten.map(&:lock)
         local_block = node_data_processor.process_block(node_block)
         expected_lock_address = locks.map { |lock| Address.find_or_create_address(lock, node_block.header.timestamp) }
@@ -423,6 +452,7 @@ module CkbSync
     test "#process_block should create addresses for ckb transaction" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         locks = node_block.transactions.map(&:outputs).flatten.map(&:lock)
         local_block = node_data_processor.process_block(node_block)
         expected_lock_address = locks.map { |lock| Address.find_or_create_address(lock, node_block.header.timestamp) }
@@ -434,6 +464,7 @@ module CkbSync
     test "#process_block should create lock_scripts for output" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         expected_lock_scripts = node_block.transactions.map(&:outputs).flatten.map(&:lock).map(&:to_h)
         local_block = node_data_processor.process_block(node_block)
         actual_lock_scripts = local_block.cell_outputs.map { |cell_output| CKB::Types::Script.new(code_hash: cell_output.lock_script.code_hash, args: cell_output.lock_script.args, hash_type: "type") }.map(&:to_h)
@@ -445,6 +476,7 @@ module CkbSync
     test "#process_block created lock_script's attribute value should equal with the node lock_script's attribute value" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block_transactions = node_block.transactions
         node_block_lock_scripts = node_block_transactions.map { |commit_transaction| commit_transaction.to_h.deep_stringify_keys["outputs"].map { |output| output["lock"] }.sort }.flatten
 
@@ -459,6 +491,7 @@ module CkbSync
     test "#process_block should create type_scripts" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block_transactions = node_block.transactions
         node_cell_outputs = node_block_transactions.map(&:outputs).flatten
         node_cell_outputs_with_type_script = node_cell_outputs.select { |cell_output| cell_output.type.present? }
@@ -472,6 +505,7 @@ module CkbSync
     test "#process_block created type_script's attribute value should equal with the node type_script's attribute value" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         fake_node_block_with_type_script(node_block)
         node_block_transactions = node_block.transactions
         node_block_type_scripts = node_block_transactions.map { |commit_transaction| commit_transaction.to_h.deep_stringify_keys["outputs"].map { |output| output["type"] }.sort }.flatten
@@ -486,6 +520,7 @@ module CkbSync
 
     test "#process_block should update block's total transaction fee" do
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         block = create(:block, :with_block_hash)
         ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -500,6 +535,7 @@ module CkbSync
 
     test "#process_block should update block's contained addresses's transactions count even if fee is a negative number" do
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         block = create(:block, :with_block_hash)
         ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -516,6 +552,7 @@ module CkbSync
     test "#process_block should update block's contained addresses's info even if raise RPCError " do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).raises(CKB::RPCError)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
 
@@ -528,6 +565,7 @@ module CkbSync
     test "#process_block should create dao_event which event_type is deposit_to_dao when output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
 
@@ -540,6 +578,7 @@ module CkbSync
     test "#process_block should create dao_event which event_type is new_dao_depositor when output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
 
@@ -552,6 +591,7 @@ module CkbSync
     test "#process_block should update address deposits when dao_event is deposit_to_dao and output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_deposit_transaction(node_block)
         output = tx.outputs.first
@@ -569,6 +609,7 @@ module CkbSync
     test "#process_block should update dao contract total deposits when dao_event is deposit_to_dao and output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
 
@@ -584,6 +625,7 @@ module CkbSync
     test "#process_block should update dao contract deposit transactions count when dao_event is deposit_to_dao and output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
 
@@ -599,6 +641,7 @@ module CkbSync
     test "#process_block should update dao contract depositors count when dao_event is new_dao_depositor and output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
@@ -616,6 +659,7 @@ module CkbSync
     test "#process_block should update dao contract total depositors count when dao_event is new_dao_depositor and output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
@@ -633,6 +677,7 @@ module CkbSync
     test "#process_block should not update dao contract total depositors count when depositors is already has been recorded" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       address = create(:address)
       block = create(:block, :with_block_hash)
       ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -654,6 +699,7 @@ module CkbSync
     test "#process_block should not update dao contract depositors count when depositors is already has been recorded" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       address = create(:address)
       block = create(:block, :with_block_hash)
       ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -675,6 +721,7 @@ module CkbSync
     test "#process_block should create dao_event which event_type is withdraw_from_dao when previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_withdraw_transaction(node_block)
 
@@ -691,6 +738,7 @@ module CkbSync
     test "#process_block should create dao_event which event_type is issue interest when previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_withdraw_transaction(node_block)
 
@@ -706,6 +754,7 @@ module CkbSync
     test "#process_block should create dao_event which event_type is take away all deposit when previous output is a dao cell and address interest change to zero" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         output = tx.cell_outputs.first
@@ -724,6 +773,7 @@ module CkbSync
     test "#process_block should increase dao contract withdraw transactions count when previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_withdraw_transaction(node_block)
 
@@ -740,6 +790,7 @@ module CkbSync
     test "#process_block should decrease dao contract total deposit when previous output is a withdrawing cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         withdraw_amount = tx.cell_outputs.nervos_dao_withdrawing.first.capacity
@@ -757,6 +808,7 @@ module CkbSync
     test "#process_block should increase dao contract interest granted when previous output is a withdrawing cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         withdraw_amount = tx.cell_outputs.nervos_dao_withdrawing.first.capacity
@@ -773,6 +825,7 @@ module CkbSync
     test "#process_block should decrease dao contract depositors count when previous output is a dao cell and address interest change to zero" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         output = tx.cell_outputs.first
@@ -792,6 +845,7 @@ module CkbSync
     test "#process_block should decrease address deposit when previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         output = tx.cell_outputs.first
@@ -810,6 +864,7 @@ module CkbSync
     test "#process_block should increase address interest when previous output is a withdrawing cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         nervos_dao_withdrawing_cell = tx.cell_outputs.nervos_dao_withdrawing.first
@@ -871,6 +926,7 @@ module CkbSync
     test "should revert address dao deposit when block is invalid and there is dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       target_address = nil
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_deposit_transaction(node_block)
@@ -898,6 +954,7 @@ module CkbSync
     test "should revert dao contract total deposit when block is invalid and there is dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
         node_data_processor.process_block(node_block)
@@ -919,6 +976,7 @@ module CkbSync
     test "should revert dao contract deposit transactions count when block is invalid and there is dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
         node_data_processor.process_block(node_block)
@@ -940,6 +998,7 @@ module CkbSync
     test "should revert dao contract depositors count when block is invalid and there is dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
         node_data_processor.process_block(node_block)
@@ -959,6 +1018,7 @@ module CkbSync
 
     test "should create forked event when block is invalid " do
       node_block = fake_node_block
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
         node_data_processor.process_block(node_block)
@@ -976,6 +1036,7 @@ module CkbSync
     test "should revert dao contract total depositors count when block is invalid and there is dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
         node_data_processor.process_block(node_block)
@@ -997,6 +1058,7 @@ module CkbSync
     test "should decrease dao contract withdraw_transactions_count when block is invalid and previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         output = tx.cell_outputs.first
@@ -1022,6 +1084,7 @@ module CkbSync
     test "should increase dao contract total_deposit when block is invalid and previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         output = tx.cell_outputs.first
@@ -1047,6 +1110,7 @@ module CkbSync
     test "should increase address dao_deposit when block is invalid and previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       target_address = nil
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
@@ -1073,6 +1137,7 @@ module CkbSync
     test "should decrease dao contract interest_granted when block is invalid and previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         output = tx.cell_outputs.first
@@ -1098,6 +1163,7 @@ module CkbSync
     test "should decrease address interest when block is invalid and previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       target_address = nil
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
@@ -1124,6 +1190,7 @@ module CkbSync
     test "should increase dao contract depositors_count when block is invalid and previous output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         output = tx.cell_outputs.first
@@ -1148,6 +1215,7 @@ module CkbSync
     test "#process_block should update cell status" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         block = create(:block, :with_block_hash)
         ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
         ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -1178,6 +1246,7 @@ module CkbSync
           assert_not_nil Rails.cache.realize("normal_tx_display_outputs_previews_false_#{tx.id}")
         end
 
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         local_block = node_data_processor.process_block(node_block)
         assert_empty local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil)
         cell_outputs.each do |cell_output|
@@ -1416,8 +1485,9 @@ module CkbSync
         )
       )
       VCR.use_cassette("blocks/12") do
+        node_block = CkbSync::Api.instance.get_block_by_number(12)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         assert_difference "Block.count", 1 do
-          node_block = CkbSync::Api.instance.get_block_by_number(12)
           node_data_processor.process_block(node_block)
           block = Block.last
           cellbase = Cellbase.new(block)
@@ -1440,6 +1510,7 @@ module CkbSync
           )
         )
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         local_block = node_data_processor.process_block(node_block)
 
         local_ckb_transactions = local_block.ckb_transactions
@@ -1726,6 +1797,7 @@ module CkbSync
     test "#process_block created address's block_timestamp should be the same as block's timestamp" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         block = node_data_processor.process_block(node_block)
         address_block_timestamp = block.contained_addresses.pluck(:block_timestamp).uniq
 
@@ -1736,6 +1808,7 @@ module CkbSync
     test "#process_block created cell_output's block_timestamp should be the same as block's timestamp" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         block = node_data_processor.process_block(node_block)
         cell_outputs_block_timestamp = block.cell_outputs.pluck(:block_timestamp).uniq
 
@@ -1746,6 +1819,7 @@ module CkbSync
     test "#process_block created cell_outputs's cell_type should be equal to udt when it is a udt cell" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
@@ -1759,6 +1833,7 @@ module CkbSync
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
@@ -1775,6 +1850,7 @@ module CkbSync
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
@@ -1792,6 +1868,7 @@ module CkbSync
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
@@ -1811,6 +1888,7 @@ module CkbSync
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         new_node_output = node_output.dup
         node_block.transactions.first.outputs << new_node_output
@@ -1838,6 +1916,7 @@ module CkbSync
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         new_node_output = node_output.dup
         node_block.transactions.first.outputs << new_node_output
@@ -1864,6 +1943,7 @@ module CkbSync
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         new_node_output = node_output.dup
         node_block.transactions.first.outputs << new_node_output
@@ -1892,6 +1972,7 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(22)
       VCR.use_cassette("blocks/21") do
         node_block = CkbSync::Api.instance.get_block_by_number(21)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
 
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
@@ -1916,6 +1997,7 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(22)
       VCR.use_cassette("blocks/21") do
         node_block = CkbSync::Api.instance.get_block_by_number(21)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
 
         node_output = node_block.transactions.first.outputs.first
         new_node_output = node_output.dup
@@ -1958,6 +2040,7 @@ module CkbSync
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
         input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: previous_cell_output.tx_hash, index: 0))
         output = CKB::Types::Output.new(capacity: 150*10**8, lock: udt_lock_script, type: udt_type_script)
         tx = CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", inputs: [input], outputs: [output], outputs_data: ["0x000050ad321ea12e0000000000000000"])
