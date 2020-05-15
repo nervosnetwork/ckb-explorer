@@ -356,14 +356,14 @@ module Charts
 
     def yesterday_daily_statistic
       @yesterday_daily_statistic ||=
-          begin
-            yesterday_statistic = ::DailyStatistic.find_by(created_at_unixtimestamp: to_be_counted_date.yesterday.beginning_of_day.to_i)
-            if to_be_counted_date.beginning_of_day.to_i == Time.at(GENESIS_TIMESTAMP / 1000).in_time_zone.beginning_of_day.to_i || aggron_first_day?
-              OpenStruct.new(addresses_count: 0, total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0, total_depositors_count: 0, live_cells_count: 0, dead_cells_count: 0, occupied_capacity: 0)
-            else
-              yesterday_statistic
-            end
+        begin
+          yesterday_statistic = ::DailyStatistic.find_by(created_at_unixtimestamp: to_be_counted_date.yesterday.beginning_of_day.to_i)
+          if to_be_counted_date.beginning_of_day.to_i == Time.at(GENESIS_TIMESTAMP / 1000).in_time_zone.beginning_of_day.to_i || aggron_first_day?
+            OpenStruct.new(addresses_count: 0, total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0, total_depositors_count: 0, live_cells_count: 0, dead_cells_count: 0, occupied_capacity: 0)
+          else
+            yesterday_statistic
           end
+        end
     end
 
     def aggron_first_day?
