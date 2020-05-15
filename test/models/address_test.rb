@@ -18,6 +18,7 @@ class AddressTest < ActiveSupport::TestCase
     )
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       tx = node_block.transactions.first
       output = tx.outputs.first
       output.lock.instance_variable_set(:@args, "0x")
@@ -41,6 +42,7 @@ class AddressTest < ActiveSupport::TestCase
     )
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       tx = node_block.transactions.first
       output = tx.outputs.first
       output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
@@ -67,6 +69,7 @@ class AddressTest < ActiveSupport::TestCase
     )
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
       tx = node_block.transactions.first
       output = tx.outputs.first
       output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")

@@ -44,4 +44,46 @@ class DailyStatisticSerializer
   attribute :address_balance_distribution, if: Proc.new { |_record, params|
     params && params[:indicator].include?("address_balance_distribution")
   }
+
+  attribute :total_tx_fee, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("total_tx_fee")
+  } do |object|
+    object.total_tx_fee.to_s
+  end
+
+  attribute :occupied_capacity, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("occupied_capacity")
+  } do |object|
+    object.occupied_capacity.to_s
+  end
+
+  attribute :daily_dao_deposit, if: Proc.new { |_record, params|
+    params && params[:indicator].split("-").any? { |item| item == "daily_dao_deposit" }
+  } do |object|
+    object.daily_dao_deposit.to_s
+  end
+
+  attribute :daily_dao_depositors_count, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("daily_dao_depositors_count")
+  } do |object|
+    object.daily_dao_depositors_count.to_s
+  end
+
+  attribute :daily_dao_withdraw, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("daily_dao_withdraw")
+  } do |object|
+    object.daily_dao_withdraw.to_s
+  end
+
+  attribute :circulation_ratio, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("circulation_ratio")
+  } do |object|
+    object.circulation_ratio.truncate(4).to_s
+  end
+
+  attribute :nodes_count, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("nodes_count")
+  } do |object|
+    object.nodes_count.to_s
+  end
 end
