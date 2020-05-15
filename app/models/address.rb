@@ -17,6 +17,20 @@ class Address < ApplicationRecord
 
   attr_accessor :query_address
 
+  def ckb_dao_transactions
+    ckb_transaction_ids = cell_outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id")
+    CkbTransaction.where(id: ckb_transaction_ids)
+  end
+
+  def ckb_udt_transactions(type_hash)
+    ckb_transaction_ids = cell_outputs.udt.where(type_hash: type_hash).pluck("generated_by_id") + cell_outputs.udt.where(type_hash: type_hash).pluck("consumed_by_id").compact
+    CkbTransaction.where(id: ckb_transaction_ids.uniq)
+  end
+
+  def lock_info
+    lock_script.lock_info
+  end
+
   def lock_script
     LockScript.where(address: self).first
   end
