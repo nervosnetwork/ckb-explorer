@@ -86,4 +86,8 @@ class DailyStatisticSerializer
   } do |object|
     object.nodes_count.to_s
   end
+
+  attribute :circulating_supply, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("circulating_supply")
+  }
 end
