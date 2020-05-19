@@ -29,7 +29,7 @@ module Charts
                              avg_difficulty: avg_difficulty, uncle_rate: uncle_rate, total_depositors_count: total_depositors_count,
                              address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity,
                              daily_dao_deposit: daily_dao_deposit, daily_dao_depositors_count: daily_dao_depositors_count, daily_dao_withdraw: daily_dao_withdraw,
-                             total_supply: total_supply, circulation_ratio: circulation_ratio, block_time_distribution: block_time_distribution,
+                             total_supply: total_supply, circulating_supply: circulating_supply, circulation_ratio: circulation_ratio, block_time_distribution: block_time_distribution,
                              epoch_time_distribution: epoch_time_distribution, epoch_length_distribution: epoch_length_distribution, average_block_time: average_block_time)
     end
 
