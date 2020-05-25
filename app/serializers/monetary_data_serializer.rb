@@ -6,6 +6,8 @@ class MonetaryDataSerializer
   } do |object, params|
     if rs = params[:indicator].match(/(\d+)/)
       object.nominal_apc(rs[1].to_i).map(&:to_s)
+    else
+      object.nominal_apc.map(&:to_s)
     end
   end
 

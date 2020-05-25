@@ -6,7 +6,7 @@ class DailyStatistic < ApplicationRecord
   ).freeze
 
   def burnt
-    treasury_amount + MarketData::BURN_QUOTA
+    treasury_amount.to_i + MarketData::BURN_QUOTA
   end
 end
 
