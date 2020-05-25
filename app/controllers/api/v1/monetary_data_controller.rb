@@ -10,7 +10,7 @@ module Api
       end
 
       def validate_query_params
-        validator = Validations::DistributionData.new(params)
+        validator = Validations::MonetaryData.new(params)
 
         if validator.invalid?
           errors = validator.error_object[:errors]
