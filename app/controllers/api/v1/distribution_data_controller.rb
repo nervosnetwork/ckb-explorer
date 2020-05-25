@@ -2,9 +2,10 @@ module Api
   module V1
     class DistributionDataController < ApplicationController
       before_action :validate_query_params, only: :show
+
       def show
         distribution_data = DistributionData.new
-        render json: DistributionDataSerializer.new(distribution_data, { params: { indicator: params[:id] } })
+        render json: DistributionDataSerializer.new(distribution_data, params: { indicator: params[:id] })
       end
 
       private
