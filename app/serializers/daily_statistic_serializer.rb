@@ -90,4 +90,12 @@ class DailyStatisticSerializer
   attribute :circulating_supply, if: Proc.new { |_record, params|
     params && params[:indicator].include?("circulating_supply")
   }
+
+  attribute :burnt, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("burnt")
+  }
+
+  attribute :locked_capacity, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("locked_capacity")
+  }
 end
