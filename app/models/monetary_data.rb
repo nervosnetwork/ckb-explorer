@@ -1,5 +1,5 @@
 class MonetaryData
-  VALID_INDICATORS = %w(nominal_apc inflation_rate).freeze
+  VALID_INDICATORS = %w(nominal_apc nominal_inflation_rate real_inflation_rate).freeze
   INITIAL_SUPPLY = 33.6
   SECONDARY_SUPPLY_PER_YEAR = 1.344
 

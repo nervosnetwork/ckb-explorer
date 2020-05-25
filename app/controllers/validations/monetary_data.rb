@@ -25,9 +25,16 @@ module Validations
     attr_accessor :query_key
 
     def query_key_format_must_be_correct
-      if query_key.blank? || !(query_key.split("-") - ::MonetaryData::VALID_INDICATORS).empty?
+      if query_key.blank? || !query_key_valid?
         errors.add(:query_key, "indicator name is invalid")
       end
+    end
+
+    def query_key_valid?
+      query_keys = query_key.split("-")
+      extra_keys = query_keys - ::MonetaryData::VALID_INDICATORS
+      binding.pry
+      extra_keys.blank? || extra_keys.size == 1 && extra_keys.first =~ /^nominal_apc(\d+)$/
     end
   end
 end
