@@ -30,12 +30,17 @@ module Charts
                              address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity,
                              daily_dao_deposit: daily_dao_deposit, daily_dao_depositors_count: daily_dao_depositors_count, daily_dao_withdraw: daily_dao_withdraw,
                              total_supply: total_supply, circulating_supply: circulating_supply, circulation_ratio: circulation_ratio, block_time_distribution: block_time_distribution,
-                             epoch_time_distribution: epoch_time_distribution, epoch_length_distribution: epoch_length_distribution, average_block_time: average_block_time)
+                             epoch_time_distribution: epoch_time_distribution, epoch_length_distribution: epoch_length_distribution, average_block_time: average_block_time, locked_capacity: locked_capacity)
     end
 
     private
 
     attr_reader :datetime, :from_scratch
+
+    def locked_capacity
+      market_data = MarketData.new(current_tip_block.number)
+      total_dao_deposit + market_data.ecosystem_locked + market_data.team_locked + market_data.private_sale_locked + market_data.founding_partners_locked + market_data.foundation_reserve_locked + market_data.bug_bounty_locked
+    end
 
     def average_block_time
       Block.connection.select_all(avg_block_time_rolling_by_hour_sql).to_a.map do |item|

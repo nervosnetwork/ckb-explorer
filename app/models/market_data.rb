@@ -22,32 +22,6 @@ class MarketData
     send(indicator)
   end
 
-  private
-
-  def parsed_dao
-    @parsed_dao ||=
-      begin
-        tip_block = tip_block_number.present? ? Block.find_by(number: tip_block_number) : Block.recent.first
-        CkbUtils.parse_dao(tip_block.dao)
-      end
-  end
-
-  def total_supply
-    if current_timestamp > first_released_timestamp_may
-      result = parsed_dao.c_i - BURN_QUOTA - yesterday_treasury_amount.to_i
-    else
-      result = parsed_dao.c_i - BURN_QUOTA
-    end
-
-    (result / 10**8).truncate(8)
-  end
-
-  def circulating_supply
-    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked - bug_bounty_locked
-
-    (result / 10**8).truncate(8)
-  end
-
   def ecosystem_locked
     if current_timestamp < first_released_timestamp_other
       ECOSYSTEM_QUOTA * 0.97
@@ -94,6 +68,32 @@ class MarketData
 
   def bug_bounty_locked
     Address.find_by(address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc")&.balance.to_i
+  end
+
+  private
+
+  def parsed_dao
+    @parsed_dao ||=
+      begin
+        tip_block = tip_block_number.present? ? Block.find_by(number: tip_block_number) : Block.recent.first
+        CkbUtils.parse_dao(tip_block.dao)
+      end
+  end
+
+  def total_supply
+    if current_timestamp > first_released_timestamp_may
+      result = parsed_dao.c_i - BURN_QUOTA - yesterday_treasury_amount.to_i
+    else
+      result = parsed_dao.c_i - BURN_QUOTA
+    end
+
+    (result / 10**8).truncate(8)
+  end
+
+  def circulating_supply
+    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked - bug_bounty_locked
+
+    (result / 10**8).truncate(8)
   end
 
   # 2020-05-01
