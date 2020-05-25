@@ -98,4 +98,16 @@ class DailyStatisticSerializer
   attribute :locked_capacity, if: Proc.new { |_record, params|
     params && params[:indicator].include?("locked_capacity")
   }
+
+  attribute :treasury_amount, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("treasury_amount")
+  }
+
+  attribute :mining_reward, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("mining_reward")
+  }
+
+  attribute :deposit_compensation, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("deposit_compensation")
+  }
 end
