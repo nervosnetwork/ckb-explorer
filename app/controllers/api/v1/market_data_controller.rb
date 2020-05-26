@@ -4,7 +4,7 @@ module Api
       skip_before_action :check_header_info
 
       def show
-        render json: MarketData.new(params[:id]).call
+        render json: MarketData.new(indicator: params[:id]).call
       end
     end
   end

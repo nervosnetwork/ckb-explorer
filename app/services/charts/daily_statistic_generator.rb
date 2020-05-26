@@ -38,7 +38,7 @@ module Charts
     attr_reader :datetime, :from_scratch
 
     def locked_capacity
-      market_data = MarketData.new(current_tip_block.number)
+      market_data = MarketData.new(tip_block_number: current_tip_block.number)
       total_dao_deposit + market_data.ecosystem_locked + market_data.team_locked + market_data.private_sale_locked + market_data.founding_partners_locked + market_data.foundation_reserve_locked + market_data.bug_bounty_locked
     end
 
@@ -109,11 +109,11 @@ module Charts
     end
 
     def circulating_supply
-      MarketData.new("circulating_supply", current_tip_block.number).call
+      MarketData.new(indicator: "circulating_supply", tip_block_number: current_tip_block.number, unit: "shannon").call
     end
 
     def circulation_ratio
-      total_dao_deposit / 10**8 / circulating_supply
+      total_dao_deposit / circulating_supply
     end
 
     def total_supply

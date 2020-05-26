@@ -97,7 +97,9 @@ class DailyStatisticSerializer
 
   attribute :locked_capacity, if: Proc.new { |_record, params|
     params && params[:indicator].include?("locked_capacity")
-  }
+  } do |object|
+    object.locked_capacity.to_s
+  end
 
   attribute :treasury_amount, if: Proc.new { |_record, params|
     params && params[:indicator].include?("treasury_amount")

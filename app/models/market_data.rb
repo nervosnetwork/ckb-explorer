@@ -8,12 +8,13 @@ class MarketData
   FOUNDING_PARTNER_QUOTA = INITIAL_SUPPLY * 0.05
   FOUNDATION_RESERVE_QUOTA = INITIAL_SUPPLY * 0.02
 
-  attr_reader :indicator, :current_timestamp, :tip_block_number
+  attr_reader :indicator, :current_timestamp, :tip_block_number, :unit
 
-  def initialize(indicator = nil, tip_block_number = nil)
+  def initialize(indicator: nil, tip_block_number: nil, unit: "ckb")
     @indicator = indicator
     @current_timestamp = CkbUtils.time_in_milliseconds(Time.find_zone("UTC").now)
     @tip_block_number = tip_block_number
+    @unit = unit
   end
 
   def call
@@ -87,13 +88,13 @@ class MarketData
       result = parsed_dao.c_i - BURN_QUOTA
     end
 
-    (result / 10**8).truncate(8)
+    unit == "ckb" ? (result / 10**8).truncate(8) : result
   end
 
   def circulating_supply
     result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked - bug_bounty_locked
 
-    (result / 10**8).truncate(8)
+    unit == "ckb" ? (result / 10**8).truncate(8) : result
   end
 
   # 2020-05-01
