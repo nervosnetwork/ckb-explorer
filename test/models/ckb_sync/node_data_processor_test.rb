@@ -2042,7 +2042,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: previous_cell_output.tx_hash, index: 0))
-        output = CKB::Types::Output.new(capacity: 150*10**8, lock: udt_lock_script, type: udt_type_script)
+        output = CKB::Types::Output.new(capacity: 150 * 10**8, lock: udt_lock_script, type: udt_type_script)
         tx = CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", inputs: [input], outputs: [output], outputs_data: ["0x000050ad321ea12e0000000000000000"])
         node_block.transactions << tx
         output_address_hash = CkbUtils.generate_address(output.lock)

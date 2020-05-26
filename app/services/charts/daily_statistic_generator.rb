@@ -67,7 +67,7 @@ module Charts
       interval = 499
       start_epoch_number = [0, tip_epoch_number - interval].max
 
-      ranges.each_with_index.map { |range, index|
+      ranges.each_with_index.map { |range, _index|
         epoch_count = ::EpochStatistic.where("epoch_number >= ? and epoch_number <= ?", start_epoch_number, tip_epoch_number).where("epoch_length > ? and epoch_length <= ?", range[0], range[1]).count
 
         [range[1], epoch_count]
