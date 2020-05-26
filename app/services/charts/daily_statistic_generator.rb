@@ -39,7 +39,7 @@ module Charts
 
     def locked_capacity
       market_data = MarketData.new(tip_block_number: current_tip_block.number)
-      total_dao_deposit + market_data.ecosystem_locked + market_data.team_locked + market_data.private_sale_locked + market_data.founding_partners_locked + market_data.foundation_reserve_locked + market_data.bug_bounty_locked
+      market_data.ecosystem_locked + market_data.team_locked + market_data.private_sale_locked + market_data.founding_partners_locked + market_data.foundation_reserve_locked + market_data.bug_bounty_locked
     end
 
     def average_block_time
