@@ -11,7 +11,9 @@ class EpochStatisticSerializer
 
   attribute :uncle_rate, if: Proc.new { |_record, params|
     params && params[:indicator].include?("uncle_rate")
-  }
+  } do |object|
+    object.uncle_rate.to_d.truncate(5).to_s
+  end
 
   attribute :hash_rate, if: Proc.new { |_record, params|
     params && params[:indicator].include?("hash_rate")

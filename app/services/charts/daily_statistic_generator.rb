@@ -348,7 +348,7 @@ module Charts
       total_deposits = interest_bearing_deposits + uninterest_bearing_deposits
       return 0 if total_deposits.zero?
 
-      (sum_interest_bearing + sum_uninterest_bearing) / total_deposits
+      ((sum_interest_bearing + sum_uninterest_bearing) / total_deposits).truncate(3)
     end
 
     def treasury_amount

@@ -27,11 +27,15 @@ class DailyStatisticSerializer
 
   attribute :avg_hash_rate, if: Proc.new { |_record, params|
     params && params[:indicator].include?("avg_hash_rate")
-  }
+  } do |object|
+    object.avg_hash_rate.to_d.truncate(6).to_s
+  end
 
   attribute :avg_difficulty, if: Proc.new { |_record, params|
     params && params[:indicator].include?("avg_difficulty")
-  }
+  } do |object|
+    object.avg_difficulty.to_d.truncate(3).to_s
+  end
 
   attribute :uncle_rate, if: Proc.new { |_record, params|
     params && params[:indicator].include?("uncle_rate")

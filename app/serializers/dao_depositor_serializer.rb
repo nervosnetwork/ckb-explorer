@@ -5,6 +5,6 @@ class DaoDepositorSerializer
     object.dao_deposit.to_s
   end
   attribute :average_deposit_time do |object|
-    object.average_deposit_time.to_s
+    object.average_deposit_time&.truncate(3).to_s
   end
 end
