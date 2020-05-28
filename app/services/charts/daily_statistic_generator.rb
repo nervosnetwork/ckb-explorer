@@ -209,7 +209,7 @@ module Charts
     end
 
     def total_difficulties_for_the_day
-      @total_difficulties ||=
+      @total_difficulties_for_the_day ||=
         epoch_numbers_for_the_day.reduce(0) do |memo, epoch_number|
           first_block_of_the_epoch = Block.created_after(started_at).created_before(ended_at).where(epoch: epoch_number).recent.last
           last_block_of_the_epoch = Block.created_after(started_at).created_before(ended_at).where(epoch: epoch_number).recent.first
@@ -323,7 +323,7 @@ module Charts
             tip_dao = current_tip_block.dao
             parse_dao = CkbUtils.parse_dao(dao)
             tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-            memo + (cell_output.capacity * tip_parse_dao.ar_i / parse_dao.ar_i) - cell_output.capacity
+            memo + (cell_output.capacity.to_i * tip_parse_dao.ar_i / parse_dao.ar_i) - cell_output.capacity.to_i
           end
         end
     end
