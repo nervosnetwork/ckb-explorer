@@ -93,7 +93,9 @@ class DailyStatisticSerializer
 
   attribute :burnt, if: Proc.new { |_record, params|
     params && params[:indicator].include?("burnt")
-  }
+  } do |object|
+    object.burnt.to_s
+  end
 
   attribute :locked_capacity, if: Proc.new { |_record, params|
     params && params[:indicator].include?("locked_capacity")
@@ -112,4 +114,10 @@ class DailyStatisticSerializer
   attribute :deposit_compensation, if: Proc.new { |_record, params|
     params && params[:indicator].include?("deposit_compensation")
   }
+
+  attribute :liquidity, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("liquidity")
+  } do |object|
+    object.liquidity.to_s
+  end
 end
