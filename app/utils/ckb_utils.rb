@@ -264,7 +264,7 @@ class CkbUtils
   def self.parse_udt_cell_data(data)
     return if data.delete_prefix("0x") == ""
 
-    [data.delete_prefix("0x")].pack("H*")[0..15].reverse.unpack1("B*").to_i(2)
+    CKB::Utils.sudt_amount(data)
   end
 
   def self.time_in_milliseconds(time)
