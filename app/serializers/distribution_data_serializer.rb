@@ -48,4 +48,8 @@ class DistributionDataSerializer
   } do |object|
     object.transaction_propagation_delay_history
   end
+
+  attribute :miner_address_distribution, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("miner_address_distribution")
+  }
 end

@@ -2,7 +2,7 @@ class DistributionData
   VALID_INDICATORS = %w(
     address_balance_distribution block_time_distribution epoch_time_distribution epoch_length_distribution
     average_block_time nodes_distribution block_propagation_delay_history transaction_propagation_delay_history
-    miner_addresses_distribution
+    miner_address_distribution
   ).freeze
 
   def id
@@ -77,12 +77,14 @@ class DistributionData
     TransactionPropagationDelay.connection.select_all(sql)
   end
 
-  def miner_addresses_distribution
-    result = Block.where("timestamp >= ?", CkbUtils.time_in_milliseconds(7.days.ago.to_i)).group(:miner_hash).order("count(miner_hash) desc").count.to_a
-    if result.present?
-      (result[0..9] + [["other", result[10..-1].map { |item| item[1] }.reduce(:+)]]).to_h
-    else
-      result
+  def miner_address_distribution
+    Rails.cache.realize("miner_address_distribution", expires_in: 1.day) do
+      result = Block.where("timestamp >= ?", CkbUtils.time_in_milliseconds(7.days.ago.to_i)).group(:miner_hash).order("count(miner_hash) desc").count.to_a
+      if result.present?
+        (result[0..9].map{ |item| [item[0], item[1].to_s] } + [["other", result[10..-1].map { |item| item[1] }.reduce(:+).to_s]]).to_h
+      else
+        result
+      end
     end
   end
 end
