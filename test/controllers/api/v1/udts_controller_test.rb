@@ -150,6 +150,37 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should get empty array when there are no udts" do
+        valid_get api_v1_udts_url
+
+        assert_empty json["data"]
+      end
+
+      test "should return udts in order of descending addresses count" do
+        udt1 = create(:udt, addresses_count: 1, published: true)
+        udt2 = create(:udt, addresses_count: 2)
+        udt3 = create(:udt, addresses_count: 3)
+
+        valid_get api_v1_udts_url
+
+        expected_udts = UdtSerializer.new([udt3, udt2, udt1]).serialized_json
+
+        assert_equal expected_udts, response.body
+      end
+
+      test "unpublished udt symbol field should show args last 2 bytes" do
+        udt1 = create(:udt, addresses_count: 1, published: true)
+        udt2 = create(:udt, addresses_count: 2, args: "0x94bbc8327e16d195de87815c391e7b9131e80419c51a405a0b21227c6ee05129")
+
+        valid_get api_v1_udts_url
+
+        expected_published_udt_name = udt1.symbol
+        expected_unpublished_udt_name = udt2.args
+
+        assert_equal expected_unpublished_udt_name, json["data"][0]
+        assert_equal expected_published_udt_name, json["data"][1]
+      end
     end
   end
 end
