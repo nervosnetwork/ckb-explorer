@@ -43,7 +43,7 @@ class DaoContract < ApplicationRecord
         rate(start_epoch, end_epoch)
       end
     rate = rates.reduce(1) { |memo, rate| memo * (1 + rate) } - 1
-    (rate * 100) / ratio
+    ((rate * 100) / ratio).truncate(4)
   end
 
   def deposit_changes
