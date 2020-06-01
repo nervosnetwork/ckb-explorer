@@ -12,4 +12,7 @@ class UdtSerializer
   attribute :decimal do |object|
     object.decimal.to_s
   end
+  attribute :h24_ckb_transactions_count do |object|
+    object.h24_ckb_transactions_count.to_s
+  end
 end
