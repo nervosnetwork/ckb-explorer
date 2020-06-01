@@ -647,6 +647,27 @@ types:
       },
       "circulation_ratio": {
         "type": "string"
+      },
+      "circulating_supply": {
+        "type": "string"
+      },
+      "burnt": {
+        "type": "string"
+      },
+      "locked_capacity": {
+        "type": "string"
+      },
+      "treasury_amount": {
+        "type": "string"
+      },
+      "mining_reward": {
+        "type": "string"
+      },
+      "deposit_compensation": {
+        "type": "string"
+      },
+      "liquidity": {
+        "type": "string"
       }
     }
   }
@@ -656,6 +677,15 @@ types:
     properties: {
       "address_balance_distribution": {
         type: "[][]",
+      }
+    }
+  }
+
+  monetary_data_attributes: {
+    type: object,
+    properties: {
+      "nominal_apc": {
+        type: "string[]",
       }
     }
   }
@@ -1028,6 +1058,15 @@ types:
       }
     }
   }
+
+  monetary_data_response: {
+      type: object,
+      properties: {
+        "data": {
+          "type": monetary_data_attributes
+        }
+      }
+    }
 
   block_statistic_response: {
      type: object,
@@ -3452,6 +3491,62 @@ types:
                     }
 
                   }
+        404:
+          body:
+            application/vnd.api+json:
+              type: error_response
+              example: |
+                {
+                  "message": "Record Not Found",
+                  "errors": [
+                    {
+                      "id": "ActiveRecord::RecordNotFound",
+                      "code": "1141",
+                      "status": "404",
+                      "title": "Record not fund",
+                      "detail": "No matching address record were found",
+                      "href": "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+                    }
+                  ]
+                }
+
+/monetary_data:
+  /{indicator}:
+    uriParameters:
+      indicator:
+        description: The indicator name
+        required: true
+        type: string
+    get:
+      description: Returns the monetary data
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: monetary_data_response
+              examples:
+                nominal_apc: |
+                  {
+                    "id": "1",
+                    "type": "monetary_data_data",
+                    "attributes": {
+                      "nominal_apc": [
+                        "4.0", "3.94574599", "3.89294403", "3.84153661", "3.79146919"
+                      ]
+                    }
+                  },
+                inflation_rate: |
+                 {
+                    "id": "1",
+                    "type": "monetary_data_data",
+                    "attributes": {
+                        "inflation_rate": {
+                           "nominal_apc": ["4.0", "3.94574599", "3.89294403", "3.84153661", "3.79146919"],
+                           "nominal_inflation_rate": ["16.5", "16.27620221", "16.05839416", "15.84633853"],
+                           "real_inflation_rate": ["12.5", "12.33045622", "12.16545012", "12.00480192"]
+                        }
+                    }
+                 }
         404:
           body:
             application/vnd.api+json:

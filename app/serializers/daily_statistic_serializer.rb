@@ -27,11 +27,15 @@ class DailyStatisticSerializer
 
   attribute :avg_hash_rate, if: Proc.new { |_record, params|
     params && params[:indicator].include?("avg_hash_rate")
-  }
+  } do |object|
+    object.avg_hash_rate.to_d.truncate(6).to_s
+  end
 
   attribute :avg_difficulty, if: Proc.new { |_record, params|
     params && params[:indicator].include?("avg_difficulty")
-  }
+  } do |object|
+    object.avg_difficulty.to_d.truncate(3).to_s
+  end
 
   attribute :uncle_rate, if: Proc.new { |_record, params|
     params && params[:indicator].include?("uncle_rate")
@@ -90,4 +94,34 @@ class DailyStatisticSerializer
   attribute :circulating_supply, if: Proc.new { |_record, params|
     params && params[:indicator].include?("circulating_supply")
   }
+
+  attribute :burnt, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("burnt")
+  } do |object|
+    object.burnt.to_s
+  end
+
+  attribute :locked_capacity, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("locked_capacity")
+  } do |object|
+    object.locked_capacity.to_s
+  end
+
+  attribute :treasury_amount, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("treasury_amount")
+  }
+
+  attribute :mining_reward, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("mining_reward")
+  }
+
+  attribute :deposit_compensation, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("deposit_compensation")
+  }
+
+  attribute :liquidity, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("liquidity")
+  } do |object|
+    object.liquidity.to_s
+  end
 end

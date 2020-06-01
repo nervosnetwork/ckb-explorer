@@ -8,44 +8,19 @@ class MarketData
   FOUNDING_PARTNER_QUOTA = INITIAL_SUPPLY * 0.05
   FOUNDATION_RESERVE_QUOTA = INITIAL_SUPPLY * 0.02
 
-  attr_reader :indicator, :current_timestamp, :tip_block_number
+  attr_reader :indicator, :current_timestamp, :tip_block_number, :unit
 
-  def initialize(indicator = nil, tip_block_number = nil)
+  def initialize(indicator: nil, tip_block_number: nil, unit: "ckb")
     @indicator = indicator
-    @current_timestamp = CkbUtils.time_in_milliseconds(Time.find_zone("UTC").now)
     @tip_block_number = tip_block_number
+    @unit = unit
+    @current_timestamp = tip_block_number.blank? ? CkbUtils.time_in_milliseconds(Time.find_zone("UTC").now) : tip_block.timestamp
   end
 
   def call
     return unless indicator.in?(VALID_INDICATORS)
 
     send(indicator)
-  end
-
-  private
-
-  def parsed_dao
-    @parsed_dao ||=
-      begin
-        tip_block = tip_block_number.present? ? Block.find_by(number: tip_block_number) : Block.recent.first
-        CkbUtils.parse_dao(tip_block.dao)
-      end
-  end
-
-  def total_supply
-    if current_timestamp > first_released_timestamp_may
-      result = parsed_dao.c_i - BURN_QUOTA - yesterday_treasury_amount.to_i
-    else
-      result = parsed_dao.c_i - BURN_QUOTA
-    end
-
-    (result / 10**8).truncate(8)
-  end
-
-  def circulating_supply
-    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked - bug_bounty_locked
-
-    (result / 10**8).truncate(8)
   end
 
   def ecosystem_locked
@@ -94,6 +69,32 @@ class MarketData
 
   def bug_bounty_locked
     Address.find_by(address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc")&.balance.to_i
+  end
+
+  private
+
+  def tip_block
+    @tip_block ||= tip_block_number.present? ? Block.find_by(number: tip_block_number) : Block.recent.first
+  end
+
+  def parsed_dao
+    @parsed_dao ||= CkbUtils.parse_dao(tip_block.dao)
+  end
+
+  def total_supply
+    if current_timestamp > first_released_timestamp_may
+      result = parsed_dao.c_i - BURN_QUOTA - yesterday_treasury_amount.to_i
+    else
+      result = parsed_dao.c_i - BURN_QUOTA
+    end
+
+    unit == "ckb" ? (result / 10**8).truncate(8) : result
+  end
+
+  def circulating_supply
+    result = parsed_dao.c_i - parsed_dao.s_i - BURN_QUOTA - ecosystem_locked - team_locked - private_sale_locked - founding_partners_locked - foundation_reserve_locked - bug_bounty_locked
+
+    unit == "ckb" ? (result / 10**8).truncate(8) : result
   end
 
   # 2020-05-01

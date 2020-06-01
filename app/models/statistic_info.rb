@@ -21,7 +21,9 @@ class StatisticInfo
   end
 
   def estimated_epoch_time
-    tip_block.difficulty * tip_block.length / hash_rate
+    if hash_rate.present?
+      (tip_block.difficulty * tip_block.length / hash_rate).truncate(6)
+    end
   end
 
   def transactions_last_24hrs
@@ -35,7 +37,7 @@ class StatisticInfo
 
     transactions_count = Block.where(number: start_block_number..tip_block_number).sum(:ckb_transactions_count)
 
-    transactions_count / (total_block_time(timestamps) / 1000 / 60)
+    (transactions_count / (total_block_time(timestamps) / 1000 / 60)).truncate(3)
   end
 
   def current_epoch_difficulty
@@ -57,7 +59,7 @@ class StatisticInfo
     total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty }
     total_time = blocks.first.timestamp - blocks.last.timestamp
 
-    total_difficulties.to_d / total_time
+    (total_difficulties.to_d / total_time).truncate(6)
   end
 
   def miner_ranking

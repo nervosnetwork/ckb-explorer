@@ -26,9 +26,8 @@ class BlockTimeStatistic < ApplicationRecord
         values << item
       end
 
-      current_time = current_time + 1.days
+      current_time = current_time + 1.day
     end
-
 
     BlockTimeStatistic.upsert_all(values, unique_by: :stat_timestamp)
   end

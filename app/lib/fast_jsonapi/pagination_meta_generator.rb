@@ -53,7 +53,7 @@ module FastJsonapi
     end
 
     def query_string(query_params)
-      query_params.reject{ |key| key.in?(%w(page page_size)) }.map{|k,v| "?#{k}=#{v}" }.join("?")
+      query_params.reject { |key| key.in?(%w(page page_size)) }.map { |k, v| "?#{k}=#{v}" }.join("?")
     end
 
     def limit_page_size(records, page_size)

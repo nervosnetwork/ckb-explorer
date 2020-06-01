@@ -1,9 +1,9 @@
-require 'test_helper'
+require "test_helper"
 
 module Api
   module V1
     class AddressUdtTransactionsControllerTest < ActionDispatch::IntegrationTest
-     test "should set right content type when call index" do
+      test "should set right content type when call index" do
         address = create(:address)
         valid_get api_v1_address_udt_transaction_url(address.address_hash)
 
@@ -234,7 +234,6 @@ module Api
       test "should return meta that contained total in response body" do
         udt = create(:udt, published: true)
         address = create(:address, :with_udt_transactions, transactions_count: 3, udt: udt)
-
 
         valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash)
 

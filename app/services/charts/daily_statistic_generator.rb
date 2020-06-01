@@ -30,12 +30,17 @@ module Charts
                              address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity,
                              daily_dao_deposit: daily_dao_deposit, daily_dao_depositors_count: daily_dao_depositors_count, daily_dao_withdraw: daily_dao_withdraw,
                              total_supply: total_supply, circulating_supply: circulating_supply, circulation_ratio: circulation_ratio, block_time_distribution: block_time_distribution,
-                             epoch_time_distribution: epoch_time_distribution, epoch_length_distribution: epoch_length_distribution, average_block_time: average_block_time)
+                             epoch_time_distribution: epoch_time_distribution, epoch_length_distribution: epoch_length_distribution, average_block_time: average_block_time, locked_capacity: locked_capacity)
     end
 
     private
 
     attr_reader :datetime, :from_scratch
+
+    def locked_capacity
+      market_data = MarketData.new(tip_block_number: current_tip_block.number)
+      market_data.ecosystem_locked + market_data.team_locked + market_data.private_sale_locked + market_data.founding_partners_locked + market_data.foundation_reserve_locked + market_data.bug_bounty_locked
+    end
 
     def average_block_time
       Block.connection.select_all(avg_block_time_rolling_by_hour_sql).to_a.map do |item|
@@ -62,7 +67,7 @@ module Charts
       interval = 499
       start_epoch_number = [0, tip_epoch_number - interval].max
 
-      ranges.each_with_index.map { |range, index|
+      ranges.each_with_index.map { |range, _index|
         epoch_count = ::EpochStatistic.where("epoch_number >= ? and epoch_number <= ?", start_epoch_number, tip_epoch_number).where("epoch_length > ? and epoch_length <= ?", range[0], range[1]).count
 
         [range[1], epoch_count]
@@ -104,11 +109,11 @@ module Charts
     end
 
     def circulating_supply
-      MarketData.new("circulating_supply", current_tip_block.number).call
+      MarketData.new(indicator: "circulating_supply", tip_block_number: current_tip_block.number, unit: "shannon").call
     end
 
     def circulation_ratio
-      total_dao_deposit / 10**8 / circulating_supply
+      total_dao_deposit / circulating_supply
     end
 
     def total_supply
@@ -204,7 +209,7 @@ module Charts
     end
 
     def total_difficulties_for_the_day
-      @total_difficulties ||=
+      @total_difficulties_for_the_day ||=
         epoch_numbers_for_the_day.reduce(0) do |memo, epoch_number|
           first_block_of_the_epoch = Block.created_after(started_at).created_before(ended_at).where(epoch: epoch_number).recent.last
           last_block_of_the_epoch = Block.created_after(started_at).created_before(ended_at).where(epoch: epoch_number).recent.first
@@ -318,7 +323,7 @@ module Charts
             tip_dao = current_tip_block.dao
             parse_dao = CkbUtils.parse_dao(dao)
             tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-            memo + (cell_output.capacity * tip_parse_dao.ar_i / parse_dao.ar_i) - cell_output.capacity
+            memo + (cell_output.capacity.to_i * tip_parse_dao.ar_i / parse_dao.ar_i) - cell_output.capacity.to_i
           end
         end
     end
@@ -343,7 +348,7 @@ module Charts
       total_deposits = interest_bearing_deposits + uninterest_bearing_deposits
       return 0 if total_deposits.zero?
 
-      (sum_interest_bearing + sum_uninterest_bearing) / total_deposits
+      ((sum_interest_bearing + sum_uninterest_bearing) / total_deposits).truncate(3)
     end
 
     def treasury_amount

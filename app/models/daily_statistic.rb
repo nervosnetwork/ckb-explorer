@@ -2,8 +2,17 @@ class DailyStatistic < ApplicationRecord
   VALID_INDICATORS = %w(
     transactions_count addresses_count total_dao_deposit live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate
     total_depositors_count address_balance_distribution total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count
-    circulation_ratio daily_dao_withdraw nodes_count circulating_supply
+    circulation_ratio daily_dao_withdraw nodes_count circulating_supply burnt locked_capacity treasury_amount mining_reward
+    deposit_compensation liquidity
   ).freeze
+
+  def burnt
+    treasury_amount.to_i + MarketData::BURN_QUOTA
+  end
+
+  def liquidity
+    circulating_supply - total_dao_deposit.to_d
+  end
 end
 
 # == Schema Information
@@ -47,4 +56,5 @@ end
 #  average_block_time           :jsonb
 #  nodes_distribution           :jsonb
 #  nodes_count                  :integer
+#  locked_capacity              :decimal(30, )
 #
