@@ -106,7 +106,7 @@ module Api
         valid_get api_v1_udt_url(udt.type_hash)
 
         response_tx_transaction = json["data"]
-        assert_equal %w(symbol full_name total_amount addresses_count decimal icon_file).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(symbol full_name total_amount addresses_count decimal icon_file h24_ckb_transactions_count).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should get success code when call index" do
@@ -167,19 +167,6 @@ module Api
         expected_udts = UdtSerializer.new([udt3, udt2, udt1]).serialized_json
 
         assert_equal expected_udts, response.body
-      end
-
-      test "unpublished udt symbol field should show args last 2 bytes" do
-        udt1 = create(:udt, addresses_count: 1, published: true)
-        udt2 = create(:udt, addresses_count: 2, args: "0x94bbc8327e16d195de87815c391e7b9131e80419c51a405a0b21227c6ee05129")
-
-        valid_get api_v1_udts_url
-
-        expected_published_udt_name = udt1.symbol
-        expected_unpublished_udt_name = udt2.args
-
-        assert_equal expected_unpublished_udt_name, json["data"][0]
-        assert_equal expected_published_udt_name, json["data"][1]
       end
     end
   end
