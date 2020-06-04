@@ -69,9 +69,9 @@ module Api
       test "should return current circulating supply" do
         create(:address, address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
         valid_get api_v1_market_datum_url("circulating_supply")
-        MarketData.new("circulating_supply").call
+        MarketData.new(indicator: "circulating_supply").call
 
-        assert_equal MarketData.new("circulating_supply").call.to_s, json
+        assert_equal MarketData.new(indicator: "circulating_supply").call.to_s, json
       end
     end
   end

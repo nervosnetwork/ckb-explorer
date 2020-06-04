@@ -33,6 +33,6 @@ class AddressAverageDepositTimeGenerator
         memo + nervos_dao_deposit_cell.capacity * (ended_at - nervos_dao_deposit_cell.block_timestamp) / milliseconds_in_day
       end
 
-    (sum_interest_bearing + sum_uninterest_bearing) / (interest_bearing_deposits + uninterest_bearing_deposits)
+    ((sum_interest_bearing + sum_uninterest_bearing) / (interest_bearing_deposits + uninterest_bearing_deposits)).truncate(6)
   end
 end

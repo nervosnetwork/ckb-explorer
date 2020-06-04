@@ -1,3 +1,54 @@
+# [v0.9.6](https://github.com/shaojunda/ckb-explorer/compare/v0.9.5...v0.9.6) (2020-06-01)
+
+
+### Bug Fixes
+
+* task bug ([48c735c](https://github.com/shaojunda/ckb-explorer/commit/48c735c))
+
+
+### Features
+
+* add average_block_time to daily statistic ([ed2519d](https://github.com/shaojunda/ckb-explorer/commit/ed2519d))
+* add block time statistic ([26898c4](https://github.com/shaojunda/ckb-explorer/commit/26898c4))
+* add block_propagation_delay table ([09c7643](https://github.com/shaojunda/ckb-explorer/commit/09c7643))
+* add block_propagation_delay_history ([8cf7293](https://github.com/shaojunda/ckb-explorer/commit/8cf7293))
+* add block_size column to blocks ([fec68e0](https://github.com/shaojunda/ckb-explorer/commit/fec68e0))
+* add circulating supply to daily statistics ([a63e01f](https://github.com/shaojunda/ckb-explorer/commit/a63e01f))
+* add circulation ratio to daily statistic ([64717a5](https://github.com/shaojunda/ckb-explorer/commit/64717a5))
+* add epoch distribution info generation task ([42f53a3](https://github.com/shaojunda/ckb-explorer/commit/42f53a3))
+* add epoch length to epoch statistics ([1ad1249](https://github.com/shaojunda/ckb-explorer/commit/1ad1249))
+* add epoch_length_distribution ([68c9d61](https://github.com/shaojunda/ckb-explorer/commit/68c9d61))
+* add epoch_time_distribution ([2c40104](https://github.com/shaojunda/ckb-explorer/commit/2c40104))
+* add epoch_time_distribution ([7aac8db](https://github.com/shaojunda/ckb-explorer/commit/7aac8db))
+* add fill block size task ([5146ecf](https://github.com/shaojunda/ckb-explorer/commit/5146ecf))
+* add inflation_rate ([bc5cdd8](https://github.com/shaojunda/ckb-explorer/commit/bc5cdd8))
+* add liquidity to daily statistic ([493a50c](https://github.com/shaojunda/ckb-explorer/commit/493a50c))
+* add locked_capacity to daily statistics ([c1e0bf9](https://github.com/shaojunda/ckb-explorer/commit/c1e0bf9))
+* add miner_addresses_distribution ([f8752dd](https://github.com/shaojunda/ckb-explorer/commit/f8752dd))
+* add monetary data serializer ([8c7d14c](https://github.com/shaojunda/ckb-explorer/commit/8c7d14c))
+* add monetary data show action ([4feedeb](https://github.com/shaojunda/ckb-explorer/commit/4feedeb))
+* add monetary data validator ([ed14322](https://github.com/shaojunda/ckb-explorer/commit/ed14322))
+* add more columns to daily statistics ([ffe1fc1](https://github.com/shaojunda/ckb-explorer/commit/ffe1fc1))
+* add new column to daily statistics ([871aefe](https://github.com/shaojunda/ckb-explorer/commit/871aefe))
+* add new columns ([9b69d89](https://github.com/shaojunda/ckb-explorer/commit/9b69d89))
+* add nominal apc ([6b24e77](https://github.com/shaojunda/ckb-explorer/commit/6b24e77))
+* add real_inflation_rate ([098c930](https://github.com/shaojunda/ckb-explorer/commit/098c930))
+* add total supply to daily statistic ([8c383bd](https://github.com/shaojunda/ckb-explorer/commit/8c383bd))
+* add total tx fee column to daily statistic ([05669e2](https://github.com/shaojunda/ckb-explorer/commit/05669e2))
+* add transaction propagation delays ([bf9651c](https://github.com/shaojunda/ckb-explorer/commit/bf9651c))
+* add udt account model ([2b5c1f0](https://github.com/shaojunda/ckb-explorer/commit/2b5c1f0))
+* add udt model ([74fbcf7](https://github.com/shaojunda/ckb-explorer/commit/74fbcf7))
+* generate epoch_time_distribution ([3a175b9](https://github.com/shaojunda/ckb-explorer/commit/3a175b9))
+* return epoch_length_distribution ([b7de134](https://github.com/shaojunda/ckb-explorer/commit/b7de134))
+* show circulating_supply ([260f158](https://github.com/shaojunda/ckb-explorer/commit/260f158))
+
+
+### Performance Improvements
+
+* speed up epoch statistic generator ([f3a059a](https://github.com/shaojunda/ckb-explorer/commit/f3a059a))
+
+
+
 # [v0.9.5](https://github.com/shaojunda/ckb-explorer/compare/v0.9.4...v0.9.5) (2020-02-26)
 
 - prevent divided by 0 on average deposit time ([cabfa48](https://github.com/nervosnetwork/ckb-explorer/commit/cabfa48))

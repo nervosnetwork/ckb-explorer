@@ -42,6 +42,7 @@ Rails.application.routes.draw do
       resources :udt_transactions, only: :show
       resources :address_udt_transactions, only: :show
       resources :distribution_data, only: :show
+      resources :monetary_data, only: :show
     end
   end
 
