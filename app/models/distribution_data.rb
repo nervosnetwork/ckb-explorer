@@ -77,11 +77,15 @@ class DistributionData
     TransactionPropagationDelay.connection.select_all(sql)
   end
 
-  def miner_address_distribution
-    Rails.cache.realize("miner_address_distribution", expires_in: 1.day) do
-      result = Block.where("timestamp >= ?", CkbUtils.time_in_milliseconds(7.days.ago.to_i)).group(:miner_hash).order("count(miner_hash) desc").count.to_a
+  def miner_address_distribution(checkpoint = 7)
+    supported_checkpoints = [7, 90]
+    return unless checkpoint.in?(supported_checkpoints)
+
+    Rails.cache.realize("miner_address_distribution_#{checkpoint}", expires_in: 1.day) do
+      result = Block.where("timestamp >= ?", CkbUtils.time_in_milliseconds(checkpoint.days.ago.to_i)).group(:miner_hash).order("count(miner_hash) desc").count.to_a
+      cut_off_point = (result.count * 0.7).floor
       if result.present?
-        (result[0..9].map{ |item| [item[0], item[1].to_s] } + [["other", result[10..-1].map { |item| item[1] }.reduce(:+).to_s]]).to_h
+        (result[0..cut_off_point].map{ |item| [item[0], item[1].to_s] } + [["other", result[(cut_off_point + 1)..-1].map { |item| item[1] }.reduce(:+).to_s]]).to_h
       else
         result
       end

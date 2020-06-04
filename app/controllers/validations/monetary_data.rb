@@ -33,7 +33,7 @@ module Validations
     def query_key_valid?
       query_keys = query_key.split("-")
       extra_keys = query_keys - ::MonetaryData::VALID_INDICATORS
-      extra_keys.blank? || extra_keys.size == 1 && extra_keys.first =~ /^nominal_apc(\d+)$/
+      extra_keys.blank? || extra_keys.size == 1 && /^nominal_apc(\d+)$/ =~ extra_keys.first
     end
   end
 end
