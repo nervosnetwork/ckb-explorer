@@ -4,7 +4,6 @@ class Address < ApplicationRecord
 
   has_many :cell_outputs, dependent: :destroy
   has_many :account_books, dependent: :destroy
-  has_many :ckb_transactions, through: :account_books
   has_many :mining_infos
   has_many :udt_accounts
   validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
@@ -16,6 +15,11 @@ class Address < ApplicationRecord
   after_commit :flush_cache
 
   attr_accessor :query_address
+
+  def ckb_transactions
+    ckb_transaction_ids = account_books.select(:ckb_transaction_id).distinct
+    CkbTransaction.where(id: ckb_transaction_ids)
+  end
 
   def ckb_dao_transactions
     ckb_transaction_ids = cell_outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id")
