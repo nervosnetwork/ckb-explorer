@@ -10,7 +10,6 @@ class Udt < ApplicationRecord
   attribute :code_hash, :ckb_hash
 
   def ckb_transactions
-    type_hash = "0xe3be4fb98ec914886c6525abac97e1f8769c59492636a1d35955e9163ef46efa"
     sql =
       <<-SQL
         SELECT
