@@ -12,7 +12,7 @@ module Api
         udt = Udt.find_by(type_hash: params[:type_hash], published: true)
         raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
 
-        ckb_dao_transactions = address.ckb_udt_transactions(params[:type_hash]).recent.distinct.page(@page).per(@page_size)
+        ckb_dao_transactions = address.ckb_udt_transactions(params[:type_hash]).recent.page(@page).per(@page_size)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: @page, page_size: @page_size).call
 
         render json: CkbTransactionSerializer.new(ckb_dao_transactions, options.merge({ params: { previews: true } }))

@@ -23,13 +23,41 @@ class Address < ApplicationRecord
   end
 
   def ckb_dao_transactions
-    ckb_transaction_ids = cell_outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id")
+    ckb_transaction_ids = cell_outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id").distinct
     CkbTransaction.where(id: ckb_transaction_ids)
   end
 
   def ckb_udt_transactions(type_hash)
-    ckb_transaction_ids = cell_outputs.udt.where(type_hash: type_hash).pluck("generated_by_id") + cell_outputs.udt.where(type_hash: type_hash).pluck("consumed_by_id").compact
-    CkbTransaction.where(id: ckb_transaction_ids.uniq)
+    sql =
+      <<-SQL
+        SELECT
+          generated_by_id ckb_transaction_id
+        FROM
+          cell_outputs
+        WHERE
+          address_id = #{id}
+          AND
+          cell_type = #{CellOutput::cell_types['udt']}
+          AND
+          type_hash = '#{type_hash}'
+
+        UNION
+
+        SELECT
+          consumed_by_id ckb_transaction_id
+        FROM
+          cell_outputs
+        WHERE
+          address_id = #{id}
+          AND
+          cell_type = #{CellOutput::cell_types['udt']}
+          AND
+          type_hash = '#{type_hash}'
+          AND
+          consumed_by_id is not null
+      SQL
+    ckb_transaction_ids = CellOutput.select("ckb_transaction_id").from("(#{sql}) as cell_outputs")
+    CkbTransaction.where(id: ckb_transaction_ids.distinct)
   end
 
   def lock_info
