@@ -779,6 +779,15 @@ types:
       },
       "icon_file": {
         type: "string"
+      },
+      "description": {
+        type: "string"
+      },
+      "created_at": {
+        type: "string"
+      },
+      "published": {
+        type: "boolean"
       }
     }
   }
@@ -1010,6 +1019,15 @@ types:
     properties: {
       "data": {
         "type": udt
+      }
+    }
+  }
+
+  udts_response: {
+    type: object,
+    properties: {
+      "data": {
+        "type": "udt[]",
       }
     }
   }
@@ -3690,6 +3708,66 @@ types:
                 }
 
 /udts:
+  get:
+    description: Returns udts in reverse chronological order by addresses count.
+    responses:
+      200:
+        body:
+          application/vnd.api+json:
+            type: udts_response
+            example: |
+              {
+                "data": [
+                  {
+                    "id": "1",
+                    "type": "udt",
+                    "attributes": {
+                        "symbol": "kfc",
+                        "full_name": "Kingdom Fly Coin",
+                        "icon_file": "data:image/png;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAQDAwQDAwQEAwQFBAQFBgoHBgYGBg0JCggKDw0QEA8NDw4RExgUERIXEg4PFRwVFxkZGxsbEBQdHx0aHxgaGxr/2wBDAQQFBQYFBgwHBwwaEQ8RGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhr/wAARCAAoACgDASIAAhEBAxEB/8QAGwAAAgIDAQAAAAAAAAAAAAAAAAYEBwEFCAP/xAAtEAABAgUCBAUEAwAAAAAAAAABAgQAAwUREgYTFCExUSJBYXHwBxUygRaRwf/EABoBAAIDAQEAAAAAAAAAAAAAAAACAwUGBAf/xAAiEQABAwQCAgMAAAAAAAAAAAABAAIRAwQhMUFRBhMiQoH/2gAMAwEAAhEDEQA/AO83TtDWVnM6eXeFhzWJ7hRCV4pvyANvn7vGKu6LlyoXOKPCB8+c4pmhUKo6Zq8qq1yTw1PkZ7kwzQvHIEDkCT1IhXOhVd5ePtH0wKZc1xyeGjGTjWZzGlbW4c872Ve94nNa1ObqSCvNPmFG/wA/UUt9QdQU+tCn/anO+ZRmblkqTa+NuoHYxpadpOt1NtJdsmxmt5hulW8kXsbHkT6GENTMAKmr+QOFy6hbUfbHLTPXQOphdWNHct5KEyUfcdoIVqM6LV0hJJwX4VD5/f6giVa1QJmQUTMvl53ipdQfUEVqlOaf9vMgzbDc3srWUD0t6RdFYaqbuZhIOK7qSf8APnaOfdJ06RU9Rtmz+SZreYZmSTcA2SSOY9oiqE4A5WS8gr3LXUbag6PbLT+wOjG+F76T0mNTh2S7LXhyjpLzyyv6jtDKNUjRJTQOEL7hbDf3NvLLxfjY2tlbr5QaqvokNP4ungi7Kt8AbmWNrfle1sj07xsqDQafqalN6rXG3Ev54O7NKlIviogcgQByAhACMDaqrS0fbPNpaENuGj5O20tOYEznLfqNHPbvLyuDLvl5WgifR2hcOkGxCEG6j7QR0L0JNDtpLeSjLmj2PaFZ3R3DVRKZe4i/JSReCCBCgbaivAgFV7RsGdHcuFC6DLRfmoi0EECE0NGktnKEuUPc94IIIEL/2Q==",
+                        "total_amount": "10000000000",
+                        "addresses_count": "3",
+                        "decimal": "6",
+                        "h24_ckb_transactions_count": "0",
+                        "published": true,
+                        "description": "Kingdom Fly Coin",
+                        "created_at": "1591096409"
+                    }
+                  },
+                  {
+                    "id": "4",
+                    "type": "udt",
+                    "attributes": {
+                        "symbol": null,
+                        "full_name": null,
+                        "icon_file": null,
+                        "total_amount": "100000000000000000000",
+                        "addresses_count": "3",
+                        "decimal": "",
+                        "h24_ckb_transactions_count": "0",
+                        "published": false,
+                        "description": "",
+                        "created_at": "1591096409"
+                    }
+                  },
+                  {
+                    "id": "14",
+                    "type": "udt",
+                    "attributes": {
+                        "symbol": null,
+                        "full_name": null,
+                        "icon_file": null,
+                        "total_amount": "9999900000",
+                        "addresses_count": "1",
+                        "decimal": "",
+                        "h24_ckb_transactions_count": "0",
+                        "published": false,
+                        "description": "",
+                        "created_at": "1591096409"
+                    }
+                  }]
+              }
+
   /{type_hash}:
     uriParameters:
       type_hash:

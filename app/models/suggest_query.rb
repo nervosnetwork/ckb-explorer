@@ -47,10 +47,7 @@ class SuggestQuery
     address = Address.cached_find(query_key)
     raise Api::V1::Exceptions::AddressNotFoundError if address.blank?
 
-    return AddressSerializer.new(address) if address.is_a?(NullAddress)
-
-    presented_address = AddressPresenter.new(address)
-    AddressSerializer.new(presented_address)
+    AddressSerializer.new(address)
   end
 
   def find_udt_by_type_hash

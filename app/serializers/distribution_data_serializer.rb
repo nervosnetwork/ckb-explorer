@@ -51,5 +51,11 @@ class DistributionDataSerializer
 
   attribute :miner_address_distribution, if: Proc.new { |_record, params|
     params && params[:indicator].include?("miner_address_distribution")
-  }
+  } do |object, params|
+    if rs = params[:indicator].match(/(\d+)/)
+      object.miner_address_distribution(rs[1].to_i)
+    else
+      object.miner_address_distribution
+    end
+  end
 end

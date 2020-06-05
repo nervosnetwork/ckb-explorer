@@ -1822,7 +1822,7 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
-        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, block_timestamp: node_block.header.timestamp)
         local_block = node_data_processor.process_block(node_block)
 
         assert_equal ["udt"], local_block.cell_outputs.pluck(:cell_type).uniq
@@ -1836,7 +1836,7 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
-        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, block_timestamp: node_block.header.timestamp)
         address_hash = CkbUtils.generate_address(node_output.lock)
         address = Address.find_by(address_hash: address_hash)
 
@@ -1923,7 +1923,7 @@ module CkbSync
         new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2")
         new_node_output.lock = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0xc2e61ff569acf041b3c2c17724e2379c581eeac2")
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2")
-        udt = create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, published: true)
+        udt = create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, published: true, block_timestamp: node_block.header.timestamp)
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         node_block.transactions.first.outputs_data[1] = "0x0000909dceda82370000000000000000"
         address_hash = CkbUtils.generate_address(node_output.lock)
@@ -1977,7 +1977,7 @@ module CkbSync
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
-        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, block_timestamp: node_block.header.timestamp)
         node_data_processor.process_block(node_block)
         block = Block.find_by(number: 21)
         block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
@@ -2006,8 +2006,8 @@ module CkbSync
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         node_block.transactions.first.outputs_data[1] = "0x0000909dceda82370000000000000000"
-        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
-        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: new_node_output.type.compute_hash)
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, block_timestamp: node_block.header.timestamp)
+        create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: new_node_output.type.compute_hash, block_timestamp: node_block.header.timestamp)
         node_data_processor.process_block(node_block)
         block = Block.find_by(number: 21)
         block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
