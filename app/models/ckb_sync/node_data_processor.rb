@@ -39,7 +39,7 @@ module CkbSync
         update_current_block_mining_info(local_block)
         update_block_contained_address_info(local_block)
         update_block_reward_info(local_block)
-        update_udt_accounts(udt_infos)
+        update_udt_accounts(udt_infos, local_block.timestamp)
         update_udt_info(udt_infos)
         dao_events = build_new_dao_depositor_events(new_dao_depositor_events)
         DaoEvent.import!(dao_events, validate: false)
@@ -67,7 +67,7 @@ module CkbSync
       Udt.import columns, import_values, validate: false, on_duplicate_key_update: { conflict_target: [:type_hash], columns: [:total_amount, :addresses_count] }
     end
 
-    def update_udt_accounts(udt_infos)
+    def update_udt_accounts(udt_infos, block_timestamp)
       return if udt_infos.blank?
 
       udt_infos.each do |udt_output|
@@ -78,7 +78,7 @@ module CkbSync
         if udt_account.present?
           udt_account.update!(amount: amount)
         else
-          udt = Udt.find_or_create_by!(type_hash: udt_output[:type_hash], code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt")
+          udt = Udt.find_or_create_by!(type_hash: udt_output[:type_hash], code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt", block_timestamp: block_timestamp)
           address.udt_accounts.create!(udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount, udt: udt)
         end
       end

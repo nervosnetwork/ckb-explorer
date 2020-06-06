@@ -30,9 +30,8 @@ class SuggestQueryTest < ActiveSupport::TestCase
   test "should return Address by query key when query key is a exist address hash" do
     address = create(:address, :with_lock_script)
     address.query_address = address.address_hash
-    presented_address = AddressPresenter.new(address)
 
-    assert_equal AddressSerializer.new(presented_address).serialized_json, SuggestQuery.new(presented_address.address_hash).find!.serialized_json
+    assert_equal AddressSerializer.new(address).serialized_json, SuggestQuery.new(address.address_hash).find!.serialized_json
   end
 
   test "should raise BlockNotFoundError when query key is a block number that doesn't exist" do
