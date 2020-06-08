@@ -55,7 +55,7 @@ class CkbTransaction < ApplicationRecord
   end
 
   def dao_transaction?
-    inputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing))
+    inputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).exists? || outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).exists?
   end
 
   private
