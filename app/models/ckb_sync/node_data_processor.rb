@@ -78,7 +78,8 @@ module CkbSync
         if udt_account.present?
           udt_account.update!(amount: amount)
         else
-          udt = Udt.find_or_create_by!(type_hash: udt_output[:type_hash], code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt", block_timestamp: block_timestamp)
+          udt = Udt.find_or_create_by!(type_hash: udt_output[:type_hash], code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt")
+          udt.update(block_timestamp: block_timestamp) if udt.block_timestamp.blank?
           address.udt_accounts.create!(udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount, udt: udt)
         end
       end
