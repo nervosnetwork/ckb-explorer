@@ -8,4 +8,15 @@ class UdtTest < ActiveSupport::TestCase
     should validate_length_of(:symbol).allow_nil.is_at_least(1).is_at_most(16)
     should validate_length_of(:full_name).allow_nil.is_at_least(1).is_at_most(32)
   end
+
+  test "should return node type script when the udt is published" do
+    udt = create(:udt, published: true)
+    node_type_script = {
+      args: udt.args,
+      code_hash: udt.code_hash,
+      hash_type: udt.hash_type
+    }
+
+    assert_equal node_type_script, udt.type_script
+  end
 end
