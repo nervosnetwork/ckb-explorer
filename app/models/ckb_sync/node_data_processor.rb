@@ -55,7 +55,7 @@ module CkbSync
     def update_udt_info(udt_infos)
       return if udt_infos.blank?
 
-      type_hashes = udt_infos.map { |udt_info| udt_info[:type_hash] }.uniq
+      type_hashes = udt_infos.map { |udt_info| udt_info[:type_script].compute_hash }.uniq
       columns = %i(type_hash total_amount addresses_count)
       amount_hashes = UdtAccount.where(type_hash: type_hashes).group(:type_hash).sum(:amount)
       addresses_count_hashes = UdtAccount.where(type_hash: type_hashes).group(:type_hash).count(:address_id)
@@ -72,14 +72,18 @@ module CkbSync
 
       udt_infos.each do |udt_output|
         address = udt_output[:address]
-        udt_account = address.udt_accounts.find_by(type_hash: udt_output[:type_hash])
-        amount = address.cell_outputs.live.udt.where(type_hash: udt_output[:type_hash]).sum(:udt_amount)
+        udt_type_script = udt_output[:type_script]
+        type_hash = udt_type_script.compute_hash
+        udt_account = address.udt_accounts.find_by(type_hash: type_hash)
+        amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
 
         if udt_account.present?
           udt_account.update!(amount: amount)
         else
-          udt = Udt.find_or_create_by!(type_hash: udt_output[:type_hash], code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt")
+          udt = Udt.find_or_create_by!(type_hash: type_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt")
           udt.update(block_timestamp: block_timestamp) if udt.block_timestamp.blank?
+          issuer_address = Address.where(lock_hash: udt_type_script.args).select(:address_hash).first.address_hash
+          udt.update(args: udt_type_script.args, hash_type: udt_type_script.hash_type, issuer_address: issuer_address)
           address.udt_accounts.create!(udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount, udt: udt)
         end
       end
@@ -437,7 +441,7 @@ module CkbSync
         addresses << address
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
         outputs << cell_output
-        udt_infos << { type_hash: output.type.compute_hash, address: address } if cell_output.udt?
+        udt_infos << { type_script: output.type, address: address } if cell_output.udt?
 
         build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
         build_lock_script(cell_output, output.lock, address)
@@ -546,7 +550,7 @@ module CkbSync
             address_id = previous_cell_output.address_id
             input_capacities[ckb_transaction_id] << previous_cell_output.capacity
             if previous_cell_output.udt?
-              udt_infos << { type_hash: previous_cell_output.node_output.type.compute_hash, address: previous_cell_output.address }
+              udt_infos << { type_script: previous_cell_output.node_output.type, address: previous_cell_output.address }
             end
 
             link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
