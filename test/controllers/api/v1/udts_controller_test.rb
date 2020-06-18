@@ -106,7 +106,7 @@ module Api
         valid_get api_v1_udt_url(udt.type_hash)
 
         response_tx_transaction = json["data"]
-        assert_equal %w(symbol full_name total_amount addresses_count decimal icon_file h24_ckb_transactions_count created_at description published type_hash).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(symbol full_name total_amount addresses_count decimal icon_file h24_ckb_transactions_count created_at description published type_hash type_script).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should get success code when call index" do
