@@ -43,6 +43,16 @@ class Udt < ApplicationRecord
       ckb_transactions.where("block_timestamp >= ?", CkbUtils.time_in_milliseconds(24.hours.ago)).count
     end
   end
+
+  def type_script
+    return unless published
+
+    {
+      args: args,
+      code_hash: code_hash,
+      hash_type: hash_type
+    }
+  end
 end
 
 # == Schema Information
@@ -67,6 +77,7 @@ end
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #  block_timestamp  :decimal(30, )
+#  issuer_address   :binary
 #
 # Indexes
 #

@@ -3,7 +3,7 @@ FactoryBot.define do
     code_hash { "0x#{SecureRandom.hex(32)}" }
     type_hash { "0x#{SecureRandom.hex(32)}" }
     hash_type { "type" }
-    args { "0x" }
+    args { "0x#{SecureRandom.hex(20)}" }
     udt_type { "sudt" }
     full_name { "kingdom fat coin" }
     symbol { "kfc" }
