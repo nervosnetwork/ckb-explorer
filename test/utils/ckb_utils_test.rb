@@ -313,6 +313,10 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal u_i, parsed_dao.u_i
   end
 
+  test "should return 0 when sudt_amount raise Runtime error" do
+    assert_equal 0, CkbUtils.parse_udt_cell_data("0x01")
+  end
+
   private
 
   def node_data_processor
