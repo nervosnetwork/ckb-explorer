@@ -264,7 +264,9 @@ class CkbUtils
   def self.parse_udt_cell_data(data)
     return if data.delete_prefix("0x") == ""
 
-    CKB::Utils.sudt_amount(data)
+    CKB::Utils.sudt_amount!(data)
+  rescue RuntimeError
+    0
   end
 
   def self.time_in_milliseconds(time)
