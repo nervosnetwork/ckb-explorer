@@ -265,6 +265,8 @@ class CkbUtils
     return if data.delete_prefix("0x") == ""
 
     CKB::Utils.sudt_amount(data)
+  rescue RuntimeError
+    0
   end
 
   def self.time_in_milliseconds(time)
