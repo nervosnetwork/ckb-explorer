@@ -483,7 +483,11 @@ module CkbSync
           "nervos_dao_withdrawing"
         end
       when ENV["SUDT_CELL_TYPE_HASH"]
-        "udt"
+        if CKB::Utils.hex_to_bin(output_data).bytesize >= CellOutput::MIN_SUDT_AMOUNT_BYTESIZE
+          "udt"
+        else
+          "normal"
+        end
       else
         "normal"
       end
