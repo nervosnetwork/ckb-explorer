@@ -64,7 +64,7 @@ module Api
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: page, page_size: page_size).call
 
-        assert_equal CkbTransactionSerializer.new(ckb_dao_transactions, options.merge(params: {previews: true})).serialized_json, response.body
+        assert_equal CkbTransactionSerializer.new(ckb_dao_transactions, options.merge(params: { previews: true })).serialized_json, response.body
       end
 
       test "should return corresponding ckb transactions with given lock hash" do
@@ -78,7 +78,7 @@ module Api
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: page, page_size: page_size).call
 
-        assert_equal CkbTransactionSerializer.new(ckb_dao_transactions, options.merge(params: {previews: true})).serialized_json, response.body
+        assert_equal CkbTransactionSerializer.new(ckb_dao_transactions, options.merge(params: { previews: true })).serialized_json, response.body
       end
 
       test "should contain right keys in the serialized object when call show" do
@@ -152,7 +152,7 @@ module Api
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: page }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_dao_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_dao_transactions, options.merge(params: {previews: true})).serialized_json
+        response_transaction = CkbTransactionSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
         assert_equal page_size, json["data"].size
@@ -168,7 +168,7 @@ module Api
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_dao_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_dao_transactions, options.merge(params: {previews: true})).serialized_json
+        response_transaction = CkbTransactionSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
         assert_equal page_size, json["data"].size
@@ -183,7 +183,7 @@ module Api
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_dao_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_dao_transactions, options.merge(params: {previews: true})).serialized_json
+        response_transaction = CkbTransactionSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
       end
@@ -198,7 +198,7 @@ module Api
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_dao_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_dao_transactions, options.merge(params: {previews: true})).serialized_json
+        response_transaction = CkbTransactionSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal [], json["data"]
         assert_equal response_transaction, response.body
