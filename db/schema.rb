@@ -301,6 +301,8 @@ ActiveRecord::Schema.define(version: 2020_06_24_022548) do
     t.integer "live_cell_changes"
     t.decimal "block_time", precision: 13
     t.integer "block_size"
+    t.decimal "proposal_reward", precision: 30
+    t.decimal "commit_reward", precision: 30
   end
 
   create_table "forked_events", force: :cascade do |t|

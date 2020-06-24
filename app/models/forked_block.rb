@@ -54,4 +54,6 @@ end
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
 #  block_size                 :integer
+#  proposal_reward            :decimal(30, )
+#  commit_reward              :decimal(30, )
 #
