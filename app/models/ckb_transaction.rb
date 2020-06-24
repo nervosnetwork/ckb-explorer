@@ -78,7 +78,7 @@ class CkbTransaction < ApplicationRecord
     cellbase = Cellbase.new(block)
     cell_outputs_for_display.map do |output|
       consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-      CkbUtils.hash_value_to_s({ id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash })
+      CkbUtils.hash_value_to_s(id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash)
     end
   end
 
@@ -119,7 +119,7 @@ class CkbTransaction < ApplicationRecord
 
   def cellbase_display_inputs
     cellbase = Cellbase.new(block)
-    [CkbUtils.hash_value_to_s({ id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number, generated_tx_hash: tx_hash })]
+    [CkbUtils.hash_value_to_s(id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number, generated_tx_hash: tx_hash)]
   end
 
   def recover_dead_cell
