@@ -236,7 +236,7 @@ module Charts
           if from_scratch
             Block.created_before(ended_at).recent.first
           else
-            Block.created_after(started_at).created_before(ended_at).recent.first
+            Block.created_after(started_at).created_before(ended_at).recent.first || Block.recent.first
           end
         end
     end
