@@ -1,18 +1,27 @@
-name: Ruby
-
-on: [push]
+name: Explorer service
+on: push
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
       redis:
         image: redis
         ports: ['6379:6379']
         options: --entrypoint redis-server
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Set up Ruby 2.6.4
         run: |
           sudo apt-get update
@@ -25,13 +34,6 @@ jobs:
       - name: Set up SECP256k1
         run: |
           git clone https://github.com/bitcoin-core/secp256k1.git && cd secp256k1 && ./autogen.sh && ./configure && make && ./tests && sudo make install && cd ..
-      - name: Set up PostgreSQL
-        run: |
-          sudo apt install postgresql postgresql-contrib
-          sudo sed -i 's/peer/trust/gI' /etc/postgresql/10/main/pg_hba.conf
-          sudo sed -i 's/md5/trust/gI' /etc/postgresql/10/main/pg_hba.conf
-          sudo systemctl restart postgresql.service
-          psql -c 'create database "ckb_explorer_test";' -U postgres
       - name: Build and test with Rake
         run: |
           source /usr/share/rvm/scripts/rvm
