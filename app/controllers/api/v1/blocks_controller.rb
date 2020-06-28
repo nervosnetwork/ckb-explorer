@@ -9,7 +9,8 @@ module Api
           blocks = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
           options = {}
         else
-          blocks = Block.recent.page(@page).per(@page_size)
+          block_timestamps = Block.recent.page(@page).per(@page_size).pluck(:timestamp)
+          blocks = Block.where(timestamp: block_timestamps).select(:number, :timestamp, :reward, :transactions_count, :live_cell_changes)
           options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: @page, page_size: @page_size).call
         end
 
