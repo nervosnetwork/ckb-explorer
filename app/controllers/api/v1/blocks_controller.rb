@@ -9,9 +9,9 @@ module Api
           blocks = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
           options = {}
         else
-          block_timestamps = Block.recent.page(@page).per(@page_size).pluck(:timestamp)
-          blocks = Block.where(timestamp: block_timestamps).select(:number, :timestamp, :reward, :transactions_count, :live_cell_changes)
-          options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: @page, page_size: @page_size).call
+          block_timestamps = Block.recent.select(:timestamp).page(@page).per(@page_size)
+          blocks = Block.where(timestamp: block_timestamps.map { |block| block.timestamp }).select(:miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes)
+          options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: block_timestamps, page: @page, page_size: @page_size).call
         end
 
         render json: BlockListSerializer.new(blocks, options)
