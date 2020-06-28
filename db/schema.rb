@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_24_022548) do
+ActiveRecord::Schema.define(version: 2020_06_28_091022) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -117,7 +117,7 @@ ActiveRecord::Schema.define(version: 2020_06_24_022548) do
     t.index ["block_time"], name: "index_blocks_on_block_time"
     t.index ["epoch"], name: "index_blocks_on_epoch"
     t.index ["number"], name: "index_blocks_on_number"
-    t.index ["timestamp"], name: "index_blocks_on_timestamp"
+    t.index ["timestamp"], name: "index_blocks_on_timestamp", order: "DESC NULLS LAST"
   end
 
   create_table "cell_inputs", force: :cascade do |t|
