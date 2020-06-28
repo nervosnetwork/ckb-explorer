@@ -10,7 +10,7 @@ module Api
           options = {}
         else
           block_timestamps = Block.recent.select(:timestamp).page(@page).per(@page_size)
-          blocks = Block.where(timestamp: block_timestamps.map { |block| block.timestamp }).select(:miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes)
+          blocks = Block.where(timestamp: block_timestamps.map { |block| block.timestamp }).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes)
           options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: block_timestamps, page: @page, page_size: @page_size).call
         end
 
