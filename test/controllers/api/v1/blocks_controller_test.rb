@@ -157,11 +157,12 @@ module Api
         create_list(:block, 15, :with_block_hash)
         page = 2
         page_size = 5
-        blocks = Block.order(timestamp: :desc).page(page).per(page_size)
+        block_timestamps = Block.recent.select(:timestamp).page(page).per(page_size)
+        blocks = Block.where(timestamp: block_timestamps.map { |block| block.timestamp }).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes)
 
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: block_timestamps, page: page, page_size: page_size).call
         response_blocks = BlockListSerializer.new(blocks, options).serialized_json
         assert_equal response_blocks, response.body
       end
