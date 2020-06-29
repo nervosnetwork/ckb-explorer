@@ -24,8 +24,6 @@ class NullAddress
     LockScript.new(args: parsed_address.script.args, code_hash: parsed_address.script.code_hash).lock_info
   end
 
-  def cached_lock_script; end
-
   def dao_deposit
     0
   end
@@ -47,11 +45,14 @@ class NullAddress
   end
 
   def lock_script
-    parsed_address = CKB::AddressParser.new(address_hash).parse
-    raise Api::V1::Exceptions::AddressNotMatchEnvironmentError.new(ENV["CKB_NET_MODE"]) if parsed_address.mode != ENV["CKB_NET_MODE"]
+    @lock_script ||=
+      begin
+        parsed_address = CKB::AddressParser.new(address_hash).parse
+        raise Api::V1::Exceptions::AddressNotMatchEnvironmentError.new(ENV["CKB_NET_MODE"]) if parsed_address.mode != ENV["CKB_NET_MODE"]
 
-    script = parsed_address.script
-    LockScript.new(code_hash: script.code_hash, args: script.args, hash_type: script.hash_type)
+        script = parsed_address.script
+        LockScript.new(code_hash: script.code_hash, args: script.args, hash_type: script.hash_type)
+      end
   end
 
   def average_deposit_time
@@ -61,4 +62,6 @@ class NullAddress
   def udt_accounts
     []
   end
+
+  alias_method :cached_lock_script, :lock_script
 end
