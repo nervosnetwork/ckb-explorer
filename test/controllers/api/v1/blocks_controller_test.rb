@@ -47,8 +47,8 @@ module Api
 
       test "should get serialized objects" do
         create_list(:block, 15, :with_block_hash)
-
-        blocks = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
+        block_timestamps = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).pluck(:timestamp)
+        blocks = Block.where(timestamp: block_timestamps).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes)
 
         valid_get api_v1_blocks_url
 
@@ -56,13 +56,13 @@ module Api
       end
 
       test "serialized objects should in reverse order of timestamp" do
-        create_list(:block, 2, :with_block_hash)
+        create(:block, :with_block_hash, number: 11)
+        create(:block, :with_block_hash, number: 12)
 
         valid_get api_v1_blocks_url
 
         first_block = json["data"].first
         last_block = json["data"].last
-
         assert_operator first_block.dig("attributes", "timestamp"), :>, last_block.dig("attributes", "timestamp")
       end
 
@@ -132,7 +132,8 @@ module Api
       test "should return corresponding page's records when page is set and page_size is not set" do
         page = 2
         create_list(:block, 20, :with_block_hash)
-        blocks = Block.order(timestamp: :desc).limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
+        block_timestamps = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).pluck(:timestamp)
+        blocks = Block.where(timestamp: block_timestamps).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes)
 
         valid_get api_v1_blocks_url, params: { page: page }
 
@@ -147,7 +148,8 @@ module Api
 
         valid_get api_v1_blocks_url, params: { page_size: 12 }
 
-        blocks = Block.order(timestamp: :desc).limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
+        block_timestamps = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).pluck(:timestamp)
+        blocks = Block.where(timestamp: block_timestamps).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes)
         response_blocks = BlockListSerializer.new(blocks, {}).serialized_json
         assert_equal response_blocks, response.body
         assert_equal 15, json["data"].size
