@@ -56,14 +56,15 @@ module Api
       end
 
       test "serialized objects should in reverse order of timestamp" do
-        create(:block, :with_block_hash, number: 11)
-        create(:block, :with_block_hash, number: 12)
+        timestamp = Time.current.to_i
+        create(:block, :with_block_hash, number: 11, timestamp: timestamp)
+        create(:block, :with_block_hash, number: 12, timestamp: timestamp + 8.seconds)
 
         valid_get api_v1_blocks_url
 
         first_block = json["data"].first
         last_block = json["data"].last
-        assert_operator first_block.dig("attributes", "timestamp"), :>, last_block.dig("attributes", "timestamp")
+        assert_operator first_block.dig("attributes", "timestamp").to_i, :>, last_block.dig("attributes", "timestamp").to_i
       end
 
       test "should contain right keys in the serialized object" do
