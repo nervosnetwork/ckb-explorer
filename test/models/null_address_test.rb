@@ -26,11 +26,6 @@ class NullAddressTest < ActiveSupport::TestCase
     assert_nil null_address.lock_info
   end
 
-  test ".cached_lock_script should return nil" do
-    null_address = NullAddress.new("ckb1qyqxfde320py026hwvsev240t35mjjvsccgq5dugeg")
-    assert_nil null_address.cached_lock_script
-  end
-
   test ".dao_deposit should return zero" do
     null_address = NullAddress.new("ckb1qyqxfde320py026hwvsev240t35mjjvsccgq5dugeg")
     assert_equal 0, null_address.dao_deposit
@@ -120,5 +115,12 @@ class NullAddressTest < ActiveSupport::TestCase
     null_address = NullAddress.new("ckb1qyqxfde320py026hwvsev240t35mjjvsccgq5dugeg")
 
     assert_nil null_address.lock_info
+  end
+
+  test "#cached_lock_script and lock_script should return the same value" do
+    ENV["CKB_NET_MODE"] = "testnet"
+    null_address = NullAddress.new("ckt1qyqvrwwyvnlk0mq5v8hrecc0raw58h8nanqq4ufmkm")
+    assert_equal null_address.cached_lock_script, null_address.lock_script
+    ENV["CKB_NET_MODE"] = "mainnet"
   end
 end
