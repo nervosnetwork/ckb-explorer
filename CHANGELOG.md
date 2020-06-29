@@ -1,3 +1,23 @@
+# [v0.9.8](https://github.com/shaojunda/ckb-explorer/compare/v0.9.7...v0.9.8) (2020-06-29)
+
+
+### Bug Fixes
+
+* [#645](https://github.com/nervosnetwork/ckb-explorer/pull/645): dao contract transactions api can find normal tx
+* [#646](https://github.com/nervosnetwork/ckb-explorer/pull/646): dao contract transaction bug
+* [#649](https://github.com/nervosnetwork/ckb-explorer/pull/649): update udt accounts bug
+
+
+### Features
+
+* [#652](https://github.com/nervosnetwork/ckb-explorer/pull/652): add more info to sudt
+
+### Performance Improvements
+
+* [#662](https://github.com/nervosnetwork/ckb-explorer/pull/662): perf block index api
+* [#658](https://github.com/nervosnetwork/ckb-explorer/pull/658): reduce RPC call on cellbase
+
+
 # [v0.9.7](https://github.com/shaojunda/ckb-explorer/compare/v0.9.6...v0.9.7) (2020-06-05)
 
 
