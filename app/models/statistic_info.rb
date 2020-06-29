@@ -32,7 +32,7 @@ class StatisticInfo
 
   def transactions_count_per_minute(interval = 100)
     start_block_number = [tip_block_number.to_i - interval + 1, 0].max
-    timestamps = Block.where(number: [start_block_number, tip_block_number]).order(timestamp: :desc).pluck(:timestamp)
+    timestamps = Block.where(number: [start_block_number, tip_block_number]).recent.pluck(:timestamp)
     return if timestamps.empty?
 
     transactions_count = Block.where(number: start_block_number..tip_block_number).sum(:ckb_transactions_count)
@@ -46,7 +46,7 @@ class StatisticInfo
 
   def average_block_time(interval = average_block_time_interval)
     start_block_number = [tip_block_number.to_i - interval + 1, 0].max
-    timestamps = Block.where(number: [start_block_number, tip_block_number]).order(timestamp: :desc).pluck(:timestamp)
+    timestamps = Block.where(number: [start_block_number, tip_block_number]).recent.pluck(:timestamp)
     return if timestamps.empty?
 
     total_block_time(timestamps) / blocks_count(interval)
@@ -92,6 +92,6 @@ class StatisticInfo
   end
 
   def tip_block
-    @tip_block ||= Block.order(timestamp: :desc).first
+    @tip_block ||= Block.recent.first
   end
 end
