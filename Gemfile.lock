@@ -155,6 +155,8 @@ GEM
     factory_bot_rails (5.0.2)
       factory_bot (~> 5.0.2)
       railties (>= 4.2.0)
+    faraday (1.0.1)
+      multipart-post (>= 1.2, < 3)
     fast_jsonapi (1.5)
       activesupport (>= 4.2)
     ffi (1.13.1)
@@ -211,6 +213,7 @@ GEM
     mocha (1.8.0)
       metaclass (~> 0.0.1)
     msgpack (1.2.10)
+    multipart-post (2.1.1)
     net-http-persistent (3.0.1)
       connection_pool (~> 2.2)
     newrelic_rpm (6.4.0.356)
@@ -293,6 +296,8 @@ GEM
     ruby-progressbar (1.10.1)
     ruby_dep (1.5.0)
     safe_yaml (1.0.5)
+    sentry-raven (3.0.0)
+      faraday (>= 1.0)
     shoulda-context (1.2.2)
     shoulda-matchers (4.1.0)
       activesupport (>= 4.2.0)
@@ -401,6 +406,7 @@ DEPENDENCIES
   rubocop-performance
   rubocop-rails
   ruby-progressbar
+  sentry-raven
   shoulda-context
   shoulda-matchers
   sidekiq
