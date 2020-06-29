@@ -59,7 +59,7 @@ class StatisticInfoChart
     if current_epoch_number > 0
       Block.where(epoch: 0).recent.first&.number.to_i
     else
-      Block.recent.last&.number.to_i
+      Block.recent.order("timestamp asc").first&.number.to_i
     end
   end
 end

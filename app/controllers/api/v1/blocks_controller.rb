@@ -6,7 +6,8 @@ module Api
 
       def index
         if from_home_page?
-          blocks = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
+          block_timestamps = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).pluck(:timestamp)
+          blocks = Block.where(timestamp: block_timestamps).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes)
           options = {}
         else
           block_timestamps = Block.recent.select(:timestamp).page(@page).per(@page_size)
