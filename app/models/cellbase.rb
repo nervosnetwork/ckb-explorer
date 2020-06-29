@@ -4,7 +4,6 @@ class Cellbase
   def initialize(block)
     @block = block
     @target_block_number = @block.target_block.present? ? @block.target_block_number : 0
-    @cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(block.block_hash)
   end
 
   def proposal_reward
@@ -33,5 +32,17 @@ class Cellbase
 
   private
 
-  attr_reader :cellbase_output_capacity_details, :block
+  attr_reader :block
+
+  def cellbase_output_capacity_details
+    @cellbase_output_capacity_details ||=
+      begin
+        if block.target_block_reward_status == "issued"
+          target_block = block.target_block
+          OpenStruct.new(primary: target_block.primary_reward, secondary: target_block.secondary_reward, proposal_reward: target_block.proposal_reward, tx_fee: target_block.commit_reward)
+        else
+          CkbSync::Api.instance.get_cellbase_output_capacity_details(block.block_hash)
+        end
+      end
+  end
 end

@@ -89,6 +89,14 @@ class CkbUtils
     node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.secondary.to_i : 0
   end
 
+  def self.proposal_reward(node_block_header, cellbase_output_capacity_details)
+    node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.proposal_reward.to_i : 0
+  end
+
+  def self.commit_reward(node_block_header, cellbase_output_capacity_details)
+    node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.tx_fee.to_i : 0
+  end
+
   def self.get_epoch_info(epoch)
     CkbSync::Api.instance.get_epoch_by_number(epoch)
   end
@@ -157,7 +165,9 @@ class CkbUtils
     reward = CkbUtils.block_reward(block_header.new(current_block.block_hash, current_block.number))
     primary_reward = CkbUtils.primary_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
     secondary_reward = CkbUtils.secondary_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
-    target_block.update!(reward_status: "issued", reward: reward, primary_reward: primary_reward, secondary_reward: secondary_reward)
+    proposal_reward = CkbUtils.proposal_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
+    commit_reward = CkbUtils.commit_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
+    target_block.update!(reward_status: "issued", reward: reward, primary_reward: primary_reward, secondary_reward: secondary_reward, commit_reward: commit_reward, proposal_reward: proposal_reward)
     current_block.update!(target_block_reward_status: "issued")
   end
 

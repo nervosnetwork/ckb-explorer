@@ -64,6 +64,8 @@ gem "kaminari"
 
 gem "ruby-progressbar", require: false
 
+gem "sentry-raven"
+
 # Deployment
 gem "mina", require: false
 gem "mina-multistage", require: false
