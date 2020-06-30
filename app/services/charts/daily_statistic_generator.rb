@@ -197,7 +197,7 @@ module Charts
     end
 
     def avg_hash_rate
-      first_block_for_the_day = Block.created_after(started_at).created_before(ended_at).recent.last
+      first_block_for_the_day = Block.created_after(started_at).created_before(ended_at).order("timestamp asc").first
       last_block_for_the_day = Block.created_after(started_at).created_before(ended_at).recent.first
       total_block_time = last_block_for_the_day.timestamp - first_block_for_the_day.timestamp
 
@@ -211,7 +211,7 @@ module Charts
     def total_difficulties_for_the_day
       @total_difficulties_for_the_day ||=
         epoch_numbers_for_the_day.reduce(0) do |memo, epoch_number|
-          first_block_of_the_epoch = Block.created_after(started_at).created_before(ended_at).where(epoch: epoch_number).recent.last
+          first_block_of_the_epoch = Block.created_after(started_at).created_before(ended_at).where(epoch: epoch_number).order("timestamp asc").first
           last_block_of_the_epoch = Block.created_after(started_at).created_before(ended_at).where(epoch: epoch_number).recent.first
           memo + first_block_of_the_epoch.difficulty * (last_block_of_the_epoch.number - first_block_of_the_epoch.number + 1)
         end

@@ -25,7 +25,7 @@ class Block < ApplicationRecord
   attribute :uncle_block_hashes, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
 
-  scope :recent, -> { order(timestamp: :desc) }
+  scope :recent, -> { order("timestamp desc nulls last") }
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
   scope :h24, -> { where("timestamp > ?", 24.hours.ago.to_datetime.strftime("%Q")) }
