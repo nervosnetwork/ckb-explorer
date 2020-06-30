@@ -162,6 +162,7 @@ def build_display_info_from_node_output(output)
 end
 
 def prepare_api_wrapper
+  SecureRandom.stubs(:uuid).returns(1)
   CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
     CKB::Types::BlockReward.new(
       total: "0x174876e800",
