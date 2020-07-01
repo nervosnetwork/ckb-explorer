@@ -76,7 +76,9 @@ class StatisticInfo
   end
 
   def blockchain_info
-    CkbSync::Api.instance.get_blockchain_info
+    Rails.cache.realize("blockchain_info", expires_in: 6.hours) do
+      CkbSync::Api.instance.get_blockchain_info
+    end
   end
 
   private
