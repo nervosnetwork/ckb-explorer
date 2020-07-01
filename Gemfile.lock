@@ -1,12 +1,12 @@
 GIT
   remote: https://github.com/nervosnetwork/ckb-sdk-ruby.git
-  revision: db7917c8cdcc9c4bdefd6e39f48a19eb3fda3491
+  revision: e0b1c3046331de14175abf0864866947d4e7a941
   branch: develop
   specs:
-    ckb-sdk-ruby (0.32.0)
+    ckb-sdk-ruby (0.33.0)
       bitcoin-secp256k1 (~> 0.5.2)
       net-http-persistent (~> 3.0.0)
-      rbnacl (~> 6.0, >= 6.0.1)
+      rbnacl (~> 7.1.1)
 
 GIT
   remote: https://github.com/stympy/faker.git
@@ -278,7 +278,7 @@ GEM
     rb-fsevent (0.10.3)
     rb-inotify (0.10.0)
       ffi (~> 1.0)
-    rbnacl (6.0.1)
+    rbnacl (7.1.1)
       ffi
     redis (4.1.2)
     rubocop (0.71.0)
