@@ -1,6 +1,10 @@
+require "new_relic/agent/method_tracer"
+
 module Api
   module V1
     class StatisticsController < ApplicationController
+      include ::NewRelic::Agent::MethodTracer
+
       before_action :validate_query_params, only: :show
 
       def index
@@ -10,7 +14,7 @@ module Api
 
       def show
         statistic_info = StatisticInfo.new
-        render json: StatisticSerializer.new(statistic_info, { params: { info_name: params[:id] } })
+        render json: StatisticSerializer.new(statistic_info, params: { info_name: params[:id] })
       end
 
       private
@@ -25,6 +29,8 @@ module Api
           render json: errors, status: status
         end
       end
+
+      add_method_tracer :show, "Custom/statistic_show"
     end
   end
 end
