@@ -138,6 +138,7 @@ end
 #  live_cells_count       :decimal(30, )    default(0)
 #  mined_blocks_count     :integer          default(0)
 #  average_deposit_time   :decimal(, )
+#  unclaimed_compensation :decimal(30, )
 #
 # Indexes
 #
