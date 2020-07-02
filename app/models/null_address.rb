@@ -63,5 +63,9 @@ class NullAddress
     []
   end
 
+  def unclaimed_compensation
+    0
+  end
+
   alias_method :cached_lock_script, :lock_script
 end
