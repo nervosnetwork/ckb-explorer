@@ -136,7 +136,7 @@ class Address < ApplicationRecord
       dao = cell_output.block.dao
       parse_dao = CkbUtils.parse_dao(dao)
       tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-      memo + (cell_output.capacity * tip_parse_dao.ar_i / parse_dao.ar_i) - cell_output.capacity
+      memo + (cell_output.capacity.to_i * tip_parse_dao.ar_i / parse_dao.ar_i) - cell_output.capacity.to_i
     end
   end
 end
