@@ -161,9 +161,11 @@ end
 #  mined_blocks_count     :integer          default(0)
 #  average_deposit_time   :decimal(, )
 #  unclaimed_compensation :decimal(30, )
+#  is_depositor           :boolean          default(FALSE)
 #
 # Indexes
 #
 #  index_addresses_on_address_hash  (address_hash)
+#  index_addresses_on_is_depositor  (is_depositor) WHERE (is_depositor = true)
 #  index_addresses_on_lock_hash     (lock_hash) UNIQUE
 #
