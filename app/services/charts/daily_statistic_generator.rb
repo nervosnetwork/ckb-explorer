@@ -323,7 +323,7 @@ module Charts
             tip_dao = current_tip_block.dao
             parse_dao = CkbUtils.parse_dao(dao)
             tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-            memo + (cell_output.capacity.to_i * tip_parse_dao.ar_i / parse_dao.ar_i) - cell_output.capacity.to_i
+            memo + (cell_output.capacity - cell_output.occupied_capacity).to_i * tip_parse_dao.ar_i / parse_dao.ar_i - (cell_output.capacity - cell_output.occupied_capacity)
           end
         end
     end
