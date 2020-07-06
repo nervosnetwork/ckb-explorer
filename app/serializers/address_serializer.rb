@@ -35,4 +35,7 @@ class AddressSerializer
   attribute :lock_script do |object|
     object.cached_lock_script
   end
+  attribute :dao_compensation do |object|
+    (object.interest + object.unclaimed_compensation.to_i).to_s
+  end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_28_091022) do
+ActiveRecord::Schema.define(version: 2020_07_03_043629) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -39,7 +39,10 @@ ActiveRecord::Schema.define(version: 2020_06_28_091022) do
     t.decimal "live_cells_count", precision: 30, default: "0"
     t.integer "mined_blocks_count", default: 0
     t.decimal "average_deposit_time"
+    t.decimal "unclaimed_compensation", precision: 30
+    t.boolean "is_depositor", default: false
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
+    t.index ["is_depositor"], name: "index_addresses_on_is_depositor", where: "(is_depositor = true)"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
   end
 
