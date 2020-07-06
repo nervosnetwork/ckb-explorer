@@ -100,12 +100,12 @@ class AddressTest < ActiveSupport::TestCase
     create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 10000 * 10**8, generated_by: nervos_dao_withdrawing_tx, cell_index: 0)
     create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 20000 * 10**8, generated_by: nervos_dao_withdrawing_tx, cell_index: 1)
 
-    deposit_cell = create(:cell_output, block: deposit_block, address: address, cell_type: "nervos_dao_deposit", capacity: 60000 * 10**8, ckb_transaction: deposit_tx, generated_by: deposit_tx, cell_index: 0)
+    deposit_cell = create(:cell_output, block: deposit_block, address: address, cell_type: "nervos_dao_deposit", capacity: 60000 * 10**8, ckb_transaction: deposit_tx, generated_by: deposit_tx, cell_index: 0, occupied_capacity: 6100000000)
 
     expected_phase1_dao_interests = 20000000000
     parse_dao_ar_i = 10239678363827763
     tip_dao_ar_i = 10239685510632493
-    expected_unmade_dao_interests = deposit_cell.capacity * tip_dao_ar_i / parse_dao_ar_i - deposit_cell.capacity
+    expected_unmade_dao_interests = (deposit_cell.capacity - deposit_cell.occupied_capacity).to_i * tip_dao_ar_i / parse_dao_ar_i - (deposit_cell.capacity - deposit_cell.occupied_capacity)
 
     assert_equal (expected_phase1_dao_interests + expected_unmade_dao_interests), address.cal_unclaimed_compensation
   end
