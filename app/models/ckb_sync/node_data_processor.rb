@@ -144,6 +144,7 @@ module CkbSync
       new_dao_depositor_events.each do |event|
         dao_contract.increment!(:depositors_count)
         dao_contract.increment!(:total_depositors_count)
+        event.address.update(is_depositor: true)
         event.processed!
       end
     end
