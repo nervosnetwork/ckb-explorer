@@ -13,7 +13,7 @@ task :set_maintenance_info, [:start_at, :end_at, :dry_run] => :environment do |_
     puts "start_at: #{start_at}"
     puts "end_at: #{end_at}"
   else
-    info = { start_at: start_at.to_i, end_at: end_at.to_i }
+    info = { start_at: start_at.to_i.to_s, end_at: end_at.to_i.to_s }
     puts "inf: #{info}"
     Rails.cache.write("maintenance_info", info)
   end
