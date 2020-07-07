@@ -10,7 +10,7 @@ module Api
 
       def show
         statistic_info = StatisticInfo.new
-        render json: StatisticSerializer.new(statistic_info, { params: { info_name: params[:id] } })
+        render json: StatisticSerializer.new(statistic_info, params: { info_name: params[:id] })
       end
 
       private
