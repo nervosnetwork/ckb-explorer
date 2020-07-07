@@ -1,5 +1,3 @@
-require "new_relic/agent/method_tracer"
-
 module Api
   module V1
     class StatisticsController < ApplicationController
