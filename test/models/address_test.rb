@@ -93,7 +93,7 @@ class AddressTest < ActiveSupport::TestCase
     previous_output_tx = create(:ckb_transaction, block: previous_output_block)
     create(:cell_output, block: previous_output_block, capacity: 50000 * 10**8, ckb_transaction: previous_output_tx, tx_hash: previous_output_tx.tx_hash, generated_by: previous_output_tx, cell_type: "nervos_dao_deposit", cell_index: 0)
     create(:cell_output, block: previous_output_block, capacity: 50000 * 10**8, ckb_transaction: previous_output_tx, tx_hash: previous_output_tx.tx_hash, generated_by: previous_output_tx, cell_type: "nervos_dao_deposit", cell_index: 1)
-    nervos_dao_withdrawing_block = create(:block, :with_block_hash, dao: "0x9a7a7ce1f34c6a332d147991f0602400aaf7346eb06bfc0000e2abc108760207", timestamp: Time.current)
+    nervos_dao_withdrawing_block = create(:block, :with_block_hash, dao: "0x9a7a7ce1f34c6a332d147991f0602400aaf7346eb06bfc0000e2abc108760207", timestamp: CkbUtils.time_in_milliseconds(Time.current))
     nervos_dao_withdrawing_tx = create(:ckb_transaction, block: nervos_dao_withdrawing_block)
     create(:cell_input, block: nervos_dao_withdrawing_block, previous_output: { tx_hash: previous_output_tx.tx_hash, index: 0 }, ckb_transaction: nervos_dao_withdrawing_tx)
     create(:cell_input, block: nervos_dao_withdrawing_block, previous_output: { tx_hash: previous_output_tx.tx_hash, index: 1 }, ckb_transaction: nervos_dao_withdrawing_tx)
