@@ -28,4 +28,8 @@ class StatisticSerializer
   attribute :address_balance_ranking, if: Proc.new { |_record, params|
     params && params[:info_name] == "address_balance_ranking"
   }
+
+  attribute :maintenance_info, if: Proc.new { |_record, params|
+    params && params[:info_name] == "maintenance_info"
+  }
 end
