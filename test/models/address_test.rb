@@ -83,4 +83,30 @@ class AddressTest < ActiveSupport::TestCase
       assert_equal output.lock.compute_hash, address.lock_hash
     end
   end
+
+  test "#cal_unclaimed_compensation should return phase1 dao interests and unmade dao interests" do
+    CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x48e7b453400")
+    address = create(:address, is_depositor: true)
+    deposit_block = create(:block, :with_block_hash, dao: "0xea43d76640436a33337e7de7ee60240035099074a869fc0000165f8ab3750207")
+    deposit_tx = create(:ckb_transaction, block: deposit_block)
+    previous_output_block = create(:block, :with_block_hash)
+    previous_output_tx = create(:ckb_transaction, block: previous_output_block)
+    create(:cell_output, block: previous_output_block, capacity: 50000 * 10**8, ckb_transaction: previous_output_tx, tx_hash: previous_output_tx.tx_hash, generated_by: previous_output_tx, cell_type: "nervos_dao_deposit", cell_index: 0)
+    create(:cell_output, block: previous_output_block, capacity: 50000 * 10**8, ckb_transaction: previous_output_tx, tx_hash: previous_output_tx.tx_hash, generated_by: previous_output_tx, cell_type: "nervos_dao_deposit", cell_index: 1)
+    nervos_dao_withdrawing_block = create(:block, :with_block_hash, dao: "0x9a7a7ce1f34c6a332d147991f0602400aaf7346eb06bfc0000e2abc108760207", timestamp: Time.current)
+    nervos_dao_withdrawing_tx = create(:ckb_transaction, block: nervos_dao_withdrawing_block)
+    create(:cell_input, block: nervos_dao_withdrawing_block, previous_output: { tx_hash: previous_output_tx.tx_hash, index: 0 }, ckb_transaction: nervos_dao_withdrawing_tx)
+    create(:cell_input, block: nervos_dao_withdrawing_block, previous_output: { tx_hash: previous_output_tx.tx_hash, index: 1 }, ckb_transaction: nervos_dao_withdrawing_tx)
+    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 10000 * 10**8, generated_by: nervos_dao_withdrawing_tx, cell_index: 0)
+    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 20000 * 10**8, generated_by: nervos_dao_withdrawing_tx, cell_index: 1)
+
+    deposit_cell = create(:cell_output, block: deposit_block, address: address, cell_type: "nervos_dao_deposit", capacity: 60000 * 10**8, ckb_transaction: deposit_tx, generated_by: deposit_tx, cell_index: 0, occupied_capacity: 6100000000)
+
+    expected_phase1_dao_interests = 20000000000
+    parse_dao_ar_i = 10239678363827763
+    tip_dao_ar_i = 10239685510632493
+    expected_unmade_dao_interests = (deposit_cell.capacity - deposit_cell.occupied_capacity).to_i * tip_dao_ar_i / parse_dao_ar_i - (deposit_cell.capacity - deposit_cell.occupied_capacity)
+
+    assert_equal (expected_phase1_dao_interests + expected_unmade_dao_interests), address.cal_unclaimed_compensation
+  end
 end

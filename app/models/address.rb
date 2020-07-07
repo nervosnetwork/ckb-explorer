@@ -117,6 +117,28 @@ class Address < ApplicationRecord
   def special?
     Settings.special_addresses[address_hash].present?
   end
+
+  def cal_unclaimed_compensation
+    phase1_dao_interests + unmade_dao_interests
+  end
+
+  private
+
+  def phase1_dao_interests
+    cell_outputs.nervos_dao_withdrawing.live.find_each.reduce(0) do |memo, nervos_dao_withdrawing_cell|
+      memo + CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
+    end
+  end
+
+  def unmade_dao_interests
+    tip_dao = Block.recent.first.dao
+    cell_outputs.nervos_dao_deposit.live.find_each.reduce(0) do |memo, cell_output|
+      dao = cell_output.block.dao
+      parse_dao = CkbUtils.parse_dao(dao)
+      tip_parse_dao = CkbUtils.parse_dao(tip_dao)
+      memo + (cell_output.capacity - cell_output.occupied_capacity).to_i * tip_parse_dao.ar_i / parse_dao.ar_i - (cell_output.capacity - cell_output.occupied_capacity)
+    end
+  end
 end
 
 # == Schema Information
@@ -138,9 +160,12 @@ end
 #  live_cells_count       :decimal(30, )    default(0)
 #  mined_blocks_count     :integer          default(0)
 #  average_deposit_time   :decimal(, )
+#  unclaimed_compensation :decimal(30, )
+#  is_depositor           :boolean          default(FALSE)
 #
 # Indexes
 #
 #  index_addresses_on_address_hash  (address_hash)
+#  index_addresses_on_is_depositor  (is_depositor) WHERE (is_depositor = true)
 #  index_addresses_on_lock_hash     (lock_hash) UNIQUE
 #
