@@ -546,6 +546,21 @@ types:
       "address_balance_ranking": {
         type: "address_balance_ranking"
       }
+      "maintenance_info": {
+        type: "maintenance_info"
+      }
+    }
+  }
+
+  maintenance_info: {
+    type: object,
+    properties: {
+      "stat_at": {
+        type: "string"
+      },
+      "end_at": {
+        type: "string"
+      }
     }
   }
 
@@ -2474,6 +2489,19 @@ types:
                         ]
                       }
                     }
+                  }
+                maintenance_info: |
+                  {
+                    "data": {
+                        "id": "1594105429",
+                        "type": "statistic",
+                        "attributes": {
+                           "maintenance_info": {
+                             "start_at": "1591632000",
+                             "end_at": "1591639200"
+                           }
+                         }
+                     }
                   }
         404:
           body:
