@@ -540,6 +540,9 @@ types:
       "hash_rate": {
         type: "string",
       },
+      "flush_cache_info": {
+        type: "string[]"
+      }
       "blockchain_info": {
         type: "object"
       },
@@ -2428,6 +2431,19 @@ types:
                              }
                          }
                      }
+                  }
+                flush_cache_info: |
+                  {
+                    "data": {
+                      "id": "1594109792",
+                      "type": "statistic",
+                      "attributes": {
+                        "flush_cache_info": [
+                          "liquidity",
+                          "deposit_compensation"
+                        ]
+                      }
+                    }
                   }
                 address_balance_ranking: |
                   {
