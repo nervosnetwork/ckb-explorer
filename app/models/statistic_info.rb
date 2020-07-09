@@ -81,6 +81,14 @@ class StatisticInfo
     end
   end
 
+  def maintenance_info
+    Rails.cache.fetch("maintenance_info")
+  end
+
+  def flush_cache_info
+    Rails.cache.realize("flush_cache_info") || []
+  end
+
   private
 
   attr_reader :hash_rate_statistical_interval, :average_block_time_interval

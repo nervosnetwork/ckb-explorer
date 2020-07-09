@@ -540,11 +540,29 @@ types:
       "hash_rate": {
         type: "string",
       },
+      "flush_cache_info": {
+        type: "string[]"
+      }
       "blockchain_info": {
         type: "object"
       },
       "address_balance_ranking": {
         type: "address_balance_ranking"
+      }
+      "maintenance_info": {
+        type: "maintenance_info"
+      }
+    }
+  }
+
+  maintenance_info: {
+    type: object,
+    properties: {
+      "stat_at": {
+        type: "string"
+      },
+      "end_at": {
+        type: "string"
       }
     }
   }
@@ -2414,6 +2432,19 @@ types:
                          }
                      }
                   }
+                flush_cache_info: |
+                  {
+                    "data": {
+                      "id": "1594109792",
+                      "type": "statistic",
+                      "attributes": {
+                        "flush_cache_info": [
+                          "liquidity",
+                          "deposit_compensation"
+                        ]
+                      }
+                    }
+                  }
                 address_balance_ranking: |
                   {
                     "data": {
@@ -2474,6 +2505,19 @@ types:
                         ]
                       }
                     }
+                  }
+                maintenance_info: |
+                  {
+                    "data": {
+                        "id": "1594105429",
+                        "type": "statistic",
+                        "attributes": {
+                           "maintenance_info": {
+                             "start_at": "1591632000",
+                             "end_at": "1591639200"
+                           }
+                         }
+                     }
                   }
         404:
           body:

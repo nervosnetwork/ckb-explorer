@@ -1,3 +1,23 @@
+# [v0.9.9](https://github.com/nervosnetwork/ckb-explorer/compare/v0.9.8...v0.9.9) (2020-07-09)
+
+
+### Bug Fixes
+
+* [#669](https://github.com/nervosnetwork/ckb-explorer/pull/669): fix ActiveRecord::IrreversibleOrderError
+
+
+### Features
+
+* [#677](https://github.com/nervosnetwork/ckb-explorer/pull/677): update dao compensation logic to include the unclaimed compensation 
+* [#680](https://github.com/nervosnetwork/ckb-explorer/pull/680): add maintenance info API
+* [#682](https://github.com/nervosnetwork/ckb-explorer/pull/682): add flush front-end cache API
+
+### Performance Improvements
+
+* [#699](https://github.com/nervosnetwork/ckb-explorer/pull/669): use separate query and just select needed field
+* [#670](https://github.com/nervosnetwork/ckb-explorer/pull/670): use recent scope on block query
+* [#675](https://github.com/nervosnetwork/ckb-explorer/pull/675): add cache on blockchain info
+
 # [v0.9.8](https://github.com/nervosnetwork/ckb-explorer/compare/v0.9.7...v0.9.8) (2020-06-29)
 
 
