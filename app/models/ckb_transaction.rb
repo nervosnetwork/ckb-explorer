@@ -15,7 +15,7 @@ class CkbTransaction < ApplicationRecord
   attribute :tx_hash, :ckb_hash
   attribute :header_deps, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]
 
-  scope :recent, -> { order(block_timestamp: :desc) }
+  scope :recent, -> { order("block_timestamp desc nulls last") }
   scope :cellbase, -> { where(is_cellbase: true) }
   scope :normal, -> { where(is_cellbase: false) }
   scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
