@@ -151,6 +151,7 @@ end
 # Indexes
 #
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
+#  index_ckb_transactions_on_block_timestamp               (block_timestamp)
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)
 #  index_ckb_transactions_on_tx_hash_and_block_id          (tx_hash,block_id) UNIQUE
 #
