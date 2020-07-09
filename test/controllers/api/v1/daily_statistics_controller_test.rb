@@ -48,7 +48,8 @@ module Api
       end
 
       test "should return addresses count and timestamp" do
-        daily_statistic_data = create_list(:daily_statistic, 15)
+        create_list(:daily_statistic, 15)
+        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp)
         valid_get api_v1_daily_statistic_url("addresses_count")
 
         assert_equal [%w(addresses_count created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq

@@ -25,7 +25,15 @@ class StatisticSerializer
     params && params[:info_name] == "blockchain_info"
   }
 
+  attribute :flush_cache_info, if: Proc.new { |_record, params|
+    params && params[:info_name] == "flush_cache_info"
+  }
+
   attribute :address_balance_ranking, if: Proc.new { |_record, params|
     params && params[:info_name] == "address_balance_ranking"
+  }
+
+  attribute :maintenance_info, if: Proc.new { |_record, params|
+    params && params[:info_name] == "maintenance_info"
   }
 end
