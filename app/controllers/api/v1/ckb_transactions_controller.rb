@@ -6,14 +6,20 @@ module Api
 
       def index
         if from_home_page?
-          block_timestamps = CkbTransaction.recent.normal.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i).pluck(:block_timestamp)
-          ckb_transactions = CkbTransaction.where(block_timestamp: block_timestamps).select(:transaction_hash, :block_number, :block_timestamp, :capacity_involved).recent
-          render json: CkbTransactionListSerializer.new(ckb_transactions)
+          ckb_transactions = CkbTransaction.recent.normal.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved)
+          json =
+            Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
+              CkbTransactionListSerializer.new(ckb_transactions).serialized_json
+            end
+          render json: json
         else
-          block_timestamps = CkbTransaction.recent.normal.select(:block_timestamp).page(@page).per(@page_size)
-          ckb_transactions = CkbTransaction.where(block_timestamp: block_timestamps).select(:transaction_hash, :block_number, :block_timestamp, :capacity_involved).recent
-          options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
-          render json: CkbTransactionListSerializer.new(ckb_transactions, options)
+          ckb_transactions = CkbTransaction.recent.normal.page(@page).per(@page_size).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved)
+          json =
+            Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
+              options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
+              CkbTransactionListSerializer.new(ckb_transactions, options).serialized_json
+            end
+          render json: json
         end
       end
 
