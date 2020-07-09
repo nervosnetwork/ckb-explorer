@@ -6,10 +6,12 @@ module Api
 
       def index
         if from_home_page?
-          ckb_transactions = CkbTransaction.recent.normal.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
+          block_timestamps = CkbTransaction.recent.normal.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i).pluck(:block_timestamp)
+          ckb_transactions = CkbTransaction.where(block_timestamp: block_timestamps).select(:transaction_hash, :block_number, :block_timestamp, :capacity_involved).recent
           render json: CkbTransactionListSerializer.new(ckb_transactions)
         else
-          ckb_transactions = CkbTransaction.recent.normal.page(@page).per(@page_size)
+          block_timestamps = CkbTransaction.recent.normal.select(:block_timestamp).page(@page).per(@page_size)
+          ckb_transactions = CkbTransaction.where(block_timestamp: block_timestamps).select(:transaction_hash, :block_number, :block_timestamp, :capacity_involved).recent
           options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
           render json: CkbTransactionListSerializer.new(ckb_transactions, options)
         end
