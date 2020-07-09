@@ -82,7 +82,7 @@ class NullAddressTest < ActiveSupport::TestCase
       )
     )
     null_address = NullAddress.new("ckt1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323k5v49yzmvm0q0kfqw0hk0kyal6z32nwjvcqqr7qyzq8yqtec2wj")
-    expected_lock_info = { status: "locked", epoch_number: "51", epoch_index: "764", estimated_unlock_time: "1576212722613" }
+    expected_lock_info = { status: "locked", epoch_number: "51", epoch_index: "764", estimated_unlock_time: "1576226962613" }
 
     assert_equal expected_lock_info.to_a.sort, null_address.lock_info.to_a.sort
   end
