@@ -98,7 +98,7 @@ class LockScriptTest < ActiveSupport::TestCase
     address = create(:address)
     create(:block, number: 107036, start_number: 106327, epoch: 118, timestamp: 1576648516881, length: 796)
     lock_script = create(:lock_script, address: address, args: "0x691fdcdc80ca82a4cb15826dcb7f0cf04cd821367600004506080720", code_hash: ENV["SECP_MULTISIG_CELL_TYPE_HASH"])
-    expected_lock_info = { status: "unlocked", epoch_number: "118", epoch_index: "1605", estimated_unlock_time: "1576648516881" }
+    expected_lock_info = { status: "locked", epoch_number: "118", epoch_index: "1605", estimated_unlock_time: "1576648532881" }
 
     assert_equal expected_lock_info, lock_script.lock_info
   end
