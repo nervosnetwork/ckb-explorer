@@ -25,7 +25,9 @@ class LockScript < ApplicationRecord
         since_value = SinceParser.new(since).parse
         return if since_value.blank?
 
-        tip_epoch = CkbUtils.parse_epoch(CkbSync::Api.instance.get_tip_header.epoch)
+        tip_block = Block.recent.first
+        tip_epoch = tip_epoch(tip_block)
+
         epoch_number, since_value_index = set_since_epoch_number_and_index(since_value)
         block_interval = (epoch_number * 1800 + since_value_index * 1800 / since_value.length) - (tip_epoch.number * 1800 + tip_epoch.index * 1800 / tip_epoch.length)
 
@@ -35,7 +37,7 @@ class LockScript < ApplicationRecord
           block_timestamp = Block.where(number: block.start_number + new_index).pick(:timestamp)
           estimated_unlock_time = DateTime.strptime(block_timestamp.to_s, "%Q")
         else
-          tip_block_timestamp = Block.recent.where(epoch: tip_epoch.number).pick(:timestamp)
+          tip_block_timestamp = tip_block.timestamp
           tip_block_time = DateTime.strptime(tip_block_timestamp.to_s, "%Q")
           estimated_unlock_time = tip_block_time + (block_interval * 8).seconds
         end
@@ -67,6 +69,14 @@ class LockScript < ApplicationRecord
       tip_epoch.index * since_value.length > since_value.index * tip_epoch.length)
 
     after_lock_epoch_number || at_lock_epoch_number_but_exceeded_index ? "unlocked" : "locked"
+  end
+
+  def tip_epoch(tip_block)
+    @tip_epoch ||=
+      begin
+        tip_epoch_index = tip_block.number - tip_block.start_number
+        OpenStruct.new(number: tip_block.epoch, index: tip_epoch_index, length: tip_block.length)
+      end
   end
 end
 

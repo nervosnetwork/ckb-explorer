@@ -1,11 +1,11 @@
 GIT
   remote: https://github.com/nervosnetwork/ckb-sdk-ruby.git
-  revision: e0b1c3046331de14175abf0864866947d4e7a941
+  revision: c9e651c25953c0c6173f8c1fa75e98e546f1164b
   branch: develop
   specs:
     ckb-sdk-ruby (0.33.0)
       bitcoin-secp256k1 (~> 0.5.2)
-      net-http-persistent (~> 3.0.0)
+      net-http-persistent (~> 3.1.0)
       rbnacl (~> 7.1.1)
 
 GIT
@@ -214,7 +214,7 @@ GEM
       metaclass (~> 0.0.1)
     msgpack (1.2.10)
     multipart-post (2.1.1)
-    net-http-persistent (3.0.1)
+    net-http-persistent (3.1.0)
       connection_pool (~> 2.2)
     newrelic_rpm (6.4.0.356)
     nio4r (2.5.2)

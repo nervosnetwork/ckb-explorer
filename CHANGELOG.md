@@ -1,3 +1,18 @@
+# [v0.10.0](https://github.com/nervosnetwork/ckb-explorer/compare/v0.9.9...v0.10.0) (2020-07-10)
+
+
+### Features
+
+* [#683](https://github.com/nervosnetwork/ckb-explorer/pull/683): set timeout config on ckb api
+
+
+### Performance Improvements
+
+* [#687](https://github.com/nervosnetwork/ckb-explorer/pull/687): use DB data replace RPC call on lock info
+* [#688](https://github.com/nervosnetwork/ckb-explorer/pull/688): perf transaction index API
+
+
+
 # [v0.9.9](https://github.com/nervosnetwork/ckb-explorer/compare/v0.9.8...v0.9.9) (2020-07-09)
 
 

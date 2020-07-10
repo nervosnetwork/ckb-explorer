@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_07_03_043629) do
+ActiveRecord::Schema.define(version: 2020_07_09_100457) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -182,6 +182,7 @@ ActiveRecord::Schema.define(version: 2020_07_03_043629) do
     t.integer "live_cell_changes"
     t.decimal "capacity_involved", precision: 30
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
+    t.index ["block_timestamp"], name: "index_ckb_transactions_on_block_timestamp", order: "DESC NULLS LAST"
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
   end
