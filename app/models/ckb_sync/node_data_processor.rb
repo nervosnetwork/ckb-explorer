@@ -114,6 +114,7 @@ module CkbSync
       take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
       take_away_all_deposit_dao_events.each do |event|
         dao_contract.decrement!(:depositors_count)
+        event.address.update(is_depositor: false)
         event.processed!
       end
     end
