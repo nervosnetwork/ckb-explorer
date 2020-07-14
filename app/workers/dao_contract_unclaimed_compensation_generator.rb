@@ -12,18 +12,15 @@ class DaoContractUnclaimedCompensationGenerator
   end
 
   def phase1_dao_interests
-    CellOutput.nervos_dao_withdrawing.generated_before(ended_at).unconsumed_at(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
+    CellOutput.nervos_dao_withdrawing.live.reduce(0) do |memo, nervos_dao_withdrawing_cell|
       memo + CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
     end
   end
 
   def unmade_dao_interests
     tip_dao = current_tip_block.dao
-    CellOutput.nervos_dao_deposit.generated_before(ended_at).unconsumed_at(ended_at).reduce(0) do |memo, cell_output|
-      dao = cell_output.dao
-      parse_dao = CkbUtils.parse_dao(dao)
-      tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-      memo + (cell_output.capacity - cell_output.occupied_capacity).to_i * tip_parse_dao.ar_i / parse_dao.ar_i - (cell_output.capacity - cell_output.occupied_capacity)
+    CellOutput.nervos_dao_deposit.live.reduce(0) do |memo, cell_output|
+      memo + DaoCompensationCalculator.new(cell_output, tip_dao).call
     end
   end
 
