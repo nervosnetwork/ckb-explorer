@@ -515,7 +515,8 @@ module CkbSync
         generated_by: ckb_transaction,
         cell_type: cell_type(output.type, output_data),
         block_timestamp: ckb_transaction.block_timestamp,
-        type_hash: output.type&.compute_hash
+        type_hash: output.type&.compute_hash,
+        dao: ckb_transaction.block.dao
       )
 
       cell_output.udt_amount = CkbUtils.parse_udt_cell_data(output_data) if cell_output.udt?
