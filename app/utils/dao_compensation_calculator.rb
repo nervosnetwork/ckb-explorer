@@ -17,7 +17,7 @@ class DaoCompensationCalculator
   end
 
   def parsed_deposit_block_dao
-    CkbUtils.parse_dao(deposit_cell_output.block.dao)
+    CkbUtils.parse_dao(deposit_cell_output.dao)
   end
 
   def compensation_generating_capacity

@@ -204,7 +204,7 @@ class CkbUtils
   def self.dao_interest(nervos_dao_withdrawing_cell)
     nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
-    withdrawing_dao_cell_block_dao = nervos_dao_withdrawing_cell.block.dao
+    withdrawing_dao_cell_block_dao = nervos_dao_withdrawing_cell.dao
     DaoCompensationCalculator.new(nervos_dao_deposit_cell, withdrawing_dao_cell_block_dao).call
   rescue CKB::RPCError
     0
