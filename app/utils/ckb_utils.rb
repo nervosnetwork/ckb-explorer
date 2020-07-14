@@ -198,16 +198,14 @@ class CkbUtils
   def self.dao_withdraw_tx_fee(ckb_transaction)
     nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
     interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
-
     ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
   end
 
   def self.dao_interest(nervos_dao_withdrawing_cell)
     nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
-    deposit_out_point = CKB::Types::OutPoint.new(tx_hash: nervos_dao_deposit_cell.tx_hash, index: nervos_dao_deposit_cell.cell_index)
-    withdrawing_dao_cell_block_hash = nervos_dao_withdrawing_cell.block.block_hash
-    CkbSync::Api.instance.calculate_dao_maximum_withdraw(deposit_out_point, withdrawing_dao_cell_block_hash).hex - nervos_dao_deposit_cell.capacity.to_i
+    withdrawing_dao_cell_block_dao = nervos_dao_withdrawing_cell.block.dao
+    DaoCompensationCalculator.new(nervos_dao_deposit_cell, withdrawing_dao_cell_block_dao).call
   rescue CKB::RPCError
     0
   end

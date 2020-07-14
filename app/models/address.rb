@@ -133,10 +133,7 @@ class Address < ApplicationRecord
   def unmade_dao_interests
     tip_dao = Block.recent.first.dao
     cell_outputs.nervos_dao_deposit.live.find_each.reduce(0) do |memo, cell_output|
-      dao = cell_output.block.dao
-      parse_dao = CkbUtils.parse_dao(dao)
-      tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-      memo + (cell_output.capacity - cell_output.occupied_capacity).to_i * tip_parse_dao.ar_i / parse_dao.ar_i - (cell_output.capacity - cell_output.occupied_capacity)
+      memo + DaoCompensationCalculator.new(cell_output, tip_dao).call
     end
   end
 end
