@@ -65,7 +65,9 @@ class Address < ApplicationRecord
   end
 
   def lock_script
-    LockScript.where(address: self).first
+    Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
+      LockScript.where(address: self).first
+    end
   end
 
   def self.find_or_create_address(lock_script, block_timestamp)
