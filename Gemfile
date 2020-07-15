@@ -8,7 +8,7 @@ gem "rails", "~> 6.0.0"
 # Use postgresql as the database for Active Record
 gem "pg", ">= 0.18", "< 2.0"
 # Use Puma as the app server
-gem "puma", "~> 4.3.5"
+gem "puma", "~> 4.3.5", require: false
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 # gem 'jbuilder', '~> 2.5'
 # Use Redis adapter to run Action Cable in production
@@ -33,9 +33,6 @@ gem "dotenv-rails"
 
 # manage environment specific settings by config
 gem "config"
-
-# daemons
-gem "daemons", "~> 1.2", ">= 1.2.6"
 
 # CKB SDK
 gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", branch: "develop"
@@ -64,12 +61,14 @@ gem "kaminari"
 
 gem "ruby-progressbar", require: false
 
-gem "sentry-raven"
+group :production do
+  gem "sentry-raven"
+  gem "newrelic_rpm"
+end
 
 # Deployment
 gem "mina", require: false
 gem "mina-multistage", require: false
-gem "newrelic_rpm"
 gem "rack-attack"
 
 group :development, :test do
@@ -100,7 +99,7 @@ group :development do
   gem "rubocop", require: false
   gem "rubocop-rails", require: false
   gem "rubocop-performance", require: false
-  gem "awesome_print"
+  gem "awesome_print", require: false
   gem "annotate"
 end
 
