@@ -85,6 +85,7 @@ end
 #  consumed_block_timestamp :decimal(30, )
 #  type_hash                :string
 #  udt_amount               :decimal(40, )
+#  dao                      :string
 #
 # Indexes
 #

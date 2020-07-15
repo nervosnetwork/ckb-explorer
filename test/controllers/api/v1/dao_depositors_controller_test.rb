@@ -40,8 +40,8 @@ module Api
       end
 
       test "should get serialized dao depositors" do
-        create_list(:address, 10, dao_deposit: 1000)
-        addresses = Address.select(:id, :address_hash, :dao_deposit, :average_deposit_time).where("dao_deposit > 0").order(dao_deposit: :desc).limit(100)
+        create_list(:address, 10, dao_deposit: 1000, is_depositor: true)
+        addresses = Address.select(:id, :address_hash, :dao_deposit, :average_deposit_time).where(is_depositor: true).order(dao_deposit: :desc).limit(100)
 
         valid_get api_v1_dao_depositors_url
 
@@ -49,8 +49,8 @@ module Api
       end
 
       test "serialized dao depositors should order by dao deposit" do
-        create_list(:address, 3, dao_deposit: 1000)
-        addresses = Address.where("dao_deposit > 0").order("dao_deposit desc")
+        create_list(:address, 3, dao_deposit: 1000, is_depositor: true)
+        addresses = Address.where(is_depositor: true).order("dao_deposit desc")
 
         valid_get api_v1_dao_depositors_url
 
@@ -58,7 +58,7 @@ module Api
       end
 
       test "should contain right keys in the serialized dao depositors" do
-        create(:address, dao_deposit: 1000)
+        create(:address, dao_deposit: 1000, is_depositor: true)
 
         valid_get api_v1_dao_depositors_url
 
@@ -66,7 +66,7 @@ module Api
       end
 
       test "should return up to 100 records" do
-        create_list(:address, 103, dao_deposit: 1000)
+        create_list(:address, 103, dao_deposit: 1000, is_depositor: true)
 
         valid_get api_v1_dao_depositors_url
 
