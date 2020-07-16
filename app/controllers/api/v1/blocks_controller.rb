@@ -8,13 +8,13 @@ module Api
         if from_home_page?
           blocks = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes)
           json =
-            Rails.cache.realize(blocks.cache_key, version: blocks.cache_version) do
+            Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do
               BlockListSerializer.new(blocks).serialized_json
             end
         else
           blocks = Block.recent.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes).page(@page).per(@page_size)
           json =
-            Rails.cache.realize(blocks.cache_key, version: blocks.cache_version) do
+            Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do
               options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: @page, page_size: @page_size).call
               BlockListSerializer.new(blocks, options).serialized_json
             end
