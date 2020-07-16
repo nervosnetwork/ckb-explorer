@@ -131,27 +131,34 @@ end
 #
 # Table name: ckb_transactions
 #
-#  id                :bigint           not null, primary key
-#  tx_hash           :binary
-#  deps              :jsonb
-#  block_id          :bigint
-#  block_number      :decimal(30, )
-#  block_timestamp   :decimal(30, )
-#  transaction_fee   :decimal(30, )
-#  version           :integer
-#  created_at        :datetime         not null
-#  updated_at        :datetime         not null
-#  is_cellbase       :boolean          default(FALSE)
-#  witnesses         :jsonb
-#  header_deps       :binary
-#  cell_deps         :jsonb
-#  live_cell_changes :integer
-#  capacity_involved :decimal(30, )
+#  id                    :bigint           not null, primary key
+#  tx_hash               :binary
+#  deps                  :jsonb
+#  block_id              :bigint
+#  block_number          :decimal(30, )
+#  block_timestamp       :decimal(30, )
+#  transaction_fee       :decimal(30, )
+#  version               :integer
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  is_cellbase           :boolean          default(FALSE)
+#  witnesses             :jsonb
+#  header_deps           :binary
+#  cell_deps             :jsonb
+#  live_cell_changes     :integer
+#  capacity_involved     :decimal(30, )
+#  contained_address_ids :bigint           default([]), is an Array
+#  tags                  :string           default([]), is an Array
+#  contained_udt_ids     :bigint           default([]), is an Array
+
 #
 # Indexes
 #
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
 #  index_ckb_transactions_on_block_timestamp               (block_timestamp)
+#  index_ckb_transactions_on_contained_address_ids         (contained_address_ids) USING gin
+#  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)
+#  index_ckb_transactions_on_tags                          (tags) USING gin
 #  index_ckb_transactions_on_tx_hash_and_block_id          (tx_hash,block_id) UNIQUE
 #

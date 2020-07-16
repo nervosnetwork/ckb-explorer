@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_07_14_044614) do
+ActiveRecord::Schema.define(version: 2020_07_16_174806) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -182,9 +182,15 @@ ActiveRecord::Schema.define(version: 2020_07_14_044614) do
     t.jsonb "cell_deps"
     t.integer "live_cell_changes"
     t.decimal "capacity_involved", precision: 30
+    t.bigint "contained_address_ids", default: [], array: true
+    t.string "tags", default: [], array: true
+    t.bigint "contained_udt_ids", default: [], array: true
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["block_timestamp"], name: "index_ckb_transactions_on_block_timestamp", order: "DESC NULLS LAST"
+    t.index ["contained_address_ids"], name: "index_ckb_transactions_on_contained_address_ids", using: :gin
+    t.index ["contained_udt_ids"], name: "index_ckb_transactions_on_contained_udt_ids", using: :gin
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
+    t.index ["tags"], name: "index_ckb_transactions_on_tags", using: :gin
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
   end
 
