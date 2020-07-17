@@ -4,7 +4,7 @@ FactoryBot.define do
     tx_hash { "0x#{SecureRandom.hex(32)}" }
     deps {}
     block_number {}
-    block_timestamp { Faker::Time.between(2.days.ago, Date.today, :all).to_i }
+    block_timestamp { Faker::Time.between(from: 2.days.ago, to: Date.today).to_i }
     transaction_fee { 0 }
     version { 0 }
     witnesses {}
