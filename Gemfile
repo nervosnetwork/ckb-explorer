@@ -87,7 +87,7 @@ group :test do
   gem "database_cleaner"
   gem "mocha"
   gem "factory_bot_rails"
-  gem "faker", git: "https://github.com/stympy/faker.git", branch: "master"
+  gem "faker", git: "https://github.com/faker-ruby/faker.git", branch: "master"
   gem "codecov", require: false
 end
 
