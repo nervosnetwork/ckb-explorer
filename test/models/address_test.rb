@@ -89,20 +89,20 @@ class AddressTest < ActiveSupport::TestCase
     address = create(:address, is_depositor: true)
     deposit_block = create(:block, :with_block_hash, dao: "0xea43d76640436a33337e7de7ee60240035099074a869fc0000165f8ab3750207")
     deposit_tx = create(:ckb_transaction, block: deposit_block)
-    previous_output_block = create(:block, :with_block_hash)
+    previous_output_block = create(:block, :with_block_hash, dao: "0x28fbce93e82cbd2ff345ba74f2ba2300b0cd2c97f2953a000060983e29c50007")
     previous_output_tx = create(:ckb_transaction, block: previous_output_block)
-    create(:cell_output, block: previous_output_block, capacity: 50000 * 10**8, ckb_transaction: previous_output_tx, tx_hash: previous_output_tx.tx_hash, generated_by: previous_output_tx, cell_type: "nervos_dao_deposit", cell_index: 0)
-    create(:cell_output, block: previous_output_block, capacity: 50000 * 10**8, ckb_transaction: previous_output_tx, tx_hash: previous_output_tx.tx_hash, generated_by: previous_output_tx, cell_type: "nervos_dao_deposit", cell_index: 1)
+    create(:cell_output, block: previous_output_block, capacity: 50000 * 10**8, ckb_transaction: previous_output_tx, tx_hash: previous_output_tx.tx_hash, generated_by: previous_output_tx, cell_type: "nervos_dao_deposit", cell_index: 0, occupied_capacity: 6100000000, dao: previous_output_block.dao)
+    create(:cell_output, block: previous_output_block, capacity: 50000 * 10**8, ckb_transaction: previous_output_tx, tx_hash: previous_output_tx.tx_hash, generated_by: previous_output_tx, cell_type: "nervos_dao_deposit", cell_index: 1, occupied_capacity: 6100000000, dao: previous_output_block.dao)
     nervos_dao_withdrawing_block = create(:block, :with_block_hash, dao: "0x9a7a7ce1f34c6a332d147991f0602400aaf7346eb06bfc0000e2abc108760207", timestamp: CkbUtils.time_in_milliseconds(Time.current))
     nervos_dao_withdrawing_tx = create(:ckb_transaction, block: nervos_dao_withdrawing_block)
     create(:cell_input, block: nervos_dao_withdrawing_block, previous_output: { tx_hash: previous_output_tx.tx_hash, index: 0 }, ckb_transaction: nervos_dao_withdrawing_tx)
     create(:cell_input, block: nervos_dao_withdrawing_block, previous_output: { tx_hash: previous_output_tx.tx_hash, index: 1 }, ckb_transaction: nervos_dao_withdrawing_tx)
-    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 10000 * 10**8, generated_by: nervos_dao_withdrawing_tx, cell_index: 0)
-    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 20000 * 10**8, generated_by: nervos_dao_withdrawing_tx, cell_index: 1)
+    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 10000 * 10**8, generated_by: nervos_dao_withdrawing_tx, cell_index: 0, dao: nervos_dao_withdrawing_block.dao)
+    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 20000 * 10**8, generated_by: nervos_dao_withdrawing_tx, cell_index: 1, dao: nervos_dao_withdrawing_block.dao)
 
-    deposit_cell = create(:cell_output, block: deposit_block, address: address, cell_type: "nervos_dao_deposit", capacity: 60000 * 10**8, ckb_transaction: deposit_tx, generated_by: deposit_tx, cell_index: 0, occupied_capacity: 6100000000)
+    deposit_cell = create(:cell_output, block: deposit_block, address: address, cell_type: "nervos_dao_deposit", capacity: 60000 * 10**8, ckb_transaction: deposit_tx, generated_by: deposit_tx, cell_index: 0, occupied_capacity: 6100000000, dao: deposit_block.dao)
 
-    expected_phase1_dao_interests = 20000000000
+    expected_phase1_dao_interests = 181251857496
     parse_dao_ar_i = 10239678363827763
     tip_dao_ar_i = 10239685510632493
     expected_unmade_dao_interests = (deposit_cell.capacity - deposit_cell.occupied_capacity).to_i * tip_dao_ar_i / parse_dao_ar_i - (deposit_cell.capacity - deposit_cell.occupied_capacity)

@@ -719,7 +719,7 @@ module CkbSync
     end
 
     test "#process_block should create dao_event which event_type is withdraw_from_dao when previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -736,7 +736,7 @@ module CkbSync
     end
 
     test "#process_block should create dao_event which event_type is issue interest when previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -752,7 +752,7 @@ module CkbSync
     end
 
     test "#process_block should create dao_event which event_type is take away all deposit when previous output is a dao cell and address interest change to zero" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -771,7 +771,7 @@ module CkbSync
     end
 
     test "#process_block should increase dao contract withdraw transactions count when previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -788,7 +788,7 @@ module CkbSync
     end
 
     test "#process_block should decrease dao contract total deposit when previous output is a withdrawing cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -806,7 +806,7 @@ module CkbSync
     end
 
     test "#process_block should increase dao contract interest granted when previous output is a withdrawing cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -823,7 +823,7 @@ module CkbSync
     end
 
     test "#process_block should decrease dao contract depositors count when previous output is a dao cell and address interest change to zero" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -843,7 +843,7 @@ module CkbSync
     end
 
     test "#process_block should decrease address deposit when previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -862,7 +862,7 @@ module CkbSync
     end
 
     test "#process_block should increase address interest when previous output is a withdrawing cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -873,7 +873,7 @@ module CkbSync
         address = output.address
         address.update(dao_deposit: output.capacity)
 
-        assert_difference -> { address.reload.interest }, "0x174876ebe8".hex - nervos_dao_deposit_cell.capacity do
+        assert_difference -> { address.reload.interest }, 100800000000 do
           node_data_processor.process_block(node_block)
         end
 
@@ -1056,7 +1056,7 @@ module CkbSync
     end
 
     test "should decrease dao contract withdraw_transactions_count when block is invalid and previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -1082,7 +1082,7 @@ module CkbSync
     end
 
     test "should increase dao contract total_deposit when block is invalid and previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -1108,7 +1108,7 @@ module CkbSync
     end
 
     test "should increase address dao_deposit when block is invalid and previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       target_address = nil
@@ -1135,7 +1135,7 @@ module CkbSync
     end
 
     test "should decrease dao contract interest_granted when block is invalid and previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -1161,7 +1161,7 @@ module CkbSync
     end
 
     test "should decrease address interest when block is invalid and previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       target_address = nil
@@ -1188,7 +1188,7 @@ module CkbSync
     end
 
     test "should increase dao contract depositors_count when block is invalid and previous output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x174876ebe8")
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do

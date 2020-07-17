@@ -56,7 +56,8 @@ module Charts
           avg(avg_block_time_per_hour) over(order by stat_timestamp rows between 7 * 24 preceding and current row) as avg_bt1
           from block_time_statistics
         )
-        select stat_timestamp, round(avg_bt, 2) avg_bt1, round(avg_bt1, 2) avg_bt2 from avg_block_time_24_hours_rolling_by_hour where stat_timestamp >= #{35.days.ago.to_i} order by stat_timestamp limit 720
+        -- 804 = 24 * 35, show data for the last 35 days
+        select stat_timestamp, round(avg_bt, 2) avg_bt1, round(avg_bt1, 2) avg_bt2 from avg_block_time_24_hours_rolling_by_hour where stat_timestamp >= #{35.days.ago.end_of_day.to_i} order by stat_timestamp limit 840
       SQL
     end
 
@@ -318,12 +319,9 @@ module Charts
     def unmade_dao_interests
       @unmade_dao_interests ||=
         begin
+          tip_dao = current_tip_block.dao
           CellOutput.nervos_dao_deposit.generated_before(ended_at).unconsumed_at(ended_at).reduce(0) do |memo, cell_output|
-            dao = cell_output.block.dao
-            tip_dao = current_tip_block.dao
-            parse_dao = CkbUtils.parse_dao(dao)
-            tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-            memo + (cell_output.capacity - cell_output.occupied_capacity).to_i * tip_parse_dao.ar_i / parse_dao.ar_i - (cell_output.capacity - cell_output.occupied_capacity)
+            memo + DaoCompensationCalculator.new(cell_output, tip_dao).call
           end
         end
     end

@@ -1,3 +1,22 @@
+# [v0.10.1](https://github.com/shaojunda/ckb-explorer/compare/v0.10.0...v0.10.1) (2020-07-17)
+
+
+### Bug Fixes
+
+* [#695](https://github.com/nervosnetwork/ckb-explorer/pull/695): fix average block time missing data
+
+
+### Performance Improvements
+
+* [#683](https://github.com/nervosnetwork/ckb-explorer/pull/683): perf lock info
+* [#687](https://github.com/nervosnetwork/ckb-explorer/pull/687): perf use DB data replace RPC call
+* [#688](https://github.com/nervosnetwork/ckb-explorer/pull/688): perf transaction index
+* [#691](https://github.com/nervosnetwork/ckb-explorer/pull/691): perf address unclaimed compensation worker
+* [#692](https://github.com/nervosnetwork/ckb-explorer/pull/692): perf add cache on lock_script
+* [#693](https://github.com/nervosnetwork/ckb-explorer/pull/693): perf use cache on blocks controller
+* [#694](https://github.com/nervosnetwork/ckb-explorer/pull/694): perf contract show
+
+
 # [v0.10.0](https://github.com/nervosnetwork/ckb-explorer/compare/v0.9.9...v0.10.0) (2020-07-10)
 
 

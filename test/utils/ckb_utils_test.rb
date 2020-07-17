@@ -216,7 +216,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".ckb_transaction_fee should return right tx_fee when tx is dao withdraw tx" do
-    CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x177825f000")
+    DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
     node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
     create(:block, :with_block_hash, number: node_block.header.number - 1)
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -238,14 +238,14 @@ class CkbUtilsTest < ActiveSupport::TestCase
       ckb_transaction = CkbTransaction.find_by(tx_hash: node_tx.hash)
       input_capacities = ckb_transaction.inputs.sum(:capacity)
       output_capacities = ckb_transaction.outputs.sum(:capacity)
-      expected_tx_fee = ckb_transaction.inputs.sum(:capacity) + "0x177825f000".hex - 10**8 * 8 - ckb_transaction.outputs.sum(:capacity)
+      expected_tx_fee = ckb_transaction.inputs.sum(:capacity) + 100800000000 - ckb_transaction.outputs.sum(:capacity)
 
       assert_equal expected_tx_fee, CkbUtils.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
     end
   end
 
   test ".ckb_transaction_fee should return right tx_fee when tx is dao withdraw tx and have multiple dao cell" do
-    CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x177825f000")
+    DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
     node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
     create(:block, :with_block_hash, number: node_block.header.number - 1)
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -269,7 +269,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       ckb_transaction = CkbTransaction.find_by(tx_hash: node_tx.hash)
       input_capacities = ckb_transaction.inputs.sum(:capacity)
       output_capacities = ckb_transaction.outputs.sum(:capacity)
-      expected_tx_fee = ckb_transaction.inputs.sum(:capacity) + "0x177825f000".hex - 10**8 * 8 - ckb_transaction.outputs.sum(:capacity)
+      expected_tx_fee = ckb_transaction.inputs.sum(:capacity) + 100800000000 - ckb_transaction.outputs.sum(:capacity)
 
       assert_equal expected_tx_fee, CkbUtils.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
     end

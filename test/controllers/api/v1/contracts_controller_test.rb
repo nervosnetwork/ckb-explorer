@@ -46,12 +46,14 @@ module Api
       end
 
       test "the returned dao contract when param is dao_contract" do
+        DaoContract.default_contract
         valid_get api_v1_contract_url(DaoContract::CONTRACT_NAME)
 
         assert_equal DaoContract::CONTRACT_NAME, json.dig("data", "type")
       end
 
       test "should contain right keys in the serialized object when visit show" do
+        DaoContract.default_contract
         valid_get api_v1_contract_url(DaoContract::CONTRACT_NAME)
 
         response_contract = json["data"]
@@ -61,6 +63,7 @@ module Api
       end
 
       test "should return corresponding contract with given contract name" do
+        DaoContract.default_contract
         valid_get api_v1_contract_url(DaoContract::CONTRACT_NAME)
 
         assert_equal JSON.parse(DaoContractSerializer.new(DaoContract.default_contract).serialized_json), json
