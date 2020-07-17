@@ -30,6 +30,10 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
+  def address_ids
+    attributes["address_ids"]
+  end
+
   def flush_cache
     Rails.cache.delete([self.class.name, tx_hash])
   end
@@ -150,7 +154,6 @@ end
 #  contained_address_ids :bigint           default([]), is an Array
 #  tags                  :string           default([]), is an Array
 #  contained_udt_ids     :bigint           default([]), is an Array
-
 #
 # Indexes
 #
