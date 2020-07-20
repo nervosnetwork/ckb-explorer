@@ -17,7 +17,7 @@ class ApplicationController < ActionController::API
   private
 
   def set_raven_context
-    Raven.extra_context(params: params.to_unsafe_h, url: request.url)
+    Raven.extra_context(params: params.to_unsafe_h, url: request.url) if Rails.env.production?
   end
 
   def api_error(error)

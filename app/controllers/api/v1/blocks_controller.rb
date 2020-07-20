@@ -6,16 +6,21 @@ module Api
 
       def index
         if from_home_page?
-          block_timestamps = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).pluck(:timestamp)
-          blocks = Block.where(timestamp: block_timestamps).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes).recent
-          options = {}
+          blocks = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes)
+          json =
+            Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do
+              BlockListSerializer.new(blocks).serialized_json
+            end
         else
-          block_timestamps = Block.recent.select(:timestamp).page(@page).per(@page_size)
-          blocks = Block.where(timestamp: block_timestamps.pluck(:timestamp)).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes).recent
-          options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: block_timestamps, page: @page, page_size: @page_size).call
+          blocks = Block.recent.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes).page(@page).per(@page_size)
+          json =
+            Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do
+              options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: @page, page_size: @page_size).call
+              BlockListSerializer.new(blocks, options).serialized_json
+            end
         end
 
-        render json: BlockListSerializer.new(blocks, options)
+        render json: json
       end
 
       def show

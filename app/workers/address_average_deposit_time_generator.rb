@@ -2,7 +2,7 @@ class AddressAverageDepositTimeGenerator
   include Sidekiq::Worker
 
   def perform
-    addresses = Address.where("dao_deposit > 0")
+    addresses = Address.where(is_depositor: true)
     values =
       addresses.map do |address|
         [address.id, cal_average_deposit_time(address)]

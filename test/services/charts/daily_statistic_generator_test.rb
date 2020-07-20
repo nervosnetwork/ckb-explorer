@@ -28,11 +28,17 @@ module Charts
       create(:block, :with_block_hash, epoch: 69, timestamp: 1575090866093, dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
       create(:address, address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
       tx = create(:ckb_transaction, block: block, block_timestamp: block.timestamp)
-      create(:cell_output, cell_type: "nervos_dao_deposit", generated_by: tx, ckb_transaction: tx, block: block, capacity: 10**8 * 1000, block_timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, occupied_capacity: 6100000000)
+      create(:cell_output, cell_type: "nervos_dao_deposit", generated_by: tx, ckb_transaction: tx, block: block, capacity: 10**8 * 1000, block_timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, occupied_capacity: 6100000000, dao: block.dao)
       create(:daily_statistic, created_at_unixtimestamp: Time.current.yesterday.yesterday.beginning_of_day.to_i)
       assert_difference -> { ::DailyStatistic.count }, 1 do
         Charts::DailyStatisticGenerator.new.call
       end
+    end
+
+    test "average_block_time should return 840 points" do
+      create_list(:block_time_statistic, 1000)
+      daily_generator = Charts::DailyStatisticGenerator.new
+      assert_equal 24 * 35, daily_generator.send(:average_block_time).count
     end
   end
 end

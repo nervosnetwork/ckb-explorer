@@ -65,7 +65,9 @@ class Address < ApplicationRecord
   end
 
   def lock_script
-    LockScript.where(address: self).first
+    Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
+      LockScript.where(address: self).first
+    end
   end
 
   def self.find_or_create_address(lock_script, block_timestamp)
@@ -133,10 +135,7 @@ class Address < ApplicationRecord
   def unmade_dao_interests
     tip_dao = Block.recent.first.dao
     cell_outputs.nervos_dao_deposit.live.find_each.reduce(0) do |memo, cell_output|
-      dao = cell_output.block.dao
-      parse_dao = CkbUtils.parse_dao(dao)
-      tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-      memo + (cell_output.capacity - cell_output.occupied_capacity).to_i * tip_parse_dao.ar_i / parse_dao.ar_i - (cell_output.capacity - cell_output.occupied_capacity)
+      memo + DaoCompensationCalculator.new(cell_output, tip_dao).call
     end
   end
 end
