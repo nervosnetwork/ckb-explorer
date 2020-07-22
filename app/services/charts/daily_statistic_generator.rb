@@ -74,6 +74,7 @@ module Charts
       }.compact
     end
 
+    # [0, 180] 0-180 minutes
     def epoch_time_distribution
       max_n = 119
       ranges = [[0, 180]] + (180..(180 + max_n)).map { |n| [n, n + 1] }
