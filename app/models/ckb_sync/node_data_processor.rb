@@ -576,19 +576,18 @@ module CkbSync
             link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
             update_previous_cell_output_status(ckb_transaction_id, previous_cell_output, consumed_tx.block_timestamp)
             account_book = link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
-            ckb_transaction = update_ckb_transaction(consumed_tx, address_id, previous_cell_output)
+            update_ckb_transaction(consumed_tx, address_id, previous_cell_output, updated_ckb_transactions)
             build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
 
             updated_inputs << cell_input
             updated_outputs << previous_cell_output
             account_books << account_book
-            updated_ckb_transactions << ckb_transaction
           end
 
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
           CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status, :consumed_block_timestamp])
           AccountBook.import!(account_books, validate: false)
-          CkbTransaction.upsert_all(updated_ckb_transactions.to_a.uniq { |tx| tx[:id] })
+          CkbTransaction.upsert_all(updated_ckb_transactions.uniq { |tx| tx[:id] })
         end
         input_cache_keys = updated_inputs.map(&:cache_keys)
         output_cache_keys = updated_outputs.map(&:cache_keys)
@@ -612,7 +611,8 @@ module CkbSync
       { ckb_transaction_id: ckb_transaction_id, address_id: address_id }
     end
 
-    def update_ckb_transaction(consumed_tx, address_id, previous_cell_output)
+    def update_ckb_transaction(consumed_tx, address_id, previous_cell_output, updated_ckb_transactions)
+      tx = updated_ckb_transactions.select { |tx| tx[:id] == consumed_tx.id }.first
       consumed_tx.contained_address_ids << address_id
       if previous_cell_output.udt?
         consumed_tx.tags << "udt"
@@ -621,8 +621,13 @@ module CkbSync
       if previous_cell_output.nervos_dao_withdrawing?
         consumed_tx.tags << "dao"
       end
-
-      { id: consumed_tx.id, contained_udt_ids: consumed_tx.contained_udt_ids.uniq, contained_address_ids: consumed_tx.contained_address_ids.uniq, tags: consumed_tx.tags.uniq, created_at: consumed_tx.created_at, updated_at: Time.current }
+      if tx.present?
+        tx[:contained_address_ids] = (tx[:contained_address_ids] << consumed_tx.contained_address_ids).flatten.uniq
+        tx[:tags] = (tx[:tags] << consumed_tx.tags).flatten.uniq
+        tx[:contained_udt_ids] = (tx[:contained_udt_ids] << consumed_tx.contained_udt_ids).flatten.uniq
+      else
+        updated_ckb_transactions << { id: consumed_tx.id, contained_udt_ids: consumed_tx.contained_udt_ids.uniq, contained_address_ids: consumed_tx.contained_address_ids.uniq, tags: consumed_tx.tags.uniq, created_at: consumed_tx.created_at, updated_at: Time.current }
+      end
     end
 
     def update_previous_cell_output_status(ckb_transaction_id, previous_cell_output, consumed_block_timestamp)
