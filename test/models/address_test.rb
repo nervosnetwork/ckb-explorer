@@ -192,4 +192,11 @@ class AddressTest < ActiveSupport::TestCase
 
     assert_equal expected_ckb_transactions.pluck(:id), address.ckb_udt_transactions(udt.type_hash).recent.pluck(:id)
   end
+
+  test "#ckb_udt_transactions should return an empty array when there aren't udt cells" do
+    udt = create(:udt)
+    address = create(:address)
+
+    assert_equal [], address.ckb_udt_transactions(udt.type_hash)
+  end
 end
