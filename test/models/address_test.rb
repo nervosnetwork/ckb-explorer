@@ -199,4 +199,10 @@ class AddressTest < ActiveSupport::TestCase
 
     assert_equal [], address.ckb_udt_transactions(udt.type_hash)
   end
+
+  test "#ckb_udt_transactions should return an empty array when udt not exist" do
+    address = create(:address)
+
+    assert_equal [], address.ckb_udt_transactions("0x11")
+  end
 end
