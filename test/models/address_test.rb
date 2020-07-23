@@ -109,4 +109,18 @@ class AddressTest < ActiveSupport::TestCase
 
     assert_equal (expected_phase1_dao_interests + expected_unmade_dao_interests), address.cal_unclaimed_compensation
   end
+
+  test "#custom_ckb_transactions should return correct ckb transactions" do
+    address = create(:address)
+    block = create(:block)
+    ckb_transactions = create_list(:ckb_transaction, 30, block: block, address: address, contained_address_ids: [address.id])
+    ckb_transactions.each do |tx|
+      AccountBook.create(address: address, ckb_transaction: tx)
+    end
+
+    ckb_transaction_ids = address.account_books.select(:ckb_transaction_id).distinct
+    expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).recent
+
+    assert_equal address.custom_ckb_transactions.recent.pluck(:id), expected_ckb_transactions.pluck(:id)
+  end
 end
