@@ -121,6 +121,25 @@ class AddressTest < ActiveSupport::TestCase
     ckb_transaction_ids = address.account_books.select(:ckb_transaction_id).distinct
     expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).recent
 
-    assert_equal address.custom_ckb_transactions.recent.pluck(:id), expected_ckb_transactions.pluck(:id)
+    assert_equal expected_ckb_transactions.pluck(:id), address.custom_ckb_transactions.recent.pluck(:id)
+  end
+
+  test "#ckb_dao_transactions should return correct ckb transactions" do
+    address = create(:address)
+    address1 = create(:address)
+    30.times do |number|
+      block = create(:block, :with_block_hash)
+      contained_address_ids =  number % 2 == 0 ? [address.id] : [address1.id]
+      tx = create(:ckb_transaction, block: block, tags: ["dao"], contained_address_ids: contained_address_ids)
+      AccountBook.create(address: address, ckb_transaction: tx)
+      cell_type = number % 2 == 0 ? "nervos_dao_deposit" : "nervos_dao_withdrawing"
+      cell_output_address = number % 2 == 0 ? address : address1
+      create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, generated_by: tx, cell_type: cell_type)
+    end
+
+    ckb_transaction_ids = address.cell_outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id").distinct
+    expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).recent
+
+    assert_equal expected_ckb_transactions.pluck(:id), address.ckb_dao_transactions.recent.pluck(:id)
   end
 end
