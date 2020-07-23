@@ -143,6 +143,12 @@ class AddressTest < ActiveSupport::TestCase
     assert_equal expected_ckb_transactions.pluck(:id), address.ckb_dao_transactions.recent.pluck(:id)
   end
 
+  test "#ckb_dao_transactions should return an empty array when there aren't dao cell" do
+    address = create(:address)
+
+    assert_equal [], address.ckb_dao_transactions.recent.pluck(:id)
+  end
+
   test "#ckb_udt_transactions should return correct ckb transactions with udt cell when there are udt cells" do
     udt = create(:udt)
     address = create(:address)
