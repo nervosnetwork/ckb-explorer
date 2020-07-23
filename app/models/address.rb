@@ -26,36 +26,10 @@ class Address < ApplicationRecord
   end
 
   def ckb_udt_transactions(type_hash)
-    sql =
-      <<-SQL
-        SELECT
-          generated_by_id ckb_transaction_id
-        FROM
-          cell_outputs
-        WHERE
-          address_id = #{id}
-          AND
-          cell_type = #{CellOutput::cell_types['udt']}
-          AND
-          type_hash = '#{type_hash}'
+    udt = Udt.where(type_hash: type_hash).select(:id).first
+    return [] if udt.blank?
 
-        UNION
-
-        SELECT
-          consumed_by_id ckb_transaction_id
-        FROM
-          cell_outputs
-        WHERE
-          address_id = #{id}
-          AND
-          cell_type = #{CellOutput::cell_types['udt']}
-          AND
-          type_hash = '#{type_hash}'
-          AND
-          consumed_by_id is not null
-      SQL
-    ckb_transaction_ids = CellOutput.select("ckb_transaction_id").from("(#{sql}) as cell_outputs")
-    CkbTransaction.where(id: ckb_transaction_ids.distinct)
+    CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id]).where("contained_udt_ids @> array[?]::bigint[]", [udt.id])
   end
 
   def lock_info
