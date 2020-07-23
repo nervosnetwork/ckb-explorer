@@ -18,8 +18,7 @@ class Address < ApplicationRecord
   attr_accessor :query_address
 
   def custom_ckb_transactions
-    ckb_transaction_ids = account_books.select(:ckb_transaction_id).distinct
-    CkbTransaction.where(id: ckb_transaction_ids)
+    CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id])
   end
 
   def ckb_dao_transactions
