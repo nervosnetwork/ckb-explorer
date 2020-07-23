@@ -2520,6 +2520,17 @@ module CkbSync
       assert_equal %w[dao udt], tx.tags
     end
 
+    test "#process_block should not update tx's tags when there aren't dao cells and udt cells" do
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        block = node_data_processor.process_block(node_block)
+        tags = block.ckb_transactions.pluck(:tags).flatten
+
+        assert_empty tags
+      end
+    end
+
     private
 
     def node_data_processor
