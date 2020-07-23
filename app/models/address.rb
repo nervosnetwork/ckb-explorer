@@ -22,8 +22,7 @@ class Address < ApplicationRecord
   end
 
   def ckb_dao_transactions
-    ckb_transaction_ids = cell_outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id").distinct
-    CkbTransaction.where(id: ckb_transaction_ids)
+    CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id]).where("tags @> array[?]::varchar[]", ["dao"])
   end
 
   def ckb_udt_transactions(type_hash)
