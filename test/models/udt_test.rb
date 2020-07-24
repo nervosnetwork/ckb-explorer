@@ -19,4 +19,10 @@ class UdtTest < ActiveSupport::TestCase
 
     assert_equal node_type_script, udt.type_script
   end
+
+  test "#ckb_transactions should return an empty array when there aren't udt cells" do
+    udt = create(:udt, published: true)
+
+    assert_equal [], udt.ckb_transactions
+  end
 end
