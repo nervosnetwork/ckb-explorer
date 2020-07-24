@@ -242,18 +242,6 @@ module Api
         valid_get api_v1_address_dao_transaction_url(address.address_hash)
         assert_equal links.stringify_keys.sort, json["links"].sort
       end
-
-      private
-
-      def fake_dao_deposit_transaction(dao_cell_count, address)
-        block = create(:block, :with_block_hash)
-        dao_cell_count.times do |number|
-          ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x#{SecureRandom.hex(32)}", block: block, address: address)
-          ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x#{SecureRandom.hex(32)}", block: block, address: address)
-          generated_by = number % 2 == 0 ? ckb_transaction2 : ckb_transaction1
-          create(:cell_output, ckb_transaction: generated_by, cell_index: number, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: generated_by, block: block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit", address: address)
-        end
-      end
     end
   end
 end
