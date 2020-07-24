@@ -152,4 +152,10 @@ class DaoContractTest < ActiveSupport::TestCase
 
     assert_equal 0, dao_contract.claimed_compensation_changes
   end
+
+  test "#ckb_transactions should return an empty array when there aren't transactions" do
+    contract = DaoContract.default_contract
+
+    assert_equal [], contract.ckb_transactions
+  end
 end
