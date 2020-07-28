@@ -83,7 +83,7 @@ module CkbSync
           udt = Udt.find_or_create_by!(type_hash: type_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt")
           udt.update(block_timestamp: block_timestamp) if udt.block_timestamp.blank?
           if udt.issuer_address.blank?
-            issuer_address = Address.find_or_create_address(udt_type_script, block_timestamp).address_hash
+            issuer_address = Address.where(lock_hash: udt_type_script.args).pick(:address_hash)
             udt.issuer_address = issuer_address
           end
           udt.update(args: udt_type_script.args, hash_type: udt_type_script.hash_type, issuer_address: udt.issuer_address)
