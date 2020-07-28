@@ -36,7 +36,9 @@ module Charts
     end
 
     test "average_block_time should return 840 points" do
-      create_list(:block_time_statistic, 1000)
+      1000.times do |number|
+        create(:block_time_statistic, stat_timestamp: 35.days.ago.end_of_day.to_i + number)
+      end
       daily_generator = Charts::DailyStatisticGenerator.new
       assert_equal 24 * 35, daily_generator.send(:average_block_time).count
     end

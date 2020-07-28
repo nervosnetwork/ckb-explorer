@@ -46,7 +46,10 @@ module Api
       end
 
       test "should get serialized objects" do
-        create_list(:block, 15, :with_block_hash)
+        15.times do |number|
+          create(:block, :with_block_hash, timestamp: 2.days.ago.to_i + number)
+
+        end
         block_timestamps = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).pluck(:timestamp)
         blocks = Block.where(timestamp: block_timestamps).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes).recent
 
