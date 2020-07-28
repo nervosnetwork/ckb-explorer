@@ -56,7 +56,7 @@ module Charts
           avg(avg_block_time_per_hour) over(order by stat_timestamp rows between 7 * 24 preceding and current row) as avg_bt1
           from block_time_statistics
         )
-        -- 804 = 24 * 35, show data for the last 35 days
+        -- 840 = 24 * 35, show data for the last 35 days
         select stat_timestamp, round(avg_bt, 2) avg_bt1, round(avg_bt1, 2) avg_bt2 from avg_block_time_24_hours_rolling_by_hour where stat_timestamp >= #{35.days.ago.end_of_day.to_i} order by stat_timestamp limit 840
       SQL
     end
