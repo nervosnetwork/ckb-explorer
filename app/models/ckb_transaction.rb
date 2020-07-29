@@ -15,7 +15,7 @@ class CkbTransaction < ApplicationRecord
   attribute :tx_hash, :ckb_hash
   attribute :header_deps, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]
 
-  scope :recent, -> { order("block_timestamp desc nulls last") }
+  scope :recent, -> { order("block_timestamp desc nulls last, id desc") }
   scope :cellbase, -> { where(is_cellbase: true) }
   scope :normal, -> { where(is_cellbase: false) }
   scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
@@ -158,7 +158,7 @@ end
 # Indexes
 #
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
-#  index_ckb_transactions_on_block_timestamp               (block_timestamp)
+#  index_ckb_transactions_on_block_timestamp_and_id        (block_timestamp DESC NULLS LAST,id DESC)
 #  index_ckb_transactions_on_contained_address_ids         (contained_address_ids) USING gin
 #  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)

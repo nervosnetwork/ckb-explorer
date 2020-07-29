@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_07_16_174806) do
+ActiveRecord::Schema.define(version: 2020_07_29_174146) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -186,7 +186,7 @@ ActiveRecord::Schema.define(version: 2020_07_16_174806) do
     t.string "tags", default: [], array: true
     t.bigint "contained_udt_ids", default: [], array: true
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
-    t.index ["block_timestamp"], name: "index_ckb_transactions_on_block_timestamp", order: "DESC NULLS LAST"
+    t.index ["block_timestamp", "id"], name: "index_ckb_transactions_on_block_timestamp_and_id", order: { block_timestamp: "DESC NULLS LAST", id: :desc }
     t.index ["contained_address_ids"], name: "index_ckb_transactions_on_contained_address_ids", using: :gin
     t.index ["contained_udt_ids"], name: "index_ckb_transactions_on_contained_udt_ids", using: :gin
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
