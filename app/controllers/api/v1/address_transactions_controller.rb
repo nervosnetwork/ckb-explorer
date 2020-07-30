@@ -8,7 +8,7 @@ module Api
         @address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if @address.is_a?(NullAddress)
 
-        @ckb_transactions = @address.custom_ckb_transactions.select(:tx_hash, :block_number, :block_timestamp, :is_cellbase).recent.page(@page).per(@page_size)
+        @ckb_transactions = @address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase).recent.page(@page).per(@page_size)
 
         json =
           Rails.cache.realize(@ckb_transactions.cache_key, version: @ckb_transactions.cache_version) do
@@ -38,7 +38,7 @@ module Api
       end
 
       def json_result
-        ckb_transaction_serializer = CkbTransactionSerializer.new(@ckb_transactions, @options.merge(params: { previews: true, address: @address }))
+        ckb_transaction_serializer = CkbTransactionsSerializer.new(@ckb_transactions, @options.merge(params: { previews: true, address: @address }))
 
         if QueryKeyUtils.valid_address?(params[:id])
           if @address.address_hash == @address.query_address
