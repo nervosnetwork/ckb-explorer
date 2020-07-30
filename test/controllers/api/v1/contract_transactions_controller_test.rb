@@ -49,16 +49,17 @@ module Api
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
 
-        assert_equal CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true } })).serialized_json, response.body
+        assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge({ params: { previews: true } })).serialized_json, response.body
       end
 
       test "should contain right keys in the serialized transaction when call show" do
-        fake_dao_deposit_transaction(5)
+        address = create(:address)
+        fake_dao_deposit_transaction(5, address)
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp display_inputs display_outputs is_cellbase income).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return error object when no records found by give contract name" do
@@ -100,14 +101,16 @@ module Api
       end
 
       test "should return 10 records when page and page_size are not set" do
-        fake_dao_deposit_transaction(30)
+        address = create(:address)
+        fake_dao_deposit_transaction(30, address)
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
         assert_equal 10, json["data"].size
       end
 
       test "should return corresponding page's records when page is set and page_size is not set" do
-        fake_dao_deposit_transaction(30)
+        address = create(:address)
+        fake_dao_deposit_transaction(30, address)
         page = 2
         page_size = 10
         dao_contract = DaoContract.default_contract
@@ -116,14 +119,15 @@ module Api
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: page }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(contract_ckb_transactions, options).serialized_json
+        response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions, options).serialized_json
 
         assert_equal response_transaction, response.body
         assert_equal page_size, json["data"].size
       end
 
       test "should return corresponding records when page is not set and page_size is set" do
-        fake_dao_deposit_transaction(15)
+        address = create(:address)
+        fake_dao_deposit_transaction(15, address)
         page = 1
         page_size = 12
         dao_contract = DaoContract.default_contract
@@ -132,14 +136,15 @@ module Api
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(contract_ckb_transactions, options).serialized_json
+        response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions, options).serialized_json
 
         assert_equal response_transaction, response.body
         assert_equal page_size, json["data"].size
       end
 
       test "should return the corresponding transactions when page and page_size are set" do
-        fake_dao_deposit_transaction(30)
+        address = create(:address)
+        fake_dao_deposit_transaction(30, address)
         page = 2
         page_size = 5
         dao_contract = DaoContract.default_contract
@@ -148,7 +153,7 @@ module Api
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: page, page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(contract_ckb_transactions, options).serialized_json
+        response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions, options).serialized_json
 
         assert_equal response_transaction, response.body
       end
@@ -162,14 +167,15 @@ module Api
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: page, page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(contract_ckb_transactions, options).serialized_json
+        response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions, options).serialized_json
 
         assert_equal [], json["data"]
         assert_equal response_transaction, response.body
       end
 
       test "should return pagination links in response body" do
-        fake_dao_deposit_transaction(30)
+        address = create(:address)
+        fake_dao_deposit_transaction(30, address)
         page = 2
         page_size = 3
 
@@ -187,7 +193,8 @@ module Api
       end
 
       test "should return meta that contained total in response body" do
-        fake_dao_deposit_transaction(3)
+        address = create(:address)
+        fake_dao_deposit_transaction(3, address)
 
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
@@ -201,18 +208,6 @@ module Api
 
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
         assert_equal links.stringify_keys.sort, json["links"].sort
-      end
-
-      private
-
-      def fake_dao_deposit_transaction(dao_cell_count)
-        block = create(:block, :with_block_hash)
-        dao_cell_count.times do |number|
-          ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x#{SecureRandom.hex(32)}", block: block)
-          ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x#{SecureRandom.hex(32)}", block: block)
-          generated_by = number % 2 == 0 ? ckb_transaction2 : ckb_transaction1
-          create(:cell_output, ckb_transaction: generated_by, cell_index: number, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: generated_by, block: block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit")
-        end
       end
     end
   end

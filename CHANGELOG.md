@@ -1,4 +1,22 @@
-# [v0.10.1](https://github.com/shaojunda/ckb-explorer/compare/v0.10.0...v0.10.1) (2020-07-17)
+# [v0.11.0](https://github.com/nervosnetwork/ckb-explorer/compare/v0.10.1...v0.11.0) (2020-07-30)
+
+
+### Bug Fixes
+* [#703](https://github.com/nervosnetwork/ckb-explorer/pull/703): fix address nil when update udt accounts
+* [#705](https://github.com/nervosnetwork/ckb-explorer/pull/705): fix zero division
+
+### Performance Improvements
+
+* [#697](https://github.com/nervosnetwork/ckb-explorer/pull/697): perf xxx transactions list
+    * perf address_dao_transactions
+    * perf address_transactions
+    * perf address_udt_transactions
+    * perf block_udt_transactions
+    * perf contract_transactions
+    * perf udt_transactions
+
+
+# [v0.10.1](https://github.com/nervosnetwork/ckb-explorer/compare/v0.10.0...v0.10.1) (2020-07-17)
 
 
 ### Bug Fixes

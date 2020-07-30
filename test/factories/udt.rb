@@ -13,8 +13,8 @@ FactoryBot.define do
       after(:create) do |udt, _evaluator|
         20.times do
           block = create(:block, :with_block_hash)
-          transaction = create(:ckb_transaction, block: block)
-          transaction1 = create(:ckb_transaction, block: block)
+          transaction = create(:ckb_transaction, block: block, contained_udt_ids: [udt.id], tags: ["udt"])
+          transaction1 = create(:ckb_transaction, block: block, contained_udt_ids: [udt.id], tags: ["udt"])
           create(:cell_output, block: block, ckb_transaction: transaction, generated_by: transaction, consumed_by: transaction1, type_hash: udt.type_hash, cell_type: "udt", data: "0x000050ad321ea12e0000000000000000")
         end
       end

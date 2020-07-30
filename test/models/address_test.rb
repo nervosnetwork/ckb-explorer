@@ -109,4 +109,106 @@ class AddressTest < ActiveSupport::TestCase
 
     assert_equal (expected_phase1_dao_interests + expected_unmade_dao_interests), address.cal_unclaimed_compensation
   end
+
+  test "#custom_ckb_transactions should return correct ckb transactions" do
+    address = create(:address)
+    block = create(:block)
+    ckb_transactions = create_list(:ckb_transaction, 30, block: block, address: address, contained_address_ids: [address.id])
+    ckb_transactions.each do |tx|
+      AccountBook.create(address: address, ckb_transaction: tx)
+    end
+
+    ckb_transaction_ids = address.account_books.select(:ckb_transaction_id).distinct
+    expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).recent
+
+    assert_equal expected_ckb_transactions.pluck(:id), address.custom_ckb_transactions.recent.pluck(:id)
+  end
+
+  test "#ckb_dao_transactions should return correct ckb transactions with dao cell" do
+    address = create(:address)
+    address1 = create(:address)
+    30.times do |number|
+      block = create(:block, :with_block_hash)
+      contained_address_ids = number % 2 == 0 ? [address.id] : [address1.id]
+      tx = create(:ckb_transaction, block: block, tags: ["dao"], contained_address_ids: contained_address_ids)
+      AccountBook.create(address: address, ckb_transaction: tx)
+      cell_type = number % 2 == 0 ? "nervos_dao_deposit" : "nervos_dao_withdrawing"
+      cell_output_address = number % 2 == 0 ? address : address1
+      create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, generated_by: tx, cell_type: cell_type)
+    end
+
+    ckb_transaction_ids = address.cell_outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id").distinct
+    expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).recent
+
+    assert_equal expected_ckb_transactions.pluck(:id), address.ckb_dao_transactions.recent.pluck(:id)
+  end
+
+  test "#ckb_dao_transactions should return an empty array when there aren't dao cell" do
+    address = create(:address)
+
+    assert_equal [], address.ckb_dao_transactions.recent.pluck(:id)
+  end
+
+  test "#ckb_udt_transactions should return correct ckb transactions with udt cell when there are udt cells" do
+    udt = create(:udt)
+    address = create(:address)
+    30.times do |number|
+      block = create(:block, :with_block_hash)
+      if number % 2 == 0
+        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], contained_address_ids: [address.id])
+        create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash, generated_by: tx, address: address)
+      else
+        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], contained_address_ids: [address.id])
+        tx1 = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], contained_address_ids: [address.id])
+        create(:cell_output, block: block, ckb_transaction: tx1, cell_type: "udt", type_hash: udt.type_hash, generated_by: tx1, address: address)
+        create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash, generated_by: tx, consumed_by_id: tx1, address: address)
+      end
+    end
+
+    sql =
+      <<-SQL
+        SELECT
+          generated_by_id ckb_transaction_id
+        FROM
+          cell_outputs
+        WHERE
+          address_id = #{address.id}
+          AND
+          cell_type = #{CellOutput::cell_types['udt']}
+          AND
+          type_hash = '#{udt.type_hash}'
+
+        UNION
+
+        SELECT
+          consumed_by_id ckb_transaction_id
+        FROM
+          cell_outputs
+        WHERE
+          address_id = #{address.id}
+          AND
+          cell_type = #{CellOutput::cell_types['udt']}
+          AND
+          type_hash = '#{udt.type_hash}'
+          AND
+          consumed_by_id is not null
+      SQL
+    ckb_transaction_ids = CellOutput.select("ckb_transaction_id").from("(#{sql}) as cell_outputs")
+    expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids.distinct).recent
+
+    assert_equal expected_ckb_transactions.pluck(:id), address.ckb_udt_transactions(udt.type_hash).recent.pluck(:id)
+  end
+
+  test "#ckb_udt_transactions should return an empty array when there aren't udt cells" do
+    udt = create(:udt)
+    address = create(:address)
+
+    assert_equal [], address.ckb_udt_transactions(udt.type_hash)
+  end
+
+  test "#ckb_udt_transactions should return an empty array when udt not exist" do
+    address = create(:address)
+
+    assert_equal [], address.ckb_udt_transactions("0x11")
+  end
 end

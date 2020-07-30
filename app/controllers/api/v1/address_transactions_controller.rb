@@ -8,10 +8,15 @@ module Api
         @address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if @address.is_a?(NullAddress)
 
-        @ckb_transactions = @address.custom_ckb_transactions.recent.page(@page).per(@page_size)
-        @options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: @ckb_transactions, page: @page, page_size: @page_size).call
+        @ckb_transactions = @address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase).recent.page(@page).per(@page_size)
 
-        render json: json_result
+        json =
+          Rails.cache.realize(@ckb_transactions.cache_key, version: @ckb_transactions.cache_version) do
+            @options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: @ckb_transactions, page: @page, page_size: @page_size).call
+            json_result
+          end
+
+        render json: json
       end
 
       private
@@ -33,16 +38,16 @@ module Api
       end
 
       def json_result
-        ckb_transaction_serializer = CkbTransactionSerializer.new(@ckb_transactions, @options.merge({ params: { previews: true, address: @address } }))
+        ckb_transaction_serializer = CkbTransactionsSerializer.new(@ckb_transactions, @options.merge(params: { previews: true, address: @address }))
 
         if QueryKeyUtils.valid_address?(params[:id])
           if @address.address_hash == @address.query_address
-            ckb_transaction_serializer
+            ckb_transaction_serializer.serialized_json
           else
             ckb_transaction_serializer.serialized_json.gsub(@address.address_hash, @address.query_address)
           end
         else
-          ckb_transaction_serializer
+          ckb_transaction_serializer.serialized_json
         end
       end
     end

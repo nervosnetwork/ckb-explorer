@@ -102,6 +102,6 @@ class StatisticInfo
   end
 
   def tip_block
-    @tip_block ||= Block.recent.first
+    @tip_block ||= Block.recent.first || OpenStruct.new(number: 0, epoch: 0, length: 0, start_number: 0, difficulty: 0)
   end
 end

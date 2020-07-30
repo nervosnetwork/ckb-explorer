@@ -7,10 +7,14 @@ module Api
         raise Api::V1::Exceptions::ContractNotFoundError if params[:id] != DaoContract::CONTRACT_NAME
 
         dao_contract = DaoContract.default_contract
-        ckb_transactions = dao_contract.ckb_transactions.distinct.recent.page(@page).per(@page_size)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
+        ckb_transactions = dao_contract.ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase).recent.page(@page).per(@page_size)
+        json =
+          Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
+            options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
+            CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true })).serialized_json
+          end
 
-        render json: CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true } }))
+        render json: json
       end
 
       private

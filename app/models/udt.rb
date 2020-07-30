@@ -10,32 +10,7 @@ class Udt < ApplicationRecord
   attribute :code_hash, :ckb_hash
 
   def ckb_transactions
-    sql =
-      <<-SQL
-        SELECT
-          generated_by_id ckb_transaction_id
-        FROM
-          cell_outputs
-        WHERE
-          cell_type = #{CellOutput::cell_types['udt']}
-          AND
-          type_hash = '#{type_hash}'
-
-        UNION
-
-        SELECT
-          consumed_by_id ckb_transaction_id
-        FROM
-          cell_outputs
-        WHERE
-          cell_type = #{CellOutput::cell_types['udt']}
-          AND
-          type_hash = '#{type_hash}'
-          AND
-          consumed_by_id is not null
-      SQL
-    ckb_transaction_ids = CellOutput.select("ckb_transaction_id").from("(#{sql}) as cell_outputs")
-    CkbTransaction.where(id: ckb_transaction_ids.distinct)
+    CkbTransaction.where("contained_udt_ids @> array[?]::bigint[]", [id])
   end
 
   def h24_ckb_transactions_count

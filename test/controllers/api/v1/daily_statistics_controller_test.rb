@@ -57,11 +57,11 @@ module Api
       end
 
       test "should return total dao deposit and timestamp" do
-        daily_statistic_data = create_list(:daily_statistic, 15)
+        create_list(:daily_statistic, 15)
         valid_get api_v1_daily_statistic_url("total_dao_deposit")
 
         assert_equal [%w(total_dao_deposit created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
-        assert_equal DailyStatisticSerializer.new(daily_statistic_data, params: { indicator: "total_dao_deposit" }).serialized_json, response.body
+        assert_equal DailyStatisticSerializer.new(DailyStatistic.order(:created_at_unixtimestamp), params: { indicator: "total_dao_deposit" }).serialized_json, response.body
       end
 
       test "should respond with error object when indicator name is invalid" do
