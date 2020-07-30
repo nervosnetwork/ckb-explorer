@@ -74,7 +74,7 @@ module Api
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
 
-        assert_equal CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json, response.body
+        assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json, response.body
       end
 
       test "should return corresponding ckb transactions with given lock hash" do
@@ -87,7 +87,7 @@ module Api
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
 
-        assert_equal CkbTransactionSerializer.new(ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json, response.body
+        assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json, response.body
       end
 
       test "should contain right keys in the serialized object when call show" do
@@ -97,7 +97,7 @@ module Api
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp display_inputs display_outputs is_cellbase income).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return correct income" do
@@ -179,7 +179,7 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash), params: { page: page }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
+        response_transaction = CkbTransactionsSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
 
         assert_equal response_transaction, response.body
         assert_equal page_size, json["data"].size
@@ -194,7 +194,7 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash), params: { page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
+        response_transaction = CkbTransactionsSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
 
         assert_equal response_transaction, response.body
         assert_equal page_size, json["data"].size
@@ -208,7 +208,7 @@ module Api
 
         valid_get api_v1_address_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
+        response_transaction = CkbTransactionsSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
 
         assert_equal response_transaction, response.body
       end
@@ -222,7 +222,7 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_ckb_transactions, page: page, page_size: page_size).call
-        response_transaction = CkbTransactionSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
+        response_transaction = CkbTransactionsSerializer.new(address_ckb_transactions, options.merge({ params: { previews: true, address: address } })).serialized_json
 
         assert_equal [], json["data"]
         assert_equal response_transaction, response.body
