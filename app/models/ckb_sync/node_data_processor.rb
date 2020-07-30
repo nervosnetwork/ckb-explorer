@@ -291,7 +291,7 @@ module CkbSync
 
     def update_block_contained_address_info(local_block)
       ApplicationRecord.transaction do
-        local_block.address_ids = AccountBook.where(ckb_transaction: local_block.ckb_transactions).pluck(:address_id).uniq
+        local_block.address_ids = local_block.ckb_transactions.pluck(:contained_address_ids).flatten.uniq
         local_block.save!
         local_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
       end
@@ -392,11 +392,16 @@ module CkbSync
     def build_ckb_transactions(local_block, transactions, outputs, new_dao_depositor_events, udt_infos)
       transactions.each_with_index.map do |transaction, transaction_index|
         addresses = Set.new
+        address_ids = Set.new
+        tags = Set.new
+        udt_ids = Set.new
         ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
         build_cell_inputs(transaction.inputs, ckb_transaction)
-        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data, outputs, new_dao_depositor_events, udt_infos)
-        addresses_arr = addresses.to_a
-        ckb_transaction.addresses << addresses_arr
+        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data, outputs, new_dao_depositor_events, udt_infos, address_ids, tags, udt_ids)
+        ckb_transaction.addresses << addresses.to_a
+        ckb_transaction.contained_address_ids += address_ids.to_a
+        ckb_transaction.tags += tags.to_a
+        ckb_transaction.contained_udt_ids += udt_ids.to_a
 
         ckb_transaction
       end
@@ -440,13 +445,21 @@ module CkbSync
       node_input.previous_output.tx_hash == CellOutput::SYSTEM_TX_HASH
     end
 
-    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs, new_dao_depositor_events, udt_infos)
+    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs, new_dao_depositor_events, udt_infos, address_ids, tags, udt_ids)
       node_outputs.each_with_index.map do |output, cell_index|
         address = Address.find_or_create_address(output.lock, ckb_transaction.block_timestamp)
         addresses << address
+        address_ids << address.id
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
         outputs << cell_output
-        udt_infos << { type_script: output.type, address: address } if cell_output.udt?
+        if cell_output.udt?
+          udt_infos << { type_script: output.type, address: address }
+          tags << "udt"
+          udt_ids << Udt.find_or_create_by!(type_hash: output.type.compute_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt").id
+        end
+        if cell_output.nervos_dao_deposit? || cell_output.nervos_dao_withdrawing?
+          tags << "dao"
+        end
 
         build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
         build_lock_script(cell_output, output.lock, address)
@@ -547,6 +560,7 @@ module CkbSync
       local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).find_in_batches(batch_size: 3500) do |cell_inputs|
         updated_inputs = []
         updated_outputs = []
+        updated_ckb_transactions = []
         account_books = []
         ApplicationRecord.transaction do
           cell_inputs.each do |cell_input|
@@ -562,6 +576,7 @@ module CkbSync
             link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
             update_previous_cell_output_status(ckb_transaction_id, previous_cell_output, consumed_tx.block_timestamp)
             account_book = link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
+            update_ckb_transaction(consumed_tx, address_id, previous_cell_output, updated_ckb_transactions)
             build_withdraw_dao_events(address_id, ckb_transaction_id, local_block, previous_cell_output)
 
             updated_inputs << cell_input
@@ -572,6 +587,7 @@ module CkbSync
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
           CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status, :consumed_block_timestamp])
           AccountBook.import!(account_books, validate: false)
+          CkbTransaction.upsert_all(updated_ckb_transactions.uniq { |tx| tx[:id] })
         end
         input_cache_keys = updated_inputs.map(&:cache_keys)
         output_cache_keys = updated_outputs.map(&:cache_keys)
@@ -593,6 +609,25 @@ module CkbSync
 
     def link_payer_address_to_ckb_transaction(ckb_transaction_id, address_id)
       { ckb_transaction_id: ckb_transaction_id, address_id: address_id }
+    end
+
+    def update_ckb_transaction(consumed_tx, address_id, previous_cell_output, updated_ckb_transactions)
+      tx = updated_ckb_transactions.select { |tx| tx[:id] == consumed_tx.id }.first
+      consumed_tx.contained_address_ids << address_id
+      if previous_cell_output.udt?
+        consumed_tx.tags << "udt"
+        consumed_tx.contained_udt_ids << Udt.find_or_create_by!(type_hash: previous_cell_output.node_output.type.compute_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt").id
+      end
+      if previous_cell_output.nervos_dao_withdrawing?
+        consumed_tx.tags << "dao"
+      end
+      if tx.present?
+        tx[:contained_address_ids] = (tx[:contained_address_ids] << consumed_tx.contained_address_ids).flatten.uniq
+        tx[:tags] = (tx[:tags] << consumed_tx.tags).flatten.uniq
+        tx[:contained_udt_ids] = (tx[:contained_udt_ids] << consumed_tx.contained_udt_ids).flatten.uniq
+      else
+        updated_ckb_transactions << { id: consumed_tx.id, contained_udt_ids: consumed_tx.contained_udt_ids.uniq, contained_address_ids: consumed_tx.contained_address_ids.uniq, tags: consumed_tx.tags.uniq, created_at: consumed_tx.created_at, updated_at: Time.current }
+      end
     end
 
     def update_previous_cell_output_status(ckb_transaction_id, previous_cell_output, consumed_block_timestamp)

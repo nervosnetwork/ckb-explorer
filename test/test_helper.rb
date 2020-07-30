@@ -242,6 +242,19 @@ def expected_ranking(address1, address2, address3)
   ]
 end
 
+def fake_dao_deposit_transaction(dao_cell_count, address)
+  block = create(:block, :with_block_hash)
+  dao_cell_count.times do |number|
+    if number % 2 == 0
+      ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x#{SecureRandom.hex(32)}", block: block, address: address, contained_address_ids: [address.id], tags: ["dao"])
+      create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: number, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit", address: address)
+    else
+      ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x#{SecureRandom.hex(32)}", block: block, address: address, contained_address_ids: [address.id], tags: ["dao"])
+      create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: number, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit", address: address)
+    end
+  end
+end
+
 module RequestHelpers
   def json
     JSON.parse(response.body)

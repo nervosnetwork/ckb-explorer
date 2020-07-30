@@ -14,8 +14,7 @@ class DaoContract < ApplicationRecord
   end
 
   def ckb_transactions
-    ckb_transaction_ids = CellOutput.nervos_dao_deposit.pluck("generated_by_id") + CellOutput.nervos_dao_withdrawing.pluck("generated_by_id") + CellOutput.nervos_dao_withdrawing.pluck("consumed_by_id").compact
-    CkbTransaction.where(id: ckb_transaction_ids.uniq)
+    CkbTransaction.where("tags @> array[?]::varchar[]", ["dao"])
   end
 
   def estimated_apc(deposit_epoch = tip_block_fraction_epoch, deposited_epochs = EPOCHS_IN_ONE_NATURAL_YEAR)

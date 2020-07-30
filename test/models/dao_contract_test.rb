@@ -152,4 +152,36 @@ class DaoContractTest < ActiveSupport::TestCase
 
     assert_equal 0, dao_contract.claimed_compensation_changes
   end
+
+  test "#ckb_transactions should return an empty array when there aren't transactions" do
+    contract = DaoContract.default_contract
+
+    assert_equal [], contract.ckb_transactions
+  end
+
+  test "#ckb_transactions should return correct transactions when there are dao transactions" do
+    contract = DaoContract.default_contract
+    address = create(:address)
+    address1 = create(:address)
+
+    30.times do |number|
+      block = create(:block, :with_block_hash)
+      cell_type = number % 2 == 0 ? "nervos_dao_deposit" : "nervos_dao_withdrawing"
+      cell_output_address = number % 2 == 0 ? address : address1
+      if number % 2 == 0
+        tx = create(:ckb_transaction, block: block, tags: ["dao"])
+        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, generated_by: tx, cell_type: cell_type)
+      else
+        tx = create(:ckb_transaction, block: block, tags: ["dao"])
+        tx1 = create(:ckb_transaction, block: block, tags: ["dao"])
+        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx1, generated_by: tx1, cell_type: cell_type)
+        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, generated_by: tx, consumed_by: tx1, cell_type: cell_type)
+      end
+    end
+
+    ckb_transaction_ids = CellOutput.nervos_dao_deposit.pluck("generated_by_id") + CellOutput.nervos_dao_withdrawing.pluck("generated_by_id") + CellOutput.nervos_dao_withdrawing.pluck("consumed_by_id").compact
+    expected_txs = CkbTransaction.where(id: ckb_transaction_ids.uniq).recent
+
+    assert_equal expected_txs.pluck(:id), contract.ckb_transactions.recent.pluck(:id)
+  end
 end
