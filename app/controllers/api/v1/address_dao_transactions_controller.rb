@@ -9,9 +9,13 @@ module Api
         raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
 
         ckb_dao_transactions = address.ckb_dao_transactions.recent.page(@page).per(@page_size)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: @page, page_size: @page_size).call
+        json =
+          Rails.cache.realize(ckb_dao_transactions.cache_key, version: ckb_dao_transactions.cache_version) do
+            options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: @page, page_size: @page_size).call
+            CkbTransactionSerializer.new(ckb_dao_transactions, options.merge(params: { previews: true })).serialized_json
+          end
 
-        render json: CkbTransactionSerializer.new(ckb_dao_transactions, options.merge({ params: { previews: true } }))
+        render json: json
       end
 
       private
