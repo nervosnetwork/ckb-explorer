@@ -7,7 +7,6 @@ Rails.application.routes.draw do
   Sidekiq::Web.set :session_secret, Rails.application.credentials[:secret_key_base]
 
   root "application#homepage"
-
   namespace :api do
     namespace :v1 do
       namespace :external do
@@ -46,5 +45,5 @@ Rails.application.routes.draw do
     end
   end
 
-  match "*path", to: "application#catch_404", via: :all
+  match "/:anything" => "errors#routing_error", via: :all, constraints: { anything: /.*/ }
 end
