@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_07_29_174146) do
+ActiveRecord::Schema.define(version: 2020_08_03_152507) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -347,6 +347,14 @@ ActiveRecord::Schema.define(version: 2020_07_29_174146) do
     t.datetime "updated_at", precision: 6, null: false
     t.index ["block_id"], name: "index_mining_infos_on_block_id"
     t.index ["block_number"], name: "index_mining_infos_on_block_number"
+  end
+
+  create_table "table_record_counts", force: :cascade do |t|
+    t.string "table_name"
+    t.bigint "count"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["table_name", "count"], name: "index_table_record_counts_on_table_name_and_count"
   end
 
   create_table "transaction_propagation_delays", force: :cascade do |t|
