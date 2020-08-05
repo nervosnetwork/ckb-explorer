@@ -2722,6 +2722,7 @@ module CkbSync
       outputs1 = [
         CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock1, type: udt_script1),
         CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock2, type: udt_script2),
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock2, type: udt_script2),
         CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
       ]
       miner_lock = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
@@ -2734,7 +2735,7 @@ module CkbSync
       transactions = [
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: cellbase_inputs, outputs: cellbase_outputs, outputs_data: %w[0x], witnesses: ["0x590000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd800000000"]),
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: inputs, outputs: outputs, outputs_data: %W[#{CKB::Utils.generate_sudt_amount(1000)} #{CKB::Utils.generate_sudt_amount(1000)} 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
-        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: inputs1, outputs: outputs1, outputs_data: %W[#{CKB::Utils.generate_sudt_amount(1000)} #{CKB::Utils.generate_sudt_amount(1000)} 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
+        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: inputs1, outputs: outputs1, outputs_data: %W[#{CKB::Utils.generate_sudt_amount(1000)} #{CKB::Utils.generate_sudt_amount(1000)} #{CKB::Utils.generate_sudt_amount(1000)} 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
       ]
       node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions: transactions, header: header)
       block = node_data_processor.process_block(node_block)
@@ -2745,6 +2746,8 @@ module CkbSync
 
       assert_equal [udt1.id, udt2.id], tx.contained_udt_ids
       assert_equal [udt1.id, udt2.id], tx1.contained_udt_ids
+      assert_equal 2, udt1.ckb_transactions_count
+      assert_equal 2, udt2.ckb_transactions_count
     end
 
     test "#process_block should update tx's contained_udt_ids when there are udt cells in inputs" do
@@ -2821,6 +2824,8 @@ module CkbSync
 
       assert_equal [udt1.id, udt2.id], tx.contained_udt_ids
       assert_equal [udt1.id, udt2.id], tx1.contained_udt_ids
+      assert_equal 3, udt1.ckb_transactions_count
+      assert_equal 2, udt2.ckb_transactions_count
     end
 
     private
