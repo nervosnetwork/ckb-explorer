@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_03_152507) do
+ActiveRecord::Schema.define(version: 2020_08_05_093044) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -413,6 +413,7 @@ ActiveRecord::Schema.define(version: 2020_08_03_152507) do
     t.datetime "updated_at", precision: 6, null: false
     t.decimal "block_timestamp", precision: 30
     t.binary "issuer_address"
+    t.decimal "ckb_transactions_count", precision: 30, default: "0"
     t.index ["type_hash"], name: "index_udts_on_type_hash", unique: true
   end
 
