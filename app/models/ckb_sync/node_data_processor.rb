@@ -402,6 +402,7 @@ module CkbSync
         ckb_transaction.contained_address_ids += address_ids.to_a
         ckb_transaction.tags += tags.to_a
         ckb_transaction.contained_udt_ids += udt_ids.to_a
+        Udt.where(id: udt_ids.to_a).map { |udt| udt.increment!(:ckb_transactions_count) }
 
         ckb_transaction
       end
@@ -455,7 +456,8 @@ module CkbSync
         if cell_output.udt?
           udt_infos << { type_script: output.type, address: address }
           tags << "udt"
-          udt_ids << Udt.find_or_create_by!(type_hash: output.type.compute_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt").id
+          udt = Udt.find_or_create_by!(type_hash: output.type.compute_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt")
+          udt_ids << udt.id
         end
         if cell_output.nervos_dao_deposit? || cell_output.nervos_dao_withdrawing?
           tags << "dao"
