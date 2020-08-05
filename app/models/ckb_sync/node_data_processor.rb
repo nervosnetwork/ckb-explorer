@@ -199,6 +199,7 @@ module CkbSync
         revert_dao_contract_related_operations(local_tip_block)
         revert_mining_info(local_tip_block)
         udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq
+        recalculate_udt_transactions_count(local_tip_block)
         local_tip_block.invalid!
         recalculate_udt_accounts(udt_type_hashes, local_tip_block)
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
@@ -208,6 +209,18 @@ module CkbSync
 
         local_tip_block
       end
+    end
+
+    def recalculate_udt_transactions_count(local_tip_block)
+      udt_ids = local_tip_block.ckb_transactions.where("tags @> array[?]::varchar[]", ["udt"]).pluck(:contained_udt_ids).flatten
+      udt_counts = udt_ids.each_with_object(Hash.new(0)) { |udt_id, counts| counts[udt_id] += 1 }
+      udt_counts_value =
+        udt_counts.map do |udt_id, count|
+          udt = Udt.find(udt_id)
+          { id: udt_id, ckb_transactions_count: udt.ckb_transactions_count - count, created_at: udt.created_at, updated_at: Time.current }
+        end
+
+      Udt.upsert_all(udt_counts_value) if udt_counts_value.present?
     end
 
     def recalculate_udt_accounts(udt_type_hashes, local_tip_block)
@@ -402,7 +415,6 @@ module CkbSync
         ckb_transaction.contained_address_ids += address_ids.to_a
         ckb_transaction.tags += tags.to_a
         ckb_transaction.contained_udt_ids += udt_ids.to_a
-        Udt.where(id: udt_ids.to_a).map { |udt| udt.increment!(:ckb_transactions_count) }
 
         ckb_transaction
       end
@@ -591,7 +603,7 @@ module CkbSync
           udt_counts_value =
             udt_counts.map do |udt_id, count|
               udt = Udt.find(udt_id)
-              { id: udt_id, ckb_transactions_count: count, created_at: udt.created_at, updated_at: Time.current }
+              { id: udt_id, ckb_transactions_count: udt.ckb_transactions_count + count, created_at: udt.created_at, updated_at: Time.current }
             end
 
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
