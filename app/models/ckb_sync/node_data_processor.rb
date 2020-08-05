@@ -586,10 +586,19 @@ module CkbSync
             account_books << account_book
           end
 
+          udt_ids = updated_ckb_transactions.pluck(:contained_udt_ids).flatten
+          udt_counts = udt_ids.each_with_object(Hash.new(0)) { |udt_id, counts| counts[udt_id] += 1 }
+          udt_counts_value =
+            udt_counts.map do |udt_id, count|
+              udt = Udt.find(udt_id)
+              { id: udt_id, ckb_transactions_count: count, created_at: udt.created_at, updated_at: Time.current }
+            end
+
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
           CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status, :consumed_block_timestamp])
           AccountBook.import!(account_books, validate: false)
           CkbTransaction.upsert_all(updated_ckb_transactions.uniq { |tx| tx[:id] })
+          Udt.upsert_all(udt_counts_value) if udt_counts_value.present?
         end
         input_cache_keys = updated_inputs.map(&:cache_keys)
         output_cache_keys = updated_outputs.map(&:cache_keys)
@@ -618,7 +627,7 @@ module CkbSync
       consumed_tx.contained_address_ids << address_id
       if previous_cell_output.udt?
         consumed_tx.tags << "udt"
-        consumed_tx.contained_udt_ids << Udt.find_or_create_by!(type_hash: previous_cell_output.node_output.type.compute_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt").id
+        consumed_tx.contained_udt_ids << Udt.find_or_create_by!(type_hash: previous_cell_output.type_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt").id
       end
       if previous_cell_output.nervos_dao_withdrawing?
         consumed_tx.tags << "dao"
