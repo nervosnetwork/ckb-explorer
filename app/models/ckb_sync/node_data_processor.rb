@@ -632,7 +632,7 @@ module CkbSync
       udt_counts = udt_ids.each_with_object(Hash.new(0)) { |udt_id, counts| counts[udt_id] += 1 }
       udt_counts.map do |udt_id, count|
         udt = Udt.find(udt_id)
-        {id: udt_id, ckb_transactions_count: udt.ckb_transactions_count + count, created_at: udt.created_at, updated_at: Time.current}
+        { id: udt_id, ckb_transactions_count: udt.ckb_transactions_count + count, created_at: udt.created_at, updated_at: Time.current }
       end
     end
 
@@ -669,7 +669,7 @@ module CkbSync
         tx[:tags] = (tx[:tags] << consumed_tx.tags).flatten.uniq
         tx[:contained_udt_ids] = (tx[:contained_udt_ids] << consumed_tx.contained_udt_ids).flatten.uniq
       else
-        updated_ckb_transactions << { id: consumed_tx.id, dao_address_ids: consumed_tx.dao_address_ids.uniq,  udt_address_ids: consumed_tx.udt_address_ids.uniq, contained_udt_ids: consumed_tx.contained_udt_ids.uniq, contained_address_ids: consumed_tx.contained_address_ids.uniq, tags: consumed_tx.tags.uniq, created_at: consumed_tx.created_at, updated_at: Time.current }
+        updated_ckb_transactions << { id: consumed_tx.id, dao_address_ids: consumed_tx.dao_address_ids.uniq, udt_address_ids: consumed_tx.udt_address_ids.uniq, contained_udt_ids: consumed_tx.contained_udt_ids.uniq, contained_address_ids: consumed_tx.contained_address_ids.uniq, tags: consumed_tx.tags.uniq, created_at: consumed_tx.created_at, updated_at: Time.current }
       end
     end
 
