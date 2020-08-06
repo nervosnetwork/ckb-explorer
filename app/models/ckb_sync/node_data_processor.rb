@@ -683,6 +683,7 @@ module CkbSync
       address.balance = address.cell_outputs.live.sum(:capacity)
       address.ckb_transactions_count = address.custom_ckb_transactions.count
       address.live_cells_count = address.cell_outputs.live.count
+      address.dao_transactions_count = address.ckb_dao_transactions.count
       address.save!
     end
 
