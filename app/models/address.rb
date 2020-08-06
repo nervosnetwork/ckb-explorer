@@ -133,6 +133,7 @@ end
 #  average_deposit_time   :decimal(, )
 #  unclaimed_compensation :decimal(30, )
 #  is_depositor           :boolean          default(FALSE)
+#  dao_transactions_count :decimal(30, )    default(0)
 #
 # Indexes
 #
