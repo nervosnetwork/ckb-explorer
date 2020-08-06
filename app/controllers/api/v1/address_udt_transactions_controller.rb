@@ -12,7 +12,7 @@ module Api
         udt = Udt.find_by(type_hash: params[:type_hash], published: true)
         raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
 
-        ckb_dao_transactions = address.ckb_udt_transactions(params[:type_hash]).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase).recent.page(@page).per(@page_size)
+        ckb_dao_transactions = address.ckb_udt_transactions(udt.id).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase).recent.page(@page).per(@page_size)
         json =
           Rails.cache.realize(ckb_dao_transactions.cache_key, version: ckb_dao_transactions.cache_version) do
             options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: @page, page_size: @page_size).call
