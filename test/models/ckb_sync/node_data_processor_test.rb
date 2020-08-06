@@ -2196,6 +2196,7 @@ module CkbSync
 
       assert_equal ["dao"], tx.tags
       assert_equal ["dao"], tx1.tags
+      assert_equal 2, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "should update tx's tags when output have nervos_dao_withdrawing cells" do
@@ -2260,6 +2261,7 @@ module CkbSync
       tx1 = block.ckb_transactions.where(is_cellbase: false).second
       assert_equal ["dao"], tx.tags
       assert_equal ["dao"], tx1.tags
+      assert_equal 2, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "should update tx's tags when input have nervos_dao_withdrawing cells" do
@@ -2337,6 +2339,7 @@ module CkbSync
 
       assert_equal ["dao"], tx.tags
       assert_equal ["dao"], tx1.tags
+      assert_equal 2, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "should update tx's tags when output have udt cells" do
@@ -2432,6 +2435,7 @@ module CkbSync
       tx = block.ckb_transactions.where(is_cellbase: false).first
 
       assert_equal %w[dao udt], tx.tags
+      assert_equal 1, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "should update tx's tags when output have udt cells and nervos_dao_withdrawing cell" do
@@ -2480,6 +2484,7 @@ module CkbSync
 
       tx = block.ckb_transactions.where(is_cellbase: false).first
       assert_equal %w[dao udt], tx.tags
+      assert_equal 1, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "should update tx's tags when input have udt cells" do
@@ -2655,6 +2660,8 @@ module CkbSync
 
       assert_equal %w[dao udt], tx.tags
       assert_equal %w[dao udt], tx1.tags
+
+      assert_equal 2, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "#process_block should not update tx's tags when there aren't dao cells and udt cells" do
