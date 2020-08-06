@@ -196,14 +196,14 @@ class AddressTest < ActiveSupport::TestCase
     ckb_transaction_ids = CellOutput.select("ckb_transaction_id").from("(#{sql}) as cell_outputs")
     expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids.distinct).recent
 
-    assert_equal expected_ckb_transactions.pluck(:id), address.ckb_udt_transactions(udt.type_hash).recent.pluck(:id)
+    assert_equal expected_ckb_transactions.pluck(:id), address.ckb_udt_transactions(udt.id).recent.pluck(:id)
   end
 
   test "#ckb_udt_transactions should return an empty array when there aren't udt cells" do
     udt = create(:udt)
     address = create(:address)
 
-    assert_equal [], address.ckb_udt_transactions(udt.type_hash)
+    assert_equal [], address.ckb_udt_transactions(udt.id)
   end
 
   test "#ckb_udt_transactions should return an empty array when udt not exist" do
