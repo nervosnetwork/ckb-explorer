@@ -414,13 +414,17 @@ module CkbSync
         address_ids = Set.new
         tags = Set.new
         udt_ids = Set.new
+        dao_address_ids = Set.new
+        udt_address_ids = Set.new
         ckb_transaction = build_ckb_transaction(local_block, transaction, transaction_index)
         build_cell_inputs(transaction.inputs, ckb_transaction)
-        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data, outputs, new_dao_depositor_events, udt_infos, address_ids, tags, udt_ids)
+        build_cell_outputs(transaction.outputs, ckb_transaction, addresses, transaction.outputs_data, outputs, new_dao_depositor_events, udt_infos, address_ids, tags, udt_ids, dao_address_ids, udt_address_ids)
         ckb_transaction.addresses << addresses.to_a
         ckb_transaction.contained_address_ids += address_ids.to_a
         ckb_transaction.tags += tags.to_a
         ckb_transaction.contained_udt_ids += udt_ids.to_a
+        ckb_transaction.dao_address_ids += dao_address_ids.to_a
+        ckb_transaction.udt_address_ids += udt_address_ids.to_a
 
         ckb_transaction
       end
@@ -464,7 +468,7 @@ module CkbSync
       node_input.previous_output.tx_hash == CellOutput::SYSTEM_TX_HASH
     end
 
-    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs, new_dao_depositor_events, udt_infos, address_ids, tags, udt_ids)
+    def build_cell_outputs(node_outputs, ckb_transaction, addresses, outputs_data, outputs, new_dao_depositor_events, udt_infos, address_ids, tags, udt_ids, dao_address_ids, udt_address_ids)
       node_outputs.each_with_index.map do |output, cell_index|
         address = Address.find_or_create_address(output.lock, ckb_transaction.block_timestamp)
         addresses << address
@@ -476,9 +480,11 @@ module CkbSync
           tags << "udt"
           udt = Udt.find_or_create_by!(type_hash: output.type.compute_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt")
           udt_ids << udt.id
+          udt_address_ids << address.id
         end
         if cell_output.nervos_dao_deposit? || cell_output.nervos_dao_withdrawing?
           tags << "dao"
+          dao_address_ids << address.id
         end
 
         build_deposit_dao_events(address, cell_output, ckb_transaction, new_dao_depositor_events)
@@ -652,16 +658,18 @@ module CkbSync
       if previous_cell_output.udt?
         consumed_tx.tags << "udt"
         consumed_tx.contained_udt_ids << Udt.find_or_create_by!(type_hash: previous_cell_output.type_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt").id
+        consumed_tx.udt_address_ids << previous_cell_output.address_id
       end
       if previous_cell_output.nervos_dao_withdrawing?
         consumed_tx.tags << "dao"
+        consumed_tx.dao_address_ids << previous_cell_output.address_id
       end
       if tx.present?
         tx[:contained_address_ids] = (tx[:contained_address_ids] << consumed_tx.contained_address_ids).flatten.uniq
         tx[:tags] = (tx[:tags] << consumed_tx.tags).flatten.uniq
         tx[:contained_udt_ids] = (tx[:contained_udt_ids] << consumed_tx.contained_udt_ids).flatten.uniq
       else
-        updated_ckb_transactions << { id: consumed_tx.id, contained_udt_ids: consumed_tx.contained_udt_ids.uniq, contained_address_ids: consumed_tx.contained_address_ids.uniq, tags: consumed_tx.tags.uniq, created_at: consumed_tx.created_at, updated_at: Time.current }
+        updated_ckb_transactions << { id: consumed_tx.id, dao_address_ids: consumed_tx.dao_address_ids.uniq,  udt_address_ids: consumed_tx.udt_address_ids.uniq, contained_udt_ids: consumed_tx.contained_udt_ids.uniq, contained_address_ids: consumed_tx.contained_address_ids.uniq, tags: consumed_tx.tags.uniq, created_at: consumed_tx.created_at, updated_at: Time.current }
       end
     end
 
@@ -673,7 +681,7 @@ module CkbSync
 
     def update_address_balance_and_ckb_transactions_count(address)
       address.balance = address.cell_outputs.live.sum(:capacity)
-      address.ckb_transactions_count = AccountBook.where(address: address).select(:ckb_transaction_id).distinct.count
+      address.ckb_transactions_count = address.custom_ckb_transactions.count
       address.live_cells_count = address.cell_outputs.live.count
       address.save!
     end

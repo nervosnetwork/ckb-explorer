@@ -22,14 +22,14 @@ class Address < ApplicationRecord
   end
 
   def ckb_dao_transactions
-    CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id]).where("tags @> array[?]::varchar[]", ["dao"])
+    CkbTransaction.where("dao_address_ids @> array[?]::bigint[]", [id])
   end
 
   def ckb_udt_transactions(type_hash)
     udt = Udt.where(type_hash: type_hash).select(:id).first
     return [] if udt.blank?
 
-    CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id]).where("contained_udt_ids @> array[?]::bigint[]", [udt.id])
+    CkbTransaction.where("udt_address_ids @> array[?]::bigint[]", [id]).where("contained_udt_ids @> array[?]::bigint[]", [udt.id])
   end
 
   def lock_info

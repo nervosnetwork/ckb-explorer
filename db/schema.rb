@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_06_071500) do
+ActiveRecord::Schema.define(version: 2020_08_06_081043) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -186,13 +186,17 @@ ActiveRecord::Schema.define(version: 2020_08_06_071500) do
     t.bigint "contained_address_ids", default: [], array: true
     t.string "tags", default: [], array: true
     t.bigint "contained_udt_ids", default: [], array: true
+    t.bigint "dao_address_ids", default: [], array: true
+    t.bigint "udt_address_ids", default: [], array: true
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["block_timestamp", "id"], name: "index_ckb_transactions_on_block_timestamp_and_id", order: { block_timestamp: "DESC NULLS LAST", id: :desc }
     t.index ["contained_address_ids"], name: "index_ckb_transactions_on_contained_address_ids", using: :gin
     t.index ["contained_udt_ids"], name: "index_ckb_transactions_on_contained_udt_ids", using: :gin
+    t.index ["dao_address_ids"], name: "index_ckb_transactions_on_dao_address_ids", using: :gin
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["tags"], name: "index_ckb_transactions_on_tags", using: :gin
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
+    t.index ["udt_address_ids"], name: "index_ckb_transactions_on_udt_address_ids", using: :gin
   end
 
   create_table "daily_statistics", force: :cascade do |t|
