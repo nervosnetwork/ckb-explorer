@@ -606,6 +606,9 @@ module CkbSync
               { id: udt_id, ckb_transactions_count: udt.ckb_transactions_count + count, created_at: udt.created_at, updated_at: Time.current }
             end
 
+          dao_tx_count = updated_ckb_transactions.select { |tx| tx[:tags].include?("dao") }.count
+          DaoContract.default_contract.increment!(:ckb_transactions_count, dao_tx_count)
+
           CellInput.import!(updated_inputs, validate: false, on_duplicate_key_update: [:previous_cell_output_id])
           CellOutput.import!(updated_outputs, validate: false, on_duplicate_key_update: [:consumed_by_id, :status, :consumed_block_timestamp])
           AccountBook.import!(account_books, validate: false)
