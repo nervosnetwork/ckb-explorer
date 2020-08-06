@@ -244,6 +244,7 @@ end
 
 def fake_dao_deposit_transaction(dao_cell_count, address)
   block = create(:block, :with_block_hash)
+  DaoContract.default_contract.update(ckb_transactions_count: dao_cell_count)
   dao_cell_count.times do |number|
     if number % 2 == 0
       ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x#{SecureRandom.hex(32)}", block: block, address: address, contained_address_ids: [address.id], tags: ["dao"])
