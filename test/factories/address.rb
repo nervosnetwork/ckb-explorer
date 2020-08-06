@@ -36,6 +36,9 @@ FactoryBot.define do
       after(:create) do |address, evaluator|
         block = create(:block, :with_block_hash)
         ckb_transactions = create_list(:ckb_transaction, evaluator.transactions_count, block: block)
+        ckb_transactions.each do |tx|
+          tx.contained_address_ids << address.id
+        end
         address.ckb_transactions << ckb_transactions
       end
     end
@@ -45,8 +48,8 @@ FactoryBot.define do
       after(:create) do |address, evaluator|
         evaluator.transactions_count.times do
           block = create(:block, :with_block_hash)
-          transaction = create(:ckb_transaction, block: block)
-          transaction1 = create(:ckb_transaction, block: block)
+          transaction = create(:ckb_transaction, block: block, contained_address_ids: [address.id], tags: ["udt"], contained_udt_ids: [evaluator.udt.id])
+          transaction1 = create(:ckb_transaction, block: block, contained_address_ids: [address.id], tags: ["udt"], contained_udt_ids: [evaluator.udt.id])
           create(:cell_output, address: address, block: block, ckb_transaction: transaction, generated_by: transaction, consumed_by: transaction1, type_hash: evaluator.udt.type_hash, cell_type: "udt", data: "0x000050ad321ea12e0000000000000000")
           address.ckb_transactions << transaction
           address.ckb_transactions << transaction1

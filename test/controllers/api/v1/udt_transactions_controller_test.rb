@@ -72,7 +72,7 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
 
     options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
 
-    assert_equal CkbTransactionSerializer.new(ckb_transactions, options.merge(params: { previews: true })).serialized_json, response.body
+    assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true })).serialized_json, response.body
   end
 
   test "should contain right keys in the serialized object when call show" do
@@ -82,7 +82,7 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
 
     response_tx_transaction = json["data"].first
 
-    assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps).sort, response_tx_transaction["attributes"].keys.sort
+    assert_equal %w(block_number transaction_hash block_timestamp display_inputs display_outputs is_cellbase income).sort, response_tx_transaction["attributes"].keys.sort
   end
 
   test "should return error object when no records found by id" do
@@ -153,7 +153,7 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
     valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page: page }
 
     options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page, page_size: page_size).call
-    response_transaction = CkbTransactionSerializer.new(udt_ckb_transactions, options.merge(params: { previews: true })).serialized_json
+    response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions, options.merge(params: { previews: true })).serialized_json
 
     assert_equal response_transaction, response.body
     assert_equal page_size, json["data"].size
@@ -168,7 +168,7 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
     valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page_size: page_size }
 
     options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page, page_size: page_size).call
-    response_transaction = CkbTransactionSerializer.new(udt_ckb_transactions, options.merge(params: { previews: true })).serialized_json
+    response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions, options.merge(params: { previews: true })).serialized_json
 
     assert_equal response_transaction, response.body
     assert_equal page_size, json["data"].size
@@ -182,7 +182,7 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
 
     valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page: page, page_size: page_size }
     options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page, page_size: page_size).call
-    response_transaction = CkbTransactionSerializer.new(udt_ckb_transactions, options.merge(params: { previews: true })).serialized_json
+    response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions, options.merge(params: { previews: true })).serialized_json
 
     assert_equal response_transaction, response.body
   end
@@ -196,7 +196,7 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
     valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page: page, page_size: page_size }
 
     options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page, page_size: page_size).call
-    response_transaction = CkbTransactionSerializer.new(udt_ckb_transactions, options.merge(params: { previews: true })).serialized_json
+    response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions, options.merge(params: { previews: true })).serialized_json
 
     assert_equal [], json["data"]
     assert_equal response_transaction, response.body
