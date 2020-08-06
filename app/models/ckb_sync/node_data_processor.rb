@@ -598,13 +598,7 @@ module CkbSync
             account_books << account_book
           end
 
-          udt_ids = updated_ckb_transactions.pluck(:contained_udt_ids).flatten
-          udt_counts = udt_ids.each_with_object(Hash.new(0)) { |udt_id, counts| counts[udt_id] += 1 }
-          udt_counts_value =
-            udt_counts.map do |udt_id, count|
-              udt = Udt.find(udt_id)
-              { id: udt_id, ckb_transactions_count: udt.ckb_transactions_count + count, created_at: udt.created_at, updated_at: Time.current }
-            end
+          udt_counts_value = udt_counts_value(updated_ckb_transactions)
 
           dao_tx_count = updated_ckb_transactions.select { |tx| tx[:tags].include?("dao") }.count
           DaoContract.default_contract.increment!(:ckb_transactions_count, dao_tx_count)
@@ -618,6 +612,15 @@ module CkbSync
         input_cache_keys = updated_inputs.map(&:cache_keys)
         output_cache_keys = updated_outputs.map(&:cache_keys)
         flush_caches(input_cache_keys + output_cache_keys)
+      end
+    end
+
+    def udt_counts_value(updated_ckb_transactions)
+      udt_ids = updated_ckb_transactions.pluck(:contained_udt_ids).flatten
+      udt_counts = udt_ids.each_with_object(Hash.new(0)) { |udt_id, counts| counts[udt_id] += 1 }
+      udt_counts.map do |udt_id, count|
+        udt = Udt.find(udt_id)
+        {id: udt_id, ckb_transactions_count: udt.ckb_transactions_count + count, created_at: udt.created_at, updated_at: Time.current}
       end
     end
 
