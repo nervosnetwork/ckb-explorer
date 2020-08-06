@@ -16,7 +16,7 @@ namespace :migration do
 
         if tx.inputs.udt.present?
           tx.tags << "udt"
-          type_hashes = tx.outputs.udt.pluck(:type_hash).uniq
+          type_hashes = tx.inputs.udt.pluck(:type_hash).uniq
           tx.contained_udt_ids += Udt.where(type_hash: type_hashes).pluck(:id)
         end
 
