@@ -200,6 +200,7 @@ module CkbSync
         revert_mining_info(local_tip_block)
         udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq
         recalculate_udt_transactions_count(local_tip_block)
+        recalculate_dao_contract_transactions_count(local_tip_block)
         local_tip_block.invalid!
         recalculate_udt_accounts(udt_type_hashes, local_tip_block)
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
@@ -209,6 +210,11 @@ module CkbSync
 
         local_tip_block
       end
+    end
+
+    def recalculate_dao_contract_transactions_count(local_tip_block)
+      dao_transactions_count = local_tip_block.ckb_transactions.where("tags @> array[?]::varchar[]", ["dao"]).count
+      DaoContract.default_contract.decrement!(:ckb_transactions_count, dao_transactions_count) if dao_transactions_count > 0
     end
 
     def recalculate_udt_transactions_count(local_tip_block)
