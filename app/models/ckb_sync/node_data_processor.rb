@@ -45,17 +45,20 @@ module CkbSync
         DaoEvent.import!(dao_events, validate: false)
 
         update_dao_contract_related_info(local_block)
-        block_counter = TableRecordCount.find_by(table_name: "blocks")
-        block_counter.increment!(:count)
-        ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
-        ckb_transaction_counter.increment!(:count, ckb_transactions.count)
+        increase_records_count(ckb_transactions)
       end
-
 
       local_block
     end
 
     private
+
+    def increase_records_count(ckb_transactions)
+      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter.increment!(:count)
+      ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transaction_counter.increment!(:count, ckb_transactions.count)
+    end
 
     def update_udt_info(udt_infos)
       return if udt_infos.blank?
@@ -206,17 +209,23 @@ module CkbSync
         udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq
         recalculate_udt_transactions_count(local_tip_block)
         recalculate_dao_contract_transactions_count(local_tip_block)
+        decrease_records_count(local_tip_block)
         local_tip_block.invalid!
         recalculate_udt_accounts(udt_type_hashes, local_tip_block)
         local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
         revert_block_rewards(local_tip_block)
         ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch, block_timestamp: local_tip_block.timestamp)
         Charts::BlockStatisticGenerator.new(local_tip_block.number).call
-        block_counter = TableRecordCount.find_by(table_name: "blocks")
-        block_counter.decrement!(:count)
 
         local_tip_block
       end
+    end
+
+    def decrease_records_count(local_tip_block)
+      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter.decrement!(:count)
+      ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transaction_counter.decrement!(:count, local_tip_block.ckb_transactions.count)
     end
 
     def recalculate_dao_contract_transactions_count(local_tip_block)
