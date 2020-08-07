@@ -40,6 +40,7 @@ FactoryBot.define do
           tx.contained_address_ids << address.id
         end
         address.ckb_transactions << ckb_transactions
+        address.update(ckb_transactions_count: address.ckb_transactions.count)
       end
     end
 
