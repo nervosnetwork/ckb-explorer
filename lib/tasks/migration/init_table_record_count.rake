@@ -4,7 +4,7 @@ namespace :migration do
     ApplicationRecord.transaction do
       ActiveRecord::Base.connection.execute('LOCK blocks IN ACCESS EXCLUSIVE MODE')
       TableRecordCount.create(table_name: "blocks", count: Block.count)
-      TableRecordCount.create(table_name: "ckb_transactions", count: CkbTransaction.count)
+      TableRecordCount.create(table_name: "ckb_transactions", count: CkbTransaction.normal.count)
     end
 
     puts "done"
