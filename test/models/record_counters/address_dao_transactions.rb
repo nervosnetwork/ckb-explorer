@@ -7,7 +7,7 @@ class AddressDaoTransactionsTest < ActiveSupport::TestCase
     assert_respond_to address_dao_transactions_counter, :total_count
   end
 
-  test "total_count should return dao_contract ckb transactions count" do
+  test "total_count should return address dao transactions count" do
     address = create(:address)
     address_dao_transactions_counter = RecordCounters::AddressDaoTransactions.new(address)
     assert_equal address.dao_transactions_count, address_dao_transactions_counter.total_count
