@@ -16,7 +16,8 @@ module Api
           ckb_transactions = CkbTransaction.recent.normal.page(@page).per(@page_size).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved)
           json =
             Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
-              options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size).call
+              records_counter = RecordCounters::Transactions.new
+              options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
               CkbTransactionListSerializer.new(ckb_transactions, options).serialized_json
             end
           render json: json
