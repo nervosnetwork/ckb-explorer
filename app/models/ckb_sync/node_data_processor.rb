@@ -45,10 +45,13 @@ module CkbSync
         DaoEvent.import!(dao_events, validate: false)
 
         update_dao_contract_related_info(local_block)
+        block_counter = TableRecordCount.find_by(table_name: "blocks")
+        block_counter.increment!(:count)
+        ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+        ckb_transaction_counter.increment!(:count, ckb_transactions.count)
       end
 
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
-      block_counter.increment!(:count)
+
       local_block
     end
 
