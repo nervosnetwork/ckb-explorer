@@ -24,7 +24,7 @@ class DaoContractTest < ActiveSupport::TestCase
 
   test "should have correct columns" do
     dao_contract = create(:dao_contract)
-    expected_attributes = %w(created_at deposit_transactions_count depositors_count id claimed_compensation total_deposit total_depositors_count updated_at withdraw_transactions_count unclaimed_compensation)
+    expected_attributes = %w(created_at deposit_transactions_count depositors_count id claimed_compensation total_deposit total_depositors_count updated_at withdraw_transactions_count unclaimed_compensation ckb_transactions_count)
     assert_equal expected_attributes.sort, dao_contract.attributes.keys.sort
   end
 

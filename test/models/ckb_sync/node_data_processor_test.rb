@@ -1483,7 +1483,9 @@ module CkbSync
       address2 = Address.find_by(lock_hash: lock2.compute_hash)
       address3 = Address.find_by(lock_hash: lock3.compute_hash)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-      node_data_processor.call
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
+        node_data_processor.call
+      end
 
       assert_equal 0, address1.reload.dao_transactions_count
       assert_equal 0, address2.reload.dao_transactions_count
