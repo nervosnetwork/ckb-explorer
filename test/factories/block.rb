@@ -47,6 +47,7 @@ FactoryBot.define do
     trait :with_ckb_transactions do
       after(:create) do |block, evaluator|
         create_list(:ckb_transaction, evaluator.transactions_count, block: block)
+        block.update(ckb_transactions_count: evaluator.transactions_count)
       end
     end
   end
