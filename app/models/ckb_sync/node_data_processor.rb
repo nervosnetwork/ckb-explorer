@@ -47,6 +47,8 @@ module CkbSync
         update_dao_contract_related_info(local_block)
       end
 
+      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter.increment!(:count)
       local_block
     end
 
