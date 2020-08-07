@@ -1359,6 +1359,21 @@ module CkbSync
       end
     end
 
+    test "should recalculate table_record_counts ckb_transactions count when block is invalid" do
+      create(:table_record_count, :block_counter)
+      ckb_transactions_counter = create(:table_record_count, :ckb_transactions_counter)
+
+      prepare_node_data(12)
+      local_block = Block.find_by(number: 12)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+
+      VCR.use_cassette("blocks/13") do
+        assert_difference -> { ckb_transactions_counter.reload.count }, -local_block.ckb_transactions.count do
+          node_data_processor.call
+        end
+      end
+    end
+
     test "#process_block should update abandoned block's contained address's balance" do
       prepare_node_data(12)
       local_block = Block.find_by(number: 12)
