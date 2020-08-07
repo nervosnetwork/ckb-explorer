@@ -34,6 +34,18 @@ module CkbSync
       end
     end
 
+    test "should update table_record_counts ckb transactions count after block has been processed" do
+      create(:table_record_count, :block_counter)
+      ckb_transaction_counter = create(:table_record_count, :ckb_transactions_counter)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        assert_difference -> { ckb_transaction_counter.reload.count }, node_block.transactions.count do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
     test "#process_block created block's attribute value should equal with the node block's attribute value" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
