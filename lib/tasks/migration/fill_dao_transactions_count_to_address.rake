@@ -11,7 +11,7 @@ namespace :migration do
       progress_bar.increment
       dao_transactions_count = address.ckb_dao_transactions.count
 
-      { id: udt.id, dao_transactions_count: dao_transactions_count, created_at: udt.created_at, updated_at: Time.current }
+      { id: address.id, dao_transactions_count: dao_transactions_count, created_at: address.created_at, updated_at: Time.current }
     end
 
     Address.upsert_all(values) if values.present?
