@@ -12,7 +12,8 @@ module Api
 
         json =
           Rails.cache.realize(@ckb_transactions.cache_key, version: @ckb_transactions.cache_version) do
-            @options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: @ckb_transactions, page: @page, page_size: @page_size).call
+            records_counter = RecordCounters::AddressTransactions.new(@address)
+            @options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: @ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
             json_result
           end
 

@@ -7,7 +7,7 @@ class UdtTransactionsTest < ActiveSupport::TestCase
     assert_respond_to udt_transactions_counter, :total_count
   end
 
-  test "total_count should return udt's ckb transactions count" do
+  test "total_count should return udt ckb transactions count" do
     udt = create(:udt, published: true)
     udt_transactions_counter = RecordCounters::UdtTransactions.new(udt)
     assert_equal udt.ckb_transactions_count, udt_transactions_counter.total_count

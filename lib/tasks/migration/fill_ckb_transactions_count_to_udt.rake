@@ -7,7 +7,7 @@ namespace :migration do
     })
 
     values =
-        Udt.all.map do |udt|
+      Udt.all.map do |udt|
         progress_bar.increment
         ckb_transactions_count = udt.ckb_transactions.count
 
