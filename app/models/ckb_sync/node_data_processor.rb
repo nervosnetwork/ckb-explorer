@@ -209,6 +209,8 @@ module CkbSync
         revert_block_rewards(local_tip_block)
         ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch, block_timestamp: local_tip_block.timestamp)
         Charts::BlockStatisticGenerator.new(local_tip_block.number).call
+        block_counter = TableRecordCount.find_by(table_name: "blocks")
+        block_counter.decrement!(:count)
 
         local_tip_block
       end
