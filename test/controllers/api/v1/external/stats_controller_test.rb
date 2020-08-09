@@ -5,6 +5,8 @@ module Api
     module External
       class StatsControllerTest < ActionDispatch::IntegrationTest
         test "should return tip block number when call show action and id is equal to tip_block_number" do
+          create(:table_record_count, :block_counter)
+          create(:table_record_count, :ckb_transactions_counter)
           prepare_node_data
           get api_v1_external_stat_url("tip_block_number")
 

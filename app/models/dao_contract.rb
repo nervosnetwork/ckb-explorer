@@ -130,4 +130,5 @@ end
 #  created_at                  :datetime         not null
 #  updated_at                  :datetime         not null
 #  unclaimed_compensation      :decimal(30, )
+#  ckb_transactions_count      :decimal(30, )    default(0)
 #

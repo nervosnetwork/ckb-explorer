@@ -1,6 +1,11 @@
 require "test_helper"
 
 class BlockTest < ActiveSupport::TestCase
+  setup do
+    create(:table_record_count, :block_counter)
+    create(:table_record_count, :ckb_transactions_counter)
+  end
+
   context "associations" do
     should have_many(:ckb_transactions)
     should have_many(:uncle_blocks)

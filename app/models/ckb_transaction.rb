@@ -154,6 +154,8 @@ end
 #  contained_address_ids :bigint           default([]), is an Array
 #  tags                  :string           default([]), is an Array
 #  contained_udt_ids     :bigint           default([]), is an Array
+#  dao_address_ids       :bigint           default([]), is an Array
+#  udt_address_ids       :bigint           default([]), is an Array
 #
 # Indexes
 #
@@ -161,7 +163,9 @@ end
 #  index_ckb_transactions_on_block_timestamp_and_id        (block_timestamp DESC NULLS LAST,id DESC)
 #  index_ckb_transactions_on_contained_address_ids         (contained_address_ids) USING gin
 #  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
+#  index_ckb_transactions_on_dao_address_ids               (dao_address_ids) USING gin
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)
 #  index_ckb_transactions_on_tags                          (tags) USING gin
 #  index_ckb_transactions_on_tx_hash_and_block_id          (tx_hash,block_id) UNIQUE
+#  index_ckb_transactions_on_udt_address_ids               (udt_address_ids) USING gin
 #
