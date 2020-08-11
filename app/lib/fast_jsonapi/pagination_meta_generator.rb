@@ -27,8 +27,8 @@ module FastJsonapi
       hash[:links][:self] = generate_url(page)
 
       if page < total_pages
-        hash[:links][:next] = generate_url(records.next_page)
-        hash[:links][:last] = generate_url(records.total_pages)
+        hash[:links][:next] = generate_url(next_page)
+        hash[:links][:last] = generate_url(total_pages)
       end
 
       hash
@@ -38,6 +38,26 @@ module FastJsonapi
 
     attr_reader :page, :page_size, :records, :records_counter, :total_count
     attr_accessor :url, :hash
+
+    def current_page
+      records.current_page
+    end
+
+    def last_page?
+      current_page == total_pages
+    end
+
+    def next_page
+      current_page + 1 unless last_page? || out_of_range?
+    end
+
+    def last_page?
+      current_page == total_pages
+    end
+
+    def out_of_range?
+      current_page > total_pages
+    end
 
     def generate_url(page)
       [url, url_params(page)].join("?")
