@@ -1,6 +1,11 @@
 require "test_helper"
 
 class AddressTest < ActiveSupport::TestCase
+  setup do
+    create(:table_record_count, :block_counter)
+    create(:table_record_count, :ckb_transactions_counter)
+  end
+
   context "associations" do
     should have_many(:account_books)
     should have_many(:ckb_transactions).
@@ -130,7 +135,7 @@ class AddressTest < ActiveSupport::TestCase
     30.times do |number|
       block = create(:block, :with_block_hash)
       contained_address_ids = number % 2 == 0 ? [address.id] : [address1.id]
-      tx = create(:ckb_transaction, block: block, tags: ["dao"], contained_address_ids: contained_address_ids)
+      tx = create(:ckb_transaction, block: block, tags: ["dao"], dao_address_ids: [contained_address_ids], contained_address_ids: contained_address_ids)
       AccountBook.create(address: address, ckb_transaction: tx)
       cell_type = number % 2 == 0 ? "nervos_dao_deposit" : "nervos_dao_withdrawing"
       cell_output_address = number % 2 == 0 ? address : address1
@@ -155,11 +160,11 @@ class AddressTest < ActiveSupport::TestCase
     30.times do |number|
       block = create(:block, :with_block_hash)
       if number % 2 == 0
-        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], contained_address_ids: [address.id])
+        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], udt_address_ids: [address.id], contained_address_ids: [address.id])
         create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash, generated_by: tx, address: address)
       else
-        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], contained_address_ids: [address.id])
-        tx1 = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], contained_address_ids: [address.id])
+        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], udt_address_ids: [address.id], contained_address_ids: [address.id])
+        tx1 = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], udt_address_ids: [address.id], contained_address_ids: [address.id])
         create(:cell_output, block: block, ckb_transaction: tx1, cell_type: "udt", type_hash: udt.type_hash, generated_by: tx1, address: address)
         create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash, generated_by: tx, consumed_by_id: tx1, address: address)
       end
@@ -196,19 +201,19 @@ class AddressTest < ActiveSupport::TestCase
     ckb_transaction_ids = CellOutput.select("ckb_transaction_id").from("(#{sql}) as cell_outputs")
     expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids.distinct).recent
 
-    assert_equal expected_ckb_transactions.pluck(:id), address.ckb_udt_transactions(udt.type_hash).recent.pluck(:id)
+    assert_equal expected_ckb_transactions.pluck(:id), address.ckb_udt_transactions(udt.id).recent.pluck(:id)
   end
 
   test "#ckb_udt_transactions should return an empty array when there aren't udt cells" do
     udt = create(:udt)
     address = create(:address)
 
-    assert_equal [], address.ckb_udt_transactions(udt.type_hash)
+    assert_equal [], address.ckb_udt_transactions(udt.id)
   end
 
   test "#ckb_udt_transactions should return an empty array when udt not exist" do
     address = create(:address)
 
-    assert_equal [], address.ckb_udt_transactions("0x11")
+    assert_equal [], address.ckb_udt_transactions(123)
   end
 end

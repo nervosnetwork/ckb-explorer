@@ -48,7 +48,6 @@ module Api
       test "should get serialized objects" do
         15.times do |number|
           create(:block, :with_block_hash, timestamp: 2.days.ago.to_i + number)
-
         end
         block_timestamps = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).pluck(:timestamp)
         blocks = Block.where(timestamp: block_timestamps).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes).recent
@@ -124,6 +123,7 @@ module Api
         page_size = 30
         create_list(:block, 15, :with_block_hash)
         create(:block)
+        create(:table_record_count, :block_counter, count: 16)
 
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
@@ -161,6 +161,7 @@ module Api
 
       test "should return the corresponding blocks when page and page_size are set" do
         create_list(:block, 15, :with_block_hash)
+        create(:table_record_count, :block_counter, count: 15)
         page = 2
         page_size = 5
         block_timestamps = Block.recent.select(:timestamp).page(page).per(page_size)
@@ -168,19 +169,22 @@ module Api
 
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: block_timestamps, page: page, page_size: page_size).call
+        records_counter = RecordCounters::Blocks.new
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: block_timestamps, page: page, page_size: page_size, records_counter: records_counter).call
         response_blocks = BlockListSerializer.new(blocks, options).serialized_json
         assert_equal response_blocks, response.body
       end
 
       test "should return empty array when there is no blocks" do
+        create(:table_record_count, :block_counter)
         page = 2
         page_size = 5
         blocks = Block.order(timestamp: :desc).page(page).per(page_size)
 
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: page, page_size: page_size).call
+        records_counter = RecordCounters::Blocks.new
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: page, page_size: page_size, records_counter: records_counter).call
         response_blocks = BlockSerializer.new(blocks, options).serialized_json
 
         assert_equal [], json["data"]
@@ -191,6 +195,7 @@ module Api
         page = 2
         page_size = 3
         create_list(:block, 30, :with_block_hash)
+        create(:table_record_count, :block_counter, count: 30)
         links = {
           self: "#{api_v1_blocks_url}?page=2&page_size=3",
           first: "#{api_v1_blocks_url}?page_size=3",
@@ -208,12 +213,14 @@ module Api
         page = 1
         page_size = 30
         create_list(:block, 30, :with_block_hash)
+        create(:table_record_count, :block_counter, count: 30)
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
         assert_equal page_size, json.dig("meta", "total")
       end
 
       test "should return pagination links that only contain self in response body when there is no blocks" do
+        create(:table_record_count, :block_counter)
         page = 1
         page_size = 10
         links = {

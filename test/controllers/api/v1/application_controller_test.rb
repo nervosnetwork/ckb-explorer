@@ -14,7 +14,7 @@ module Api
         valid_get "/app"
 
         assert_response :not_found
-        assert_equal "app", json["message"]
+        assert_equal "Not Found", json["message"]
       end
     end
   end

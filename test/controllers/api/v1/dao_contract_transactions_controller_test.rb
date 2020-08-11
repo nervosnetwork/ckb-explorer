@@ -2,6 +2,11 @@ require "test_helper"
 module Api
   module V1
     class DaoContractTransactionsControllerTest < ActionDispatch::IntegrationTest
+      setup do
+        create(:table_record_count, :block_counter)
+        create(:table_record_count, :ckb_transactions_counter)
+      end
+
       test "should set right content type when call index" do
         ckb_transaction = create(:ckb_transaction)
 
