@@ -41,7 +41,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
-        assert_difference -> { ckb_transaction_counter.reload.count }, node_block.transactions.count do
+        assert_difference -> { ckb_transaction_counter.reload.count }, node_block.transactions[1..-1].count do
           node_data_processor.process_block(node_block)
         end
       end
@@ -1368,7 +1368,7 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/13") do
-        assert_difference -> { ckb_transactions_counter.reload.count }, -local_block.ckb_transactions.count do
+        assert_difference -> { ckb_transactions_counter.reload.count }, -local_block.ckb_transactions.normal.count do
           node_data_processor.call
         end
       end

@@ -57,7 +57,8 @@ module CkbSync
       block_counter = TableRecordCount.find_by(table_name: "blocks")
       block_counter.increment!(:count)
       ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
-      ckb_transaction_counter.increment!(:count, ckb_transactions.count)
+      normal_transactions = ckb_transactions.reject { |tx| tx.is_cellbase }
+      ckb_transaction_counter.increment!(:count, normal_transactions.count) if normal_transactions.present?
     end
 
     def update_udt_info(udt_infos)
@@ -225,7 +226,8 @@ module CkbSync
       block_counter = TableRecordCount.find_by(table_name: "blocks")
       block_counter.decrement!(:count)
       ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
-      ckb_transaction_counter.decrement!(:count, local_tip_block.ckb_transactions.count)
+      normal_transactions = local_tip_block.ckb_transactions.normal
+      ckb_transaction_counter.decrement!(:count, normal_transactions.count) if normal_transactions.present?
     end
 
     def recalculate_dao_contract_transactions_count(local_tip_block)
