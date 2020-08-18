@@ -34,25 +34,26 @@ end
 #
 # Table name: udts
 #
-#  id               :bigint           not null, primary key
-#  code_hash        :binary
-#  hash_type        :string
-#  args             :string
-#  type_hash        :string
-#  full_name        :string
-#  symbol           :string
-#  decimal          :integer
-#  description      :string
-#  icon_file        :string
-#  operator_website :string
-#  addresses_count  :decimal(30, )    default(0)
-#  total_amount     :decimal(40, )    default(0)
-#  udt_type         :integer
-#  published        :boolean          default(FALSE)
-#  created_at       :datetime         not null
-#  updated_at       :datetime         not null
-#  block_timestamp  :decimal(30, )
-#  issuer_address   :binary
+#  id                     :bigint           not null, primary key
+#  code_hash              :binary
+#  hash_type              :string
+#  args                   :string
+#  type_hash              :string
+#  full_name              :string
+#  symbol                 :string
+#  decimal                :integer
+#  description            :string
+#  icon_file              :string
+#  operator_website       :string
+#  addresses_count        :decimal(30, )    default(0)
+#  total_amount           :decimal(40, )    default(0)
+#  udt_type               :integer
+#  published              :boolean          default(FALSE)
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  block_timestamp        :decimal(30, )
+#  issuer_address         :binary
+#  ckb_transactions_count :decimal(30, )    default(0)
 #
 # Indexes
 #

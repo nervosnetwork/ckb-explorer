@@ -3,13 +3,19 @@ module FastJsonapi
     DEFAULT_PAGE = 1
     DEFAULT_PER_PAGE = 20
 
-    def initialize(request:, records:, page:, page_size:)
+    def initialize(request:, records:, page:, page_size:, records_counter: nil)
       @url = request.base_url + request.path + query_string(request.query_parameters)
       @page = page.to_i
       @page_size = limit_page_size(records, page_size.to_i)
-      @total_pages = records.total_pages
       @records = records
-      @hash = { links: {}, meta: { total: records.total_count, page_size: @page_size } }
+      @records_counter = records_counter.presence || records
+      @total_count = @records_counter.total_count
+      @total_pages = total_pages
+      @hash = { links: {}, meta: { total: @total_count, page_size: @page_size } }
+    end
+
+    def total_pages
+      (total_count / @page_size).ceil
     end
 
     def call
@@ -21,8 +27,8 @@ module FastJsonapi
       hash[:links][:self] = generate_url(page)
 
       if page < total_pages
-        hash[:links][:next] = generate_url(records.next_page)
-        hash[:links][:last] = generate_url(records.total_pages)
+        hash[:links][:next] = generate_url(next_page)
+        hash[:links][:last] = generate_url(total_pages)
       end
 
       hash
@@ -30,8 +36,28 @@ module FastJsonapi
 
     private
 
-    attr_reader :page, :page_size, :records, :total_pages
+    attr_reader :page, :page_size, :records, :records_counter, :total_count
     attr_accessor :url, :hash
+
+    def current_page
+      records.current_page
+    end
+
+    def last_page?
+      current_page == total_pages
+    end
+
+    def next_page
+      current_page + 1 unless last_page? || out_of_range?
+    end
+
+    def last_page?
+      current_page == total_pages
+    end
+
+    def out_of_range?
+      current_page > total_pages
+    end
 
     def generate_url(page)
       [url, url_params(page)].join("?")

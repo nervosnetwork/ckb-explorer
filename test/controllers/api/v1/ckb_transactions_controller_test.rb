@@ -91,6 +91,8 @@ module Api
       end
 
       test "should contain right keys in the serialized object when call show" do
+        create(:table_record_count, :block_counter)
+        create(:table_record_count, :ckb_transactions_counter)
         prepare_node_data(8)
         ckb_transaction = CkbTransaction.last
 
@@ -101,6 +103,8 @@ module Api
       end
 
       test "returned income should be null" do
+        create(:table_record_count, :block_counter)
+        create(:table_record_count, :ckb_transactions_counter)
         prepare_node_data(8)
         ckb_transaction = CkbTransaction.last
 
@@ -302,13 +306,16 @@ module Api
       test "should return the corresponding blocks when page and page_size are set" do
         block = create(:block, :with_block_hash)
         create_list(:ckb_transaction, 15, block: block)
+        create(:table_record_count, :block_counter, count: Block.count)
+        create(:table_record_count, :ckb_transactions_counter, count: CkbTransaction.count)
         page = 2
         page_size = 5
         ckb_transactions = CkbTransaction.order(block_timestamp: :desc).page(page).per(page_size)
 
         valid_get api_v1_ckb_transactions_url, params: { page: page, page_size: page_size }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
+        records_counter = RecordCounters::Transactions.new
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
         response_ckb_transactions = CkbTransactionListSerializer.new(ckb_transactions, options).serialized_json
         assert_equal response_ckb_transactions, response.body
       end

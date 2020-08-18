@@ -1,3 +1,9 @@
+# [v0.11.1](https://github.com/shaojunda/ckb-explorer/compare/v0.11.0...v0.11.1) (2020-08-12)
+
+### Performance Improvements
+
+* [#716](https://github.com/nervosnetwork/ckb-explorer/pull/716): use record counter to replace count(*)
+
 # [v0.11.0](https://github.com/nervosnetwork/ckb-explorer/compare/v0.10.1...v0.11.0) (2020-07-30)
 
 
