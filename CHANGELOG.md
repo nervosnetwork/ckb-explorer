@@ -9,7 +9,6 @@
 * [#721](https://github.com/nervosnetwork/ckb-explorer/pull/721): fix normal transactions counter
 
 
-
 # [v0.11.1](https://github.com/shaojunda/ckb-explorer/compare/v0.11.0...v0.11.1) (2020-08-12)
 
 ### Performance Improvements
