@@ -1,3 +1,12 @@
+# [](https://github.com/shaojunda/ckb-explorer/compare/v0.11.1...v) (2020-08-29)
+
+
+### Bug Fixes
+
+* normal transactions counter ([8aa417c](https://github.com/shaojunda/ckb-explorer/commit/8aa417c))
+
+
+
 # [v0.11.1](https://github.com/shaojunda/ckb-explorer/compare/v0.11.0...v0.11.1) (2020-08-12)
 
 ### Performance Improvements
