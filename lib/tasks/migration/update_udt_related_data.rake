@@ -11,6 +11,7 @@ class UdtRelatedDataUpdater
           create_udt_accounts(udt_infos)
           update_udt_info(udt_infos)
         end
+        update_related_tx_caches
 
         puts "done"
       end
@@ -56,6 +57,19 @@ class UdtRelatedDataUpdater
     end
 
     puts "udts created"
+  end
+
+
+  def update_related_tx_caches
+    type_scripts = TypeScript.where(code_hash: ENV["SUDT_CELL_TYPE_HASH"])
+    type_hashes = type_scripts.map {|type_script| CKB::Types::Script.new(type_script.to_node_type).compute_hash }.uniq
+    tx_ids = CellOutput.where(type_hash: type_hashes).pluck(:ckb_transaction_id)
+    tx_ids.each do |tx_id|
+      Rails.cache.delete("normal_tx_display_outputs_previews_false_#{tx_id}")
+      Rails.cache.delete("normal_tx_display_outputs_previews_true_#{tx_id}")
+      Rails.cache.delete("normal_tx_display_inputs_previews_false_#{tx_id}")
+      Rails.cache.delete("normal_tx_display_inputs_previews_true_#{tx_id}")
+    end
   end
 end
 
