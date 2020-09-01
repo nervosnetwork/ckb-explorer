@@ -1,3 +1,14 @@
+# [v0.11.2](https://github.com/shaojunda/ckb-explorer/compare/v0.11.1...v0.11.2) (2020-08-30)
+
+### Features
+
+* [#723](https://github.com/nervosnetwork/ckb-explorer/pull/723): support sUDT on mainnet
+
+### Bug Fixes
+
+* [#721](https://github.com/nervosnetwork/ckb-explorer/pull/721): fix normal transactions counter
+
+
 # [v0.11.1](https://github.com/shaojunda/ckb-explorer/compare/v0.11.0...v0.11.1) (2020-08-12)
 
 ### Performance Improvements
@@ -66,7 +77,7 @@
 
 ### Features
 
-* [#677](https://github.com/nervosnetwork/ckb-explorer/pull/677): update dao compensation logic to include the unclaimed compensation 
+* [#677](https://github.com/nervosnetwork/ckb-explorer/pull/677): update dao compensation logic to include the unclaimed compensation
 * [#680](https://github.com/nervosnetwork/ckb-explorer/pull/680): add maintenance info API
 * [#682](https://github.com/nervosnetwork/ckb-explorer/pull/682): add flush front-end cache API
 

@@ -29,7 +29,7 @@ class BlockTimeStatistic < ApplicationRecord
       current_time = current_time + 1.day
     end
 
-    BlockTimeStatistic.upsert_all(values, unique_by: :stat_timestamp)
+    BlockTimeStatistic.upsert_all(values, unique_by: :stat_timestamp) if values.present?
   end
 
   def avg_block_time_sql(started_at, ended_at)
