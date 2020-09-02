@@ -5,12 +5,14 @@ module Api
     class NetsControllerTest < ActionDispatch::IntegrationTest
       setup do
         CkbSync::Api.any_instance.stubs(:local_node_info).returns(
-          CKB::Types::Peer.new(
+          CKB::Types::LocalNode.new(
             addresses: [
               CKB::Types::AddressInfo.new(address: "/ip4/172.16.55.2/tcp/8115/p2p/QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNrc", score: "0x1"),
               CKB::Types::AddressInfo.new(address: "/ip4/172.16.55.2/tcp/8115/p2p/QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNrc", score: "0x1")
             ],
-            is_outbound: nil,
+            active: true,
+            protocols: [],
+            connections: 10,
             node_id: "QmPcRzhoyTUKnoMpJ4SfrWsQGLo5fLMMXsCJieGbVuYNra",
             version: "0.16.0 (rylai-v5 2178d78 2019-07-13)"
           )
@@ -86,14 +88,6 @@ module Api
         valid_get api_v1_net_url("addresses")
 
         assert_equal NetInfoSerializer.new(net_info, { params: { info_name: "addresses" } }).serialized_json, response.body
-      end
-
-      test "should return is outbound when param is is_outbound" do
-        net_info = NetInfo.new
-
-        valid_get api_v1_net_url("is_outbound")
-
-        assert_equal NetInfoSerializer.new(net_info, { params: { info_name: "is_outbound" } }).serialized_json, response.body
       end
 
       test "should return is node id when param is node_id" do

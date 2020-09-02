@@ -7,10 +7,6 @@ class NetInfo
     local_node_info.addresses
   end
 
-  def is_outbound
-    local_node_info.is_outbound
-  end
-
   def node_id
     local_node_info.node_id
   end
