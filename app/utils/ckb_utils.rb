@@ -162,6 +162,8 @@ class CkbUtils
 
     block_header = Struct.new(:hash, :number)
     cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(current_block.block_hash)
+    return if cellbase_output_capacity_details.blank?
+
     reward = CkbUtils.block_reward(block_header.new(current_block.block_hash, current_block.number))
     primary_reward = CkbUtils.primary_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
     secondary_reward = CkbUtils.secondary_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
