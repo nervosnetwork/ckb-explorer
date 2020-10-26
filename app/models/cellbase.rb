@@ -41,7 +41,7 @@ class Cellbase
           target_block = block.target_block
           OpenStruct.new(primary: target_block.primary_reward, secondary: target_block.secondary_reward, proposal_reward: target_block.proposal_reward, tx_fee: target_block.commit_reward)
         else
-          CkbSync::Api.instance.get_cellbase_output_capacity_details(block.block_hash)
+          CkbSync::Api.instance.get_cellbase_output_capacity_details(block.block_hash) || OpenStruct.new(primary: 0, secondary: 0, proposal_reward: 0, tx_fee: 0)
         end
       end
   end
