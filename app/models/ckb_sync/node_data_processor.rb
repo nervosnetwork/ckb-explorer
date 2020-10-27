@@ -89,7 +89,7 @@ module CkbSync
         if udt_account.present?
           udt_account.update!(amount: amount)
         else
-          udt = Udt.find_or_create_by!(type_hash: type_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt")
+          udt = Udt.find_or_create_by!(type_hash: type_hash, udt_type: "sudt")
           udt.update(block_timestamp: block_timestamp) if udt.block_timestamp.blank?
           if udt.issuer_address.blank?
             issuer_address = Address.where(lock_hash: udt_type_script.args).pick(:address_hash)
@@ -117,6 +117,7 @@ module CkbSync
       process_withdraw_from_dao(dao_contract, dao_events)
       process_issue_interest(dao_contract, dao_events)
       process_take_away_all_deposit(dao_contract, dao_events)
+      dao_contract.touch if dao_events.present?
     end
 
     def process_take_away_all_deposit(dao_contract, dao_events)
@@ -496,7 +497,7 @@ module CkbSync
         if cell_output.udt?
           udt_infos << { type_script: output.type, address: address }
           tags << "udt"
-          udt = Udt.find_or_create_by!(type_hash: output.type.compute_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt")
+          udt = Udt.find_or_create_by!(type_hash: output.type.compute_hash, udt_type: "sudt")
           udt_ids << udt.id
           udt_address_ids << address.id
         end
@@ -539,7 +540,7 @@ module CkbSync
     end
 
     def cell_type(type_script, output_data)
-      return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"]].include?(type_script&.code_hash)
+      return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]].include?(type_script&.code_hash)
 
       case type_script&.code_hash
       when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
@@ -548,7 +549,7 @@ module CkbSync
         else
           "nervos_dao_withdrawing"
         end
-      when ENV["SUDT_CELL_TYPE_HASH"]
+      when ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]
         if CKB::Utils.hex_to_bin(output_data).bytesize >= CellOutput::MIN_SUDT_AMOUNT_BYTESIZE
           "udt"
         else
@@ -675,7 +676,7 @@ module CkbSync
       consumed_tx.contained_address_ids << address_id
       if previous_cell_output.udt?
         consumed_tx.tags << "udt"
-        consumed_tx.contained_udt_ids << Udt.find_or_create_by!(type_hash: previous_cell_output.type_hash, code_hash: ENV["SUDT_CELL_TYPE_HASH"], udt_type: "sudt").id
+        consumed_tx.contained_udt_ids << Udt.find_or_create_by!(type_hash: previous_cell_output.type_hash, udt_type: "sudt").id
         consumed_tx.udt_address_ids << previous_cell_output.address_id
       end
       if previous_cell_output.nervos_dao_withdrawing?
