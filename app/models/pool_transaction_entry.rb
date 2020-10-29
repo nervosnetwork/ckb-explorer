@@ -1,12 +1,24 @@
 class PoolTransactionEntry < ApplicationRecord
-  enum tx_status: { pending: 0, proposed: 1, committed: 2 }
+  enum tx_status: { pending: 0, proposed: 1, committed: 2 }, _prefix: :pool_transaction
 
   def is_cellbase
     false
   end
 
-  def income
+  def income(address)
     nil
+  end
+
+  def display_outputs(previews: false)
+    self.attributes["display_outputs"]
+  end
+
+  def display_inputs(previews: false)
+    self.attributes["display_inputs"]
+  end
+
+  def proposal_short_id
+    tx_hash[0...12]
   end
 end
 
@@ -27,7 +39,7 @@ end
 #  block_number    :decimal(30, )
 #  block_timestamp :decimal(30, )
 #  cycles          :decimal(30, )
-#  size            :decimal(30, )
+#  tx_size         :decimal(30, )
 #  display_inputs  :jsonb
 #  display_outputs :jsonb
 #  tx_status       :integer          default("pending")

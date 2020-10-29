@@ -13,7 +13,7 @@ class CreatePoolTransactionEntries < ActiveRecord::Migration[6.0]
 			t.decimal :block_number, precision: 30, scale: 0
 			t.decimal :block_timestamp, precision: 30, scale: 0
 			t.decimal :cycles, precision: 30, scale: 0
-			t.decimal :size, precision: 30, scale: 0
+			t.decimal :tx_size, precision: 30, scale: 0
 			t.jsonb :display_inputs
 			t.jsonb :display_outputs
 			t.integer :tx_status, default: 0
