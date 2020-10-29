@@ -61,4 +61,10 @@ class SuggestQueryTest < ActiveSupport::TestCase
       SuggestQuery.new(udt.type_hash).find!
     end
   end
+
+  test "should return pool tx when tx is in the pool" do
+    tx = create(:pool_transaction_entry)
+    expected_response = CkbTransactionSerializer.new(tx).serialized_json
+    assert_equal expected_response, SuggestQuery.new(tx.tx_hash).find!.serialized_json
+  end
 end
