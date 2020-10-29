@@ -3,6 +3,8 @@ class CkbTransaction < ApplicationRecord
   paginates_per 10
   max_paginates_per MAX_PAGINATES_PER
 
+  enum tx_status: { pending: 0, proposed: 1, committed: 2 }, _prefix: :ckb_transaction
+
   belongs_to :block
   has_many :account_books, dependent: :destroy
   has_many :addresses, through: :account_books
@@ -156,6 +158,7 @@ end
 #  contained_udt_ids     :bigint           default([]), is an Array
 #  dao_address_ids       :bigint           default([]), is an Array
 #  udt_address_ids       :bigint           default([]), is an Array
+#  tx_status             :integer          default("pending")
 #
 # Indexes
 #

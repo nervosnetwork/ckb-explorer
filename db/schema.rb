@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_29_140549) do
+ActiveRecord::Schema.define(version: 2020_10_29_143529) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -188,6 +188,7 @@ ActiveRecord::Schema.define(version: 2020_10_29_140549) do
     t.bigint "contained_udt_ids", default: [], array: true
     t.bigint "dao_address_ids", default: [], array: true
     t.bigint "udt_address_ids", default: [], array: true
+    t.integer "tx_status", default: 0
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["block_timestamp", "id"], name: "index_ckb_transactions_on_block_timestamp_and_id", order: { block_timestamp: "DESC NULLS LAST", id: :desc }
     t.index ["contained_address_ids"], name: "index_ckb_transactions_on_contained_address_ids", using: :gin
