@@ -5,7 +5,7 @@ class PoolTransactionEntry < ApplicationRecord
     false
   end
 
-  def income(address)
+  def income(address = nil)
     nil
   end
 
