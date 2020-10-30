@@ -110,6 +110,45 @@ module CkbSync
       end
     end
 
+    test "#process_block should change pool transaction's status to committed when it has been committed to current block" do
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          compact_target: "0x1000",
+          length: "0x07d0",
+          number: "0x0",
+          start_number: "0x0"
+        )
+      )
+      VCR.use_cassette("blocks/11") do
+        tx = create(:pool_transaction_entry)
+        node_block = CkbSync::Api.instance.get_block_by_number(11)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        node_block.transactions.first.hash = tx.tx_hash
+        assert_changes -> { tx.reload.tx_status }, from: "pending", to: "committed" do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
+    test "#process_block should not change pool transaction's status to committed when it has not been committed to current block" do
+      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+        CKB::Types::Epoch.new(
+          compact_target: "0x1000",
+          length: "0x07d0",
+          number: "0x0",
+          start_number: "0x0"
+        )
+      )
+      VCR.use_cassette("blocks/11") do
+        tx = create(:pool_transaction_entry)
+        node_block = CkbSync::Api.instance.get_block_by_number(11)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        assert_no_changes -> { tx.reload.tx_status } do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
     test "#process_block should generate miner's lock when cellbase has witnesses" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
