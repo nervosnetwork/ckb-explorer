@@ -32,6 +32,7 @@ module CkbSync
         local_block.ckb_transactions_count = ckb_transactions.size
         local_block.live_cell_changes = ckb_transactions.sum(&:live_cell_changes)
         CkbTransaction.import!(ckb_transactions, recursive: true, batch_size: 3500, validate: false)
+        update_pool_tx_status(ckb_transactions)
         input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h { |id| [id, []] }
         update_tx_fee_related_data(local_block, input_capacities, udt_infos)
         calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
@@ -52,6 +53,10 @@ module CkbSync
     end
 
     private
+
+    def update_pool_tx_status(ckb_transactions)
+      PoolTransactionEntry.pool_transaction_pending.where(tx_hash: ckb_transactions.pluck(:tx_hash)).update_all(tx_status: "committed")
+    end
 
     def increase_records_count(ckb_transactions)
       block_counter = TableRecordCount.find_by(table_name: "blocks")
