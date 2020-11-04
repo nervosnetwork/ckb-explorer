@@ -64,6 +64,14 @@ class CkbTransaction < ApplicationRecord
     inputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).exists? || outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).exists?
   end
 
+  def tx_status
+    "committed"
+  end
+
+  def cell_info
+    nil
+  end
+
   private
 
   def normal_tx_display_outputs(previews)
