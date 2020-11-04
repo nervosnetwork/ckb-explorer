@@ -3,6 +3,8 @@ class CkbTransaction < ApplicationRecord
   paginates_per 10
   max_paginates_per MAX_PAGINATES_PER
 
+  enum tx_status: { pending: 0, proposed: 1, committed: 2 }, _prefix: :ckb_transaction
+
   belongs_to :block
   has_many :account_books, dependent: :destroy
   has_many :addresses, through: :account_books
@@ -60,6 +62,14 @@ class CkbTransaction < ApplicationRecord
 
   def dao_transaction?
     inputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).exists? || outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).exists?
+  end
+
+  def tx_status
+    "committed"
+  end
+
+  def cell_info
+    nil
   end
 
   private

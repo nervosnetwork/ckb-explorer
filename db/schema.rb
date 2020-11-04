@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_06_081043) do
+ActiveRecord::Schema.define(version: 2020_10_29_140549) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -353,6 +353,28 @@ ActiveRecord::Schema.define(version: 2020_08_06_081043) do
     t.datetime "updated_at", precision: 6, null: false
     t.index ["block_id"], name: "index_mining_infos_on_block_id"
     t.index ["block_number"], name: "index_mining_infos_on_block_number"
+  end
+
+  create_table "pool_transaction_entries", force: :cascade do |t|
+    t.jsonb "cell_deps"
+    t.binary "tx_hash"
+    t.jsonb "header_deps"
+    t.jsonb "inputs"
+    t.jsonb "outputs"
+    t.jsonb "outputs_data"
+    t.integer "version"
+    t.jsonb "witnesses"
+    t.decimal "transaction_fee", precision: 30
+    t.decimal "block_number", precision: 30
+    t.decimal "block_timestamp", precision: 30
+    t.decimal "cycles", precision: 30
+    t.decimal "tx_size", precision: 30
+    t.jsonb "display_inputs"
+    t.jsonb "display_outputs"
+    t.integer "tx_status", default: 0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["tx_hash"], name: "index_pool_transaction_entries_on_tx_hash", unique: true
   end
 
   create_table "table_record_counts", force: :cascade do |t|

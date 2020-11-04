@@ -90,6 +90,15 @@ module Api
         assert_equal CkbTransactionSerializer.new(ckb_transaction).serialized_json, response.body
       end
 
+      test "should return pool tx when tx is in the pool" do
+        tx = create(:pool_transaction_entry)
+
+        valid_get api_v1_ckb_transaction_url(tx.tx_hash)
+
+        expected_response = CkbTransactionSerializer.new(tx).serialized_json
+        assert_equal expected_response, response.body
+      end
+
       test "should contain right keys in the serialized object when call show" do
         create(:table_record_count, :block_counter)
         create(:table_record_count, :ckb_transactions_counter)
@@ -99,7 +108,7 @@ module Api
         valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
 
         response_tx_transaction = json["data"]
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps tx_status).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "returned income should be null" do
@@ -303,7 +312,7 @@ module Api
         assert_equal 15, json["data"].size
       end
 
-      test "should return the corresponding blocks when page and page_size are set" do
+      test "should return the corresponding transactions when page and page_size are set" do
         block = create(:block, :with_block_hash)
         create_list(:ckb_transaction, 15, block: block)
         create(:table_record_count, :block_counter, count: Block.count)
