@@ -158,7 +158,6 @@ end
 #  contained_udt_ids     :bigint           default([]), is an Array
 #  dao_address_ids       :bigint           default([]), is an Array
 #  udt_address_ids       :bigint           default([]), is an Array
-#  tx_status             :integer          default("pending")
 #
 # Indexes
 #
