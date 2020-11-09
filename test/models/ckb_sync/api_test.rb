@@ -8,5 +8,12 @@ module CkbSync
 
       assert_equal contained_method_names.sort, sdk_api_names.map(&:to_s).sort
     end
+
+    test "the API being used should be available" do
+      api_names = %w(get_block_by_number local_node_info get_cellbase_output_capacity_details get_tip_block_number get_blockchain_info get_current_epoch get_epoch_by_number)
+      sdk_api_names = CKB::API.instance_methods(false).map(&:to_s)
+
+      assert_empty api_names - sdk_api_names
+    end
   end
 end
