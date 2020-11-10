@@ -8,10 +8,10 @@ GIT
 
 GIT
   remote: https://github.com/nervosnetwork/ckb-sdk-ruby.git
-  revision: e1b2414561d8363b301f9480fab915e84f71b1c4
+  revision: dfe4c30f3be49f89d2c8d88170a199cfa053d4fe
   branch: develop
   specs:
-    ckb-sdk-ruby (0.35.0)
+    ckb-sdk-ruby (0.37.0)
       bitcoin-secp256k1 (~> 0.5.2)
       net-http-persistent (~> 3.1.0)
       rbnacl (~> 7.1.1)
@@ -224,7 +224,7 @@ GEM
     pry-nav (0.3.0)
       pry (>= 0.9.10, < 0.13.0)
     public_suffix (3.1.0)
-    puma (4.3.5)
+    puma (4.3.6)
       nio4r (~> 2.0)
     raabro (1.1.6)
     rack (2.2.3)
