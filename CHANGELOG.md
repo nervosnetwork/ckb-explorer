@@ -1,4 +1,11 @@
-# [v0.11.2](https://github.com/shaojunda/ckb-explorer/compare/v0.11.1...v0.11.2) (2020-08-30)
+# [v0.12.0](https://github.com/nervosnetwork/ckb-explorer/compare/v0.11.2...v0.12.0) (2020-11-10)
+
+
+### Features
+
+* [#739](https://github.com/nervosnetwork/ckb-explorer/pull/739): support querying transactions in the transaction pool
+
+# [v0.11.2](https://github.com/nervosnetwork/ckb-explorer/compare/v0.11.1...v0.11.2) (2020-08-30)
 
 ### Features
 
@@ -9,7 +16,7 @@
 * [#721](https://github.com/nervosnetwork/ckb-explorer/pull/721): fix normal transactions counter
 
 
-# [v0.11.1](https://github.com/shaojunda/ckb-explorer/compare/v0.11.0...v0.11.1) (2020-08-12)
+# [v0.11.1](https://github.com/nervosnetwork/ckb-explorer/compare/v0.11.0...v0.11.1) (2020-08-12)
 
 ### Performance Improvements
 
