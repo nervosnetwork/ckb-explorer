@@ -1,9 +1,8 @@
-# [v0.11.2](https://github.com/shaojunda/ckb-explorer/compare/v0.11.1...v0.11.2) (2020-08-30)
+### Adapted CKB Version
+[ckb 0.25.1](https://github.com/nervosnetwork/ckb/releases/tag/v0.25.1) and above
+
+# [v0.12.0](https://github.com/nervosnetwork/ckb-explorer/compare/v0.11.2...v0.12.0) (2020-11-10)
 
 ### Features
 
-* [#723](https://github.com/nervosnetwork/ckb-explorer/pull/723): support sUDT on mainnet
-
-### Bug Fixes
-
-* [#721](https://github.com/nervosnetwork/ckb-explorer/pull/721): fix normal transactions counter
+* [#739](https://github.com/nervosnetwork/ckb-explorer/pull/739): support querying transactions in the transaction pool
