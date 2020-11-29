@@ -200,7 +200,7 @@ module Api
         page_size = 5
         udt = create(:udt, published: true)
         address = create(:address, :with_udt_transactions, transactions_count: 30, udt: udt)
-        address_udt_transactions = address.ckb_udt_transactions(udt.id).order(block_timestamp: :desc).page(page).per(page_size)
+        address_udt_transactions = address.ckb_udt_transactions(udt.id).order("block_timestamp desc nulls last, id desc").page(page).per(page_size)
 
         valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash), params: { page: page, page_size: page_size }
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_udt_transactions, page: page, page_size: page_size).call
