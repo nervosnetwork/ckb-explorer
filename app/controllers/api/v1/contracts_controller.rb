@@ -4,10 +4,10 @@ module Api
       def show
         raise Api::V1::Exceptions::ContractNotFoundError if params[:id] != DaoContract::CONTRACT_NAME
 
-        dao_contract = DaoContract.where(id: 1)
+        dao_contract = DaoContract.default_contract
         json =
           Rails.cache.realize(dao_contract.cache_key, version: dao_contract.cache_version, race_condition_ttl: 3.seconds) do
-            DaoContractSerializer.new(dao_contract.first).serialized_json
+            DaoContractSerializer.new(dao_contract).serialized_json
           end
 
         render json: json
