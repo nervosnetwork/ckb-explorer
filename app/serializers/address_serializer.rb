@@ -1,7 +1,11 @@
 class AddressSerializer
   include FastJsonapi::ObjectSerializer
 
-  attributes :address_hash, :lock_info
+  attributes :lock_info
+
+  attribute :address_hash do |object|
+    object.query_address
+  end
   attribute :balance do |object|
     object.balance.to_s
   end
