@@ -148,7 +148,7 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
     page = 2
     page_size = 10
     udt = create(:udt, :with_transactions, published: true)
-    udt_ckb_transactions = udt.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+    udt_ckb_transactions = udt.ckb_transactions.order("block_timestamp desc nulls last, id desc").page(page).per(page_size)
 
     valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page: page }
 
