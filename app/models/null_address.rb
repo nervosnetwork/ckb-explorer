@@ -68,4 +68,5 @@ class NullAddress
   end
 
   alias_method :cached_lock_script, :lock_script
+  alias_method :query_address, :address_hash
 end
