@@ -1,8 +1,12 @@
-### Adapted CKB Version
-[ckb 0.25.1](https://github.com/nervosnetwork/ckb/releases/tag/v0.25.1) and above
+# [v0.12.1](https://github.com/nervosnetwork/ckb-explorer/compare/v0.12.0...v0.12.1) (2020-11-30)
 
-# [v0.12.0](https://github.com/nervosnetwork/ckb-explorer/compare/v0.11.2...v0.12.0) (2020-11-10)
+
+### Bug Fixes
+
+[#749](https://github.com/nervosnetwork/ckb-explorer/pull/749): fix dao contract cache bug
+
 
 ### Features
 
-* [#739](https://github.com/nervosnetwork/ckb-explorer/pull/739): support querying transactions in the transaction pool
+[#747](https://github.com/nervosnetwork/ckb-explorer/pull/747): support short acp address
+

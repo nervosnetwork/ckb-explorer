@@ -8,10 +8,9 @@ module Api
         @address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if @address.is_a?(NullAddress)
 
-        @ckb_transactions = @address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase).recent.page(@page).per(@page_size)
-
+        @ckb_transactions = @address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(@page).per(@page_size)
         json =
-          Rails.cache.realize(@ckb_transactions.cache_key, version: @ckb_transactions.cache_version) do
+          Rails.cache.realize("#{@ckb_transactions.cache_key}/#{@address.query_address}", version: @ckb_transactions.cache_version) do
             records_counter = RecordCounters::AddressTransactions.new(@address)
             @options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: @ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
             json_result
