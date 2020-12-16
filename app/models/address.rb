@@ -53,20 +53,26 @@ class Address < ApplicationRecord
   end
 
   def self.cached_find(query_key)
-    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
+    cache_key = query_key
+    unless QueryKeyUtils.valid_hex?(query_key)
+      cache_key = CkbUtils.parse_address(query_key).script.compute_hash
+    end
+    address = Rails.cache.realize([name, cache_key], race_condition_ttl: 3.seconds) do
       if QueryKeyUtils.valid_hex?(query_key)
         find_by(lock_hash: query_key)
       else
         lock_hash = CkbUtils.parse_address(query_key).script.compute_hash
-        address = find_by(lock_hash: lock_hash)
-        if address.present?
-          address.query_address = query_key
-          address
-        else
-          NullAddress.new(query_key)
-        end
+        find_by(lock_hash: lock_hash)
       end
     end
+    unless QueryKeyUtils.valid_hex?(query_key)
+      if address.present?
+        address.query_address = query_key
+      else
+        address = NullAddress.new(query_key)
+      end
+    end
+    address
   end
 
   def cached_lock_script
