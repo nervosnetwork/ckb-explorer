@@ -4,7 +4,7 @@ module Api
       before_action :validate_query_params, only: :show
 
       def show
-        daily_statistics = DailyStatistic.order(:created_at_unixtimestamp)
+        daily_statistics = DailyStatistic.order(:id).valid_indicators
         render json: DailyStatisticSerializer.new(daily_statistics, { params: { indicator: params[:id] } })
       end
 
