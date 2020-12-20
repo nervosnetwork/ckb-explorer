@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_29_140549) do
+ActiveRecord::Schema.define(version: 2020_12_18_065319) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -237,6 +237,7 @@ ActiveRecord::Schema.define(version: 2020_10_29_140549) do
     t.jsonb "nodes_distribution"
     t.integer "nodes_count"
     t.decimal "locked_capacity", precision: 30
+    t.index ["created_at_unixtimestamp"], name: "index_daily_statistics_on_created_at_unixtimestamp", order: "DESC NULLS LAST"
   end
 
   create_table "dao_contracts", force: :cascade do |t|
