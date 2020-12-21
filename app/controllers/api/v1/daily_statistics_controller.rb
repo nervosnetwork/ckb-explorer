@@ -6,7 +6,7 @@ module Api
       def show
         daily_statistics = DailyStatistic.order(:id).valid_indicators
         json =
-          Rails.cache.realize(daily_statistics.cache_key, version: daily_statistics.cache_version, race_condition_ttl: 3.seconds) do
+          Rails.cache.realize("#{daily_statistics.cache_key}/#{params[:id]}", version: daily_statistics.cache_version, race_condition_ttl: 3.seconds) do
             DailyStatisticSerializer.new(daily_statistics, { params: { indicator: params[:id] } })
           end
         render json: json
