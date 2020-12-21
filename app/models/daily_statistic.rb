@@ -6,7 +6,7 @@ class DailyStatistic < ApplicationRecord
     deposit_compensation liquidity created_at_unixtimestamp
   ).freeze
 
-  scope :valid_indicators, -> { select( VALID_INDICATORS - %w(burnt liquidity created_at updated_at) ) }
+  scope :valid_indicators, -> { select( VALID_INDICATORS - %w(burnt liquidity created_at updated_at) + %w(id)  ) }
   scope :recent, -> { order("created_at_unixtimestamp desc nulls last") }
 
   def burnt
