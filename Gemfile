@@ -61,6 +61,8 @@ gem "kaminari"
 
 gem "ruby-progressbar", require: false
 
+gem "with_advisory_lock"
+
 group :production do
   gem "sentry-raven"
   gem "newrelic_rpm"
