@@ -47,5 +47,24 @@ module Cache
 
 			assert_equal tx_jsons, rs
 		end
+
+		test "write function should add records to cache" do
+			block = create(:block, :with_block_hash)
+			addr = create(:address)
+			20.times.each do |i|
+				create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
+			end
+			txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
+			tx_jsons = []
+			score_member_pairs = txs.map do |tx|
+				ckb_transaction_serializer = CkbTransactionsSerializer.new(tx, params: { previews: true, address: addr })
+				tx_jsons << ckb_transaction_serializer.serialized_json
+				[tx.id, ckb_transaction_serializer.serialized_json]
+			end
+			s = Cache::ListCacheService.new
+			s.write(addr.tx_list_cache_key, score_member_pairs)
+			rs = s.fetch(addr.tx_list_cache_key, 1, 20)
+			assert_equal tx_jsons, rs
+		end
 	end
 end
