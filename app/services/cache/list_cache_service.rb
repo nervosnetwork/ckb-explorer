@@ -14,10 +14,14 @@ module Cache
 					score_member_pairs = yield
 					return if score_member_pairs.blank?
 
-					$redis.zadd(key, score_member_pairs)
+					write(key, score_member_pairs)
 					return $redis.zrevrange(key, start, stop)
 				end
 			end
+		end
+
+		def write(key, score_member_pairs)
+			$redis.zadd(key, score_member_pairs)
 		end
 
 		private
