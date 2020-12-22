@@ -298,4 +298,9 @@ class AddressTest < ActiveSupport::TestCase
 
     assert_equal address, actual_address
   end
+
+  test "tx_list_cache_key should return right key" do
+    addr = create(:address)
+    assert_equal "Address/txs/#{addr.id}", addr.tx_list_cache_key
+  end
 end
