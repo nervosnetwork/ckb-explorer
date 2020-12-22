@@ -99,6 +99,10 @@ class Address < ApplicationRecord
     phase1_dao_interests + unmade_dao_interests
   end
 
+  def tx_list_cache_key
+    "Address/txs/#{id}"
+  end
+
   private
 
   def phase1_dao_interests
