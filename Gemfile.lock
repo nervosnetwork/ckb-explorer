@@ -269,7 +269,7 @@ GEM
       ffi (~> 1.0)
     rbnacl (7.1.1)
       ffi
-    redis (4.1.2)
+    redis (4.2.5)
     rubocop (0.71.0)
       jaro_winkler (~> 1.5.1)
       parallel (~> 1.10)
@@ -359,7 +359,7 @@ DEPENDENCIES
   factory_bot_rails
   faker!
   fast_jsonapi
-  hiredis (~> 0.6.1)
+  hiredis (~> 0.6.0)
   kaminari
   listen (>= 3.0.5, < 3.2)
   mina
@@ -374,7 +374,7 @@ DEPENDENCIES
   rack-attack
   rack-cors
   rails (~> 6.0.0)
-  redis (~> 4.0, >= 4.0.3)
+  redis (~> 4.2.0)
   rubocop
   rubocop-performance
   rubocop-rails
