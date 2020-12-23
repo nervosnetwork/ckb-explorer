@@ -17,14 +17,16 @@ module Cache
 			txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
 			tx_jsons = []
 			score_member_pairs = txs.map do |tx|
-				ckb_transaction_serializer = CkbTransactionsSerializer.new(tx, params: { previews: true, address: addr })
-				tx_jsons << ckb_transaction_serializer.serialized_json
-				[tx.id, ckb_transaction_serializer.serialized_json]
+				tx_jsons << tx.to_json
+				[tx.id, tx.to_json]
 			end
 			$redis.zadd(addr.tx_list_cache_key, score_member_pairs)
 			s = Cache::ListCacheService.new
-			rs = s.fetch(addr.tx_list_cache_key, 1, 20)
-			assert_equal tx_jsons, rs
+			rs = s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction)
+			expected_rs = tx_jsons.map do |json|
+				CkbTransaction.new.from_json(json)
+			end
+			assert_equal expected_rs, rs
 		end
 
 		test "fetch function should return the corresponding result when block is given" do
@@ -36,16 +38,18 @@ module Cache
 			$redis.flushdb
 			s = Cache::ListCacheService.new
 			tx_jsons = []
-			rs = s.fetch(addr.tx_list_cache_key, 1, 20) do
-				txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(1).per(20)
+			rs = s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction) do
+				txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
 				txs.map do |tx|
-					ckb_transaction_serializer = CkbTransactionsSerializer.new(tx, params: { previews: true, address: addr })
-					tx_jsons << ckb_transaction_serializer.serialized_json
-					[tx.id, ckb_transaction_serializer.serialized_json]
+					tx_jsons << tx.to_json
+					[tx.id, tx.to_json]
 				end
+				txs
 			end
-
-			assert_equal tx_jsons, rs
+			expected_rs = tx_jsons.map do |json|
+				CkbTransaction.new.from_json(json)
+			end
+			assert_equal expected_rs, rs
 		end
 
 		test "write function should add records to cache" do
@@ -57,14 +61,16 @@ module Cache
 			txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
 			tx_jsons = []
 			score_member_pairs = txs.map do |tx|
-				ckb_transaction_serializer = CkbTransactionsSerializer.new(tx, params: { previews: true, address: addr })
-				tx_jsons << ckb_transaction_serializer.serialized_json
-				[tx.id, ckb_transaction_serializer.serialized_json]
+				tx_jsons << tx.to_json
+				[tx.id, tx.to_json]
 			end
 			s = Cache::ListCacheService.new
 			s.write(addr.tx_list_cache_key, score_member_pairs)
-			rs = s.fetch(addr.tx_list_cache_key, 1, 20)
-			assert_equal tx_jsons, rs
+			rs = s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction)
+			expected_rs = tx_jsons.map do |json|
+				CkbTransaction.new.from_json(json)
+			end
+			assert_equal expected_rs, rs
 		end
 	end
 end
