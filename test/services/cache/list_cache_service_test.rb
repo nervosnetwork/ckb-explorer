@@ -65,12 +65,38 @@ module Cache
 				[tx.id, tx.to_json]
 			end
 			s = Cache::ListCacheService.new
-			s.write(addr.tx_list_cache_key, score_member_pairs)
+			s.write(addr.tx_list_cache_key, score_member_pairs, CkbTransaction)
 			rs = s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction)
 			expected_rs = tx_jsons.map do |json|
 				CkbTransaction.new.from_json(json)
 			end
 			assert_equal expected_rs, rs
+		end
+
+		test "write function will remove exceeds max cache count records" do
+			block = create(:block, :with_block_hash)
+			addr = create(:address)
+			500.times.each do |i|
+				create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
+			end
+			txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
+			score_member_pairs = txs.map do |tx|
+				[tx.id, tx.to_json]
+			end
+			s = Cache::ListCacheService.new
+			s.write(addr.tx_list_cache_key, score_member_pairs, CkbTransaction)
+			tx_ids = []
+			100.times.each do |i|
+				tx = create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
+				tx_ids << tx.id
+			end
+			txs = addr.custom_ckb_transactions.where(id: tx_ids).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
+			score_member_pairs = txs.map do |tx|
+				[tx.id, tx.to_json]
+			end
+			s.write(addr.tx_list_cache_key, score_member_pairs, CkbTransaction)
+
+			assert_equal 400, $redis.zcard(addr.tx_list_cache_key)
 		end
 	end
 end
