@@ -1,6 +1,6 @@
 module Cache
 	class ListCacheService
-		MAX_CACHED_PAGE = 10
+		MAX_CACHED_PAGE = 30
 		# given block must return ActiveRecord_Relation, if there are no records will return empty array
 		def fetch(key, page, page_size, record_klass)
 			page = page.to_i
@@ -22,11 +22,20 @@ module Cache
 			end
 		end
 
-		def write(key, score_member_pairs)
+		def write(key, score_member_pairs, record_klass)
+			# cache at most MAX_CACHED_PAGE * record_klass::DEFAULT_PAGINATES_PER + record_klass::DEFAULT_PAGINATES_PER records
+			total_count = $redis.zcard(key)
+			if total_count > max_cache_count(record_klass)
+				$redis.zremrangebyrank(key, 0, total_count - MAX_CACHED_PAGE * record_klass::DEFAULT_PAGINATES_PER - 1)
+			end
 			$redis.zadd(key, score_member_pairs)
 		end
 
 		private
+
+		def max_cache_count(record_klass)
+			MAX_CACHED_PAGE * record_klass::DEFAULT_PAGINATES_PER + record_klass::DEFAULT_PAGINATES_PER
+		end
 
 		def load_records(key, page, page_size, records, record_klass)
 			# load first MAX_CACHED_PAGE records
@@ -35,7 +44,7 @@ module Cache
 				score_member_pairs = records.limit(MAX_CACHED_PAGE * page_size).map do |record|
 					[record.id, record.to_json]
 				end
-				write(key, score_member_pairs)
+				write(key, score_member_pairs, record_klass)
 				rs = read_records(key, start, stop, record_klass)
 				if rs.present?
 					return rs
