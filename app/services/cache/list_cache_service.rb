@@ -35,6 +35,10 @@ module Cache
 			$redis.expire(key, second)
 		end
 
+		def zrem(key, member)
+			$redis.zrem(key, member)
+		end
+
 		private
 
 		def max_cache_count(record_klass)
