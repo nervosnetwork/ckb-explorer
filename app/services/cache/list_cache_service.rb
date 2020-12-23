@@ -31,6 +31,10 @@ module Cache
 			$redis.zadd(key, score_member_pairs)
 		end
 
+		def expire(key, second)
+			$redis.expire(key, second)
+		end
+
 		private
 
 		def max_cache_count(record_klass)
