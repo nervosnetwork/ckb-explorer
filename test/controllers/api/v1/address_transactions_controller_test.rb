@@ -176,8 +176,7 @@ module Api
         page = 2
         page_size = 10
         address = create(:address, :with_transactions, transactions_count: 30)
-        address_ckb_transactions = address.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
-
+        address_ckb_transactions = address.custom_ckb_transactions.order("block_timestamp desc nulls last, id desc").page(page).per(page_size)
         valid_get api_v1_address_transaction_url(address.address_hash), params: { page: page }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_ckb_transactions, page: page, page_size: page_size).call
@@ -234,41 +233,12 @@ module Api
         assert_equal response_transaction, response.body
       end
 
-      test "should return pagination links in response body" do
-        page = 2
-        page_size = 3
-        address = create(:address, :with_transactions, transactions_count: 30)
-
-        links = {
-          self: "#{api_v1_address_transaction_url(address.address_hash)}?page=2&page_size=3",
-          first: "#{api_v1_address_transaction_url(address.address_hash)}?page_size=3",
-          prev: "#{api_v1_address_transaction_url(address.address_hash)}?page_size=3",
-          next: "#{api_v1_address_transaction_url(address.address_hash)}?page=3&page_size=3",
-          last: "#{api_v1_address_transaction_url(address.address_hash)}?page=10&page_size=3"
-        }
-
-        valid_get api_v1_address_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
-
-        assert_equal links.stringify_keys.sort, json["links"].sort
-      end
-
       test "should return meta that contained total in response body" do
         address = create(:address, :with_transactions, transactions_count: 3)
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 
         assert_equal 3, json.dig("meta", "total")
-      end
-
-      test "should return pagination links that only contain self in response bod when there is no blocks" do
-        address = create(:address, :with_transactions)
-
-        links = {
-          self: "#{api_v1_address_transaction_url(address.address_hash)}?page_size=10"
-        }
-
-        valid_get api_v1_address_transaction_url(address.address_hash)
-        assert_equal links.stringify_keys.sort, json["links"].sort
       end
 
       test "should return up to ten display_inputs" do
@@ -297,3 +267,7 @@ module Api
     end
   end
 end
+
+
+-"{\"data\":[{\"id\":\"3931\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0xebe1ce18b4de3fe266258bd0c30b2d5bda23c7ec34fa6364b8823cd689108e97\",\"block_number\":\"\",\"block_timestamp\":\"1608702821\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3930\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x9c16dfdb717b38b1c7f9f084b99680a3ed9947f6116f1b9b8aaa5fcc51bf9ff5\",\"block_number\":\"\",\"block_timestamp\":\"1608702820\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3929\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x0befe00a477361105609137ae563812bcd540654545887da285ed0a2a821aa4e\",\"block_number\":\"\",\"block_timestamp\":\"1608702819\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3928\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x0fec560589635e368a96f875c180a3d2a54c47c32dc2c32ed155db463084219b\",\"block_number\":\"\",\"block_timestamp\":\"1608702818\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3927\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0xd5629436dea64aa087777292c07b9537a37a2a8378dd741f0671658a081b493f\",\"block_number\":\"\",\"block_timestamp\":\"1608702817\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3926\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x6cf5c589d60f03a68d54f80e58db2caaf0ff339c1d7e53fcc71f18a87e1c94d5\",\"block_number\":\"\",\"block_timestamp\":\"1608702816\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3925\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0xfdaa7245c7ccad26641025ba8eb8aedac0bffa84aeeb8df0036d3db857f7cd55\",\"block_number\":\"\",\"block_timestamp\":\"1608702815\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3924\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x5efd9157ae3baa004c6039d97ea133e2b8f54a9305b83a04b20e2c79fff25ef7\",\"block_number\":\"\",\"block_timestamp\":\"1608702814\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3923\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x9867fecc0a8f9f2403b8284eef3b607f868ccdd163cfa8401fa6f20f3ca5f8f8\",\"block_number\":\"\",\"block_timestamp\":\"1608702813\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3922\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0xff5f3e938cc75406160046db03a06204ac5c6789162cc396c8b6c3a6552a0738\",\"block_number\":\"\",\"block_timestamp\":\"1608702812\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}}],\"meta\":{\"total\":30,\"page_size\":10}}"
++"{\"data\":[{\"id\":\"3930\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x9c16dfdb717b38b1c7f9f084b99680a3ed9947f6116f1b9b8aaa5fcc51bf9ff5\",\"block_number\":\"\",\"block_timestamp\":\"1608702820\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3929\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x0befe00a477361105609137ae563812bcd540654545887da285ed0a2a821aa4e\",\"block_number\":\"\",\"block_timestamp\":\"1608702819\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3928\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x0fec560589635e368a96f875c180a3d2a54c47c32dc2c32ed155db463084219b\",\"block_number\":\"\",\"block_timestamp\":\"1608702818\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3927\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0xd5629436dea64aa087777292c07b9537a37a2a8378dd741f0671658a081b493f\",\"block_number\":\"\",\"block_timestamp\":\"1608702817\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3926\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x6cf5c589d60f03a68d54f80e58db2caaf0ff339c1d7e53fcc71f18a87e1c94d5\",\"block_number\":\"\",\"block_timestamp\":\"1608702816\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3925\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0xfdaa7245c7ccad26641025ba8eb8aedac0bffa84aeeb8df0036d3db857f7cd55\",\"block_number\":\"\",\"block_timestamp\":\"1608702815\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3924\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x5efd9157ae3baa004c6039d97ea133e2b8f54a9305b83a04b20e2c79fff25ef7\",\"block_number\":\"\",\"block_timestamp\":\"1608702814\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3923\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x9867fecc0a8f9f2403b8284eef3b607f868ccdd163cfa8401fa6f20f3ca5f8f8\",\"block_number\":\"\",\"block_timestamp\":\"1608702813\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3922\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0xff5f3e938cc75406160046db03a06204ac5c6789162cc396c8b6c3a6552a0738\",\"block_number\":\"\",\"block_timestamp\":\"1608702812\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}},{\"id\":\"3921\",\"type\":\"ckb_transactions\",\"attributes\":{\"is_cellbase\":false,\"transaction_hash\":\"0x28daf2d5c31539d557e4584fea8d3599f0614be40de5e5b02c644bab9049689a\",\"block_number\":\"\",\"block_timestamp\":\"1608702811\",\"display_inputs\":[],\"display_outputs\":[],\"income\":\"0.0\"}}],\"meta\":{\"total\":30,\"page_size\":10}}"
