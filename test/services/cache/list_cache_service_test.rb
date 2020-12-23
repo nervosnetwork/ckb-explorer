@@ -98,5 +98,26 @@ module Cache
 
 			assert_equal 400, $redis.zcard(addr.tx_list_cache_key)
 		end
+
+		test "zrem should remove specific members associate with the key" do
+			block = create(:block, :with_block_hash)
+			addr = create(:address)
+			20.times.each do |i|
+				create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
+			end
+			txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
+			tx_jsons = []
+			score_member_pairs = txs.map do |tx|
+				tx_jsons << tx.to_json
+				[tx.id, tx.to_json]
+			end
+			$redis.zadd(addr.tx_list_cache_key, score_member_pairs)
+			assert_equal 20, $redis.zcard(addr.tx_list_cache_key)
+
+			s = Cache::ListCacheService.new
+			s.zrem(addr.tx_list_cache_key, tx_jsons[0..3])
+			assert_equal 16, $redis.zcard(addr.tx_list_cache_key)
+			assert_equal tx_jsons[4..], $redis.zrevrange(addr.tx_list_cache_key, 0, -1)
+		end
 	end
 end
