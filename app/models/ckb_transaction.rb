@@ -1,6 +1,7 @@
 class CkbTransaction < ApplicationRecord
   MAX_PAGINATES_PER = 100
-  paginates_per 10
+  DEFAULT_PAGINATES_PER = 10
+  paginates_per DEFAULT_PAGINATES_PER
   max_paginates_per MAX_PAGINATES_PER
 
   enum tx_status: { pending: 0, proposed: 1, committed: 2 }, _prefix: :ckb_transaction
