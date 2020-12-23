@@ -24,11 +24,11 @@ module Cache
 
 		def write(key, score_member_pairs, record_klass)
 			# cache at most MAX_CACHED_PAGE * record_klass::DEFAULT_PAGINATES_PER + record_klass::DEFAULT_PAGINATES_PER records
+			$redis.zadd(key, score_member_pairs)
 			total_count = $redis.zcard(key)
 			if total_count > max_cache_count(record_klass)
 				$redis.zremrangebyrank(key, 0, total_count - MAX_CACHED_PAGE * record_klass::DEFAULT_PAGINATES_PER - 1)
 			end
-			$redis.zadd(key, score_member_pairs)
 		end
 
 		def expire(key, second)
