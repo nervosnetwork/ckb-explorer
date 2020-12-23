@@ -1,21 +1,23 @@
 module Cache
 	class ListCacheService
-		# given block must return score_member_pairs [[1, "a"], [2, "c"]]
-		def fetch(key, page, page_size)
+		MAX_CACHED_PAGE = 10
+		# given block must return ActiveRecord_Relation, if there are no records will return empty array
+		def fetch(key, page, page_size, record_klass)
+			page = page.to_i
+			page_size = page_size.to_i
 			start, stop = get_range(page, page_size)
-			rs = $redis.zrevrange(key, start, stop)
+			rs = read_records(key, start, stop, record_klass)
 			return rs if rs.present?
 
 			if block_given?
 				ActiveRecord::Base.with_advisory_lock("list/cache/#{key}/#{page}/#{page_size}", timeout_seconds: 3) do
-					rs = $redis.zrevrange(key, start, stop)
+					rs = read_records(key, start, stop, record_klass)
 					return rs if rs.present?
 
-					score_member_pairs = yield
-					return if score_member_pairs.blank?
+					records = yield
+					return [] if records.blank?
 
-					write(key, score_member_pairs)
-					return $redis.zrevrange(key, start, stop)
+					load_records(key, page, page_size, records, record_klass)
 				end
 			end
 		end
@@ -26,12 +28,41 @@ module Cache
 
 		private
 
+		def load_records(key, page, page_size, records, record_klass)
+			# load first MAX_CACHED_PAGE records
+			if page < MAX_CACHED_PAGE
+				start, stop = get_range(page, page_size)
+				score_member_pairs = records.limit(MAX_CACHED_PAGE * page_size).map do |record|
+					[record.id, record.to_json]
+				end
+				write(key, score_member_pairs)
+				rs = read_records(key, start, stop, record_klass)
+				if rs.present?
+					return rs
+				else
+					return []
+				end
+			else
+				# Do not cache parts that exceed the maximum number of cached pages, Optimize this when there is more pressure
+				records.page(@page).per(@page_size)
+			end
+		end
+
+		def read_records(key, start, stop, record_klass)
+			rs = $redis.zrevrange(key, start, stop)
+			if rs.present?
+				rs.map do |json|
+					record_klass.new.from_json(json)
+				end
+			end
+		end
+
 		def get_range(page, page_size)
 			if page == 1
-				return 0, page_size
+				return 0, page_size - 1
 			else
-				start = (page - 1) * page_size - 1
-				stop = start + page_size
+				start = (page - 1) * page_size
+				stop = (page - 1) * page_size + page_size - 1
 				return start, stop
 			end
 		end
