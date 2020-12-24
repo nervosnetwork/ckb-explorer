@@ -72,7 +72,7 @@ module CkbSync
         end
       end
 
-      Cache::AddressTxsCacheUpdateWorker.perform_async(address_txs)
+      AddressTxsCacheUpdateWorker.perform_async(address_txs)
     end
 
     def update_pool_tx_status(ckb_transactions)
