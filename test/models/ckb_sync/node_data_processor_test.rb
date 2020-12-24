@@ -3369,7 +3369,7 @@ module CkbSync
       ]
       node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions: transactions, header: header)
       Sidekiq::Testing.fake!
-      assert_difference -> { Cache::AddressTxsCacheUpdateWorker.jobs.size }, 1 do
+      assert_difference -> { AddressTxsCacheUpdateWorker.jobs.size }, 1 do
         block = node_data_processor.process_block(node_block)
         address_txs = Hash.new
         block.ckb_transactions.each do |tx|
@@ -3381,7 +3381,7 @@ module CkbSync
             end
           end
         end
-        pairs = Cache::AddressTxsCacheUpdateWorker.jobs.first["args"].first
+        pairs = AddressTxsCacheUpdateWorker.jobs.first["args"].first
         assert_equal address_txs.stringify_keys, pairs
       end
     end
