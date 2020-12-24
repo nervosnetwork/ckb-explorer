@@ -3487,6 +3487,31 @@ module CkbSync
       end
     end
 
+    test "should remove tx display info when block is invalid" do
+      Sidekiq::Testing.inline!
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
+      node_block = fake_node_block
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      target_address = nil
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        tx = fake_dao_deposit_transaction(node_block)
+        output = tx.outputs.first
+        address = Address.find_or_create_address(output.lock, node_block.header.timestamp)
+        target_address = address
+        assert_difference -> { address.reload.dao_deposit }, 10**8 * 1000 do
+          node_data_processor.process_block(node_block)
+        end
+      end
+
+      local_block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
+        assert_difference -> { TxDisplayInfo.count }, -local_block.reload.ckb_transactions.count do
+          node_data_processor.call
+        end
+      end
+    end
+
     private
 
     def node_data_processor
