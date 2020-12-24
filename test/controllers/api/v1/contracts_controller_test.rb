@@ -78,7 +78,6 @@ module Api
         assert_equal response_json, response.body
       end
 
-
       test "should update dao contract cache when dao related data changed" do
         dao_contract = DaoContract.default_contract
         cache_version = dao_contract.cache_version
