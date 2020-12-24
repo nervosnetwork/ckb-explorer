@@ -398,7 +398,7 @@ module CkbSync
             cell_input.previous_output = cell_input.previous_output.sort
             cell_input.attributes.select { |attribute| attribute.in?(%(previous_output since)) }.sort
           end
-        } .flatten
+        }.flatten
 
         assert_equal node_block_cell_inputs, local_block_cell_inputs
       end
