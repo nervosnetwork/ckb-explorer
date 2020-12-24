@@ -17,7 +17,7 @@ module Cache
       end
       address_txs = { addr.id => addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.pluck(:id) }
       Cache::AddressTxsCacheUpdateWorker.perform_async(address_txs)
-      max_count = Cache::ListCacheService::MAX_CACHED_PAGE * CkbTransaction::DEFAULT_PAGINATES_PER
+      max_count = ListCacheService::MAX_CACHED_PAGE * CkbTransaction::DEFAULT_PAGINATES_PER
       expected_txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.limit(max_count).map(&:to_json)
       assert_equal max_count, $redis.zcard(addr.tx_list_cache_key)
       assert_equal expected_txs, $redis.zrevrange(addr.tx_list_cache_key, 0, -1)
@@ -30,7 +30,7 @@ module Cache
       500.times.each do |i|
         create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
       end
-      s = Cache::ListCacheService.new
+      s = ListCacheService.new
       s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction) do
         addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
       end
