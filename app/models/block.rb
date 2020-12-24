@@ -114,7 +114,7 @@ class Block < ApplicationRecord
         end
       end
     end
-    service = Cache::ListCacheService.new
+    service = ListCacheService.new
     $redis.pipelined do
       address_txs.each do |k, v|
         members = CkbTransaction.where(id: v).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).map(&:to_json)

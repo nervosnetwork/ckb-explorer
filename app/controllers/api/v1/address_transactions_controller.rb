@@ -10,10 +10,11 @@ module Api
 
         enabled = Rails.cache.read("enable_list_cache_service")
         if enabled
-          service = Cache::ListCacheService.new
-          @ckb_transactions = service.fetch(@address.tx_list_cache_key, @page, @page_size, CkbTransaction) do
-            @address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
-          end
+          service = ListCacheService.new
+          @ckb_transactions =
+            service.fetch(@address.tx_list_cache_key, @page, @page_size, CkbTransaction) do
+              @address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
+            end
           records_counter = RecordCounters::AddressTransactions.new(@address)
           @options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: @ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
           json = json_result
