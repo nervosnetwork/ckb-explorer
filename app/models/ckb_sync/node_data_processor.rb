@@ -48,12 +48,17 @@ module CkbSync
         update_dao_contract_related_info(local_block)
         increase_records_count(ckb_transactions)
         cache_address_txs(local_block.ckb_transactions)
+        generate_tx_display_info(ckb_transactions)
       end
 
       local_block
     end
 
     private
+
+    def generate_tx_display_info(ckb_transactions)
+      TxDisplayInfoGeneratorWorker.perform_async(ckb_transactions.pluck(:id))
+    end
 
     def cache_address_txs(ckb_transactions)
       address_txs = Hash.new
