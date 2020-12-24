@@ -95,7 +95,7 @@ class ListCacheServiceTest < ActiveSupport::TestCase
 		end
 		s.write(addr.tx_list_cache_key, score_member_pairs, CkbTransaction)
 
-		assert_equal 400, $redis.zcard(addr.tx_list_cache_key)
+		assert_equal 300, $redis.zcard(addr.tx_list_cache_key)
 	end
 
 	test "zrem should remove specific members associate with the key" do

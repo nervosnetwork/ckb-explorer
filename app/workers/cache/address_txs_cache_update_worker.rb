@@ -6,7 +6,7 @@ module Cache
     def perform(address_txs_pair)
       already_exist_pairs = address_txs_pair.reject { |key| !$redis.exists?("Address/txs/#{key}") }
       new_pairs = address_txs_pair.reject { |key| $redis.exists?("Address/txs/#{key}") }
-      service = Cache::ListCacheService.new
+      service = ListCacheService.new
 
       already_exist_pairs.each do |k, v|
         score_member_pairs =
