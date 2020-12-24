@@ -217,41 +217,12 @@ module Api
         assert_equal response_transaction, response.body
       end
 
-      test "should return pagination links in response body" do
-        page = 2
-        page_size = 3
-        block = create(:block, :with_ckb_transactions, transactions_count: 30)
-
-        links = {
-          self: "#{api_v1_block_transaction_url(block.block_hash)}?page=2&page_size=3",
-          first: "#{api_v1_block_transaction_url(block.block_hash)}?page_size=3",
-          prev: "#{api_v1_block_transaction_url(block.block_hash)}?page_size=3",
-          next: "#{api_v1_block_transaction_url(block.block_hash)}?page=3&page_size=3",
-          last: "#{api_v1_block_transaction_url(block.block_hash)}?page=10&page_size=3"
-        }
-
-        valid_get api_v1_block_transaction_url(block.block_hash), params: { page: page, page_size: page_size }
-
-        assert_equal links.stringify_keys.sort, json["links"].sort
-      end
-
       test "should return meta that contained total in response body" do
         block = create(:block, :with_ckb_transactions, transactions_count: 3)
 
         valid_get api_v1_block_transaction_url(block.block_hash)
 
         assert_equal 3, json.dig("meta", "total")
-      end
-
-      test "should return pagination links that only contain self in response bod when there is no blocks" do
-        block = create(:block, :with_ckb_transactions)
-
-        links = {
-          self: "#{api_v1_block_transaction_url(block.block_hash)}?page_size=10"
-        }
-
-        valid_get api_v1_block_transaction_url(block.block_hash)
-        assert_equal links.stringify_keys.sort, json["links"].sort
       end
 
       test "should return up to ten display_inputs" do

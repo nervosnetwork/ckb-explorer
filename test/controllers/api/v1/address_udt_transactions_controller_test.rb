@@ -234,18 +234,6 @@ module Api
 
         assert_equal 6, json.dig("meta", "total")
       end
-
-      test "should return pagination links that only contain self in response body when there is no blocks" do
-        udt = create(:udt, published: true)
-        address = create(:address, udt: udt)
-
-        links = {
-          self: "#{api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash)}?page_size=10"
-        }
-
-        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash)
-        assert_equal links.stringify_keys.sort, json["links"].sort
-      end
     end
   end
 end
