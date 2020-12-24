@@ -74,7 +74,7 @@ class CkbTransaction < ApplicationRecord
   end
 
   def tx_display_info
-    @tx_display_info ||= TxDisplayInfo.find(self.id)
+    @tx_display_info ||= TxDisplayInfo.find_by(ckb_transaction_id: self.id)
   end
 
   def display_inputs_info(previews: false)
