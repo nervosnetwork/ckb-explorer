@@ -47,9 +47,9 @@ module CkbSync
 
         update_dao_contract_related_info(local_block)
         increase_records_count(ckb_transactions)
-        cache_address_txs(local_block.ckb_transactions)
-        generate_tx_display_info(ckb_transactions)
       end
+      cache_address_txs(local_block.ckb_transactions)
+      generate_tx_display_info(local_block.ckb_transactions)
 
       local_block
     end
