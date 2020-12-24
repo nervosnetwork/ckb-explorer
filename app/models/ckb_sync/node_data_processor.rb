@@ -57,7 +57,10 @@ module CkbSync
     private
 
     def generate_tx_display_info(ckb_transactions)
-      TxDisplayInfoGeneratorWorker.perform_async(ckb_transactions.pluck(:id))
+      enabled = Rails.cache.read("enable_generate_tx_display_info")
+      if enabled
+        TxDisplayInfoGeneratorWorker.perform_async(ckb_transactions.pluck(:id))
+      end
     end
 
     def cache_address_txs(ckb_transactions)

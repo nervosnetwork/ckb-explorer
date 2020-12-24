@@ -6,7 +6,7 @@ namespace :migration do
 			value =
 				txs.map do |tx|
 					progress_bar.increment
-					{ ckb_transaction_id: tx_id, inputs: tx.display_inputs, outputs: tx.display_outputs, created_at: Time.current, updated_at: Time.current }
+					{ ckb_transaction_id: tx.id, inputs: tx.display_inputs, outputs: tx.display_outputs, created_at: Time.current, updated_at: Time.current }
 				end
 			if value.present?
 				TxDisplayInfo.upsert_all(value)
