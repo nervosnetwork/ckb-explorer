@@ -22,11 +22,35 @@ class CkbTransactionSerializer
   end
 
   attribute :display_inputs do |object, params|
-    params && params[:previews] ? object.display_inputs(previews: true) : object.display_inputs
+    if params && params[:previews]
+      if object.display_inputs_info.present?
+        object.display_inputs_info(previews: true)
+      else
+        object.display_inputs(previews: true)
+      end
+    else
+      if object.display_inputs_info.present?
+        object.display_inputs_info
+      else
+        object.display_inputs
+      end
+    end
   end
 
   attribute :display_outputs do |object, params|
-    params && params[:previews] ? object.display_outputs(previews: true) : object.display_outputs
+    if params && params[:previews]
+      if object.display_inputs_info.present?
+        object.display_outputs_info(previews: true)
+      else
+        object.display_outputs(previews: true)
+      end
+    else
+      if object.display_inputs_info.present?
+        object.display_outputs_info
+      else
+        object.display_outputs
+      end
+    end
   end
 
   attribute :income do |object, params|

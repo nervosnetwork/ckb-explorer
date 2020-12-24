@@ -73,6 +73,30 @@ class CkbTransaction < ApplicationRecord
     nil
   end
 
+  def tx_display_info
+    @tx_display_info ||= TxDisplayInfo.find(self.id)
+  end
+
+  def display_inputs_info(previews: false)
+    return if tx_display_info.blank?
+
+    if previews
+      tx_display_info.inputs[0..9]
+    else
+      tx_display_info.inputs
+    end
+  end
+
+  def display_outputs_info(previews: false)
+    return if tx_display_info.blank?
+
+    if previews
+      tx_display_info.outputs[0..9]
+    else
+      tx_display_info.outputs
+    end
+  end
+
   private
 
   def normal_tx_display_outputs(previews)
