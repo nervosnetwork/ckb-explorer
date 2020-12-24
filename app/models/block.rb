@@ -96,12 +96,17 @@ class Block < ApplicationRecord
   def invalid!
     uncle_blocks.delete_all
     delete_address_txs_cache
+    delete_tx_display_infos
     ckb_transactions.destroy_all
     ForkedBlock.create(attributes)
     destroy
   end
 
   private
+
+  def delete_tx_display_infos
+    TxDisplayInfo.where(ckb_transaction_id: ckb_transactions.ids).delete_all
+  end
 
   def delete_address_txs_cache
     address_txs = Hash.new
