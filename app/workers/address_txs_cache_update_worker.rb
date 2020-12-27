@@ -7,7 +7,7 @@ class AddressTxsCacheUpdateWorker
     new_pairs = address_txs_pair.reject { |key| $redis.exists?("Address/txs/#{key}") }
     service = ListCacheService.new
 
-    already_exist_pairs.each do |_, v|
+    already_exist_pairs.each do |k, v|
       score_member_pairs =
         CkbTransaction.where(id: v).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).find_each.map do |tx|
           [tx.id, tx.to_json]
