@@ -80,7 +80,10 @@ class CkbTransaction < ApplicationRecord
   end
 
   def display_inputs_info(previews: false)
-    return if tx_display_info.blank?
+    if tx_display_info.blank?
+      TxDisplayInfoGeneratorWorker.perform_async([self.id])
+      return
+    end
 
     if previews
       tx_display_info.inputs[0..9]
