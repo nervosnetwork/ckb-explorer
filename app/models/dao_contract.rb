@@ -84,7 +84,7 @@ class DaoContract < ApplicationRecord
   end
 
   def latest_daily_statistic
-    @latest_daily_statistic ||= DailyStatistic.order(created_at_unixtimestamp: :desc).first || OpenStruct.new(total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0)
+    @latest_daily_statistic ||= DailyStatistic.recent.first || OpenStruct.new(total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0)
   end
 
   def alpha(start_epoch_number)

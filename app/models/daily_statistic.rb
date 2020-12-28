@@ -3,8 +3,11 @@ class DailyStatistic < ApplicationRecord
     transactions_count addresses_count total_dao_deposit live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate
     total_depositors_count address_balance_distribution total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count
     circulation_ratio daily_dao_withdraw nodes_count circulating_supply burnt locked_capacity treasury_amount mining_reward
-    deposit_compensation liquidity
+    deposit_compensation liquidity created_at_unixtimestamp
   ).freeze
+
+  scope :valid_indicators, -> { select( VALID_INDICATORS - %w(burnt liquidity created_at updated_at) + %w(id)  ) }
+  scope :recent, -> { order("created_at_unixtimestamp desc nulls last") }
 
   def burnt
     treasury_amount.to_i + MarketData::BURN_QUOTA
@@ -57,4 +60,8 @@ end
 #  nodes_distribution           :jsonb
 #  nodes_count                  :integer
 #  locked_capacity              :decimal(30, )
+#
+# Indexes
+#
+#  index_daily_statistics_on_created_at_unixtimestamp  (created_at_unixtimestamp)
 #
