@@ -52,7 +52,7 @@ class ListCacheService
         records.limit(MAX_CACHED_PAGE * page_size).map do |record|
           [record.id, record.to_json]
         end
-      write(key, score_member_pairs, record_klass)
+      write(key, score_member_pairs, record_klass) if score_member_pairs.present?
       rs = read_records(key, start, stop, record_klass)
       if rs.present?
         return rs
