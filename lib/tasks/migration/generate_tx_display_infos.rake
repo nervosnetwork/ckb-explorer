@@ -1,14 +1,15 @@
 namespace :migration do
-	desc "Usage: RAILS_ENV=production bundle exec rake 'migration:generate_tx_display_infos[0]'"
-	task :generate_tx_display_infos, [:tx_id] => :environment do |_, args|
-		progress_bar = ProgressBar.create({ total: CkbTransaction.count, format: "%e %B %p%% %c/%C" })
-		if args[:tx_id].present?
-			tx_id = args[:tx_id].to_i
-		else
-			tx_id = 0
-		end
-		puts "tx_id: #{tx_id}"
-		CkbTransaction.where("id > ?", tx_id).order(:id).find_in_batches(batch_size: 3000).each do |txs|
+	desc "Usage: RAILS_ENV=production bundle exec rake migration:generate_tx_display_infos"
+	task generate_tx_display_infos: :environment do
+		sql =
+			<<-SQL
+				select id from ckb_transactions 
+				except 
+				select ckb_transaction_id from tx_display_infos
+			SQL
+		tx_ids = CkbTransaction.find_by_sql(sql)
+		progress_bar = ProgressBar.create({ total: tx_ids.count, format: "%e %B %p%% %c/%C" })
+		CkbTransaction.where(id: tx_ids).order(:id).find_in_batches(batch_size: 3000).each do |txs|
 			value =
 				txs.map do |tx|
 					progress_bar.increment
