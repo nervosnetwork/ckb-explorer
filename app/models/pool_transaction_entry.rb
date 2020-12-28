@@ -20,6 +20,8 @@ class PoolTransactionEntry < ApplicationRecord
   def proposal_short_id
     tx_hash[0...12]
   end
+
+  def display_inputs_info ;end
 end
 
 # == Schema Information

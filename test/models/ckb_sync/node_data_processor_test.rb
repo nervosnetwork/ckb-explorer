@@ -1302,20 +1302,10 @@ module CkbSync
         ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
         create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block)
         create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
-        cell_outputs = CellOutput.all
-        cell_outputs.each do |cell_output|
-          tx = cell_output.ckb_transaction
-          tx.display_outputs
-          assert_not_nil Rails.cache.realize("normal_tx_display_outputs_previews_false_#{tx.id}")
-        end
 
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         local_block = node_data_processor.process_block(node_block)
         assert_empty local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil)
-        cell_outputs.each do |cell_output|
-          tx = cell_output.ckb_transaction
-          assert_nil Rails.cache.realize("normal_tx_display_outputs_previews_false_#{tx.id}")
-        end
       end
     end
 
@@ -3477,10 +3467,13 @@ module CkbSync
       output1.capacity = 10**8 * 1000
       tx1.outputs << output1
       tx1.outputs_data << CKB::Utils.bin_to_hex("\x00" * 8)
+      redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+      Rails.stubs(:cache).returns(redis_cache_store)
+      Rails.cache.extend(CacheRealizer)
+      Rails.cache.write("enable_generate_tx_display_info", true)
       assert_difference -> { TxDisplayInfo.count }, 3 do
         block = node_data_processor.process_block(node_block)
         block.reload.ckb_transactions.each do |tx|
-          binding.pry
           assert_equal tx.display_inputs.map(&:deep_stringify_keys).map(&:to_a).map(&:sort), tx.display_inputs_info.map(&:to_a).map(&:sort)
           assert_equal tx.display_outputs.map(&:deep_stringify_keys).map(&:to_a).map(&:sort), tx.display_outputs_info.map(&:to_a).map(&:sort)
         end
@@ -3492,12 +3485,13 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
       create(:block, :with_block_hash, number: node_block.header.number - 1)
-      target_address = nil
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_deposit_transaction(node_block)
         output = tx.outputs.first
         address = Address.find_or_create_address(output.lock, node_block.header.timestamp)
-        target_address = address
+        redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+        Rails.stubs(:cache).returns(redis_cache_store)
+        Rails.cache.write("enable_generate_tx_display_info", true)
         assert_difference -> { address.reload.dao_deposit }, 10**8 * 1000 do
           node_data_processor.process_block(node_block)
         end
