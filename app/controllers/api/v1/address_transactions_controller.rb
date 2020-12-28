@@ -12,7 +12,7 @@ module Api
         if enabled
           service = ListCacheService.new
           @ckb_transactions =
-            service.fetch(@address.tx_list_cache_key, @page, @page_size, CkbTransaction) do
+            service.fetch(@address.tx_list_cache_key, @page, CkbTransaction::DEFAULT_PAGINATES_PER, CkbTransaction) do
               @address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
             end
           records_counter = RecordCounters::AddressTransactions.new(@address)

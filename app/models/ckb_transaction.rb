@@ -74,7 +74,9 @@ class CkbTransaction < ApplicationRecord
   end
 
   def tx_display_info
-    @tx_display_info ||= TxDisplayInfo.find_by(ckb_transaction_id: self.id)
+    Rails.cache.fetch("TxDisplayInfo/#{id}", skip_nil: true) do
+      TxDisplayInfo.find_by(ckb_transaction_id: self.id)
+    end
   end
 
   def display_inputs_info(previews: false)
