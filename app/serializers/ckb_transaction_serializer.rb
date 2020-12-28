@@ -54,6 +54,12 @@ class CkbTransactionSerializer
   end
 
   attribute :income do |object, params|
-    params && params[:previews] && params[:address] ? object.income(params[:address]) : nil
+    if params && params[:previews] && params[:address].present?
+      if object.tx_display_info.present?
+        object.tx_display_info.income[params[:address].address_hash]
+      else
+        object.income(params[:address])
+      end
+    end
   end
 end
