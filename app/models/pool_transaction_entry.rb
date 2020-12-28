@@ -21,7 +21,7 @@ class PoolTransactionEntry < ApplicationRecord
     tx_hash[0...12]
   end
 
-  def display_inputs_info ;end
+  def display_inputs_info; end
 end
 
 # == Schema Information

@@ -21,11 +21,7 @@ class CkbTransactionsSerializer
         object.display_inputs(previews: true)
       end
     else
-      if object.display_inputs_info.present?
-        object.display_inputs_info
-      else
-        object.display_inputs
-      end
+      object.display_inputs_info.presence || object.display_inputs
     end
   end
 
