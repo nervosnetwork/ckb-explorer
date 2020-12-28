@@ -38,7 +38,7 @@ gem "config"
 gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", branch: "develop"
 
 # Redis
-gem "hiredis", "~> 0.6.0"
+gem "hiredis", "~> 0.6.3"
 gem "redis", "~> 4.2.0"
 
 # Backgroud Jobs
