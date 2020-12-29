@@ -1,6 +1,7 @@
 class CkbTransaction < ApplicationRecord
   MAX_PAGINATES_PER = 100
-  paginates_per 10
+  DEFAULT_PAGINATES_PER = 10
+  paginates_per DEFAULT_PAGINATES_PER
   max_paginates_per MAX_PAGINATES_PER
 
   enum tx_status: { pending: 0, proposed: 1, committed: 2 }, _prefix: :ckb_transaction
@@ -72,18 +73,48 @@ class CkbTransaction < ApplicationRecord
     nil
   end
 
+  def tx_display_info
+    Rails.cache.fetch("TxDisplayInfo/#{id}", skip_nil: true) do
+      TxDisplayInfo.find_by(ckb_transaction_id: self.id)
+    end
+  end
+
+  def display_inputs_info(previews: false)
+    if tx_display_info.blank?
+      enabled = Rails.cache.read("enable_generate_tx_display_info")
+      if enabled
+        TxDisplayInfoGeneratorWorker.perform_async([self.id])
+      end
+      return
+    end
+
+    if previews
+      tx_display_info.inputs[0..9]
+    else
+      tx_display_info.inputs
+    end
+  end
+
+  def display_outputs_info(previews: false)
+    return if tx_display_info.blank?
+
+    if previews
+      tx_display_info.outputs[0..9]
+    else
+      tx_display_info.outputs
+    end
+  end
+
   private
 
   def normal_tx_display_outputs(previews)
-    Rails.cache.realize("normal_tx_display_outputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
-      cell_outputs_for_display = previews ? outputs.order(:id).limit(10) : outputs.order(:id)
-      cell_outputs_for_display.map do |output|
-        consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-        display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
-        display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
+    cell_outputs_for_display = previews ? outputs.order(:id).limit(10) : outputs.order(:id)
+    cell_outputs_for_display.map do |output|
+      consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
+      display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
+      display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
 
-        CkbUtils.hash_value_to_s(display_output)
-      end
+      CkbUtils.hash_value_to_s(display_output)
     end
   end
 
@@ -97,17 +128,15 @@ class CkbTransaction < ApplicationRecord
   end
 
   def normal_tx_display_inputs(previews)
-    Rails.cache.realize("normal_tx_display_inputs_previews_#{previews}_#{id}", race_condition_ttl: 3.seconds) do
-      cell_inputs_for_display = previews ? cell_inputs.order(:id).limit(10) : cell_inputs.order(:id)
-      cell_inputs_for_display.each_with_index.map do |cell_input, index|
-        previous_cell_output = cell_input.previous_cell_output
-        display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_index: previous_cell_output.cell_index, cell_type: previous_cell_output.cell_type }
-        display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
-        display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
-        display_input.merge!(attributes_for_udt_cell(previous_cell_output)) if previous_cell_output.udt?
+    cell_inputs_for_display = previews ? cell_inputs.order(:id).limit(10) : cell_inputs.order(:id)
+    cell_inputs_for_display.each_with_index.map do |cell_input, index|
+      previous_cell_output = cell_input.previous_cell_output
+      display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_index: previous_cell_output.cell_index, cell_type: previous_cell_output.cell_type }
+      display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
+      display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
+      display_input.merge!(attributes_for_udt_cell(previous_cell_output)) if previous_cell_output.udt?
 
-        CkbUtils.hash_value_to_s(display_input)
-      end
+      CkbUtils.hash_value_to_s(display_input)
     end
   end
 

@@ -232,8 +232,6 @@ GEM
       rack (>= 1.0, < 3)
     rack-cors (1.0.5)
       rack (>= 1.6.0)
-    rack-protection (2.0.5)
-      rack
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
     rails (6.0.3.2)
@@ -269,7 +267,7 @@ GEM
       ffi (~> 1.0)
     rbnacl (7.1.1)
       ffi
-    redis (4.1.2)
+    redis (4.2.5)
     rubocop (0.71.0)
       jaro_winkler (~> 1.5.1)
       parallel (~> 1.10)
@@ -290,11 +288,10 @@ GEM
     shoulda-context (1.2.2)
     shoulda-matchers (4.1.0)
       activesupport (>= 4.2.0)
-    sidekiq (5.2.7)
-      connection_pool (~> 2.2, >= 2.2.2)
-      rack (>= 1.5.0)
-      rack-protection (>= 1.5.0)
-      redis (>= 3.3.5, < 5)
+    sidekiq (6.1.2)
+      connection_pool (>= 2.2.2)
+      rack (~> 2.0)
+      redis (>= 4.2.0)
     sidekiq-cron (1.1.0)
       fugit (~> 1.1)
       sidekiq (>= 4.2.1)
@@ -341,6 +338,8 @@ GEM
     websocket-driver (0.7.2)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    with_advisory_lock (4.6.0)
+      activerecord (>= 4.2)
     zeitwerk (2.4.0)
 
 PLATFORMS
@@ -359,7 +358,7 @@ DEPENDENCIES
   factory_bot_rails
   faker!
   fast_jsonapi
-  hiredis (~> 0.6.1)
+  hiredis (~> 0.6.3)
   kaminari
   listen (>= 3.0.5, < 3.2)
   mina
@@ -374,7 +373,7 @@ DEPENDENCIES
   rack-attack
   rack-cors
   rails (~> 6.0.0)
-  redis (~> 4.0, >= 4.0.3)
+  redis (~> 4.2.0)
   rubocop
   rubocop-performance
   rubocop-rails
@@ -394,6 +393,7 @@ DEPENDENCIES
   tzinfo-data
   vcr
   webmock
+  with_advisory_lock
 
 RUBY VERSION
    ruby 2.6.4p104

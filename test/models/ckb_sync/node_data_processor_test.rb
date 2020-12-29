@@ -398,7 +398,7 @@ module CkbSync
             cell_input.previous_output = cell_input.previous_output.sort
             cell_input.attributes.select { |attribute| attribute.in?(%(previous_output since)) }.sort
           end
-        } .flatten
+        }.flatten
 
         assert_equal node_block_cell_inputs, local_block_cell_inputs
       end
@@ -1302,20 +1302,10 @@ module CkbSync
         ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
         create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block)
         create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block)
-        cell_outputs = CellOutput.all
-        cell_outputs.each do |cell_output|
-          tx = cell_output.ckb_transaction
-          tx.display_outputs
-          assert_not_nil Rails.cache.realize("normal_tx_display_outputs_previews_false_#{tx.id}")
-        end
 
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         local_block = node_data_processor.process_block(node_block)
         assert_empty local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil)
-        cell_outputs.each do |cell_output|
-          tx = cell_output.ckb_transaction
-          assert_nil Rails.cache.realize("normal_tx_display_outputs_previews_false_#{tx.id}")
-        end
       end
     end
 
@@ -3307,6 +3297,213 @@ module CkbSync
       end
       assert_equal 0, udt1.reload.ckb_transactions_count
       assert_equal 0, udt2.reload.ckb_transactions_count
+    end
+
+    test "#process_block should generate right address txs pair sent to worker" do
+      block1 = create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 2)
+      tx1 = create(:ckb_transaction, block: block1)
+      block2 = create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 1)
+      tx2 = create(:ckb_transaction, block: block2)
+      tx3 = create(:ckb_transaction, block: block2)
+      tx4 = create(:ckb_transaction, block: block2)
+      tx5 = create(:ckb_transaction, block: block2)
+      input_address1 = create(:address)
+      input_address2 = create(:address)
+      input_address3 = create(:address)
+      input_address4 = create(:address)
+      input_address5 = create(:address)
+      create(:cell_output, ckb_transaction: tx1, generated_by: tx1, block: block1, capacity: 50000 * 10**8, tx_hash: tx1.tx_hash, cell_index: 0, address: input_address1)
+      create(:cell_output, ckb_transaction: tx2, generated_by: tx2, block: block2, capacity: 60000 * 10**8, tx_hash: tx2.tx_hash, cell_index: 1, address: input_address2)
+      create(:cell_output, ckb_transaction: tx3, generated_by: tx3, block: block2, capacity: 70000 * 10**8, tx_hash: tx3.tx_hash, cell_index: 2, address: input_address3)
+      create(:cell_output, ckb_transaction: tx4, generated_by: tx4, block: block1, capacity: 50000 * 10**8, tx_hash: tx4.tx_hash, cell_index: 0, address: input_address4)
+      create(:cell_output, ckb_transaction: tx5, generated_by: tx5, block: block2, capacity: 60000 * 10**8, tx_hash: tx5.tx_hash, cell_index: 0, address: input_address5)
+      header = CKB::Types::BlockHeader.new(compact_target: "0x1000", hash: "0x#{SecureRandom.hex(32)}", number: DEFAULT_NODE_BLOCK_NUMBER, parent_hash: "0x#{SecureRandom.hex(32)}", nonce: 1757392074788233522, timestamp: CkbUtils.time_in_milliseconds(Time.current), transactions_root: "0x#{SecureRandom.hex(32)}", proposals_hash: "0x#{SecureRandom.hex(32)}", uncles_hash: "0x#{SecureRandom.hex(32)}", version: 0, epoch: 1, dao: "0x01000000000000000000c16ff286230000a3a65e97fd03000057c138586f0000")
+      inputs = [
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx1.tx_hash, index: 0)),
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx2.tx_hash, index: 1)),
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx3.tx_hash, index: 2))
+      ]
+      inputs1 = [
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx4.tx_hash, index: 0)),
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx5.tx_hash, index: 0))
+      ]
+      lock1 = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock2 = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock3 = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      udt_script1 = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(32)}")
+      udt_script2 = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(32)}")
+      Address.create(lock_hash: udt_script1.args, address_hash: "0x#{SecureRandom.hex(32)}")
+      Address.create(lock_hash: udt_script2.args, address_hash: "0x#{SecureRandom.hex(32)}")
+      outputs = [
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock1, type: udt_script1),
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock2, type: udt_script2),
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
+      ]
+      outputs1 = [
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock1, type: udt_script1),
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock2, type: udt_script2),
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock2, type: udt_script2),
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
+      ]
+      miner_lock = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      cellbase_inputs = [
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295), since: 3000)
+      ]
+      cellbase_outputs = [
+        CKB::Types::Output.new(capacity: 200986682127, lock: miner_lock)
+      ]
+      transactions = [
+        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: cellbase_inputs, outputs: cellbase_outputs, outputs_data: %w[0x], witnesses: ["0x590000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd800000000"]),
+        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: inputs, outputs: outputs, outputs_data: %W[#{CKB::Utils.generate_sudt_amount(1000)} #{CKB::Utils.generate_sudt_amount(1000)} 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
+        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: inputs1, outputs: outputs1, outputs_data: %W[#{CKB::Utils.generate_sudt_amount(1000)} #{CKB::Utils.generate_sudt_amount(1000)} #{CKB::Utils.generate_sudt_amount(1000)} 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"])
+      ]
+      node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions: transactions, header: header)
+      Sidekiq::Testing.fake!
+      assert_difference -> { AddressTxsCacheUpdateWorker.jobs.size }, 1 do
+        block = node_data_processor.process_block(node_block)
+        address_txs = Hash.new
+        block.ckb_transactions.each do |tx|
+          tx.contained_address_ids.each do |id|
+            if address_txs[id].present?
+              address_txs[id] << tx.id
+            else
+              address_txs[id] = [tx.id]
+            end
+          end
+        end
+        pairs = AddressTxsCacheUpdateWorker.jobs.first["args"].first
+        assert_equal address_txs.stringify_keys, pairs
+      end
+    end
+
+    test "should remove block's contained address's tx cache when block is invalid" do
+      block1 = create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 2)
+      tx1 = create(:ckb_transaction, block: block1)
+      block2 = create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 1)
+      tx2 = create(:ckb_transaction, block: block2)
+      tx3 = create(:ckb_transaction, block: block2)
+      tx4 = create(:ckb_transaction, block: block2)
+      tx5 = create(:ckb_transaction, block: block2)
+      input_address1 = create(:address)
+      input_address2 = create(:address)
+      input_address3 = create(:address)
+      input_address4 = create(:address)
+      input_address5 = create(:address)
+      create(:cell_output, ckb_transaction: tx1, generated_by: tx1, block: block1, capacity: 50000 * 10**8, tx_hash: tx1.tx_hash, cell_index: 0, address: input_address1)
+      create(:cell_output, ckb_transaction: tx2, generated_by: tx2, block: block2, capacity: 60000 * 10**8, tx_hash: tx2.tx_hash, cell_index: 1, address: input_address2)
+      create(:cell_output, ckb_transaction: tx3, generated_by: tx3, block: block2, capacity: 70000 * 10**8, tx_hash: tx3.tx_hash, cell_index: 2, address: input_address3)
+      create(:cell_output, ckb_transaction: tx4, generated_by: tx4, block: block2, capacity: 70000 * 10**8, tx_hash: tx4.tx_hash, cell_index: 0, address: input_address4)
+      create(:cell_output, ckb_transaction: tx5, generated_by: tx5, block: block2, capacity: 70000 * 10**8, tx_hash: tx5.tx_hash, cell_index: 0, address: input_address5)
+      header = CKB::Types::BlockHeader.new(compact_target: "0x1000", hash: "0x#{SecureRandom.hex(32)}", number: DEFAULT_NODE_BLOCK_NUMBER, parent_hash: "0x#{SecureRandom.hex(32)}", nonce: 1757392074788233522, timestamp: CkbUtils.time_in_milliseconds(Time.current), transactions_root: "0x#{SecureRandom.hex(32)}", proposals_hash: "0x#{SecureRandom.hex(32)}", uncles_hash: "0x#{SecureRandom.hex(32)}", version: 0, epoch: 1, dao: "0x01000000000000000000c16ff286230000a3a65e97fd03000057c138586f0000")
+      inputs = [
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx1.tx_hash, index: 0)),
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx2.tx_hash, index: 1)),
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx3.tx_hash, index: 2))
+      ]
+      inputs1 = [
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx4.tx_hash, index: 0)),
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx5.tx_hash, index: 0))
+      ]
+      lock1 = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock2 = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock3 = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      dao_type = CKB::Types::Script.new(code_hash: ENV["DAO_TYPE_HASH"], hash_type: "type", args: "0x")
+      outputs = [
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock1, type: dao_type),
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock2, type: dao_type),
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
+      ]
+      outputs1 = [
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock1, type: dao_type),
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock2, type: dao_type),
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
+      ]
+      miner_lock = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      cellbase_inputs = [
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295), since: 3000)
+      ]
+      cellbase_outputs = [
+        CKB::Types::Output.new(capacity: 200986682127, lock: miner_lock)
+      ]
+      transactions = [
+        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: cellbase_inputs, outputs: cellbase_outputs, outputs_data: %w[0x], witnesses: ["0x590000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd800000000"]),
+        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: inputs, outputs: outputs, outputs_data: %w[0x0000000000000000 0x0000000000000000 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
+        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: inputs1, outputs: outputs1, outputs_data: %w[0x0000000000000000 0x0000000000000000 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"])
+      ]
+      node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions: transactions, header: header)
+      Sidekiq::Testing.inline!
+      block = node_data_processor.process_block(node_block)
+      CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
+      block.ckb_transactions.pluck(:contained_address_ids).uniq.each do |ids|
+        ids.each do |id|
+          assert $redis.zcard("Address/txs/#{id}") > 0
+        end
+      end
+
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
+        node_data_processor.call
+        block.ckb_transactions.pluck(:contained_address_ids).uniq.each do |ids|
+          ids.each do |id|
+            assert_equal 0, $redis.zcard("Address/txs/#{id}")
+          end
+        end
+      end
+    end
+
+    test "#process_block should generate tx display input info" do
+      Sidekiq::Testing.inline!
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      address = create(:address)
+      block = create(:block, :with_block_hash)
+      ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+      ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+      create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, capacity: 10**8 * 1000, address: address)
+      create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, capacity: 10**8 * 1000, address: address)
+      tx1 = node_block.transactions.first
+      output1 = tx1.outputs.first
+      output1.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: ENV["DAO_TYPE_HASH"])
+      output1.capacity = 10**8 * 1000
+      tx1.outputs << output1
+      tx1.outputs_data << CKB::Utils.bin_to_hex("\x00" * 8)
+      redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+      Rails.stubs(:cache).returns(redis_cache_store)
+      Rails.cache.extend(CacheRealizer)
+      Rails.cache.write("enable_generate_tx_display_info", true)
+      assert_difference -> { TxDisplayInfo.count }, 3 do
+        block = node_data_processor.process_block(node_block)
+        block.reload.ckb_transactions.each do |tx|
+          assert_equal tx.display_inputs.map(&:deep_stringify_keys).map(&:to_a).map(&:sort), tx.display_inputs_info.map(&:to_a).map(&:sort)
+          assert_equal tx.display_outputs.map(&:deep_stringify_keys).map(&:to_a).map(&:sort), tx.display_outputs_info.map(&:to_a).map(&:sort)
+        end
+      end
+    end
+
+    test "should remove tx display info when block is invalid" do
+      Sidekiq::Testing.inline!
+      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
+      node_block = fake_node_block
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        tx = fake_dao_deposit_transaction(node_block)
+        output = tx.outputs.first
+        address = Address.find_or_create_address(output.lock, node_block.header.timestamp)
+        redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+        Rails.stubs(:cache).returns(redis_cache_store)
+        Rails.cache.write("enable_generate_tx_display_info", true)
+        assert_difference -> { address.reload.dao_deposit }, 10**8 * 1000 do
+          node_data_processor.process_block(node_block)
+        end
+      end
+
+      local_block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
+        assert_difference -> { TxDisplayInfo.count }, -local_block.reload.ckb_transactions.count do
+          node_data_processor.call
+        end
+      end
     end
 
     private
