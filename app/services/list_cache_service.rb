@@ -6,8 +6,10 @@ class ListCacheService
   end
 
   # given block must return ActiveRecord_Relation, if there are no records will return empty array
-  def fetch(key, page, page_size, record_klass)
+  def fetch(key, page, page_size, record_klass, records_counter)
     page, page_size = process_page_params(page, page_size, record_klass)
+    return [] if exceeds_max_pages?(page, page_size, records_counter)
+
     start, stop = get_range(page, page_size)
     rs = read_records(key, start, stop, record_klass)
     return rs if rs.present?
@@ -45,6 +47,12 @@ class ListCacheService
 
   private
 
+  def exceeds_max_pages?(page, page_size, records_counter)
+    page > (records_counter.total_count / page_size).ceil
+  end
+
+  attr_reader :max_cached_page
+
   def process_page_params(page, page_size, record_klass)
     page = page.to_i
     page_size = page_size.to_i
@@ -65,8 +73,6 @@ class ListCacheService
       $redis.zremrangebyrank(key, 0, total_count - max_cached_page * record_klass::MAX_PAGINATES_PER - 1)
     end
   end
-
-  attr_reader :max_cached_page
 
   def max_cache_count(record_klass)
     max_cached_page * record_klass::MAX_PAGINATES_PER + record_klass::MAX_PAGINATES_PER
