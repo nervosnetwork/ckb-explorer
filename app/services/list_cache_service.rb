@@ -83,7 +83,7 @@ class ListCacheService
     if page < max_cached_page
       start, stop = get_range(page, page_size)
       score_member_pairs =
-        records.limit(max_cached_page * page_size).map do |record|
+        records.limit(max_cached_page * record_klass::MAX_PAGINATES_PER).map do |record|
           [record.id, record.to_json]
         end
       write(key, score_member_pairs, record_klass) if score_member_pairs.present?

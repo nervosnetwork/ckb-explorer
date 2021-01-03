@@ -11,7 +11,7 @@ module Api
         enabled = Rails.cache.read("enable_list_cache_service")
         if enabled
           records_counter = RecordCounters::AddressTransactions.new(@address)
-          service = ListCacheService.new(records_counter)
+          service = ListCacheService.new
           @ckb_transactions =
             service.fetch(@address.tx_list_cache_key, @page, @page_size, CkbTransaction, records_counter) do
               @address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
