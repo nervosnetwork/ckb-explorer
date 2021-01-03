@@ -48,7 +48,7 @@ class ListCacheService
   private
 
   def exceeds_max_pages?(page, page_size, records_counter)
-    page > (records_counter.total_count / page_size).ceil
+    page > (records_counter.total_count / page_size.to_d).ceil
   end
 
   attr_reader :max_cached_page
