@@ -63,6 +63,8 @@ gem "ruby-progressbar", require: false
 
 gem "with_advisory_lock"
 
+gem "nokogiri", ">= 1.11.0.rc4"
+
 group :production do
   gem "sentry-raven"
   gem "newrelic_rpm"
