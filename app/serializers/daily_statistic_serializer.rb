@@ -32,13 +32,13 @@ class DailyStatisticSerializer
   end
 
   attribute :avg_difficulty, if: Proc.new { |_record, params|
-    params.present?  && params[:indicator].include?("avg_difficulty")
+    params.present? && params[:indicator].include?("avg_difficulty")
   } do |object|
     object.avg_difficulty.to_d.truncate(3).to_s
   end
 
   attribute :uncle_rate, if: Proc.new { |_record, params|
-    params.present?  && params[:indicator].include?("uncle_rate")
+    params.present? && params[:indicator].include?("uncle_rate")
   }
 
   attribute :total_depositors_count, if: Proc.new { |_record, params|
