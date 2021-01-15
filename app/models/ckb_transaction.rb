@@ -80,11 +80,11 @@ class CkbTransaction < ApplicationRecord
   end
 
   def display_inputs_info(previews: false)
+    enabled = Rails.cache.read("enable_generate_tx_display_info")
+    return unless enabled
+
     if tx_display_info.blank?
-      enabled = Rails.cache.read("enable_generate_tx_display_info")
-      if enabled
-        TxDisplayInfoGeneratorWorker.perform_async([self.id])
-      end
+      TxDisplayInfoGeneratorWorker.perform_async([self.id])
       return
     end
 
