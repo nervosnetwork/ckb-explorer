@@ -74,17 +74,15 @@ class CkbTransaction < ApplicationRecord
   end
 
   def tx_display_info
-    Rails.cache.fetch("TxDisplayInfo/#{id}", skip_nil: true) do
-      TxDisplayInfo.find_by(ckb_transaction_id: self.id)
-    end
+    TxDisplayInfo.find_by(ckb_transaction_id: self.id)
   end
 
   def display_inputs_info(previews: false)
+    enabled = Rails.cache.read("enable_generate_tx_display_info")
+    return unless enabled
+
     if tx_display_info.blank?
-      enabled = Rails.cache.read("enable_generate_tx_display_info")
-      if enabled
-        TxDisplayInfoGeneratorWorker.perform_async([self.id])
-      end
+      TxDisplayInfoGeneratorWorker.perform_async([self.id])
       return
     end
 
@@ -166,6 +164,12 @@ class CkbTransaction < ApplicationRecord
   end
 
   def recover_dead_cell
+    enabled = Rails.cache.read("enable_generate_tx_display_info")
+    if enabled
+      tx_ids = inputs.pluck(:generated_by_id)
+      TxDisplayInfoGeneratorWorker.perform_async(tx_ids)
+    end
+
     inputs.update_all(status: "live")
   end
 end

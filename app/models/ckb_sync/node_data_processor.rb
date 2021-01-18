@@ -671,6 +671,12 @@ module CkbSync
         end
         input_cache_keys = updated_inputs.map(&:cache_keys)
         output_cache_keys = updated_outputs.map(&:cache_keys)
+        enabled = Rails.cache.read("enable_generate_tx_display_info")
+        if enabled
+          tx_ids = updated_outputs.map(&:generated_by_id).uniq
+          TxDisplayInfoGeneratorWorker.new.perform(tx_ids)
+        end
+
         flush_caches(input_cache_keys + output_cache_keys)
       end
     end
