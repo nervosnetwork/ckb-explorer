@@ -3459,7 +3459,6 @@ module CkbSync
       block = create(:block, :with_block_hash)
       ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
       ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
-      TxDisplayInfoGeneratorWorker.new.perform([ckb_transaction1.id, ckb_transaction2.id])
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, capacity: 10**8 * 1000, address: address)
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, capacity: 10**8 * 1000, address: address)
       tx1 = node_block.transactions.first
@@ -3505,17 +3504,19 @@ module CkbSync
       Rails.stubs(:cache).returns(redis_cache_store)
       Rails.cache.extend(CacheRealizer)
       Rails.cache.write("enable_generate_tx_display_info", true)
-      assert_difference -> { TxDisplayInfo.count }, 3 do
+      assert_difference -> { TxDisplayInfo.count }, 1 do
         block = node_data_processor.process_block(node_block)
         block.reload.ckb_transactions.each do |tx|
           assert_equal tx.display_inputs.map(&:deep_stringify_keys).map(&:to_a).map(&:sort), tx.display_inputs_info.map(&:to_a).map(&:sort)
           assert_equal tx.display_outputs.map(&:deep_stringify_keys).map(&:to_a).map(&:sort), tx.display_outputs_info.map(&:to_a).map(&:sort)
         end
       end
-      assert tx1_display_info.updated_at < tx1_display_info.reload.updated_at
-      assert_equal "dead", tx1_display_info.reload.outputs.first["status"]
-      assert tx2_display_info.updated_at < tx2_display_info.reload.updated_at
-      assert_equal "dead", tx2_display_info.reload.outputs.first["status"]
+      assert_raises ActiveRecord::RecordNotFound do
+        tx1_display_info.reload
+      end
+      assert_raises ActiveRecord::RecordNotFound do
+        tx2_display_info.reload
+      end
     end
 
     test "should remove tx display info when block is invalid" do
