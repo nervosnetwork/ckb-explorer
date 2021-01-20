@@ -167,7 +167,7 @@ class CkbTransaction < ApplicationRecord
     enabled = Rails.cache.read("enable_generate_tx_display_info")
     if enabled
       tx_ids = inputs.pluck(:generated_by_id)
-      TxDisplayInfoGeneratorWorker.perform_async(tx_ids)
+      TxDisplayInfo.where(ckb_transaction_id: tx_ids).delete_all
     end
 
     inputs.update_all(status: "live")
