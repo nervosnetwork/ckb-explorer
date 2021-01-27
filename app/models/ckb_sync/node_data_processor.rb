@@ -1,23 +1,48 @@
+require 'ruby-prof'
+require 'stackprof'
+
 module CkbSync
   class NodeDataProcessor
     def call
-      local_tip_block = Block.recent.first
-      tip_block_number = CkbSync::Api.instance.get_tip_block_number
-      target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
-      return if target_block_number > tip_block_number
+      # GC.start
+      # GC.disable
+      # puts GC.stat
+      # memory_before = `ps -o rss= -p #{Process.pid}`.to_i/1024
+      # puts memory_before
+      # GC::Profiler.enable
+      api = CkbSync::Api.instance
+      # StackProf.run(mode: :object, out: "#{Rails.root}/tmp/measurement/stackprof-object-app-optimized.dump", raw: true) do
+      # result1 = RubyProf.profile do
+      # result = Benchmark.realtime do
+        local_tip_block = Block.recent.first
+        tip_block_number = api.get_tip_block_number
+        target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
+        return if target_block_number > tip_block_number
+        puts "target_block_number: #{target_block_number}"
 
-      target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
-
-      if !forked?(target_block, local_tip_block)
-        process_block(target_block)
-      else
-        invalid_block(local_tip_block)
-      end
+        target_block = api.get_block_by_number(target_block_number)
+        if !forked?(target_block, local_tip_block)
+          process_block(target_block)
+        else
+          invalid_block(local_tip_block)
+        end
+      # end
+      # puts "%5.3f" % result
+      # printer = RubyProf::CallTreePrinter.new(result1)
+      # printer1 = RubyProf::FlatPrinter.new(result1)
+      # printer2 = RubyProf::GraphHtmlPrinter.new(result1)
+      # printer.print(profile: "local", path: "#{Rails.root}/tmp/measurement/")
+      # printer1.print(File.open("#{Rails.root}/tmp/measurement/flat-2.txt", "w+"))
+      # printer2.print(File.open("#{Rails.root}/tmp/measurement/html-2.html", "w+"))
+      # puts GC.stat
+      # memory_after = `ps -o rss= -p #{Process.pid}`.to_i/1024
+      # puts memory_after
+      # GC::Profiler.report
+      # GC::Profiler.disable
     end
 
     def process_block(node_block)
       local_block = build_block(node_block)
-
       node_block.uncles.each do |uncle_block|
         build_uncle_block(uncle_block, local_block)
       end
@@ -27,7 +52,6 @@ module CkbSync
         udt_infos = Set.new
         new_dao_depositor_events = {}
         local_block.save!
-
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs, new_dao_depositor_events, udt_infos)
         local_block.ckb_transactions_count = ckb_transactions.size
         local_block.live_cell_changes = ckb_transactions.sum(&:live_cell_changes)
@@ -36,7 +60,6 @@ module CkbSync
         input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h { |id| [id, []] }
         update_tx_fee_related_data(local_block, input_capacities, udt_infos)
         calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
-
         update_current_block_mining_info(local_block)
         update_block_contained_address_info(local_block)
         update_block_reward_info(local_block)
@@ -44,13 +67,11 @@ module CkbSync
         update_udt_info(udt_infos)
         dao_events = build_new_dao_depositor_events(new_dao_depositor_events)
         DaoEvent.import!(dao_events, validate: false)
-
         update_dao_contract_related_info(local_block)
         increase_records_count(ckb_transactions)
+        cache_address_txs(local_block.ckb_transactions)
+        generate_tx_display_info(local_block.ckb_transactions)
       end
-      cache_address_txs(local_block.ckb_transactions)
-      generate_tx_display_info(local_block.ckb_transactions)
-
       local_block
     end
 
