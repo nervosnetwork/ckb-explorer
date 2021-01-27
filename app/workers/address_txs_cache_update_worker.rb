@@ -19,10 +19,14 @@ class AddressTxsCacheUpdateWorker
     ActiveRecord::Base.uncached do
       new_pairs.each do |k, _|
         key = "Address/txs/#{k}"
-        service.fetch(key, 1, CkbTransaction::DEFAULT_PAGINATES_PER, CkbTransaction) do
-          CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [k]).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
+        address = Address.find_by(id: k)
+        if address.present?
+          records_counter = RecordCounters::AddressTransactions.new(address)
+          service.fetch(key, 1, CkbTransaction::DEFAULT_PAGINATES_PER, CkbTransaction, records_counter) do
+            CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [k]).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
+          end
+          service.expire(key, 30)
         end
-        service.expire(key, 30)
       end
     end
   end

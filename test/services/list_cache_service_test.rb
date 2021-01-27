@@ -13,6 +13,7 @@ class ListCacheServiceTest < ActiveSupport::TestCase
 		20.times.each do |i|
 			create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
 		end
+		addr.update(ckb_transactions_count: addr.custom_ckb_transactions.count)
 		txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
 		tx_jsons = []
 		score_member_pairs = txs.map do |tx|
@@ -21,7 +22,8 @@ class ListCacheServiceTest < ActiveSupport::TestCase
 		end
 		$redis.zadd(addr.tx_list_cache_key, score_member_pairs)
 		s = ListCacheService.new
-		rs = s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction)
+		records_counter = RecordCounters::AddressTransactions.new(addr)
+		rs = s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction, records_counter)
 		expected_rs = tx_jsons.map do |json|
 			CkbTransaction.new.from_json(json)
 		end
@@ -37,7 +39,8 @@ class ListCacheServiceTest < ActiveSupport::TestCase
 		$redis.flushdb
 		s = ListCacheService.new
 		tx_jsons = []
-		rs = s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction) do
+		records_counter = RecordCounters::AddressTransactions.new(addr)
+		rs = s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction, records_counter) do
 			txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
 			txs.map do |tx|
 				tx_jsons << tx.to_json
@@ -57,6 +60,7 @@ class ListCacheServiceTest < ActiveSupport::TestCase
 		20.times.each do |i|
 			create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
 		end
+		addr.update(ckb_transactions_count: addr.custom_ckb_transactions.count)
 		txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
 		tx_jsons = []
 		score_member_pairs = txs.map do |tx|
@@ -65,7 +69,8 @@ class ListCacheServiceTest < ActiveSupport::TestCase
 		end
 		s = ListCacheService.new
 		s.write(addr.tx_list_cache_key, score_member_pairs, CkbTransaction)
-		rs = s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction)
+		records_counter = RecordCounters::AddressTransactions.new(addr)
+		rs = s.fetch(addr.tx_list_cache_key, 1, 20, CkbTransaction, records_counter)
 		expected_rs = tx_jsons.map do |json|
 			CkbTransaction.new.from_json(json)
 		end
@@ -75,9 +80,10 @@ class ListCacheServiceTest < ActiveSupport::TestCase
 	test "write function will remove exceeds max cache count records" do
 		block = create(:block, :with_block_hash)
 		addr = create(:address)
-		500.times.each do |i|
+		1000.times.each do |i|
 			create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
 		end
+		addr.update(ckb_transactions_count: addr.custom_ckb_transactions.count)
 		txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
 		score_member_pairs = txs.map do |tx|
 			[tx.id, tx.to_json]
@@ -85,7 +91,7 @@ class ListCacheServiceTest < ActiveSupport::TestCase
 		s = ListCacheService.new
 		s.write(addr.tx_list_cache_key, score_member_pairs, CkbTransaction)
 		tx_ids = []
-		100.times.each do |i|
+		200.times.each do |i|
 			tx = create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
 			tx_ids << tx.id
 		end
@@ -95,7 +101,7 @@ class ListCacheServiceTest < ActiveSupport::TestCase
 		end
 		s.write(addr.tx_list_cache_key, score_member_pairs, CkbTransaction)
 
-		assert_equal 300, $redis.zcard(addr.tx_list_cache_key)
+		assert_equal 1000, $redis.zcard(addr.tx_list_cache_key)
 	end
 
 	test "zrem should remove specific members associate with the key" do

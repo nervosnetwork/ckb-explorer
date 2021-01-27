@@ -2,8 +2,8 @@ module Validations
   class Pagination
     include ActiveModel::Validations
 
-    validates :page, numericality: { only_integer: true }, allow_nil: true
-    validates :page_size, numericality: { only_integer: true }, allow_nil: true
+    validates :page, numericality: { only_integer: true, greater_than_or_equal_to: 1 }, allow_nil: true
+    validates :page_size, numericality: { only_integer: true, greater_than_or_equal_to: 1 }, allow_nil: true
 
     def initialize(params = {})
       @page = params[:page]
