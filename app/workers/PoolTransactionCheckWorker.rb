@@ -15,4 +15,3 @@ class PoolTransactionCheckWorker
 		PoolTransactionEntry.upsert_all(pool_tx_entry_attributes) if pool_tx_entry_attributes.present?
 	end
 end
-
