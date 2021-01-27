@@ -33,3 +33,7 @@ cal_average_block_time:
 cal_address_unclaimed_compensation:
   cron: "0 */1 * * *"
   class: "AddressUnclaimedCompensationGenerator"
+
+update_pool_txs_status:
+  cron: "*/5 * * * *"
+  class: "PoolTransactionCheckWorker"

@@ -1,5 +1,5 @@
 class PoolTransactionEntry < ApplicationRecord
-  enum tx_status: { pending: 0, proposed: 1, committed: 2 }, _prefix: :pool_transaction
+  enum tx_status: { pending: 0, proposed: 1, committed: 2, rejected: 3 }, _prefix: :pool_transaction
 
   def is_cellbase
     false
