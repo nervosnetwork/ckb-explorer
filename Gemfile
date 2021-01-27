@@ -40,7 +40,8 @@ gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", re
 # Redis
 gem "hiredis", "~> 0.6.3"
 gem "redis", "~> 4.2.0"
-
+gem "ruby-prof"
+gem "stackprof"
 # Backgroud Jobs
 
 group :production, :staging, :development do
