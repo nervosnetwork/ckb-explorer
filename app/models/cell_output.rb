@@ -111,6 +111,8 @@ end
 #  type_hash                :string
 #  udt_amount               :decimal(40, )
 #  dao                      :string
+#  lock_script_id           :bigint
+#  type_script_id           :bigint
 #
 # Indexes
 #
