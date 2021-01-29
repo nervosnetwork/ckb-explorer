@@ -2,6 +2,8 @@ class CellInput < ApplicationRecord
   belongs_to :ckb_transaction
   belongs_to :block
 
+  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3 }
+
   after_commit :flush_cache
 
   def find_lock_script!
@@ -70,6 +72,7 @@ end
 #  from_cell_base          :boolean          default(FALSE)
 #  block_id                :decimal(30, )
 #  since                   :decimal(30, )    default(0)
+#  cell_type               :integer          default("normal")
 #
 # Indexes
 #
