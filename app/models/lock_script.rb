@@ -1,5 +1,5 @@
 class LockScript < ApplicationRecord
-  belongs_to :address
+  has_many :cell_outputs
 
   validates_presence_of :code_hash
 
