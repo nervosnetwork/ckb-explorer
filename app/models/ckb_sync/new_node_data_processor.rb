@@ -20,6 +20,7 @@ module CkbSync
 		end
 
 		def process_block(node_block)
+			local_block = nil
 			ApplicationRecord.transaction do
 				# build node data
 				local_block = build_block!(node_block)
@@ -32,15 +33,196 @@ module CkbSync
 				consume_previous_cell_outputs(local_block)
 				update_ckb_txs_rel_and_fee(local_block)
 				update_block_info!(local_block)
+				update_block_reward_info!(local_block)
 				update_addresses_info(local_block)
 				update_mining_info(local_block)
 				update_table_records_count(local_block)
+				update_or_create_udt_accounts!(local_block)
+				update_pool_tx_status(local_block)
+				# maybe can be changed to asynchronous update
+				update_udt_info(local_block)
+				process_dao_events!(local_block)
 			end
+			cache_address_txs(local_block)
+			generate_tx_display_info(local_block)
+			remove_tx_display_infos(local_block)
+			flush_inputs_outputs_caches(local_block)
+
+			local_block
 		end
 
 		private
 		attr_accessor :local_cache
 		private_constant :LocalCache
+
+		def flush_inputs_outputs_caches(local_block)
+			FlushInputsOutputsCacheWorker.perform_async(local_block.id)
+		end
+
+		def remove_tx_display_infos(local_block)
+			RemoveTxDisplayInfoWorker.perform_async(local_block.id)
+		end
+
+		def cache_address_txs(local_block)
+			AddressTxsCacheUpdateWorker.perform_async(local_block.id)
+		end
+
+		def generate_tx_display_info(local_block)
+			enabled = Rails.cache.read("enable_generate_tx_display_info")
+			if enabled
+				TxDisplayInfoGeneratorWorker.perform_async(local_block.ckb_transactions.pluck(:id))
+			end
+		end
+
+		def increase_records_count(local_block)
+			block_counter = TableRecordCount.find_by(table_name: "blocks")
+			block_counter.increment!(:count)
+			ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+			normal_transactions = local_block.ckb_transactions.normal.count
+			ckb_transaction_counter.increment!(:count, normal_transactions.count) if normal_transactions.present?
+		end
+
+		def process_dao_events!(local_block)
+			new_dao_depositors = {}
+			dao_contract = DaoContract.default_contract
+			process_deposit_dao_events!(local_block, new_dao_depositors, dao_contract)
+			process_withdraw_dao_events!(local_block, dao_contract)
+			build_new_dao_depositor_events!(local_block, new_dao_depositors, dao_contract)
+
+			# update dao contract ckb_transactions_count
+			dao_contract.increment!(:ckb_transactions_count, local_block.ckb_transactions.where("tags @> array[?]::varchar[]", ["dao"]).count)
+		end
+
+		def build_new_dao_depositor_events!(local_block, new_dao_depositors, dao_contract)
+			new_dao_events_attributes = []
+			new_dao_depositors.each do |address_id, ckb_transaction_id|
+				new_dao_events_attributes << { block_id: local_block.id, ckb_transaction_id: ckb_transaction_id, address_id: address_id, event_type: "new_dao_depositor",
+				                               value: 1, status: "processed", contract_id: dao_contract.id, block_timestamp: block.timestamp }
+			end
+
+			if new_dao_events_attributes.present?
+				DaoEvent.insert_all!(new_dao_events_attributes)
+				dao_contract.update!(depositors_count: dao_contract.depositors_count - new_dao_events_attributes.size)
+				address_ids = []
+				new_dao_events_attributes.each do |dao_event_attr|
+					address_ids << dao_event_attr[:address_id]
+				end
+				Address.where(id: address_ids).update_all(is_depositor: true)
+			end
+		end
+
+		def process_withdraw_dao_events!(local_block, dao_contract)
+			withdraw_amount = 0
+			withdraw_transaction_ids = Set.new
+			addrs_withdraw_info = {}
+			claimed_compensation = 0
+			take_away_all_deposit_count = 0
+			local_block.cell_inputs.input_nervos_dao_withdrawing.select(:id, :ckb_transaction_id, :previous_cell_output_id).find_in_batches do |dao_inputs|
+				dao_events_attributes = []
+				dao_inputs.each do |dao_input|
+					previous_cell_output = CellOutput.where(id: dao_input.previous_cell_output_id).select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity).take!
+					address = previous_cell_output.address
+					interest = CkbUtils.dao_interest(previous_cell_output)
+					if addrs_withdraw_info.key?(address.id)
+						addrs_withdraw_info[address.id][:dao_deposit] -= previous_cell_output.capacity
+						addrs_withdraw_info[address.id][:interest] += interest
+					else
+						addrs_withdraw_info[address.id] = { dao_deposit: address.dao_deposit - previous_cell_output.capacity, interest: address.interest, is_depositor: address.is_depositor, created_at: address.created_at }
+					end
+					dao_events_attributes << { ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, status: "processed", contract_id: dao_contract.id }
+					dao_events_attributes << { ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "issue_interest", value: interest, status: "processed", contract_id: dao_contract.id }
+					address_dao_deposit = Address.where(id: previous_cell_output.address_id).pick(:dao_deposit)
+					if (address_dao_deposit - previous_cell_output.capacity).zero?
+						take_away_all_deposit_count += 1
+						addrs_withdraw_info[address.id][:is_depositor] = false
+						dao_events_attributes << { ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "take_away_all_deposit", value: 1, status: "processed", contract_id: dao_contract.id }
+					end
+					withdraw_amount += previous_cell_output.capacity
+					claimed_compensation += interest
+					withdraw_transaction_ids << dao_input.ckb_transaction_id
+				end
+				DaoEvent.insert_all!(dao_events_attributes) if dao_events_attributes.present?
+			end
+			# update dao contract info
+			dao_contract.update!(total_deposit: dao_contract.total_deposit - withdraw_amount, withdraw_transactions_count: dao_contract.withdraw_transactions_count + withdraw_transaction_ids.size, claimed_compensation: dao_contract.claimed_compensation + claimed_compensation, depositors_count: dao_contract.depositors_count - take_away_all_deposit_count)
+			update_addresses_dao_info(addrs_withdraw_info)
+		end
+
+		def process_deposit_dao_events!(local_block, new_dao_depositors, dao_contract)
+			deposit_amount = 0
+			deposit_transaction_ids = Set.new
+			addresses_deposit_info = {}
+			# build deposit dao events
+			local_block.cell_outputs.nervos_dao_deposit.select(:address_id, :capacity, :ckb_transaction_id).find_in_batches do |dao_outputs|
+				deposit_dao_events_attributes = []
+				dao_outputs.each do |dao_output|
+					address = dao_output.address
+					if addresses_deposit_info.key?(address_id)
+						addresses_deposit_info[address.id][:dao_deposit] += dao_output.capacity
+					else
+						addresses_deposit_info[address.id] = { dao_deposit: address.dao_deposit + dao_output.capacity, interest: address.interest, is_depositor: address.is_depositor, created_at: address.created_at }
+					end
+					if address.dao_deposit.zero? && !new_dao_depositors.key?(address.id)
+						new_dao_depositors[address.id] = dao_output.ckb_transaction_id
+					end
+					deposit_amount += dao_output.capacity
+					deposit_transaction_ids << dao_output.ckb_transaction_id
+					deposit_dao_events_attributes << { ckb_transaction_id: dao_output.ckb_transaction_id, block_id: local_block.id, address_id: address.id, event_type: "deposit_to_dao",
+					                                   value: dao_output.capacity, status: "processed", contract_id: dao_contract.id, block_timestamp: block.timestamp }
+				end
+				DaoEvent.insert_all!(deposit_dao_events_attributes) if deposit_dao_events_attributes.present?
+			end
+			# update dao contract info
+			dao_contract.update!(total_deposit: dao_contract.total_deposit + deposit_amount, deposit_transactions_count: dao_contract.deposit_transactions_count + deposit_transaction_ids.size)
+			update_addresses_dao_info(addresses_deposit_info)
+		end
+
+		def update_addresses_dao_info(addrs_deposit_info)
+			addresses_deposit_attributes = []
+			addrs_deposit_info.each do |address_id, address_info|
+				addresses_deposit_attributes << { id: address_id, dao_deposit: address_info[:dao_deposit], created_at: address_info[:created_at], updated_at: Time.current }
+			end
+			Address.upsert_all(addresses_deposit_attributes) if addresses_deposit_attributes.present?
+		end
+
+		def update_pool_tx_status(local_block)
+			PoolTransactionEntry.pool_transaction_pending.where(tx_hash: local_block.ckb_transactions.pluck(:tx_hash)).update_all(tx_status: "committed")
+		end
+
+		def update_udt_info(local_block)
+			type_hashes = []
+			local_block.cell_outputs.udt.select(:type_hash).find_each do |udt_output|
+				type_hashes << udt_output.type_hash
+			end
+			return if type_hashes.blank?
+
+			amount_info = UdtAccount.where(type_hash: type_hashes).group(:type_hash).sum(:amount)
+			addresses_count_info = UdtAccount.where(type_hash: type_hashes).group(:type_hash).count(:address_id)
+			udts_attributes = []
+			type_hashes.each do |type_hash|
+				udts_attributes << { type_hash: type_hash, total_amount: amount_info[type_hash], addresses_count: addresses_count_info[type_hash] }
+			end
+
+			Udt.upsert_all(udts_attributes, unique_by: :type_hash) if udts_attributes.present?
+		end
+
+		def update_or_create_udt_accounts!(local_block)
+			new_udt_accounts_attributes = []
+			udt_accounts_attributes = []
+			local_block.cell_outputs.udt.select(:address_id, :type_hash).find_each do |udt_output|
+				address = Address.find(udt_output.address_id)
+				udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash).select(:id, :created_at)
+				if udt_account.present?
+					udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at, updated_at: Time.current }
+				else
+					udt = Udt.where(type_hash: type_hash, udt_type: "sudt").select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash).take!
+					new_udt_accounts_attributes << { udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal, published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount, udt_id: udt.id }
+				end
+			end
+
+			UdtAccount.insert_all!(new_udt_accounts_attributes) if new_udt_accounts_attributes.present?
+			UdtAccount.upsert_all(udt_accounts_attributes) if udt_accounts_attributes.present?
+		end
 
 		def update_table_records_count(local_block)
 			block_counter = TableRecordCount.find_by(table_name: "blocks")
@@ -50,7 +232,7 @@ module CkbSync
 			ckb_transaction_counter.increment!(:count, normal_transactions.count) if normal_transactions.present?
 		end
 
-		def update_block_reward_info(local_block)
+		def update_block_reward_info!(local_block)
 			target_block_number = local_block.target_block_number
 			target_block = local_block.target_block
 			return if target_block_number < 1 || target_block.blank?
@@ -69,7 +251,7 @@ module CkbSync
 
 		def update_addresses_info(local_block)
 			address_attributes = []
-			local_block.contained_addresses.select(:id, :created_at).each do |address|
+			local_block.contained_addresses.select(:id, :created_at).find_each do |address|
 				address_attributes << { id: address.id, balance: address.cell_outputs.live.sum(:capacity),
 				                        ckb_transactions_count: address.custom_ckb_transactions.count,
 				                        live_cells_count: address.cell_outputs.live.count,
@@ -86,14 +268,23 @@ module CkbSync
 		end
 
 		def build_udts!(local_block)
-			local_block.cell_outputs.udt.pluck(:type_hash).each do |type_hash|
-				Udt.find_or_create_by!(type_hash: type_hash, udt_type: "sudt")
+			udts_attributes = []
+			local_block.cell_outputs.udt.select(:type_hash).find_each do |output|
+				unless Udt.where(type_hash: output.type_hash).exists?
+					type_script = output.type_script
+					issuer_address = Address.where(lock_hash: type_script.args).pick(:address_hash)
+					udts_attributes << { type_hash: output.type_hash, udt_type: "sudt", issuer_address: issuer_address,
+					                     block_timestamp: local_block.timestamp, args: type_script.args,
+					                     code_hash: type_script.code_hash, hash_type: type_script.hash_type }
+				end
 			end
+
+			Udt.insert_all!(udts_attributes) if udts_attributes.present?
 		end
 
 		def update_ckb_txs_rel_and_fee(local_block)
 			ckb_transactions_attributes = []
-			local_block.ckb_transactions.each do |tx|
+			local_block.ckb_transactions.select(:id, :created_at).find_each do |tx|
 				tags = Set.new
 				dao_address_ids = []
 				udt_address_ids = []
@@ -146,16 +337,16 @@ module CkbSync
 		end
 
 		def consume_previous_cell_outputs(local_block)
-			local_block.cell_inputs.where(from_cell_base: false, previous_cell_output_id: nil).select(:id).find_in_batches(batch_size: 3500) do |cell_inputs|
+			local_block.cell_inputs.where(from_cell_base: false).select(:id, :cell_type).find_in_batches(batch_size: 3500) do |cell_inputs|
 				cell_inputs_attributes = []
 				cell_outputs_attributes = []
 				cell_inputs.each do |cell_input|
 					previous_cell_output = cell_input.previous_cell_output
-					cell_inputs_attributes << { id: cell_input.id, previous_cell_output_id: previous_cell_output.id, created_at: cell_input.created_at, updated_at: Time.current }
+					cell_inputs_attributes << { id: cell_input.id, previous_cell_output_id: previous_cell_output.id, cell_type: previous_cell_output.cell_type, created_at: cell_input.created_at, updated_at: Time.current }
 					cell_outputs_attributes << { id: previous_cell_output.id, consumed_by_id: cell_input.ckb_transaction_id, consumed_block_timestamp: local_block.timestamp, status: "dead", created_at: previous_cell_output.created_at, updated_at: Time.current }
 				end
-				CellInput.update_all(cell_inputs_attributes) if cell_inputs_attributes.present?
-				CellOutput.update_all(cell_outputs_attributes) if cell_outputs_attributes.present?
+				CellInput.upsert_all(cell_inputs_attributes) if cell_inputs_attributes.present?
+				CellOutput.upsert_all(cell_outputs_attributes) if cell_outputs_attributes.present?
 			end
 		end
 
@@ -340,6 +531,27 @@ module CkbSync
 				block_time: block_time(header.timestamp, header.number),
 				block_size: node_block.serialized_size_without_uncle_proposals
 			)
+		end
+
+		def cell_type(type_script, output_data)
+			return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]].include?(type_script&.code_hash)
+
+			case type_script&.code_hash
+			when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
+				if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
+					"nervos_dao_deposit"
+				else
+					"nervos_dao_withdrawing"
+				end
+			when ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]
+				if CKB::Utils.hex_to_bin(output_data).bytesize >= CellOutput::MIN_SUDT_AMOUNT_BYTESIZE
+					"udt"
+				else
+					"normal"
+				end
+			else
+				"normal"
+			end
 		end
 
 		class LocalCache
