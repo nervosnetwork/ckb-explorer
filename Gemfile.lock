@@ -371,6 +371,7 @@ DEPENDENCIES
   mocha
   newrelic_rpm
   nokogiri (>= 1.11.0.rc4)
+  parallel
   pg (>= 0.18, < 2.0)
   pry
   pry-nav
