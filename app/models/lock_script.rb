@@ -92,6 +92,7 @@ end
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  hash_type      :string
+#  lock_hash      :string
 #
 # Indexes
 #
