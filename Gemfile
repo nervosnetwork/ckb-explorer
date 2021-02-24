@@ -42,9 +42,6 @@ gem "hiredis", "~> 0.6.3"
 gem "redis", "~> 4.2.0"
 
 gem "parallel"
-
-gem "ruby-prof"
-gem "stackprof"
 # Backgroud Jobs
 
 group :production, :staging, :development do
