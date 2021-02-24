@@ -1,5 +1,6 @@
 class TypeScript < ApplicationRecord
   has_many :cell_outputs
+  belongs_to :cell_output, optional: true # will remove this later
 
   validates_presence_of :code_hash
 
