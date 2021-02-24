@@ -35,15 +35,16 @@ class Address < ApplicationRecord
 
   def lock_script
     Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
-      LockScript.where(address: self).first
+      LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
     end
   end
 
-  def self.find_or_create_address(lock_script, block_timestamp)
+  def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     address_hash = CkbUtils.generate_address(lock_script)
     lock_hash = lock_script.compute_hash
     address = Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
     address.update(block_timestamp: block_timestamp) if address.block_timestamp.blank?
+    address.update(lock_script_id: lock_script_id) if address.lock_script_id.blank?
 
     address
   end
@@ -142,6 +143,7 @@ end
 #  unclaimed_compensation :decimal(30, )
 #  is_depositor           :boolean          default(FALSE)
 #  dao_transactions_count :decimal(30, )    default(0)
+#  lock_script_id         :bigint
 #
 # Indexes
 #
