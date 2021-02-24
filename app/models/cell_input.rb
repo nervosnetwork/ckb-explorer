@@ -25,10 +25,7 @@ class CellInput < ApplicationRecord
   def previous_cell_output
     return if previous_output["tx_hash"] == CellOutput::SYSTEM_TX_HASH
 
-    tx_hash = previous_output["tx_hash"]
-    cell_index = previous_output["index"].to_i
-
-    CellOutput.find_by(tx_hash: tx_hash, cell_index: cell_index)
+    CellOutput.find_by(tx_hash: previous_output["tx_hash"], cell_index: previous_output["index"])
   end
 
   def self.cached_find(id)
