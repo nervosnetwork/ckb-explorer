@@ -186,7 +186,6 @@ end
 #
 #  id                    :bigint           not null, primary key
 #  tx_hash               :binary
-#  deps                  :jsonb
 #  block_id              :bigint
 #  block_number          :decimal(30, )
 #  block_timestamp       :decimal(30, )
