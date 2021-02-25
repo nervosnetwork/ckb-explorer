@@ -60,7 +60,7 @@ def prepare_node_data(node_tip_block_number = 30)
       VCR.use_cassette("blocks/#{number}", record: :new_episodes) do
         node_block = CkbSync::Api.instance.get_block_by_number(number)
 
-        CkbSync::NodeDataProcessor.new.process_block(node_block)
+        CkbSync::NewNodeDataProcessor.new.process_block(node_block)
         CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
           CKB::Types::BlockReward.new(
             total: "0x174876e800",
