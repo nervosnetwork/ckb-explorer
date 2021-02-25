@@ -15,8 +15,7 @@ class AddressTxsCacheUpdateWorkerTest < ActiveSupport::TestCase
       create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
     end
     addr.update(ckb_transactions_count: addr.custom_ckb_transactions.count)
-    address_txs = { addr.id => addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.pluck(:id) }
-    AddressTxsCacheUpdateWorker.perform_async(address_txs)
+    AddressTxsCacheUpdateWorker.perform_async(block.id)
     max_count = ListCacheService::MAX_CACHED_PAGE * CkbTransaction::MAX_PAGINATES_PER
     expected_txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.limit(max_count).map(&:to_json)
     assert_equal 500, $redis.zcard(addr.tx_list_cache_key)
@@ -37,8 +36,7 @@ class AddressTxsCacheUpdateWorkerTest < ActiveSupport::TestCase
       addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
     end
     tx = create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + 1000)
-    address_txs = { addr.id => [tx.id] }
-    AddressTxsCacheUpdateWorker.perform_async(address_txs)
+    AddressTxsCacheUpdateWorker.perform_async(block.id)
     expected_txs = addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.first.to_json
 
     assert_equal [expected_txs], $redis.zrevrange(addr.tx_list_cache_key, 0, 0)
@@ -51,8 +49,7 @@ class AddressTxsCacheUpdateWorkerTest < ActiveSupport::TestCase
     500.times.each do |i|
       create(:ckb_transaction, :with_single_output, block: block, contained_address_ids: [addr.id], block_timestamp: Time.current.to_i + i)
     end
-    address_txs = { addr.id => addr.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.pluck(:id) }
-    AddressTxsCacheUpdateWorker.perform_async(address_txs)
+    AddressTxsCacheUpdateWorker.perform_async(block.id)
     assert $redis.ttl(addr.tx_list_cache_key) <= 30
   end
 end
