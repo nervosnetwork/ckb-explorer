@@ -75,7 +75,7 @@ class UncleBlockTest < ActiveSupport::TestCase
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       node_block.uncles.first.instance_variable_set(:@proposals, ["0x98a4e0c18c"])
 
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       uncle_block = block.uncle_blocks.first
