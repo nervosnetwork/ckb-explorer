@@ -146,7 +146,7 @@ module CkbSync
       process_withdraw_from_dao(dao_contract, dao_events)
       process_issue_interest(dao_contract, dao_events)
       process_take_away_all_deposit(dao_contract, dao_events)
-      dao_contract.touch if dao_events.present?
+      dao_contract.touch
     end
 
     def process_take_away_all_deposit(dao_contract, dao_events)
