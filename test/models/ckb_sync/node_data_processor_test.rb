@@ -13,6 +13,7 @@ module CkbSync
       )
       create(:table_record_count, :block_counter)
       create(:table_record_count, :ckb_transactions_counter)
+      GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
     end
 
     test "#process_block should create one block" do
@@ -1457,7 +1458,21 @@ module CkbSync
       local_block = Block.find_by(number: 12)
       origin_balance = local_block.contained_addresses.sum(:balance)
       VCR.use_cassette("blocks/13") do
-        new_local_block = node_data_processor.call
+        node_block = CkbSync::Api.instance.get_block_by_number(13)
+        lock1 = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+        lock2 = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+        Address.find_or_create_address(lock1, node_block.header.timestamp)
+        Address.find_or_create_address(lock2, node_block.header.timestamp)
+        300.times do |i|
+          if i % 2 == 0
+            node_block.transactions.first.outputs << CKB::Types::Output.new(capacity: 30000 * 10**8, lock: lock1)
+          else
+            node_block.transactions.first.outputs << CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock2)
+          end
+          node_block.transactions.first.outputs_data << "0x"
+        end
+        new_local_block = node_data_processor.process_block(node_block)
+        binding.pry
         assert_equal origin_balance + new_local_block.cell_outputs.sum(:capacity), new_local_block.contained_addresses.sum(:balance)
       end
     end
@@ -2343,8 +2358,8 @@ module CkbSync
       previous_ckb_transaction = create(:ckb_transaction, address: address)
       previous_cell_output = create(:cell_output, ckb_transaction: previous_ckb_transaction, generated_by: previous_ckb_transaction, block: block, cell_type: "udt", address: address, udt_amount: udt_amount, cell_index: 0, tx_hash: previous_ckb_transaction.tx_hash, capacity: 300 * 10**8, type_hash: udt_type_script.compute_hash)
       previous_cell_output_type_script = create(:type_script, code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash, hash_type: "data", cell_output: previous_cell_output)
-      previous_cell_output.type_script = previous_cell_output_type_script
-      previous_cell_output.lock_script = previous_cell_output_lock_script
+      previous_cell_output.type_script_id = previous_cell_output_type_script.id
+      previous_cell_output.lock_script_id = previous_cell_output_lock_script.id
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
