@@ -248,14 +248,14 @@ module CkbSync
 
     def update_or_create_udt_accounts!(local_block)
       new_udt_accounts_attributes = Set.new
-      udt_accounts_attributes = []
+      udt_accounts_attributes = Set.new
       local_block.cell_outputs.udt.select(:id, :address_id, :type_hash).find_each do |udt_output|
         address = Address.find(udt_output.address_id)
         udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash).select(:id, :created_at).first
         amount = address.cell_outputs.live.udt.where(type_hash: udt_output.type_hash).sum(:udt_amount)
         udt = Udt.where(type_hash: udt_output.type_hash, udt_type: "sudt").select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
         if udt_account.present?
-          udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at, updated_at: Time.current }
+          udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
         else
           new_udt_accounts_attributes << {
             address_id: udt_output.address_id, udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal,
@@ -269,12 +269,12 @@ module CkbSync
         amount = address.cell_outputs.live.udt.where(type_hash: udt_output.type_hash).sum(:udt_amount)
         udt = Udt.where(type_hash: udt_output.type_hash, udt_type: "sudt").select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
         if udt_account.present?
-          udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at, updated_at: Time.current }
+          udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
         end
       end
 
       UdtAccount.insert_all!(new_udt_accounts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if new_udt_accounts_attributes.present?
-      UdtAccount.upsert_all(udt_accounts_attributes) if udt_accounts_attributes.present?
+      UdtAccount.upsert_all(udt_accounts_attributes.map! { |attr| attr.merge!(updated_at: Time.current) }) if udt_accounts_attributes.present?
     end
 
     def update_table_records_count(local_block)
