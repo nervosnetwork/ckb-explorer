@@ -1473,6 +1473,10 @@ module CkbSync
           node_block.transactions.first.outputs_data << "0x"
         end
         new_local_block = node_data_processor.process_block(node_block)
+<<<<<<< HEAD
+=======
+        binding.pry
+>>>>>>> cd6437fb (chore: adjust tests)
         assert_equal origin_balance + new_local_block.cell_outputs.sum(:capacity), new_local_block.contained_addresses.sum(:balance)
       end
     end
