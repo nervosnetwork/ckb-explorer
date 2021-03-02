@@ -9,7 +9,11 @@ module CkbSync
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
 
       if !forked?(target_block, local_tip_block)
-        process_block(target_block)
+        result =
+          Benchmark.realtime do
+            process_block(target_block)
+          end
+        Rails.logger.error "current_block_number: #{target_block_number}: %5.3f" % result
       else
         invalid_block(local_tip_block)
       end
