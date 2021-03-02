@@ -306,8 +306,8 @@ module CkbSync
       address_attributes = []
       block_number = local_cache.read("BlockNumber")
       address = []
-      $redis.smembers("NodeData/#{block_number}/ContainedAddresses")&.each do |addr|
-        address << Address.new(ActiveSupport::JSON.decode(addr))
+      local_cache.read("NodeData/#{block_number}/ContainedAddresses")&.each do |addr|
+        address << addr
       end
       address.each do |addr|
         address_attributes << {
@@ -413,7 +413,7 @@ module CkbSync
       if inputs.size > 2
         CellOutput.find_by_sql(sql.delete_suffix!("or ")).each do |item|
           previous_outputs["#{item.tx_hash}-#{item.cell_index}"] = item
-          $redis.sadd("NodeData/#{block_number}/ContainedAddresses", Address.where(id: item.address_id).select(:id, :created_at).first!&.to_json)
+          local_cache.push("NodeData/#{block_number}/ContainedAddresses", Address.where(id: item.address_id).select(:id, :created_at).first!)
         end
       end
       previous_outputs
@@ -427,10 +427,9 @@ module CkbSync
             local_cache.fetch("NodeData/Address/#{item.lock.code_hash}-#{item.lock.hash_type}-#{item.lock.args}") do
               Address.find_or_create_address(item.lock, local_block.timestamp)
             end
-          $redis.sadd("NodeData/#{block_number}/ContainedAddresses", { id: address.id, created_at: address.created_at }.to_json)
+          local_cache.push("NodeData/#{block_number}/ContainedAddresses", Address.new(id: address.id, created_at: address.created_at))
         end
       end
-      $redis.expire("NodeData/#{block_number}/ContainedAddresses", 5)
     end
 
     def prepare_script_ids(outputs)
