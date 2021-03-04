@@ -305,17 +305,14 @@ module CkbSync
     def update_addresses_info
       address_attributes = []
       block_number = local_cache.read("BlockNumber")
-      address = []
       local_cache.read("NodeData/#{block_number}/ContainedAddresses")&.each do |addr|
-        address << addr
-      end
-      address.each do |addr|
         address_attributes << {
           id: addr.id, balance: addr.cell_outputs.live.sum(:capacity),
           ckb_transactions_count: addr.custom_ckb_transactions.count,
           live_cells_count: addr.cell_outputs.live.count,
           dao_transactions_count: addr.ckb_dao_transactions.count, created_at: addr.created_at, updated_at: Time.current }
       end
+
       Address.upsert_all(address_attributes) if address_attributes.present?
     end
 
@@ -436,11 +433,13 @@ module CkbSync
       outputs.each do |output|
         unless output.is_a?(Integer)
           local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}") do
-            LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).select(:id).take!
+            # TODO remove search by code_hash, hash_type and args query after script_hash has been filled
+            LockScript.where(script_hash: output.lock.compute_hash).select(:id).first || LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).select(:id).take!
           end
           if output.type.present?
             local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}") do
-              TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).select(:id).take!
+              # TODO remove search by code_hash, hash_type and args query after script_hash has been filled
+              TypeScript.where(script_hash: output.type.compute_hash).select(:id).first || TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).select(:id).take!
             end
           end
         end
@@ -450,6 +449,7 @@ module CkbSync
     def build_scripts(outputs)
       locks_attributes = Set.new
       types_attributes = Set.new
+      block_number = local_cache.read("BlockNumber")
       finish =
         lambda do |_, _, result|
           locks_attributes << result[0]
@@ -459,14 +459,22 @@ module CkbSync
         lock_attrs = nil
         type_attrs = nil
         unless output.is_a?(Integer)
-          if !Rails.cache.read("NodeData/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}") && !LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).exists?
-            lock_attrs = script_attributes(output.lock)
-            Rails.cache.write("NodeData/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}", true, expires_in: 3.seconds)
+          unless Rails.cache.read("NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
+            script_hash = output.lock.compute_hash
+            # TODO remove search by code_hash, hash_type and args query after script_hash has been filled
+            unless LockScript.where(script_hash: script_hash).exists? && LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).exists?
+              lock_attrs = script_attributes(output.lock, script_hash)
+              Rails.cache.write("NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}", true, expires_in: 5.seconds)
+            end
           end
           if output.type.present?
-            if !Rails.cache.read("NodeData/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}") && !TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).exists?
-              type_attrs = script_attributes(output.type)
-              Rails.cache.write("NodeData/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}", true, expires_in: 3.seconds)
+            unless Rails.cache.read("NodeData/#{block_number}/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}")
+              script_hash = output.type.compute_hash
+              # TODO remove search by code_hash, hash_type and args query after script_hash has been filled
+              unless TypeScript.where(script_hash: script_hash).exists? && TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).exists?
+                type_attrs = script_attributes(output.type, script_hash)
+                Rails.cache.write("NodeData/#{block_number}/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}", true, expires_in: 5.seconds)
+              end
             end
           end
         end
@@ -475,12 +483,12 @@ module CkbSync
       return locks_attributes.to_a.compact!, types_attributes.to_a.compact!
     end
 
-    def script_attributes(script)
+    def script_attributes(script, script_hash)
       {
         args: script.args,
         code_hash: script.code_hash,
         hash_type: script.hash_type,
-        lock_hash: script.compute_hash
+        script_hash: script_hash
       }
     end
 
