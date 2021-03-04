@@ -434,12 +434,12 @@ module CkbSync
         unless output.is_a?(Integer)
           local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}") do
             # TODO remove search by code_hash, hash_type and args query after script_hash has been filled
-            LockScript.where(script_hash: output.lock.compute_hash).select(:id).first || LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).select(:id).take!
+            LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first || LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).select(:id).take!
           end
           if output.type.present?
             local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}") do
               # TODO remove search by code_hash, hash_type and args query after script_hash has been filled
-              TypeScript.where(script_hash: output.type.compute_hash).select(:id).first || TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).select(:id).take!
+              TypeScript.where(script_hash: output.type.compute_hash).select(:id)&.first || TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).select(:id).take!
             end
           end
         end
