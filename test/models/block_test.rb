@@ -4,6 +4,7 @@ class BlockTest < ActiveSupport::TestCase
   setup do
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
+    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
 
   context "associations" do
