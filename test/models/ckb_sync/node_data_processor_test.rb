@@ -753,7 +753,7 @@ module CkbSync
       lock = node_block.transactions.last.outputs.first.lock
       lock_script = create(:lock_script, code_hash: lock.code_hash, hash_type: lock.hash_type, args: lock.args)
       address = Address.find_or_create_address(lock, node_block.header.timestamp, lock_script.id)
-      address.update(dao_deposit: 100000*10**8)
+      address.update(dao_deposit: 100000 * 10**8)
       block = create(:block, :with_block_hash)
       ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
       ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -3182,7 +3182,6 @@ module CkbSync
       input_address3 = create(:address)
       input_address4 = create(:address)
       input_address5 = create(:address)
-
 
       address1_lock = create(:lock_script, address: input_address1, args: "0x#{SecureRandom.hex(20)}", code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type")
       address2_lock = create(:lock_script, address: input_address2, args: "0x#{SecureRandom.hex(20)}", code_hash: ENV["SECP_CELL_TYPE_HASH"], hash_type: "type")
