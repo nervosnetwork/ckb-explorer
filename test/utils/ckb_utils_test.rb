@@ -13,6 +13,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
+    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
 
   test ".generate_address should return mainnet address when mode is mainnet" do

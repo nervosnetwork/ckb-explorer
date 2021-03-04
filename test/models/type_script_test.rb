@@ -16,6 +16,7 @@ class TypeScriptTest < ActiveSupport::TestCase
   end
 
   test "#code_hash should decodes packed string" do
+    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
         compact_target: "0x1000",
@@ -35,10 +36,11 @@ class TypeScriptTest < ActiveSupport::TestCase
       type_script = cell_output.type_script
       lock_script = cell_output.lock_script
       if type_script.blank?
-        type_script = cell_output.create_type_script(
+        type_script = TypeScript.create(
           args: lock_script.args,
           code_hash: lock_script.code_hash
         )
+        cell_output.update(type_script_id: type_script.id)
       else
         type_script = cell_output.type_script
       end
