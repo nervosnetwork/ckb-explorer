@@ -9,6 +9,7 @@ class AddressTxsCacheUpdateWorker
 
     ckb_transactions = block.ckb_transactions.select(:id, :contained_address_ids)
     return if ckb_transactions.blank?
+
     ckb_transactions.each do |tx|
       tx.contained_address_ids.each do |id|
         if address_txs_pair[id].present?
