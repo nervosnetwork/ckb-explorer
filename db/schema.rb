@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_03_03_023806) do
+ActiveRecord::Schema.define(version: 2021_03_04_115516) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -347,6 +347,7 @@ ActiveRecord::Schema.define(version: 2021_03_03_023806) do
     t.string "script_hash"
     t.index ["address_id"], name: "index_lock_scripts_on_address_id"
     t.index ["cell_output_id"], name: "index_lock_scripts_on_cell_output_id"
+    t.index ["script_hash"], name: "index_lock_scripts_on_script_hash"
   end
 
   create_table "mining_infos", force: :cascade do |t|
@@ -416,6 +417,7 @@ ActiveRecord::Schema.define(version: 2021_03_03_023806) do
     t.string "hash_type"
     t.string "script_hash"
     t.index ["cell_output_id"], name: "index_type_scripts_on_cell_output_id"
+    t.index ["script_hash"], name: "index_type_scripts_on_script_hash"
   end
 
   create_table "udt_accounts", force: :cascade do |t|
