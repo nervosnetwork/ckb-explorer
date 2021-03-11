@@ -30,14 +30,15 @@ jobs:
           sudo apt-add-repository -y ppa:rael-gc/rvm
           sudo apt-get install libpq-dev rvm
           sudo /usr/share/rvm/bin/rvm install "ruby-2.6.4"
-          sudo /usr/share/rvm/bin/rvm use 2.6.4
       - name: Set up SECP256k1
         run: |
           git clone https://github.com/bitcoin-core/secp256k1.git && cd secp256k1 && ./autogen.sh && ./configure && make && ./tests && sudo make install && cd ..
       - name: Build and test with Rake
         run: |
           source /usr/share/rvm/scripts/rvm
-          gem install bundler:2.0.1
+          sudo /usr/share/rvm/bin/rvm use 2.6.4
+          sudo gem install bundler:2.0.1
+          sudo bundle update --bundler
           bundle install --jobs 4 --retry 3
           bundle exec rails db:create RAILS_ENV=test
           bundle exec rails db:migrate RAILS_ENV=test
