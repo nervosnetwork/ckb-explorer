@@ -18,4 +18,16 @@ class EpochStatisticSerializer
   attribute :hash_rate, if: Proc.new { |_record, params|
     params && params[:indicator].include?("hash_rate")
   }
+
+  attribute :epoch_time, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("epoch_time")
+  } do |object|
+    object.epoch_time.to_s
+  end
+
+  attribute :epoch_length, if: Proc.new { |_record, params|
+    params && params[:indicator].include?("epoch_length")
+  } do |object|
+    object.epoch_length.to_s
+  end
 end
