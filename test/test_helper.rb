@@ -59,7 +59,14 @@ def prepare_node_data(node_tip_block_number = 30)
     VCR.use_cassette("genesis_block") do
       VCR.use_cassette("blocks/#{number}", record: :new_episodes) do
         node_block = CkbSync::Api.instance.get_block_by_number(number)
-
+        CkbSync::Api.any_instance.stubs(:get_block_economic_state).returns(
+          OpenStruct.new(miner_reward: CKB::Types::MinerReward.new(
+            primary: "0x174876e800",
+            secondary: "0xa",
+            committed: "0xa",
+            proposal: "0xa"
+          ))
+        )
         CkbSync::NodeDataProcessor.new.process_block(node_block)
         CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
           CKB::Types::BlockReward.new(
@@ -171,6 +178,14 @@ def prepare_api_wrapper
       tx_fee: "0x0",
       proposal_reward: "0x0"
     )
+  )
+  CkbSync::Api.any_instance.stubs(:get_block_economic_state).returns(
+    OpenStruct.new(miner_reward: CKB::Types::MinerReward.new(
+      primary: "0x174876e800",
+      secondary: "0xa",
+      committed: "0xa",
+      proposal: "0xa"
+    ))
   )
   VCR.use_cassette("genesis_block") do
     CkbSync::Api.instance
