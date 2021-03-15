@@ -1292,6 +1292,7 @@ module CkbSync
     end
 
     test "#process_block should fill all cell input's previous cell output id without cellbase's cell input" do
+      prepare_node_data(11)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
         Rails.stubs(:cache).returns(redis_cache_store)
@@ -1589,8 +1590,8 @@ module CkbSync
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         local_block = node_data_processor.call
         target_block = local_block.target_block
-        block_header = Struct.new(:hash, :number)
-        expected_reward = CkbUtils.block_reward(block_header.new(local_block.block_hash, local_block.number))
+        block_economic_state = CkbSync::Api.instance.get_block_economic_state(local_block.target_block.block_hash)
+        expected_reward = CkbUtils.block_reward(local_block.number, block_economic_state)
 
         assert_equal expected_reward, target_block.reward
       end
@@ -1602,8 +1603,8 @@ module CkbSync
         local_block = node_data_processor.call
         target_block = local_block.target_block
         block_header = Struct.new(:hash, :number)
-        cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(local_block.block_hash)
-        expected_primary_reward = CkbUtils.primary_reward(block_header.new(local_block.block_hash, local_block.number), cellbase_output_capacity_details)
+        block_economic_state = CkbSync::Api.instance.get_block_economic_state(local_block.target_block.block_hash)
+        expected_primary_reward = CkbUtils.primary_reward(local_block.target_block_number, block_economic_state)
 
         assert_equal expected_primary_reward, target_block.primary_reward
       end
@@ -1615,8 +1616,8 @@ module CkbSync
         local_block = node_data_processor.call
         target_block = local_block.target_block
         block_header = Struct.new(:hash, :number)
-        cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(local_block.block_hash)
-        expected_secondary_reward = CkbUtils.secondary_reward(block_header.new(local_block.block_hash, local_block.number), cellbase_output_capacity_details)
+        block_economic_state = CkbSync::Api.instance.get_block_economic_state(local_block.target_block.block_hash)
+        expected_secondary_reward = CkbUtils.secondary_reward(local_block.target_block_number, block_economic_state)
 
         assert_equal expected_secondary_reward, target_block.secondary_reward
       end
@@ -1700,6 +1701,14 @@ module CkbSync
           proposal_reward: "0x0"
         )
       )
+      CkbSync::Api.any_instance.stubs(:get_block_economic_state).returns(
+        OpenStruct.new(miner_reward: CKB::Types::MinerReward.new(
+          primary: "0x174876e800",
+          secondary: "0xa",
+          committed: "0xa",
+          proposal: "0xa"
+        ))
+      )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
           compact_target: "0x1000",
@@ -1723,6 +1732,7 @@ module CkbSync
     end
 
     test "generated transactions should has correct display output" do
+      create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 11)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
           CKB::Types::BlockReward.new(
@@ -1732,6 +1742,14 @@ module CkbSync
             tx_fee: "0x0",
             proposal_reward: "0x0"
           )
+        )
+        CkbSync::Api.any_instance.stubs(:get_block_economic_state).returns(
+          OpenStruct.new(miner_reward: CKB::Types::MinerReward.new(
+            primary: "0x174876e800",
+            secondary: "0xa",
+            committed: "0xa",
+            proposal: "0xa"
+          ))
         )
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -1756,6 +1774,14 @@ module CkbSync
           tx_fee: "0x0",
           proposal_reward: "0x0"
         )
+      )
+      CkbSync::Api.any_instance.stubs(:get_block_economic_state).returns(
+        OpenStruct.new(miner_reward: CKB::Types::MinerReward.new(
+          primary: "0x174876e800",
+          secondary: "0xa",
+          committed: "0xa",
+          proposal: "0xa"
+        ))
       )
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
@@ -1799,6 +1825,14 @@ module CkbSync
           tx_fee: "0x0",
           proposal_reward: "0x0"
         )
+      )
+      CkbSync::Api.any_instance.stubs(:get_block_economic_state).returns(
+        OpenStruct.new(miner_reward: CKB::Types::MinerReward.new(
+          primary: "0x174876e800",
+          secondary: "0xa",
+          committed: "0xa",
+          proposal: "0xa"
+        ))
       )
       VCR.use_cassette("blocks/12") do
         assert_difference "Block.count", 1 do
@@ -3455,6 +3489,7 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: 1)
       address = create(:address)
       block = create(:block, :with_block_hash)
       ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -3485,6 +3520,7 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 11)
       address = create(:address)
       block = create(:block, :with_block_hash)
       ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -3524,6 +3560,7 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
       create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_deposit_transaction(node_block)
         output = tx.outputs.first
