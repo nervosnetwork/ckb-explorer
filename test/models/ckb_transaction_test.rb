@@ -16,6 +16,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
   end
 
   test "#tx_hash should decodes packed string" do
+    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
@@ -27,7 +28,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       )
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
       ckb_transaction = block.ckb_transactions.first
       assert_equal unpack_attribute(ckb_transaction, "tx_hash"), ckb_transaction.tx_hash

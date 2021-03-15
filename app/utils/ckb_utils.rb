@@ -123,10 +123,22 @@ class CkbUtils
   end
 
   def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
-    if ckb_transaction.inputs.where(cell_type: "nervos_dao_withdrawing").present?
-      dao_withdraw_tx_fee(ckb_transaction)
+    if ckb_transaction.is_a?(CkbTransaction)
+      return 0 if ckb_transaction.is_cellbase
+
+      if ckb_transaction.inputs.where(cell_type: "nervos_dao_withdrawing").present?
+        dao_withdraw_tx_fee(ckb_transaction)
+      else
+        normal_tx_fee(input_capacities, output_capacities)
+      end
     else
-      normal_tx_fee(input_capacities, output_capacities)
+      return 0 if ckb_transaction["is_cellbase"]
+
+      if CellOutput.where(consumed_by_id: ckb_transaction["id"], cell_type: "nervos_dao_withdrawing").present?
+        dao_withdraw_tx_fee(ckb_transaction)
+      else
+        normal_tx_fee(input_capacities, output_capacities)
+      end
     end
   end
 
@@ -196,9 +208,15 @@ class CkbUtils
   end
 
   def self.dao_withdraw_tx_fee(ckb_transaction)
-    nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
-    interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
-    ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+    if ckb_transaction.is_a?(CkbTransaction)
+      nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
+      interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
+      ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+    else
+      nervos_dao_withdrawing_cells = CellOutput.where(consumed_by_id: ckb_transaction["id"]).nervos_dao_withdrawing
+      interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
+      CellOutput.where(consumed_by_id: ckb_transaction["id"]).sum(:capacity) + interests - CellOutput.where(generated_by: ckb_transaction["id"]).sum(:capacity)
+    end
   end
 
   def self.dao_interest(nervos_dao_withdrawing_cell)

@@ -4,6 +4,7 @@ class LockScriptTest < ActiveSupport::TestCase
   setup do
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
+    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
 
   context "associations" do
@@ -28,7 +29,7 @@ class LockScriptTest < ActiveSupport::TestCase
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
 
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
       ckb_transaction = block.ckb_transactions.first
       cell_output = ckb_transaction.cell_outputs.first
