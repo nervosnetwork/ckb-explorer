@@ -1,5 +1,6 @@
 class LockScript < ApplicationRecord
-  belongs_to :address
+  has_many :cell_outputs
+  belongs_to :address # will remove this later
 
   validates_presence_of :code_hash
 
@@ -32,7 +33,7 @@ class LockScript < ApplicationRecord
         block_interval = (epoch_number * 1800 + since_value_index * 1800 / since_value.length) - (tip_epoch.number * 1800 + tip_epoch.index * 1800 / tip_epoch.length)
 
         if block_interval.negative?
-          block = Block.where(epoch: since_value.number).recent.first
+          block = Block.where(epoch: since_value.number).order(number: :desc).select(:start_number, :length)[0]
           new_index = since_value_index < block.length ? since_value_index : since_value_index * block.length / since_value.length
           block_timestamp = Block.where(number: block.start_number + new_index).pick(:timestamp)
           estimated_unlock_time = DateTime.strptime(block_timestamp.to_s, "%Q")
@@ -92,9 +93,11 @@ end
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  hash_type      :string
+#  script_hash    :string
 #
 # Indexes
 #
 #  index_lock_scripts_on_address_id      (address_id)
 #  index_lock_scripts_on_cell_output_id  (cell_output_id)
+#  index_lock_scripts_on_script_hash     (script_hash)
 #

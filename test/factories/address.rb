@@ -35,7 +35,11 @@ FactoryBot.define do
       ckb_transactions_count { 3 }
       after(:create) do |address, evaluator|
         block = create(:block, :with_block_hash)
-        ckb_transactions = create_list(:ckb_transaction, evaluator.transactions_count, block: block)
+        ckb_transactions = []
+        evaluator.transactions_count.times do |i|
+          ckb_transactions << create(:ckb_transaction, block: block, block_timestamp: Time.current.to_i + i)
+        end
+
         ckb_transactions.each do |tx|
           tx.contained_address_ids << address.id
         end

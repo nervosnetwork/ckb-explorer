@@ -19,18 +19,6 @@ module FastJsonapi
     end
 
     def call
-      if page > 1
-        hash[:links][:first] = generate_url(1)
-        hash[:links][:prev] = generate_url(records.prev_page)
-      end
-
-      hash[:links][:self] = generate_url(page)
-
-      if page < total_pages
-        hash[:links][:next] = generate_url(next_page)
-        hash[:links][:last] = generate_url(total_pages)
-      end
-
       hash
     end
 
@@ -83,10 +71,20 @@ module FastJsonapi
     end
 
     def limit_page_size(records, page_size)
-      if page_size > records.klass::MAX_PAGINATES_PER
-        records.klass::MAX_PAGINATES_PER
+      if @ckb_transactions.try(:klass).present?
+        if page_size > records.klass::MAX_PAGINATES_PER
+          records.klass::MAX_PAGINATES_PER
+        else
+          page_size
+        end
       else
-        page_size
+        return DEFAULT_PER_PAGE if records.blank?
+
+        if page_size > records.first.class::MAX_PAGINATES_PER
+          DEFAULT_PER_PAGE
+        else
+          page_size
+        end
       end
     end
   end

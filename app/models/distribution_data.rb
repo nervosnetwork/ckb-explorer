@@ -10,27 +10,27 @@ class DistributionData
   end
 
   def address_balance_distribution
-    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.address_balance_distribution || []
+    DailyStatistic.recent.first&.address_balance_distribution || []
   end
 
   def block_time_distribution
-    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.block_time_distribution || []
+    DailyStatistic.recent.first&.block_time_distribution || []
   end
 
   def epoch_time_distribution
-    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.epoch_time_distribution || []
+    DailyStatistic.recent.first&.epoch_time_distribution || []
   end
 
   def epoch_length_distribution
-    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.epoch_length_distribution || []
+    DailyStatistic.recent.first&.epoch_length_distribution || []
   end
 
   def average_block_time
-    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.average_block_time || []
+    DailyStatistic.recent.first&.average_block_time || []
   end
 
   def nodes_distribution
-    DailyStatistic.order(created_at_unixtimestamp: :desc).first&.nodes_distribution || DailyStatistic.where.not(nodes_distribution: nil).order(created_at_unixtimestamp: :desc).first&.nodes_distribution || []
+    DailyStatistic.recent.first&.nodes_distribution || DailyStatistic.where.not(nodes_distribution: nil).recent.first&.nodes_distribution || []
   end
 
   def block_propagation_delay_history

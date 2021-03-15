@@ -1,3 +1,31 @@
+# [v0.12.3](https://github.com/nervosnetwork/ckb-explorer/compare/v0.12.2...v0.12.3) (2020-12-21)
+
+### Performance Improvements
+
+[#758](https://github.com/nervosnetwork/ckb-explorer/pull/758): perf daily statistics show api
+[#757](https://github.com/nervosnetwork/ckb-explorer/pull/757): perf market data api
+
+
+# [v0.12.2](https://github.com/nervosnetwork/ckb-explorer/compare/v0.12.1...v0.12.2) (2020-12-17)
+
+### Bug Fixes
+
+[#753](https://github.com/nervosnetwork/ckb-explorer/pull/753): fix address cache bug
+
+# [v0.12.1](https://github.com/nervosnetwork/ckb-explorer/compare/v0.12.0...v0.12.1) (2020-11-30)
+
+
+### Bug Fixes
+
+[#749](https://github.com/nervosnetwork/ckb-explorer/pull/749): fix dao contract cache bug
+
+
+### Features
+
+[#747](https://github.com/nervosnetwork/ckb-explorer/pull/747): support short acp address
+
+
+
 # [v0.12.0](https://github.com/nervosnetwork/ckb-explorer/compare/v0.11.2...v0.12.0) (2020-11-10)
 
 

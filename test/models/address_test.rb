@@ -4,6 +4,7 @@ class AddressTest < ActiveSupport::TestCase
   setup do
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
+    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
 
   context "associations" do
@@ -28,7 +29,7 @@ class AddressTest < ActiveSupport::TestCase
       output = tx.outputs.first
       output.lock.instance_variable_set(:@args, "0x")
 
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
       address = block.contained_addresses.first
 
@@ -53,7 +54,7 @@ class AddressTest < ActiveSupport::TestCase
       output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
       output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
 
       lock_script = node_block.transactions.first.outputs.first.lock
 
@@ -80,7 +81,7 @@ class AddressTest < ActiveSupport::TestCase
       output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
       output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
 
       lock_script = node_block.transactions.first.outputs.first.lock
       address = Address.find_or_create_address(lock_script, node_block.header.timestamp)
@@ -215,5 +216,92 @@ class AddressTest < ActiveSupport::TestCase
     address = create(:address)
 
     assert_equal [], address.ckb_udt_transactions(123)
+  end
+
+  test "cached find cache key is lock_hash for short payload address" do
+    redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+    Rails.stubs(:cache).returns(redis_cache_store)
+    Rails.cache.extend(CacheRealizer)
+    lock_script = CKB::Types::Script.new(code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99")
+    addr = CKB::Address.new(lock_script).generate
+    address = Address.find_or_create_address(lock_script, Time.current.to_i)
+    address = Address.cached_find(addr)
+    assert_equal address, Rails.cache.realize("Address/#{lock_script.compute_hash}")
+  end
+
+  test "cached find cache key is lock_hash for full payload address" do
+    redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+    Rails.stubs(:cache).returns(redis_cache_store)
+    Rails.cache.extend(CacheRealizer)
+    lock_script = CKB::Types::Script.new(code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99")
+    addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
+    address = Address.find_or_create_address(lock_script, Time.current.to_i)
+    address = Address.cached_find(addr)
+    assert_equal address, Rails.cache.realize("Address/#{lock_script.compute_hash}")
+  end
+
+  test "cached find returned address's query address should be short payload address when query key is short payload address" do
+    redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+    Rails.stubs(:cache).returns(redis_cache_store)
+    Rails.cache.extend(CacheRealizer)
+    lock_script = CKB::Types::Script.new(code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99")
+    addr = CKB::Address.new(lock_script).generate
+    full_addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
+    Address.find_or_create_address(lock_script, Time.current.to_i)
+    Address.cached_find(full_addr)
+    address = Address.cached_find(addr)
+
+    assert_equal addr, address.query_address
+  end
+
+  test "cached find returned address's query address should be short payload address when query key is full payload address" do
+    redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+    Rails.stubs(:cache).returns(redis_cache_store)
+    Rails.cache.extend(CacheRealizer)
+    lock_script = CKB::Types::Script.new(code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99")
+    addr = CKB::Address.new(lock_script).generate
+    full_addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
+    Address.find_or_create_address(lock_script, Time.current.to_i)
+    Address.cached_find(addr)
+    address = Address.cached_find(full_addr)
+
+    assert_equal full_addr, address.query_address
+  end
+
+  test "cached find should return nil when query key is a hex string and there is no matched record" do
+    redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+    Rails.stubs(:cache).returns(redis_cache_store)
+    Rails.cache.extend(CacheRealizer)
+    address = Address.cached_find("0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8")
+
+    assert_nil address
+  end
+
+  test "cached find should return null address when there is no matched record" do
+    redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+    Rails.stubs(:cache).returns(redis_cache_store)
+    Rails.cache.extend(CacheRealizer)
+    lock_script = CKB::Types::Script.new(code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99")
+    addr = CKB::Address.new(lock_script).generate
+    address = Address.cached_find(addr)
+    expected_address = NullAddress.new(addr)
+    assert_equal expected_address.query_address, address.query_address
+  end
+
+  test "cached find should returned corresponding address when query key is hex string and there is a matched record" do
+    redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
+    Rails.stubs(:cache).returns(redis_cache_store)
+    Rails.cache.extend(CacheRealizer)
+    lock_script = CKB::Types::Script.new(code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99")
+    full_addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
+    address = Address.find_or_create_address(lock_script, Time.current.to_i)
+    actual_address = Address.cached_find(lock_script.compute_hash)
+
+    assert_equal address, actual_address
+  end
+
+  test "tx_list_cache_key should return right key" do
+    addr = create(:address)
+    assert_equal "Address/txs/#{addr.id}", addr.tx_list_cache_key
   end
 end

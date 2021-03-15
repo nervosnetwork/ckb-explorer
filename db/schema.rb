@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_29_140549) do
+ActiveRecord::Schema.define(version: 2021_03_04_115516) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -42,6 +42,7 @@ ActiveRecord::Schema.define(version: 2020_10_29_140549) do
     t.decimal "unclaimed_compensation", precision: 30
     t.boolean "is_depositor", default: false
     t.decimal "dao_transactions_count", precision: 30, default: "0"
+    t.bigint "lock_script_id"
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["is_depositor"], name: "index_addresses_on_is_depositor", where: "(is_depositor = true)"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
@@ -133,6 +134,7 @@ ActiveRecord::Schema.define(version: 2020_10_29_140549) do
     t.boolean "from_cell_base", default: false
     t.decimal "block_id", precision: 30
     t.decimal "since", precision: 30, default: "0"
+    t.integer "cell_type", default: 0
     t.index ["block_id"], name: "index_cell_inputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_inputs_on_ckb_transaction_id"
     t.index ["previous_cell_output_id"], name: "index_cell_inputs_on_previous_cell_output_id"
@@ -159,6 +161,8 @@ ActiveRecord::Schema.define(version: 2020_10_29_140549) do
     t.string "type_hash"
     t.decimal "udt_amount", precision: 40
     t.string "dao"
+    t.bigint "lock_script_id"
+    t.bigint "type_script_id"
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
@@ -169,7 +173,6 @@ ActiveRecord::Schema.define(version: 2020_10_29_140549) do
 
   create_table "ckb_transactions", force: :cascade do |t|
     t.binary "tx_hash"
-    t.jsonb "deps"
     t.bigint "block_id"
     t.decimal "block_number", precision: 30
     t.decimal "block_timestamp", precision: 30
@@ -237,6 +240,7 @@ ActiveRecord::Schema.define(version: 2020_10_29_140549) do
     t.jsonb "nodes_distribution"
     t.integer "nodes_count"
     t.decimal "locked_capacity", precision: 30
+    t.index ["created_at_unixtimestamp"], name: "index_daily_statistics_on_created_at_unixtimestamp", order: "DESC NULLS LAST"
   end
 
   create_table "dao_contracts", force: :cascade do |t|
@@ -340,8 +344,10 @@ ActiveRecord::Schema.define(version: 2020_10_29_140549) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "hash_type"
+    t.string "script_hash"
     t.index ["address_id"], name: "index_lock_scripts_on_address_id"
     t.index ["cell_output_id"], name: "index_lock_scripts_on_cell_output_id"
+    t.index ["script_hash"], name: "index_lock_scripts_on_script_hash"
   end
 
   create_table "mining_infos", force: :cascade do |t|
@@ -394,6 +400,14 @@ ActiveRecord::Schema.define(version: 2020_10_29_140549) do
     t.index ["created_at_unixtimestamp"], name: "index_tx_propagation_timestamp"
   end
 
+  create_table "tx_display_infos", primary_key: "ckb_transaction_id", id: :bigint, default: nil, force: :cascade do |t|
+    t.jsonb "inputs"
+    t.jsonb "outputs"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.jsonb "income"
+  end
+
   create_table "type_scripts", force: :cascade do |t|
     t.string "args"
     t.binary "code_hash"
@@ -401,7 +415,9 @@ ActiveRecord::Schema.define(version: 2020_10_29_140549) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "hash_type"
+    t.string "script_hash"
     t.index ["cell_output_id"], name: "index_type_scripts_on_cell_output_id"
+    t.index ["script_hash"], name: "index_type_scripts_on_script_hash"
   end
 
   create_table "udt_accounts", force: :cascade do |t|

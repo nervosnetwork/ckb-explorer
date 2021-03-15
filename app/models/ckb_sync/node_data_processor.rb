@@ -7,9 +7,12 @@ module CkbSync
       return if target_block_number > tip_block_number
 
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
-
       if !forked?(target_block, local_tip_block)
-        process_block(target_block)
+        result =
+          Benchmark.realtime do
+            process_block(target_block)
+          end
+        Rails.logger.error "current_block_number: #{target_block_number}: %5.3f" % result
       else
         invalid_block(local_tip_block)
       end
@@ -17,7 +20,6 @@ module CkbSync
 
     def process_block(node_block)
       local_block = build_block(node_block)
-
       node_block.uncles.each do |uncle_block|
         build_uncle_block(uncle_block, local_block)
       end
@@ -27,7 +29,6 @@ module CkbSync
         udt_infos = Set.new
         new_dao_depositor_events = {}
         local_block.save!
-
         ckb_transactions = build_ckb_transactions(local_block, node_block.transactions, outputs, new_dao_depositor_events, udt_infos)
         local_block.ckb_transactions_count = ckb_transactions.size
         local_block.live_cell_changes = ckb_transactions.sum(&:live_cell_changes)
@@ -36,7 +37,6 @@ module CkbSync
         input_capacities = ckb_transactions.reject(&:is_cellbase).pluck(:id).to_h { |id| [id, []] }
         update_tx_fee_related_data(local_block, input_capacities, udt_infos)
         calculate_tx_fee(local_block, ckb_transactions, input_capacities, outputs.group_by(&:ckb_transaction_id))
-
         update_current_block_mining_info(local_block)
         update_block_contained_address_info(local_block)
         update_block_reward_info(local_block)
@@ -44,15 +44,37 @@ module CkbSync
         update_udt_info(udt_infos)
         dao_events = build_new_dao_depositor_events(new_dao_depositor_events)
         DaoEvent.import!(dao_events, validate: false)
-
         update_dao_contract_related_info(local_block)
         increase_records_count(ckb_transactions)
+        cache_address_txs(local_block.ckb_transactions)
+        generate_tx_display_info(local_block.ckb_transactions)
       end
-
       local_block
     end
 
     private
+
+    def generate_tx_display_info(ckb_transactions)
+      enabled = Rails.cache.read("enable_generate_tx_display_info")
+      if enabled
+        TxDisplayInfoGeneratorWorker.perform_async(ckb_transactions.pluck(:id))
+      end
+    end
+
+    def cache_address_txs(ckb_transactions)
+      address_txs = Hash.new
+      ckb_transactions.each do |tx|
+        tx.contained_address_ids.each do |id|
+          if address_txs[id].present?
+            address_txs[id] << tx.id
+          else
+            address_txs[id] = [tx.id]
+          end
+        end
+      end
+
+      AddressTxsCacheUpdateWorker.perform_async(address_txs)
+    end
 
     def update_pool_tx_status(ckb_transactions)
       PoolTransactionEntry.pool_transaction_pending.where(tx_hash: ckb_transactions.pluck(:tx_hash)).update_all(tx_status: "committed")
@@ -122,7 +144,7 @@ module CkbSync
       process_withdraw_from_dao(dao_contract, dao_events)
       process_issue_interest(dao_contract, dao_events)
       process_take_away_all_deposit(dao_contract, dao_events)
-      dao_contract.touch if dao_events.present?
+      dao_contract.touch
     end
 
     def process_take_away_all_deposit(dao_contract, dao_events)
@@ -647,8 +669,18 @@ module CkbSync
         end
         input_cache_keys = updated_inputs.map(&:cache_keys)
         output_cache_keys = updated_outputs.map(&:cache_keys)
+        enabled = Rails.cache.read("enable_generate_tx_display_info")
+        if enabled
+          tx_ids = updated_outputs.map(&:generated_by_id).uniq
+          remove_tx_display_infos(tx_ids)
+        end
+
         flush_caches(input_cache_keys + output_cache_keys)
       end
+    end
+
+    def remove_tx_display_infos(tx_ids)
+      TxDisplayInfo.where(ckb_transaction_id: tx_ids).delete_all
     end
 
     def udt_counts_value(updated_ckb_transactions)

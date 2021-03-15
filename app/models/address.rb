@@ -35,15 +35,16 @@ class Address < ApplicationRecord
 
   def lock_script
     Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
-      LockScript.where(address: self).first
+      LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
     end
   end
 
-  def self.find_or_create_address(lock_script, block_timestamp)
+  def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     address_hash = CkbUtils.generate_address(lock_script)
     lock_hash = lock_script.compute_hash
     address = Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
     address.update(block_timestamp: block_timestamp) if address.block_timestamp.blank?
+    address.update(lock_script_id: lock_script_id) if address.lock_script_id.blank?
 
     address
   end
@@ -53,20 +54,27 @@ class Address < ApplicationRecord
   end
 
   def self.cached_find(query_key)
-    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
-      if QueryKeyUtils.valid_hex?(query_key)
-        find_by(lock_hash: query_key)
-      else
-        lock_hash = CkbUtils.parse_address(query_key).script.compute_hash
-        address = find_by(lock_hash: lock_hash)
-        if address.present?
-          address.query_address = query_key
-          address
+    cache_key = query_key
+    unless QueryKeyUtils.valid_hex?(query_key)
+      cache_key = CkbUtils.parse_address(query_key).script.compute_hash
+    end
+    address =
+      Rails.cache.realize([name, cache_key], race_condition_ttl: 3.seconds) do
+        if QueryKeyUtils.valid_hex?(query_key)
+          find_by(lock_hash: query_key)
         else
-          NullAddress.new(query_key)
+          lock_hash = CkbUtils.parse_address(query_key).script.compute_hash
+          find_by(lock_hash: lock_hash)
         end
       end
+    unless QueryKeyUtils.valid_hex?(query_key)
+      if address.present?
+        address.query_address = query_key
+      else
+        address = NullAddress.new(query_key)
+      end
     end
+    address
   end
 
   def cached_lock_script
@@ -91,6 +99,10 @@ class Address < ApplicationRecord
 
   def cal_unclaimed_compensation
     phase1_dao_interests + unmade_dao_interests
+  end
+
+  def tx_list_cache_key
+    "Address/txs/#{id}"
   end
 
   private
@@ -131,6 +143,7 @@ end
 #  unclaimed_compensation :decimal(30, )
 #  is_depositor           :boolean          default(FALSE)
 #  dao_transactions_count :decimal(30, )    default(0)
+#  lock_script_id         :bigint
 #
 # Indexes
 #

@@ -38,9 +38,10 @@ gem "config"
 gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", branch: "develop"
 
 # Redis
-gem "hiredis", "~> 0.6.1"
-gem "redis", "~> 4.0", ">= 4.0.3"
+gem "hiredis", "~> 0.6.3"
+gem "redis", "~> 4.2.0"
 
+gem "parallel"
 # Backgroud Jobs
 
 group :production, :staging, :development do
@@ -60,6 +61,10 @@ gem "fast_jsonapi"
 gem "kaminari"
 
 gem "ruby-progressbar", require: false
+
+gem "with_advisory_lock"
+
+gem "nokogiri", ">= 1.11.0.rc4"
 
 group :production do
   gem "sentry-raven"

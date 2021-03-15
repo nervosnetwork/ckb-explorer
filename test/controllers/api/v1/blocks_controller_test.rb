@@ -191,24 +191,6 @@ module Api
         assert_equal response_blocks, response.body
       end
 
-      test "should return pagination links in response body" do
-        page = 2
-        page_size = 3
-        create_list(:block, 30, :with_block_hash)
-        create(:table_record_count, :block_counter, count: 30)
-        links = {
-          self: "#{api_v1_blocks_url}?page=2&page_size=3",
-          first: "#{api_v1_blocks_url}?page_size=3",
-          prev: "#{api_v1_blocks_url}?page_size=3",
-          next: "#{api_v1_blocks_url}?page=3&page_size=3",
-          last: "#{api_v1_blocks_url}?page=10&page_size=3"
-        }
-
-        valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
-
-        assert_equal links.stringify_keys.sort, json["links"].sort
-      end
-
       test "should return meta that contained total in response body" do
         page = 1
         page_size = 30
@@ -217,18 +199,6 @@ module Api
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
         assert_equal page_size, json.dig("meta", "total")
-      end
-
-      test "should return pagination links that only contain self in response body when there is no blocks" do
-        create(:table_record_count, :block_counter)
-        page = 1
-        page_size = 10
-        links = {
-          self: "#{api_v1_blocks_url}?page_size=10"
-        }
-
-        valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
-        assert_equal links.stringify_keys.sort, json["links"].sort
       end
 
       test "should get success code when visit show" do

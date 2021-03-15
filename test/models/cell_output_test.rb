@@ -5,8 +5,6 @@ class CellOutputTest < ActiveSupport::TestCase
     should belong_to(:ckb_transaction)
     should belong_to(:address)
     should belong_to(:block)
-    should have_one(:lock_script)
-    should have_one(:type_script)
   end
 
   context "validations" do

@@ -1,8 +1,6 @@
-### Adapted CKB Version
-[ckb 0.25.1](https://github.com/nervosnetwork/ckb/releases/tag/v0.25.1) and above
+# [v0.12.3](https://github.com/nervosnetwork/ckb-explorer/compare/v0.12.2...v0.12.3) (2020-12-21)
 
-# [v0.12.0](https://github.com/nervosnetwork/ckb-explorer/compare/v0.11.2...v0.12.0) (2020-11-10)
+### Performance Improvements
 
-### Features
-
-* [#739](https://github.com/nervosnetwork/ckb-explorer/pull/739): support querying transactions in the transaction pool
+[#758](https://github.com/nervosnetwork/ckb-explorer/pull/758): perf daily statistics show api
+[#757](https://github.com/nervosnetwork/ckb-explorer/pull/757): perf market data api

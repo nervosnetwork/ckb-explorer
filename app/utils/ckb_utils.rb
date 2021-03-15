@@ -61,9 +61,8 @@ class CkbUtils
     CKB::AddressParser.new(address_hash).parse
   end
 
-  def self.block_reward(node_block_header)
-    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(node_block_header.hash)
-    primary_reward(node_block_header, cellbase_output_capacity_details) + secondary_reward(node_block_header, cellbase_output_capacity_details)
+  def self.block_reward(block_number, block_economic_state)
+    primary_reward(block_number, block_economic_state) + secondary_reward(block_number, block_economic_state)
   end
 
   def self.base_reward(block_number, epoch_number)
@@ -81,20 +80,20 @@ class CkbUtils
     end
   end
 
-  def self.primary_reward(node_block_header, cellbase_output_capacity_details)
-    node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.primary.to_i : 0
+  def self.primary_reward(block_number, block_economic_state)
+    block_number != 0 ? block_economic_state.miner_reward.primary : 0
   end
 
-  def self.secondary_reward(node_block_header, cellbase_output_capacity_details)
-    node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.secondary.to_i : 0
+  def self.secondary_reward(block_number, block_economic_state)
+    block_number != 0 ? block_economic_state.miner_reward.secondary : 0
   end
 
-  def self.proposal_reward(node_block_header, cellbase_output_capacity_details)
-    node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.proposal_reward.to_i : 0
+  def self.proposal_reward(block_number, block_economic_state)
+    block_number != 0 ? block_economic_state.miner_reward.proposal : 0
   end
 
-  def self.commit_reward(node_block_header, cellbase_output_capacity_details)
-    node_block_header.number.to_i != 0 ? cellbase_output_capacity_details.tx_fee.to_i : 0
+  def self.commit_reward(block_number, block_economic_state)
+    block_number != 0 ? block_economic_state.miner_reward.committed : 0
   end
 
   def self.get_epoch_info(epoch)
@@ -124,10 +123,22 @@ class CkbUtils
   end
 
   def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
-    if ckb_transaction.inputs.where(cell_type: "nervos_dao_withdrawing").present?
-      dao_withdraw_tx_fee(ckb_transaction)
+    if ckb_transaction.is_a?(CkbTransaction)
+      return 0 if ckb_transaction.is_cellbase
+
+      if ckb_transaction.inputs.where(cell_type: "nervos_dao_withdrawing").present?
+        dao_withdraw_tx_fee(ckb_transaction)
+      else
+        normal_tx_fee(input_capacities, output_capacities)
+      end
     else
-      normal_tx_fee(input_capacities, output_capacities)
+      return 0 if ckb_transaction["is_cellbase"]
+
+      if CellOutput.where(consumed_by_id: ckb_transaction["id"], cell_type: "nervos_dao_withdrawing").present?
+        dao_withdraw_tx_fee(ckb_transaction)
+      else
+        normal_tx_fee(input_capacities, output_capacities)
+      end
     end
   end
 
@@ -160,15 +171,14 @@ class CkbUtils
     target_block = current_block.target_block
     return if target_block_number < 1 || target_block.blank?
 
-    block_header = Struct.new(:hash, :number)
-    cellbase_output_capacity_details = CkbSync::Api.instance.get_cellbase_output_capacity_details(current_block.block_hash)
-    return if cellbase_output_capacity_details.blank?
+    block_economic_state = CkbSync::Api.instance.get_block_economic_state(target_block.block_hash)
+    return if block_economic_state.blank?
 
-    reward = CkbUtils.block_reward(block_header.new(current_block.block_hash, current_block.number))
-    primary_reward = CkbUtils.primary_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
-    secondary_reward = CkbUtils.secondary_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
-    proposal_reward = CkbUtils.proposal_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
-    commit_reward = CkbUtils.commit_reward(block_header.new(current_block.block_hash, current_block.number), cellbase_output_capacity_details)
+    reward = CkbUtils.block_reward(target_block.number, block_economic_state)
+    primary_reward = CkbUtils.primary_reward(target_block.number, block_economic_state)
+    secondary_reward = CkbUtils.secondary_reward(target_block.number, block_economic_state)
+    proposal_reward = CkbUtils.proposal_reward(target_block.number, block_economic_state)
+    commit_reward = CkbUtils.commit_reward(target_block.number, block_economic_state)
     target_block.update!(reward_status: "issued", reward: reward, primary_reward: primary_reward, secondary_reward: secondary_reward, commit_reward: commit_reward, proposal_reward: proposal_reward)
     current_block.update!(target_block_reward_status: "issued")
   end
@@ -198,9 +208,15 @@ class CkbUtils
   end
 
   def self.dao_withdraw_tx_fee(ckb_transaction)
-    nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
-    interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
-    ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+    if ckb_transaction.is_a?(CkbTransaction)
+      nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
+      interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
+      ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+    else
+      nervos_dao_withdrawing_cells = CellOutput.where(consumed_by_id: ckb_transaction["id"]).nervos_dao_withdrawing
+      interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
+      CellOutput.where(consumed_by_id: ckb_transaction["id"]).sum(:capacity) + interests - CellOutput.where(generated_by: ckb_transaction["id"]).sum(:capacity)
+    end
   end
 
   def self.dao_interest(nervos_dao_withdrawing_cell)
