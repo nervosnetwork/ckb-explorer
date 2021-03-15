@@ -9,39 +9,40 @@ class Cellbase
   def proposal_reward
     return if block.genesis_block?
 
-    cellbase_output_capacity_details.proposal_reward.to_i
+    block_economic_state.miner_reward.proposal
   end
 
   def commit_reward
     return if block.genesis_block?
 
-    cellbase_output_capacity_details.tx_fee.to_i
+    block_economic_state.miner_reward.committed
   end
 
   def base_reward
     return if block.genesis_block?
 
-    cellbase_output_capacity_details.primary.to_i
+    block_economic_state.miner_reward.primary
   end
 
   def secondary_reward
     return if block.genesis_block?
 
-    cellbase_output_capacity_details.secondary.to_i
+    block_economic_state.miner_reward.secondary
   end
 
   private
 
   attr_reader :block
 
-  def cellbase_output_capacity_details
-    @cellbase_output_capacity_details ||=
+  def block_economic_state
+    @block_economic_state ||=
       begin
         if block.target_block_reward_status == "issued"
           target_block = block.target_block
-          OpenStruct.new(primary: target_block.primary_reward, secondary: target_block.secondary_reward, proposal_reward: target_block.proposal_reward, tx_fee: target_block.commit_reward)
+          miner_reward = OpenStruct.new(primary: target_block.primary_reward, secondary: target_block.secondary_reward, proposal: target_block.proposal_reward, committed: target_block.commit_reward)
+          OpenStruct.new(miner_reward: miner_reward)
         else
-          CkbSync::Api.instance.get_cellbase_output_capacity_details(block.block_hash) || OpenStruct.new(primary: 0, secondary: 0, proposal_reward: 0, tx_fee: 0)
+          CkbSync::Api.instance.get_block_economic_state(block.target_block.block_hash) || OpenStruct.new(miner_reward: OpenStruct.new(primary: 0, secondary: 0, proposal: 0, committed: 0))
         end
       end
   end
