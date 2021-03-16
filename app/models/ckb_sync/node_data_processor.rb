@@ -439,7 +439,7 @@ module CkbSync
         length: epoch_info.length,
         dao: header.dao,
         block_time: block_time(header.timestamp, header.number),
-        block_size: node_block.serialized_size_without_uncle_proposals
+        block_size: 0,
       )
     end
 
