@@ -306,11 +306,8 @@ module CkbSync
       address_attributes = []
       block_number = local_cache.read("BlockNumber")
       local_cache.read("NodeData/#{block_number}/ContainedAddresses")&.each do |addr|
-        address_attributes << {
-          id: addr.id, balance: addr.cell_outputs.live.sum(:capacity),
-          ckb_transactions_count: addr.custom_ckb_transactions.count,
-          live_cells_count: addr.cell_outputs.live.count,
-          dao_transactions_count: addr.ckb_dao_transactions.count, created_at: addr.created_at, updated_at: Time.current }
+        UpdateAddressInfoWorker.perform_async(addr.id)
+        address_attributes << { id: addr.id, balance: addr.cell_outputs.live.sum(:capacity), created_at: addr.created_at, updated_at: Time.current }
       end
 
       Address.upsert_all(address_attributes) if address_attributes.present?
