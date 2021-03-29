@@ -433,13 +433,13 @@ module CkbSync
       outputs.each do |output|
         unless output.is_a?(Integer)
           local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}") do
-            # TODO remove search by code_hash, hash_type and args query after script_hash has been filled
-            LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first || LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).select(:id).take!
+            # TODO use LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
+            LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).select(:id).take!
           end
           if output.type.present?
             local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}") do
-              # TODO remove search by code_hash, hash_type and args query after script_hash has been filled
-              TypeScript.where(script_hash: output.type.compute_hash).select(:id)&.first || TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).select(:id).take!
+              # TODO use TypeScript.where(script_hash: output.type.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
+              TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).select(:id).take!
             end
           end
         end
@@ -461,8 +461,8 @@ module CkbSync
         unless output.is_a?(Integer)
           unless Rails.cache.read("NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
             script_hash = output.lock.compute_hash
-            # TODO remove search by code_hash, hash_type and args query after script_hash has been filled
-            unless LockScript.where(script_hash: script_hash).exists? && LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).exists?
+            # TODO use LockScript.where(script_hash: script_hash).exists? replace search by code_hash, hash_type and args query after script_hash has been filled
+            unless LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).exists?
               lock_attrs = script_attributes(output.lock, script_hash)
               Rails.cache.write("NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}", true, expires_in: 5.seconds)
             end
@@ -470,8 +470,8 @@ module CkbSync
           if output.type.present?
             unless Rails.cache.read("NodeData/#{block_number}/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}")
               script_hash = output.type.compute_hash
-              # TODO remove search by code_hash, hash_type and args query after script_hash has been filled
-              unless TypeScript.where(script_hash: script_hash).exists? && TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).exists?
+              # TODO use TypeScript.where(script_hash: script_hash).exists? replace search by code_hash, hash_type and args query after script_hash has been filled
+              unless TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).exists?
                 type_attrs = script_attributes(output.type, script_hash)
                 Rails.cache.write("NodeData/#{block_number}/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}", true, expires_in: 5.seconds)
               end
