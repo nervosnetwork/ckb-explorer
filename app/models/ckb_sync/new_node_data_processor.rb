@@ -40,7 +40,7 @@ module CkbSync
         update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
         update_block_info!(local_block)
         update_block_reward_info!(local_block)
-        update_addresses_info
+        # update_addresses_info
         update_mining_info(local_block)
         update_table_records_count(local_block)
         update_or_create_udt_accounts!(local_block)
