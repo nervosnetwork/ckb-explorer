@@ -89,7 +89,7 @@ module CkbSync
 
         result =
           Benchmark.realtime do
-            # update_addresses_info
+            update_addresses_info
           end
         Rails.logger.error "update_addresses_info!: %5.3f" % result
 
