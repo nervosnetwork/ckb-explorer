@@ -447,26 +447,71 @@ module CkbSync
       prev_cell_outputs_attributes = []
       input_capacities = []
       output_capacities = []
-      lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
-      if lock_scripts_attributes.present?
-        lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
-        LockScript.insert_all!(lock_scripts_attributes)
-      end
-      if type_scripts_attributes.present?
-        type_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
-        TypeScript.insert_all!(type_scripts_attributes)
-      end
-      build_addresses!(outputs, local_block)
+      lock_scripts_attributes = nil
+      type_scripts_attributes = nil
+      result =
+        Benchmark.realtime do
+          lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
+        end
+      Rails.logger.error "build_scripts!!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          if lock_scripts_attributes.present?
+            lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
+            LockScript.insert_all!(lock_scripts_attributes)
+          end
+        end
+      Rails.logger.error "insert_all_lock_scripts!!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          if type_scripts_attributes.present?
+            type_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
+            TypeScript.insert_all!(type_scripts_attributes)
+          end
+        end
+      Rails.logger.error "insert_all_type_scripts!!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          build_addresses!(outputs, local_block)
+        end
+      Rails.logger.error "build_addresses!: %5.3f" % result
       # prepare script ids for insert cell_outputs
-      prepare_script_ids(outputs)
-
-      build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
-      CellOutput.insert_all!(cell_outputs_attributes) if cell_outputs_attributes.present?
-      prev_outputs = prepare_previous_outputs(inputs)
-      build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs)
-
-      CellInput.insert_all!(cell_inputs_attributes)
-      CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
+      result =
+        Benchmark.realtime do
+          prepare_script_ids(outputs)
+        end
+      Rails.logger.error "prepare_script_ids!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
+        end
+      Rails.logger.error "build_cell_outputs!!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          CellOutput.insert_all!(cell_outputs_attributes) if cell_outputs_attributes.present?
+        end
+      Rails.logger.error "insert_all_cell_outputs!: %5.3f" % result
+      prev_outputs = nil
+      result =
+        Benchmark.realtime do
+          prev_outputs = prepare_previous_outputs(inputs)
+        end
+      Rails.logger.error "prepare_previous_outputs!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs)
+        end
+      Rails.logger.error "build_cell_inputs!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          CellInput.insert_all!(cell_inputs_attributes)
+        end
+      Rails.logger.error "insert_all_inputs!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
+        end
+      Rails.logger.error "insert_all_outputs!: %5.3f" % result
       return input_capacities, output_capacities
     end
 
