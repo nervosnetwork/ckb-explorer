@@ -383,29 +383,23 @@ module CkbSync
     end
 
     def update_addresses_info
-      address_attributes = []
       block_number = nil
       result =
         Benchmark.realtime do
           block_number = local_cache.read("BlockNumber")
         end
-      Rails.logger.error "read_block_number: %5.3f" % result
-      Rails.logger.error "block_number: #{block_number}"
-      Rails.logger.error "count: #{local_cache.read("NodeData/#{block_number}/ContainedAddresses").count}"
+      Rails.logger.error "read block number: %5.3f" % result
+      # local_cache.read("NodeData/#{block_number}/ContainedAddresses")&.each do |addr|
+      #   UpdateAddressInfoWorker.perform_async(addr.id)
+      #   address_attributes << { id: addr.id, balance: addr.cell_outputs.live.sum(:capacity), created_at: addr.created_at, updated_at: Time.current }
+      # end
+      #
       result =
         Benchmark.realtime do
-          local_cache.read("NodeData/#{block_number}/ContainedAddresses").each do |addr|
-            UpdateAddressInfoWorker.perform_async(addr.id)
-            address_attributes << { id: addr.id, balance: addr.cell_outputs.live.sum(:capacity), created_at: addr.created_at, updated_at: Time.current }
-          end
+          UpdateAddressInfoWorker.perform_async(block_number)
         end
-      Rails.logger.error "build_address_attributes: %5.3f" % result
-
-      result =
-        Benchmark.realtime do
-          Address.upsert_all(address_attributes) if address_attributes.present?
-        end
-      Rails.logger.error "upsert_all_address: %5.3f" % result
+      Rails.logger.error "UpdateAddressInfoWorker: %5.3f" % result
+      # Address.upsert_all(address_attributes) if address_attributes.present?
     end
 
     def update_block_info!(local_block)
