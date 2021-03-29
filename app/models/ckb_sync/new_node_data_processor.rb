@@ -6,13 +6,27 @@ module CkbSync
 
     def call
       local_tip_block = Block.recent.first
-      tip_block_number = CkbSync::Api.instance.get_tip_block_number
+      tip_block_number = nil
+      result =
+        Benchmark.realtime do
+          tip_block_number = CkbSync::Api.instance.get_tip_block_number
+        end
+      Rails.logger.error "get_tip_block_number!: %5.3f" % result
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
       return if target_block_number > tip_block_number
 
-      target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
+      target_block = nil
+      result =
+        Benchmark.realtime do
+          target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
+        end
+      Rails.logger.error "get_block_by_number!: %5.3f" % result
       if !forked?(target_block, local_tip_block)
-        process_block(target_block)
+        result =
+          Benchmark.realtime do
+            process_block(target_block)
+          end
+        Rails.logger.error "process_block! #{target_block_number}: %5.3f" % result
       else
         invalid_block(local_tip_block)
       end
@@ -22,32 +36,98 @@ module CkbSync
       local_block = nil
       ApplicationRecord.transaction do
         # build node data
-        local_block = build_block!(node_block)
+        result =
+          Benchmark.realtime do
+            local_block = build_block!(node_block)
+          end
+        Rails.logger.error "build_block!!: %5.3f" % result
         local_cache.write("BlockNumber", local_block.number)
-        build_uncle_blocks!(node_block, local_block.id)
+        result =
+          Benchmark.realtime do
+            build_uncle_blocks!(node_block, local_block.id)
+          end
+        Rails.logger.error "build_uncle_blocks!: %5.3f" % result
         inputs = []
         outputs = []
-        ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs).to_a
-        build_udts!(local_block, outputs)
+        ckb_txs = nil
+        result =
+          Benchmark.realtime do
+            ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs).to_a
+          end
+        Rails.logger.error "build_ckb_transactions!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            build_udts!(local_block, outputs)
+          end
+        Rails.logger.error "build_udts!!: %5.3f" % result
         tags = []
         udt_address_ids = []
         dao_address_ids = []
         contained_udt_ids = []
         contained_address_ids = []
-        process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
-        input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
+        result =
+          Benchmark.realtime do
+            process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
+          end
+        Rails.logger.error "process_ckb_txs!: %5.3f" % result
+        input_capacities, output_capacities = nil
+        result =
+          Benchmark.realtime do
+            input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
+          end
+        Rails.logger.error "build_cells_and_locks!!: %5.3f" % result
         # update explorer data
-        update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
-        update_block_info!(local_block)
-        update_block_reward_info!(local_block)
-        update_addresses_info
-        update_mining_info(local_block)
-        update_table_records_count(local_block)
-        update_or_create_udt_accounts!(local_block)
-        update_pool_tx_status(local_block)
+        result =
+          Benchmark.realtime do
+            update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
+          end
+        Rails.logger.error "update_ckb_txs_rel_and_fee!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            update_block_info!(local_block)
+          end
+        Rails.logger.error "update_block_info!!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            update_block_reward_info!(local_block)
+          end
+        Rails.logger.error "update_block_reward_info!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            update_addresses_info
+          end
+        Rails.logger.error "update_addresses_info!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            update_mining_info(local_block)
+          end
+        Rails.logger.error "update_mining_info!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            update_table_records_count(local_block)
+          end
+        Rails.logger.error "update_table_records_count!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            update_or_create_udt_accounts!(local_block)
+          end
+        Rails.logger.error "update_or_create_udt_accounts!!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            update_pool_tx_status(local_block)
+          end
+        Rails.logger.error "update_pool_tx_status!!: %5.3f" % result
         # maybe can be changed to asynchronous update
-        update_udt_info(local_block)
-        process_dao_events!(local_block)
+        result =
+          Benchmark.realtime do
+            update_udt_info(local_block)
+          end
+        Rails.logger.error "update_udt_info!!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            process_dao_events!(local_block)
+          end
+        Rails.logger.error "process_dao_events!!!: %5.3f" % result
       end
 
       cache_address_txs(local_block)
@@ -304,13 +384,28 @@ module CkbSync
 
     def update_addresses_info
       address_attributes = []
-      block_number = local_cache.read("BlockNumber")
-      local_cache.read("NodeData/#{block_number}/ContainedAddresses")&.each do |addr|
-        UpdateAddressInfoWorker.perform_async(addr.id)
-        address_attributes << { id: addr.id, balance: addr.cell_outputs.live.sum(:capacity), created_at: addr.created_at, updated_at: Time.current }
-      end
+      block_number = nil
+      result =
+        Benchmark.realtime do
+          block_number = local_cache.read("BlockNumber")
+        end
+      Rails.logger.error "read_block_number: %5.3f" % result
+      Rails.logger.error "block_number: #{block_number}"
+      Rails.logger.error "count: #{local_cache.read("NodeData/#{block_number}/ContainedAddresses").count}"
+      result =
+        Benchmark.realtime do
+          local_cache.read("NodeData/#{block_number}/ContainedAddresses").each do |addr|
+            UpdateAddressInfoWorker.perform_async(addr.id)
+            address_attributes << { id: addr.id, balance: addr.cell_outputs.live.sum(:capacity), created_at: addr.created_at, updated_at: Time.current }
+          end
+        end
+      Rails.logger.error "build_address_attributes: %5.3f" % result
 
-      Address.upsert_all(address_attributes) if address_attributes.present?
+      result =
+        Benchmark.realtime do
+          Address.upsert_all(address_attributes) if address_attributes.present?
+        end
+      Rails.logger.error "upsert_all_address: %5.3f" % result
     end
 
     def update_block_info!(local_block)
