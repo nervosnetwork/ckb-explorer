@@ -12,6 +12,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
+    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
 
   test ".generate_address should return mainnet address when mode is mainnet" do
@@ -149,7 +150,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     VCR.use_cassette("genesis_block", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(0)
 
-      local_block = CkbSync::NodeDataProcessor.new.process_block(node_block)
+      local_block = CkbSync::NewNodeDataProcessor.new.process_block(node_block)
 
       assert_equal 0, local_block.reward
     end
@@ -218,6 +219,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".ckb_transaction_fee should return right tx_fee when tx is dao withdraw tx" do
+    DaoContract.default_contract.update(total_deposit: 100000000000000)
     DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
     node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
     create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -247,6 +249,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".ckb_transaction_fee should return right tx_fee when tx is dao withdraw tx and have multiple dao cell" do
+    DaoContract.default_contract.update(total_deposit: 100000000000000)
     DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
     node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
     create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -322,6 +325,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
   private
 
   def node_data_processor
-    CkbSync::NodeDataProcessor.new
+    CkbSync::NewNodeDataProcessor.new
   end
 end

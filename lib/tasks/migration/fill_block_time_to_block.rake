@@ -28,9 +28,6 @@ class FillBlockTimeToBlock
       end
     end
   end
-
-  private
-
 end
 
 FillBlockTimeToBlock.new

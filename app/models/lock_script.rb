@@ -1,5 +1,6 @@
 class LockScript < ApplicationRecord
-  belongs_to :address
+  has_many :cell_outputs
+  belongs_to :address # will remove this later
 
   validates_presence_of :code_hash
 
@@ -92,9 +93,11 @@ end
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  hash_type      :string
+#  script_hash    :string
 #
 # Indexes
 #
 #  index_lock_scripts_on_address_id      (address_id)
 #  index_lock_scripts_on_cell_output_id  (cell_output_id)
+#  index_lock_scripts_on_script_hash     (script_hash)
 #

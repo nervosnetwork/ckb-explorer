@@ -1,5 +1,6 @@
 class TypeScript < ApplicationRecord
-  belongs_to :cell_output
+  has_many :cell_outputs
+  belongs_to :cell_output, optional: true # will remove this later
 
   validates_presence_of :code_hash
 
@@ -29,8 +30,10 @@ end
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  hash_type      :string
+#  script_hash    :string
 #
 # Indexes
 #
 #  index_type_scripts_on_cell_output_id  (cell_output_id)
+#  index_type_scripts_on_script_hash     (script_hash)
 #

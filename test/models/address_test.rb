@@ -4,6 +4,7 @@ class AddressTest < ActiveSupport::TestCase
   setup do
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
+    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
 
   context "associations" do
@@ -28,7 +29,7 @@ class AddressTest < ActiveSupport::TestCase
       output = tx.outputs.first
       output.lock.instance_variable_set(:@args, "0x")
 
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
       address = block.contained_addresses.first
 
@@ -53,7 +54,7 @@ class AddressTest < ActiveSupport::TestCase
       output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
       output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
 
       lock_script = node_block.transactions.first.outputs.first.lock
 
@@ -80,7 +81,7 @@ class AddressTest < ActiveSupport::TestCase
       output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
       output.lock.instance_variable_set(:@code_hash, ENV["CODE_HASH"])
 
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
 
       lock_script = node_block.transactions.first.outputs.first.lock
       address = Address.find_or_create_address(lock_script, node_block.header.timestamp)

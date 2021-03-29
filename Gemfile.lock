@@ -8,10 +8,10 @@ GIT
 
 GIT
   remote: https://github.com/nervosnetwork/ckb-sdk-ruby.git
-  revision: bbe04b45aabcc112c2c13540a68ded989cc2eb00
+  revision: 60e0eb25a705354a1ca5c6c0ff17816d6f7d933e
   branch: develop
   specs:
-    ckb-sdk-ruby (0.38.1)
+    ckb-sdk-ruby (0.39.0)
       bitcoin-secp256k1 (~> 0.5.2)
       net-http-persistent (~> 3.1.0)
       rbnacl (~> 7.1.1)
@@ -151,7 +151,7 @@ GEM
       multipart-post (>= 1.2, < 3)
     fast_jsonapi (1.5)
       activesupport (>= 4.2)
-    ffi (1.13.1)
+    ffi (1.14.2)
     fugit (1.3.3)
       et-orbi (~> 1.1, >= 1.1.8)
       raabro (~> 1.1)
@@ -369,6 +369,7 @@ DEPENDENCIES
   mocha
   newrelic_rpm
   nokogiri (>= 1.11.0.rc4)
+  parallel
   pg (>= 0.18, < 2.0)
   pry
   pry-nav

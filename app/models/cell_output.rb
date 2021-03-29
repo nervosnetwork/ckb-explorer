@@ -10,8 +10,8 @@ class CellOutput < ApplicationRecord
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
   belongs_to :address
   belongs_to :block
-  has_one :lock_script, dependent: :delete
-  has_one :type_script, dependent: :delete
+  # belongs_to :lock_script, optional: true
+  # belongs_to :type_script, optional: true
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
@@ -24,6 +24,16 @@ class CellOutput < ApplicationRecord
   scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
 
   after_commit :flush_cache
+
+  # will remove this method after the migration task processed
+  def lock_script
+    LockScript.find_by(id: lock_script_id) || LockScript.find_by(cell_output_id: id)
+  end
+
+  # will remove this method after the migration task processed
+  def type_script
+    TypeScript.find_by(id: type_script_id) || TypeScript.find_by(cell_output_id: id)
+  end
 
   def address_hash
     address.address_hash
@@ -86,6 +96,8 @@ end
 #  type_hash                :string
 #  udt_amount               :decimal(40, )
 #  dao                      :string
+#  lock_script_id           :bigint
+#  type_script_id           :bigint
 #
 # Indexes
 #
