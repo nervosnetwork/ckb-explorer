@@ -383,35 +383,11 @@ module CkbSync
       address_attributes = []
       block_number = local_cache.read("BlockNumber")
       local_cache.read("NodeData/#{block_number}/ContainedAddresses")&.each do |addr|
-        balance = nil
-        ckb_transactions_count = nil
-        live_cells_count = nil
-        dao_transactions_count = nil
-        result =
-          Benchmark.realtime do
-            balance = addr.cell_outputs.live.sum(:capacity)
-          end
-        Rails.logger.error "balance!: %5.3f" % result
-        result =
-          Benchmark.realtime do
-            ckb_transactions_count = addr.custom_ckb_transactions.count
-          end
-        Rails.logger.error "ckb_transactions_count!: %5.3f" % result
-        result =
-          Benchmark.realtime do
-            live_cells_count = addr.cell_outputs.live.count
-          end
-        Rails.logger.error "live_cells_count!: %5.3f" % result
-        result =
-          Benchmark.realtime do
-            dao_transactions_count = addr.ckb_dao_transactions.count
-          end
-        Rails.logger.error "dao_transactions_count!: %5.3f" % result
+        UpdateAddressBalanceWorker.perform_async(addr.id)
         address_attributes << {
-          id: addr.id, balance: balance,
-          ckb_transactions_count: ckb_transactions_count,
-          live_cells_count: live_cells_count,
-          dao_transactions_count: dao_transactions_count, created_at: addr.created_at, updated_at: Time.current }
+          id: addr.id, ckb_transactions_count: addr.custom_ckb_transactions.count,
+          live_cells_count: addr.cell_outputs.live.count,
+          dao_transactions_count: addr.ckb_dao_transactions.count, created_at: addr.created_at, updated_at: Time.current }
       end
 
       Address.upsert_all(address_attributes) if address_attributes.present?
