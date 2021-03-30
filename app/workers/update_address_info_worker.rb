@@ -1,5 +1,6 @@
 class UpdateAddressInfoWorker
   include Sidekiq::Worker
+  sidekiq_options queue: "low"
 
   def perform(block_number)
     address_attributes = []
