@@ -456,26 +456,72 @@ module CkbSync
       prev_cell_outputs_attributes = []
       input_capacities = []
       output_capacities = []
-      lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
-      if lock_scripts_attributes.present?
-        lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
-        LockScript.insert_all!(lock_scripts_attributes)
-      end
-      if type_scripts_attributes.present?
-        type_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
-        TypeScript.insert_all!(type_scripts_attributes)
-      end
-      build_addresses!(outputs, local_block)
+      lock_scripts_attributes, type_scripts_attributes = nil
+      result =
+        Benchmark.realtime do
+          lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
+        end
+      Rails.logger.error "build_scripts: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          if lock_scripts_attributes.present?
+            lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
+            LockScript.insert_all!(lock_scripts_attributes)
+          end
+        end
+      Rails.logger.error "insert_lock_scripts: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          if type_scripts_attributes.present?
+            type_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
+            TypeScript.insert_all!(type_scripts_attributes)
+          end
+        end
+      Rails.logger.error "insert_type_scripts: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          build_addresses!(outputs, local_block)
+        end
+      Rails.logger.error "build_addresses!: %5.3f" % result
       # prepare script ids for insert cell_outputs
-      prepare_script_ids(outputs)
+      result =
+        Benchmark.realtime do
+          prepare_script_ids(outputs)
+        end
+      Rails.logger.error "prepare_script_ids!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
+        end
+      Rails.logger.error "build_cell_outputs!!: %5.3f" % result
 
-      build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
-      CellOutput.insert_all!(cell_outputs_attributes) if cell_outputs_attributes.present?
-      prev_outputs = prepare_previous_outputs(inputs)
-      build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs)
+      result =
+        Benchmark.realtime do
+          CellOutput.insert_all!(cell_outputs_attributes) if cell_outputs_attributes.present?
+        end
+      Rails.logger.error "insert_cell_outputs!!: %5.3f" % result
+      prev_outputs = nil
+      result =
+        Benchmark.realtime do
+          prev_outputs = prepare_previous_outputs(inputs)
+        end
+      Rails.logger.error "prepare_previous_outputs!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs)
+        end
+      Rails.logger.error "build_cell_inputs!: %5.3f" % result
 
-      CellInput.insert_all!(cell_inputs_attributes)
-      CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
+      result =
+        Benchmark.realtime do
+          CellInput.insert_all!(cell_inputs_attributes)
+        end
+      Rails.logger.error "insert_cell_input!: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
+        end
+      Rails.logger.error "upsert_cell_output!: %5.3f" % result
       return input_capacities, output_capacities
     end
 
@@ -777,38 +823,77 @@ module CkbSync
       cellbase = node_block.transactions.first
 
       generate_address_in_advance(cellbase, header.timestamp)
+      block_cell_consumed = nil
+      total_cell_capacity = nil
+      miner_hash = nil
+      miner_lock_hash = nil
+      base_reward = nil
+      block = nil
+      result =
+        Benchmark.realtime do
+          block_cell_consumed = CkbUtils.block_cell_consumed(node_block.transactions)
+        end
+      Rails.logger.error "block_cell_consumed: %5.3f" % result
 
-      Block.create!(
-        compact_target: header.compact_target,
-        block_hash: header.hash,
-        number: header.number,
-        parent_hash: header.parent_hash,
-        nonce: header.nonce,
-        timestamp: header.timestamp,
-        transactions_root: header.transactions_root,
-        proposals_hash: header.proposals_hash,
-        uncles_count: node_block.uncles.count,
-        uncles_hash: header.uncles_hash,
-        uncle_block_hashes: uncle_block_hashes(node_block.uncles),
-        version: header.version,
-        proposals: node_block.proposals,
-        proposals_count: node_block.proposals.count,
-        cell_consumed: CkbUtils.block_cell_consumed(node_block.transactions),
-        total_cell_capacity: CkbUtils.total_cell_capacity(node_block.transactions),
-        miner_hash: CkbUtils.miner_hash(cellbase),
-        miner_lock_hash: CkbUtils.miner_lock_hash(cellbase),
-        reward: CkbUtils.base_reward(header.number, epoch_info.number),
-        primary_reward: CkbUtils.base_reward(header.number, epoch_info.number),
-        secondary_reward: 0,
-        reward_status: header.number.to_i == 0 ? "issued" : "pending",
-        total_transaction_fee: 0,
-        epoch: epoch_info.number,
-        start_number: epoch_info.start_number,
-        length: epoch_info.length,
-        dao: header.dao,
-        block_time: block_time(header.timestamp, header.number),
-        block_size: 0
-      )
+      result =
+        Benchmark.realtime do
+          total_cell_capacity = CkbUtils.total_cell_capacity(node_block.transactions)
+        end
+      Rails.logger.error "total_cell_capacity: %5.3f" % result
+
+      result =
+        Benchmark.realtime do
+          miner_hash = CkbUtils.miner_hash(cellbase)
+        end
+      Rails.logger.error "miner_hash: %5.3f" % result
+
+      result =
+        Benchmark.realtime do
+          miner_lock_hash = CkbUtils.miner_lock_hash(cellbase)
+        end
+      Rails.logger.error "miner_lock_hash: %5.3f" % result
+
+      result =
+        Benchmark.realtime do
+          base_reward = CkbUtils.base_reward(header.number, epoch_info.number)
+        end
+      Rails.logger.error "base_reward: %5.3f" % result
+      result =
+        Benchmark.realtime do
+          block = Block.create!(
+            compact_target: header.compact_target,
+            block_hash: header.hash,
+            number: header.number,
+            parent_hash: header.parent_hash,
+            nonce: header.nonce,
+            timestamp: header.timestamp,
+            transactions_root: header.transactions_root,
+            proposals_hash: header.proposals_hash,
+            uncles_count: node_block.uncles.count,
+            uncles_hash: header.uncles_hash,
+            uncle_block_hashes: uncle_block_hashes(node_block.uncles),
+            version: header.version,
+            proposals: node_block.proposals,
+            proposals_count: node_block.proposals.count,
+            cell_consumed: block_cell_consumed,
+            total_cell_capacity: total_cell_capacity,
+            miner_hash: miner_hash,
+            miner_lock_hash: miner_lock_hash,
+            reward: base_reward,
+            primary_reward: base_reward,
+            secondary_reward: 0,
+            reward_status: header.number.to_i == 0 ? "issued" : "pending",
+            total_transaction_fee: 0,
+            epoch: epoch_info.number,
+            start_number: epoch_info.start_number,
+            length: epoch_info.length,
+            dao: header.dao,
+            block_time: block_time(header.timestamp, header.number),
+            block_size: 0
+          )
+        end
+      Rails.logger.error "create_block: %5.3f" % result
+      block
     end
 
     def from_cell_base?(node_input)
