@@ -582,20 +582,13 @@ module CkbSync
       locks_attributes = Set.new
       types_attributes = Set.new
       block_number = local_cache.read("BlockNumber")
-      finish =
-        lambda do |_, _, result|
-          locks_attributes << result[0]
-          types_attributes << result[1]
-        end
-      Parallel.map(outputs, finish: finish) do |output|
-        lock_attrs = nil
-        type_attrs = nil
+      outputs.each do |output|
         unless output.is_a?(Integer)
           unless Rails.cache.read("NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
             script_hash = output.lock.compute_hash
             # TODO use LockScript.where(script_hash: script_hash).exists? replace search by code_hash, hash_type and args query after script_hash has been filled
             unless LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).exists?
-              lock_attrs = script_attributes(output.lock, script_hash)
+              locks_attributes << script_attributes(output.lock, script_hash)
               Rails.cache.write("NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}", true, expires_in: 5.seconds)
             end
           end
@@ -604,14 +597,14 @@ module CkbSync
               script_hash = output.type.compute_hash
               # TODO use TypeScript.where(script_hash: script_hash).exists? replace search by code_hash, hash_type and args query after script_hash has been filled
               unless TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).exists?
-                type_attrs = script_attributes(output.type, script_hash)
+                types_attributes << script_attributes(output.type, script_hash)
                 Rails.cache.write("NodeData/#{block_number}/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}", true, expires_in: 5.seconds)
               end
             end
           end
         end
-        [lock_attrs, type_attrs]
       end
+
       return locks_attributes.to_a.compact!, types_attributes.to_a.compact!
     end
 
