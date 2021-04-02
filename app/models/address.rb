@@ -18,15 +18,15 @@ class Address < ApplicationRecord
   attr_accessor :query_address
 
   def custom_ckb_transactions
-    CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id])
+    CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id]).optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_address_ids)")
   end
 
   def ckb_dao_transactions
-    CkbTransaction.where("dao_address_ids @> array[?]::bigint[]", [id])
+    CkbTransaction.where("dao_address_ids @> array[?]::bigint[]", [id]).optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_dao_address_ids)")
   end
 
   def ckb_udt_transactions(udt_id)
-    CkbTransaction.where("udt_address_ids @> array[?]::bigint[]", [id]).where("contained_udt_ids @> array[?]::bigint[]", [udt_id])
+    CkbTransaction.where("udt_address_ids @> array[?]::bigint[]", [id]).where("contained_udt_ids @> array[?]::bigint[]", [udt_id]).optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_udt_ids)")
   end
 
   def lock_info
