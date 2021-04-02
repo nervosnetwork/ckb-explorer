@@ -563,11 +563,8 @@ module CkbSync
     def prepare_script_ids(outputs)
       outputs.each do |output|
         unless output.is_a?(Integer)
-          cache = local_cache.read("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
-          puts "cache: #{cache.to_json}"
           local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}") do
             # TODO use LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
-            puts "code_has: #{output.lock.code_hash}, hash_type: #{output.lock.hash_type}, args: #{output.lock.args}"
             LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).select(:id).take!
           end
           if output.type.present?
@@ -584,14 +581,12 @@ module CkbSync
       locks_attributes = Set.new
       types_attributes = Set.new
       block_number = local_cache.read("BlockNumber")
-      puts "outputs_count: #{outputs.size}"
       outputs.each do |output|
         unless output.is_a?(Integer)
           unless local_cache.read("NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
             script_hash = output.lock.compute_hash
             # TODO use LockScript.where(script_hash: script_hash).exists? replace search by code_hash, hash_type and args query after script_hash has been filled
             unless LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).exists?
-              puts "script_attributes: #{script_attributes(output.lock, script_hash)}"
               locks_attributes << script_attributes(output.lock, script_hash)
               local_cache.write("NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}", true)
             end
@@ -609,7 +604,6 @@ module CkbSync
         end
       end
 
-      puts "locks_attributes: #{locks_attributes.to_a.compact!}, types_attributes: #{types_attributes.to_a.compact!}"
       return locks_attributes.to_a.compact, types_attributes.to_a.compact
     end
 
