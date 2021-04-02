@@ -526,19 +526,18 @@ module CkbSync
     end
 
     def prepare_previous_outputs(inputs)
-      outpoints = []
       previous_outputs = {}
       sql = "select id, tx_hash, cell_index, cell_type, capacity, address_id, type_hash, created_at from cell_outputs where "
       inputs.each do |item|
         unless item.is_a?(Integer)
           unless from_cell_base?(item)
-            outpoints << { tx_hash: item.previous_output.tx_hash, cell_index: item.previous_output.index }
             sql << "(tx_hash = '\\#{item.previous_output.tx_hash.delete_prefix('0')}' and cell_index = #{item.previous_output.index}) or "
           end
         end
       end
       block_number = local_cache.read("BlockNumber")
       # not just cellbase in inputs
+      Rails.logger.error "sql: #{sql}"
       if inputs.size > 2
         CellOutput.find_by_sql(sql.delete_suffix!("or ")).each do |item|
           previous_outputs["#{item.tx_hash}-#{item.cell_index}"] = item
@@ -564,8 +563,11 @@ module CkbSync
     def prepare_script_ids(outputs)
       outputs.each do |output|
         unless output.is_a?(Integer)
+          cache = local_cache.read("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
+          Rails.logger.error "cache: #{cache}"
           local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}") do
             # TODO use LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
+            Rails.logger.error "code_has: #{output.lock.code_hash}, hash_type: #{output.lock.hash_type}, args: #{output.lock.args}"
             LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).select(:id).take!
           end
           if output.type.present?
