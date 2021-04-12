@@ -554,7 +554,9 @@ module CkbSync
         unless item.is_a?(Integer)
           address =
             local_cache.fetch("NodeData/Address/#{item.lock.code_hash}-#{item.lock.hash_type}-#{item.lock.args}") do
-              Address.find_or_create_address(item.lock, local_block.timestamp)
+              # TODO use LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
+              lock_script = LockScript.find_by(code_hash: item.lock.code_hash, hash_type: item.lock.hash_type, args: item.lock.args)
+              Address.find_or_create_address(item.lock, local_block.timestamp, lock_script.id)
             end
           local_cache.push("NodeData/#{block_number}/ContainedAddresses", Address.new(id: address.id, created_at: address.created_at))
         end
