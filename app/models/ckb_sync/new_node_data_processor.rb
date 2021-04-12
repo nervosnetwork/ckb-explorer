@@ -464,6 +464,7 @@ module CkbSync
       Rails.logger.error "build_scripts: %5.3f" % result
       result =
         Benchmark.realtime do
+          Rails.logger.error "lock_scripts_attributes: #{lock_scripts_attributes}"
           if lock_scripts_attributes.present?
             lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
             LockScript.insert_all!(lock_scripts_attributes)
