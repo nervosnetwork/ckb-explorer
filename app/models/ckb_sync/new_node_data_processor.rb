@@ -389,6 +389,7 @@ module CkbSync
           block_number = local_cache.read("BlockNumber")
         end
       Rails.logger.error "read block number: %5.3f" % result
+      Rails.logger.error "read block number process_block!: #{block_number}"
       # local_cache.read("NodeData/#{block_number}/ContainedAddresses")&.each do |addr|
       #   UpdateAddressInfoWorker.perform_async(addr.id)
       #   address_attributes << { id: addr.id, balance: addr.cell_outputs.live.sum(:capacity), created_at: addr.created_at, updated_at: Time.current }
