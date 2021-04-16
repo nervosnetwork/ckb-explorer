@@ -94,11 +94,6 @@ module CkbSync
         Rails.logger.error "update_block_reward_info!: %5.3f" % result
         result =
           Benchmark.realtime do
-            update_addresses_info
-          end
-        Rails.logger.error "update_addresses_info!: %5.3f" % result
-        result =
-          Benchmark.realtime do
             update_mining_info(local_block)
           end
         Rails.logger.error "update_mining_info!: %5.3f" % result
@@ -129,6 +124,11 @@ module CkbSync
           end
         Rails.logger.error "process_dao_events!!!: %5.3f" % result
       end
+      result =
+        Benchmark.realtime do
+          update_addresses_info
+        end
+      Rails.logger.error "update_addresses_info!: %5.3f" % result
 
       cache_address_txs(local_block)
       generate_tx_display_info(local_block)
