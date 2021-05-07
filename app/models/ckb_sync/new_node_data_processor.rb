@@ -529,21 +529,28 @@ module CkbSync
 
     def prepare_previous_outputs(inputs)
       previous_outputs = {}
+      outpoints = []
       sql = "select id, tx_hash, cell_index, cell_type, capacity, address_id, type_hash, created_at from cell_outputs where "
       inputs.each do |item|
         unless item.is_a?(Integer)
           unless from_cell_base?(item)
-            sql << "(tx_hash = '\\#{item.previous_output.tx_hash.delete_prefix('0')}' and cell_index = #{item.previous_output.index}) or "
+            outpoints << "(tx_hash = '\\#{item.previous_output.tx_hash.delete_prefix('0')}' and cell_index = #{item.previous_output.index}) or "
           end
         end
       end
       block_number = local_cache.read("BlockNumber")
       # not just cellbase in inputs
-      Rails.logger.error "sql: #{sql}"
       if inputs.size > 2
-        CellOutput.find_by_sql(sql.delete_suffix!("or ")).each do |item|
-          previous_outputs["#{item.tx_hash}-#{item.cell_index}"] = item
-          local_cache.push("NodeData/#{block_number}/ContainedAddresses", Address.where(id: item.address_id).select(:id, :created_at).first!)
+        outpoints.each_slice(100) do |ops|
+          inner_sql = sql.dup
+          ops.each do |op|
+            inner_sql << op
+          end
+          Rails.logger.error "sql: #{inner_sql.delete_suffix!("or ")}"
+          CellOutput.find_by_sql(inner_sql).each do |item|
+            previous_outputs["#{item.tx_hash}-#{item.cell_index}"] = item
+            local_cache.push("NodeData/#{block_number}/ContainedAddresses", Address.where(id: item.address_id).select(:id, :created_at).first!)
+          end
         end
       end
       previous_outputs
