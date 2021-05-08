@@ -963,19 +963,67 @@ module CkbSync
 
     def invalid_block(local_tip_block)
       ApplicationRecord.transaction do
-        revert_dao_contract_related_operations(local_tip_block)
-        revert_mining_info(local_tip_block)
-        udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq
-        recalculate_udt_transactions_count(local_tip_block)
-        recalculate_dao_contract_transactions_count(local_tip_block)
-        decrease_records_count(local_tip_block)
-        local_tip_block.invalid!
-        recalculate_udt_accounts(udt_type_hashes, local_tip_block)
-        local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
-        revert_block_rewards(local_tip_block)
-        ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch, block_timestamp: local_tip_block.timestamp)
-        Charts::BlockStatisticGenerator.new(local_tip_block.number).call
-
+        result =
+          Benchmark.realtime do
+            revert_dao_contract_related_operations(local_tip_block)
+          end
+        Rails.logger.error "revert_dao_contract_related_operations!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            revert_mining_info(local_tip_block)
+          end
+        Rails.logger.error "revert_mining_info!: %5.3f" % result
+        udt_type_hashes = nil
+        result =
+          Benchmark.realtime do
+            udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq
+          end
+        Rails.logger.error "pluck type_hash!: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            recalculate_udt_transactions_count(local_tip_block)
+          end
+        Rails.logger.error "recalculate_udt_transactions_count: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            recalculate_dao_contract_transactions_count(local_tip_block)
+          end
+        Rails.logger.error "recalculate_dao_contract_transactions_count: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            decrease_records_count(local_tip_block)
+          end
+        Rails.logger.error "decrease_records_count: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            local_tip_block.invalid!
+          end
+        Rails.logger.error "invalid! block: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            recalculate_udt_accounts(udt_type_hashes, local_tip_block)
+          end
+        Rails.logger.error "recalculate_udt_accounts: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
+          end
+        Rails.logger.error "update_address_balance_and_ckb_transactions_count: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            revert_block_rewards(local_tip_block)
+          end
+        Rails.logger.error "revert_block_rewards: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch, block_timestamp: local_tip_block.timestamp)
+          end
+        Rails.logger.error "ForkedEvent: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            Charts::BlockStatisticGenerator.new(local_tip_block.number).call
+          end
+        Rails.logger.error "BlockStatisticGenerator: %5.3f" % result
         local_tip_block
       end
     end
