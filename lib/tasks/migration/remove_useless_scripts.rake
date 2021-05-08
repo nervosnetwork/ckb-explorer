@@ -21,19 +21,23 @@ class RemoveUselessScripts
   def remove_lock_scripts(dry_run)
     progress_bar = ProgressBar.create({ total: Address.count, format: "%e %B %p%% %c/%C" })
     Address.select(:id).find_each do |addr_id|
-      removed_lock_ids = []
-      addresses_attrs = []
-      LockScript.where(address_id: addr_id).select(:id, :address_id).group_by(&:address_id).each do |address_id, locks|
-        removed_lock_ids.concat(locks[1..-1].pluck(:id))
-        addr = Address.find(address_id)
-        addresses_attrs << { id: addr.id, lock_script_id: locks.first.id, created_at: addr.created_at, updated_at: Time.current }
-      end
-      if dry_run
-        puts "update address count: #{addresses_attrs.count}"
-        puts "removed lock ids count: #{removed_lock_ids.count}"
-      else
-        Address.upsert_all(addresses_attrs) if addresses_attrs.present?
-        LockScript.where(id: removed_lock_ids).destroy_all if removed_lock_ids.present?
+      ApplicationRecord.transaction do
+        puts "address_id: #{addr_id.id}"
+        removed_lock_ids = []
+        addresses_attrs = []
+        LockScript.where(address_id: addr_id).select(:id, :address_id).group_by(&:address_id).each do |address_id, locks|
+          puts "locks_count: #{locks.count}"
+          removed_lock_ids.concat(locks[1..-1].pluck(:id))
+          addr = Address.find(address_id)
+          addresses_attrs << { id: addr.id, lock_script_id: locks.first.id, created_at: addr.created_at, updated_at: Time.current }
+        end
+        if dry_run
+          puts "update address count: #{addresses_attrs.count}"
+          puts "removed lock ids count: #{removed_lock_ids.count}"
+        else
+          Address.upsert_all(addresses_attrs) if addresses_attrs.present?
+          LockScript.where(id: removed_lock_ids).destroy_all if removed_lock_ids.present?
+        end
       end
       progress_bar.increment
     end
