@@ -46,6 +46,7 @@ class RemoveUselessScripts
   def remove_type_scripts(dry_run)
     cell_output_groups = Hash.new
     CellOutput.where.not(type_script_id: nil).select(:id, :type_hash).find_each do |cell_output|
+      puts "cell_output_id: #{cell_output.id}"
       if cell_output_groups[cell_output.type_hash].blank?
         cell_output_groups[cell_output.type_hash] = Set.new([cell_output.id])
       else
@@ -59,6 +60,7 @@ class RemoveUselessScripts
       if dry_run
         puts "removed type script ids count: #{type_scripts[1..-1].count}"
       else
+        puts "removed type script ids count: #{type_scripts[1..-1].count}"
         CellOutput.where(id: cell_output_ids).update_all(type_script_id: type_scripts.first.id)
         TypeScript.where(id: type_scripts[1..-1].pluck(:id)).destroy_all
       end
