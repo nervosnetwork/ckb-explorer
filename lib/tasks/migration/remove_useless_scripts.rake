@@ -24,7 +24,6 @@ class RemoveUselessScripts
       removed_lock_ids = []
       addresses_attrs = []
       LockScript.where(address_id: addr_id).select(:id, :address_id).group_by(&:address_id).each do |address_id, locks|
-        progress_bar.increment
         removed_lock_ids.concat(locks[1..-1].pluck(:id))
         addr = Address.find(address_id)
         addresses_attrs << { id: addr.id, lock_script_id: locks.first.id, created_at: addr.created_at, updated_at: Time.current }
@@ -36,6 +35,7 @@ class RemoveUselessScripts
         Address.upsert_all(addresses_attrs) if addresses_attrs.present?
         LockScript.where(id: removed_lock_ids).destroy_all if removed_lock_ids.present?
       end
+      progress_bar.increment
     end
     puts "remove_lock_scripts has been completed"
   end
