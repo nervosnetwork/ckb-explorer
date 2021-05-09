@@ -27,7 +27,7 @@ class RemoveUselessScripts
         addresses_attrs = []
         LockScript.where(address_id: addr.id).select(:id, :address_id).find_each do |lock|
           puts "lock_id: #{lock.id}"
-          lock_ids.concat(lock.id)
+          lock_ids << lock.id
         end
         addresses_attrs << { id: addr.id, lock_script_id: lock_ids.first, created_at: addr.created_at, updated_at: Time.current }
         if dry_run
