@@ -10,7 +10,7 @@ class Udt < ApplicationRecord
   attribute :code_hash, :ckb_hash
 
   def ckb_transactions
-    CkbTransaction.where("contained_udt_ids @> array[?]::bigint[]", [id])
+    CkbTransaction.where("contained_udt_ids @> array[?]::bigint[]", [id]).optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_udt_ids)")
   end
 
   def h24_ckb_transactions_count
