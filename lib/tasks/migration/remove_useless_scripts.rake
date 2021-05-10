@@ -68,13 +68,14 @@ class RemoveUselessScripts
     puts "type_script statistics has been completed. size: #{cell_output_groups.size}"
 
     cell_output_groups.each do |type_hash, cell_output_ids|
+      puts "type_hash: #{type_hash}, ids_count: #{cell_output_ids.size}"
       type_scripts = TypeScript.where(script_hash: type_hash).select(:id)
       if dry_run
         puts "removed type script ids count: #{type_scripts[1..-1].count}"
       else
-        puts "removed type script ids count: #{type_scripts[1..-1].count}"
         CellOutput.where(id: cell_output_ids).update_all(type_script_id: type_scripts.first.id)
         TypeScript.where(id: type_scripts[1..-1].pluck(:id)).delete_all
+        puts "removed type script ids count: #{type_scripts[1..-1].count}"
       end
     end
 
