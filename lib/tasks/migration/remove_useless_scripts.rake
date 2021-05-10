@@ -22,20 +22,32 @@ class RemoveUselessScripts
     progress_bar = ProgressBar.create({ total: Address.count, format: "%e %B %p%% %c/%C" })
     Address.select(:id, :created_at).find_each do |addr|
       ApplicationRecord.transaction do
-        puts "address_id: #{addr.id}"
-        lock_ids = []
         addresses_attrs = []
-        LockScript.where(address_id: addr.id).select(:id, :address_id).find_each do |lock|
-          puts "lock_id: #{lock.id}"
-          lock_ids << lock.id
+        puts "address_id: #{addr.id}"
+        first_lock_id = nil
+        LockScript.where(address_id: addr.id).select(:id, :address_id).find_in_batches do |locks|
+          lock_ids = []
+          locks.each do |lock|
+            puts "address_id: #{addr.id}, lock_id: #{lock.id}"
+            if first_lock_id.nil?
+              first_lock_id = lock.id
+            else
+              lock_ids << lock.id
+            end
+          end
+          if dry_run
+            puts "removed lock ids count: #{lock_ids.count}"
+          else
+            puts "removed lock ids count: #{lock_ids.count}"
+            LockScript.where(id: lock_ids).delete_all if lock_ids.present?
+          end
         end
-        addresses_attrs << { id: addr.id, lock_script_id: lock_ids.first, created_at: addr.created_at, updated_at: Time.current }
+        addresses_attrs << { id: addr.id, lock_script_id: first_lock_id, created_at: addr.created_at, updated_at: Time.current }
         if dry_run
-          puts "update address count: #{addresses_attrs.count}"
-          puts "removed lock ids count: #{lock_ids.count}"
+          puts "update address: #{addresses_attrs}"
         else
-          Address.upsert_all(addresses_attrs) if addresses_attrs.present?
-          LockScript.where(id: lock_ids[1..-1]).destroy_all if lock_ids.present?
+          puts "update address: #{addresses_attrs}"
+          Address.upsert_all(addresses_attrs)
         end
       end
       progress_bar.increment
@@ -62,7 +74,7 @@ class RemoveUselessScripts
       else
         puts "removed type script ids count: #{type_scripts[1..-1].count}"
         CellOutput.where(id: cell_output_ids).update_all(type_script_id: type_scripts.first.id)
-        TypeScript.where(id: type_scripts[1..-1].pluck(:id)).destroy_all
+        TypeScript.where(id: type_scripts[1..-1].pluck(:id)).delete_all
       end
     end
 
