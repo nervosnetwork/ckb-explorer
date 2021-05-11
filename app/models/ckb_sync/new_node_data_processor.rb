@@ -6,12 +6,7 @@ module CkbSync
 
     def call
       local_tip_block = Block.recent.first
-      tip_block_number = nil
-      result =
-        Benchmark.realtime do
-          tip_block_number = CkbSync::Api.instance.get_tip_block_number
-        end
-      Rails.logger.error "get_tip_block_number!: %5.3f" % result
+      tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
       return if target_block_number > tip_block_number
 
