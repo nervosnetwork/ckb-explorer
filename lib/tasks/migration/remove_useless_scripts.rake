@@ -4,12 +4,12 @@ class RemoveUselessScripts
   def initialize
     namespace :migration do
       desc "Usage: RAILS_ENV=production bundle exec rake 'migration:remove_useless_scripts[nil]'"
-      task :remove_useless_scripts, [:dry_run] => :environment do |_, args|
+      task :remove_useless_scripts, [:dry_run,:skip_lock,:skip_type] => :environment do |_, args|
         dry_run = args[:dry_run] == "true" ? true : false
         puts "before lock_script_count: #{LockScript.count}"
         puts "before type_script_count: #{TypeScript.count}"
-        remove_lock_scripts(dry_run)
-        remove_type_scripts(dry_run)
+        remove_lock_scripts(dry_run) if args[:skip_lock].blank?
+        remove_type_scripts(dry_run) if args[:skip_type].blank?
         puts "after lock_script_count: #{LockScript.count}"
         puts "after type_script_count: #{TypeScript.count}"
       end
@@ -68,11 +68,12 @@ class RemoveUselessScripts
     puts "type_script statistics has been completed. size: #{cell_output_groups.size}"
 
     cell_output_groups.each do |type_hash, cell_output_ids|
-      puts "type_hash: #{type_hash}, ids_count: #{cell_output_ids.size}"
       type_scripts = TypeScript.where(script_hash: type_hash).select(:id)
       if dry_run
         puts "removed type script ids count: #{type_scripts[1..-1].count}"
       else
+        puts "begin to remove type script..."
+        puts "type_hash: #{type_hash}, cell_output_ids_count: #{cell_output_ids.size}"
         CellOutput.where(id: cell_output_ids).update_all(type_script_id: type_scripts.first.id)
         TypeScript.where(id: type_scripts[1..-1].pluck(:id)).delete_all
         puts "removed type script ids count: #{type_scripts[1..-1].count}"
