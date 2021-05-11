@@ -74,7 +74,14 @@ class RemoveUselessScripts
       else
         puts "begin to remove type script..."
         puts "type_hash: #{type_hash}, cell_output_ids_count: #{cell_output_ids.size}"
-        CellOutput.where(id: cell_output_ids).update_all(type_script_id: type_scripts.first.id)
+        if cell_output_ids.size > 10000
+          cell_output_ids.each_slice(1000) do |ids|
+            puts "updated cell_output_ids: #{ids}"
+            CellOutput.where(id: ids).update_all(type_script_id: type_scripts.first.id)
+          end
+        else
+          CellOutput.where(id: cell_output_ids).update_all(type_script_id: type_scripts.first.id)
+        end
         TypeScript.where(id: type_scripts[1..-1].pluck(:id)).delete_all
         puts "removed type script ids count: #{type_scripts[1..-1].count}"
       end
