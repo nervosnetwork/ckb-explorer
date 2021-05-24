@@ -13,6 +13,9 @@ GIT
   specs:
     ckb-sdk-ruby (0.38.1)
       bitcoin-secp256k1 (~> 0.5.2)
+      
+      
+      
       net-http-persistent (~> 3.1.0)
       rbnacl (~> 7.1.1)
 
@@ -227,7 +230,7 @@ GEM
     pry-nav (0.3.0)
       pry (>= 0.9.10, < 0.13.0)
     public_suffix (3.1.0)
-    puma (4.3.6)
+    puma (4.3.8)
       nio4r (~> 2.0)
     raabro (1.1.6)
     racc (1.5.2)
@@ -374,7 +377,7 @@ DEPENDENCIES
   pg (>= 0.18, < 2.0)
   pry
   pry-nav
-  puma (~> 4.3.5)
+  puma (~> 4.3.8)
   rack-attack
   rack-cors
   rails (~> 6.0.0)
