@@ -54,6 +54,22 @@ class CellOutput < ApplicationRecord
     )
   end
 
+  def m_nft_info
+    return unless cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
+
+    case cell_type
+    when "m_nft_issuer"
+      value = { issuer_name: "" }
+    when "m_nft_class"
+      value = { class_name: "", total: "" }
+    when "m_nft_token"
+      value = { class_name: "", token_id: "", total: "" }
+    else
+      raise RuntimeError.new("invalid cell type")
+    end
+    CkbUtils.hash_value_to_s(value)
+  end
+
   def flush_cache
     $redis.pipelined do
       $redis.del(*cache_keys)
