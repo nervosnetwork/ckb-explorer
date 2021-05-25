@@ -562,27 +562,6 @@ module CkbSync
       end
     end
 
-    def cell_type(type_script, output_data)
-      return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]].include?(type_script&.code_hash)
-
-      case type_script&.code_hash
-      when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
-        if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
-          "nervos_dao_deposit"
-        else
-          "nervos_dao_withdrawing"
-        end
-      when ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]
-        if CKB::Utils.hex_to_bin(output_data).bytesize >= CellOutput::MIN_SUDT_AMOUNT_BYTESIZE
-          "udt"
-        else
-          "normal"
-        end
-      else
-        "normal"
-      end
-    end
-
     def build_cell_output(ckb_transaction, output, address, cell_index, output_data)
       cell_output = ckb_transaction.cell_outputs.build(
         capacity: output.capacity,
@@ -594,7 +573,7 @@ module CkbSync
         tx_hash: ckb_transaction.tx_hash,
         cell_index: cell_index,
         generated_by: ckb_transaction,
-        cell_type: cell_type(output.type, output_data),
+        cell_type: CkbUtils.cell_type(output.type, output_data),
         block_timestamp: ckb_transaction.block_timestamp,
         type_hash: output.type&.compute_hash,
         dao: ckb_transaction.block.dao
