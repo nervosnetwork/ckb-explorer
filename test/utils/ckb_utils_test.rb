@@ -14,6 +14,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     create(:table_record_count, :ckb_transactions_counter)
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
+    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
   end
 
   test ".generate_address should return mainnet address when mode is mainnet" do
@@ -387,6 +388,20 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal name, parsed_data.name
     assert_equal description, parsed_data.description
     assert_equal renderer, parsed_data.renderer
+  end
+
+  test "parse_token_data should return correct info" do
+    version = 0
+    characteristic = "0000000000000000"
+    configure = "11000000".to_i(2)
+    state = "00".rjust(8, "0").to_i(2)
+    data = "0x000000000000000000c000"
+    parsed_data = CkbUtils.parse_token_data(data)
+
+    assert_equal version, parsed_data.version
+    assert_equal characteristic, parsed_data.characteristic
+    assert_equal state, parsed_data.state
+    assert_equal configure, parsed_data.configure
   end
 
   private
