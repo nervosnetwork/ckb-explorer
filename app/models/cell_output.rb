@@ -59,11 +59,20 @@ class CellOutput < ApplicationRecord
 
     case cell_type
     when "m_nft_issuer"
-      value = { issuer_name: "" }
+      value = { issuer_name: CkbUtils.parse_issuer_data(data).info["name"] }
     when "m_nft_class"
-      value = { class_name: "", total: "" }
+      parsed_data = CkbUtils.parse_token_class_data(data)
+      value = { class_name: parsed_data.name, total: parsed_data.total }
     when "m_nft_token"
-      value = { class_name: "", token_id: "", total: "" }
+      # issuer_id size is 20 bytes, class_id size is 4 bytes
+      m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: type_script.args[0..49]).first
+      if m_nft_class_type.present?
+        m_nft_class_cell = m_nft_class_type.cell_output
+        parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+        value = { class_name: parsed_class_data.name, token_id: type_script.args[50..-1], total: parsed_class_data.total }
+      else
+        value = { class_name: "", token_id: "", total: "" }
+      end
     else
       raise RuntimeError.new("invalid cell type")
     end

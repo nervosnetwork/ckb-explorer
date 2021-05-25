@@ -317,8 +317,9 @@ class CkbUtils
     set_count = data[10..17].to_i(16)
     info_size = data[18..21].to_i(16)
     info = JSON.parse([data[22..-1]].pack("H*").force_encoding("utf-8"))
-
     OpenStruct.new(version: version, class_count: class_count, set_count: set_count, info_size: info_size, info: info)
+  rescue
+    OpenStruct.new(version: 0, class_count: 0, set_count: 0, info_size: 0, info: "")
   end
 
   def self.parse_token_class_data(data)
@@ -343,14 +344,7 @@ class CkbUtils
     renderer_end_index = renderer_start_index + renderer_size * 2 - 1
     renderer = [data[renderer_start_index, renderer_end_index]].pack("H*").force_encoding("utf-8")
     OpenStruct.new(version: version, total: total, issued: issued, configure: configure, name: name, description: description, renderer: renderer)
-  end
-
-  def self.parse_token_data(data)
-    data = data.delete_prefix("0x")
-    version = data[0..1].to_i(16)
-    characteristic = data[2..17]
-    configure = data[18..19].to_i(16)
-    state = data[20..21].to_i(16)
-    OpenStruct.new(version: version, characteristic: characteristic, configure: configure, state: state)
+  rescue
+    OpenStruct.new(version: 0, total: 0, issued: 0, configure: 0, name: "", description: "", renderer: "")
   end
 end
