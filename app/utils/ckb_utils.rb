@@ -280,4 +280,25 @@ class CkbUtils
   def self.time_in_milliseconds(time)
     (time.to_f * 1000).floor
   end
+
+  def self.cell_type(type_script, output_data)
+    return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]].include?(type_script&.code_hash)
+
+    case type_script&.code_hash
+    when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
+      if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
+        "nervos_dao_deposit"
+      else
+        "nervos_dao_withdrawing"
+      end
+    when ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]
+      if CKB::Utils.hex_to_bin(output_data).bytesize >= CellOutput::MIN_SUDT_AMOUNT_BYTESIZE
+        "udt"
+      else
+        "normal"
+      end
+    else
+      "normal"
+    end
+  end
 end
