@@ -282,7 +282,8 @@ class CkbUtils
   end
 
   def self.cell_type(type_script, output_data)
-    return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"], CkbSync::Api.instance.issuer_script_code_hash].include?(type_script&.code_hash)
+    return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"],
+                            CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash].include?(type_script&.code_hash)
 
     case type_script&.code_hash
     when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
@@ -299,6 +300,8 @@ class CkbUtils
       end
     when CkbSync::Api.instance.issuer_script_code_hash
       "m_nft_issuer"
+    when CkbSync::Api.instance.token_class_script_code_hash
+      "m_nft_class"
     else
       "normal"
     end
