@@ -13,6 +13,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
+    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
   end
 
   test ".generate_address should return mainnet address when mode is mainnet" do
@@ -323,7 +324,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test "cell_type should return testnet m_nft_issuer when type script code_hash match m_nft_issuer code_hash" do
-    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     type_script = CKB::Types::Script.new(code_hash: Settings.testnet_issuer_script_code_hash, hash_type: "type", args: "0x")
     assert_equal "m_nft_issuer", CkbUtils.cell_type(type_script, "0x")
   end
@@ -335,7 +335,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test "cell_type should return testnet m_nft_class when type script code_hash match m_nft_class code_hash" do
-    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     type_script = CKB::Types::Script.new(code_hash: Settings.testnet_token_class_script_code_hash, hash_type: "type", args: "0x")
     assert_equal "m_nft_class", CkbUtils.cell_type(type_script, "0x")
   end
@@ -347,7 +346,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test "cell_type should return testnet m_nft_token when type script code_hash match m_nft_token code_hash" do
-    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     type_script = CKB::Types::Script.new(code_hash: Settings.testnet_token_script_code_hash, hash_type: "type", args: "0x")
     assert_equal "m_nft_token", CkbUtils.cell_type(type_script, "0x")
   end
@@ -356,6 +354,53 @@ class CkbUtilsTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb"))
     type_script = CKB::Types::Script.new(code_hash: Settings.mainnet_token_script_code_hash, hash_type: "type", args: "0x")
     assert_equal "m_nft_token", CkbUtils.cell_type(type_script, "0x")
+  end
+
+  test "parse_issuer_data should return correct info" do
+    version = 0
+    class_count = 0
+    set_count = 0
+    info = { name: "alice" }.stringify_keys!
+    parsed_data = CkbUtils.parse_issuer_data("0x00000000000000000000107b226e616d65223a22616c696365227d")
+
+    assert_equal version, parsed_data.version
+    assert_equal class_count, parsed_data.class_count
+    assert_equal set_count, parsed_data.set_count
+    assert_equal info, parsed_data.info
+  end
+
+  test "parse_token_class_data should return correct info" do
+    version = 0
+    total = 1000
+    issued = 0
+    configure = "11000000".to_i(2)
+    name = "First NFT"
+    description = "First NFT"
+    renderer = "https://xxx.img.com/yyy"
+    data = "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979"
+    parsed_data = CkbUtils.parse_token_class_data(data)
+
+    assert_equal version, parsed_data.version
+    assert_equal total, parsed_data.total
+    assert_equal issued, parsed_data.issued
+    assert_equal configure, parsed_data.configure
+    assert_equal name, parsed_data.name
+    assert_equal description, parsed_data.description
+    assert_equal renderer, parsed_data.renderer
+  end
+
+  test "parse_token_data should return correct info" do
+    version = 0
+    characteristic = "0000000000000000"
+    configure = "11000000".to_i(2)
+    state = "00".rjust(8, "0").to_i(2)
+    data = "0x000000000000000000c000"
+    parsed_data = CkbUtils.parse_token_data(data)
+
+    assert_equal version, parsed_data.version
+    assert_equal characteristic, parsed_data.characteristic
+    assert_equal state, parsed_data.state
+    assert_equal configure, parsed_data.configure
   end
 
   private
