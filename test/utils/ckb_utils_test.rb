@@ -319,6 +319,18 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal 0, CkbUtils.parse_udt_cell_data("0x01")
   end
 
+  test "cell_type should return testnet m_nft_issuer when type script code_hash match m_nft_issuer code_hash" do
+    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
+    type_script = CKB::Types::Script.new(code_hash: Settings.testnet_issuer_script_code_hash, hash_type: "type", args: "0x")
+    assert_equal "m_nft_issuer", CkbUtils.cell_type(type_script, "0x")
+  end
+
+  test "cell_type should return mainnet m_nft_issuer when type script code_hash match m_nft_issuer code_hash" do
+    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb"))
+    type_script = CKB::Types::Script.new(code_hash: Settings.mainnet_issuer_script_code_hash, hash_type: "type", args: "0x")
+    assert_equal "m_nft_issuer", CkbUtils.cell_type(type_script, "0x")
+  end
+
   private
 
   def node_data_processor
