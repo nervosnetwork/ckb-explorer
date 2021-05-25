@@ -220,4 +220,58 @@ class CkbTransactionTest < ActiveSupport::TestCase
     assert_equal expected_udt_attributes, udt_output_transaction.display_outputs.first[:udt_info].keys.sort
     assert_equal expected_display_input, udt_output_transaction.display_outputs.first
   end
+
+  test "#display_inputs should contain m_nft_issuer info for m_nft_issuer transaction" do
+    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+    m_nft_input_block = create(:block, :with_block_hash)
+    m_nft_input_transaction = create(:ckb_transaction, block: m_nft_input_block)
+    m_nft_cell_output = create(:cell_output, block: m_nft_input_block, ckb_transaction: m_nft_input_transaction, consumed_by: ckb_transaction, generated_by: m_nft_input_transaction, cell_type: "m_nft_issuer", cell_index: 0, tx_hash: m_nft_input_transaction.tx_hash, data: "0x00000000000000000000107b226e616d65223a22616c696365227d", type_hash: "0x")
+
+    cell_input = ckb_transaction.cell_inputs.first
+    cell_input.update(previous_output: { "tx_hash": m_nft_input_transaction.tx_hash, "index": "0" })
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type).sort
+    expected_udt_attributes = %i(issuer_name).sort
+    expected_display_input = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, from_cellbase: false, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, generated_tx_hash: m_nft_cell_output.generated_by.tx_hash, cell_index: m_nft_cell_output.cell_index, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)
+
+    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
+    assert_equal expected_udt_attributes, ckb_transaction.display_inputs.first[:m_nft_info].keys.sort
+    assert_equal expected_display_input, ckb_transaction.display_inputs.first
+  end
+
+  test "#display_inputs should contain m_nft_class info for m_nft_class transaction" do
+    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+    m_nft_input_block = create(:block, :with_block_hash)
+    m_nft_input_transaction = create(:ckb_transaction, block: m_nft_input_block)
+    m_nft_cell_output = create(:cell_output, block: m_nft_input_block, ckb_transaction: m_nft_input_transaction, consumed_by: ckb_transaction, generated_by: m_nft_input_transaction, cell_type: "m_nft_class", cell_index: 0, tx_hash: m_nft_input_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x")
+
+    cell_input = ckb_transaction.cell_inputs.first
+    cell_input.update(previous_output: { "tx_hash": m_nft_input_transaction.tx_hash, "index": "0" })
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type).sort
+    expected_udt_attributes = %i(class_name total).sort
+    expected_display_input = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, from_cellbase: false, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, generated_tx_hash: m_nft_cell_output.generated_by.tx_hash, cell_index: m_nft_cell_output.cell_index, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)
+
+    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
+    assert_equal expected_udt_attributes, ckb_transaction.display_inputs.first[:m_nft_info].keys.sort
+    assert_equal expected_display_input, ckb_transaction.display_inputs.first
+  end
+
+  test "#display_inputs should contain m_nft_token info for m_nft_token transaction" do
+    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+    m_nft_input_block = create(:block, :with_block_hash)
+    m_nft_input_transaction = create(:ckb_transaction, block: m_nft_input_block)
+    m_nft_cell_output = create(:cell_output, block: m_nft_input_block, ckb_transaction: m_nft_input_transaction, consumed_by: ckb_transaction, generated_by: m_nft_input_transaction, cell_type: "m_nft_token", cell_index: 0, tx_hash: m_nft_input_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x")
+
+    cell_input = ckb_transaction.cell_inputs.first
+    cell_input.update(previous_output: { "tx_hash": m_nft_input_transaction.tx_hash, "index": "0" })
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type).sort
+    expected_udt_attributes = %i(class_name token_id total).sort
+    expected_display_input = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, from_cellbase: false, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, generated_tx_hash: m_nft_cell_output.generated_by.tx_hash, cell_index: m_nft_cell_output.cell_index, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)
+
+    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
+    assert_equal expected_udt_attributes, ckb_transaction.display_inputs.first[:m_nft_info].keys.sort
+    assert_equal expected_display_input, ckb_transaction.display_inputs.first
+  end
 end
