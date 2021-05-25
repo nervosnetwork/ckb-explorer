@@ -133,6 +133,7 @@ class CkbTransaction < ApplicationRecord
       display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
       display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
       display_input.merge!(attributes_for_udt_cell(previous_cell_output)) if previous_cell_output.udt?
+      display_input.merge!(attributes_for_m_nft_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
 
       CkbUtils.hash_value_to_s(display_input)
     end
@@ -140,6 +141,10 @@ class CkbTransaction < ApplicationRecord
 
   def attributes_for_udt_cell(udt_cell)
     { udt_info: CkbUtils.hash_value_to_s(udt_cell.udt_info) }
+  end
+
+  def attributes_for_m_nft_cell(m_nft_cell)
+    { m_nft_info: m_nft_cell.m_nft_info }
   end
 
   def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
