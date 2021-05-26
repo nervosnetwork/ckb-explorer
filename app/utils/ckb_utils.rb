@@ -298,4 +298,71 @@ class CkbUtils
   def self.time_in_milliseconds(time)
     (time.to_f * 1000).floor
   end
+
+  def self.cell_type(type_script, output_data)
+    return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"],
+                            CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
+                            CkbSync::Api.instance.token_script_code_hash].include?(type_script&.code_hash)
+
+    case type_script&.code_hash
+    when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
+      if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
+        "nervos_dao_deposit"
+      else
+        "nervos_dao_withdrawing"
+      end
+    when ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]
+      if CKB::Utils.hex_to_bin(output_data).bytesize >= CellOutput::MIN_SUDT_AMOUNT_BYTESIZE
+        "udt"
+      else
+        "normal"
+      end
+    when CkbSync::Api.instance.issuer_script_code_hash
+      "m_nft_issuer"
+    when CkbSync::Api.instance.token_class_script_code_hash
+      "m_nft_class"
+    when CkbSync::Api.instance.token_script_code_hash
+      "m_nft_token"
+    else
+      "normal"
+    end
+  end
+
+  def self.parse_issuer_data(data)
+    data = data.delete_prefix("0x")
+    version = data[0..1].to_i(16)
+    class_count = data[2..9].to_i(16)
+    set_count = data[10..17].to_i(16)
+    info_size = data[18..21].to_i(16)
+    info = JSON.parse([data[22..-1]].pack("H*").force_encoding("utf-8"))
+    OpenStruct.new(version: version, class_count: class_count, set_count: set_count, info_size: info_size, info: info)
+  rescue
+    OpenStruct.new(version: 0, class_count: 0, set_count: 0, info_size: 0, info: "")
+  end
+
+  def self.parse_token_class_data(data)
+    data = data.delete_prefix("0x")
+    version = data[0..1].to_i(16)
+    total = data[2..9].to_i(16)
+    issued = data[10..17].to_i(16)
+    configure = data[18..19].to_i(16)
+    name_size = data[20..23].to_i(16)
+    name_end_index = (24 + name_size * 2 - 1)
+    name = [data[24..name_end_index]].pack("H*").force_encoding("utf-8")
+    description_size_start_index = name_end_index + 1
+    description_size_end_index = description_size_start_index + 4 - 1
+    description_size = data[description_size_start_index..description_size_end_index].to_i(16)
+    description_start_index = description_size_end_index + 1
+    description_end_index = description_start_index + description_size * 2 - 1
+    description = [data[description_start_index..description_end_index]].pack("H*").force_encoding("utf-8")
+    renderer_size_start_index = description_end_index + 1
+    renderer_size_end_index = renderer_size_start_index + 4 - 1
+    renderer_size = data[renderer_size_start_index..renderer_size_end_index].to_i(16)
+    renderer_start_index = renderer_size_end_index + 1
+    renderer_end_index = renderer_start_index + renderer_size * 2 - 1
+    renderer = [data[renderer_start_index, renderer_end_index]].pack("H*").force_encoding("utf-8")
+    OpenStruct.new(version: version, total: total, issued: issued, configure: configure, name: name, description: description, renderer: renderer)
+  rescue
+    OpenStruct.new(version: 0, total: 0, issued: 0, configure: 0, name: "", description: "", renderer: "")
+  end
 end

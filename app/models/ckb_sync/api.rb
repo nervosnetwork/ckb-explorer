@@ -8,6 +8,42 @@ module CkbSync
       @api = CKB::API.new(host: ENV["CKB_NODE_URL"], timeout_config: { open_timeout: 1, read_timeout: 3, write_timeout: 1 })
     end
 
+    def chain_type
+      get_blockchain_info.chain
+    end
+
+    def mode
+      if chain_type == "ckb"
+        CKB::MODE::MAINNET
+      else
+        CKB::MODE::TESTNET
+      end
+    end
+
+    def issuer_script_code_hash
+      if mode == CKB::MODE::MAINNET
+        Settings.mainnet_issuer_script_code_hash
+      else
+        Settings.testnet_issuer_script_code_hash
+      end
+    end
+
+    def token_class_script_code_hash
+      if mode == CKB::MODE::MAINNET
+        Settings.mainnet_token_class_script_code_hash
+      else
+        Settings.testnet_token_class_script_code_hash
+      end
+    end
+
+    def token_script_code_hash
+      if mode == CKB::MODE::MAINNET
+        Settings.mainnet_token_script_code_hash
+      else
+        Settings.testnet_token_script_code_hash
+      end
+    end
+
     METHOD_NAMES.each do |name|
       define_method name do |*params|
         call_rpc(name, params: params)
