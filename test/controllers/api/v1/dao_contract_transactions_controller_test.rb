@@ -5,6 +5,7 @@ module Api
       setup do
         create(:table_record_count, :block_counter)
         create(:table_record_count, :ckb_transactions_counter)
+        CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
       end
 
       test "should set right content type when call index" do
