@@ -1,5 +1,5 @@
 require_relative "../config/environment"
 
 loop do
-  CkbSync::NewNodeDataProcessor.new.call
+  CkbSync::NodeDataProcessor.new.call
 end
