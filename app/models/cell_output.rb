@@ -10,8 +10,8 @@ class CellOutput < ApplicationRecord
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
   belongs_to :address
   belongs_to :block
-  # belongs_to :lock_script, optional: true
-  # belongs_to :type_script, optional: true
+  belongs_to :lock_script, optional: true
+  belongs_to :type_script, optional: true
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
