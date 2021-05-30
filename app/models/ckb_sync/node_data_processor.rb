@@ -244,7 +244,7 @@ module CkbSync
       ApplicationRecord.transaction do
         revert_dao_contract_related_operations(local_tip_block)
         revert_mining_info(local_tip_block)
-        udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq
+        udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq.concat(local_tip_block.cell_outputs.m_nft_token.pluck(:type_hash).uniq)
         recalculate_udt_transactions_count(local_tip_block)
         recalculate_dao_contract_transactions_count(local_tip_block)
         decrease_records_count(local_tip_block)
@@ -292,8 +292,12 @@ module CkbSync
           udt_account = address.udt_accounts.find_by(type_hash: type_hash)
           next if udt_account.blank?
 
-          amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
-          udt_account.update!(amount: amount)
+          if udt_account.udt_type == "sudt"
+            amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
+            udt_account.update!(amount: amount)
+          elsif udt_account.udt_type == "m_nft_token"
+            udt_account.destroy
+          end
         end
       end
     end
