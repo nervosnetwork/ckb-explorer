@@ -2310,6 +2310,31 @@ module CkbSync
       end
     end
 
+    test "should del m_nft_token udt accounts when block is invalid" do
+      create(:address)
+      address = nil
+      CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(22)
+      VCR.use_cassette("blocks/21") do
+        node_block = CkbSync::Api.instance.get_block_by_number(21)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+
+        node_output = node_block.transactions.first.outputs.first
+        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x9cf6ef96c3f053f6d128903e608516d658cac2da0000000000000001")
+        node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
+        node_data_processor.process_block(node_block)
+        block = Block.find_by(number: 21)
+        block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+        address_hash = CkbUtils.generate_address(node_output.lock)
+        address = Address.find_by(address_hash: address_hash)
+      end
+
+      VCR.use_cassette("blocks/22") do
+        assert_difference -> { address.reload.udt_accounts.m_nft_token.count }, -1 do
+          node_data_processor.call
+        end
+      end
+    end
+
     test "should recalculate multiple udt accounts when block is invalid" do
       issuer_address1 = create(:address)
       issuer_address2 = create(:address)
