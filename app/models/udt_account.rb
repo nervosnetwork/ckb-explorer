@@ -1,5 +1,5 @@
 class UdtAccount < ApplicationRecord
-  enum udt_type: { sudt: 0 }
+  enum udt_type: { sudt: 0, m_nft_token: 1 }
 
   belongs_to :address
   belongs_to :udt

@@ -3,6 +3,10 @@ require "test_helper"
 module Api
   module V1
     class CkbTransactionsControllerTest < ActionDispatch::IntegrationTest
+      setup do
+        CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
+      end
+
       test "should get success code when call show" do
         ckb_transaction = create(:ckb_transaction)
 

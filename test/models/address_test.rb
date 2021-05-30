@@ -5,6 +5,7 @@ class AddressTest < ActiveSupport::TestCase
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
+    CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
   end
 
   context "associations" do

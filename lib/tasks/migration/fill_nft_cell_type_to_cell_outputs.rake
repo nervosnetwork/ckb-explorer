@@ -17,12 +17,17 @@ namespace :migration do
     TypeScript.where(code_hash: [CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash, CkbSync::Api.instance.token_script_code_hash]).find_each do |ts|
       if chain == "ckb"
         nft_cell = ts.cell_output
+        cell_output_ids << nft_cell.id
+        nft_cell.update(cell_type: CkbUtils.cell_type(ts, "0x"))
+        progress_bar.increment
       else
-        nft_cell = CellOutput.find_by(type_script_id: ts.id)
+        nft_cells = CellOutput.where(type_script_id: ts.id)
+        nft_cells.each do |nft_cell|
+          cell_output_ids << nft_cell.id
+          nft_cell.update(cell_type: CkbUtils.cell_type(ts, "0x"))
+          progress_bar.increment
+        end
       end
-      cell_output_ids << nft_cell.id
-      nft_cell.update(cell_type: CkbUtils.cell_type(ts, "0x"))
-      progress_bar.increment
     end
 
     tx_ids = Set.new
