@@ -2163,6 +2163,42 @@ module CkbSync
       end
     end
 
+    test "#process_block should create udt account for the address when it receive m_nft_token cell for the first time" do
+      create(:address)
+      prepare_node_data(10)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        node_output = node_block.transactions.first.outputs.first
+        node_block.transactions.first.outputs_data[0] = "0x421d0000000000000000000000000000"
+        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c")
+        create(:udt, code_hash: CkbSync::Api.instance.token_script_code_hash, type_hash: node_output.type.compute_hash, block_timestamp: Time.current.to_i, udt_type: "m_nft_token")
+        address_hash = CkbUtils.generate_address(node_output.lock)
+        address = Address.find_by(address_hash: address_hash)
+
+        assert_difference -> { address.udt_accounts.m_nft_token.count }, 1 do
+          node_data_processor.process_block(node_block)
+        end
+        assert_equal 12, address.udt_accounts.m_nft_token.first.amount
+      end
+    end
+
+    test "#process_block should create one udt when there is one m_nft_token cell" do
+      create(:address)
+      prepare_node_data(10)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        node_output = node_block.transactions.first.outputs.first
+        node_block.transactions.first.outputs_data[0] = "0x421d0000000000000000000000000000"
+        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c")
+
+        assert_difference -> { Udt.m_nft_token.count }, 1 do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
     test "#process_block should not create udt account for the address when it already received udt cell" do
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
