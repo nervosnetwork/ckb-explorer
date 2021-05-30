@@ -543,7 +543,8 @@ module CkbSync
         end
         if cell_output.m_nft_token?
           udt_infos << { type_script: output.type, address: address, udt_type: "m_nft_token" }
-          Udt.find_or_create_by!(type_hash: output.type.compute_hash, udt_type: "m_nft_token")
+          udt = Udt.find_or_create_by!(type_hash: output.type.compute_hash, udt_type: "m_nft_token")
+          udt.update(published: true)
         end
         if cell_output.nervos_dao_deposit? || cell_output.nervos_dao_withdrawing?
           tags << "dao"
