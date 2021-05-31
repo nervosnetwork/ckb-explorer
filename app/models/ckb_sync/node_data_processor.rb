@@ -538,6 +538,12 @@ module CkbSync
         if cell_output.m_nft_token?
           udt_infos << { type_script: output.type, address: address, udt_type: "m_nft_token" }
           udt = Udt.find_or_create_by!(type_hash: output.type.compute_hash, udt_type: "m_nft_token")
+          m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: output.type.args[0..49]).first
+          if m_nft_class_type.present?
+            m_nft_class_cell = m_nft_class_type.cell_output
+            parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+            udt.update(full_name: parsed_class_data.name, icon_file: parsed_class_data.renderer)
+          end
           udt.update(published: true)
         end
         if cell_output.nervos_dao_deposit? || cell_output.nervos_dao_withdrawing?
