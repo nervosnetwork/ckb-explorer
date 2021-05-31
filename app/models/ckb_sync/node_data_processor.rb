@@ -546,7 +546,7 @@ module CkbSync
           if m_nft_class_type.present?
             m_nft_class_cell = m_nft_class_type.cell_output
             parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
-            udt.update(symbol: parsed_class_data.name, udt_icon_file: parsed_class_data.renderer)
+            udt.update(symbol: parsed_class_data.name, icon_file: parsed_class_data.renderer)
           end
           udt.update(published: true)
         end
