@@ -111,16 +111,23 @@ module CkbSync
       udt_infos.each do |udt_output|
         address = udt_output[:address]
         udt_type_script = udt_output[:type_script]
+        udt_type = udt_output[:udt_type]
         type_hash = udt_type_script.compute_hash
-        udt_account = address.udt_accounts.find_by(type_hash: type_hash)
-        amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
+        udt_account = address.udt_accounts.find_by(type_hash: type_hash, udt_type: udt_type)
+        if udt_type == "sudt"
+          amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
+        elsif udt_type == "m_nft_token"
+          amount = address.cell_outputs.live.m_nft_token.where(type_hash: type_hash).sum(:udt_amount)
+        else
+          amount = 0
+        end
 
         if udt_account.present?
           udt_account.update!(amount: amount)
         else
-          udt = Udt.find_or_create_by!(type_hash: type_hash, udt_type: "sudt")
+          udt = Udt.find_or_create_by!(type_hash: type_hash, udt_type: udt_type)
           udt.update(block_timestamp: block_timestamp) if udt.block_timestamp.blank?
-          if udt.issuer_address.blank?
+          if udt.udt_type == "sudt" && udt.issuer_address.blank?
             issuer_address = Address.where(lock_hash: udt_type_script.args).pick(:address_hash)
             udt.issuer_address = issuer_address
           end
@@ -237,7 +244,7 @@ module CkbSync
       ApplicationRecord.transaction do
         revert_dao_contract_related_operations(local_tip_block)
         revert_mining_info(local_tip_block)
-        udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq
+        udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq.concat(local_tip_block.cell_outputs.m_nft_token.pluck(:type_hash).uniq)
         recalculate_udt_transactions_count(local_tip_block)
         recalculate_dao_contract_transactions_count(local_tip_block)
         decrease_records_count(local_tip_block)
@@ -285,8 +292,12 @@ module CkbSync
           udt_account = address.udt_accounts.find_by(type_hash: type_hash)
           next if udt_account.blank?
 
-          amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
-          udt_account.update!(amount: amount)
+          if udt_account.udt_type == "sudt"
+            amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
+            udt_account.update!(amount: amount)
+          elsif udt_account.udt_type == "m_nft_token"
+            udt_account.destroy
+          end
         end
       end
     end
@@ -524,11 +535,22 @@ module CkbSync
         cell_output = build_cell_output(ckb_transaction, output, address, cell_index, outputs_data[cell_index])
         outputs << cell_output
         if cell_output.udt?
-          udt_infos << { type_script: output.type, address: address }
+          udt_infos << { type_script: output.type, address: address, udt_type: "sudt" }
           tags << "udt"
           udt = Udt.find_or_create_by!(type_hash: output.type.compute_hash, udt_type: "sudt")
           udt_ids << udt.id
           udt_address_ids << address.id
+        end
+        if cell_output.m_nft_token?
+          udt_infos << { type_script: output.type, address: address, udt_type: "m_nft_token" }
+          udt = Udt.find_or_create_by!(type_hash: output.type.compute_hash, udt_type: "m_nft_token")
+          m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: output.type.args[0..49]).first
+          if m_nft_class_type.present?
+            m_nft_class_cell = m_nft_class_type.cell_output
+            parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+            udt.update(full_name: parsed_class_data.name, icon_file: parsed_class_data.renderer)
+          end
+          udt.update(published: true)
         end
         if cell_output.nervos_dao_deposit? || cell_output.nervos_dao_withdrawing?
           tags << "dao"
@@ -586,6 +608,7 @@ module CkbSync
       )
 
       cell_output.udt_amount = CkbUtils.parse_udt_cell_data(output_data) if cell_output.udt?
+      cell_output.udt_amount = "0x#{output.type.args[-8..-1]}".hex if cell_output.m_nft_token?
 
       cell_output
     end
@@ -623,7 +646,10 @@ module CkbSync
             address_id = previous_cell_output.address_id
             input_capacities[ckb_transaction_id] << previous_cell_output.capacity
             if previous_cell_output.udt?
-              udt_infos << { type_script: previous_cell_output.node_output.type, address: previous_cell_output.address }
+              udt_infos << { type_script: previous_cell_output.node_output.type, address: previous_cell_output.address, udt_type: "sudt" }
+            end
+            if previous_cell_output.m_nft_token?
+              udt_infos << { type_script: previous_cell_output.node_output.type, address: previous_cell_output.address, udt_type: "m_nft_token" }
             end
 
             link_previous_cell_output_to_cell_input(cell_input, previous_cell_output)
