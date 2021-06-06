@@ -13,6 +13,7 @@ module CkbSync
       )
       create(:table_record_count, :block_counter)
       create(:table_record_count, :ckb_transactions_counter)
+      CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     end
 
     test "#process_block should create one block" do
@@ -2124,6 +2125,42 @@ module CkbSync
       end
     end
 
+    test "#process_block should create udt account for the address when it receive m_nft_token cell for the first time" do
+      create(:address)
+      prepare_node_data(10)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        node_output = node_block.transactions.first.outputs.first
+        node_block.transactions.first.outputs_data[0] = "0x421d0000000000000000000000000000"
+        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c")
+        create(:udt, code_hash: CkbSync::Api.instance.token_script_code_hash, type_hash: node_output.type.compute_hash, block_timestamp: Time.current.to_i, udt_type: "m_nft_token")
+        address_hash = CkbUtils.generate_address(node_output.lock)
+        address = Address.find_by(address_hash: address_hash)
+
+        assert_difference -> { address.udt_accounts.m_nft_token.count }, 1 do
+          node_data_processor.process_block(node_block)
+        end
+        assert_equal 12, address.udt_accounts.m_nft_token.first.amount
+      end
+    end
+
+    test "#process_block should create one udt when there is one m_nft_token cell" do
+      create(:address)
+      prepare_node_data(10)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        node_output = node_block.transactions.first.outputs.first
+        node_block.transactions.first.outputs_data[0] = "0x421d0000000000000000000000000000"
+        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c")
+
+        assert_difference -> { Udt.m_nft_token.count }, 1 do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
     test "#process_block should not create udt account for the address when it already received udt cell" do
       prepare_node_data(10)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
@@ -2268,6 +2305,31 @@ module CkbSync
 
       VCR.use_cassette("blocks/22") do
         assert_changes -> { address.reload.udt_accounts.sum(:amount) }, from: CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000"), to: 0 do
+          node_data_processor.call
+        end
+      end
+    end
+
+    test "should del m_nft_token udt accounts when block is invalid" do
+      create(:address)
+      address = nil
+      CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(22)
+      VCR.use_cassette("blocks/21") do
+        node_block = CkbSync::Api.instance.get_block_by_number(21)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+
+        node_output = node_block.transactions.first.outputs.first
+        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x9cf6ef96c3f053f6d128903e608516d658cac2da0000000000000001")
+        node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
+        node_data_processor.process_block(node_block)
+        block = Block.find_by(number: 21)
+        block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+        address_hash = CkbUtils.generate_address(node_output.lock)
+        address = Address.find_by(address_hash: address_hash)
+      end
+
+      VCR.use_cassette("blocks/22") do
+        assert_difference -> { address.reload.udt_accounts.m_nft_token.count }, -1 do
           node_data_processor.call
         end
       end
