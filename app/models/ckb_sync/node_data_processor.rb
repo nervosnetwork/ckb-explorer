@@ -123,7 +123,12 @@ module CkbSync
         end
 
         if udt_account.present?
-          udt_account.update!(amount: amount)
+          case udt_type
+          when "sudt"
+            udt_account.update!(amount: amount)
+          when "m_nft_token"
+            udt_account.destroy unless address.cell_outputs.live.m_nft_token.where(type_hash: type_hash).exists?
+          end
         else
           udt = Udt.find_or_create_by!(type_hash: type_hash, udt_type: udt_type)
           udt.update(block_timestamp: block_timestamp) if udt.block_timestamp.blank?
