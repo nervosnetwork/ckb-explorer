@@ -2183,6 +2183,34 @@ module CkbSync
       end
     end
 
+    test "#process_block should destroy the udt account for the address when it consume the m_nft_token cell" do
+      address = create(:address)
+      block = create(:block, :with_block_hash)
+
+      prepare_node_data(10)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        previous_ckb_transaction = create(:ckb_transaction, block: block)
+        previous_cell_output = create(:cell_output, ckb_transaction: previous_ckb_transaction, generated_by: previous_ckb_transaction, block: block, cell_type: "m_nft_token", address: address, udt_amount: "12", cell_index: 0, data: "0x421d0000000000000000000000000000")
+        previous_cell_output_lock_script = create(:lock_script, code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
+        previous_cell_output_type_script = create(:type_script, code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c", hash_type: "type", cell_output: previous_cell_output)
+        previous_cell_output.type_script = previous_cell_output_type_script
+        previous_cell_output.lock_script = previous_cell_output_lock_script
+        type_hash = CKB::Types::Script.new(previous_cell_output_type_script.to_node_type).compute_hash
+        udt = create(:udt, type_hash: type_hash, udt_type: "m_nft_token")
+        address.udt_accounts.create(udt_type: "m_nft_token", type_hash: type_hash, udt: udt)
+        input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: previous_cell_output.tx_hash, index: 0))
+        output = CKB::Types::Output.new(capacity: 150 * 10**8, lock: CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x3954acece65096bfa81258983ddb83915fc56bd8", hash_type: "type"), type: nil)
+        tx = CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", inputs: [input], outputs: [output], outputs_data: ["0x"])
+        node_block.transactions << tx
+
+        assert_difference -> { address.udt_accounts.m_nft_token.count }, -1 do
+          node_data_processor.process_block(node_block)
+        end
+      end
+    end
+
     test "#process_block should create one udt when there is one m_nft_token cell" do
       create(:address)
       prepare_node_data(10)
