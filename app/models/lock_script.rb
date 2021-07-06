@@ -1,5 +1,5 @@
 class LockScript < ApplicationRecord
-  belongs_to :cell_output
+  belongs_to :cell_output, optional: true
   belongs_to :address # will remove this later
 
   validates_presence_of :code_hash
