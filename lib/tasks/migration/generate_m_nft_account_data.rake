@@ -19,7 +19,6 @@ class MNftAccountDataGenerator
 					parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
 					udt.update!(published: true, full_name: parsed_class_data.name, icon_file: parsed_class_data.renderer)
 					udt_account = cell_output.address.udt_accounts.find_or_create_by!(udt_type: cell_output.cell_type, type_hash: udt.type_hash, udt: udt)
-					udt_account.update!(code_hash: udt.code_hash, amount: cell_output.udt_amount, published: udt.published)
 					udt_account.update!(code_hash: udt.code_hash, amount: cell_output.udt_amount, published: udt.published, full_name: udt.full_name)
 					progress_bar.increment
 				end
@@ -28,9 +27,6 @@ class MNftAccountDataGenerator
 			end
 		end
 	end
-
-	private
-
 end
 
 MNftAccountDataGenerator.new
