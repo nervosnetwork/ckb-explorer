@@ -73,6 +73,39 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should return recent year transactions count and timestamp" do
+        target_date = Time.current.beginning_of_year
+        i = 1
+        o_date = i.days.ago
+        while o_date > target_date
+          create(:daily_statistic, created_at_unixtimestamp: o_date)
+          i += 1
+          o_date = i.days.ago
+        end
+        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).recent_year.valid_indicators
+        valid_get api_v1_daily_statistic_url("transactions_count")
+
+        assert_equal [%w(transactions_count created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal DailyStatisticSerializer.new(daily_statistic_data, params: { indicator: "transactions_count" }).serialized_json, response.body
+        assert_equal ((Time.current - target_date) / (24 * 60 * 60)).to_i, json.dig("data").size
+      end
+
+      test "should return recent 90 days average hash rate" do
+        target_date = Time.current.beginning_of_year
+        i = 1
+        o_date = i.days.ago
+        while o_date > target_date
+          create(:daily_statistic, created_at_unixtimestamp: o_date)
+          i += 1
+          o_date = i.days.ago
+        end
+        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).recent_year.valid_indicators[-90..-1]
+        valid_get api_v1_daily_statistic_url("avg_hash_rate")
+        assert_equal [%w(avg_hash_rate created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal DailyStatisticSerializer.new(daily_statistic_data, params: { indicator: "avg_hash_rate" }).serialized_json, response.body
+        assert_equal 90, json.dig("data").size
+      end
     end
   end
 end
