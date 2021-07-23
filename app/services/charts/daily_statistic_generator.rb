@@ -11,7 +11,7 @@ module Charts
     end
 
     def call
-      daily_ckb_transactions_count = CkbTransaction.created_after(started_at).created_before(ended_at).count
+      daily_ckb_transactions_count = CkbTransaction.created_after(started_at).created_before(ended_at).recent.count
       return if daily_ckb_transactions_count.zero?
 
       mining_reward = Block.where("timestamp <= ?", ended_at).sum(:secondary_reward)
