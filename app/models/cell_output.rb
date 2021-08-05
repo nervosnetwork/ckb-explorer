@@ -3,7 +3,7 @@ class CellOutput < ApplicationRecord
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   MIN_SUDT_AMOUNT_BYTESIZE = 16
   enum status: { live: 0, dead: 1 }
-  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3 }
+  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class:5, m_nft_token: 6 }
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
@@ -62,6 +62,31 @@ class CellOutput < ApplicationRecord
     CkbUtils.hash_value_to_s(
       symbol: udt_info&.symbol, amount: udt_amount, decimal: udt_info&.decimal, type_hash: type_hash, published: !!udt_info&.published
     )
+  end
+
+  def m_nft_info
+    return unless cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
+
+    case cell_type
+    when "m_nft_issuer"
+      value = { issuer_name: CkbUtils.parse_issuer_data(data).info["name"] }
+    when "m_nft_class"
+      parsed_data = CkbUtils.parse_token_class_data(data)
+      value = { class_name: parsed_data.name, total: parsed_data.total }
+    when "m_nft_token"
+      # issuer_id size is 20 bytes, class_id size is 4 bytes
+      m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: type_script.args[0..49]).first
+      if m_nft_class_type.present?
+        m_nft_class_cell = m_nft_class_type.cell_output
+        parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+        value = { class_name: parsed_class_data.name, token_id: type_script.args[50..-1], total: parsed_class_data.total }
+      else
+        value = { class_name: "", token_id: "", total: "" }
+      end
+    else
+      raise RuntimeError.new("invalid cell type")
+    end
+    CkbUtils.hash_value_to_s(value)
   end
 
   def flush_cache
