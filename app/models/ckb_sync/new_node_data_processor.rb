@@ -1055,7 +1055,7 @@ module CkbSync
     end
 
     def update_address_balance_and_ckb_transactions_count(address)
-      # return if address.mined_blocks_count > 0
+      return if address.mined_blocks_count > 0
 
       address.balance = address.cell_outputs.live.sum(:capacity)
       address.ckb_transactions_count = address.custom_ckb_transactions.count
