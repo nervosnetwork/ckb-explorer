@@ -966,7 +966,7 @@ module CkbSync
     end
 
     test "should do nothing on dao contract when block is invalid but there is no dao cell" do
-      dao_contract = DaoContract.default_contract
+      dao_contract = create(:dao_contract)
       init_total_deposit = 10**8 * 10000
       init_depositors_count = 3
       init_interest_granted = 10**8 * 100
@@ -1474,10 +1474,7 @@ module CkbSync
           node_block.transactions.first.outputs_data << "0x"
         end
         new_local_block = node_data_processor.process_block(node_block)
-<<<<<<< HEAD
-=======
-        binding.pry
->>>>>>> cd6437fb (chore: adjust tests)
+
         assert_equal origin_balance + new_local_block.cell_outputs.sum(:capacity), new_local_block.contained_addresses.sum(:balance)
       end
     end
@@ -2197,11 +2194,12 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         previous_ckb_transaction = create(:ckb_transaction, block: block)
-        previous_cell_output = create(:cell_output, ckb_transaction: previous_ckb_transaction, generated_by: previous_ckb_transaction, block: block, cell_type: "m_nft_token", address: address, udt_amount: "12", cell_index: 0, data: "0x421d0000000000000000000000000000")
+        token_type_script = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c", hash_type: "type")
+        previous_cell_output = create(:cell_output, capacity: 1000 * 10**8, tx_hash: previous_ckb_transaction.tx_hash, ckb_transaction: previous_ckb_transaction, generated_by: previous_ckb_transaction, block: block, cell_type: "m_nft_token", address: address, udt_amount: "12", cell_index: 0, data: "0x421d0000000000000000000000000000", type_hash: token_type_script.compute_hash)
         previous_cell_output_lock_script = create(:lock_script, code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
         previous_cell_output_type_script = create(:type_script, code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c", hash_type: "type", cell_output: previous_cell_output)
-        previous_cell_output.type_script = previous_cell_output_type_script
-        previous_cell_output.lock_script = previous_cell_output_lock_script
+        previous_cell_output.type_script_id = previous_cell_output_type_script.id
+        previous_cell_output.lock_script_id = previous_cell_output_lock_script.id
         type_hash = CKB::Types::Script.new(previous_cell_output_type_script.to_node_type).compute_hash
         udt = create(:udt, type_hash: type_hash, udt_type: "m_nft_token")
         address.udt_accounts.create(udt_type: "m_nft_token", type_hash: type_hash, udt: udt)
