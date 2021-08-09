@@ -84,6 +84,7 @@ GEM
     ansi (1.5.0)
     ast (2.4.0)
     awesome_print (1.8.0)
+    benchmark_methods (0.7)
     bitcoin-secp256k1 (0.5.2)
       ffi (>= 1.9.25)
     bootsnap (1.4.6)
@@ -353,6 +354,7 @@ DEPENDENCIES
   activerecord-import
   annotate
   awesome_print
+  benchmark_methods
   bootsnap (>= 1.1.0)
   ckb-sdk-ruby!
   codecov
