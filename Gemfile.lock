@@ -16,6 +16,12 @@ GIT
       net-http-persistent (~> 3.1.0)
       rbnacl (~> 7.1.1)
 
+GIT
+  remote: https://github.com/shaojunda/benchmark_methods
+  revision: 7b3ff231ea42bb054cc8c26139fa38d3965394e0
+  specs:
+    benchmark_methods (0.7)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -353,6 +359,7 @@ DEPENDENCIES
   activerecord-import
   annotate
   awesome_print
+  benchmark_methods!
   bootsnap (>= 1.1.0)
   ckb-sdk-ruby!
   codecov
