@@ -77,7 +77,7 @@ class CellOutput < ApplicationRecord
       # issuer_id size is 20 bytes, class_id size is 4 bytes
       m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: type_script.args[0..49]).first
       if m_nft_class_type.present?
-        m_nft_class_cell = m_nft_class_type.cell_output
+        m_nft_class_cell = m_nft_class_type.cell_outputs.live.last
         parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
         value = { class_name: parsed_class_data.name, token_id: type_script.args[50..-1], total: parsed_class_data.total }
       else
@@ -131,6 +131,8 @@ end
 #  index_cell_outputs_on_ckb_transaction_id      (ckb_transaction_id)
 #  index_cell_outputs_on_consumed_by_id          (consumed_by_id)
 #  index_cell_outputs_on_generated_by_id         (generated_by_id)
+#  index_cell_outputs_on_lock_script_id          (lock_script_id)
 #  index_cell_outputs_on_status                  (status)
 #  index_cell_outputs_on_tx_hash_and_cell_index  (tx_hash,cell_index)
+#  index_cell_outputs_on_type_script_id          (type_script_id)
 #
