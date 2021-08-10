@@ -34,6 +34,8 @@ class MNftAccountDataGenerator
             m_nft_class_cell = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: cell_output.type_script.args[0..49]).first.cell_outputs.live.last
           end
           parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+          puts "m_nft_class_cell_id: #{m_nft_class_cell.id}, parsed_class_data: #{parsed_class_data}"
+
           udt.update!(published: true, full_name: parsed_class_data.name, icon_file: parsed_class_data.renderer)
           udt_account = cell_output.address.udt_accounts.find_or_create_by!(udt_type: cell_output.cell_type, type_hash: udt.type_hash, udt: udt)
           udt_account.update!(code_hash: udt.code_hash, amount: cell_output.udt_amount, published: udt.published, full_name: udt.full_name)
