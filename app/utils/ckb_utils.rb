@@ -316,7 +316,7 @@ class CkbUtils
     class_count = data[2..9].to_i(16)
     set_count = data[10..17].to_i(16)
     info_size = data[18..21].to_i(16)
-    info = JSON.parse([data[22..-1]].pack("H*").force_encoding("utf-8"))
+    info = JSON.parse([data[22..-1]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace))
     OpenStruct.new(version: version, class_count: class_count, set_count: set_count, info_size: info_size, info: info)
   rescue
     OpenStruct.new(version: 0, class_count: 0, set_count: 0, info_size: 0, info: "")
@@ -330,19 +330,19 @@ class CkbUtils
     configure = data[18..19].to_i(16)
     name_size = data[20..23].to_i(16)
     name_end_index = (24 + name_size * 2 - 1)
-    name = [data[24..name_end_index]].pack("H*").force_encoding("utf-8")
+    name = [data[24..name_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace)
     description_size_start_index = name_end_index + 1
     description_size_end_index = description_size_start_index + 4 - 1
     description_size = data[description_size_start_index..description_size_end_index].to_i(16)
     description_start_index = description_size_end_index + 1
     description_end_index = description_start_index + description_size * 2 - 1
-    description = [data[description_start_index..description_end_index]].pack("H*").force_encoding("utf-8")
+    description = [data[description_start_index..description_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace)
     renderer_size_start_index = description_end_index + 1
     renderer_size_end_index = renderer_size_start_index + 4 - 1
     renderer_size = data[renderer_size_start_index..renderer_size_end_index].to_i(16)
     renderer_start_index = renderer_size_end_index + 1
     renderer_end_index = renderer_start_index + renderer_size * 2 - 1
-    renderer = [data[renderer_start_index, renderer_end_index]].pack("H*").force_encoding("utf-8")
+    renderer = [data[renderer_start_index, renderer_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace)
     OpenStruct.new(version: version, total: total, issued: issued, configure: configure, name: name, description: description, renderer: renderer)
   rescue
     OpenStruct.new(version: 0, total: 0, issued: 0, configure: 0, name: "", description: "", renderer: "")
