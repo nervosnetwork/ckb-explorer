@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_07_16_053144) do
+ActiveRecord::Schema.define(version: 2021_08_10_022442) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -168,8 +168,10 @@ ActiveRecord::Schema.define(version: 2021_07_16_053144) do
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
     t.index ["consumed_by_id"], name: "index_cell_outputs_on_consumed_by_id"
     t.index ["generated_by_id"], name: "index_cell_outputs_on_generated_by_id"
+    t.index ["lock_script_id"], name: "index_cell_outputs_on_lock_script_id"
     t.index ["status"], name: "index_cell_outputs_on_status"
     t.index ["tx_hash", "cell_index"], name: "index_cell_outputs_on_tx_hash_and_cell_index"
+    t.index ["type_script_id"], name: "index_cell_outputs_on_type_script_id"
   end
 
   create_table "ckb_transactions", force: :cascade do |t|

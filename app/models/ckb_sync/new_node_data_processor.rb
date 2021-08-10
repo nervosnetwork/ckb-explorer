@@ -17,11 +17,13 @@ module CkbSync
         end
       Rails.logger.error "get_block_by_number!: %5.3f" % result
       if !forked?(target_block, local_tip_block)
+        block = nil
         result =
           Benchmark.realtime do
-            process_block(target_block)
+            block = process_block(target_block)
           end
         Rails.logger.error "process_block! #{target_block_number}: %5.3f" % result
+        block
       else
         invalid_block(local_tip_block)
       end
@@ -44,15 +46,16 @@ module CkbSync
         Rails.logger.error "build_uncle_blocks!: %5.3f" % result
         inputs = []
         outputs = []
+        outputs_data = []
         ckb_txs = nil
         result =
           Benchmark.realtime do
-            ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs).to_a
+            ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
           end
         Rails.logger.error "build_ckb_transactions!: %5.3f" % result
         result =
           Benchmark.realtime do
-            build_udts!(local_block, outputs)
+            build_udts!(local_block, outputs, outputs_data.flatten)
           end
         Rails.logger.error "build_udts!!: %5.3f" % result
         tags = []
@@ -324,11 +327,12 @@ module CkbSync
     def update_or_create_udt_accounts!(local_block)
       new_udt_accounts_attributes = Set.new
       udt_accounts_attributes = Set.new
-      local_block.cell_outputs.udt.select(:id, :address_id, :type_hash).find_each do |udt_output|
+      local_block.cell_outputs.where(cell_type: %w(udt m_nft_token)).select(:id, :address_id, :type_hash, :cell_type).find_each do |udt_output|
         address = Address.find(udt_output.address_id)
-        udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash).select(:id, :created_at).first
-        amount = address.cell_outputs.live.udt.where(type_hash: udt_output.type_hash).sum(:udt_amount)
-        udt = Udt.where(type_hash: udt_output.type_hash, udt_type: "sudt").select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
+        udt_type = udt_type(udt_output.cell_type)
+        udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
+        amount = udt_account_amount(udt_type, udt_output.type_hash, address)
+        udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
         if udt_account.present?
           udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
         else
@@ -338,18 +342,41 @@ module CkbSync
         end
       end
 
-      CellOutput.where(consumed_by_id: local_block.ckb_transactions.pluck(:id)).udt.select(:id, :address_id, :type_hash).find_each do |udt_output|
+      CellOutput.where(consumed_by_id: local_block.ckb_transactions.pluck(:id)).where(cell_type: %w(udt m_nft_token)).select(:id, :address_id, :type_hash, :cell_type).find_each do |udt_output|
         address = Address.find(udt_output.address_id)
-        udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash).select(:id, :created_at).first
-        amount = address.cell_outputs.live.udt.where(type_hash: udt_output.type_hash).sum(:udt_amount)
-        udt = Udt.where(type_hash: udt_output.type_hash, udt_type: "sudt").select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
+        udt_type = udt_type(udt_output.cell_type)
+        udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
+        amount = udt_account_amount(udt_type, udt_output.type_hash, address)
+        udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
         if udt_account.present?
-          udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
+          case udt_type
+          when "sudt"
+            udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
+          when "m_nft_token"
+            udt_account.destroy unless address.cell_outputs.live.m_nft_token.where(type_hash: udt_output.type_hash).exists?
+          else
+            nil
+          end
         end
       end
 
       UdtAccount.insert_all!(new_udt_accounts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if new_udt_accounts_attributes.present?
       UdtAccount.upsert_all(udt_accounts_attributes.map! { |attr| attr.merge!(updated_at: Time.current) }) if udt_accounts_attributes.present?
+    end
+
+    def udt_type(cell_type)
+      cell_type == "udt" ? "sudt" : cell_type
+    end
+
+    def udt_account_amount(udt_type, type_hash, address)
+      case udt_type
+      when "sudt"
+        address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
+      when "m_nft_token"
+        address.cell_outputs.live.m_nft_token.where(type_hash: type_hash).sum(:udt_amount)
+      else
+        0
+      end
     end
 
     def update_table_records_count(local_block)
@@ -405,16 +432,18 @@ module CkbSync
                           address_ids: local_block.ckb_transactions.pluck(:contained_address_ids).flatten.uniq)
     end
 
-    def build_udts!(local_block, outputs)
+    def build_udts!(local_block, outputs, outputs_data)
       udts_attributes = Set.new
-      outputs.each do |output|
-        next if output.is_a?(Integer) || cell_type(output.type) != "udt"
+      outputs.each_with_index do |output, index|
+        next if output.is_a?(Integer)
+        cell_type = cell_type(output.type, outputs_data[index])
+        next unless cell_type.in?(%w(udt m_nft_token))
 
         type_hash = output.type.compute_hash
         unless Udt.where(type_hash: type_hash).exists?
           # fill issuer_address after publish the token
           udts_attributes << {
-            type_hash: type_hash, udt_type: "sudt", block_timestamp: local_block.timestamp, args: output.type.args,
+            type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
             code_hash: output.type.code_hash, hash_type: output.type.hash_type }
         end
       end
@@ -692,6 +721,7 @@ module CkbSync
         if output.type.present?
           local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}")
         end
+      udt_amount = udt_amount(cell_type(output.type, output_data), output_data, output.type&.args)
       {
         ckb_transaction_id: ckb_transaction["id"],
         capacity: output.capacity,
@@ -709,10 +739,21 @@ module CkbSync
         dao: local_block.dao,
         lock_script_id: lock_script.id,
         type_script_id: type_script&.id,
-        udt_amount: CkbUtils.parse_udt_cell_data(output_data),
+        udt_amount: udt_amount,
         created_at: Time.current,
         updated_at: Time.current
       }
+    end
+
+    def udt_amount(cell_type, output_data, type_script_args)
+      case cell_type
+      when "udt"
+        CkbUtils.parse_udt_cell_data(output_data)
+      when "m_nft_token"
+        "0x#{type_script_args[-8..-1]}".hex
+      else
+        nil
+      end
     end
 
     def cell_input_attributes(input, ckb_transaction_id, local_block_id, prev_outputs)
@@ -759,7 +800,7 @@ module CkbSync
       end
     end
 
-    def build_ckb_transactions!(node_block, local_block, inputs, outputs)
+    def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
       ckb_transactions_attributes = []
       tx_index = 0
       node_block.transactions.each do |tx|
@@ -768,7 +809,10 @@ module CkbSync
         inputs.concat tx.inputs
         outputs << tx_index
         outputs.concat tx.outputs
+        outputs_data << tx_index
+        outputs_data.concat << tx.outputs_data
         tx_index += 1
+
       end
       CkbTransaction.insert_all!(ckb_transactions_attributes, returning: %w(id tx_hash created_at))
     end
@@ -934,20 +978,7 @@ module CkbSync
     end
 
     def cell_type(type_script, output_data = nil)
-      return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]].include?(type_script&.code_hash)
-
-      case type_script&.code_hash
-      when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
-        if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
-          "nervos_dao_deposit"
-        else
-          "nervos_dao_withdrawing"
-        end
-      when ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]
-        "udt"
-      else
-        "normal"
-      end
+      CkbUtils.cell_type(type_script, output_data)
     end
 
     def forked?(target_block, local_tip_block)
@@ -971,7 +1002,7 @@ module CkbSync
         udt_type_hashes = nil
         result =
           Benchmark.realtime do
-            udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq
+            udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq.concat(local_tip_block.cell_outputs.m_nft_token.pluck(:type_hash).uniq)
           end
         Rails.logger.error "pluck type_hash!: %5.3f" % result
         result =
@@ -1094,8 +1125,12 @@ module CkbSync
           udt_account = address.udt_accounts.find_by(type_hash: type_hash)
           next if udt_account.blank?
 
-          amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
-          udt_account.update!(amount: amount)
+          if udt_account.udt_type == "sudt"
+            amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
+            udt_account.update!(amount: amount)
+          elsif udt_account.udt_type == "m_nft_token"
+            udt_account.destroy
+          end
         end
       end
     end
