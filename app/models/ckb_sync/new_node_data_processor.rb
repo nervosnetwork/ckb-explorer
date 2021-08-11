@@ -806,9 +806,9 @@ module CkbSync
 
       lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
       lock = LockScript.find_or_create_by(
-        args: lock_script.args,
         code_hash: lock_script.code_hash,
-        hash_type: lock_script.hash_type
+        hash_type: lock_script.hash_type,
+        args: lock_script.args
       )
       local_cache.fetch("NodeData/Address/#{lock_script.code_hash}-#{lock_script.hash_type}-#{lock_script.args}") do
         Address.find_or_create_address(lock_script, block_timestamp, lock.id)
