@@ -20,12 +20,13 @@ class RemoveUselessScripts
 
   def remove_lock_scripts(dry_run)
     progress_bar = ProgressBar.create({ total: Address.count, format: "%e %B %p%% %c/%C" })
-    Address.select(:id, :created_at).find_each do |addr|
+    Address.select(:id, :address_hash, :created_at).find_each do |addr|
       ApplicationRecord.transaction do
         addresses_attrs = []
         puts "address_id: #{addr.id}"
         first_lock_id = nil
-        LockScript.where(address_id: addr.id).select(:id, :address_id).find_in_batches do |locks|
+        s = CKB::AddressParser.new(addr.address_hash).parse.script
+        LockScript.where(code_hash: s.code_hash, hash_type: s.hash_type, args: s.args).find_in_batches do |locks|
           lock_ids = []
           locks.each do |lock|
             puts "address_id: #{addr.id}, lock_id: #{lock.id}"
@@ -42,12 +43,12 @@ class RemoveUselessScripts
             LockScript.where(id: lock_ids).delete_all if lock_ids.present?
           end
         end
-        addresses_attrs << { id: addr.id, lock_script_id: first_lock_id, created_at: addr.created_at, updated_at: Time.current }
+        addresses_attrs << { id: addr.id, lock_script_id: first_lock_id, created_at: addr.created_at, updated_at: Time.current } if first_lock_id.present?
         if dry_run
           puts "update address: #{addresses_attrs}"
         else
           puts "update address: #{addresses_attrs}"
-          Address.upsert_all(addresses_attrs)
+          Address.upsert_all(addresses_attrs) if addresses_attrs.present?
         end
       end
       progress_bar.increment

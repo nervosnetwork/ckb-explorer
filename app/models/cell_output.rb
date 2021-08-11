@@ -27,12 +27,12 @@ class CellOutput < ApplicationRecord
 
   # will remove this method after the migration task processed
   def lock_script
-    LockScript.find_by(id: lock_script_id) || LockScript.find_by(cell_output_id: id)
+    LockScript.find_by(cell_output_id: id) || LockScript.find_by(id: lock_script_id)
   end
 
   # will remove this method after the migration task processed
   def type_script
-    TypeScript.find_by(id: type_script_id) || TypeScript.find_by(cell_output_id: id)
+    TypeScript.find_by(cell_output_id: id) || TypeScript.find_by(id: type_script_id)
   end
 
   def address_hash
