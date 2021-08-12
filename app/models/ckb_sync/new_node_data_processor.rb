@@ -661,7 +661,8 @@ module CkbSync
             cell_type: previous_output.cell_type,
             created_at: previous_output.created_at,
             status: "dead",
-            updated_at: Time.current
+            updated_at: Time.current,
+            consumed_block_timestamp: CkbTransaction.find(ckb_transaction_id).block_timestamp
           },
           previous_output.capacity,
           previous_output.type_hash,
