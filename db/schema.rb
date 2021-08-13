@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_10_022442) do
+ActiveRecord::Schema.define(version: 2021_08_13_081152) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -163,6 +163,8 @@ ActiveRecord::Schema.define(version: 2021_08_10_022442) do
     t.string "dao"
     t.bigint "lock_script_id"
     t.bigint "type_script_id"
+    t.index ["block_timestamp"], name: "index_cell_outputs_on_block_timestamp"
+    t.index ["consumed_block_timestamp"], name: "index_cell_outputs_on_consumed_block_timestamp"
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
