@@ -19,7 +19,7 @@ class CellOutput < ApplicationRecord
 
   scope :consumed_after, ->(block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
   scope :consumed_before, ->(block_timestamp) { where("consumed_block_timestamp <= ?", block_timestamp) }
-  scope :unconsumed_at, ->(block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp is null", block_timestamp) }
+  scope :unconsumed_at, ->(block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp = 0", block_timestamp) }
   scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
 
@@ -126,6 +126,8 @@ end
 #
 # Indexes
 #
+#  index_cell_outputs_on_block_timestamp           (block_timestamp)
+#  index_cell_outputs_on_consumed_block_timestamp  (consumed_block_timestamp)
 #  index_cell_outputs_on_address_id_and_status   (address_id,status)
 #  index_cell_outputs_on_block_id                (block_id)
 #  index_cell_outputs_on_ckb_transaction_id      (ckb_transaction_id)
