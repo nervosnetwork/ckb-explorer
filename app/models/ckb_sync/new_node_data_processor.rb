@@ -46,7 +46,8 @@ module CkbSync
         contained_udt_ids = []
         contained_address_ids = []
         process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
-        input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
+        addrs_changes = Hash.new { |hash, key| hash[key] = {} }
+        input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
 
         # update explorer data
         update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
@@ -59,8 +60,8 @@ module CkbSync
         # maybe can be changed to asynchronous update
         update_udt_info(local_block)
         process_dao_events!(local_block)
+        update_addresses_info(addrs_changes)
       end
-      update_addresses_info
 
       cache_address_txs(local_block)
       generate_tx_display_info(local_block)
@@ -336,15 +337,17 @@ module CkbSync
       CkbUtils.update_current_block_mining_info(local_block)
     end
 
-    def update_addresses_info
-      block_number = local_cache.read("BlockNumber")
-      # local_cache.read("NodeData/#{block_number}/ContainedAddresses")&.each do |addr|
-      #   UpdateAddressInfoWorker.perform_async(addr.id)
-      #   address_attributes << { id: addr.id, balance: addr.cell_outputs.live.sum(:capacity), created_at: addr.created_at, updated_at: Time.current }
-      # end
-      #
-      UpdateAddressInfoWorker.perform_async(block_number)
-      # Address.upsert_all(address_attributes) if address_attributes.present?
+    def update_addresses_info(addrs_change)
+      attributes = addrs_change.map do |addr_id, values|
+        addr = Address.where(id: addr_id).select(:id, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at).take!
+        balance_diff = values[:balance_diff]
+        live_cells_diff = values[:cells_diff]
+        dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
+        ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
+        { id: addr.id, balance: addr.balance + balance_diff, ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
+          live_cells_count: addr.live_cells_count + live_cells_diff, dao_transactions_count: addr.dao_transactions_count + dao_txs_count, created_at: addr.created_at, updated_at: Time.current }
+      end
+      Address.upsert_all(attributes) if attributes.present?
     end
 
     def update_block_info!(local_block)
@@ -398,7 +401,7 @@ module CkbSync
       CkbTransaction.upsert_all(ckb_transactions_attributes) if ckb_transactions_attributes.present?
     end
 
-    def build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
+    def build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
       cell_outputs_attributes = []
       cell_inputs_attributes = []
       prev_cell_outputs_attributes = []
@@ -416,11 +419,11 @@ module CkbSync
       build_addresses!(outputs, local_block)
       # prepare script ids for insert cell_outputs
       prepare_script_ids(outputs)
-      build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
+      build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
 
       CellOutput.insert_all!(cell_outputs_attributes) if cell_outputs_attributes.present?
       prev_outputs = prepare_previous_outputs(inputs)
-      build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs)
+      build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes)
 
       CellInput.insert_all!(cell_inputs_attributes)
       CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
@@ -523,7 +526,7 @@ module CkbSync
       }
     end
 
-    def build_cell_inputs(inputs, ckb_txs, local_block_id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs)
+    def build_cell_inputs(inputs, ckb_txs, local_block_id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes)
       tx_index = 0
       inputs.each do |item|
         if item.is_a?(Integer)
@@ -538,11 +541,32 @@ module CkbSync
           attributes = cell_input_attributes(item, ckb_txs[tx_index]["id"], local_block_id, prev_outputs)
           cell_inputs_attributes << attributes[0]
           if attributes[1].present?
+            if addrs_changes[attributes[4]][:balance_diff].present?
+              addrs_changes[attributes[4]][:balance_diff] -= attributes[2]
+            else
+              addrs_changes[attributes[4]][:balance_diff] = -attributes[2]
+            end
+            if addrs_changes[attributes[4]][:cells_diff].present?
+              addrs_changes[attributes[4]][:cells_diff] -= 1
+            else
+              addrs_changes[attributes[4]][:cells_diff] = -1
+            end
+            if addrs_changes[attributes[4]][:ckb_txs].present?
+              addrs_changes[attributes[4]][:ckb_txs] << ckb_txs[tx_index]["tx_hash"]
+            else
+              addrs_changes[attributes[4]][:ckb_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
+            end
+
             prev_cell_outputs_attributes << attributes[1]
             contained_addr_ids[tx_index] << attributes[4]
             if attributes[1][:cell_type].in?(%w(nervos_dao_withdrawing))
               tags[tx_index] << "dao"
               dao_address_ids[tx_index] << attributes[4]
+              if addrs_changes[attributes[4]][:dao_txs].present?
+                addrs_changes[attributes[4]][:dao_txs] << ckb_txs[tx_index]["tx_hash"]
+              else
+                addrs_changes[attributes[4]][:dao_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
+              end
             end
             if attributes[1][:cell_type] == "udt"
               tags[tx_index] << "udt"
@@ -555,7 +579,7 @@ module CkbSync
       end
     end
 
-    def build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
+    def build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
       cell_index = 0
       tx_index = 0
       outputs.each do |item|
@@ -568,12 +592,33 @@ module CkbSync
           end
         else
           address = local_cache.read("NodeData/Address/#{item.lock.code_hash}-#{item.lock.hash_type}-#{item.lock.args}")
+          if addrs_changes[address.id][:balance_diff].present?
+            addrs_changes[address.id][:balance_diff] += item.capacity
+          else
+            addrs_changes[address.id][:balance_diff] = item.capacity
+          end
+
+          if addrs_changes[address.id][:cells_diff].present?
+            addrs_changes[address.id][:cells_diff] += 1
+          else
+            addrs_changes[address.id][:cells_diff] = 1
+          end
+          if addrs_changes[address.id][:ckb_txs].present?
+            addrs_changes[address.id][:ckb_txs] << ckb_txs[tx_index]["tx_hash"]
+          else
+            addrs_changes[address.id][:ckb_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
+          end
           contained_addr_ids[tx_index] << address.id
           attr = cell_output_attributes(item, address, ckb_txs[tx_index], local_block, cell_index, node_block.transactions[tx_index].outputs_data[cell_index])
           cell_outputs_attributes << attr
           if attr[:cell_type].in?(%w(nervos_dao_deposit nervos_dao_withdrawing))
             tags[tx_index] << "dao"
             dao_address_ids[tx_index] << address.id
+            if addrs_changes[address.id][:dao_txs].present?
+              addrs_changes[address.id][:dao_txs] << ckb_txs[tx_index]["tx_hash"]
+            else
+              addrs_changes[address.id][:dao_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
+            end
           end
           if attr[:cell_type] == "udt"
             tags[tx_index] << "udt"
@@ -890,8 +935,6 @@ module CkbSync
     end
 
     def update_address_balance_and_ckb_transactions_count(address)
-      return if address.mined_blocks_count > 0
-
       address.balance = address.cell_outputs.live.sum(:capacity)
       address.ckb_transactions_count = address.custom_ckb_transactions.count
       address.live_cells_count = address.cell_outputs.live.count
