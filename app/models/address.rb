@@ -126,7 +126,7 @@ end
 # Table name: addresses
 #
 #  id                     :bigint           not null, primary key
-#  balance                :decimal(30, )
+#  balance                :decimal(30, )    default(0)
 #  address_hash           :binary
 #  cell_consumed          :decimal(30, )
 #  ckb_transactions_count :decimal(30, )    default(0)

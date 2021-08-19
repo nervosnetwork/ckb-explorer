@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_13_081152) do
+ActiveRecord::Schema.define(version: 2021_08_19_124921) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -25,7 +25,7 @@ ActiveRecord::Schema.define(version: 2021_08_13_081152) do
   end
 
   create_table "addresses", force: :cascade do |t|
-    t.decimal "balance", precision: 30
+    t.decimal "balance", precision: 30, default: "0"
     t.binary "address_hash"
     t.decimal "cell_consumed", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
