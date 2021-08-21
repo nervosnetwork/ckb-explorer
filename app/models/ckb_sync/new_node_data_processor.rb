@@ -340,16 +340,21 @@ module CkbSync
     end
 
     def update_addresses_info(addrs_change)
+      addrs = []
       attributes = addrs_change.map do |addr_id, values|
-        addr = Address.where(id: addr_id).select(:id, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at).take!
+        addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at).take!
         balance_diff = values[:balance_diff]
         live_cells_diff = values[:cells_diff]
         dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
         ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
+        addrs << addr
         { id: addr.id, balance: addr.balance + balance_diff, ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
           live_cells_count: addr.live_cells_count + live_cells_diff, dao_transactions_count: addr.dao_transactions_count + dao_txs_count, created_at: addr.created_at, updated_at: Time.current }
       end
-      Address.upsert_all(attributes) if attributes.present?
+      if attributes.present?
+        Address.upsert_all(attributes)
+        addrs.each(&:touch)
+      end
     end
 
     def update_block_info!(local_block)
