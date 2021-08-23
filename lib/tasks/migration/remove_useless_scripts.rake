@@ -25,7 +25,7 @@ class RemoveUselessScripts
         addresses_attrs = []
         puts "address_id: #{addr.id}"
         first_lock_id = nil
-        s = CKB::AddressParser.new(addr.address_hash).parse.script
+        s = CkbUtils.parse_address(addr.address_hash).script
         LockScript.where(code_hash: s.code_hash, hash_type: s.hash_type, args: s.args).find_in_batches do |locks|
           lock_ids = []
           locks.each do |lock|
