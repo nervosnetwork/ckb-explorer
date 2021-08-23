@@ -10,10 +10,6 @@ class LockScriptTest < ActiveSupport::TestCase
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
 
-  context "associations" do
-    should belong_to(:address)
-  end
-
   context "validations" do
     should validate_presence_of(:code_hash)
   end
