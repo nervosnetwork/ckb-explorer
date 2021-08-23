@@ -20,7 +20,7 @@ class NullAddress
   def lock_hash; end
 
   def lock_info
-    parsed_address = CKB::AddressParser.new(address_hash).parse
+    parsed_address = CkbUtils.parse_address(address_hash)
     LockScript.new(args: parsed_address.script.args, code_hash: parsed_address.script.code_hash).lock_info
   end
 
@@ -47,7 +47,7 @@ class NullAddress
   def lock_script
     @lock_script ||=
       begin
-        parsed_address = CKB::AddressParser.new(address_hash).parse
+        parsed_address = CkbUtils.parse_address(address_hash)
         raise Api::V1::Exceptions::AddressNotMatchEnvironmentError.new(ENV["CKB_NET_MODE"]) if parsed_address.mode != ENV["CKB_NET_MODE"]
 
         script = parsed_address.script
