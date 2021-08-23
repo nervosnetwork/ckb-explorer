@@ -14,8 +14,8 @@ module Validations
       api_errors = []
 
       if invalid?
-        api_errors << Api::V1::Exceptions::PageParamError.new if :page.in?(errors.keys)
-        api_errors << Api::V1::Exceptions::PageSizeParamError.new if :page_size.in?(errors.keys)
+        api_errors << Api::V1::Exceptions::PageParamError.new if :page.in?(errors.attribute_names)
+        api_errors << Api::V1::Exceptions::PageSizeParamError.new if :page_size.in?(errors.attribute_names)
         {
           status: api_errors.first.status,
           errors: RequestErrorSerializer.new(api_errors, message: api_errors.first.title)
