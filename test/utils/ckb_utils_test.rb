@@ -29,7 +29,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".parse_address raise error when address is mainnet address and mode is testnet" do
-    assert_raises CKB::AddressParser::InvalidPrefixError do
+    assert_raises CkbAddressParser::InvalidPrefixError do
       CkbUtils.parse_address("haha1qygndsefa43s6m882pcj53m4gdnj4k440axqsm2hnz")
     end
   end
@@ -387,20 +387,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal name, parsed_data.name
     assert_equal description, parsed_data.description
     assert_equal renderer, parsed_data.renderer
-  end
-
-  test "parse_token_data should return correct info" do
-    version = 0
-    characteristic = "0000000000000000"
-    configure = "11000000".to_i(2)
-    state = "00".rjust(8, "0").to_i(2)
-    data = "0x000000000000000000c000"
-    parsed_data = CkbUtils.parse_token_data(data)
-
-    assert_equal version, parsed_data.version
-    assert_equal characteristic, parsed_data.characteristic
-    assert_equal state, parsed_data.state
-    assert_equal configure, parsed_data.configure
   end
 
   private

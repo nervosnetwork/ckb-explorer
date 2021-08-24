@@ -34,7 +34,7 @@ module CkbSync
         node_block.transactions.first.witnesses = ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000da648442dbb7347e467d1d09da13e5cd3a0ef0e104000000deadbeef"]
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         block = node_data_processor.process_block(node_block)
-        assert_equal "deadbeef", block.miner_message
+        assert_equal "0xdeadbeef", block.miner_message
       end
     end
 
