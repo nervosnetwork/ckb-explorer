@@ -73,9 +73,9 @@ class CkbAddressParser
       case code_hash_index
       when CKB::Address::CODE_HASH_INDEX_SINGLESIG
         CKB::SystemCodeHash::SECP256K1_BLAKE160_SIGHASH_ALL_TYPE_HASH
-      when Address::CODE_HASH_INDEX_MULTISIG_SIG
+      when CKB::Address::CODE_HASH_INDEX_MULTISIG_SIG
         CKB::SystemCodeHash::SECP256K1_BLAKE160_MULTISIG_ALL_TYPE_HASH
-      when Address::CODE_HASH_INDEX_ANYONE_CAN_PAY
+      when CKB::Address::CODE_HASH_INDEX_ANYONE_CAN_PAY
         if mode == CKB::MODE::TESTNET
           CKB::SystemCodeHash::ANYONE_CAN_PAY_CODE_HASH_ON_AGGRON
         else
@@ -90,7 +90,7 @@ class CkbAddressParser
       case decoded_prefix
       when CKB::Address::PREFIX_TESTNET
         CKB:: MODE::TESTNET
-      when Address::PREFIX_MAINNET
+      when CKB::Address::PREFIX_MAINNET
         CKB::MODE::MAINNET
       else
         raise InvalidPrefixError, "Invalid prefix"
