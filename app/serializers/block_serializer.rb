@@ -2,7 +2,7 @@ class BlockSerializer
   include FastJsonapi::ObjectSerializer
 
   attributes :block_hash, :uncle_block_hashes, :miner_hash, :transactions_root,
-             :reward_status, :received_tx_fee_status
+             :reward_status, :received_tx_fee_status, :miner_message
 
   attribute :number do |object|
     object.number.to_s
