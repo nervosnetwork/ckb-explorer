@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_24_133215) do
+ActiveRecord::Schema.define(version: 2021_08_24_155634) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -330,6 +330,7 @@ ActiveRecord::Schema.define(version: 2021_08_24_133215) do
     t.integer "block_size"
     t.decimal "proposal_reward", precision: 30
     t.decimal "commit_reward", precision: 30
+    t.string "miner_message"
   end
 
   create_table "forked_events", force: :cascade do |t|
