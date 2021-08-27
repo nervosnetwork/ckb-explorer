@@ -8,7 +8,7 @@ module Api
         udt = Udt.find_by!(type_hash: params[:id], published: true)
         ckb_transactions = udt.ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(@page).per(@page_size)
         json =
-          Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
+          Rails.cache.realize("#{udt.symbol}/#{ckb_transactions.cache_key}", version: ckb_transactions.cache_version) do
             records_counter = RecordCounters::UdtTransactions.new(udt)
             options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
             CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true })).serialized_json

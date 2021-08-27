@@ -5,6 +5,7 @@ class UncleBlockTest < ActiveSupport::TestCase
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
+    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
 
   context "associations" do
@@ -76,7 +77,7 @@ class UncleBlockTest < ActiveSupport::TestCase
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       node_block.uncles.first.instance_variable_set(:@proposals, ["0x98a4e0c18c"])
 
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       uncle_block = block.uncle_blocks.first

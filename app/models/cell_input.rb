@@ -2,6 +2,8 @@ class CellInput < ApplicationRecord
   belongs_to :ckb_transaction
   belongs_to :block
 
+  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class:5, m_nft_token: 6 }
+
   after_commit :flush_cache
 
   def find_lock_script!
@@ -23,10 +25,7 @@ class CellInput < ApplicationRecord
   def previous_cell_output
     return if previous_output["tx_hash"] == CellOutput::SYSTEM_TX_HASH
 
-    tx_hash = previous_output["tx_hash"]
-    cell_index = previous_output["index"].to_i
-
-    CellOutput.find_by(tx_hash: tx_hash, cell_index: cell_index)
+    CellOutput.find_by(tx_hash: previous_output["tx_hash"], cell_index: previous_output["index"])
   end
 
   def self.cached_find(id)
@@ -70,6 +69,7 @@ end
 #  from_cell_base          :boolean          default(FALSE)
 #  block_id                :decimal(30, )
 #  since                   :decimal(30, )    default(0)
+#  cell_type               :integer          default("normal")
 #
 # Indexes
 #

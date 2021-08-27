@@ -10,8 +10,8 @@ class CellOutput < ApplicationRecord
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
   belongs_to :address
   belongs_to :block
-  has_one :lock_script, dependent: :delete
-  has_one :type_script, dependent: :delete
+  # belongs_to :lock_script, optional: true
+  # belongs_to :type_script, optional: true
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
@@ -19,11 +19,21 @@ class CellOutput < ApplicationRecord
 
   scope :consumed_after, ->(block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
   scope :consumed_before, ->(block_timestamp) { where("consumed_block_timestamp <= ?", block_timestamp) }
-  scope :unconsumed_at, ->(block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp is null", block_timestamp) }
+  scope :unconsumed_at, ->(block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp = 0", block_timestamp) }
   scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
 
   after_commit :flush_cache
+
+  # will remove this method after the migration task processed
+  def lock_script
+    LockScript.find_by(cell_output_id: id) || LockScript.find_by(id: lock_script_id)
+  end
+
+  # will remove this method after the migration task processed
+  def type_script
+    TypeScript.find_by(cell_output_id: id) || TypeScript.find_by(id: type_script_id)
+  end
 
   def address_hash
     address.address_hash
@@ -67,7 +77,7 @@ class CellOutput < ApplicationRecord
       # issuer_id size is 20 bytes, class_id size is 4 bytes
       m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: type_script.args[0..49]).first
       if m_nft_class_type.present?
-        m_nft_class_cell = m_nft_class_type.cell_output
+        m_nft_class_cell = m_nft_class_type.cell_outputs.live.last
         parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
         value = { class_name: parsed_class_data.name, token_id: type_script.args[50..-1], total: parsed_class_data.total }
       else
@@ -111,13 +121,20 @@ end
 #  type_hash                :string
 #  udt_amount               :decimal(40, )
 #  dao                      :string
+#  lock_script_id           :bigint
+#  type_script_id           :bigint
 #
 # Indexes
 #
+#  index_cell_outputs_on_block_timestamp           (block_timestamp)
+#  index_cell_outputs_on_consumed_block_timestamp  (consumed_block_timestamp)
 #  index_cell_outputs_on_address_id_and_status   (address_id,status)
 #  index_cell_outputs_on_block_id                (block_id)
 #  index_cell_outputs_on_ckb_transaction_id      (ckb_transaction_id)
 #  index_cell_outputs_on_consumed_by_id          (consumed_by_id)
 #  index_cell_outputs_on_generated_by_id         (generated_by_id)
+#  index_cell_outputs_on_lock_script_id          (lock_script_id)
+#  index_cell_outputs_on_status                  (status)
 #  index_cell_outputs_on_tx_hash_and_cell_index  (tx_hash,cell_index)
+#  index_cell_outputs_on_type_script_id          (type_script_id)
 #

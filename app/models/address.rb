@@ -18,15 +18,15 @@ class Address < ApplicationRecord
   attr_accessor :query_address
 
   def custom_ckb_transactions
-    CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id])
+    CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id]).optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_address_ids)")
   end
 
   def ckb_dao_transactions
-    CkbTransaction.where("dao_address_ids @> array[?]::bigint[]", [id])
+    CkbTransaction.where("dao_address_ids @> array[?]::bigint[]", [id]).optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_dao_address_ids)")
   end
 
   def ckb_udt_transactions(udt_id)
-    CkbTransaction.where("udt_address_ids @> array[?]::bigint[]", [id]).where("contained_udt_ids @> array[?]::bigint[]", [udt_id])
+    CkbTransaction.where("udt_address_ids @> array[?]::bigint[]", [id]).where("contained_udt_ids @> array[?]::bigint[]", [udt_id]).optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_udt_ids)")
   end
 
   def lock_info
@@ -35,15 +35,16 @@ class Address < ApplicationRecord
 
   def lock_script
     Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
-      LockScript.where(address: self).first
+      LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
     end
   end
 
-  def self.find_or_create_address(lock_script, block_timestamp)
+  def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     address_hash = CkbUtils.generate_address(lock_script)
     lock_hash = lock_script.compute_hash
     address = Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
     address.update(block_timestamp: block_timestamp) if address.block_timestamp.blank?
+    address.update(lock_script_id: lock_script_id) if address.lock_script_id.blank?
 
     address
   end
@@ -125,7 +126,7 @@ end
 # Table name: addresses
 #
 #  id                     :bigint           not null, primary key
-#  balance                :decimal(30, )
+#  balance                :decimal(30, )    default(0)
 #  address_hash           :binary
 #  cell_consumed          :decimal(30, )
 #  ckb_transactions_count :decimal(30, )    default(0)
@@ -142,6 +143,7 @@ end
 #  unclaimed_compensation :decimal(30, )
 #  is_depositor           :boolean          default(FALSE)
 #  dao_transactions_count :decimal(30, )    default(0)
+#  lock_script_id         :bigint
 #
 # Indexes
 #
