@@ -39,6 +39,7 @@ namespace :migration do
 
     puts "flush display info cache"
     # flush display info cache
+    puts "tx_ids: #{tx_ids}"
     TxDisplayInfoGeneratorWorker.new.perform(tx_ids.to_a.compact)
 
     puts "done"

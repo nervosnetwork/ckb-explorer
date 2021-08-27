@@ -2,7 +2,23 @@ class AddressTxsCacheUpdateWorker
   include Sidekiq::Worker
   sidekiq_options queue: "critical"
 
-  def perform(address_txs_pair)
+  def perform(block_id)
+    address_txs_pair = Hash.new
+    block = Block.find_by(id: block_id)
+    return if block.blank?
+
+    ckb_transactions = block.ckb_transactions.select(:id, :contained_address_ids)
+    return if ckb_transactions.blank?
+
+    ckb_transactions.each do |tx|
+      tx.contained_address_ids.each do |id|
+        if address_txs_pair[id].present?
+          address_txs_pair[id] << tx.id
+        else
+          address_txs_pair[id] = [tx.id]
+        end
+      end
+    end
     already_exist_pairs = address_txs_pair.reject { |key| !$redis.exists?("Address/txs/#{key}") }
     new_pairs = address_txs_pair.reject { |key| $redis.exists?("Address/txs/#{key}") }
     service = ListCacheService.new

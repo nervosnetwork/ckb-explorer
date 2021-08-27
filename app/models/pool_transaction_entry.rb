@@ -50,5 +50,6 @@ end
 #
 # Indexes
 #
-#  index_pool_transaction_entries_on_tx_hash  (tx_hash) UNIQUE
+#  index_pool_transaction_entries_on_tx_hash    (tx_hash) UNIQUE
+#  index_pool_transaction_entries_on_tx_status  (tx_status)
 #

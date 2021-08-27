@@ -1,9 +1,16 @@
 class LockScript < ApplicationRecord
-  belongs_to :address
+  has_many :cell_outputs
+  has_many :generated_by_txs, source: :generated_by, through: :cell_outputs
+  has_many :consumed_by_txs, source: :consumed_by, through: :cell_outputs
+  belongs_to :address, optional: true # will remove this later
 
   validates_presence_of :code_hash
 
   attribute :code_hash, :ckb_hash
+
+  def ckb_transactions
+    CkbTransaction.from("(#{consumed_by_txs.to_sql} union #{generated_by_txs.to_sql}) as ckb_transactions")
+  end
 
   def cell_output
     CellOutput.find(cell_output_id)
@@ -92,9 +99,12 @@ end
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  hash_type      :string
+#  script_hash    :string
 #
 # Indexes
 #
-#  index_lock_scripts_on_address_id      (address_id)
-#  index_lock_scripts_on_cell_output_id  (cell_output_id)
+#  index_lock_scripts_on_address_id                        (address_id)
+#  index_lock_scripts_on_cell_output_id                    (cell_output_id)
+#  index_lock_scripts_on_code_hash_and_hash_type_and_args  (code_hash,hash_type,args)
+#  index_lock_scripts_on_script_hash                       (script_hash)
 #

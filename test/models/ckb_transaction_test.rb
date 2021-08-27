@@ -17,6 +17,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
   end
 
   test "#tx_hash should decodes packed string" do
+    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
         CKB::Types::Epoch.new(
@@ -28,7 +29,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       )
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
-      CkbSync::NodeDataProcessor.new.process_block(node_block)
+      CkbSync::NewNodeDataProcessor.new.process_block(node_block)
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
       ckb_transaction = block.ckb_transactions.first
       assert_equal unpack_attribute(ckb_transaction, "tx_hash"), ckb_transaction.tx_hash
@@ -260,11 +261,10 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
     m_nft_input_block = create(:block, :with_block_hash)
     m_nft_input_transaction = create(:ckb_transaction, block: m_nft_input_block)
-    m_nft_cell_output = create(:cell_output, block: m_nft_input_block, ckb_transaction: m_nft_input_transaction, consumed_by: ckb_transaction, generated_by: m_nft_input_transaction, cell_type: "m_nft_token", cell_index: 0, tx_hash: m_nft_input_transaction.tx_hash, data: "0x000000000000000000c000", type_hash: "0x")
-    create(:type_script, cell_output: m_nft_cell_output, code_hash: CkbSync::Api.instance.token_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c111070000000500000004")
-    m_nft_class_cell_output = create(:cell_output, block: m_nft_input_block, ckb_transaction: m_nft_input_transaction, consumed_by: ckb_transaction, generated_by: m_nft_input_transaction, cell_type: "m_nft_class", cell_index: 0, tx_hash: m_nft_input_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x")
-    create(:type_script, cell_output: m_nft_class_cell_output, code_hash: CkbSync::Api.instance.token_class_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c1110700000005")
-
+    type_script = create(:type_script, code_hash: CkbSync::Api.instance.token_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c111070000000500000004")
+    m_nft_cell_output = create(:cell_output, block: m_nft_input_block, ckb_transaction: m_nft_input_transaction, consumed_by: ckb_transaction, generated_by: m_nft_input_transaction, cell_type: "m_nft_token", cell_index: 0, tx_hash: m_nft_input_transaction.tx_hash, data: "0x000000000000000000c000", type_hash: "0x", type_script_id: type_script.id)
+    type_script1 = create(:type_script, code_hash: CkbSync::Api.instance.token_class_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c1110700000005")
+    m_nft_class_cell_output = create(:cell_output, block: m_nft_input_block, ckb_transaction: m_nft_input_transaction, consumed_by: ckb_transaction, generated_by: m_nft_input_transaction, cell_type: "m_nft_class", cell_index: 0, tx_hash: m_nft_input_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x", type_script_id: type_script1.id)
     cell_input = ckb_transaction.cell_inputs.first
     cell_input.update(previous_output: { "tx_hash": m_nft_input_transaction.tx_hash, "index": "0" })
     expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type).sort
@@ -307,10 +307,10 @@ class CkbTransactionTest < ActiveSupport::TestCase
   test "#display_outputs should contain m_nft_token info for m_nft_token transaction" do
     m_nft_output_block = create(:block, :with_block_hash)
     m_nft_output_transaction = create(:ckb_transaction, block: m_nft_output_block)
-    m_nft_cell_output = create(:cell_output, block: m_nft_output_block, ckb_transaction: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_token", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x000000000000000000c000", type_hash: "0x")
-    create(:type_script, cell_output: m_nft_cell_output, code_hash: CkbSync::Api.instance.token_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c111070000000500000004")
-    m_nft_class_cell_output = create(:cell_output, block: m_nft_output_block, ckb_transaction: m_nft_output_transaction, consumed_by: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_class", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x")
-    create(:type_script, cell_output: m_nft_class_cell_output, code_hash: CkbSync::Api.instance.token_class_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c1110700000005")
+    type_script = create(:type_script, code_hash: CkbSync::Api.instance.token_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c111070000000500000004")
+    m_nft_cell_output = create(:cell_output, block: m_nft_output_block, ckb_transaction: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_token", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x000000000000000000c000", type_hash: "0x", type_script_id: type_script.id)
+    type_script1 = create(:type_script, code_hash: CkbSync::Api.instance.token_class_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c1110700000005")
+    create(:cell_output, block: m_nft_output_block, ckb_transaction: m_nft_output_transaction, consumed_by: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_class", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x", type_script_id: type_script1.id)
     expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type m_nft_info).sort
     expected_m_nft_attributes = %i(class_name token_id total).sort
     expected_display_output = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, status: m_nft_cell_output.status, consumed_tx_hash: nil, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)

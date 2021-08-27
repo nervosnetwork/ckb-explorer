@@ -32,6 +32,10 @@ class CkbUtils
   end
 
   def self.generate_lock_script_from_cellbase(cellbase)
+    parse_cellbase_witness(cellbase).lock
+  end
+
+  def self.parse_cellbase_witness(cellbase)
     cellbase_witness = cellbase.witnesses.first.delete_prefix("0x")
     cellbase_witness_serialization = [cellbase_witness].pack("H*")
     script_offset = [cellbase_witness_serialization[4..7].unpack1("H*")].pack("H*").unpack1("V")
@@ -40,6 +44,9 @@ class CkbUtils
     code_hash_offset = [script_serialization[4..7].unpack1("H*")].pack("H*").unpack1("V")
     hash_type_offset = [script_serialization[8..11].unpack1("H*")].pack("H*").unpack1("V")
     args_offset = [script_serialization[12..15].unpack1("H*")].pack("H*").unpack1("V")
+    message_bytes = cellbase_witness_serialization[message_offset..-1]
+    message_serialization = message_bytes[4..-1]
+    message = "0x#{message_serialization.unpack1('H*')}"
     code_hash_serialization = script_serialization[code_hash_offset...hash_type_offset]
     hash_type_serialization = script_serialization[hash_type_offset...args_offset]
     args_serialization = script_serialization[hash_type_offset + 1..-1]
@@ -50,7 +57,12 @@ class CkbUtils
     args = "0x#{args_serialization.unpack1('H*')}"
 
     hash_type = hash_type_hex == "0x00" ? "data" : "type"
-    CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: hash_type)
+    lock = CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: hash_type)
+    OpenStruct.new(lock: lock, message: message)
+  end
+
+  def self.miner_message(cellbase)
+    parse_cellbase_witness(cellbase).message
   end
 
   def self.generate_address(lock_script)
@@ -58,7 +70,7 @@ class CkbUtils
   end
 
   def self.parse_address(address_hash)
-    CKB::AddressParser.new(address_hash).parse
+    CkbAddressParser.new(address_hash).parse
   end
 
   def self.block_reward(block_number, block_economic_state)
@@ -123,10 +135,22 @@ class CkbUtils
   end
 
   def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
-    if ckb_transaction.inputs.where(cell_type: "nervos_dao_withdrawing").present?
-      dao_withdraw_tx_fee(ckb_transaction)
+    if ckb_transaction.is_a?(CkbTransaction)
+      return 0 if ckb_transaction.is_cellbase
+
+      if ckb_transaction.inputs.where(cell_type: "nervos_dao_withdrawing").present?
+        dao_withdraw_tx_fee(ckb_transaction)
+      else
+        normal_tx_fee(input_capacities, output_capacities)
+      end
     else
-      normal_tx_fee(input_capacities, output_capacities)
+      return 0 if ckb_transaction["is_cellbase"]
+
+      if CellOutput.where(consumed_by_id: ckb_transaction["id"], cell_type: "nervos_dao_withdrawing").present?
+        dao_withdraw_tx_fee(ckb_transaction)
+      else
+        normal_tx_fee(input_capacities, output_capacities)
+      end
     end
   end
 
@@ -196,9 +220,15 @@ class CkbUtils
   end
 
   def self.dao_withdraw_tx_fee(ckb_transaction)
-    nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
-    interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
-    ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+    if ckb_transaction.is_a?(CkbTransaction)
+      nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
+      interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
+      ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
+    else
+      nervos_dao_withdrawing_cells = CellOutput.where(consumed_by_id: ckb_transaction["id"]).nervos_dao_withdrawing
+      interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
+      CellOutput.where(consumed_by_id: ckb_transaction["id"]).sum(:capacity) + interests - CellOutput.where(generated_by: ckb_transaction["id"]).sum(:capacity)
+    end
   end
 
   def self.dao_interest(nervos_dao_withdrawing_cell)

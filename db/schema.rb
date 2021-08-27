@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_28_095436) do
+ActiveRecord::Schema.define(version: 2021_08_24_155634) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -25,7 +25,7 @@ ActiveRecord::Schema.define(version: 2020_12_28_095436) do
   end
 
   create_table "addresses", force: :cascade do |t|
-    t.decimal "balance", precision: 30
+    t.decimal "balance", precision: 30, default: "0"
     t.binary "address_hash"
     t.decimal "cell_consumed", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
@@ -42,6 +42,7 @@ ActiveRecord::Schema.define(version: 2020_12_28_095436) do
     t.decimal "unclaimed_compensation", precision: 30
     t.boolean "is_depositor", default: false
     t.decimal "dao_transactions_count", precision: 30, default: "0"
+    t.bigint "lock_script_id"
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["is_depositor"], name: "index_addresses_on_is_depositor", where: "(is_depositor = true)"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
@@ -90,6 +91,7 @@ ActiveRecord::Schema.define(version: 2020_12_28_095436) do
     t.integer "proposals_count"
     t.decimal "cell_consumed", precision: 30
     t.binary "miner_hash"
+    t.string "miner_message"
     t.decimal "reward", precision: 30
     t.decimal "total_transaction_fee", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
@@ -133,6 +135,7 @@ ActiveRecord::Schema.define(version: 2020_12_28_095436) do
     t.boolean "from_cell_base", default: false
     t.decimal "block_id", precision: 30
     t.decimal "since", precision: 30, default: "0"
+    t.integer "cell_type", default: 0
     t.index ["block_id"], name: "index_cell_inputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_inputs_on_ckb_transaction_id"
     t.index ["previous_cell_output_id"], name: "index_cell_inputs_on_previous_cell_output_id"
@@ -159,17 +162,23 @@ ActiveRecord::Schema.define(version: 2020_12_28_095436) do
     t.string "type_hash"
     t.decimal "udt_amount", precision: 40
     t.string "dao"
+    t.bigint "lock_script_id"
+    t.bigint "type_script_id"
+    t.index ["block_timestamp"], name: "index_cell_outputs_on_block_timestamp"
+    t.index ["consumed_block_timestamp"], name: "index_cell_outputs_on_consumed_block_timestamp"
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
     t.index ["consumed_by_id"], name: "index_cell_outputs_on_consumed_by_id"
     t.index ["generated_by_id"], name: "index_cell_outputs_on_generated_by_id"
+    t.index ["lock_script_id"], name: "index_cell_outputs_on_lock_script_id"
+    t.index ["status"], name: "index_cell_outputs_on_status"
     t.index ["tx_hash", "cell_index"], name: "index_cell_outputs_on_tx_hash_and_cell_index"
+    t.index ["type_script_id"], name: "index_cell_outputs_on_type_script_id"
   end
 
   create_table "ckb_transactions", force: :cascade do |t|
     t.binary "tx_hash"
-    t.jsonb "deps"
     t.bigint "block_id"
     t.decimal "block_number", precision: 30
     t.decimal "block_timestamp", precision: 30
@@ -321,6 +330,7 @@ ActiveRecord::Schema.define(version: 2020_12_28_095436) do
     t.integer "block_size"
     t.decimal "proposal_reward", precision: 30
     t.decimal "commit_reward", precision: 30
+    t.string "miner_message"
   end
 
   create_table "forked_events", force: :cascade do |t|
@@ -341,8 +351,11 @@ ActiveRecord::Schema.define(version: 2020_12_28_095436) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "hash_type"
+    t.string "script_hash"
     t.index ["address_id"], name: "index_lock_scripts_on_address_id"
     t.index ["cell_output_id"], name: "index_lock_scripts_on_cell_output_id"
+    t.index ["code_hash", "hash_type", "args"], name: "index_lock_scripts_on_code_hash_and_hash_type_and_args"
+    t.index ["script_hash"], name: "index_lock_scripts_on_script_hash"
   end
 
   create_table "mining_infos", force: :cascade do |t|
@@ -376,6 +389,7 @@ ActiveRecord::Schema.define(version: 2020_12_28_095436) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["tx_hash"], name: "index_pool_transaction_entries_on_tx_hash", unique: true
+    t.index ["tx_status"], name: "index_pool_transaction_entries_on_tx_status"
   end
 
   create_table "table_record_counts", force: :cascade do |t|
@@ -410,7 +424,10 @@ ActiveRecord::Schema.define(version: 2020_12_28_095436) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "hash_type"
+    t.string "script_hash"
     t.index ["cell_output_id"], name: "index_type_scripts_on_cell_output_id"
+    t.index ["code_hash", "hash_type", "args"], name: "index_type_scripts_on_code_hash_and_hash_type_and_args"
+    t.index ["script_hash"], name: "index_type_scripts_on_script_hash"
   end
 
   create_table "udt_accounts", force: :cascade do |t|
