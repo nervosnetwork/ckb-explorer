@@ -823,7 +823,8 @@ module CkbSync
         length: epoch_info.length,
         dao: header.dao,
         block_time: block_time(header.timestamp, header.number),
-        block_size: 0
+        block_size: 0,
+        miner_message: CkbUtils.miner_message(cellbase)
       )
     end
 
