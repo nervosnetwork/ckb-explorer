@@ -374,10 +374,21 @@ module CkbSync
 
         type_hash = output.type.compute_hash
         unless Udt.where(type_hash: type_hash).exists?
+          m_nft_token_attr = {}
+          if cell_type == "m_nft_token"
+            m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: output.type.args[0..49]).first
+            if m_nft_class_type.present?
+              m_nft_class_cell = m_nft_class_type.cell_outputs.last
+              parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+              m_nft_token_attr[:full_name] = parsed_class_data.name
+              m_nft_token_attr[:icon_file] = parsed_class_data.renderer
+              m_nft_token_attr[:published] = true
+            end
+          end
           # fill issuer_address after publish the token
           udts_attributes << {
             type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
-            code_hash: output.type.code_hash, hash_type: output.type.hash_type }
+            code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(m_nft_token_attr)
         end
       end
       Udt.insert_all!(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if udts_attributes.present?

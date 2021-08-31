@@ -2233,11 +2233,15 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_block.transactions.first.outputs_data[0] = "0x421d0000000000000000000000000000"
+        type = create(:type_script, code_hash: CkbSync::Api.instance.token_class_script_code_hash, hash_type: "type", args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de00000002")
+        create(:cell_output, :with_full_transaction_but_no_type_script, type_script_id: type.id, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979")
         node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c")
-
         assert_difference -> { Udt.m_nft_token.count }, 1 do
           node_data_processor.process_block(node_block)
         end
+        udt = Udt.first
+        assert_equal "First NFT", udt.full_name
+        assert_equal "https://xxx.img.com/yyy", udt.icon_file
       end
     end
 
