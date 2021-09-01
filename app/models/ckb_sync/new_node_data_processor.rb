@@ -374,7 +374,7 @@ module CkbSync
 
         type_hash = output.type.compute_hash
         unless Udt.where(type_hash: type_hash).exists?
-          m_nft_token_attr = {}
+          m_nft_token_attr = { full_name: nil, icon_file: nil, published: false }
           if cell_type == "m_nft_token"
             m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: output.type.args[0..49]).first
             if m_nft_class_type.present?
