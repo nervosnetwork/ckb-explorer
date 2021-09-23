@@ -358,6 +358,7 @@ module CkbSync
     end
 
     def update_block_info!(local_block)
+      Rails.logger.error "total_transaction_fee: #{local_block.ckb_transactions.sum(:transaction_fee)}"
       local_block.update!(total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
                           ckb_transactions_count: local_block.ckb_transactions.count,
                           live_cell_changes: local_block.ckb_transactions.sum(&:live_cell_changes),
@@ -406,6 +407,7 @@ module CkbSync
             capacity_involved: input_capacities[tx_index], transaction_fee: 0,
             created_at: tx["created_at"], updated_at: Time.current }
         else
+          Rails.logger.error "tx_fee: #{tx["tx_hash"]} #{CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index])}"
           ckb_transactions_attributes << {
             id: tx["id"], dao_address_ids: dao_address_ids[tx_index].to_a,
             udt_address_ids: udt_address_ids[tx_index].to_a, contained_udt_ids: contained_udt_ids[tx_index].to_a,
