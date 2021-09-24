@@ -104,12 +104,12 @@ class AddressTest < ActiveSupport::TestCase
     nervos_dao_withdrawing_tx = create(:ckb_transaction, block: nervos_dao_withdrawing_block)
     create(:cell_input, block: nervos_dao_withdrawing_block, previous_output: { tx_hash: previous_output_tx.tx_hash, index: 0 }, ckb_transaction: nervos_dao_withdrawing_tx)
     create(:cell_input, block: nervos_dao_withdrawing_block, previous_output: { tx_hash: previous_output_tx.tx_hash, index: 1 }, ckb_transaction: nervos_dao_withdrawing_tx)
-    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 10000 * 10**8, generated_by: nervos_dao_withdrawing_tx, cell_index: 0, dao: nervos_dao_withdrawing_block.dao)
-    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 20000 * 10**8, generated_by: nervos_dao_withdrawing_tx, cell_index: 1, dao: nervos_dao_withdrawing_block.dao)
+    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 10000 * 10**8, generated_by: nervos_dao_withdrawing_tx, occupied_capacity: 6100000000, cell_index: 0, dao: nervos_dao_withdrawing_block.dao)
+    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing", ckb_transaction: nervos_dao_withdrawing_tx, capacity: 20000 * 10**8, generated_by: nervos_dao_withdrawing_tx, occupied_capacity: 6100000000, cell_index: 1, dao: nervos_dao_withdrawing_block.dao)
 
     deposit_cell = create(:cell_output, block: deposit_block, address: address, cell_type: "nervos_dao_deposit", capacity: 60000 * 10**8, ckb_transaction: deposit_tx, generated_by: deposit_tx, cell_index: 0, occupied_capacity: 6100000000, dao: deposit_block.dao)
 
-    expected_phase1_dao_interests = 181251857496
+    expected_phase1_dao_interests = 54220579089
     parse_dao_ar_i = 10239678363827763
     tip_dao_ar_i = 10239685510632493
     expected_unmade_dao_interests = (deposit_cell.capacity - deposit_cell.occupied_capacity).to_i * tip_dao_ar_i / parse_dao_ar_i - (deposit_cell.capacity - deposit_cell.occupied_capacity)

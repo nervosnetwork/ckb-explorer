@@ -1,8 +1,9 @@
 class DaoCompensationCalculator
-  attr_reader :deposit_cell_output, :withdraw_block_dao
+  attr_reader :deposit_cell_output, :withdraw_block_dao, :withdraw_cell_output
 
-  def initialize(deposit_cell_output, withdraw_block_dao)
+  def initialize(deposit_cell_output, withdraw_block_dao, withdraw_cell_output = nil)
     @deposit_cell_output = deposit_cell_output
+    @withdraw_cell_output = withdraw_cell_output
     @withdraw_block_dao = withdraw_block_dao
   end
 
@@ -21,6 +22,7 @@ class DaoCompensationCalculator
   end
 
   def compensation_generating_capacity
-    @compensation_generating_capacity ||= (deposit_cell_output.capacity - deposit_cell_output.occupied_capacity).to_i
+    cell_output = withdraw_cell_output.presence || deposit_cell_output
+    @compensation_generating_capacity ||= (cell_output.capacity - cell_output.occupied_capacity).to_i
   end
 end
