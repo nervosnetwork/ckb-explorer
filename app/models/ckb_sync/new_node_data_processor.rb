@@ -163,7 +163,7 @@ module CkbSync
       local_block.cell_inputs.nervos_dao_withdrawing.select(:id, :ckb_transaction_id, :previous_cell_output_id).find_in_batches do |dao_inputs|
         dao_events_attributes = []
         dao_inputs.each do |dao_input|
-          previous_cell_output = CellOutput.where(id: dao_input.previous_cell_output_id).select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity).take!
+          previous_cell_output = CellOutput.where(id: dao_input.previous_cell_output_id).select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).take!
           address = previous_cell_output.address
           interest = CkbUtils.dao_interest(previous_cell_output)
           if addrs_withdraw_info.key?(address.id)
@@ -358,6 +358,7 @@ module CkbSync
     end
 
     def update_block_info!(local_block)
+      Rails.logger.error "total_transaction_fee: #{local_block.ckb_transactions.sum(:transaction_fee)}"
       local_block.update!(total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
                           ckb_transactions_count: local_block.ckb_transactions.count,
                           live_cell_changes: local_block.ckb_transactions.sum(&:live_cell_changes),
@@ -406,6 +407,7 @@ module CkbSync
             capacity_involved: input_capacities[tx_index], transaction_fee: 0,
             created_at: tx["created_at"], updated_at: Time.current }
         else
+          Rails.logger.error "tx_fee: #{tx["tx_hash"]} #{CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index])}"
           ckb_transactions_attributes << {
             id: tx["id"], dao_address_ids: dao_address_ids[tx_index].to_a,
             udt_address_ids: udt_address_ids[tx_index].to_a, contained_udt_ids: contained_udt_ids[tx_index].to_a,
