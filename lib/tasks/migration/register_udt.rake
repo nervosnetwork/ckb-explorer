@@ -73,9 +73,8 @@ class UdtRegister
       udt.update!(published: true) if args[:icon_file].present?
       UdtAccount.where(udt_id: udt.id).update(symbol: udt.symbol, full_name: udt.full_name, decimal: udt.decimal, published: udt.published)
       flush_caches(type_script, udt)
+      puts "UDT type_hash: #{udt.type_hash}"
     end
-
-    puts "UDT type_hash: #{udt.type_hash}"
   end
 
   def build_udt_type_script(args)
