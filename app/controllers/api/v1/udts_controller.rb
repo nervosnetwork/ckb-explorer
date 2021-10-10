@@ -1,8 +1,9 @@
 class Api::V1::UdtsController < ApplicationController
   before_action :validate_query_params, only: :show
+  before_action :validate_pagination_params, :pagination_params, only: :index
 
   def index
-    udts = Udt.sudt.order(addresses_count: :desc).limit(1000)
+    udts = Udt.sudt.order(addresses_count: :desc).page(@page).per(@page_size)
     render json: UdtSerializer.new(udts)
   end
 
@@ -25,5 +26,10 @@ class Api::V1::UdtsController < ApplicationController
 
       render json: errors, status: status
     end
+  end
+
+  def pagination_params
+    @page = params[:page] || 1
+    @page_size = params[:page_size] || Udt.default_per_page
   end
 end
