@@ -163,7 +163,7 @@ module CkbSync
       local_block.cell_inputs.nervos_dao_withdrawing.select(:id, :ckb_transaction_id, :previous_cell_output_id).find_in_batches do |dao_inputs|
         dao_events_attributes = []
         dao_inputs.each do |dao_input|
-          previous_cell_output = CellOutput.where(id: dao_input.previous_cell_output_id).select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity).take!
+          previous_cell_output = CellOutput.where(id: dao_input.previous_cell_output_id).select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).take!
           address = previous_cell_output.address
           interest = CkbUtils.dao_interest(previous_cell_output)
           if addrs_withdraw_info.key?(address.id)
@@ -426,7 +426,6 @@ module CkbSync
       input_capacities = []
       output_capacities = []
       lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
-      Rails.logger.error "lock_scripts_attributes: #{lock_scripts_attributes}"
       if lock_scripts_attributes.present?
         lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
         LockScript.insert_all!(lock_scripts_attributes)
