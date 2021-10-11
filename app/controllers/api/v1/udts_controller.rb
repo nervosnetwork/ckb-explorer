@@ -4,7 +4,8 @@ class Api::V1::UdtsController < ApplicationController
 
   def index
     udts = Udt.sudt.order(addresses_count: :desc).page(@page).per(@page_size)
-    render json: UdtSerializer.new(udts)
+    options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: @page, page_size: @page_size).call
+    render json: UdtSerializer.new(udts, options)
   end
 
   def show
