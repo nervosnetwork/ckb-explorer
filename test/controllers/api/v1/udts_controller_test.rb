@@ -158,9 +158,9 @@ module Api
       end
 
       test "should return udts in order of descending addresses count" do
-        udt1 = create(:udt, addresses_count: 1, published: true)
-        udt2 = create(:udt, addresses_count: 2)
-        udt3 = create(:udt, addresses_count: 3)
+        create(:udt, addresses_count: 1, published: true)
+        create(:udt, addresses_count: 2)
+        create(:udt, addresses_count: 3)
 
         valid_get api_v1_udts_url
         records = Udt.sudt.order(addresses_count: :desc).page(1).per(25)
