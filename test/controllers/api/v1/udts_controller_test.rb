@@ -158,13 +158,14 @@ module Api
       end
 
       test "should return udts in order of descending addresses count" do
-        udt1 = create(:udt, addresses_count: 1, published: true)
-        udt2 = create(:udt, addresses_count: 2)
-        udt3 = create(:udt, addresses_count: 3)
+        create(:udt, addresses_count: 1, published: true)
+        create(:udt, addresses_count: 2)
+        create(:udt, addresses_count: 3)
 
         valid_get api_v1_udts_url
-
-        expected_udts = UdtSerializer.new([udt3, udt2, udt1]).serialized_json
+        records = Udt.sudt.order(addresses_count: :desc).page(1).per(25)
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: records, page: 1, page_size: 25).call
+        expected_udts = UdtSerializer.new(records, options).serialized_json
 
         assert_equal expected_udts, response.body
       end
