@@ -21,7 +21,8 @@ class UdtRegister
     puts "forcebridge_asset_counts: #{forcebridge_assets.size}"
     non_exist_udt_infos = []
     forcebridge_assets.each do |asset|
-      args = { args: asset[:info][:shadow][:ident], symbol: asset[:info][:symbol], full_name: asset[:info][:name], decimal: asset[:info][:decimals], icon_file: asset[:info][:logoURI] }
+      next if asset[:network] != "Nervos"
+      args = { args: asset[:ident], symbol: asset[:info][:symbol], full_name: asset[:info][:name], decimal: asset[:info][:decimals], icon_file: asset[:info][:logoURI] }
       puts args
       type_script = build_udt_type_script(args)
       udt = Udt.find_by(type_hash: type_script.compute_hash)
