@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: https://github.com/nervosnetwork/ckb-sdk-ruby.git
-  revision: 057f61cb14691d25f9fef246fca3ff83b4b10229
+  revision: 4b470bb2207f3227470210e51ec7ed3d179a8f35
   branch: develop
   specs:
     ckb-sdk-ruby (0.41.0)
@@ -185,7 +185,7 @@ GEM
     faraday-rack (1.0.0)
     fast_jsonapi (1.5)
       activesupport (>= 4.2)
-    ffi (1.15.3)
+    ffi (1.15.4)
     fugit (1.5.1)
       et-orbi (~> 1.1, >= 1.1.8)
       raabro (~> 1.4)
