@@ -9,7 +9,7 @@ FactoryBot.define do
     transactions_root { "0xe08894ef0ed80481448f7a584438a76b6bdbea178c02b4c3b40863d75c5aed3c" }
     proposals_hash { "0x0000000000000000000000000000000000000000000000000000000000000000" }
     uncles_count { 1 }
-    uncles_hash { "0xa43e4bb916f6d08f746a055271049d3a61a5344ad266553454862ef68d41bc4d" }
+    extra_hash { "0xa43e4bb916f6d08f746a055271049d3a61a5344ad266553454862ef68d41bc4d" }
     version { 0 }
     cell_consumed { 43 }
     reward { 50000 }
