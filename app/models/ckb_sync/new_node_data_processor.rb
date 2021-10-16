@@ -783,7 +783,7 @@ module CkbSync
           timestamp: header.timestamp,
           transactions_root: header.transactions_root,
           proposals_hash: header.proposals_hash,
-          extra_hash: header.extra_hash,
+          extra_hash: header.try(:uncles_hash).presence || header.try(:extra_hash),
           version: header.version,
           proposals: uncle_block.proposals,
           proposals_count: uncle_block.proposals.count,
