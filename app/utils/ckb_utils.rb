@@ -65,8 +65,8 @@ class CkbUtils
     parse_cellbase_witness(cellbase).message
   end
 
-  def self.generate_address(lock_script)
-    CKB::Address.new(lock_script, mode: ENV["CKB_NET_MODE"]).generate
+  def self.generate_address(lock_script, version = CKB::Address::Version::CKB2021)
+    CKB::Address.new(lock_script, mode: ENV["CKB_NET_MODE"], version: version).generate
   end
 
   def self.parse_address(address_hash)
