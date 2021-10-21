@@ -374,10 +374,21 @@ module CkbSync
 
         type_hash = output.type.compute_hash
         unless Udt.where(type_hash: type_hash).exists?
+          m_nft_token_attr = { full_name: nil, icon_file: nil, published: false }
+          if cell_type == "m_nft_token"
+            m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: output.type.args[0..49]).first
+            if m_nft_class_type.present?
+              m_nft_class_cell = m_nft_class_type.cell_outputs.last
+              parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+              m_nft_token_attr[:full_name] = parsed_class_data.name
+              m_nft_token_attr[:icon_file] = parsed_class_data.renderer
+              m_nft_token_attr[:published] = true
+            end
+          end
           # fill issuer_address after publish the token
           udts_attributes << {
             type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
-            code_hash: output.type.code_hash, hash_type: output.type.hash_type }
+            code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(m_nft_token_attr)
         end
       end
       Udt.insert_all!(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if udts_attributes.present?
@@ -415,7 +426,6 @@ module CkbSync
       input_capacities = []
       output_capacities = []
       lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
-      Rails.logger.error "lock_scripts_attributes: #{lock_scripts_attributes}"
       if lock_scripts_attributes.present?
         lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
         LockScript.insert_all!(lock_scripts_attributes)
@@ -773,7 +783,7 @@ module CkbSync
           timestamp: header.timestamp,
           transactions_root: header.transactions_root,
           proposals_hash: header.proposals_hash,
-          uncles_hash: header.uncles_hash,
+          extra_hash: header.try(:uncles_hash).presence || header.try(:extra_hash),
           version: header.version,
           proposals: uncle_block.proposals,
           proposals_count: uncle_block.proposals.count,
@@ -804,7 +814,7 @@ module CkbSync
         transactions_root: header.transactions_root,
         proposals_hash: header.proposals_hash,
         uncles_count: node_block.uncles.count,
-        uncles_hash: header.uncles_hash,
+        extra_hash: header.try(:uncles_hash).presence || header.try(:extra_hash),
         uncle_block_hashes: uncle_block_hashes(node_block.uncles),
         version: header.version,
         proposals: node_block.proposals,
@@ -824,7 +834,8 @@ module CkbSync
         dao: header.dao,
         block_time: block_time(header.timestamp, header.number),
         block_size: 0,
-        miner_message: CkbUtils.miner_message(cellbase)
+        miner_message: CkbUtils.miner_message(cellbase),
+        extension: node_block.extension
       )
     end
 

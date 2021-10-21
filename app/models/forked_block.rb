@@ -7,7 +7,7 @@ class ForkedBlock < ApplicationRecord
   attribute :parent_hash, :ckb_hash
   attribute :transactions_root, :ckb_hash
   attribute :proposals_hash, :ckb_hash
-  attribute :uncles_hash, :ckb_hash
+  attribute :extra_hash, :ckb_hash
   attribute :uncle_block_hashes, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
 end

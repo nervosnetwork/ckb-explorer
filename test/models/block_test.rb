@@ -4,7 +4,6 @@ class BlockTest < ActiveSupport::TestCase
   setup do
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
-    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
@@ -23,7 +22,7 @@ class BlockTest < ActiveSupport::TestCase
     should validate_presence_of(:transactions_root).on(:create)
     should validate_presence_of(:proposals_hash).on(:create)
     should validate_presence_of(:uncles_count).on(:create)
-    should validate_presence_of(:uncles_hash).on(:create)
+    should validate_presence_of(:extra_hash).on(:create)
     should validate_presence_of(:version).on(:create)
     should validate_presence_of(:cell_consumed).on(:create)
     should validate_presence_of(:reward).on(:create)
@@ -191,11 +190,11 @@ class BlockTest < ActiveSupport::TestCase
     assert_equal unpack_attribute(block, "proposals_hash"), proposals_hash
   end
 
-  test "#uncles_hash should decodes packed string" do
+  test "#extra_hash should decodes packed string" do
     block = create(:block)
-    uncles_hash = block.uncles_hash
+    extra_hash = block.extra_hash
 
-    assert_equal unpack_attribute(block, "uncles_hash"), uncles_hash
+    assert_equal unpack_attribute(block, "extra_hash"), extra_hash
   end
 
   test "#uncle_block_hashes should decodes packed string" do

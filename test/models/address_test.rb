@@ -4,7 +4,6 @@ class AddressTest < ActiveSupport::TestCase
   setup do
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
-    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
@@ -237,7 +236,7 @@ class AddressTest < ActiveSupport::TestCase
     Rails.cache.extend(CacheRealizer)
     lock_script = CKB::Types::Script.new(code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99")
     addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
-    address = Address.find_or_create_address(lock_script, Time.current.to_i)
+    Address.find_or_create_address(lock_script, Time.current.to_i)
     address = Address.cached_find(addr)
     assert_equal address, Rails.cache.realize("Address/#{lock_script.compute_hash}")
   end

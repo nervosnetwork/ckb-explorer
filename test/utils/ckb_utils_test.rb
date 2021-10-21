@@ -12,7 +12,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
     )
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
-    GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
@@ -53,7 +52,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       "data"
     )
 
-    assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+    assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     ENV["CKB_NET_MODE"] = "mainnet"
   end
 
@@ -78,7 +77,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       "data"
     )
 
-    assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
+    assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     ENV["CKB_NET_MODE"] = "mainnet"
   end
 
@@ -103,7 +102,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       "data"
     )
 
-    assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+    assert_equal full_payload_address, CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     ENV["CKB_NET_MODE"] = "mainnet"
   end
 
@@ -115,7 +114,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176"
     )
 
-    assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+    assert_equal full_payload_address, CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     ENV["CKB_NET_MODE"] = "mainnet"
   end
 
@@ -127,7 +126,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       "0xa656f172b6b45c245307aeb5a7a37a176f002f6f22e92582c58bf7ba362e4176"
     )
 
-    assert_equal full_payload_address, CkbUtils.generate_address(lock_script)
+    assert_equal full_payload_address, CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     ENV["CKB_NET_MODE"] = "mainnet"
   end
 

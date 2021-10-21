@@ -1,4 +1,5 @@
 class Udt < ApplicationRecord
+  MAX_PAGINATES_PER = 100
   enum udt_type: { sudt: 0, m_nft_token: 1 }
 
   validates_presence_of :total_amount
