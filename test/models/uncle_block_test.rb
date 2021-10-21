@@ -19,7 +19,7 @@ class UncleBlockTest < ActiveSupport::TestCase
     should validate_presence_of(:timestamp).on(:create)
     should validate_presence_of(:transactions_root).on(:create)
     should validate_presence_of(:proposals_hash).on(:create)
-    should validate_presence_of(:uncles_hash).on(:create)
+    should validate_presence_of(:extra_hash).on(:create)
     should validate_presence_of(:version).on(:create)
   end
 
@@ -55,12 +55,12 @@ class UncleBlockTest < ActiveSupport::TestCase
     assert_equal unpack_attribute(uncle_block, "proposals_hash"), proposals_hash
   end
 
-  test "#uncles_hash should decodes packed string" do
+  test "#extra_hash should decodes packed string" do
     block = create(:block)
     uncle_block = create(:uncle_block, block: block)
-    uncles_hash = uncle_block.uncles_hash
+    extra_hash = uncle_block.extra_hash
 
-    assert_equal unpack_attribute(uncle_block, "uncles_hash"), uncles_hash
+    assert_equal unpack_attribute(uncle_block, "extra_hash"), extra_hash
   end
 
   test "#proposals should decodes packed string" do

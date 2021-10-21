@@ -783,7 +783,7 @@ module CkbSync
           timestamp: header.timestamp,
           transactions_root: header.transactions_root,
           proposals_hash: header.proposals_hash,
-          uncles_hash: header.uncles_hash,
+          extra_hash: header.extra_hash,
           version: header.version,
           proposals: uncle_block.proposals,
           proposals_count: uncle_block.proposals.count,
@@ -814,7 +814,7 @@ module CkbSync
         transactions_root: header.transactions_root,
         proposals_hash: header.proposals_hash,
         uncles_count: node_block.uncles.count,
-        uncles_hash: header.uncles_hash,
+        extra_hash: header.try(:uncles_hash).presence || header.try(:extra_hash),
         uncle_block_hashes: uncle_block_hashes(node_block.uncles),
         version: header.version,
         proposals: node_block.proposals,
@@ -834,7 +834,8 @@ module CkbSync
         dao: header.dao,
         block_time: block_time(header.timestamp, header.number),
         block_size: 0,
-        miner_message: CkbUtils.miner_message(cellbase)
+        miner_message: CkbUtils.miner_message(cellbase),
+        extension: node_block.extension
       )
     end
 

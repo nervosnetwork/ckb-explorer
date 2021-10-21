@@ -2,15 +2,15 @@
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
 #
-# This file is the source Rails uses to define your schema when running `rails
-# db:schema:load`. When creating a new database, `rails db:schema:load` tends to
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
 # be faster and is potentially less error prone than running all of your
 # migrations from scratch. Old migrations may fail to apply correctly if those
 # migrations use external dependencies or application code.
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_08_24_155634) do
+ActiveRecord::Schema.define(version: 2021_10_15_105234) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -84,7 +84,7 @@ ActiveRecord::Schema.define(version: 2021_08_24_155634) do
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
-    t.binary "uncles_hash"
+    t.binary "extra_hash"
     t.binary "uncle_block_hashes"
     t.integer "version"
     t.binary "proposals"
@@ -118,6 +118,7 @@ ActiveRecord::Schema.define(version: 2021_08_24_155634) do
     t.integer "block_size"
     t.decimal "proposal_reward", precision: 30
     t.decimal "commit_reward", precision: 30
+    t.jsonb "extension"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["block_size"], name: "index_blocks_on_block_size"
     t.index ["block_time"], name: "index_blocks_on_block_time"
@@ -164,11 +165,11 @@ ActiveRecord::Schema.define(version: 2021_08_24_155634) do
     t.string "dao"
     t.bigint "lock_script_id"
     t.bigint "type_script_id"
-    t.index ["block_timestamp"], name: "index_cell_outputs_on_block_timestamp"
-    t.index ["consumed_block_timestamp"], name: "index_cell_outputs_on_consumed_block_timestamp"
     t.index ["address_id", "status"], name: "index_cell_outputs_on_address_id_and_status"
     t.index ["block_id"], name: "index_cell_outputs_on_block_id"
+    t.index ["block_timestamp"], name: "index_cell_outputs_on_block_timestamp"
     t.index ["ckb_transaction_id"], name: "index_cell_outputs_on_ckb_transaction_id"
+    t.index ["consumed_block_timestamp"], name: "index_cell_outputs_on_consumed_block_timestamp"
     t.index ["consumed_by_id"], name: "index_cell_outputs_on_consumed_by_id"
     t.index ["generated_by_id"], name: "index_cell_outputs_on_generated_by_id"
     t.index ["lock_script_id"], name: "index_cell_outputs_on_lock_script_id"
@@ -297,7 +298,7 @@ ActiveRecord::Schema.define(version: 2021_08_24_155634) do
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
-    t.binary "uncles_hash"
+    t.binary "extra_hash"
     t.binary "uncle_block_hashes"
     t.integer "version"
     t.binary "proposals"
@@ -331,6 +332,7 @@ ActiveRecord::Schema.define(version: 2021_08_24_155634) do
     t.decimal "proposal_reward", precision: 30
     t.decimal "commit_reward", precision: 30
     t.string "miner_message"
+    t.jsonb "extension"
   end
 
   create_table "forked_events", force: :cascade do |t|
@@ -478,7 +480,7 @@ ActiveRecord::Schema.define(version: 2021_08_24_155634) do
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
-    t.binary "uncles_hash"
+    t.binary "extra_hash"
     t.integer "version"
     t.binary "proposals"
     t.integer "proposals_count"

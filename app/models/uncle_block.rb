@@ -1,13 +1,13 @@
 class UncleBlock < ApplicationRecord
   belongs_to :block
 
-  validates_presence_of :compact_target, :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_hash, :version
+  validates_presence_of :compact_target, :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :extra_hash, :version
 
   attribute :block_hash, :ckb_hash
   attribute :parent_hash, :ckb_hash
   attribute :transactions_root, :ckb_hash
   attribute :proposals_hash, :ckb_hash
-  attribute :uncles_hash, :ckb_hash
+  attribute :extra_hash, :ckb_hash
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
 
   def difficulty

@@ -40,9 +40,14 @@ class Address < ApplicationRecord
   end
 
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
-    address_hash = CkbUtils.generate_address(lock_script)
+    address_hash_2019 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     lock_hash = lock_script.compute_hash
-    address = Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
+    if Address.where(address_hash: address_hash_2019).exists?
+      address = Address.find_or_create_by!(address_hash: address_hash_2019, lock_hash: lock_hash)
+    else
+      address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
+      address = Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
+    end
     address.update(block_timestamp: block_timestamp) if address.block_timestamp.blank?
     address.update(lock_script_id: lock_script_id) if address.lock_script_id.blank?
 
