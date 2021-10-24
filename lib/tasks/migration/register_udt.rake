@@ -74,7 +74,7 @@ class UdtRegister
       udt.update!(code_hash: type_script.code_hash, hash_type: type_script.hash_type, args: type_script.args, symbol: args[:symbol], full_name: args[:full_name], decimal: args[:decimal], description: args[:description], operator_website: args[:operator_website], icon_file: args[:icon_file], issuer_address: issuer_address)
       udt.update!(published: true) if args[:icon_file].present?
       UdtAccount.where(udt_id: udt.id).update(symbol: udt.symbol, full_name: udt.full_name, decimal: udt.decimal, published: udt.published)
-      flush_caches(type_script, udt)
+      flush_caches(udt)
       puts "UDT type_hash: #{udt.type_hash}"
     end
   end
@@ -84,7 +84,7 @@ class UdtRegister
     CKB::Types::Script.new(args: args[:args], code_hash: code_hash, hash_type: "type")
   end
 
-  def flush_caches(type_script, udt)
+  def flush_caches(udt)
     tx_ids = udt.ckb_transactions.pluck(:id)
     tx_ids.each do |tx_id|
       Rails.cache.delete("normal_tx_display_outputs_previews_false_#{tx_id}")
@@ -99,9 +99,12 @@ class UdtRegister
     Rails.cache.delete(ckb_transactions.cache_key)
 
     # update addresses transaction page cache
-    address = Address.where(lock_hash: type_script.args).first
-    ckb_transactions = address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(1).per(CkbTransaction.default_per_page)
-    $redis.del("#{ckb_transactions.cache_key}/#{address.query_address}")
+    CkbTransaction.where(id: tx_ids).find_each do |ckb_tx|
+      Address.where(id: ckb_tx.contained_address_ids).find_each do |address|
+        ckb_transactions = address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(1).per(CkbTransaction.default_per_page)
+        $redis.del("#{ckb_transactions.cache_key}/#{address.query_address}")
+      end
+    end
   end
 
   def params_valid?(args)

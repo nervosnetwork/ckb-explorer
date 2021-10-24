@@ -41,7 +41,7 @@ module Api
 
       test "should return transactions count and timestamp" do
         create_list(:daily_statistic, 15)
-        daily_statistic_data = DailyStatistic.order(:id).valid_indicators
+        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).valid_indicators
         valid_get api_v1_daily_statistic_url("transactions_count")
 
         assert_equal [%w(transactions_count created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
