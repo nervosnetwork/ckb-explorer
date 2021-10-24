@@ -14,7 +14,7 @@ class DaoContract < ApplicationRecord
   end
 
   def ckb_transactions
-    CkbTransaction.where("tags @> array[?]::varchar[]", ["dao"]).optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_tags)")
+    CkbTransaction.where("tags @> array[?]::varchar[]", ["dao"])#.optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_tags)")
   end
 
   def estimated_apc(deposit_epoch = tip_block_fraction_epoch, deposited_epochs = EPOCHS_IN_ONE_NATURAL_YEAR)
