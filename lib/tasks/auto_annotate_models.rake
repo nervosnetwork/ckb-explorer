@@ -13,6 +13,7 @@ if Rails.env.development?
       "position_in_fixture"  => "after",
       "position_in_factory"  => "after",
       "show_indexes"         => "true",
+      "models"               => "true",
       "simple_indexes"       => "false",
       "model_dir"            => "app/models",
       "include_version"      => "false",
