@@ -110,6 +110,14 @@ class Address < ApplicationRecord
     "Address/txs/#{id}"
   end
 
+  def cal_balance_occupied
+    cell_outputs.live.find_each.sum do |cell|
+      next if cell.tx_hash.blank? && cell.data.blank?
+
+      cell.capacity
+    end
+  end
+
   private
 
   def phase1_dao_interests
@@ -149,6 +157,7 @@ end
 #  is_depositor           :boolean          default(FALSE)
 #  dao_transactions_count :decimal(30, )    default(0)
 #  lock_script_id         :bigint
+#  balance_occupied       :decimal(30, )    default(0)
 #
 # Indexes
 #
