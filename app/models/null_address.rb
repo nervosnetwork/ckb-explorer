@@ -67,6 +67,10 @@ class NullAddress
     0
   end
 
+  def balance_occupied
+    0
+  end
+
   alias_method :cached_lock_script, :lock_script
   alias_method :query_address, :address_hash
 end
