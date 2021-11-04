@@ -2459,6 +2459,7 @@ module CkbSync
       block = create(:block, :with_block_hash)
       previous_cell_output_lock_script = create(:lock_script, code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
       address = previous_cell_output_lock_script.address
+      address.update(balance_occupied: 300 * 10**8)
       udt_lock_script = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x3954acece65096bfa81258983ddb83915fc56bd8", hash_type: "type")
       udt_amount = 1000000
       create(:udt_account, address: address, amount: udt_amount, type_hash: udt_type_script.compute_hash)
@@ -2485,6 +2486,8 @@ module CkbSync
         end
 
         assert_equal 0, address.udt_accounts.find_by(type_hash: udt_type_script.compute_hash).amount
+        assert_equal 0, address.reload.balance_occupied
+        assert_equal 150 * 10**8, output_address.reload.balance_occupied
       end
     end
 
