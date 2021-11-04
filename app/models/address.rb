@@ -111,11 +111,11 @@ class Address < ApplicationRecord
   end
 
   def cal_balance_occupied
-    cell_outputs.live.find_each.sum do |cell|
-      next if cell.tx_hash.blank? && cell.data.blank?
+    cell_outputs.live.find_each.map do |cell|
+      next if cell.type_hash.blank? && (cell.data.present? && cell.data == "0x")
 
       cell.capacity
-    end
+    end.compact.sum
   end
 
   private
