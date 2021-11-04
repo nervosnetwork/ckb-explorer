@@ -86,7 +86,7 @@ module Api
 
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal %w(address_hash balance transactions_count lock_script dao_deposit interest lock_info is_special live_cells_count mined_blocks_count average_deposit_time udt_accounts dao_compensation).sort, json["data"]["attributes"].keys.sort
+        assert_equal %w(address_hash balance transactions_count lock_script dao_deposit interest lock_info is_special live_cells_count mined_blocks_count average_deposit_time udt_accounts dao_compensation balance_occupied).sort, json["data"]["attributes"].keys.sort
       end
 
       test "should return NullAddress when address no found by id" do
@@ -149,6 +149,13 @@ module Api
         valid_get api_v1_address_url(address.address_hash)
 
         assert_empty json.dig("data", "attributes", "udt_accounts")
+      end
+
+      test "should return balance occupied" do
+        address = create(:address, :with_lock_script, address_hash: "ckb1qyq0hcfpff4h8w8zvy44uurvlgdrr09tefwqx266dl")
+
+        valid_get api_v1_address_url(address.address_hash)
+        assert_equal "0", json.dig("data", "attributes", "balance_occupied")
       end
     end
   end

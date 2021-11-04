@@ -193,7 +193,7 @@ GEM
       activesupport (>= 5.0)
     hashdiff (1.0.1)
     hiredis (0.6.3)
-    i18n (1.8.10)
+    i18n (1.8.11)
       concurrent-ruby (~> 1.0)
     kaminari (1.2.1)
       activesupport (>= 4.1.0)
@@ -378,7 +378,7 @@ GEM
     websocket-extensions (0.1.5)
     with_advisory_lock (4.6.0)
       activerecord (>= 4.2)
-    zeitwerk (2.4.2)
+    zeitwerk (2.5.1)
 
 PLATFORMS
   ruby

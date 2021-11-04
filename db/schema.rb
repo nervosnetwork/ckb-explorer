@@ -10,8 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_10_15_105234) do
-
+ActiveRecord::Schema.define(version: 2021_11_03_012805) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -43,6 +42,7 @@ ActiveRecord::Schema.define(version: 2021_10_15_105234) do
     t.boolean "is_depositor", default: false
     t.decimal "dao_transactions_count", precision: 30, default: "0"
     t.bigint "lock_script_id"
+    t.decimal "balance_occupied", precision: 30, default: "0"
     t.index ["address_hash"], name: "index_addresses_on_address_hash"
     t.index ["is_depositor"], name: "index_addresses_on_is_depositor", where: "(is_depositor = true)"
     t.index ["lock_hash"], name: "index_addresses_on_lock_hash", unique: true
@@ -494,5 +494,4 @@ ActiveRecord::Schema.define(version: 2021_10_15_105234) do
     t.index ["block_hash", "block_id"], name: "index_uncle_blocks_on_block_hash_and_block_id", unique: true
     t.index ["block_id"], name: "index_uncle_blocks_on_block_id"
   end
-
 end
