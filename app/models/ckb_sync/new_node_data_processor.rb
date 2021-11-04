@@ -342,13 +342,14 @@ module CkbSync
     def update_addresses_info(addrs_change)
       addrs = []
       attributes = addrs_change.map do |addr_id, values|
-        addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at).take!
+        addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at, :balance_occupied).take!
         balance_diff = values[:balance_diff]
+        balance_occupied_diff = values[:balance_occupied_diff].presence || 0
         live_cells_diff = values[:cells_diff]
         dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
         ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
         addrs << addr
-        { id: addr.id, balance: addr.balance + balance_diff, ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
+        { id: addr.id, balance: addr.balance + balance_diff, balance_occupied: addr.balance_occupied + balance_occupied_diff, ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
           live_cells_count: addr.live_cells_count + live_cells_diff, dao_transactions_count: addr.dao_transactions_count + dao_txs_count, created_at: addr.created_at, updated_at: Time.current }
       end
       if attributes.present?
@@ -451,7 +452,7 @@ module CkbSync
     def prepare_previous_outputs(inputs)
       previous_outputs = {}
       outpoints = []
-      sql = "select id, tx_hash, cell_index, cell_type, capacity, address_id, type_hash, created_at from cell_outputs where "
+      sql = "select id, tx_hash, cell_index, cell_type, capacity, address_id, type_hash, created_at, data from cell_outputs where "
       inputs.each do |item|
         if !item.is_a?(Integer) && !from_cell_base?(item)
           outpoints << "(tx_hash = '\\#{item.previous_output.tx_hash.delete_prefix('0')}' and cell_index = #{item.previous_output.index}) or "
@@ -556,6 +557,7 @@ module CkbSync
           # attributes[2] is previous_cell_output capacity
           # attributes[3] is previous_cell_output type_hash
           # attributes[4] is previous_cell address_id
+          # attributes[5] is previous_cell data
           attributes = cell_input_attributes(item, ckb_txs[tx_index]["id"], local_block_id, prev_outputs)
           cell_inputs_attributes << attributes[0]
           if attributes[1].present?
@@ -563,6 +565,11 @@ module CkbSync
               addrs_changes[attributes[4]][:balance_diff] -= attributes[2]
             else
               addrs_changes[attributes[4]][:balance_diff] = -attributes[2]
+            end
+            if addrs_changes[attributes[4]][:balance_occupied_diff].present?
+              addrs_changes[attributes[4]][:balance_occupied_diff] -= attributes[2] if occupied?(attributes[3], attributes[5])
+            else
+              addrs_changes[attributes[4]][:balance_occupied_diff] = -attributes[2] if occupied?(attributes[3], attributes[5])
             end
             if addrs_changes[attributes[4]][:cells_diff].present?
               addrs_changes[attributes[4]][:cells_diff] -= 1
@@ -610,10 +617,16 @@ module CkbSync
           end
         else
           address = local_cache.read("NodeData/Address/#{item.lock.code_hash}-#{item.lock.hash_type}-#{item.lock.args}")
+          cell_data = node_block.transactions[tx_index].outputs_data[cell_index]
           if addrs_changes[address.id][:balance_diff].present?
             addrs_changes[address.id][:balance_diff] += item.capacity
           else
             addrs_changes[address.id][:balance_diff] = item.capacity
+          end
+          if addrs_changes[address.id][:balance_occupied_diff].present?
+            addrs_changes[address.id][:balance_occupied_diff] += item.capacity if occupied?(item.type&.compute_hash, cell_data)
+          else
+            addrs_changes[address.id][:balance_occupied_diff] = item.capacity if occupied?(item.type&.compute_hash, cell_data)
           end
 
           if addrs_changes[address.id][:cells_diff].present?
@@ -648,6 +661,10 @@ module CkbSync
           cell_index += 1
         end
       end
+    end
+
+    def occupied?(type_hash, cell_data)
+      cell_data.present? && cell_data != "0x" || type_hash.present?
     end
 
     def cell_output_attributes(output, address, ckb_transaction, local_block, cell_index, output_data)
@@ -729,7 +746,8 @@ module CkbSync
           },
           previous_output.capacity,
           previous_output.type_hash,
-          previous_output.address_id
+          previous_output.address_id,
+          previous_output.data
         ]
       end
     end
