@@ -52,4 +52,7 @@ class AddressSerializer
   attribute :dao_compensation do |object|
     (object.interest + object.unclaimed_compensation.to_i).to_s
   end
+  attribute :balance_occupied do |object|
+    object.balance_occupied.to_s
+  end
 end
