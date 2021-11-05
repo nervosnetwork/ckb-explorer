@@ -35,4 +35,7 @@ class LockHashSerializer
   attribute :mined_blocks_count do |object|
     object.mined_blocks_count.to_s
   end
+  attribute :balance_occupied do |object|
+    object.balance_occupied.to_s
+  end
 end
