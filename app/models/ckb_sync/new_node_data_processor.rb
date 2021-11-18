@@ -977,6 +977,7 @@ module CkbSync
       address.ckb_transactions_count = address.custom_ckb_transactions.count
       address.live_cells_count = address.cell_outputs.live.count
       address.dao_transactions_count = address.ckb_dao_transactions.count
+      address.balance_occupied = address.cal_balance_occupied
       address.save!
     end
 
