@@ -4,14 +4,15 @@ class CkbAddressParser
   end
 
   def parse
-    decoded_prefix, data = CKB::ConvertAddress.decode(address_hash)
+    decoded_prefix, data, _ = CKB::ConvertAddress.decode(address_hash)
     format_type = data[0].unpack("H*").first
-
     case format_type
     when CKB::Address::SHORT_FORMAT
       parse_short_payload_address(decoded_prefix, data)
     when CKB::Address::FULL_DATA_FORMAT, CKB::Address::FULL_TYPE_FORMAT
       parse_full_payload_address(decoded_prefix, data)
+    when CKB::Address::FULL_WITH_IDENTIFIER_FORMAT
+      parse_new_full_payload_address(decoded_prefix, data)
     else
       raise InvalidFormatTypeError, "Invalid format type"
     end
@@ -56,6 +57,17 @@ class CkbAddressParser
       args = CKB::Utils.bin_to_hex(data[offset..-1])
 
       OpenStruct.new(mode: mode, script: CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: hash_type), address_type: parse_address_type(format_type))
+    end
+
+    def parse_new_full_payload_address(decoded_prefix, data)
+      format_type = data[0].unpack("H*").first
+      mode = parse_mode(decoded_prefix)
+      code_hash_size = 32
+      code_hash = "0x#{data.slice(1..code_hash_size).unpack('H*').first}"
+      hash_type = CKB::Utils.bin_to_hex(data[code_hash_size + 1...code_hash_size + 2]).hex
+      args = CKB::Utils.bin_to_hex(data[code_hash_size + 2..-1])
+      OpenStruct.new(mode: mode,
+                     script: CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: CKB::ScriptHashType::TYPES[hash_type]), address_type: parse_address_type(format_type))
     end
 
     def parse_hash_type(format_type)

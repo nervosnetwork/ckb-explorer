@@ -22,7 +22,7 @@ class BlockTest < ActiveSupport::TestCase
     should validate_presence_of(:transactions_root).on(:create)
     should validate_presence_of(:proposals_hash).on(:create)
     should validate_presence_of(:uncles_count).on(:create)
-    should validate_presence_of(:uncles_hash).on(:create)
+    should validate_presence_of(:extra_hash).on(:create)
     should validate_presence_of(:version).on(:create)
     should validate_presence_of(:cell_consumed).on(:create)
     should validate_presence_of(:reward).on(:create)
@@ -190,11 +190,11 @@ class BlockTest < ActiveSupport::TestCase
     assert_equal unpack_attribute(block, "proposals_hash"), proposals_hash
   end
 
-  test "#uncles_hash should decodes packed string" do
+  test "#extra_hash should decodes packed string" do
     block = create(:block)
-    uncles_hash = block.uncles_hash
+    extra_hash = block.extra_hash
 
-    assert_equal unpack_attribute(block, "uncles_hash"), uncles_hash
+    assert_equal unpack_attribute(block, "extra_hash"), extra_hash
   end
 
   test "#uncle_block_hashes should decodes packed string" do

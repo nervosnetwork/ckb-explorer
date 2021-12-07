@@ -14,14 +14,14 @@ class Block < ApplicationRecord
   has_many :dao_events
   has_many :mining_infos
 
-  validates_presence_of :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :uncles_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
+  validates_presence_of :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :extra_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
   validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed, numericality: { greater_than_or_equal_to: 0 }
 
   attribute :block_hash, :ckb_hash
   attribute :parent_hash, :ckb_hash
   attribute :transactions_root, :ckb_hash
   attribute :proposals_hash, :ckb_hash
-  attribute :uncles_hash, :ckb_hash
+  attribute :extra_hash, :ckb_hash
   attribute :uncle_block_hashes, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]
   attribute :proposals, :ckb_array_hash, hash_length: ENV["DEFAULT_SHORT_HASH_LENGTH"]
 

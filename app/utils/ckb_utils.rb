@@ -46,7 +46,11 @@ class CkbUtils
     args_offset = [script_serialization[12..15].unpack1("H*")].pack("H*").unpack1("V")
     message_bytes = cellbase_witness_serialization[message_offset..-1]
     message_serialization = message_bytes[4..-1]
-    message = "0x#{message_serialization.unpack1('H*')}"
+    if message_serialization.size > 28
+      message = "#{message_serialization[0..28]}#{message_serialization[29..-1]&.unpack1("H*")}".to_json.unpack1("H*")
+    else
+      message = message_serialization.unpack1("H*")
+    end
     code_hash_serialization = script_serialization[code_hash_offset...hash_type_offset]
     hash_type_serialization = script_serialization[hash_type_offset...args_offset]
     args_serialization = script_serialization[hash_type_offset + 1..-1]
@@ -58,15 +62,15 @@ class CkbUtils
 
     hash_type = hash_type_hex == "0x00" ? "data" : "type"
     lock = CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: hash_type)
-    OpenStruct.new(lock: lock, message: message)
+    OpenStruct.new(lock: lock, message: "0x#{message}")
   end
 
   def self.miner_message(cellbase)
     parse_cellbase_witness(cellbase).message
   end
 
-  def self.generate_address(lock_script)
-    CKB::Address.new(lock_script, mode: ENV["CKB_NET_MODE"]).generate
+  def self.generate_address(lock_script, version = CKB::Address::Version::CKB2021)
+    CKB::Address.new(lock_script, mode: ENV["CKB_NET_MODE"], version: version).generate
   end
 
   def self.parse_address(address_hash)
