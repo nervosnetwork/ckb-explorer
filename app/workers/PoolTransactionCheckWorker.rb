@@ -3,7 +3,7 @@ class PoolTransactionCheckWorker
 
   def perform
     pool_tx_entry_attributes = []
-    PoolTransactionEntry.pool_transaction_pending.select(:id, :inputs, :created_at).each do |tx|
+    PoolTransactionEntry.pool_transaction_pending.select(:id, :inputs, :created_at, :cell_deps).each do |tx|
       tx.inputs.each do |input|
         if CellOutput.where(tx_hash: input["previous_output"]["tx_hash"], cell_index: input["previous_output"]["index"], status: "dead").exists?
           pool_tx_entry_attributes << { id: tx.id, tx_status: "rejected", created_at: tx.created_at, updated_at: Time.current }
@@ -11,7 +11,7 @@ class PoolTransactionCheckWorker
         end
       end
       tx.cell_deps.each do |input|
-        if CellOutput.where(tx_hash: input["previous_output"]["tx_hash"], cell_index: input["previous_output"]["index"], status: "dead").exists?
+        if CellOutput.where(tx_hash: input["out_point"]["tx_hash"], cell_index: input["out_point"]["index"], status: "dead").exists?
           pool_tx_entry_attributes << { id: tx.id, tx_status: "rejected", created_at: tx.created_at, updated_at: Time.current }
           break
         end
