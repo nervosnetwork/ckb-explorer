@@ -5,6 +5,8 @@ FactoryBot.define do
       CKB::Address.new(script).generate
     end
 
+    address_hash_crc { CkbUtils.generate_crc32(address_hash) }
+
     balance { 0 }
     cell_consumed { 0 }
     ckb_transactions_count { 0 }

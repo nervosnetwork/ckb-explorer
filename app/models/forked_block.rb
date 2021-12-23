@@ -23,7 +23,7 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
-#  uncles_hash                :binary
+#  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
 #  proposals                  :binary
@@ -56,4 +56,6 @@ end
 #  block_size                 :integer
 #  proposal_reward            :decimal(30, )
 #  commit_reward              :decimal(30, )
+#  miner_message              :string
+#  extension                  :jsonb
 #

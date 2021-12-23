@@ -383,4 +383,9 @@ class CkbUtils
   rescue
     OpenStruct.new(version: 0, total: 0, issued: 0, configure: 0, name: "", description: "", renderer: "")
   end
+
+  def self.generate_crc32(str)
+    crc = Digest::CRC32.new
+    crc.update(str).checksum
+  end
 end

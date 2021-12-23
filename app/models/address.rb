@@ -42,14 +42,15 @@ class Address < ApplicationRecord
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     address_hash_2019 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     lock_hash = lock_script.compute_hash
-    if Address.where(address_hash: address_hash_2019).exists?
-      address = Address.find_or_create_by!(address_hash: address_hash_2019, lock_hash: lock_hash)
+    if Address.where(address_hash_crc: CkbUtils.generate_crc32(address_hash_2019), address_hash: address_hash_2019).exists?
+      address = Address.find_or_create_by!(address_hash_crc: CkbUtils.generate_crc32(address_hash_2019), address_hash: address_hash_2019, lock_hash: lock_hash)
     else
       address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
-      address = Address.find_or_create_by!(address_hash: address_hash, lock_hash: lock_hash)
+      address = Address.find_or_create_by!(address_hash_crc: CkbUtils.generate_crc32(address_hash), address_hash: address_hash, lock_hash: lock_hash)
     end
     address.update(block_timestamp: block_timestamp) if address.block_timestamp.blank?
     address.update(lock_script_id: lock_script_id) if address.lock_script_id.blank?
+    address.update(address_hash_crc: CkbUtils.generate_crc32(address.address_hash)) if address.address_hash_crc.blank?
 
     address
   end
@@ -158,10 +159,11 @@ end
 #  dao_transactions_count :decimal(30, )    default(0)
 #  lock_script_id         :bigint
 #  balance_occupied       :decimal(30, )    default(0)
+#  address_hash_crc       :bigint
 #
 # Indexes
 #
-#  index_addresses_on_address_hash  (address_hash)
-#  index_addresses_on_is_depositor  (is_depositor) WHERE (is_depositor = true)
-#  index_addresses_on_lock_hash     (lock_hash) UNIQUE
+#  index_addresses_on_address_hash_crc  (address_hash_crc)
+#  index_addresses_on_is_depositor      (is_depositor) WHERE (is_depositor = true)
+#  index_addresses_on_lock_hash         (lock_hash) UNIQUE
 #

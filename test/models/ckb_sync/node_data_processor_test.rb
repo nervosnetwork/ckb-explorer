@@ -1637,6 +1637,20 @@ module CkbSync
       end
     end
 
+    test "#process_block should update abandoned block's contained address's balance occupied" do
+      prepare_node_data(12)
+      local_block = Block.find_by(number: 12)
+      address = local_block.contained_addresses.first
+      origin_balance_occupied = 300 * 10**8
+      address.update(balance_occupied: origin_balance_occupied, mined_blocks_count: 1)
+      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
+      VCR.use_cassette("blocks/12", record: :new_episodes) do
+        new_local_block = node_data_processor.call
+
+        assert_equal 0, new_local_block.contained_addresses.sum(:balance_occupied)
+      end
+    end
+
     test "should update the target block reward to the sum of primary and secondary when there is the target block" do
       prepare_node_data(12)
       VCR.use_cassette("blocks/12", record: :new_episodes) do
