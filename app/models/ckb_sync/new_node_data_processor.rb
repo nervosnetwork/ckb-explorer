@@ -908,6 +908,7 @@ module CkbSync
 
     def invalid_block(local_tip_block)
       ApplicationRecord.transaction do
+        PoolTransactionEntry.pool_transaction_pending.where(tx_hash: local_tip_block.ckb_transactions.pluck(:tx_hash)).delete_all
         result =
           Benchmark.realtime do
             revert_dao_contract_related_operations(local_tip_block)
