@@ -26,7 +26,7 @@ end
 #  timestamp         :decimal(30, )
 #  transactions_root :binary
 #  proposals_hash    :binary
-#  uncles_hash       :binary
+#  extra_hash        :binary
 #  version           :integer
 #  proposals         :binary
 #  proposals_count   :integer

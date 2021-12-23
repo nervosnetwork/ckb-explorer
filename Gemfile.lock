@@ -117,6 +117,8 @@ GEM
       database_cleaner-core (~> 2.0.0)
     database_cleaner-core (2.0.1)
     deep_merge (1.2.1)
+    digest-crc (0.6.4)
+      rake (>= 12.0.0, < 14.0.0)
     docile (1.4.0)
     dotenv (2.7.6)
     dotenv-rails (2.7.6)
@@ -393,6 +395,7 @@ DEPENDENCIES
   codecov
   config
   database_cleaner
+  digest-crc
   dotenv-rails
   factory_bot_rails
   faker!
