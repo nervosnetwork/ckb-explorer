@@ -140,13 +140,14 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
-#  uncles_hash                :binary
+#  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
 #  proposals                  :binary
 #  proposals_count            :integer
 #  cell_consumed              :decimal(30, )
 #  miner_hash                 :binary
+#  miner_message              :string
 #  reward                     :decimal(30, )
 #  total_transaction_fee      :decimal(30, )
 #  ckb_transactions_count     :decimal(30, )    default(0)
@@ -173,6 +174,7 @@ end
 #  block_size                 :integer
 #  proposal_reward            :decimal(30, )
 #  commit_reward              :decimal(30, )
+#  extension                  :jsonb
 #
 # Indexes
 #
