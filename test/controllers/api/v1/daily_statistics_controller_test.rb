@@ -40,7 +40,10 @@ module Api
       end
 
       test "should return transactions count and timestamp" do
-        create_list(:daily_statistic, 15)
+        15.times do |i|
+          create(:daily_statistic, created_at_unixtimestamp: (360 - i).days.ago.to_i)
+        end
+
         daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).valid_indicators
         valid_get api_v1_daily_statistic_url("transactions_count")
 
@@ -92,16 +95,12 @@ module Api
       end
 
       test "should return recent 90 days average hash rate" do
-        target_date = Time.current.beginning_of_year
-        i = 1
-        o_date = i.days.ago
-        while o_date > target_date
-          create(:daily_statistic, created_at_unixtimestamp: o_date)
-          i += 1
-          o_date = i.days.ago
+        100.times do |i|
+          create(:daily_statistic, created_at_unixtimestamp: (360 - i).days.ago.to_i)
         end
-        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).recent_year.valid_indicators[-90..-1]
+        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).valid_indicators[-90..-1]
         valid_get api_v1_daily_statistic_url("avg_hash_rate")
+
         assert_equal [%w(avg_hash_rate created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
         assert_equal DailyStatisticSerializer.new(daily_statistic_data, params: { indicator: "avg_hash_rate" }).serialized_json, response.body
         assert_equal 90, json.dig("data").size
