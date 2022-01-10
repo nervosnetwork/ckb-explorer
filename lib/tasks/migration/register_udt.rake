@@ -109,7 +109,7 @@ class UdtRegister
     end
 
     def build_udt_type_script(args)
-      code_hash = "0x5e7a36a77e68eecc013dfa2fe6a23f3b6c344b04005808694ae6dd45eea4cfd5"#CkbSync::Api.instance.mode == "mainnet" ? "0x5e7a36a77e68eecc013dfa2fe6a23f3b6c344b04005808694ae6dd45eea4cfd5" : "0xc5e5dcf215925f7ef4dfaf5f4b4f105bc321c02776d6e7d52a1db3fcd9d011a4"
+      code_hash = CkbSync::Api.instance.mode == "mainnet" ? "0x5e7a36a77e68eecc013dfa2fe6a23f3b6c344b04005808694ae6dd45eea4cfd5" : "0xc5e5dcf215925f7ef4dfaf5f4b4f105bc321c02776d6e7d52a1db3fcd9d011a4"
       CKB::Types::Script.new(args: args[:args], code_hash: code_hash, hash_type: "type")
     end
 
