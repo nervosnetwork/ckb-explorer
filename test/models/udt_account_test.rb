@@ -10,6 +10,6 @@ class UdtAccountTest < ActiveSupport::TestCase
     should validate_numericality_of(:decimal).allow_nil.is_greater_than_or_equal_to(0).is_less_than_or_equal_to(39)
     should validate_numericality_of(:amount).is_greater_than_or_equal_to(0)
     should validate_length_of(:symbol).allow_nil.is_at_least(1).is_at_most(16)
-    should validate_length_of(:full_name).allow_nil.is_at_least(1).is_at_most(32)
+    should validate_length_of(:full_name).allow_nil.is_at_least(1).is_at_most(100)
   end
 end
