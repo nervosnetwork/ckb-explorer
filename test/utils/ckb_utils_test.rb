@@ -389,6 +389,28 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal renderer, parsed_data.renderer
   end
 
+  test "parse nrc 721 token cell args" do
+    args = "0x00000000000000000000000000000000000000000000000000545950455f4944013620e2ced53373c5b55c5cef79b7fd0a875c60a70382a9e9664fe28e0bb345ab22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8"
+    parsed_args = CkbUtils.parse_nrc_721_args(args)
+    assert_equal "0x00000000000000000000000000000000000000000000000000545950455f4944", parsed_args.code_hash
+    assert_equal "type", parsed_args.hash_type
+    assert_equal "0x3620e2ced53373c5b55c5cef79b7fd0a875c60a70382a9e9664fe28e0bb345ab", parsed_args.args
+    assert_equal "22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8", parsed_args.token_id
+  end
+
+  test "parse nrc 721 factory cell data" do
+    data = "0x59eab9771fa11d9778b9755b10668818e7f82ea76dc8c69fb90d0afcfb48d7ae00125465737420746f6b656e20666163746f727900035454460015687474703a2f2f746573742d746f6b656e2e636f6d"
+    parsed_data = CkbUtils.parse_nrc_721_factory_data(data)
+    name = "Test token factory"
+    symbol = "TTF"
+    base_token_uri = "http://test-token.com"
+    extra_data = ""
+    assert_equal name, parsed_data.name
+    assert_equal symbol, parsed_data.symbol
+    assert_equal base_token_uri, parsed_data.base_token_uri
+    assert_equal extra_data, parsed_data.extra_data
+  end
+
   private
 
   def node_data_processor

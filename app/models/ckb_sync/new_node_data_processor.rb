@@ -3,6 +3,7 @@ require "benchmark_methods"
 module CkbSync
   class NewNodeDataProcessor
     include BenchmarkMethods
+
     benchmark :call, :process_block, :build_block!, :build_uncle_blocks!, :build_ckb_transactions!, :build_udts!, :process_ckb_txs, :build_cells_and_locks!,
               :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
               :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
@@ -264,22 +265,24 @@ module CkbSync
     def update_or_create_udt_accounts!(local_block)
       new_udt_accounts_attributes = Set.new
       udt_accounts_attributes = Set.new
-      local_block.cell_outputs.where(cell_type: %w(udt m_nft_token)).select(:id, :address_id, :type_hash, :cell_type).find_each do |udt_output|
+      local_block.cell_outputs.where(cell_type: %w(udt m_nft_token nrc_721_token)).select(:id, :address_id, :type_hash, :cell_type).find_each do |udt_output|
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
         udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
         amount = udt_account_amount(udt_type, udt_output.type_hash, address)
+        nft_token_id = 
+          udt_type == "nrc_721_token" ?  CkbUtils.parse_nrc_721_args(udt_output.type_script.args).token_id : nil
         udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
         if udt_account.present?
           udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
         else
           new_udt_accounts_attributes << {
             address_id: udt_output.address_id, udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal,
-            published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount, udt_id: udt.id }
+            published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount: amount, udt_id: udt.id, nft_token_id: nft_token_id }
         end
       end
 
-      CellOutput.where(consumed_by_id: local_block.ckb_transactions.pluck(:id)).where(cell_type: %w(udt m_nft_token)).select(:id, :address_id, :type_hash, :cell_type).find_each do |udt_output|
+      CellOutput.where(consumed_by_id: local_block.ckb_transactions.pluck(:id)).where(cell_type: %w(udt m_nft_token nrc_721_token)).select(:id, :address_id, :type_hash, :cell_type).find_each do |udt_output|
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
         udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
@@ -291,6 +294,8 @@ module CkbSync
             udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
           when "m_nft_token"
             udt_account.destroy unless address.cell_outputs.live.m_nft_token.where(type_hash: udt_output.type_hash).exists?
+          when "nrc_721_token"
+            udt_account.destroy unless address.cell_outputs.live.nrc_721_token.where(type_hash: udt_output.type_hash).exists?
           end
         end
       end
@@ -371,25 +376,37 @@ module CkbSync
         next if output.is_a?(Integer)
 
         cell_type = cell_type(output.type, outputs_data[index])
-        next unless cell_type.in?(%w(udt m_nft_token))
+        next unless cell_type.in?(%w(udt m_nft_token nrc_721_token))
 
         type_hash = output.type.compute_hash
         unless Udt.where(type_hash: type_hash).exists?
-          m_nft_token_attr = { full_name: nil, icon_file: nil, published: false }
+          nft_token_attr = { full_name: nil, icon_file: nil, published: false, symbol: nil }
           if cell_type == "m_nft_token"
             m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: output.type.args[0..49]).first
             if m_nft_class_type.present?
               m_nft_class_cell = m_nft_class_type.cell_outputs.last
               parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
-              m_nft_token_attr[:full_name] = parsed_class_data.name
-              m_nft_token_attr[:icon_file] = parsed_class_data.renderer
-              m_nft_token_attr[:published] = true
+              nft_token_attr[:full_name] = parsed_class_data.name
+              nft_token_attr[:icon_file] = parsed_class_data.renderer
+              nft_token_attr[:published] = true
             end
           end
-          # fill issuer_address after publish the token
-          udts_attributes << {
+          if cell_type == "nrc_721_token"
+            factory_cell = CkbUtils.parse_nrc_721_args(output.type.args)
+            nrc_721_factory_cell_type = TypeScript.where(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args).first
+            if nrc_721_factory_cell_type.present?
+              nrc_721_factory_cell = nrc_721_factory_cell_type.cell_outputs.nrc_721_factory.last
+              parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(nrc_721_factory_cell.data)
+              nft_token_attr[:full_name] = parsed_factory_data.name
+              nft_token_attr[:symbol] = parsed_factory_data.symbol
+              nft_token_attr[:icon_file] = "#{parsed_factory_data.base_token_uri}/#{factory_cell.token_id}"
+              nft_token_attr[:published] = false
+            end
+          end
+            # fill issuer_address after publish the token
+            udts_attributes << {
             type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
-            code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(m_nft_token_attr)
+            code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
         end
       end
       Udt.insert_all!(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if udts_attributes.present?
@@ -1051,6 +1068,8 @@ module CkbSync
             amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
             udt_account.update!(amount: amount)
           when "m_nft_token"
+            udt_account.destroy
+          when "nrc_721_token"
             udt_account.destroy
           end
         end

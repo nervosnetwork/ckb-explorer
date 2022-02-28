@@ -320,7 +320,7 @@ class CkbUtils
       ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"],
       CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
       CkbSync::Api.instance.token_script_code_hash
-    ].include?(type_script&.code_hash)
+    ].include?(type_script&.code_hash) || is_nrc_721_token_cell?(output_data) || is_nrc_721_factory_cell?(output_data)
 
     case type_script&.code_hash
     when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
@@ -342,7 +342,13 @@ class CkbUtils
     when CkbSync::Api.instance.token_script_code_hash
       "m_nft_token"
     else
-      "normal"
+      if is_nrc_721_token_cell?(output_data)
+        "nrc_721_token"
+      elsif is_nrc_721_factory_cell?(output_data)
+        "nrc_721_factory"
+      else
+        "normal"
+      end
     end
   end
 
@@ -387,5 +393,39 @@ class CkbUtils
   def self.generate_crc32(str)
     crc = Digest::CRC32.new
     crc.update(str).checksum
+  end
+
+  def self.is_nrc_721_token_cell?(output_data)
+    output_data.start_with?(Settings.nrc_721_token_output_data_header)
+  end
+
+  def self.is_nrc_721_factory_cell?(output_data)
+    output_data.start_with?(Settings.nrc_721_factory_output_data_header)
+  end
+
+  def self.parse_nrc_721_args(args)
+    args = args.delete_prefix("0x")
+    factory_code_hash = "0x#{args[0..63]}"
+    factory_type = args[64..65] == "01" ? "type" : "data"
+    factory_args = "0x#{args[66..129]}"
+    factory_token_id = args[130..-1]
+    OpenStruct.new(code_hash: factory_code_hash, hash_type: factory_type, args: factory_args, token_id: factory_token_id)
+  end
+
+  def self.parse_nrc_721_factory_data(data)
+    data = data.delete_prefix(Settings.nrc_721_factory_output_data_header)
+    arg_name_length = 4
+    name_byte_size = data[0, arg_name_length].to_i(16)
+    factory_name_hex = data[arg_name_length, name_byte_size * 2]
+
+    arg_symbol_length = 4
+    symbol_byte_size = data[(factory_name_hex.length + arg_name_length), arg_symbol_length].to_i(16)
+    factory_symbol_hex = data[arg_name_length + factory_name_hex.length + arg_symbol_length, symbol_byte_size * 2]
+
+    arg_base_token_uri_length = 4
+    base_token_uri_length = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length), arg_base_token_uri_length].to_i(16)
+    factory_base_token_uri_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length), base_token_uri_length *2]
+    extra_data_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length + base_token_uri_length *2)..-1]
+    OpenStruct.new(name: [factory_name_hex].pack("H*"), symbol: [factory_symbol_hex].pack("H*"), base_token_uri: [factory_base_token_uri_hex].pack("H*"), extra_data: [extra_data_hex].pack("H*"))
   end
 end
