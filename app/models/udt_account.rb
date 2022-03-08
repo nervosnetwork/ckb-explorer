@@ -1,12 +1,12 @@
 class UdtAccount < ApplicationRecord
-  enum udt_type: { sudt: 0, m_nft_token: 1 }
+  enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2 }
 
   belongs_to :address
   belongs_to :udt
 
   validates_presence_of :amount
   validates_length_of :symbol, minimum: 1, maximum: 16, allow_nil: true
-  validates_length_of :full_name, minimum: 1, maximum: 32, allow_nil: true
+  validates_length_of :full_name, minimum: 1, maximum: 100, allow_nil: true
   validates :decimal, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }, allow_nil: true
   validates :amount, numericality: { greater_than_or_equal_to: 0 }
 
@@ -25,19 +25,20 @@ end
 #
 # Table name: udt_accounts
 #
-#  id         :bigint           not null, primary key
-#  udt_type   :integer
-#  full_name  :string
-#  symbol     :string
-#  decimal    :integer
-#  amount     :decimal(40, )    default(0)
-#  published  :boolean          default(FALSE)
-#  code_hash  :binary
-#  type_hash  :string
-#  address_id :bigint
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  udt_id     :bigint
+#  id           :bigint           not null, primary key
+#  udt_type     :integer
+#  full_name    :string
+#  symbol       :string
+#  decimal      :integer
+#  amount       :decimal(40, )    default(0)
+#  published    :boolean          default(FALSE)
+#  code_hash    :binary
+#  type_hash    :string
+#  address_id   :bigint
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#  udt_id       :bigint
+#  nft_token_id :string
 #
 # Indexes
 #

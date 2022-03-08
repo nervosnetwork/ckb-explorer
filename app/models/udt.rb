@@ -1,10 +1,10 @@
 class Udt < ApplicationRecord
   MAX_PAGINATES_PER = 100
-  enum udt_type: { sudt: 0, m_nft_token: 1 }
+  enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2 }
 
   validates_presence_of :total_amount
   validates_length_of :symbol, minimum: 1, maximum: 16, allow_nil: true
-  validates_length_of :full_name, minimum: 1, maximum: 32, allow_nil: true
+  validates_length_of :full_name, minimum: 1, maximum: 100, allow_nil: true
   validates :decimal, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }, allow_nil: true
   validates :total_amount, numericality: { greater_than_or_equal_to: 0 }
 
