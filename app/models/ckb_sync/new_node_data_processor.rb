@@ -270,7 +270,7 @@ module CkbSync
         udt_type = udt_type(udt_output.cell_type)
         udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
         amount = udt_account_amount(udt_type, udt_output.type_hash, address)
-        nft_token_id = 
+        nft_token_id =
           udt_type == "nrc_721_token" ?  CkbUtils.parse_nrc_721_args(udt_output.type_script.args).token_id : nil
         udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
         if udt_account.present?
@@ -403,8 +403,8 @@ module CkbSync
               nft_token_attr[:published] = false
             end
           end
-            # fill issuer_address after publish the token
-            udts_attributes << {
+          # fill issuer_address after publish the token
+          udts_attributes << {
             type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
             code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
         end
