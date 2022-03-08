@@ -479,7 +479,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_CODE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_CODE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
         node_block.transactions.first.outputs_data[0] = CKB::Utils.bin_to_hex("\x00" * 8)
         local_block = node_data_processor.process_block(node_block)
 
@@ -492,7 +492,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
         node_block.transactions.first.outputs_data[0] = CKB::Utils.bin_to_hex("\x00" * 8)
         local_block = node_data_processor.process_block(node_block)
 
@@ -505,7 +505,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["DAO_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
         node_block.transactions.first.outputs_data[0] = CKB::Utils.bin_to_hex("\x02" * 8)
         local_block = node_data_processor.process_block(node_block)
 
@@ -2147,7 +2147,7 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_block.transactions.first.outputs_data[0] = "0x421d0000000000000000000000000000"
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash)
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash, hash_type: "type")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, block_timestamp: node_block.header.timestamp)
         local_block = node_data_processor.process_block(node_block)
 
@@ -2163,7 +2163,7 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_block.transactions.first.outputs_data[0] = "0x421d0000000000000000000000000000"
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT1_CELL_TYPE_HASH"], args: issuer_address.lock_hash)
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT1_CELL_TYPE_HASH"], args: issuer_address.lock_hash, hash_type: "type")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, block_timestamp: node_block.header.timestamp)
         local_block = node_data_processor.process_block(node_block)
 
@@ -2179,7 +2179,7 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_block.transactions.first.outputs_data[0] = "0x421d0000000000000000000000000000"
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash)
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash, hash_type: "type")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, block_timestamp: Time.current.to_i)
         address_hash = CkbUtils.generate_address(node_output.lock)
         address = Address.find_by(address_hash: address_hash)
@@ -2198,7 +2198,7 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
         node_block.transactions.first.outputs_data[0] = "0x421d0000000000000000000000000000"
-        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c")
+        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c", hash_type: "type")
         create(:udt, code_hash: CkbSync::Api.instance.token_script_code_hash, type_hash: node_output.type.compute_hash, block_timestamp: Time.current.to_i, udt_type: "m_nft_token")
         address_hash = CkbUtils.generate_address(node_output.lock)
         address = Address.find_by(address_hash: address_hash)
@@ -2249,7 +2249,7 @@ module CkbSync
         node_block.transactions.first.outputs_data[0] = "0x421d0000000000000000000000000000"
         type = create(:type_script, code_hash: CkbSync::Api.instance.token_class_script_code_hash, hash_type: "type", args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de00000002")
         create(:cell_output, :with_full_transaction_but_no_type_script, type_script_id: type.id, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979")
-        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c")
+        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c", hash_type: "type")
         assert_difference -> { Udt.m_nft_token.count }, 1 do
           node_data_processor.process_block(node_block)
         end
@@ -2283,7 +2283,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_output = node_block.transactions.first.outputs.first
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         address_hash = CkbUtils.generate_address(node_output.lock)
@@ -2305,8 +2305,8 @@ module CkbSync
         node_output = node_block.transactions.first.outputs.first
         new_node_output = node_output.dup
         node_block.transactions.first.outputs << new_node_output
-        new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2")
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2", hash_type: "type")
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: new_node_output.type.compute_hash)
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
@@ -2335,9 +2335,9 @@ module CkbSync
         node_output = node_block.transactions.first.outputs.first
         new_node_output = node_output.dup
         node_block.transactions.first.outputs << new_node_output
-        new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address1.lock_hash)
+        new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address1.lock_hash, hash_type: "type")
         new_node_output.lock = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: issuer_address2.lock_hash)
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address1.lock_hash)
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address1.lock_hash, hash_type: "type")
         udt = create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, published: true, block_timestamp: node_block.header.timestamp)
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         node_block.transactions.first.outputs_data[1] = "0x0000909dceda82370000000000000000"
@@ -2362,8 +2362,8 @@ module CkbSync
         node_output = node_block.transactions.first.outputs.first
         new_node_output = node_output.dup
         node_block.transactions.first.outputs << new_node_output
-        new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2")
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
+        new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac2", hash_type: "type")
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
         udt1 = create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
         udt2 = create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: new_node_output.type.compute_hash)
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
@@ -2391,7 +2391,7 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
 
         node_output = node_block.transactions.first.outputs.first
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash)
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash, hash_type: "type")
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, block_timestamp: node_block.header.timestamp)
         node_data_processor.process_block(node_block)
@@ -2417,7 +2417,7 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
 
         node_output = node_block.transactions.first.outputs.first
-        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x9cf6ef96c3f053f6d128903e608516d658cac2da0000000000000001")
+        node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x9cf6ef96c3f053f6d128903e608516d658cac2da0000000000000001", hash_type: "type")
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         node_data_processor.process_block(node_block)
         block = Block.find_by(number: 21)
@@ -2445,8 +2445,8 @@ module CkbSync
         node_output = node_block.transactions.first.outputs.first
         new_node_output = node_output.dup
         node_block.transactions.first.outputs << new_node_output
-        new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address1.lock_hash)
-        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address2.lock_hash)
+        new_node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address1.lock_hash, hash_type: "type")
+        node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address2.lock_hash, hash_type: "type")
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         node_block.transactions.first.outputs_data[1] = "0x0000909dceda82370000000000000000"
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, block_timestamp: node_block.header.timestamp)
@@ -2468,7 +2468,7 @@ module CkbSync
 
     test "should update udt account both input and output" do
       issuer_address = create(:address)
-      udt_type_script = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash)
+      udt_type_script = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash, hash_type: "type")
       create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: udt_type_script.compute_hash)
       block = create(:block, :with_block_hash)
       previous_cell_output_lock_script = create(:lock_script, code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
