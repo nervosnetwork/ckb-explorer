@@ -265,7 +265,7 @@ module CkbSync
     def update_or_create_udt_accounts!(local_block)
       new_udt_accounts_attributes = Set.new
       udt_accounts_attributes = Set.new
-      local_block.cell_outputs.where(cell_type: %w(udt m_nft_token nrc_721_token)).select(:id, :address_id, :type_hash, :cell_type).find_each do |udt_output|
+      local_block.cell_outputs.where(cell_type: %w(udt m_nft_token nrc_721_token)).select(:id, :address_id, :type_hash, :cell_type, :type_script_id).find_each do |udt_output|
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
         udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
