@@ -392,16 +392,7 @@ module CkbSync
             end
           end
           if cell_type == "nrc_721_token"
-            factory_cell = CkbUtils.parse_nrc_721_args(output.type.args)
-            nrc_721_factory_cell_type = TypeScript.where(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args).first
-            if nrc_721_factory_cell_type.present?
-              nrc_721_factory_cell = nrc_721_factory_cell_type.cell_outputs.nrc_721_factory.last
-              parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(nrc_721_factory_cell.data)
-              nft_token_attr[:full_name] = parsed_factory_data.name
-              nft_token_attr[:symbol] = parsed_factory_data.symbol
-              nft_token_attr[:icon_file] = "#{parsed_factory_data.base_token_uri}/#{factory_cell.token_id}"
-              nft_token_attr[:published] = false
-            end
+            nft_token_attr[:published] = true
           end
           # fill issuer_address after publish the token
           udts_attributes << {
