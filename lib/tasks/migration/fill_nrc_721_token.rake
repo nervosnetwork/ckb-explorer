@@ -1,12 +1,14 @@
 namespace :migration do
-  desc "Usage: RAILS_ENV=production bundle exec rake migration:publish_nrc_721_token[udt_type_hash]"
-  task :publish_nrc_721_token, [:udt_type_hash]  => :environment do |_, args|
-    udt = UDT.find_by_type_hash(args[:udt_type_hash])
-    factory_cell = CkbUtils.parse_nrc_721_args(udt.args) 
-    nrc_721_factory_cell_type = TypeScript.where(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args).first
-    parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(nrc_721_factory_cell.data)
-    udt.update(full_name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, icon_file: "#{parsed_factory_data.base_token_uri}/#{factory_cell.token_id}", published: true)
-    UdtAccount.where(udt_id: udt_id).update_all(full_name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, icon_file: "#{parsed_factory_data.base_token_uri}/#{factory_cell.token_id}", published: true)
+  desc "Usage: RAILS_ENV=production bundle exec rake migration:update_nrc_721_token_info[token_code_hash]"
+  task :update_nrc_721_token_info, [:token_code_hash]  => :environment do |_, args|
+    udts = UDT.where(code_hash: args[:token_code_hash], hash_type: "type")
+    udts.each do |udt|
+      factory_cell = CkbUtils.parse_nrc_721_args(udt.args) 
+      nrc_721_factory_cell_type = TypeScript.where(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args).first
+      parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(nrc_721_factory_cell.data)
+      udt.update(full_name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, icon_file: "#{parsed_factory_data.base_token_uri}/#{factory_cell.token_id}")
+      UdtAccount.where(udt_id: udt_id).update_all(full_name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, icon_file: "#{parsed_factory_data.base_token_uri}/#{factory_cell.token_id}")
+    end
   end
 
   desc "Usage: RAILS_ENV=production bundle exec rake migration:fill_old_nrc_721_token[0x7d77d51ba9a1123939de4ee06a86416f8edd747591aa3768426b3b199c2b4bd5]"
