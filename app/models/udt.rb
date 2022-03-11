@@ -55,6 +55,7 @@ end
 #  block_timestamp        :decimal(30, )
 #  issuer_address         :binary
 #  ckb_transactions_count :decimal(30, )    default(0)
+#  nrc_factory_cell_id    :bigint
 #
 # Indexes
 #
