@@ -614,6 +614,11 @@ module CkbSync
               udt_address_ids[tx_index] << attributes[4]
               contained_udt_ids[tx_index] << Udt.where(type_hash: attributes[3], udt_type: "sudt").pick(:id)
             end
+            if attributes[1][:cell_type] ==  "nrc_721_token"
+              tags[tx_index] << "nrc_721_token"
+              udt_address_ids[tx_index] << attributes[4]
+              contained_udt_ids[tx_index] << Udt.where(type_hash: attributes[3], udt_type: "nrc_721_token").pick(:id)
+            end
           end
           input_capacities[tx_index] += attributes[2] if tx_index != 0 && attributes[2].present?
         end

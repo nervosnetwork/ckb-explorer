@@ -89,6 +89,24 @@ class CellOutput < ApplicationRecord
     CkbUtils.hash_value_to_s(value)
   end
 
+  def nrc_721_nft_info
+    return unless cell_type.in?(%w(nrc_721_token nrc_721_factory))
+
+    case cell_type
+    when "nrc_721_factory"
+      factory_cell_type_script = self.type_script
+      factory_cell = NrcFactoryCell.find_by(code_hash: factory_cell_type_script.code_hash, hash_type: factory_cell_type_script.hash_type, args: factory_cell_type_script.args, verified: true)
+      value = { symbol: factory_cell&.symbol }
+    when "nrc_721_token"
+      udt = Udt.where(script_hash: type_hash).first
+      factory_cell = NrcFactoryCell.find_by(id: udt.nrc_factory_cell_id, verified: true)
+      value = { symbol: factory_cell&.symbol, amount: udt.udt_account.nft_token_id }
+    else
+      raise RuntimeError.new("invalid cell type")
+    end
+    CkbUtils.hash_value_to_s(value)
+  end
+
   def flush_cache
     $redis.pipelined do
       $redis.del(*cache_keys)
