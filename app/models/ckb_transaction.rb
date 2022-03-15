@@ -112,6 +112,7 @@ class CkbTransaction < ApplicationRecord
       display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
       display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
       display_output.merge!(attributes_for_m_nft_cell(output)) if output.cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
+      display_output.merge!(attributes_for_nrc_721_cell(output)) if output.cell_type.in?(%w(nrc_721_token nrc_721_factory))
 
       CkbUtils.hash_value_to_s(display_output)
     end
@@ -135,6 +136,7 @@ class CkbTransaction < ApplicationRecord
       display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
       display_input.merge!(attributes_for_udt_cell(previous_cell_output)) if previous_cell_output.udt?
       display_input.merge!(attributes_for_m_nft_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
+      display_input.merge!(attributes_for_nrc_721_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(nrc_721_token nrc_721_factory))
 
       CkbUtils.hash_value_to_s(display_input)
     end
@@ -146,6 +148,10 @@ class CkbTransaction < ApplicationRecord
 
   def attributes_for_m_nft_cell(m_nft_cell)
     { m_nft_info: m_nft_cell.m_nft_info }
+  end
+
+  def attributes_for_nrc_721_cell(nrc_721_cell)
+    { nrc_721_token_info: nrc_721_cell.nrc_721_nft_info }
   end
 
   def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
