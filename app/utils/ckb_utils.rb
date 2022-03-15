@@ -426,6 +426,6 @@ class CkbUtils
     base_token_uri_length = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length), arg_base_token_uri_length].to_i(16)
     factory_base_token_uri_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length), base_token_uri_length *2]
     extra_data_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length + base_token_uri_length *2)..-1]
-    OpenStruct.new(name: [factory_name_hex].pack("H*"), symbol: [factory_symbol_hex].pack("H*"), base_token_uri: [factory_base_token_uri_hex].pack("H*"), extra_data: [extra_data_hex].pack("H*"))
+    OpenStruct.new(name: [factory_name_hex].pack("H*"), symbol: [factory_symbol_hex].pack("H*"), base_token_uri: [factory_base_token_uri_hex].pack("H*"), extra_data: extra_data_hex)
   end
 end

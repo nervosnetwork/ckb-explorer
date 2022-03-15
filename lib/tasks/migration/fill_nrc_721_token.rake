@@ -9,12 +9,15 @@ namespace :migration do
     end
 
     nrc_721_factory_cell_type = TypeScript.where(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args).first
-    parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(nrc_721_factory_cell.data)
+    factory_data = CellOutput.where(type_script_id: nrc_721_factory_cell_type.id, cell_type: "nrc_721_factory").last.data
+    parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(factory_data)
     factory_cell.update(verified: true, name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, base_token_uri: parsed_factory_data.base_token_uri, extra_data: parse_nrc_721_factory_data.extra_data)
     udts = Udt.where(nrc_factory_cell_id: factory_cell.id)
-    udts.update_all(full_name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, icon_file: "#{parsed_factory_data.base_token_uri}/#{factory_cell.token_id}")
-    UdtAccount.where(udt_id: udts.pluck(:id)).update_all(full_name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, icon_file: "#{parsed_factory_data.base_token_uri}/#{factory_cell.token_id}")
     udts.each do |udt|
+      udt_account = UdtAccount.where(udt_id: udt.id, udt_type: "nrc_721_token").first
+      udt_account.update(full_name: parsed_factory_data.name, symbol: parsed_factory_data.symbol)
+      udt.update(full_name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, icon_file: "#{parsed_factory_data.base_token_uri}/#{udt_account.nft_token_id}")
+
       tx_ids = udt.ckb_transactions.pluck(:id)
       tx_ids.each do |tx_id|
         Rails.cache.delete("normal_tx_display_outputs_previews_false_#{tx_id}")
