@@ -392,6 +392,14 @@ module CkbSync
             end
           end
           if cell_type == "nrc_721_token"
+            factory_cell = CkbUtils.parse_nrc_721_args(output.type.args)
+            nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args)
+            if nrc_721_factory_cell.verified
+              nft_token_attr[:full_name] = nrc_721_factory_cell.name
+              nft_token_attr[:symbol] = nrc_721_factory_cell.symbol
+              nft_token_attr[:icon_file] = "#{nrc_721_factory_cell.base_token_uri}/#{factory_cell.token_id}"
+              nft_token_attr[:nrc_factory_cell_id] = nrc_721_factory_cell.id
+            end
             nft_token_attr[:published] = true
           end
           # fill issuer_address after publish the token
@@ -605,6 +613,11 @@ module CkbSync
               tags[tx_index] << "udt"
               udt_address_ids[tx_index] << attributes[4]
               contained_udt_ids[tx_index] << Udt.where(type_hash: attributes[3], udt_type: "sudt").pick(:id)
+            end
+            if attributes[1][:cell_type] ==  "nrc_721_token"
+              tags[tx_index] << "nrc_721_token"
+              udt_address_ids[tx_index] << attributes[4]
+              contained_udt_ids[tx_index] << Udt.where(type_hash: attributes[3], udt_type: "nrc_721_token").pick(:id)
             end
           end
           input_capacities[tx_index] += attributes[2] if tx_index != 0 && attributes[2].present?
