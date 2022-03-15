@@ -151,7 +151,7 @@ class CkbTransaction < ApplicationRecord
   end
 
   def attributes_for_nrc_721_cell(nrc_721_cell)
-    { m_nft_info: nrc_721_cell.nrc_721_nft_info }
+    { nrc_721_token_info: nrc_721_cell.nrc_721_nft_info }
   end
 
   def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)

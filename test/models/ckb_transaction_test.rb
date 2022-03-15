@@ -319,4 +319,24 @@ class CkbTransactionTest < ActiveSupport::TestCase
     assert_equal expected_m_nft_attributes, m_nft_output_transaction.display_outputs.first[:m_nft_info].keys.sort
     assert_equal expected_display_output, m_nft_output_transaction.display_outputs.first
   end
+
+  test "#display_outputs should contain nrc_721_token info for nrc_721_token transaction" do
+    nrc_721_token_output_block = create(:block, :with_block_hash)
+    nrc_721_token_output_transaction = create(:ckb_transaction, block: nrc_721_token_output_block)
+
+    nrc_factory_cell = create(:nrc_factory_cell, code_hash: "0x00000000000000000000000000000000000000000000000000545950455f4944013620e2ced53373c5b55c5cef79b7fd0a875c60a70382a9e9664fe28e0bb345ab22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8", args: "0x3620e2ced53373c5b55c5cef79b7fd0a875c60a70382a9e9664fe28e0bb345ab", verified: true)
+    nrc_721_factory_type_script = create(:type_script, code_hash: nrc_factory_cell.code_hash, hash_type: "type", args: nrc_factory_cell.args)
+    nrc_721_factory_cell_output = create(:cell_output, block: nrc_721_token_output_block, ckb_transaction: nrc_721_token_output_transaction, generated_by: nrc_721_token_output_transaction, cell_type: "nrc_721_factory", cell_index: 1, tx_hash: nrc_721_token_output_transaction.tx_hash, data: "0x24ff5a9ab8c38d195ce2b4ea75ca8987000a47616d62697420317374000000156465762e6b6f6c6c6563742e6d652f746f6b656e73000000000000003c000000000000000000", type_hash: "0x", type_script_id: nrc_721_factory_type_script.id)
+
+    nrc_721_token_type_script = create(:type_script, code_hash: "0x#{SecureRandom.hex(32)}", hash_type: "type", args: "0x00000000000000000000000000000000000000000000000000545950455f4944013620e2ced53373c5b55c5cef79b7fd0a875c60a70382a9e9664fe28e0bb345ab22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8")
+    nrc_721_token_cell_output = create(:cell_output, block: nrc_721_token_output_block, ckb_transaction: nrc_721_token_output_transaction, generated_by: nrc_721_token_output_transaction, cell_type: "nrc_721_token", cell_index: 0, tx_hash: nrc_721_token_output_transaction.tx_hash, data: "0x0ddeff3e8ee03cbf6a2c6920d05c381e", type_hash: "0x", type_script_id: nrc_721_token_type_script.id)
+    udt = create(:udt, type_hash: nrc_721_token_cell_output.type_hash, udt_type: "nrc_721_token", nrc_factory_cell_id: nrc_factory_cell.id)
+    address = create(:address)
+    udt_account = create(:udt_account, udt: udt, address: address, nft_token_id: "22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8")
+
+    factory_info = {:symbol => "TTF"} 
+    token_info = {:symbol => "TTF", :amount => udt_account.nft_token_id}
+    assert_equal  factory_info.to_a, nrc_721_token_output_transaction.display_outputs.first[:nrc_721_token_info].to_a
+    assert_equal token_info, nrc_721_token_output_transaction.display_outputs.last[:nrc_721_token_info]
+  end
 end
