@@ -3,7 +3,7 @@ class CellOutput < ApplicationRecord
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   MIN_SUDT_AMOUNT_BYTESIZE = 16
   enum status: { live: 0, dead: 1 }
-  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class:5, m_nft_token: 6 }
+  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class:5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8 }
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
@@ -83,6 +83,24 @@ class CellOutput < ApplicationRecord
       else
         value = { class_name: "", token_id: "", total: "" }
       end
+    else
+      raise RuntimeError.new("invalid cell type")
+    end
+    CkbUtils.hash_value_to_s(value)
+  end
+
+  def nrc_721_nft_info
+    return unless cell_type.in?(%w(nrc_721_token nrc_721_factory))
+
+    case cell_type
+    when "nrc_721_factory"
+      factory_cell_type_script = self.type_script
+      factory_cell = NrcFactoryCell.find_by(code_hash: factory_cell_type_script.code_hash, hash_type: factory_cell_type_script.hash_type, args: factory_cell_type_script.args, verified: true)
+      value = { symbol: factory_cell&.symbol }
+    when "nrc_721_token"
+      udt = Udt.find_by(type_hash: type_hash)
+      factory_cell = NrcFactoryCell.where(id: udt.nrc_factory_cell_id, verified: true).first
+      value = { symbol: factory_cell&.symbol, amount: UdtAccount.where(udt_id: udt.id).first.nft_token_id }
     else
       raise RuntimeError.new("invalid cell type")
     end

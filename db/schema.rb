@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_12_23_141845) do
+ActiveRecord::Schema.define(version: 2022_03_11_144809) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -373,6 +373,20 @@ ActiveRecord::Schema.define(version: 2021_12_23_141845) do
     t.index ["block_number"], name: "index_mining_infos_on_block_number"
   end
 
+  create_table "nrc_factory_cells", force: :cascade do |t|
+    t.binary "code_hash"
+    t.string "hash_type"
+    t.string "args"
+    t.string "name"
+    t.string "symbol"
+    t.string "base_token_uri"
+    t.string "extra_data"
+    t.boolean "verified", default: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["code_hash", "hash_type", "args"], name: "index_nrc_factory_cells_on_code_hash_and_hash_type_and_args", unique: true
+  end
+
   create_table "pool_transaction_entries", force: :cascade do |t|
     t.jsonb "cell_deps"
     t.binary "tx_hash"
@@ -447,6 +461,7 @@ ActiveRecord::Schema.define(version: 2021_12_23_141845) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.bigint "udt_id"
+    t.string "nft_token_id"
     t.index ["address_id"], name: "index_udt_accounts_on_address_id"
     t.index ["type_hash", "address_id"], name: "index_udt_accounts_on_type_hash_and_address_id", unique: true
     t.index ["udt_id"], name: "index_udt_accounts_on_udt_id"
@@ -472,6 +487,7 @@ ActiveRecord::Schema.define(version: 2021_12_23_141845) do
     t.decimal "block_timestamp", precision: 30
     t.binary "issuer_address"
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
+    t.bigint "nrc_factory_cell_id"
     t.index ["type_hash"], name: "index_udts_on_type_hash", unique: true
   end
 
