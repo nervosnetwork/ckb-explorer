@@ -91,8 +91,8 @@ GEM
     benchmark_methods (0.7)
     bitcoin-secp256k1 (0.5.2)
       ffi (>= 1.9.25)
-    bootsnap (1.7.7)
-      msgpack (~> 1.0)
+    bootsnap (1.11.1)
+      msgpack (~> 1.2)
     brpoplpush-redis_script (0.1.2)
       concurrent-ruby (~> 1.0, >= 1.0.5)
       redis (>= 1.0, <= 5.0)
@@ -187,7 +187,7 @@ GEM
     faraday-rack (1.0.0)
     fast_jsonapi (1.5)
       activesupport (>= 4.2)
-    ffi (1.15.4)
+    ffi (1.15.5)
     fugit (1.5.1)
       et-orbi (~> 1.1, >= 1.1.8)
       raabro (~> 1.4)
@@ -209,10 +209,9 @@ GEM
       activerecord
       kaminari-core (= 1.2.1)
     kaminari-core (1.2.1)
-    listen (3.1.5)
-      rb-fsevent (~> 0.9, >= 0.9.4)
-      rb-inotify (~> 0.9, >= 0.9.7)
-      ruby_dep (~> 1.2)
+    listen (3.7.1)
+      rb-fsevent (~> 0.10, >= 0.10.3)
+      rb-inotify (~> 0.9, >= 0.9.10)
     loofah (2.12.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
@@ -234,7 +233,7 @@ GEM
       minitest (>= 5.0)
       ruby-progressbar
     mocha (1.13.0)
-    msgpack (1.4.2)
+    msgpack (1.4.5)
     multipart-post (2.1.1)
     net-http-persistent (4.0.1)
       connection_pool (~> 2.2)
@@ -294,7 +293,7 @@ GEM
       thor (~> 1.0)
     rainbow (3.0.0)
     rake (13.0.6)
-    rb-fsevent (0.11.0)
+    rb-fsevent (0.11.1)
     rb-inotify (0.10.1)
       ffi (~> 1.0)
     rbnacl (7.1.1)
@@ -322,7 +321,6 @@ GEM
       rubocop (>= 1.7.0, < 2.0)
     ruby-progressbar (1.11.0)
     ruby2_keywords (0.0.5)
-    ruby_dep (1.5.0)
     sentry-raven (3.1.2)
       faraday (>= 1.0)
     shoulda-context (2.0.0)
@@ -402,7 +400,7 @@ DEPENDENCIES
   fast_jsonapi
   hiredis (~> 0.6.3)
   kaminari
-  listen (>= 3.0.5, < 3.2)
+  listen (>= 3.0.5)
   mina
   mina-multistage
   minitest-reporters
@@ -440,7 +438,7 @@ DEPENDENCIES
   with_advisory_lock
 
 RUBY VERSION
-   ruby 2.6.4p104
+   ruby 3.0.3p157
 
 BUNDLED WITH
-   2.1.4
+   2.2.32
