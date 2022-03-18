@@ -19,7 +19,7 @@ class FillScriptHash
       lock_attributes = []
       locks.each do |lock_script|
         progress_bar.increment
-        lock_attributes << { id: lock_script.id, script_hash: CKB::Types::Script.new(lock_script.to_node_lock).compute_hash, created_at: lock_script.created_at, updated_at: Time.current }
+        lock_attributes << { id: lock_script.id, script_hash: CKB::Types::Script.new(**lock_script.to_node_lock).compute_hash, created_at: lock_script.created_at, updated_at: Time.current }
       end
 
       LockScript.upsert_all(lock_attributes) if lock_attributes.present?
@@ -34,7 +34,7 @@ class FillScriptHash
       type_attributes = []
       types.each do |type_script|
         progress_bar.increment
-        type_attributes << { id: type_script.id, script_hash: CKB::Types::Script.new(type_script.to_node_type).compute_hash, created_at: type_script.created_at, updated_at: Time.current }
+        type_attributes << { id: type_script.id, script_hash: CKB::Types::Script.new(**type_script.to_node_type).compute_hash, created_at: type_script.created_at, updated_at: Time.current }
       end
 
       TypeScript.upsert_all(type_attributes) if type_attributes.present?

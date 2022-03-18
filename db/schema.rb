@@ -35,9 +35,9 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.decimal "dao_deposit", precision: 30, default: "0"
     t.decimal "interest", precision: 30, default: "0"
     t.decimal "block_timestamp", precision: 30
-    t.boolean "visible", default: true
     t.decimal "live_cells_count", precision: 30, default: "0"
     t.integer "mined_blocks_count", default: 0
+    t.boolean "visible", default: true
     t.decimal "average_deposit_time"
     t.decimal "unclaimed_compensation", precision: 30
     t.boolean "is_depositor", default: false
@@ -86,6 +86,7 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
+    t.integer "uncles_count"
     t.binary "extra_hash"
     t.binary "uncle_block_hashes"
     t.integer "version"
@@ -93,7 +94,6 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.integer "proposals_count"
     t.decimal "cell_consumed", precision: 30
     t.binary "miner_hash"
-    t.string "miner_message"
     t.decimal "reward", precision: 30
     t.decimal "total_transaction_fee", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
@@ -113,13 +113,13 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.decimal "nonce", precision: 50, default: "0"
     t.decimal "start_number", precision: 30, default: "0"
     t.decimal "length", precision: 30, default: "0"
-    t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
     t.integer "live_cell_changes"
     t.decimal "block_time", precision: 13
     t.integer "block_size"
     t.decimal "proposal_reward", precision: 30
     t.decimal "commit_reward", precision: 30
+    t.string "miner_message"
     t.jsonb "extension"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["block_size"], name: "index_blocks_on_block_size"
@@ -161,7 +161,7 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.integer "data_size"
     t.decimal "occupied_capacity", precision: 30
     t.decimal "block_timestamp", precision: 30
-    t.decimal "consumed_block_timestamp", precision: 30
+    t.decimal "consumed_block_timestamp", precision: 30, default: "0"
     t.string "type_hash"
     t.decimal "udt_amount", precision: 40
     t.string "dao"
@@ -190,9 +190,9 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "is_cellbase", default: false
-    t.jsonb "witnesses"
     t.binary "header_deps"
     t.jsonb "cell_deps"
+    t.jsonb "witnesses"
     t.integer "live_cell_changes"
     t.decimal "capacity_involved", precision: 30
     t.bigint "contained_address_ids", default: [], array: true
@@ -233,8 +233,8 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.string "avg_difficulty", default: "0"
     t.string "uncle_rate", default: "0"
     t.string "total_depositors_count", default: "0"
-    t.jsonb "address_balance_distribution"
     t.decimal "total_tx_fee", precision: 30
+    t.jsonb "address_balance_distribution"
     t.decimal "occupied_capacity", precision: 30
     t.decimal "daily_dao_deposit", precision: 30
     t.integer "daily_dao_depositors_count"
@@ -300,6 +300,7 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
+    t.integer "uncles_count"
     t.binary "extra_hash"
     t.binary "uncle_block_hashes"
     t.integer "version"
@@ -326,7 +327,6 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.decimal "nonce", precision: 50, default: "0"
     t.decimal "start_number", precision: 30, default: "0"
     t.decimal "length", precision: 30, default: "0"
-    t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
     t.integer "live_cell_changes"
     t.decimal "block_time", precision: 13

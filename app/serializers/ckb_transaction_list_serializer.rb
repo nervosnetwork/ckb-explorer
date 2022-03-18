@@ -1,7 +1,9 @@
 class CkbTransactionListSerializer
   include FastJsonapi::ObjectSerializer
 
-  attribute :transaction_hash, &:tx_hash
+  attribute :transaction_hash do |o|
+    o.tx_hash.to_s
+  end
 
   attribute :block_number do |object|
     object.block_number.to_s

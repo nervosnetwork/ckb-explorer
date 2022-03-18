@@ -3,7 +3,9 @@ class CkbTransactionSerializer
 
   attributes :is_cellbase, :witnesses, :cell_deps, :header_deps, :tx_status
 
-  attribute :transaction_hash, &:tx_hash
+  attribute :transaction_hash do |object|
+    object.tx_hash.to_s
+  end
 
   attribute :transaction_fee do |object|
     object.transaction_fee.to_s
