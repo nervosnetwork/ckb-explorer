@@ -1,6 +1,6 @@
 namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:update_nrc_721_token_info[factory_code_hash, factory_hash_type, factory_args]"
-  task :update_nrc_721_token_info, [:factory_code_hash, :factory_hash_type, :factory_args]  => :environment do |_, args|
+  task :update_nrc_721_token_info, [:factory_code_hash, :factory_hash_type, :factory_args] => :environment do |_, args|
     factory_cell = NrcFactoryCell.find_by(code_hash: args[:factory_code_hash], hash_type: args[:factory_hash_type], args: args[:factory_args])
 
     if factory_cell.nil?
@@ -8,10 +8,10 @@ namespace :migration do
       return
     end
 
-    nrc_721_factory_cell_type = TypeScript.where(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args).first
+    nrc_721_factory_cell_type = TypeScript.where(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args).last
     factory_data = CellOutput.where(type_script_id: nrc_721_factory_cell_type.id, cell_type: "nrc_721_factory").last.data
     parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(factory_data)
-    factory_cell.update(verified: true, name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, base_token_uri: parsed_factory_data.base_token_uri, extra_data: parse_nrc_721_factory_data.extra_data)
+    factory_cell.update(verified: true, name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, base_token_uri: parsed_factory_data.base_token_uri, extra_data: parsed_factory_data.extra_data)
     udts = Udt.where(nrc_factory_cell_id: factory_cell.id)
     udts.each do |udt|
       udt_account = UdtAccount.where(udt_id: udt.id, udt_type: "nrc_721_token").first
@@ -47,7 +47,7 @@ namespace :migration do
     CellOutput.where("block_id >= #{start_block.id}").where("data like '#{Settings.nrc_721_factory_output_data_header}%'").where.not(cell_type: "nrc_721_factory").update_all(cell_type: "nrc_721_factory")
     CellOutput.where("block_id >= #{start_block.id}").where("data like '#{Settings.nrc_721_token_output_data_header}%'").where.not(cell_type: "nrc_721_token").order(id: :asc).update_all(cell_type: "nrc_721_token")
     nrc_tokens = CellOutput.where("block_id >= #{start_block.id}").where("data like '#{Settings.nrc_721_token_output_data_header}%'").where(cell_type: "nrc_721_token").order(id: :asc).
-    udts_attributes = []
+      udts_attributes = []
     nrc_tokens.each do |output|
       factory_cell = CkbUtils.parse_nrc_721_args(output.type_script.args)
       type_hash = output.type_script.script_hash
