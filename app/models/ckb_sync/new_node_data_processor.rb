@@ -697,7 +697,7 @@ module CkbSync
         end
       udt_amount = udt_amount(cell_type(output.type, output_data), output_data, output.type&.args)
       cell_type = cell_type(output.type, output_data)
-      update_nrc_factory_cell_info(type_script, output_data) if cell_type == "nrc_721_factory"
+      update_nrc_factory_cell_info(output.type, output_data) if cell_type == "nrc_721_factory"
 
       {
         ckb_transaction_id: ckb_transaction["id"],
