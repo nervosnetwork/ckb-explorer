@@ -4,8 +4,12 @@ module Api
       before_action :validate_query_params, only: :show
 
       def show
-        distribution_data = DistributionData.new
-        render json: DistributionDataSerializer.new(distribution_data, params: { indicator: params[:id] })
+        if params[:id] == 'average_block_time'
+          render json: DailyStatistic.full_average_block_time
+        else
+          distribution_data = DistributionData.new
+          render json: DistributionDataSerializer.new(distribution_data, params: { indicator: params[:id] })
+        end
       end
 
       private
