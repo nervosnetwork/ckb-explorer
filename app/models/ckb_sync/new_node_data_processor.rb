@@ -1009,19 +1009,19 @@ module CkbSync
         Rails.logger.error "decrease_records_count: %5.3f" % result
         result =
           Benchmark.realtime do
-            local_tip_block.invalid!
-          end
-        Rails.logger.error "invalid! block: %5.3f" % result
-        result =
-          Benchmark.realtime do
             recalculate_udt_accounts(udt_type_hashes, local_tip_block)
           end
         Rails.logger.error "recalculate_udt_accounts: %5.3f" % result
         result =
           Benchmark.realtime do
-            local_tip_block.contained_addresses.each(&method(:update_address_balance_and_ckb_transactions_count))
+            update_address_balance_and_ckb_transactions_count(local_tip_block)
           end
         Rails.logger.error "update_address_balance_and_ckb_transactions_count: %5.3f" % result
+        result =
+          Benchmark.realtime do
+            local_tip_block.invalid!
+          end
+        Rails.logger.error "invalid! block: %5.3f" % result
         result =
           Benchmark.realtime do
             revert_block_rewards(local_tip_block)
@@ -1041,15 +1041,17 @@ module CkbSync
       end
     end
 
-    def update_address_balance_and_ckb_transactions_count(address)
-      address.balance = address.cell_outputs.live.sum(:capacity)
-      address.ckb_transactions_count = address.custom_ckb_transactions.count
-      address.live_cells_count = address.cell_outputs.live.count
-      address.dao_transactions_count = address.ckb_dao_transactions.count
-      if address.mined_blocks_count.zero?
-        address.balance_occupied = address.cal_balance_occupied
+    def update_address_balance_and_ckb_transactions_count(local_tip_block)
+      local_tip_block.contained_addresses.each do |address|
+        address.balance = address.balance - address.cell_outputs.inner_block(local_tip_block.id).live.sum(:capacity)
+        address.live_cells_count = address.live_cells_count - address.cell_outputs.inner_block(local_tip_block.id).live.count
+        address.ckb_transactions_count = address.ckb_transactions_count - address.custom_ckb_transactions.inner_block(local_tip_block.id).count
+        address.dao_transactions_count = address.dao_transactions_count - address.ckb_dao_transactions.inner_block(local_tip_block.id).count
+        if address.mined_blocks_count.zero?
+          address.balance_occupied = address.balance_occupied - address.cal_balance_occupied_inner_block(local_tip_block.id)
+        end
+        address.save!
       end
-      address.save!
     end
 
     def revert_block_rewards(local_tip_block)
@@ -1115,8 +1117,8 @@ module CkbSync
 
           case udt_account.udt_type
           when "sudt"
-            amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
-            udt_account.update!(amount: amount)
+            forked_amount = address.cell_outputs.inner_block(local_tip_block.id).live.udt.where(type_hash: type_hash).sum(:udt_amount)
+            udt_account.decrement!(:amount, forked_amount)
           when "m_nft_token"
             udt_account.destroy
           when "nrc_721_token"

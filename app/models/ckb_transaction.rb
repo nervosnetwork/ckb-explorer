@@ -23,6 +23,7 @@ class CkbTransaction < ApplicationRecord
   scope :normal, -> { where(is_cellbase: false) }
   scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :created_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+  scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
 
   after_commit :flush_cache
   before_destroy :recover_dead_cell
