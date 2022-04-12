@@ -41,7 +41,7 @@ module Api
 
       test "should return transactions count and timestamp" do
         15.times do |i|
-          create(:daily_statistic, created_at_unixtimestamp: (360 - i).days.ago.to_i)
+          create(:daily_statistic, created_at_unixtimestamp: (359 - i).days.ago.to_i)
         end
 
         daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).valid_indicators
