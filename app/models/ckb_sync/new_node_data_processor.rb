@@ -843,7 +843,7 @@ module CkbSync
       miner_hash = CkbUtils.miner_hash(cellbase)
       miner_lock_hash = CkbUtils.miner_lock_hash(cellbase)
       base_reward = CkbUtils.base_reward(header.number, epoch_info.number)
-      Block.create!(
+      Block.find_or_create_by!(
         compact_target: header.compact_target,
         block_hash: header.hash,
         number: header.number,
