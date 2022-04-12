@@ -117,9 +117,9 @@ module CkbSync
     end
 
     def increase_records_count(local_block)
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       block_counter.increment!(:count)
-      ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
       normal_transactions = local_block.ckb_transactions.normal.count
       ckb_transaction_counter.increment!(:count, normal_transactions.count) if normal_transactions.present?
     end
@@ -320,9 +320,9 @@ module CkbSync
     end
 
     def update_table_records_count(local_block)
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       block_counter.increment!(:count)
-      ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
       normal_transactions = local_block.ckb_transactions.normal
       ckb_transaction_counter.increment!(:count, normal_transactions.count) if normal_transactions.present?
     end
@@ -1025,9 +1025,9 @@ module CkbSync
     end
 
     def decrease_records_count(local_tip_block)
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       block_counter.decrement!(:count)
-      ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
       normal_transactions = local_tip_block.ckb_transactions.normal
       ckb_transaction_counter.decrement!(:count, normal_transactions.count) if normal_transactions.present?
     end

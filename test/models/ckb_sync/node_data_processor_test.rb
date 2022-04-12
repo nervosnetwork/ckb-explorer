@@ -39,7 +39,7 @@ module CkbSync
     end
 
     test "should update table_record_counts block count after block has been processed" do
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -50,7 +50,7 @@ module CkbSync
     end
 
     test "should update table_record_counts ckb transactions count after block has been processed" do
-      ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -1415,7 +1415,7 @@ module CkbSync
     end
 
     test "should recalculate table_record_counts block count when block is invalid" do
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       prepare_node_data(12)
       local_block = Block.find_by(number: 12)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
@@ -1428,7 +1428,7 @@ module CkbSync
     end
 
     test "should recalculate table_record_counts ckb_transactions count when block is invalid" do
-      ckb_transactions_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transactions_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
 
       prepare_node_data(12)
       local_block = Block.find_by(number: 12)
