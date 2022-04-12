@@ -299,6 +299,8 @@ GEM
     rbnacl (7.1.1)
       ffi
     redis (4.2.5)
+    redis-objects (1.5.1)
+      redis (~> 4.2)
     regexp_parser (2.1.1)
     rexml (3.2.5)
     rubocop (1.19.0)
@@ -416,6 +418,7 @@ DEPENDENCIES
   rack-cors
   rails (~> 6.1.0)
   redis (~> 4.2.0)
+  redis-objects
   rubocop
   rubocop-performance
   rubocop-rails
