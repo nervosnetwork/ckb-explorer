@@ -954,6 +954,20 @@ module CkbSync
       end
     end
 
+    test "#process_block should keep address deposit 0 when only have dao withdrawal event" do
+      DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
+      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
+      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
+      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        tx = fake_dao_withdraw_transaction(node_block)
+        output = tx.cell_outputs.first
+        address = output.address
+
+        assert_equal 0, address.reload.dao_deposit
+      end
+    end
+
     test "#process_block should increase address interest when previous output is a withdrawing cell" do
       DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
       DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
