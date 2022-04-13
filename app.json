@@ -1,0 +1,10 @@
+{
+  "name": "ckb-explorer",
+  "description": "explorer for ckb chain",
+  "keywords": [],
+  "scripts": {
+    "dokku": {
+      "predeploy": "bundle exec rails db:migrate"
+    }
+  }
+}

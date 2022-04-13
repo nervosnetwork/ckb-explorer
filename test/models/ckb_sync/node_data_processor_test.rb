@@ -39,7 +39,7 @@ module CkbSync
     end
 
     test "should update table_record_counts block count after block has been processed" do
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -50,7 +50,7 @@ module CkbSync
     end
 
     test "should update table_record_counts ckb transactions count after block has been processed" do
-      ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -1429,7 +1429,7 @@ module CkbSync
     end
 
     test "should recalculate table_record_counts block count when block is invalid" do
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       prepare_node_data(12)
       local_block = Block.find_by(number: 12)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
@@ -1442,7 +1442,7 @@ module CkbSync
     end
 
     test "should recalculate table_record_counts ckb_transactions count when block is invalid" do
-      ckb_transactions_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transactions_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
 
       prepare_node_data(12)
       local_block = Block.find_by(number: 12)
@@ -2239,7 +2239,7 @@ module CkbSync
         previous_cell_output_type_script = create(:type_script, code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c", hash_type: "type", cell_output: previous_cell_output)
         previous_cell_output.type_script_id = previous_cell_output_type_script.id
         previous_cell_output.lock_script_id = previous_cell_output_lock_script.id
-        type_hash = CKB::Types::Script.new(previous_cell_output_type_script.to_node_type).compute_hash
+        type_hash = CKB::Types::Script.new(**previous_cell_output_type_script.to_node_type).compute_hash
         udt = create(:udt, type_hash: type_hash, udt_type: "m_nft_token")
         address.udt_accounts.create(udt_type: "m_nft_token", type_hash: type_hash, udt: udt)
         input = CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: previous_cell_output.tx_hash, index: 0))
@@ -3306,8 +3306,8 @@ module CkbSync
       udt_script2 = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "type", args: "0x#{SecureRandom.hex(32)}")
       type_script1 = create(:type_script, args: udt_script1.args, code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "data")
       type_script2 = create(:type_script, args: udt_script2.args, code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "data")
-      udt1 = create(:udt, type_hash: CKB::Types::Script.new(type_script1.to_node_type).compute_hash, args: udt_script1.args, ckb_transactions_count: 3)
-      udt2 = create(:udt, type_hash: CKB::Types::Script.new(type_script2.to_node_type).compute_hash, args: udt_script2.args, ckb_transactions_count: 2)
+      udt1 = create(:udt, type_hash: CKB::Types::Script.new(**type_script1.to_node_type).compute_hash, args: udt_script1.args, ckb_transactions_count: 3)
+      udt2 = create(:udt, type_hash: CKB::Types::Script.new(**type_script2.to_node_type).compute_hash, args: udt_script2.args, ckb_transactions_count: 2)
       block1 = create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 2)
       tx1 = create(:ckb_transaction, block: block1, contained_udt_ids: [udt1.id])
       block2 = create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 1)
@@ -3334,11 +3334,11 @@ module CkbSync
       create(:type_script, args: udt_script1.args, code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "data", cell_output: output1)
       create(:type_script, args: udt_script1.args, code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "data", cell_output: output2)
       create(:type_script, args: udt_script2.args, code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "data", cell_output: output3)
-      output1.update(type_hash: CKB::Types::Script.new(output1.type_script.to_node_type).compute_hash)
-      output2.update(type_hash: CKB::Types::Script.new(output2.type_script.to_node_type).compute_hash)
-      output3.update(type_hash: CKB::Types::Script.new(output3.type_script.to_node_type).compute_hash)
-      output4.update(type_hash: CKB::Types::Script.new(output4.type_script.to_node_type).compute_hash)
-      output5.update(type_hash: CKB::Types::Script.new(output5.type_script.to_node_type).compute_hash)
+      output1.update(type_hash: CKB::Types::Script.new(**output1.type_script.to_node_type).compute_hash)
+      output2.update(type_hash: CKB::Types::Script.new(**output2.type_script.to_node_type).compute_hash)
+      output3.update(type_hash: CKB::Types::Script.new(**output3.type_script.to_node_type).compute_hash)
+      output4.update(type_hash: CKB::Types::Script.new(**output4.type_script.to_node_type).compute_hash)
+      output5.update(type_hash: CKB::Types::Script.new(**output5.type_script.to_node_type).compute_hash)
       Address.create(lock_hash: udt_script1.args, address_hash: "0x#{SecureRandom.hex(32)}")
       Address.create(lock_hash: udt_script2.args, address_hash: "0x#{SecureRandom.hex(32)}")
 
@@ -3467,8 +3467,8 @@ module CkbSync
       type_script3 = create(:type_script, args: udt_script1.args, code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "data")
       type_script4 = create(:type_script, args: udt_script1.args, code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "data")
       type_script5 = create(:type_script, args: udt_script2.args, code_hash: ENV["SUDT_CELL_TYPE_HASH"], hash_type: "data")
-      udt1 = create(:udt, type_hash: CKB::Types::Script.new(type_script1.to_node_type).compute_hash, args: udt_script1.args, ckb_transactions_count: 3)
-      udt2 = create(:udt, type_hash: CKB::Types::Script.new(type_script2.to_node_type).compute_hash, args: udt_script2.args, ckb_transactions_count: 2)
+      udt1 = create(:udt, type_hash: CKB::Types::Script.new(**type_script1.to_node_type).compute_hash, args: udt_script1.args, ckb_transactions_count: 3)
+      udt2 = create(:udt, type_hash: CKB::Types::Script.new(**type_script2.to_node_type).compute_hash, args: udt_script2.args, ckb_transactions_count: 2)
       block1 = create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 2)
       tx1 = create(:ckb_transaction, block: block1, contained_udt_ids: [udt1.id])
       block2 = create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 1)
@@ -3492,11 +3492,11 @@ module CkbSync
       output3 = create(:cell_output, ckb_transaction: tx3, generated_by: tx3, block: block2, capacity: 70000 * 10**8, tx_hash: tx3.tx_hash, cell_index: 2, address: input_address3, cell_type: "udt", lock_script_id: address3_lock.id, type_script_id: type_script3.id)
       output4 = create(:cell_output, ckb_transaction: tx4, generated_by: tx4, block: block2, capacity: 70000 * 10**8, tx_hash: tx4.tx_hash, cell_index: 0, address: input_address4, cell_type: "udt", lock_script_id: address4_lock.id, type_script_id: type_script4.id)
       output5 = create(:cell_output, ckb_transaction: tx5, generated_by: tx5, block: block2, capacity: 70000 * 10**8, tx_hash: tx5.tx_hash, cell_index: 0, address: input_address5, cell_type: "udt", lock_script_id: address5_lock.id, type_script_id: type_script5.id)
-      output1.update(type_hash: CKB::Types::Script.new(output1.type_script.to_node_type).compute_hash)
-      output2.update(type_hash: CKB::Types::Script.new(output2.type_script.to_node_type).compute_hash)
-      output3.update(type_hash: CKB::Types::Script.new(output3.type_script.to_node_type).compute_hash)
-      output4.update(type_hash: CKB::Types::Script.new(output4.type_script.to_node_type).compute_hash)
-      output5.update(type_hash: CKB::Types::Script.new(output5.type_script.to_node_type).compute_hash)
+      output1.update(type_hash: CKB::Types::Script.new(**output1.type_script.to_node_type).compute_hash)
+      output2.update(type_hash: CKB::Types::Script.new(**output2.type_script.to_node_type).compute_hash)
+      output3.update(type_hash: CKB::Types::Script.new(**output3.type_script.to_node_type).compute_hash)
+      output4.update(type_hash: CKB::Types::Script.new(**output4.type_script.to_node_type).compute_hash)
+      output5.update(type_hash: CKB::Types::Script.new(**output5.type_script.to_node_type).compute_hash)
       Address.create(lock_hash: udt_script1.args, address_hash: "0x#{SecureRandom.hex(32)}")
       Address.create(lock_hash: udt_script2.args, address_hash: "0x#{SecureRandom.hex(32)}")
 

@@ -2,12 +2,12 @@ require "benchmark_methods"
 
 module CkbSync
   class NewNodeDataProcessor
-    include BenchmarkMethods
+    # include BenchmarkMethods
 
-    benchmark :call, :process_block, :build_block!, :build_uncle_blocks!, :build_ckb_transactions!, :build_udts!, :process_ckb_txs, :build_cells_and_locks!,
-              :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
-              :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
-              :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
+    # benchmark :call, :process_block, :build_block!, :build_uncle_blocks!, :build_ckb_transactions!, :build_udts!, :process_ckb_txs, :build_cells_and_locks!,
+    #           :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
+    #           :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
+    #           :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
 
     def initialize
       @local_cache = LocalCache.new
@@ -116,9 +116,9 @@ module CkbSync
     end
 
     def increase_records_count(local_block)
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       block_counter.increment!(:count)
-      ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
       normal_transactions = local_block.ckb_transactions.normal.count
       ckb_transaction_counter.increment!(:count, normal_transactions.count) if normal_transactions.present?
     end
@@ -320,9 +320,9 @@ module CkbSync
     end
 
     def update_table_records_count(local_block)
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       block_counter.increment!(:count)
-      ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
       normal_transactions = local_block.ckb_transactions.normal
       ckb_transaction_counter.increment!(:count, normal_transactions.count) if normal_transactions.present?
     end
@@ -847,7 +847,7 @@ module CkbSync
       miner_hash = CkbUtils.miner_hash(cellbase)
       miner_lock_hash = CkbUtils.miner_lock_hash(cellbase)
       base_reward = CkbUtils.base_reward(header.number, epoch_info.number)
-      Block.create!(
+      Block.find_or_create_by!(
         compact_target: header.compact_target,
         block_hash: header.hash,
         number: header.number,
@@ -1029,9 +1029,9 @@ module CkbSync
     end
 
     def decrease_records_count(local_tip_block)
-      block_counter = TableRecordCount.find_by(table_name: "blocks")
+      block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       block_counter.decrement!(:count)
-      ckb_transaction_counter = TableRecordCount.find_by(table_name: "ckb_transactions")
+      ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
       normal_transactions = local_tip_block.ckb_transactions.normal
       ckb_transaction_counter.decrement!(:count, normal_transactions.count) if normal_transactions.present?
     end
