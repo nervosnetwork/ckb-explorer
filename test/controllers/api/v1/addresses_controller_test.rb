@@ -157,6 +157,17 @@ module Api
         valid_get api_v1_address_url(address.address_hash)
         assert_equal "0", json.dig("data", "attributes", "balance_occupied")
       end
+
+      test "should return nrc 721 udt accounts with given address hash" do
+        address = create(:address, :with_lock_script)
+        factory_cell = create(:nrc_factory_cell, verified: true, name: "NrcFactoryToken", symbol: "NFT", base_token_uri: "https://dev.nrc.com")
+        udt = create(:udt, udt_type: "nrc_721_token", nrc_factory_cell_id: factory_cell.id, full_name: "OldName", symbol: "ON")
+        udt_account = create(:udt_account, published: true, address: address, udt_id: udt.id, nft_token_id: "1a2b3c", udt_type: "nrc_721_token")
+        address.query_address = address.address_hash
+        valid_get api_v1_address_url(address.address_hash)
+
+        assert_equal [{ "symbol" => factory_cell.symbol, "amount" => udt_account.nft_token_id.to_s, "type_hash" => udt_account.type_hash, "udt_icon_file" => "https://dev.nrc.com/1a2b3c", "udt_type" => udt_account.udt_type }], json.dig("data", "attributes", "udt_accounts")
+      end
     end
   end
 end
