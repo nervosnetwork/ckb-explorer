@@ -6,7 +6,7 @@ module Api
 
       def show
         block = Block.find_by!(block_hash: params[:id])
-        ckb_transactions = block.ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).order(:id).page(@page).per(@page_size)
+        ckb_transactions = block.ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).order(:block_id, :id).page(@page).per(@page_size)
         json =
           Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
             records_counter = RecordCounters::BlockTransactions.new(block)
