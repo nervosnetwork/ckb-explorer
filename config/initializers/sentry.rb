@@ -7,5 +7,8 @@ if ENV['SENTRY_DSN']
     # of transactions for performance monitoring.
     # We recommend adjusting this value in production
     config.traces_sample_rate = ENV.fetch("SENTRY_SAMPLE_RATE", 1.0).to_f
+    config.traces_sampler = lambda do |context|
+      true
+    end    
   end
 end

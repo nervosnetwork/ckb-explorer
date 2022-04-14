@@ -14,6 +14,8 @@ module CkbSync
     end
 
     def call
+      @transaction = Sentry.start_transaction(op: "process_item")
+
       local_tip_block = Block.recent.first
       tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
@@ -26,10 +28,14 @@ module CkbSync
       else
         invalid_block(local_tip_block)
       end
+
+      @transaction.finish
     end
 
     def process_block(node_block)
       local_block = nil
+
+  
       ApplicationRecord.transaction do
         # build node data
         local_block = build_block!(node_block)
@@ -837,49 +843,54 @@ module CkbSync
     end
 
     def build_block!(node_block)
-      header = node_block.header
-      epoch_info = CkbUtils.parse_epoch_info(header)
-      cellbase = node_block.transactions.first
+      block = nil
+      @transaction.with_child_span(op: :build_block) do |span|
+        header = node_block.header
+        span.set_data(:block_number, header.number)
+        epoch_info = CkbUtils.parse_epoch_info(header)
+        cellbase = node_block.transactions.first
 
-      generate_address_in_advance(cellbase, header.timestamp)
-      block_cell_consumed = CkbUtils.block_cell_consumed(node_block.transactions)
-      total_cell_capacity = CkbUtils.total_cell_capacity(node_block.transactions)
-      miner_hash = CkbUtils.miner_hash(cellbase)
-      miner_lock_hash = CkbUtils.miner_lock_hash(cellbase)
-      base_reward = CkbUtils.base_reward(header.number, epoch_info.number)
-      Block.find_or_create_by!(
-        compact_target: header.compact_target,
-        block_hash: header.hash,
-        number: header.number,
-        parent_hash: header.parent_hash,
-        nonce: header.nonce,
-        timestamp: header.timestamp,
-        transactions_root: header.transactions_root,
-        proposals_hash: header.proposals_hash,
-        uncles_count: node_block.uncles.count,
-        extra_hash: header.try(:uncles_hash).presence || header.try(:extra_hash),
-        uncle_block_hashes: uncle_block_hashes(node_block.uncles),
-        version: header.version,
-        proposals: node_block.proposals,
-        proposals_count: node_block.proposals.count,
-        cell_consumed: block_cell_consumed,
-        total_cell_capacity: total_cell_capacity,
-        miner_hash: miner_hash,
-        miner_lock_hash: miner_lock_hash,
-        reward: base_reward,
-        primary_reward: base_reward,
-        secondary_reward: 0,
-        reward_status: header.number.to_i == 0 ? "issued" : "pending",
-        total_transaction_fee: 0,
-        epoch: epoch_info.number,
-        start_number: epoch_info.start_number,
-        length: epoch_info.length,
-        dao: header.dao,
-        block_time: block_time(header.timestamp, header.number),
-        block_size: 0,
-        miner_message: CkbUtils.miner_message(cellbase),
-        extension: node_block.extension
-      )
+        generate_address_in_advance(cellbase, header.timestamp)
+        block_cell_consumed = CkbUtils.block_cell_consumed(node_block.transactions)
+        total_cell_capacity = CkbUtils.total_cell_capacity(node_block.transactions)
+        miner_hash = CkbUtils.miner_hash(cellbase)
+        miner_lock_hash = CkbUtils.miner_lock_hash(cellbase)
+        base_reward = CkbUtils.base_reward(header.number, epoch_info.number)
+        block = Block.find_or_create_by!(
+          compact_target: header.compact_target,
+          block_hash: header.hash,
+          number: header.number,
+          parent_hash: header.parent_hash,
+          nonce: header.nonce,
+          timestamp: header.timestamp,
+          transactions_root: header.transactions_root,
+          proposals_hash: header.proposals_hash,
+          uncles_count: node_block.uncles.count,
+          extra_hash: header.try(:uncles_hash).presence || header.try(:extra_hash),
+          uncle_block_hashes: uncle_block_hashes(node_block.uncles),
+          version: header.version,
+          proposals: node_block.proposals,
+          proposals_count: node_block.proposals.count,
+          cell_consumed: block_cell_consumed,
+          total_cell_capacity: total_cell_capacity,
+          miner_hash: miner_hash,
+          miner_lock_hash: miner_lock_hash,
+          reward: base_reward,
+          primary_reward: base_reward,
+          secondary_reward: 0,
+          reward_status: header.number.to_i == 0 ? "issued" : "pending",
+          total_transaction_fee: 0,
+          epoch: epoch_info.number,
+          start_number: epoch_info.start_number,
+          length: epoch_info.length,
+          dao: header.dao,
+          block_time: block_time(header.timestamp, header.number),
+          block_size: 0,
+          miner_message: CkbUtils.miner_message(cellbase),
+          extension: node_block.extension
+        )
+      end
+      block
     end
 
     def from_cell_base?(node_input)
