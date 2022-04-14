@@ -71,6 +71,7 @@ gem "nokogiri", ">= 1.11.0.rc4"
 gem "benchmark_methods", require: false
 gem "sentry-ruby"
 gem "sentry-rails"
+gem "sentry-sidekiq"
 group :production do
   
   gem "newrelic_rpm"
