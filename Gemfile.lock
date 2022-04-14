@@ -166,25 +166,6 @@ GEM
     factory_bot_rails (6.2.0)
       factory_bot (~> 6.2.0)
       railties (>= 5.0.0)
-    faraday (1.7.0)
-      faraday-em_http (~> 1.0)
-      faraday-em_synchrony (~> 1.0)
-      faraday-excon (~> 1.1)
-      faraday-httpclient (~> 1.0.1)
-      faraday-net_http (~> 1.0)
-      faraday-net_http_persistent (~> 1.1)
-      faraday-patron (~> 1.0)
-      faraday-rack (~> 1.0)
-      multipart-post (>= 1.2, < 3)
-      ruby2_keywords (>= 0.0.4)
-    faraday-em_http (1.0.0)
-    faraday-em_synchrony (1.0.0)
-    faraday-excon (1.1.0)
-    faraday-httpclient (1.0.1)
-    faraday-net_http (1.0.1)
-    faraday-net_http_persistent (1.2.0)
-    faraday-patron (1.0.0)
-    faraday-rack (1.0.0)
     fast_jsonapi (1.5)
       activesupport (>= 4.2)
     ffi (1.15.5)
@@ -234,7 +215,6 @@ GEM
       ruby-progressbar
     mocha (1.13.0)
     msgpack (1.4.5)
-    multipart-post (2.1.1)
     net-http-persistent (4.0.1)
       connection_pool (~> 2.2)
     newrelic_rpm (7.2.0)
@@ -322,9 +302,14 @@ GEM
       rack (>= 1.1)
       rubocop (>= 1.7.0, < 2.0)
     ruby-progressbar (1.11.0)
-    ruby2_keywords (0.0.5)
-    sentry-raven (3.1.2)
-      faraday (>= 1.0)
+    sentry-rails (5.2.1)
+      railties (>= 5.0)
+      sentry-ruby-core (~> 5.2.1)
+    sentry-ruby (5.2.1)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      sentry-ruby-core (= 5.2.1)
+    sentry-ruby-core (5.2.1)
+      concurrent-ruby
     shoulda-context (2.0.0)
     shoulda-matchers (5.0.0)
       activesupport (>= 5.2.0)
@@ -423,7 +408,8 @@ DEPENDENCIES
   rubocop-performance
   rubocop-rails
   ruby-progressbar
-  sentry-raven
+  sentry-rails
+  sentry-ruby
   shoulda-context
   shoulda-matchers
   sidekiq

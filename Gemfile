@@ -69,9 +69,10 @@ gem "with_advisory_lock"
 gem "nokogiri", ">= 1.11.0.rc4"
 
 gem "benchmark_methods", require: false
-
+gem "sentry-ruby"
+gem "sentry-rails"
 group :production do
-  gem "sentry-raven"
+  
   gem "newrelic_rpm"
 end
 
