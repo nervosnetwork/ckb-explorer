@@ -3,14 +3,14 @@ module Api
     class BlockTransactionsController < ApplicationController
       before_action :validate_query_params
       before_action :validate_pagination_params, :pagination_params
-
+      include Pagy::Backend
       def show
         block = Block.find_by!(block_hash: params[:id])
-        ckb_transactions = block.ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).order(:block_id, :id).page(@page).per(@page_size)
+        @pagy, ckb_transactions = pagy(block.ckb_transactions.where(block_timestamp: block.timestamp).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).order(:id), items: params[:page_size])
         json =
           Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
             records_counter = RecordCounters::BlockTransactions.new(block)
-            options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
+            options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @pagy.page, page_size: @pagy.items, records_counter: records_counter).call
             CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true })).serialized_json
           end
 
