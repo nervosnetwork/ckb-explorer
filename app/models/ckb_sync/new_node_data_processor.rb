@@ -1,4 +1,5 @@
 require "benchmark_methods"
+require 'sentry-rails'
 
 module CkbSync
   class NewNodeDataProcessor
@@ -13,9 +14,25 @@ module CkbSync
       @local_cache = LocalCache.new
     end
 
-    def call
-      @transaction = Sentry.start_transaction(op: "NewNodeDataProcessor", description: "NewNodeDataProcessor")
+    def sentry_transaction
+      @transaction ||= Sentry.start_transaction(op: "NewNodeDataProcessor", description: "NewNodeDataProcessor")
+    end
 
+    def with_child_span(**args, &block)
+      if sentry_transaction
+        sentry_transaction.with_child_span(**args, &block)
+      else
+        obj = Object.new
+        class << obj
+          def set_data(key, val)
+          end
+        end
+        block.call(obj)
+      end
+    end
+
+    def call
+      sentry_transaction
       local_tip_block = Block.recent.first
       tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
@@ -35,13 +52,13 @@ module CkbSync
       Sentry.capture_exception(e)
       exit!
     ensure
-      @transaction.finish 
+      sentry_transaction&.finish 
     end
 
     def process_block(node_block)
       local_block = nil
       
-      @transaction.with_child_span(op: :process_block, description: 'process_block') do |span|
+      with_child_span(op: :process_block, description: 'process_block') do |span|
         ApplicationRecord.transaction do
           # build node data
           local_block = build_block!(node_block)
@@ -858,7 +875,7 @@ module CkbSync
 
     def build_block!(node_block)
       block = nil
-      @transaction.with_child_span(op: :build_block) do |span|
+      with_child_span(op: :build_block) do |span|
         header = node_block.header
         span.set_data(:block_number, header.number)
         epoch_info = CkbUtils.parse_epoch_info(header)

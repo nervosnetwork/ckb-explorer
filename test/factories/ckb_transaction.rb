@@ -3,7 +3,7 @@ FactoryBot.define do
     block
     tx_hash { "0x#{SecureRandom.hex(32)}" }
     block_number {}
-    block_timestamp { Faker::Time.between(from: 2.days.ago, to: Date.today).to_i }
+    block_timestamp { block.timestamp }
     transaction_fee { 0 }
     version { 0 }
     witnesses {}

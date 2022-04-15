@@ -1882,7 +1882,6 @@ module CkbSync
             consumed_tx_hash = cell_output.live? ? nil : cell_output.consumed_by.tx_hash
             CkbUtils.hash_value_to_s(id: cell_output.id, capacity: cell_output.capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: cell_output.status, consumed_tx_hash: consumed_tx_hash)
           end
-
         assert_equal expected_cellbase_display_outputs, block.cellbase.display_outputs
       end
     end

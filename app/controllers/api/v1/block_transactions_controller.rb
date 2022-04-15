@@ -6,7 +6,14 @@ module Api
       include Pagy::Backend
       def show
         block = Block.find_by!(block_hash: params[:id])
-        @pagy, ckb_transactions = pagy(block.ckb_transactions.where(block_timestamp: block.timestamp).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).order(:id), items: params[:page_size])
+        @pagy, ckb_transactions = pagy(
+          block.ckb_transactions
+                .select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
+                .where(block_timestamp: block.timestamp)
+                .order(:id), 
+          items: params[:page_size] || 10, 
+          overflow: :empty_page)
+
         json =
           Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
             records_counter = RecordCounters::BlockTransactions.new(block)
