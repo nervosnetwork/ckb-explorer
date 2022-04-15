@@ -31,6 +31,7 @@ module CkbSync
       end
     end
 
+    # returns the remaining block numbers to process
     def call
       sentry_transaction
       local_tip_block = Block.recent.first
