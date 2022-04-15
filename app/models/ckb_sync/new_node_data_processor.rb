@@ -14,7 +14,7 @@ module CkbSync
     end
 
     def call
-      @transaction = Sentry.start_transaction(op: "process_item")
+      @transaction = Sentry.start_transaction(op: "NewNodeDataProcessor", description: "NewNodeDataProcessor")
 
       local_tip_block = Block.recent.first
       tip_block_number = CkbSync::Api.instance.get_tip_block_number
@@ -29,54 +29,61 @@ module CkbSync
         invalid_block(local_tip_block)
       end
 
-      @transaction.finish
+    rescue => e
+      Rails.logger.error e.message
+      puts e.backtrace.join("\n")
+      Sentry.capture_exception(e)
+      exit!
+    ensure
+      @transaction.finish 
     end
 
     def process_block(node_block)
       local_block = nil
+      
+      @transaction.with_child_span(op: :process_block, description: 'process_block') do |span|
+        ApplicationRecord.transaction do
+          # build node data
+          local_block = build_block!(node_block)
+          span.set_data(:block_number, local_block.number)
+          local_cache.write("BlockNumber", local_block.number)
+          build_uncle_blocks!(node_block, local_block.id)
+          inputs = []
+          outputs = []
+          outputs_data = []
 
-  
-      ApplicationRecord.transaction do
-        # build node data
-        local_block = build_block!(node_block)
-        local_cache.write("BlockNumber", local_block.number)
-        build_uncle_blocks!(node_block, local_block.id)
-        inputs = []
-        outputs = []
-        outputs_data = []
+          ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
+          build_udts!(local_block, outputs, outputs_data.flatten)
 
-        ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
-        build_udts!(local_block, outputs, outputs_data.flatten)
+          tags = []
+          udt_address_ids = []
+          dao_address_ids = []
+          contained_udt_ids = []
+          contained_address_ids = []
+          process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
+          addrs_changes = Hash.new { |hash, key| hash[key] = {} }
+          input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
 
-        tags = []
-        udt_address_ids = []
-        dao_address_ids = []
-        contained_udt_ids = []
-        contained_address_ids = []
-        process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
-        addrs_changes = Hash.new { |hash, key| hash[key] = {} }
-        input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
+          # update explorer data
+          update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
+          update_block_info!(local_block)
+          update_block_reward_info!(local_block)
+          update_mining_info(local_block)
+          update_table_records_count(local_block)
+          update_or_create_udt_accounts!(local_block)
+          update_pool_tx_status(local_block)
+          # maybe can be changed to asynchronous update
+          update_udt_info(local_block)
+          process_dao_events!(local_block)
+          update_addresses_info(addrs_changes)
+        end
 
-        # update explorer data
-        update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
-        update_block_info!(local_block)
-        update_block_reward_info!(local_block)
-        update_mining_info(local_block)
-        update_table_records_count(local_block)
-        update_or_create_udt_accounts!(local_block)
-        update_pool_tx_status(local_block)
-        # maybe can be changed to asynchronous update
-        update_udt_info(local_block)
-        process_dao_events!(local_block)
-        update_addresses_info(addrs_changes)
+        cache_address_txs(local_block)
+        generate_tx_display_info(local_block)
+        remove_tx_display_infos(local_block)
+        flush_inputs_outputs_caches(local_block)
+        generate_statistics_data(local_block)
       end
-
-      cache_address_txs(local_block)
-      generate_tx_display_info(local_block)
-      remove_tx_display_infos(local_block)
-      flush_inputs_outputs_caches(local_block)
-      generate_statistics_data(local_block)
-
       local_block
     end
 
@@ -249,11 +256,13 @@ module CkbSync
 
     def update_udt_info(local_block)
       type_hashes = []
-      local_block.cell_outputs.udt.select(:id, :type_hash).find_each do |udt_output|
+      local_block.cell_outputs.udt.select(:id, :type_hash).each do |udt_output|
         type_hashes << udt_output.type_hash
       end
-      CellOutput.where(consumed_by_id: local_block.ckb_transactions.pluck(:id)).udt.select(:id, :type_hash).find_each do |udt_output|
-        type_hashes << udt_output.type_hash
+      local_block.ckb_transactions.pluck(:id).each do |tx_id|
+        CellOutput.where(consumed_by_id: tx_id).udt.select(:id, :type_hash).each do |udt_output|
+          type_hashes << udt_output.type_hash
+        end
       end
       return if type_hashes.blank?
 
@@ -271,7 +280,8 @@ module CkbSync
     def update_or_create_udt_accounts!(local_block)
       new_udt_accounts_attributes = Set.new
       udt_accounts_attributes = Set.new
-      local_block.cell_outputs.where(cell_type: %w(udt m_nft_token nrc_721_token)).select(:id, :address_id, :type_hash, :cell_type, :type_script_id).find_each do |udt_output|
+      local_block.cell_outputs.select(:id, :address_id, :type_hash, :cell_type, :type_script_id).each do |udt_output|
+        next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token))
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
         udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
@@ -288,20 +298,23 @@ module CkbSync
         end
       end
 
-      CellOutput.where(consumed_by_id: local_block.ckb_transactions.pluck(:id)).where(cell_type: %w(udt m_nft_token nrc_721_token)).select(:id, :address_id, :type_hash, :cell_type).find_each do |udt_output|
-        address = Address.find(udt_output.address_id)
-        udt_type = udt_type(udt_output.cell_type)
-        udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
-        amount = udt_account_amount(udt_type, udt_output.type_hash, address)
-        udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
-        if udt_account.present?
-          case udt_type
-          when "sudt"
-            udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
-          when "m_nft_token"
-            udt_account.destroy unless address.cell_outputs.live.m_nft_token.where(type_hash: udt_output.type_hash).exists?
-          when "nrc_721_token"
-            udt_account.destroy unless address.cell_outputs.live.nrc_721_token.where(type_hash: udt_output.type_hash).exists?
+      local_block.ckb_transactions.pluck(:id).each do |tx_id| # iterator over each tx id for better sql performance
+        CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id, :type_hash, :cell_type).each do |udt_output|
+          next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token))
+          address = Address.find(udt_output.address_id)
+          udt_type = udt_type(udt_output.cell_type)
+          udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
+          amount = udt_account_amount(udt_type, udt_output.type_hash, address)
+          udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
+          if udt_account.present?
+            case udt_type
+            when "sudt"
+              udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
+            when "m_nft_token"
+              udt_account.destroy unless address.cell_outputs.live.m_nft_token.where(type_hash: udt_output.type_hash).exists?
+            when "nrc_721_token"
+              udt_account.destroy unless address.cell_outputs.live.nrc_721_token.where(type_hash: udt_output.type_hash).exists?
+            end
           end
         end
       end
@@ -785,6 +798,7 @@ module CkbSync
     end
 
     def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
+      txs = nil
       ckb_transactions_attributes = []
       tx_index = 0
       node_block.transactions.each do |tx|
@@ -797,7 +811,7 @@ module CkbSync
         outputs_data.concat << tx.outputs_data
         tx_index += 1
       end
-      CkbTransaction.insert_all!(ckb_transactions_attributes, returning: %w(id tx_hash created_at))
+      txs = CkbTransaction.insert_all!(ckb_transactions_attributes, returning: %w(id tx_hash created_at))
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)
