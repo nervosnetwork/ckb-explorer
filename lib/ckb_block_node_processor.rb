@@ -11,9 +11,9 @@ puts 'start'
 loop do
   lock.lock do
     start = Time.now.to_f
-    CkbSync::NewNodeDataProcessor.new.call
+    remain = CkbSync::NewNodeDataProcessor.new.call
     duration = Time.now.to_f - start
-    sleep(1-duration) if duration < 1
+    sleep(1-duration) if remain > 0 && duration < 1 # only sleep when catched up with network
   end
 end
 
