@@ -69,9 +69,11 @@ gem "with_advisory_lock"
 gem "nokogiri", ">= 1.11.0.rc4"
 
 gem "benchmark_methods", require: false
-
+gem "sentry-ruby"
+gem "sentry-rails"
+gem "sentry-sidekiq"
 group :production do
-  gem "sentry-raven"
+  
   gem "newrelic_rpm"
 end
 
@@ -115,3 +117,4 @@ end
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 gem "redis-objects"
+gem "pagy"

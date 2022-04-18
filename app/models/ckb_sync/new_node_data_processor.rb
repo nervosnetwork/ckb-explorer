@@ -1,4 +1,5 @@
 require "benchmark_methods"
+require 'sentry-rails'
 
 module CkbSync
   class NewNodeDataProcessor
@@ -13,7 +14,26 @@ module CkbSync
       @local_cache = LocalCache.new
     end
 
+    def sentry_transaction
+      @transaction ||= Sentry.start_transaction(op: "NewNodeDataProcessor", description: "NewNodeDataProcessor")
+    end
+
+    def with_child_span(**args, &block)
+      if sentry_transaction
+        sentry_transaction.with_child_span(**args, &block)
+      else
+        obj = Object.new
+        class << obj
+          def set_data(key, val)
+          end
+        end
+        block.call(obj)
+      end
+    end
+
+    # returns the remaining block numbers to process
     def call
+      sentry_transaction
       local_tip_block = Block.recent.first
       tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
@@ -26,51 +46,61 @@ module CkbSync
       else
         invalid_block(local_tip_block)
       end
+    rescue => e
+      Rails.logger.error e.message
+      puts e.backtrace.join("\n")
+      Sentry.capture_exception(e)
+      exit!
+    ensure
+      sentry_transaction&.finish 
     end
 
     def process_block(node_block)
       local_block = nil
-      ApplicationRecord.transaction do
-        # build node data
-        local_block = build_block!(node_block)
-        local_cache.write("BlockNumber", local_block.number)
-        build_uncle_blocks!(node_block, local_block.id)
-        inputs = []
-        outputs = []
-        outputs_data = []
+      
+      with_child_span(op: :process_block, description: 'process_block') do |span|
+        ApplicationRecord.transaction do
+          # build node data
+          local_block = build_block!(node_block)
+          span.set_data(:block_number, local_block.number)
+          local_cache.write("BlockNumber", local_block.number)
+          build_uncle_blocks!(node_block, local_block.id)
+          inputs = []
+          outputs = []
+          outputs_data = []
 
-        ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
-        build_udts!(local_block, outputs, outputs_data.flatten)
+          ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
+          build_udts!(local_block, outputs, outputs_data.flatten)
 
-        tags = []
-        udt_address_ids = []
-        dao_address_ids = []
-        contained_udt_ids = []
-        contained_address_ids = []
-        process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
-        addrs_changes = Hash.new { |hash, key| hash[key] = {} }
-        input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
+          tags = []
+          udt_address_ids = []
+          dao_address_ids = []
+          contained_udt_ids = []
+          contained_address_ids = []
+          process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
+          addrs_changes = Hash.new { |hash, key| hash[key] = {} }
+          input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
 
-        # update explorer data
-        update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
-        update_block_info!(local_block)
-        update_block_reward_info!(local_block)
-        update_mining_info(local_block)
-        update_table_records_count(local_block)
-        update_or_create_udt_accounts!(local_block)
-        update_pool_tx_status(local_block)
-        # maybe can be changed to asynchronous update
-        update_udt_info(local_block)
-        process_dao_events!(local_block)
-        update_addresses_info(addrs_changes)
+          # update explorer data
+          update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
+          update_block_info!(local_block)
+          update_block_reward_info!(local_block)
+          update_mining_info(local_block)
+          update_table_records_count(local_block)
+          update_or_create_udt_accounts!(local_block)
+          update_pool_tx_status(local_block)
+          # maybe can be changed to asynchronous update
+          update_udt_info(local_block)
+          process_dao_events!(local_block)
+          update_addresses_info(addrs_changes)
+        end
+
+        cache_address_txs(local_block)
+        generate_tx_display_info(local_block)
+        remove_tx_display_infos(local_block)
+        flush_inputs_outputs_caches(local_block)
+        generate_statistics_data(local_block)
       end
-
-      cache_address_txs(local_block)
-      generate_tx_display_info(local_block)
-      remove_tx_display_infos(local_block)
-      flush_inputs_outputs_caches(local_block)
-      generate_statistics_data(local_block)
-
       local_block
     end
 
@@ -243,11 +273,13 @@ module CkbSync
 
     def update_udt_info(local_block)
       type_hashes = []
-      local_block.cell_outputs.udt.select(:id, :type_hash).find_each do |udt_output|
+      local_block.cell_outputs.udt.select(:id, :type_hash).each do |udt_output|
         type_hashes << udt_output.type_hash
       end
-      CellOutput.where(consumed_by_id: local_block.ckb_transactions.pluck(:id)).udt.select(:id, :type_hash).find_each do |udt_output|
-        type_hashes << udt_output.type_hash
+      local_block.ckb_transactions.pluck(:id).each do |tx_id|
+        CellOutput.where(consumed_by_id: tx_id).udt.select(:id, :type_hash).each do |udt_output|
+          type_hashes << udt_output.type_hash
+        end
       end
       return if type_hashes.blank?
 
@@ -265,7 +297,8 @@ module CkbSync
     def update_or_create_udt_accounts!(local_block)
       new_udt_accounts_attributes = Set.new
       udt_accounts_attributes = Set.new
-      local_block.cell_outputs.where(cell_type: %w(udt m_nft_token nrc_721_token)).select(:id, :address_id, :type_hash, :cell_type, :type_script_id).find_each do |udt_output|
+      local_block.cell_outputs.select(:id, :address_id, :type_hash, :cell_type, :type_script_id).each do |udt_output|
+        next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token))
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
         udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
@@ -282,20 +315,23 @@ module CkbSync
         end
       end
 
-      CellOutput.where(consumed_by_id: local_block.ckb_transactions.pluck(:id)).where(cell_type: %w(udt m_nft_token nrc_721_token)).select(:id, :address_id, :type_hash, :cell_type).find_each do |udt_output|
-        address = Address.find(udt_output.address_id)
-        udt_type = udt_type(udt_output.cell_type)
-        udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
-        amount = udt_account_amount(udt_type, udt_output.type_hash, address)
-        udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
-        if udt_account.present?
-          case udt_type
-          when "sudt"
-            udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
-          when "m_nft_token"
-            udt_account.destroy unless address.cell_outputs.live.m_nft_token.where(type_hash: udt_output.type_hash).exists?
-          when "nrc_721_token"
-            udt_account.destroy unless address.cell_outputs.live.nrc_721_token.where(type_hash: udt_output.type_hash).exists?
+      local_block.ckb_transactions.pluck(:id).each do |tx_id| # iterator over each tx id for better sql performance
+        CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id, :type_hash, :cell_type).each do |udt_output|
+          next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token))
+          address = Address.find(udt_output.address_id)
+          udt_type = udt_type(udt_output.cell_type)
+          udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
+          amount = udt_account_amount(udt_type, udt_output.type_hash, address)
+          udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
+          if udt_account.present?
+            case udt_type
+            when "sudt"
+              udt_accounts_attributes << { id: udt_account.id, amount: amount, created_at: udt.created_at }
+            when "m_nft_token"
+              udt_account.destroy unless address.cell_outputs.live.m_nft_token.where(type_hash: udt_output.type_hash).exists?
+            when "nrc_721_token"
+              udt_account.destroy unless address.cell_outputs.live.nrc_721_token.where(type_hash: udt_output.type_hash).exists?
+            end
           end
         end
       end
@@ -779,6 +815,7 @@ module CkbSync
     end
 
     def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
+      txs = nil
       ckb_transactions_attributes = []
       tx_index = 0
       node_block.transactions.each do |tx|
@@ -791,7 +828,7 @@ module CkbSync
         outputs_data.concat << tx.outputs_data
         tx_index += 1
       end
-      CkbTransaction.insert_all!(ckb_transactions_attributes, returning: %w(id tx_hash created_at))
+      txs = CkbTransaction.insert_all!(ckb_transactions_attributes, returning: %w(id tx_hash created_at))
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)
@@ -837,49 +874,54 @@ module CkbSync
     end
 
     def build_block!(node_block)
-      header = node_block.header
-      epoch_info = CkbUtils.parse_epoch_info(header)
-      cellbase = node_block.transactions.first
+      block = nil
+      with_child_span(op: :build_block) do |span|
+        header = node_block.header
+        span.set_data(:block_number, header.number)
+        epoch_info = CkbUtils.parse_epoch_info(header)
+        cellbase = node_block.transactions.first
 
-      generate_address_in_advance(cellbase, header.timestamp)
-      block_cell_consumed = CkbUtils.block_cell_consumed(node_block.transactions)
-      total_cell_capacity = CkbUtils.total_cell_capacity(node_block.transactions)
-      miner_hash = CkbUtils.miner_hash(cellbase)
-      miner_lock_hash = CkbUtils.miner_lock_hash(cellbase)
-      base_reward = CkbUtils.base_reward(header.number, epoch_info.number)
-      Block.find_or_create_by!(
-        compact_target: header.compact_target,
-        block_hash: header.hash,
-        number: header.number,
-        parent_hash: header.parent_hash,
-        nonce: header.nonce,
-        timestamp: header.timestamp,
-        transactions_root: header.transactions_root,
-        proposals_hash: header.proposals_hash,
-        uncles_count: node_block.uncles.count,
-        extra_hash: header.try(:uncles_hash).presence || header.try(:extra_hash),
-        uncle_block_hashes: uncle_block_hashes(node_block.uncles),
-        version: header.version,
-        proposals: node_block.proposals,
-        proposals_count: node_block.proposals.count,
-        cell_consumed: block_cell_consumed,
-        total_cell_capacity: total_cell_capacity,
-        miner_hash: miner_hash,
-        miner_lock_hash: miner_lock_hash,
-        reward: base_reward,
-        primary_reward: base_reward,
-        secondary_reward: 0,
-        reward_status: header.number.to_i == 0 ? "issued" : "pending",
-        total_transaction_fee: 0,
-        epoch: epoch_info.number,
-        start_number: epoch_info.start_number,
-        length: epoch_info.length,
-        dao: header.dao,
-        block_time: block_time(header.timestamp, header.number),
-        block_size: 0,
-        miner_message: CkbUtils.miner_message(cellbase),
-        extension: node_block.extension
-      )
+        generate_address_in_advance(cellbase, header.timestamp)
+        block_cell_consumed = CkbUtils.block_cell_consumed(node_block.transactions)
+        total_cell_capacity = CkbUtils.total_cell_capacity(node_block.transactions)
+        miner_hash = CkbUtils.miner_hash(cellbase)
+        miner_lock_hash = CkbUtils.miner_lock_hash(cellbase)
+        base_reward = CkbUtils.base_reward(header.number, epoch_info.number)
+        block = Block.find_or_create_by!(
+          compact_target: header.compact_target,
+          block_hash: header.hash,
+          number: header.number,
+          parent_hash: header.parent_hash,
+          nonce: header.nonce,
+          timestamp: header.timestamp,
+          transactions_root: header.transactions_root,
+          proposals_hash: header.proposals_hash,
+          uncles_count: node_block.uncles.count,
+          extra_hash: header.try(:uncles_hash).presence || header.try(:extra_hash),
+          uncle_block_hashes: uncle_block_hashes(node_block.uncles),
+          version: header.version,
+          proposals: node_block.proposals,
+          proposals_count: node_block.proposals.count,
+          cell_consumed: block_cell_consumed,
+          total_cell_capacity: total_cell_capacity,
+          miner_hash: miner_hash,
+          miner_lock_hash: miner_lock_hash,
+          reward: base_reward,
+          primary_reward: base_reward,
+          secondary_reward: 0,
+          reward_status: header.number.to_i == 0 ? "issued" : "pending",
+          total_transaction_fee: 0,
+          epoch: epoch_info.number,
+          start_number: epoch_info.start_number,
+          length: epoch_info.length,
+          dao: header.dao,
+          block_time: block_time(header.timestamp, header.number),
+          block_size: 0,
+          miner_message: CkbUtils.miner_message(cellbase),
+          extension: node_block.extension
+        )
+      end
+      block
     end
 
     def from_cell_base?(node_input)

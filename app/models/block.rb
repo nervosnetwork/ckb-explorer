@@ -80,7 +80,7 @@ class Block < ApplicationRecord
   end
 
   def miner_address
-    Address.find_by(address_hash: miner_hash)
+    Address.find_by(address_hash: miner_hash, address_hash_crc: CkbUtils.generate_crc32(miner_hash))
   end
 
   def flush_cache

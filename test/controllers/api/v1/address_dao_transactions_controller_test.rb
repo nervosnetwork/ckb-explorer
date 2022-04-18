@@ -58,7 +58,7 @@ module Api
         page_size = 10
         address = create(:address, :with_transactions)
         fake_dao_deposit_transaction(3, address)
-        ckb_dao_transactions = address.ckb_dao_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        ckb_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash)
 
@@ -72,7 +72,7 @@ module Api
         page_size = 10
         address = create(:address, :with_transactions)
         fake_dao_deposit_transaction(3, address)
-        ckb_dao_transactions = address.ckb_dao_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        ckb_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
         valid_get api_v1_address_dao_transaction_url(address.lock_hash)
 
@@ -147,7 +147,7 @@ module Api
         page_size = 10
         address = create(:address, :with_transactions, transactions_count: 30)
         fake_dao_deposit_transaction(30, address)
-        address_dao_transactions = address.ckb_dao_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        address_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: page }
         records_counter = RecordCounters::AddressDaoTransactions.new(address)
@@ -163,7 +163,7 @@ module Api
         page_size = 12
         address = create(:address, :with_transactions, transactions_count: 15)
         fake_dao_deposit_transaction(15, address)
-        address_dao_transactions = address.ckb_dao_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        address_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page_size: page_size }
 
@@ -180,7 +180,7 @@ module Api
         page_size = 5
         address = create(:address, :with_transactions, transactions_count: 30)
         fake_dao_deposit_transaction(30, address)
-        address_dao_transactions = address.ckb_dao_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        address_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
 
@@ -196,7 +196,7 @@ module Api
         page_size = 5
         address = create(:address, :with_transactions)
         fake_dao_deposit_transaction(3, address)
-        address_dao_transactions = address.ckb_dao_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        address_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
 

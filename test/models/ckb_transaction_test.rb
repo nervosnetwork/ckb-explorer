@@ -146,9 +146,9 @@ class CkbTransactionTest < ActiveSupport::TestCase
       interest: interest, cell_type: nervos_dao_withdrawing_cell.cell_type, cell_index: nervos_dao_withdrawing_cell.cell_index
     ).sort
     expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash compensation_started_block_number compensation_ended_block_number compensation_started_timestamp compensation_ended_timestamp interest cell_type locked_until_block_number locked_until_block_timestamp cell_index).sort
-
-    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
-    assert_equal expected_display_input, ckb_transaction.display_inputs.first.sort
+    display_inputs = ckb_transaction.display_inputs
+    assert_equal expected_attributes, display_inputs.first.keys.sort
+    assert_equal expected_display_input, display_inputs.first.sort
   end
 
   test "#display_inputs should return dao display input when previous cell type is nervos_dao_deposit" do
@@ -183,9 +183,9 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type).sort
     consumed_tx_hash = dao_output.live? ? nil : dao_output.consumed_by.tx_hash
     expected_display_output = CkbUtils.hash_value_to_s(id: dao_output.id, capacity: dao_output.capacity, address_hash: dao_output.address_hash, status: dao_output.status, consumed_tx_hash: consumed_tx_hash, cell_type: dao_output.cell_type).sort
-
-    assert_equal expected_attributes, ckb_transaction.display_outputs.first.keys.sort
-    assert_equal expected_display_output, ckb_transaction.display_outputs.first.sort
+    display_outputs = ckb_transaction.display_outputs
+    assert_equal expected_attributes, display_outputs.first.keys.sort
+    assert_equal expected_display_output, display_outputs.first.sort
   end
 
   test "#display_inputs should contain udt attributes for udt transaction" do
@@ -201,10 +201,10 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash udt_info cell_index cell_type).sort
     expected_udt_attributes = %i(symbol amount decimal type_hash published).sort
     expected_display_input = CkbUtils.hash_value_to_s(id: udt_cell_output.id, from_cellbase: false, capacity: udt_cell_output.capacity, address_hash: udt_cell_output.address_hash, generated_tx_hash: udt_cell_output.generated_by.tx_hash, cell_index: udt_cell_output.cell_index, cell_type: udt_cell_output.cell_type, udt_info: udt_cell_output.udt_info)
-
-    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
-    assert_equal expected_udt_attributes, ckb_transaction.display_inputs.first[:udt_info].keys.sort
-    assert_equal expected_display_input, ckb_transaction.display_inputs.first
+    display_inputs = ckb_transaction.display_inputs
+    assert_equal expected_attributes, display_inputs.first.keys.sort
+    assert_equal expected_udt_attributes, display_inputs.first[:udt_info].keys.sort
+    assert_equal expected_display_input, display_inputs.first
   end
 
   test "#display_outputs should contain udt attributes for udt transaction" do
@@ -234,10 +234,10 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type).sort
     expected_m_nft_attributes = %i(issuer_name).sort
     expected_display_input = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, from_cellbase: false, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, generated_tx_hash: m_nft_cell_output.generated_by.tx_hash, cell_index: m_nft_cell_output.cell_index, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)
-
-    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
-    assert_equal expected_m_nft_attributes, ckb_transaction.display_inputs.first[:m_nft_info].keys.sort
-    assert_equal expected_display_input, ckb_transaction.display_inputs.first
+    display_inputs = ckb_transaction.display_inputs
+    assert_equal expected_attributes, display_inputs.first.keys.sort
+    assert_equal expected_m_nft_attributes, display_inputs.first[:m_nft_info].keys.sort
+    assert_equal expected_display_input, display_inputs.first
   end
 
   test "#display_inputs should contain m_nft_class info for m_nft_class transaction" do
@@ -251,10 +251,10 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type).sort
     expected_m_nft_attributes = %i(class_name total).sort
     expected_display_input = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, from_cellbase: false, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, generated_tx_hash: m_nft_cell_output.generated_by.tx_hash, cell_index: m_nft_cell_output.cell_index, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)
-
-    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
-    assert_equal expected_m_nft_attributes, ckb_transaction.display_inputs.first[:m_nft_info].keys.sort
-    assert_equal expected_display_input, ckb_transaction.display_inputs.first
+    display_inputs = ckb_transaction.display_inputs
+    assert_equal expected_attributes, display_inputs.first.keys.sort
+    assert_equal expected_m_nft_attributes, display_inputs.first[:m_nft_info].keys.sort
+    assert_equal expected_display_input, display_inputs.first
   end
 
   test "#display_inputs should contain m_nft_token info for m_nft_token transaction" do
@@ -270,10 +270,11 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type).sort
     expected_m_nft_attributes = %i(class_name token_id total).sort
     expected_display_input = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, from_cellbase: false, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, generated_tx_hash: m_nft_cell_output.generated_by.tx_hash, cell_index: m_nft_cell_output.cell_index, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)
+    display_inputs = ckb_transaction.display_inputs
 
-    assert_equal expected_attributes, ckb_transaction.display_inputs.first.keys.sort
-    assert_equal expected_m_nft_attributes, ckb_transaction.display_inputs.first[:m_nft_info].keys.sort
-    assert_equal expected_display_input, ckb_transaction.display_inputs.first
+    assert_equal expected_attributes, display_inputs.first.keys.sort
+    assert_equal expected_m_nft_attributes, display_inputs.first[:m_nft_info].keys.sort
+    assert_equal expected_display_input, display_inputs.first
   end
 
   test "#display_outputs should contain m_nft_issuer info for m_nft_issuer transaction" do
@@ -314,10 +315,10 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type m_nft_info).sort
     expected_m_nft_attributes = %i(class_name token_id total).sort
     expected_display_output = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, status: m_nft_cell_output.status, consumed_tx_hash: nil, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)
-
-    assert_equal expected_attributes, m_nft_output_transaction.display_outputs.first.keys.sort
-    assert_equal expected_m_nft_attributes, m_nft_output_transaction.display_outputs.first[:m_nft_info].keys.sort
-    assert_equal expected_display_output, m_nft_output_transaction.display_outputs.first
+    display_outputs = m_nft_output_transaction.display_outputs
+    assert_equal expected_attributes, display_outputs.first.keys.sort
+    assert_equal expected_m_nft_attributes, display_outputs.first[:m_nft_info].keys.sort
+    assert_equal expected_display_output, display_outputs.first
   end
 
   test "#display_outputs should contain nrc_721_token info for nrc_721_token transaction" do
@@ -336,7 +337,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
     factory_info = {:symbol => "TTF"} 
     token_info = {:symbol => "TTF", :amount => udt_account.nft_token_id}
-    assert_equal  factory_info.to_a, nrc_721_token_output_transaction.display_outputs.first[:nrc_721_token_info].to_a
-    assert_equal token_info, nrc_721_token_output_transaction.display_outputs.last[:nrc_721_token_info]
+    display_outputs = nrc_721_token_output_transaction.display_outputs
+    assert_equal factory_info.to_a, display_outputs.first[:nrc_721_token_info].to_a
+    assert_equal token_info, display_outputs.last[:nrc_721_token_info]
   end
 end
