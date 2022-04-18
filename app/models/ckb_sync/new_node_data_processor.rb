@@ -37,7 +37,7 @@ module CkbSync
       local_tip_block = Block.recent.first
       tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
-      return 0 if target_block_number > tip_block_number
+      return if target_block_number > tip_block_number
 
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
       if !forked?(target_block, local_tip_block)
@@ -46,7 +46,6 @@ module CkbSync
       else
         invalid_block(local_tip_block)
       end
-      return tip_block_number - target_block_number
     rescue => e
       Rails.logger.error e.message
       puts e.backtrace.join("\n")
