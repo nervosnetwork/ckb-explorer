@@ -50,7 +50,8 @@ module CkbSync
       Rails.logger.error e.message
       puts e.backtrace.join("\n")
       Sentry.capture_exception(e)
-      exit!
+      sleep 1 # wait to submit the exception to sentry
+      raise e
     ensure
       sentry_transaction&.finish 
     end
