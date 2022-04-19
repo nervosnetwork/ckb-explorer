@@ -15,9 +15,9 @@ module Api
         Rails.cache.realize("#{daily_statistics.cache_key}/#{params[:id]}", version: daily_statistics.cache_version, race_condition_ttl: 3.seconds) do
           case params[:id]
           when "avg_hash_rate"
-            DailyStatisticSerializer.new(daily_statistics[-90..-1].presence || [], { params: { indicator: params[:id] } })
+            DailyStatisticSerializer.new(daily_statistics.presence || [], { params: { indicator: params[:id] } })
           when "transactions_count"
-            DailyStatisticSerializer.new(daily_statistics.recent_year, { params: { indicator: params[:id] } })
+            DailyStatisticSerializer.new(daily_statistics.presence || [], { params: { indicator: params[:id] } })
           else
             DailyStatisticSerializer.new(daily_statistics, { params: { indicator: params[:id] } })
           end
