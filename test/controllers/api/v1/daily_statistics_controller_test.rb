@@ -94,16 +94,16 @@ module Api
         assert_equal ((Time.current - target_date) / (24 * 60 * 60)).to_i, json.dig("data").size
       end
 
-      test "should return recent 90 days average hash rate" do
+      test "should return recent all days average hash rate" do
         100.times do |i|
           create(:daily_statistic, created_at_unixtimestamp: (360 - i).days.ago.to_i)
         end
-        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).valid_indicators[-90..-1]
+        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).valid_indicators
         valid_get api_v1_daily_statistic_url("avg_hash_rate")
 
         assert_equal [%w(avg_hash_rate created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
         assert_equal DailyStatisticSerializer.new(daily_statistic_data, params: { indicator: "avg_hash_rate" }).serialized_json, response.body
-        assert_equal 90, json.dig("data").size
+        assert_equal 100, json.dig("data").size
       end
     end
   end
