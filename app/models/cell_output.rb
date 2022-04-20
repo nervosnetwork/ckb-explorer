@@ -22,6 +22,7 @@ class CellOutput < ApplicationRecord
   scope :unconsumed_at, ->(block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp = 0", block_timestamp) }
   scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+  scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
 
   after_commit :flush_cache
 
