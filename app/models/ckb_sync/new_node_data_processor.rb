@@ -1047,9 +1047,7 @@ module CkbSync
         address.live_cells_count = address.live_cells_count - address.cell_outputs.inner_block(local_tip_block.id).live.count
         address.ckb_transactions_count = address.ckb_transactions_count - address.custom_ckb_transactions.inner_block(local_tip_block.id).count
         address.dao_transactions_count = address.dao_transactions_count - address.ckb_dao_transactions.inner_block(local_tip_block.id).count
-        if address.mined_blocks_count.zero?
-          address.balance_occupied = address.balance_occupied - address.cal_balance_occupied_inner_block(local_tip_block.id)
-        end
+        address.balance_occupied = address.balance_occupied - address.cal_balance_occupied_inner_block(local_tip_block.id)
         address.save!
       end
     end
