@@ -3815,10 +3815,6 @@ module CkbSync
       ]
       node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions: transactions, header: header)
       block = node_data_processor.process_block(node_block)
-      CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
-        node_data_processor.call
-      end
       assert_equal "R+K V1 N1", old_factory_cell.reload.symbol
     end
 
