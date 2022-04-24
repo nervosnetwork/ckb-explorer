@@ -275,14 +275,13 @@ end
 
 module RequestHelpers
   def json
-    JSON.parse(response.body)
+    @json ||= JSON.parse(response.body)
   end
 
-  def valid_get(uri, opts = {})
-    params = {}
-    params[:params] = opts[:params] || {}
+  def valid_get(uri, **params)
+    params[:params] ||= {}
     params[:headers] = { "Content-Type": "application/vnd.api+json", "Accept": "application/vnd.api+json" }
-    send :get, uri, params
+    send :get, uri, **params
   end
 end
 

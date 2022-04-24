@@ -23,7 +23,7 @@ class BlockTransactionsTest < ActiveSupport::TestCase
       )
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
-      TableRecordCount.find_by(table_name: "blocks").increment!(:count)
+      TableRecordCount.find_or_initialize_by(table_name: "blocks").increment!(:count)
       CkbSync::NewNodeDataProcessor.new.process_block(node_block)
       assert_equal Block.count, blocks_counter.total_count
     end

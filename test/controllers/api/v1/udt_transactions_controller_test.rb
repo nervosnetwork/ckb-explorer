@@ -66,7 +66,7 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
     page = 1
     page_size = 10
     udt = create(:udt, :with_transactions, published: true)
-    ckb_transactions = udt.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+    ckb_transactions = udt.ckb_transactions.recent.page(page).per(page_size)
 
     valid_get api_v1_udt_transaction_url(udt.type_hash)
 
@@ -163,7 +163,7 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
     page = 1
     page_size = 12
     udt = create(:udt, :with_transactions, published: true)
-    udt_ckb_transactions = udt.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+    udt_ckb_transactions = udt.ckb_transactions.recent.page(page).per(page_size)
 
     valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page_size: page_size }
 
@@ -178,12 +178,11 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
     page = 2
     page_size = 5
     udt = create(:udt, :with_transactions, published: true)
-    udt_ckb_transactions = udt.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+    udt_ckb_transactions = udt.ckb_transactions.recent.page(page).per(page_size)
 
     valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page: page, page_size: page_size }
     options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page, page_size: page_size).call
     response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions, options.merge(params: { previews: true })).serialized_json
-
     assert_equal response_transaction, response.body
   end
 
@@ -191,7 +190,7 @@ class Api::V1::UdtTransactionsControllerTest < ActionDispatch::IntegrationTest
     page = 5
     page_size = 10
     udt = create(:udt, :with_transactions, published: true)
-    udt_ckb_transactions = udt.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+    udt_ckb_transactions = udt.ckb_transactions.recent.page(page).per(page_size)
 
     valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page: page, page_size: page_size }
 
