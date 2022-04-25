@@ -1,5 +1,8 @@
 require_relative "../config/environment"
+
 Rails.logger = Logger.new(STDERR)
+Rails.logger.level = Logger::DEBUG
+ActiveRecord::Base.logger = Rails.logger
 
 lock = Redis::Lock.new('CkbSync', :expiration => 300, :timeout => 30)
 
