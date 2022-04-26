@@ -1,4 +1,6 @@
 class Udt < ApplicationRecord
+  belongs_to :nrc_factory_cell, optional: true
+
   MAX_PAGINATES_PER = 100
   enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2 }
 
@@ -11,7 +13,7 @@ class Udt < ApplicationRecord
   attribute :code_hash, :ckb_hash
 
   def ckb_transactions
-    CkbTransaction.where("contained_udt_ids @> array[?]::bigint[]", [id])#.optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_udt_ids)")
+    CkbTransaction.where("contained_udt_ids @> array[?]::bigint[]", [id]) # .optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_udt_ids)")
   end
 
   def h24_ckb_transactions_count

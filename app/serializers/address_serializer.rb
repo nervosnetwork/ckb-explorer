@@ -41,7 +41,7 @@ class AddressSerializer
         elsif udt_account.udt_type == "m_nft_token"
           { symbol: udt_account.full_name, decimal: udt_account.decimal.to_s, amount: udt_account.amount.to_s, type_hash: udt_account.type_hash, udt_icon_file: udt_account.udt_icon_file, udt_type: udt_account.udt_type }
         elsif udt_account.udt_type == "nrc_721_token"
-          { symbol: udt_account.symbol, amount: udt_account.nft_token_id.to_s, type_hash: udt_account.type_hash, udt_icon_file: udt_account.udt_icon_file, udt_type: udt_account.udt_type }
+          { symbol: udt_account.udt.nrc_factory_cell.symbol, amount: udt_account.nft_token_id.to_s, type_hash: udt_account.type_hash, udt_icon_file: "#{udt_account.udt.nrc_factory_cell.base_token_uri}/#{udt_account.nft_token_id}", udt_type: udt_account.udt_type }
         end
       end
     else

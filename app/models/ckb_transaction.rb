@@ -23,6 +23,7 @@ class CkbTransaction < ApplicationRecord
   scope :normal, -> { where(is_cellbase: false) }
   scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :created_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+  scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
 
   after_commit :flush_cache
   before_destroy :recover_dead_cell
@@ -106,7 +107,10 @@ class CkbTransaction < ApplicationRecord
   private
 
   def normal_tx_display_outputs(previews)
-    cell_outputs_for_display = previews ? outputs.order(:id).limit(10) : outputs.order(:id)
+    cell_outputs_for_display = outputs.sort{|a,b| a.id <=> b.id }
+    if previews 
+      cell_outputs_for_display = cell_outputs_for_display[0, 10]
+    end
     cell_outputs_for_display.map do |output|
       consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
       display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
@@ -119,7 +123,7 @@ class CkbTransaction < ApplicationRecord
   end
 
   def cellbase_display_outputs
-    cell_outputs_for_display = outputs.order(:id)
+    cell_outputs_for_display = outputs.to_a.sort{|a,b| a.id <=> b.id}
     cellbase = Cellbase.new(block)
     cell_outputs_for_display.map do |output|
       consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
@@ -128,7 +132,10 @@ class CkbTransaction < ApplicationRecord
   end
 
   def normal_tx_display_inputs(previews)
-    cell_inputs_for_display = previews ? cell_inputs.order(:id).limit(10) : cell_inputs.order(:id)
+    cell_inputs_for_display = cell_inputs.to_a.sort{|a,b| a.id <=> b.id }
+    if previews 
+      cell_inputs_for_display = cell_inputs_for_display[0, 10]
+    end    
     cell_inputs_for_display.each_with_index.map do |cell_input, index|
       previous_cell_output = cell_input.previous_cell_output
       display_input = { id: previous_cell_output.id, from_cellbase: false, capacity: previous_cell_output.capacity, address_hash: previous_cell_output.address_hash, generated_tx_hash: previous_cell_output.generated_by.tx_hash, cell_index: previous_cell_output.cell_index, cell_type: previous_cell_output.cell_type }

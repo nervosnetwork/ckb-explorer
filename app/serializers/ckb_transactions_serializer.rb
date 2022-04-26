@@ -3,7 +3,9 @@ class CkbTransactionsSerializer
 
   attributes :is_cellbase
 
-  attribute :transaction_hash, &:tx_hash
+  attribute :transaction_hash do |object|
+    object.tx_hash.to_s
+  end
 
   attribute :block_number do |object|
     object.block_number.to_s

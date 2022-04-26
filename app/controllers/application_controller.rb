@@ -1,5 +1,5 @@
 class ApplicationController < ActionController::API
-  before_action :check_header_info, :set_raven_context
+  before_action :check_header_info
 
   rescue_from Api::V1::Exceptions::Error, with: :api_error
 
@@ -8,10 +8,6 @@ class ApplicationController < ActionController::API
   end
 
   private
-
-  def set_raven_context
-    Raven.extra_context(params: params.to_unsafe_h, url: request.url) if Rails.env.production?
-  end
 
   def api_error(error)
     render json: RequestErrorSerializer.new([error], message: error.title), status: error.status

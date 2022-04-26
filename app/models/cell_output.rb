@@ -22,6 +22,7 @@ class CellOutput < ApplicationRecord
   scope :unconsumed_at, ->(block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp = 0", block_timestamp) }
   scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+  scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
 
   after_commit :flush_cache
 
@@ -40,8 +41,8 @@ class CellOutput < ApplicationRecord
   end
 
   def node_output
-    lock = CKB::Types::Script.new(lock_script.to_node_lock)
-    type = type_script.present? ? CKB::Types::Script.new(type_script.to_node_type) : nil
+    lock = CKB::Types::Script.new(**lock_script.to_node_lock)
+    type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node_type) : nil
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
   end
 

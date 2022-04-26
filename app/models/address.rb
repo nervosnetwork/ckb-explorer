@@ -40,18 +40,28 @@ class Address < ApplicationRecord
   end
 
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
-    address_hash_2019 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     lock_hash = lock_script.compute_hash
-    if Address.where(address_hash_crc: CkbUtils.generate_crc32(address_hash_2019), address_hash: address_hash_2019).exists?
-      address = Address.find_or_create_by!(address_hash_crc: CkbUtils.generate_crc32(address_hash_2019), address_hash: address_hash_2019, lock_hash: lock_hash)
-    else
-      address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
-      address = Address.find_or_create_by!(address_hash_crc: CkbUtils.generate_crc32(address_hash), address_hash: address_hash, lock_hash: lock_hash)
-    end
-    address.update(block_timestamp: block_timestamp) if address.block_timestamp.blank?
-    address.update(lock_script_id: lock_script_id) if address.lock_script_id.blank?
-    address.update(address_hash_crc: CkbUtils.generate_crc32(address.address_hash)) if address.address_hash_crc.blank?
 
+    # first try 2019 version style address hash
+    address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
+    address_hash_crc = CkbUtils.generate_crc32(address_hash)
+    address = Address.find_by(address_hash_crc: address_hash_crc, address_hash: address_hash)
+
+    # then try 2021 version style address hash
+    unless address 
+      address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
+      address_hash_crc = CkbUtils.generate_crc32(address_hash)
+      address = Address.find_by(address_hash_crc: address_hash_crc, address_hash: address_hash)
+    end
+
+    # either exists, then create new address
+    address ||= Address.new(address_hash_crc: address_hash_crc, address_hash: address_hash)
+
+    address.lock_hash ||= lock_hash
+    address.block_timestamp ||= block_timestamp
+    address.lock_script_id ||= lock_script_id
+    address.address_hash_crc ||= address_hash_crc
+    address.save!
     address
   end
 
@@ -113,6 +123,14 @@ class Address < ApplicationRecord
 
   def cal_balance_occupied
     cell_outputs.live.find_each.map do |cell|
+      next if cell.type_hash.blank? && (cell.data.present? && cell.data == "0x")
+
+      cell.capacity
+    end.compact.sum
+  end
+
+  def cal_balance_occupied_inner_block(block_id)
+    cell_outputs.inner_block(block_id).live.find_each.map do |cell|
       next if cell.type_hash.blank? && (cell.data.present? && cell.data == "0x")
 
       cell.capacity

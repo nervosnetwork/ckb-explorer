@@ -208,7 +208,7 @@ module Api
         first_ckb_transaction = json["data"].first
         last_ckb_transaction = json["data"].last
 
-        assert_operator first_ckb_transaction.dig("attributes", "block_timestamp"), :>, last_ckb_transaction.dig("attributes", "block_timestamp")
+        assert_operator first_ckb_transaction.dig("attributes", "block_timestamp"), :>=, last_ckb_transaction.dig("attributes", "block_timestamp")
       end
 
       test "should contain right keys in the serialized object" do
@@ -227,14 +227,14 @@ module Api
 
         valid_get api_v1_ckb_transactions_url
 
-        ckb_transactions = CkbTransaction.order(block_timestamp: :desc).limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
+        ckb_transactions = CkbTransaction.recent.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
         response_ckb_transaction = CkbTransactionListSerializer.new(ckb_transactions).serialized_json
         assert_equal response_ckb_transaction, response.body
         assert_equal 15, json["data"].size
       end
 
       test "should return empty array when there is no ckb_transactions" do
-        ckb_transactions = CkbTransaction.order(block_timestamp: :desc).limit(15)
+        ckb_transactions = CkbTransaction.recent.limit(15)
 
         valid_get api_v1_ckb_transactions_url
 
@@ -292,7 +292,7 @@ module Api
         page = 2
         block = create(:block, :with_block_hash)
         create_list(:ckb_transaction, 20, block: block)
-        ckb_transactions = CkbTransaction.order(block_timestamp: :desc).limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
+        ckb_transactions = CkbTransaction.recent.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
 
         valid_get api_v1_ckb_transactions_url, params: { page: page }
 
@@ -308,7 +308,7 @@ module Api
 
         valid_get api_v1_ckb_transactions_url, params: { page_size: 12 }
 
-        ckb_transactions = CkbTransaction.order(block_timestamp: :desc).limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
+        ckb_transactions = CkbTransaction.recent.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
         response_ckb_transactions = CkbTransactionListSerializer.new(ckb_transactions, {}).serialized_json
 
         assert_equal response_ckb_transactions, response.body
@@ -323,7 +323,7 @@ module Api
         create(:table_record_count, :ckb_transactions_counter, count: CkbTransaction.count)
         page = 2
         page_size = 5
-        ckb_transactions = CkbTransaction.order(block_timestamp: :desc).page(page).per(page_size)
+        ckb_transactions = CkbTransaction.recent.page(page).per(page_size)
 
         valid_get api_v1_ckb_transactions_url, params: { page: page, page_size: page_size }
 

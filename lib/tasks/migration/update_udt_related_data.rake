@@ -8,7 +8,7 @@ class UdtRelatedDataUpdater
         update_udt_cells_info(args[:code_hash])
         if args[:create_udt_accounts].downcase == "true"
           type_hashes = TypeScript.where(code_hash: args[:code_hash]).map do |script|
-            node_type = CKB::Types::Script.new(script.to_node_type)
+            node_type = CKB::Types::Script.new(**script.to_node_type)
             node_type.compute_hash
           end
           udt_infos = CellOutput.udt.where(type_hash: type_hashes).pluck(:type_hash, :address_id).uniq
@@ -55,7 +55,7 @@ class UdtRelatedDataUpdater
 
   def update_udt_cells_info(code_hash)
     TypeScript.where(code_hash: code_hash).each do |type_script|
-      node_type = CKB::Types::Script.new(type_script.to_node_type)
+      node_type = CKB::Types::Script.new(**type_script.to_node_type)
       output = type_script.cell_output
       output.update(cell_type: "udt", type_hash: node_type.compute_hash, udt_amount: CkbUtils.parse_udt_cell_data(output.data))
     end
@@ -67,7 +67,7 @@ class UdtRelatedDataUpdater
   def update_related_txs(code_hash)
     ApplicationRecord.transaction do
       TypeScript.where(code_hash: code_hash).map do |type_script|
-        node_type = CKB::Types::Script.new(type_script.to_node_type)
+        node_type = CKB::Types::Script.new(**type_script.to_node_type)
         udt = Udt.find_by(type_hash: node_type.compute_hash)
         address_id = type_script.cell_output.address.id
         generated_by_tx = type_script.cell_output.generated_by
