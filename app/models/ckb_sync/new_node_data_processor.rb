@@ -1044,18 +1044,33 @@ module CkbSync
 
     def update_address_balance_and_ckb_transactions_count(local_tip_block)
       local_tip_block.contained_addresses.each do |address|
-        orig_balance = address.balance
-        address.balance -= address.cell_outputs.inner_block(local_tip_block.id).live.sum(:capacity)
+        # orig_balance = address.balance
+        this_block_balance_change = address.cell_outputs.inner_block(local_tip_block.id).live.sum(:capacity)
+        this_block_balance_occupied = address.cal_balance_occupied_inner_block(local_tip_block.id)
+        address.balance -= this_block_balance_change
         address.live_cells_count = address.live_cells_count - address.cell_outputs.inner_block(local_tip_block.id).live.count
         address.ckb_transactions_count -= address.custom_ckb_transactions.inner_block(local_tip_block.id).count
         address.dao_transactions_count -= address.ckb_dao_transactions.inner_block(local_tip_block.id).count
-        address.balance_occupied -= address.cal_balance_occupied_inner_block(local_tip_block.id)
-        if address.balance < 0
-          address.balance = 0
-          # Address::CalcBalanceJob.perform_now(address)
-        end
-        if address.balance_occupied < 0
-          address.balance_occupied = 0
+        address.balance_occupied -= this_block_balance_occupied
+        if address.balance < 0 || address.balance_occupied = 0
+          puts "#{address.address_hash} balance < 0, resetting"
+          wrong_balance = address.balance
+          address.cal_balance!
+          puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}, #{this_block_balance_change}, #{this_block_balance_occupied}"
+
+          address.balance -= this_block_balance_change
+          address.balance_occupied -= this_block_balance_occupied
+          Sentry.capture_message(
+            'Reset balance', 
+            extra: {
+              address: address.address_hash, 
+              wrong_balance: wrong_balance,
+              calced_balance: address.balance,
+              calced_occupied_balance: address.balance_occupied,
+              balance_change_in_this_block: this_block_balance_change,
+              this_block_balance_occupied: this_block_balance_occupied
+            })
+
         end
         address.save!
       end
