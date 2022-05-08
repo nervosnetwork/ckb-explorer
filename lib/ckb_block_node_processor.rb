@@ -4,15 +4,15 @@ Rails.logger = Logger.new(STDERR)
 Rails.logger.level = ENV.fetch("LOG_LEVEL") { "info" }
 ActiveRecord::Base.logger = Rails.logger
 
-lock = Redis::Lock.new('CkbSync', :expiration => 300, :timeout => 30)
-
 at_exit do 
   puts 'exiting & clearing'
-  lock.clear
 end
+
 puts 'start'
+remain = 0
+duration = 0
 loop do
-  lock.lock do
+  ApplicationRecord.with_advisory_lock('CkbSyncer') do
     start = Time.now.to_f
     block = CkbSync::NewNodeDataProcessor.new.call
     if block
@@ -23,8 +23,8 @@ loop do
       remain = 0
       duration = 0
     end
-    sleep(1-duration) if remain <= 0 && duration < 1 # only sleep when catched up with network
   end
+  sleep(1-duration) if remain <= 0 && duration < 1 # only sleep when catched up with network
 end
 
 

@@ -26,6 +26,14 @@ class CellOutput < ApplicationRecord
 
   after_commit :flush_cache
 
+  def occupied?
+    !free?
+  end
+
+  def free?
+    type_hash.blank? && (data.present? && data == "0x")
+  end
+
   # will remove this method after the migration task processed
   def lock_script
     LockScript.find_by(cell_output_id: id) || LockScript.find_by(id: lock_script_id)

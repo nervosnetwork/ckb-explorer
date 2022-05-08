@@ -1044,11 +1044,19 @@ module CkbSync
 
     def update_address_balance_and_ckb_transactions_count(local_tip_block)
       local_tip_block.contained_addresses.each do |address|
-        address.balance = address.balance - address.cell_outputs.inner_block(local_tip_block.id).live.sum(:capacity)
+        orig_balance = address.balance
+        address.balance -= address.cell_outputs.inner_block(local_tip_block.id).live.sum(:capacity)
         address.live_cells_count = address.live_cells_count - address.cell_outputs.inner_block(local_tip_block.id).live.count
-        address.ckb_transactions_count = address.ckb_transactions_count - address.custom_ckb_transactions.inner_block(local_tip_block.id).count
-        address.dao_transactions_count = address.dao_transactions_count - address.ckb_dao_transactions.inner_block(local_tip_block.id).count
-        address.balance_occupied = address.balance_occupied - address.cal_balance_occupied_inner_block(local_tip_block.id)
+        address.ckb_transactions_count -= address.custom_ckb_transactions.inner_block(local_tip_block.id).count
+        address.dao_transactions_count -= address.ckb_dao_transactions.inner_block(local_tip_block.id).count
+        address.balance_occupied -= address.cal_balance_occupied_inner_block(local_tip_block.id)
+        if address.balance < 0
+          address.balance = 0
+          # Address::CalcBalanceJob.perform_now(address)
+        end
+        if address.balance_occupied < 0
+          address.balance_occupied = 0
+        end
         address.save!
       end
     end
