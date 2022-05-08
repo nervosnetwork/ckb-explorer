@@ -70,7 +70,7 @@ class Address < ApplicationRecord
     if address.balance < 0
       puts "#{address.address_hash} balance < 0, resetting"
       wrong_balance = address.balance
-      cal_balance!
+      address.cal_balance!
       puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}"
       Sentry.capture_message(
         'Reset balance', 
