@@ -142,14 +142,16 @@ class Address < ApplicationRecord
   end
 
   def cal_balance
-    total = 0
-    occupied = 0
-    cell_outputs.live.find_each.map do |cell|
-      total += cell.capacity
-      occupied += cell.capacity if cell.occupied?
-    end
+    total = cell_outputs.live.sum(:capacity)
+    occupied = cell_outputs.live.occupied.sum(:capacity)
+    # cell_outputs.live.each do |cell|
+    #   total += cell.capacity
+    #   occupied += cell.capacity if cell.occupied?
+    # end
     [total, occupied]
   end
+
+
 
   def cal_balance!
     self.balance, self.balance_occupied = cal_balance
