@@ -1,9 +1,10 @@
 module Api::V2
   class DasAccountsController < BaseController
     def query
-      results = {}
       das = DasIndexerService.instance
+
       cache_keys = params[:addresses]
+
       res = Rails.cache.read_multi(*cache_keys)
       not_cached = cache_keys - res.keys
       to_cache = {}
