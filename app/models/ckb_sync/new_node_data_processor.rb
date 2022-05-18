@@ -1052,8 +1052,8 @@ module CkbSync
         address.ckb_transactions_count -= address.custom_ckb_transactions.inner_block(local_tip_block.id).count
         address.dao_transactions_count -= address.ckb_dao_transactions.inner_block(local_tip_block.id).count
         address.balance_occupied -= this_block_balance_occupied
-        if address.balance < 0 || address.balance_occupied = 0
-          puts "#{address.address_hash} balance < 0, resetting"
+        if address.balance < 0 || address.balance_occupied < 0
+          puts "#{address.address_hash} balance < 0, #{address.balance}, #{address.balance_occupied} resetting"
           wrong_balance = address.balance
           address.cal_balance!
           puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}, #{this_block_balance_change}, #{this_block_balance_occupied}"

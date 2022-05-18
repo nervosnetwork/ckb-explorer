@@ -68,7 +68,7 @@ class Address < ApplicationRecord
     address.lock_script_id ||= lock_script_id
     address.address_hash_crc ||= address_hash_crc
     if address.balance < 0 || address.balance_occupied < 0 # wrong balance, recalculate balance
-      puts "#{address.address_hash} balance < 0, resetting"
+      puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied} < 0, resetting"
       wrong_balance = address.balance
       address.cal_balance!
       puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}"
