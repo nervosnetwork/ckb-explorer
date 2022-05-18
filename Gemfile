@@ -85,7 +85,8 @@ gem "rack-attack"
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem "pry"
-  gem "pry-nav"
+  gem "pry-rails"
+  # gem "pry-nav"
 end
 
 group :test do
@@ -118,3 +119,4 @@ end
 gem "tzinfo-data", platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 gem "redis-objects"
 gem "pagy"
+gem 'http'
