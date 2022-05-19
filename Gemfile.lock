@@ -219,7 +219,7 @@ GEM
       connection_pool (~> 2.2)
     newrelic_rpm (7.2.0)
     nio4r (2.5.8)
-    nokogiri (1.13.4)
+    nokogiri (1.13.5)
       mini_portile2 (~> 2.8.0)
       racc (~> 1.4)
     numerizer (0.1.1)
