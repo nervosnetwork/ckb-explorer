@@ -10,4 +10,5 @@ Sentry.init do |config|
     true
   end    
   config.logger = Logger.new(STDERR)
+  config.enabled_environments = %w[production staging]
 end
