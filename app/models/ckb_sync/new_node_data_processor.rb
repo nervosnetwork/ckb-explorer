@@ -442,12 +442,20 @@ module CkbSync
             nft_token_attr[:published] = true
           end
           # fill issuer_address after publish the token
-          udts_attributes << {
-            type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
-            code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
+          # udts_attributes << {
+          #   type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
+          #   code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
+          Udt.find_or_create_by!({
+            type_hash: type_hash, 
+            udt_type: udt_type(cell_type), 
+            block_timestamp: local_block.timestamp, 
+            args: output.type.args,
+            code_hash: output.type.code_hash, 
+            hash_type: output.type.hash_type 
+          }.merge(nft_token_attr))          
         end
       end
-      Udt.insert_all!(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if udts_attributes.present?
+      # Udt.insert_all!(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if udts_attributes.present?
     end
 
     def update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
