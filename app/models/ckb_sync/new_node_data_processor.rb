@@ -50,7 +50,8 @@ module CkbSync
       Rails.logger.error e.message
       puts e.backtrace.join("\n")
       Sentry.capture_exception(e)
-      exit!
+      sleep 1 # wait to submit the exception to sentry
+      raise e
     ensure
       sentry_transaction&.finish 
     end
@@ -441,12 +442,20 @@ module CkbSync
             nft_token_attr[:published] = true
           end
           # fill issuer_address after publish the token
-          udts_attributes << {
-            type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
-            code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
+          # udts_attributes << {
+          #   type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
+          #   code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
+          Udt.find_or_create_by!({
+            type_hash: type_hash, 
+            udt_type: udt_type(cell_type), 
+            block_timestamp: local_block.timestamp, 
+            args: output.type.args,
+            code_hash: output.type.code_hash, 
+            hash_type: output.type.hash_type 
+          }.merge(nft_token_attr))          
         end
       end
-      Udt.insert_all!(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if udts_attributes.present?
+      # Udt.insert_all!(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if udts_attributes.present?
     end
 
     def update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
@@ -1043,11 +1052,34 @@ module CkbSync
 
     def update_address_balance_and_ckb_transactions_count(local_tip_block)
       local_tip_block.contained_addresses.each do |address|
-        address.balance = address.balance - address.cell_outputs.inner_block(local_tip_block.id).live.sum(:capacity)
+        # orig_balance = address.balance
+        this_block_balance_change = address.cell_outputs.inner_block(local_tip_block.id).live.sum(:capacity)
+        this_block_balance_occupied = address.cal_balance_occupied_inner_block(local_tip_block.id)
+        address.balance -= this_block_balance_change
         address.live_cells_count = address.live_cells_count - address.cell_outputs.inner_block(local_tip_block.id).live.count
-        address.ckb_transactions_count = address.ckb_transactions_count - address.custom_ckb_transactions.inner_block(local_tip_block.id).count
-        address.dao_transactions_count = address.dao_transactions_count - address.ckb_dao_transactions.inner_block(local_tip_block.id).count
-        address.balance_occupied = address.balance_occupied - address.cal_balance_occupied_inner_block(local_tip_block.id)
+        address.ckb_transactions_count -= address.custom_ckb_transactions.inner_block(local_tip_block.id).count
+        address.dao_transactions_count -= address.ckb_dao_transactions.inner_block(local_tip_block.id).count
+        address.balance_occupied -= this_block_balance_occupied
+        if address.balance < 0 || address.balance_occupied < 0
+          puts "#{address.address_hash} balance < 0, #{address.balance}, #{address.balance_occupied} resetting"
+          wrong_balance = address.balance
+          address.cal_balance!
+          puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}, #{this_block_balance_change}, #{this_block_balance_occupied}"
+
+          address.balance -= this_block_balance_change
+          address.balance_occupied -= this_block_balance_occupied
+          Sentry.capture_message(
+            'Reset balance', 
+            extra: {
+              address: address.address_hash, 
+              wrong_balance: wrong_balance,
+              calced_balance: address.balance,
+              calced_occupied_balance: address.balance_occupied,
+              balance_change_in_this_block: this_block_balance_change,
+              this_block_balance_occupied: this_block_balance_occupied
+            })
+
+        end
         address.save!
       end
     end

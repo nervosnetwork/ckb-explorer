@@ -24,7 +24,7 @@ class Rack::Attack
   #
   # Key: "rack::attack:#{Time.now.to_i/:period}:req/ip:#{req.ip}"
   throttle("req/ip", limit: 1500, period: 5.minutes) do |req|
-    req.ip # unless req.path.start_with?('/assets')
+    req.env['HTTP_CF_CONNECTING_IP'] || req.ip # unless req.path.start_with?('/assets')
   end
 
   ### Custom Throttle Response ###

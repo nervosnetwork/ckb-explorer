@@ -23,8 +23,21 @@ class CellOutput < ApplicationRecord
   scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
+  scope :free, -> { where(type_hash: nil, data: '0x') }
+  scope :occupied, -> { where.not(type_hash: nil, data: '0x') }
+
 
   after_commit :flush_cache
+
+  def occupied?
+    !free?
+  end
+
+  def free?
+    type_hash.blank? && (data.present? && data == "0x")
+  end
+
+    
 
   # will remove this method after the migration task processed
   def lock_script
