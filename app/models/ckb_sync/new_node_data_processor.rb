@@ -445,7 +445,7 @@ module CkbSync
           # udts_attributes << {
           #   type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
           #   code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
-          Udt.create({
+          Udt.find_or_create_by!({
             type_hash: type_hash, 
             udt_type: udt_type(cell_type), 
             block_timestamp: local_block.timestamp, 
