@@ -35,7 +35,7 @@ gem "dotenv-rails"
 gem "config"
 
 # CKB SDK
-gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", branch: "develop"
+gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", tag: "v0.103.0"
 
 # Redis
 gem "hiredis", "~> 0.6.3"
