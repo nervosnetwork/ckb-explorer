@@ -40,6 +40,12 @@ class Address < ApplicationRecord
     end
   end
 
+  def self.find_by_address_hash(address_hash, *args, **kargs)
+    parsed = CkbUtils.parse_address(address_hash)
+    lock_hash = parsed.script.compute_hash
+    find_by lock_hash: lock_hash
+  end
+
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     lock_hash = lock_script.compute_hash
     address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
