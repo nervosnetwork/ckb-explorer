@@ -68,7 +68,7 @@ class MarketData
   end
 
   def bug_bounty_locked
-    Address.find_by(address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc")&.balance.to_i
+    Address.find_by_address_hash("ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc")&.balance.to_i
   end
 
   private
@@ -102,7 +102,7 @@ class MarketData
     @first_released_timestamp_may ||=
       begin
         Rails.cache.realize("first_released_timestamp_may") do
-          lock_address = Address.find_by(address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323t90gna20lusyshreg32qee4fhkt9jj2t6qrqzzqxzq8yqt8kmd9")
+          lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323t90gna20lusyshreg32qee4fhkt9jj2t6qrqzzqxzq8yqt8kmd9")
           lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-05-01"))
         end
       end
@@ -112,7 +112,7 @@ class MarketData
   def second_released_timestamp_may
     @second_released_timestamp_may ||=
       begin
-        lock_address = Address.find_by(address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323crn7nscet5sfwxjkzhexymfa4zntzt8vasvqzzqxzq8yq92pgkg")
+        lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323crn7nscet5sfwxjkzhexymfa4zntzt8vasvqzzqxzq8yq92pgkg")
         lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2021-05-01"))
       end
   end
@@ -121,7 +121,7 @@ class MarketData
   def third_released_timestamp_may
     @third_released_timestamp_may ||=
       begin
-        lock_address = Address.find_by(address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32sl0qgva2l78fcnjt6x8kr8sln4lqs4twcpq4qzzqxzq8yq7hpadu")
+        lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32sl0qgva2l78fcnjt6x8kr8sln4lqs4twcpq4qzzqxzq8yq7hpadu")
         lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2022-05-01"))
       end
   end
@@ -131,7 +131,7 @@ class MarketData
     @first_released_timestamp_other ||=
       begin
         Rails.cache.realize("first_released_timestamp_may") do
-          lock_address = Address.find_by(address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32s3y29vjv73cfm8qax220dwwmpdccl4upy4s9qzzqxzq8yqyd09am")
+          lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32s3y29vjv73cfm8qax220dwwmpdccl4upy4s9qzzqxzq8yqyd09am")
           lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-07-01"))
         end
       end
@@ -141,7 +141,7 @@ class MarketData
   def second_released_timestamp_other
     @second_released_timestamp_other ||=
       begin
-        lock_address = Address.find_by(address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32sn23uga5m8u5v87q98vr29qa8tl0ruu84gqfqzzqxzq8yqc2dxk6")
+        lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32sn23uga5m8u5v87q98vr29qa8tl0ruu84gqfqzzqxzq8yqc2dxk6")
         lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-12-31"))
       end
   end
@@ -150,7 +150,7 @@ class MarketData
   def third_released_timestamp_other
     @third_released_timestamp_other ||=
       begin
-        lock_address = Address.find_by(address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32sdufwedw7a0w9dkvhpsah4mdk2gkfq63e0q6qzzqxzq8yqnqq85p")
+        lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32sdufwedw7a0w9dkvhpsah4mdk2gkfq63e0q6qzzqxzq8yqnqq85p")
         lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2022-12-31"))
       end
   end
