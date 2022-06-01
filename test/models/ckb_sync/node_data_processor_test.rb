@@ -116,7 +116,7 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         local_block = node_data_processor.process_block(node_block)
         expected_miner_hash = CkbUtils.miner_hash(node_block.transactions.first)
-        expected_miner_address = Address.find_by(address_hash: expected_miner_hash)
+        expected_miner_address = Address.find_by_address_hash(expected_miner_hash)
 
         assert expected_miner_hash, local_block.miner_hash
         assert expected_miner_address, local_block.miner_address
@@ -2195,7 +2195,7 @@ module CkbSync
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash, hash_type: "type")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash, block_timestamp: Time.current.to_i)
         address_hash = CkbUtils.generate_address(node_output.lock)
-        address = Address.find_by(address_hash: address_hash)
+        address = Address.find_by_address_hash(address_hash)
 
         assert_difference -> { address.udt_accounts.count }, 1 do
           node_data_processor.process_block(node_block)
@@ -2214,7 +2214,7 @@ module CkbSync
         node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c", hash_type: "type")
         create(:udt, code_hash: CkbSync::Api.instance.token_script_code_hash, type_hash: node_output.type.compute_hash, block_timestamp: Time.current.to_i, udt_type: "m_nft_token")
         address_hash = CkbUtils.generate_address(node_output.lock)
-        address = Address.find_by(address_hash: address_hash)
+        address = Address.find_by_address_hash(address_hash)
 
         assert_difference -> { address.udt_accounts.m_nft_token.count }, 1 do
           node_data_processor.process_block(node_block)
@@ -2281,7 +2281,7 @@ module CkbSync
         node_output.type = CKB::Types::Script.new(code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3")
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
         address_hash = CkbUtils.generate_address(node_output.lock)
-        address = Address.find_by(address_hash: address_hash)
+        address = Address.find_by_address_hash(address_hash)
         create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: node_output.type.compute_hash)
 
         assert_difference -> { address.udt_accounts.count }, 0 do
@@ -2300,7 +2300,7 @@ module CkbSync
         create(:udt, code_hash: ENV["SUDT_CELL_TYPE_HASH"], type_hash: node_output.type.compute_hash)
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         address_hash = CkbUtils.generate_address(node_output.lock)
-        address = Address.find_by(address_hash: address_hash)
+        address = Address.find_by_address_hash(address_hash)
         create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: node_output.type.compute_hash)
         udt_account = address.udt_accounts.find_by(type_hash: node_output.type.compute_hash)
 
@@ -2325,7 +2325,7 @@ module CkbSync
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         node_block.transactions.first.outputs_data[1] = "0x0000909dceda82370000000000000000"
         address_hash = CkbUtils.generate_address(node_output.lock)
-        address = Address.find_by(address_hash: address_hash)
+        address = Address.find_by_address_hash(address_hash)
         create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: node_output.type.compute_hash)
         create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: new_node_output.type.compute_hash)
         udt_account = address.udt_accounts.find_by(type_hash: node_output.type.compute_hash)
@@ -2355,7 +2355,7 @@ module CkbSync
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         node_block.transactions.first.outputs_data[1] = "0x0000909dceda82370000000000000000"
         address_hash = CkbUtils.generate_address(node_output.lock)
-        address = Address.find_by(address_hash: address_hash)
+        address = Address.find_by_address_hash(address_hash)
         create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: node_output.type.compute_hash, published: true)
 
         node_data_processor.process_block(node_block)
@@ -2382,7 +2382,7 @@ module CkbSync
         node_block.transactions.first.outputs_data[0] = "0x000050ad321ea12e0000000000000000"
         node_block.transactions.first.outputs_data[1] = "0x0000909dceda82370000000000000000"
         address_hash = CkbUtils.generate_address(node_output.lock)
-        address = Address.find_by(address_hash: address_hash)
+        address = Address.find_by_address_hash(address_hash)
         create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: node_output.type.compute_hash)
         create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: address, type_hash: new_node_output.type.compute_hash)
 
@@ -2411,7 +2411,7 @@ module CkbSync
         block = Block.find_by(number: 21)
         block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
         address_hash = CkbUtils.generate_address(node_output.lock)
-        address = Address.find_by(address_hash: address_hash)
+        address = Address.find_by_address_hash(address_hash)
       end
 
       VCR.use_cassette("blocks/22") do
@@ -2436,7 +2436,7 @@ module CkbSync
         block = Block.find_by(number: 21)
         block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
         address_hash = CkbUtils.generate_address(node_output.lock)
-        address = Address.find_by(address_hash: address_hash)
+        address = Address.find_by_address_hash(address_hash)
       end
 
       VCR.use_cassette("blocks/22") do
@@ -2468,7 +2468,7 @@ module CkbSync
         block = Block.find_by(number: 21)
         block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
         address_hash = CkbUtils.generate_address(node_output.lock)
-        address = Address.find_by(address_hash: address_hash)
+        address = Address.find_by_address_hash(address_hash)
       end
 
       VCR.use_cassette("blocks/22") do
@@ -2505,7 +2505,7 @@ module CkbSync
         node_block.transactions << tx
         output_address_hash = CkbUtils.generate_address(output.lock)
         create(:address, address_hash: output_address_hash)
-        output_address = Address.find_by(address_hash: output_address_hash)
+        output_address = Address.find_by_address_hash(output_address_hash)
         create(:udt_account, code_hash: ENV["SUDT_CELL_TYPE_HASH"], address: output_address, type_hash: udt_type_script.compute_hash, amount: 0)
         udt_account = output_address.udt_accounts.find_by(type_hash: output.type.compute_hash)
         assert_changes -> { udt_account.reload.amount }, from: 0, to: CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000") do
