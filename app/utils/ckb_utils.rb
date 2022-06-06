@@ -161,7 +161,7 @@ class CkbUtils
   def self.get_unspent_cells(address_hash)
     return if address_hash.blank?
 
-    address = Address.find_by(address_hash: address_hash)
+    address = Address.find_by_address_hash(address_hash)
     address.cell_outputs.live
   end
 

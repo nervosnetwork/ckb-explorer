@@ -2,14 +2,11 @@ class AddressAverageDepositTimeGenerator
   include Sidekiq::Worker
 
   def perform
-    addresses = Address.where(is_depositor: true)
-    values =
-      addresses.map do |address|
-        [address.id, cal_average_deposit_time(address)]
-      end
-    columns = [:id, :average_deposit_time]
-
-    Address.import! columns, values, validate: false, on_duplicate_key_update: [:average_deposit_time]
+    addresses = Address.where(is_depositor: true).to_a
+    addresses.each do |address|
+      address.average_deposit_time = cal_average_deposit_time(address)
+      address.save!
+    end
   end
 
   private

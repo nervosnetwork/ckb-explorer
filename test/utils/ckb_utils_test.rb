@@ -58,7 +58,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
 
   test ".generate_address should return short payload blake160 address when use correct sig type match" do
     ENV["CKB_NET_MODE"] = "testnet"
-    short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
+    # short_payload_blake160_address = "ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83"
+    short_payload_blake160_address = "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfkcv576ccddnn4quf2ga65xee2m26h7nq4sds0r"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
       ENV["SECP_CELL_TYPE_HASH"]
@@ -83,7 +84,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
 
   test ".generate_address should return short payload multisig address when use correct multisig type match" do
     ENV["CKB_NET_MODE"] = "testnet"
-    short_payload_blake160_address = "ckt1qyqndsefa43s6m882pcj53m4gdnj4k440axqyz2gg9"
+    # short_payload_blake160_address = "ckt1qyqndsefa43s6m882pcj53m4gdnj4k440axqyz2gg9"
+    short_payload_blake160_address = "ckt1qpw9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32sqfkcv576ccddnn4quf2ga65xee2m26h7nqwuqak4"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
       ENV["SECP_MULTISIG_CELL_TYPE_HASH"]
