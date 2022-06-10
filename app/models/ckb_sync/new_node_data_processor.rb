@@ -205,7 +205,8 @@ module CkbSync
           end
           addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
           dao_events_attributes << {
-            ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
+            ckb_transaction_id: dao_input.ckb_transaction_id, 
+            block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
             updated_at: Time.current }
           dao_events_attributes << {
             ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "issue_interest", value: interest, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
@@ -382,23 +383,47 @@ module CkbSync
     end
 
     def update_addresses_info(addrs_change)
-      addrs = []
-      attributes =
-        addrs_change.map do |addr_id, values|
-          addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at, :balance_occupied).take!
-          balance_diff = values[:balance_diff]
-          balance_occupied_diff = values[:balance_occupied_diff].presence || 0
-          live_cells_diff = values[:cells_diff]
-          dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
-          ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
-          addrs << addr
-          {
-            id: addr.id, balance: addr.balance + balance_diff, balance_occupied: addr.balance_occupied + balance_occupied_diff, ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
-            live_cells_count: addr.live_cells_count + live_cells_diff, dao_transactions_count: addr.dao_transactions_count + dao_txs_count, created_at: addr.created_at, updated_at: Time.current }
-        end
-      if attributes.present?
-        Address.upsert_all(attributes)
-        addrs.each(&:touch)
+      # addrs = []
+      # attributes =
+      #   addrs_change.map do |addr_id, values|
+      #     addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at, :balance_occupied).take!
+      #     balance_diff = values[:balance_diff]
+      #     balance_occupied_diff = values[:balance_occupied_diff].presence || 0
+      #     live_cells_diff = values[:cells_diff]
+      #     dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
+      #     ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
+      #     addrs << addr
+      #     {
+      #       id: addr.id, 
+      #       balance: addr.balance + balance_diff, 
+      #       balance_occupied: addr.balance_occupied + balance_occupied_diff, 
+      #       ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
+      #       live_cells_count: addr.live_cells_count + live_cells_diff, 
+      #       dao_transactions_count: addr.dao_transactions_count + dao_txs_count, 
+      #       created_at: addr.created_at, 
+      #       updated_at: Time.current 
+      #     }
+      #   end
+      # if attributes.present?
+      #   Address.upsert_all(attributes)
+      #   addrs.each(&:touch)
+      # end
+      addrs_change.each do |addr_id, values|
+        addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at, :balance_occupied).take!
+        balance_diff = values[:balance_diff]
+        balance_occupied_diff = values[:balance_occupied_diff].presence || 0
+        live_cells_diff = values[:cells_diff]
+        dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
+        ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
+        # addrs << addr
+        addr.update!(
+          id: addr.id, 
+          balance: addr.balance + balance_diff, 
+          balance_occupied: addr.balance_occupied + balance_occupied_diff, 
+          ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
+          live_cells_count: addr.live_cells_count + live_cells_diff, 
+          dao_transactions_count: addr.dao_transactions_count + dao_txs_count, 
+        )
       end
     end
 
