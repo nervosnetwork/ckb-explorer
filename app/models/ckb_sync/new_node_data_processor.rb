@@ -409,7 +409,8 @@ module CkbSync
       #   addrs.each(&:touch)
       # end
       addrs_change.each do |addr_id, values|
-        addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at, :balance_occupied).take!
+        # addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at, :balance_occupied).take!
+        addr = Address.find addr_id
         balance_diff = values[:balance_diff]
         balance_occupied_diff = values[:balance_occupied_diff].presence || 0
         live_cells_diff = values[:cells_diff]
