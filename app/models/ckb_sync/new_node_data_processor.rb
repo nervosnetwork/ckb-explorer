@@ -418,7 +418,6 @@ module CkbSync
         ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
         # addrs << addr
         addr.update!(
-          id: addr.id, 
           balance: addr.balance + balance_diff, 
           balance_occupied: addr.balance_occupied + balance_occupied_diff, 
           ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
