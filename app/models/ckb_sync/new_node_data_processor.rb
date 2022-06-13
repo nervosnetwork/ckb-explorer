@@ -186,7 +186,10 @@ module CkbSync
         Address.where(id: address_ids).update_all(is_depositor: true)
       end
     end
-
+    
+    # 处理 DAO 的提现
+    # Warning：由于 DAO 提现也是一个Cell，所以提现的目标地址是 DAO Cell 的输出
+    # 有可能和充值地址不是同一个地址
     def process_withdraw_dao_events!(local_block, new_dao_depositors, dao_contract)
       dao_contract = DaoContract.default_contract
       withdraw_amount = 0
@@ -194,7 +197,8 @@ module CkbSync
       addrs_withdraw_info = {}
       claimed_compensation = 0
       take_away_all_deposit_count = 0
-      local_block.cell_inputs.nervos_dao_withdrawing.select(:id, :ckb_transaction_id, :previous_cell_output_id).find_in_batches do |dao_inputs|
+      # DAO Deposit Cell 出现在 inputs 中，说明是提现
+      local_block.cell_inputs.nervos_dao_deposit.select(:id, :ckb_transaction_id, :previous_cell_output_id).find_in_batches do |dao_inputs|
         dao_events_attributes = []
         dao_inputs.each do |dao_input|
           previous_cell_output = CellOutput.where(id: dao_input.previous_cell_output_id).select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).take!
@@ -202,34 +206,99 @@ module CkbSync
           interest = CkbUtils.dao_interest(previous_cell_output)
           if addrs_withdraw_info.key?(address.id)
             addrs_withdraw_info[address.id][:dao_deposit] -= previous_cell_output.capacity
-            addrs_withdraw_info[address.id][:interest] += interest
           else
-            addrs_withdraw_info[address.id] = { dao_deposit: address.dao_deposit - previous_cell_output.capacity, interest: address.interest + interest, is_depositor: address.is_depositor, created_at: address.created_at }
+            addrs_withdraw_info[address.id] = {
+              dao_deposit: address.dao_deposit - previous_cell_output.capacity
+              is_depositor: address.is_depositor, 
+              created_at: address.created_at 
+            }
           end
           addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
           dao_events_attributes << {
             ckb_transaction_id: dao_input.ckb_transaction_id, 
-            block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
-            updated_at: Time.current }
-          dao_events_attributes << {
-            ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "issue_interest", value: interest, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
-            updated_at: Time.current }
+            ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
+            block_id: local_block.id, 
+            block_timestamp: local_block.timestamp, 
+            address_id: previous_cell_output.address_id, 
+            event_type: "withdraw_from_dao", 
+            value: previous_cell_output.capacity, 
+            status: "processed", 
+            contract_id: dao_contract.id, created_at: Time.current,
+            updated_at: Time.current 
+          }
           address_dao_deposit = Address.where(id: previous_cell_output.address_id).pick(:dao_deposit)
           if (address_dao_deposit - previous_cell_output.capacity).zero?
             take_away_all_deposit_count += 1
             addrs_withdraw_info[address.id][:is_depositor] = false
             dao_events_attributes << {
-              ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "take_away_all_deposit", value: 1, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
-              updated_at: Time.current }
+              ckb_transaction_id: dao_input.ckb_transaction_id, 
+              block_id: local_block.id, 
+              block_timestamp: local_block.timestamp, 
+              address_id: previous_cell_output.address_id, 
+              event_type: "take_away_all_deposit", 
+              value: 1, 
+              status: "processed", 
+              contract_id: dao_contract.id, 
+              created_at: Time.current,
+              updated_at: Time.current 
+            }
           end
           withdraw_amount += previous_cell_output.capacity
-          claimed_compensation += interest
           withdraw_transaction_ids << dao_input.ckb_transaction_id
         end
         DaoEvent.insert_all!(dao_events_attributes) if dao_events_attributes.present?
       end
       # update dao contract info
-      dao_contract.update!(total_deposit: dao_contract.total_deposit - withdraw_amount, withdraw_transactions_count: dao_contract.withdraw_transactions_count + withdraw_transaction_ids.size, claimed_compensation: dao_contract.claimed_compensation + claimed_compensation, depositors_count: dao_contract.depositors_count - take_away_all_deposit_count)
+      dao_contract.update!(
+        total_deposit: dao_contract.total_deposit - withdraw_amount, 
+        withdraw_transactions_count: dao_contract.withdraw_transactions_count + withdraw_transaction_ids.size, 
+        depositors_count: dao_contract.depositors_count - take_away_all_deposit_count)
+      update_addresses_dao_info(addrs_withdraw_info)
+    end
+
+    # 处理 DAO 的利息奖励
+    # 这步在上一步提现解锁完成之后，将 nervos_dao_withdraw 的 cell 销毁，返还空余 CKB，同时增加出利息
+    # eg. https://explorer.nervos.org/transaction/0xfbaaa415c34542148a15ead5c9f3e1e2cefd39ace57107244a1404ba0d56b8f1
+    def process_interest_dao_events!(local_block, dao_contract)
+      addrs_withdraw_info = {}
+      claimed_compensation = 0
+      local_block.cell_inputs.nervos_dao_withdrawing.select(:id, :ckb_transaction_id, :previous_cell_output_id).find_in_batches do |dao_inputs|
+        dao_events_attributes = []
+        dao_inputs.each do |dao_input|
+          previous_cell_output = CellOutput.where(id: dao_input.previous_cell_output_id).select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).take!
+          address = previous_cell_output.address
+          interest = CkbUtils.dao_interest(previous_cell_output)
+          if addrs_withdraw_info.key?(address.id)
+            addrs_withdraw_info[address.id][:interest] += interest
+          else
+            addrs_withdraw_info[address.id] = {
+              interest: address.interest + interest, 
+              is_depositor: address.is_depositor, 
+              created_at: address.created_at 
+            }
+          end
+          addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
+          dao_events_attributes << {
+            ckb_transaction_id: dao_input.ckb_transaction_id, 
+            block_id: local_block.id, 
+            block_timestamp: local_block.timestamp, 
+            address_id: previous_cell_output.address_id, 
+            event_type: "issue_interest", 
+            value: interest, 
+            status: "processed", 
+            contract_id: dao_contract.id, 
+            created_at: Time.current,
+            updated_at: Time.current 
+          }
+          address_dao_deposit = Address.where(id: previous_cell_output.address_id).pick(:dao_deposit)
+          claimed_compensation += interest
+        end
+        DaoEvent.insert_all!(dao_events_attributes) if dao_events_attributes.present?
+      end
+      # update dao contract info
+      dao_contract.update!(
+        claimed_compensation: dao_contract.claimed_compensation + claimed_compensation
+      )
       update_addresses_dao_info(addrs_withdraw_info)
     end
 
@@ -253,8 +322,15 @@ module CkbSync
           deposit_amount += dao_output.capacity
           deposit_transaction_ids << dao_output.ckb_transaction_id
           deposit_dao_events_attributes << {
-            ckb_transaction_id: dao_output.ckb_transaction_id, block_id: local_block.id, address_id: address.id, event_type: "deposit_to_dao",
-            value: dao_output.capacity, status: "processed", contract_id: dao_contract.id, block_timestamp: local_block.timestamp, created_at: Time.current,
+            ckb_transaction_id: dao_output.ckb_transaction_id, 
+            block_id: local_block.id, 
+            address_id: address.id, 
+            event_type: "deposit_to_dao",
+            value: dao_output.capacity, 
+            status: "processed", 
+            contract_id: dao_contract.id, 
+            block_timestamp: local_block.timestamp, 
+            created_at: Time.current,
             updated_at: Time.current }
         end
         DaoEvent.insert_all!(deposit_dao_events_attributes) if deposit_dao_events_attributes.present?
@@ -267,7 +343,13 @@ module CkbSync
     def update_addresses_dao_info(addrs_deposit_info)
       addresses_deposit_attributes = []
       addrs_deposit_info.each do |address_id, address_info|
-        addresses_deposit_attributes << { id: address_id, dao_deposit: address_info[:dao_deposit], interest: address_info[:interest], created_at: address_info[:created_at], updated_at: Time.current }
+        addresses_deposit_attributes << { 
+          id: address_id, 
+          dao_deposit: address_info[:dao_deposit], 
+          interest: address_info[:interest], 
+          created_at: address_info[:created_at], 
+          updated_at: Time.current 
+        }
       end
       Address.upsert_all(addresses_deposit_attributes) if addresses_deposit_attributes.present?
     end

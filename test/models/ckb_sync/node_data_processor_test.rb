@@ -860,59 +860,6 @@ module CkbSync
       end
     end
 
-    test "#process_block should increase dao contract withdraw transactions count when previous output is a dao cell" do
-      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
-      DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        fake_dao_withdraw_transaction(node_block)
-
-        assert_difference -> { DaoContract.default_contract.withdraw_transactions_count }, 1 do
-          node_data_processor.process_block(node_block)
-        end
-
-        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
-        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-        assert_equal %w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp), deposit_to_dao_events.first.attribute_names.reject { |attribute| attribute.in?(%w(created_at updated_at id)) }
-      end
-    end
-
-    test "#process_block should decrease dao contract total deposit when previous output is a withdrawing cell" do
-      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        tx = fake_dao_withdraw_transaction(node_block)
-        withdraw_amount = tx.cell_outputs.nervos_dao_withdrawing.first.capacity
-        DaoContract.default_contract.update(total_deposit: withdraw_amount)
-
-        assert_difference -> { DaoContract.default_contract.total_deposit }, -withdraw_amount do
-          node_data_processor.process_block(node_block)
-        end
-
-        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
-        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-      end
-    end
-
-    test "#process_block should increase dao contract interest granted when previous output is a withdrawing cell" do
-      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
-      DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        tx = fake_dao_withdraw_transaction(node_block)
-        withdraw_amount = tx.cell_outputs.nervos_dao_withdrawing.first.capacity
-
-        assert_difference -> { DaoContract.default_contract.reload.claimed_compensation }, "0x174876ebe8".hex - withdraw_amount do
-          node_data_processor.process_block(node_block)
-        end
-
-        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_interest")
-        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-      end
-    end
 
     test "#process_block should decrease dao contract depositors count when previous output is a dao cell and address interest change to zero" do
       DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
