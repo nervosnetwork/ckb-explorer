@@ -161,6 +161,7 @@ module CkbSync
       dao_contract = DaoContract.default_contract
       process_deposit_dao_events!(local_block, new_dao_depositors, dao_contract)
       process_withdraw_dao_events!(local_block, new_dao_depositors, dao_contract)
+      process_interest_dao_events!(local_block, dao_contract)
       build_new_dao_depositor_events!(local_block, new_dao_depositors, dao_contract)
 
       # update dao contract ckb_transactions_count
@@ -203,12 +204,11 @@ module CkbSync
         dao_inputs.each do |dao_input|
           previous_cell_output = CellOutput.where(id: dao_input.previous_cell_output_id).select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).take!
           address = previous_cell_output.address
-          interest = CkbUtils.dao_interest(previous_cell_output)
           if addrs_withdraw_info.key?(address.id)
             addrs_withdraw_info[address.id][:dao_deposit] -= previous_cell_output.capacity
           else
             addrs_withdraw_info[address.id] = {
-              dao_deposit: address.dao_deposit - previous_cell_output.capacity
+              dao_deposit: address.dao_deposit - previous_cell_output.capacity,
               is_depositor: address.is_depositor, 
               created_at: address.created_at 
             }
@@ -277,7 +277,7 @@ module CkbSync
               created_at: address.created_at 
             }
           end
-          addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
+          # addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
           dao_events_attributes << {
             ckb_transaction_id: dao_input.ckb_transaction_id, 
             block_id: local_block.id, 
