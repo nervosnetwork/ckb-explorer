@@ -424,7 +424,6 @@ module CkbSync
         puts addr.address_hash
         puts addr.balance
         addr.update!(
-          id: addr.id, 
           balance: addr.balance + balance_diff, 
           balance_occupied: addr.balance_occupied + balance_occupied_diff, 
           ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
