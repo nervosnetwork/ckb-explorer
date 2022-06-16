@@ -9,7 +9,7 @@ module CkbSync
     #           :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
     #           :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
     #           :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
-    attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block
+    attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes
 
     def initialize
       @local_cache = LocalCache.new
@@ -160,7 +160,7 @@ module CkbSync
       new_dao_depositors = {}
       dao_contract = DaoContract.default_contract
       process_deposit_dao_events!(local_block, new_dao_depositors, dao_contract)
-      process_withdraw_dao_events!
+      process_withdraw_dao_events!(local_block, new_dao_depositors, dao_contract)
       build_new_dao_depositor_events!(local_block, new_dao_depositors, dao_contract)
 
       # update dao contract ckb_transactions_count
@@ -187,7 +187,7 @@ module CkbSync
       end
     end
 
-    def process_withdraw_dao_events!
+    def process_withdraw_dao_events!(local_block, new_dao_depositors, dao_contract)
       dao_contract = DaoContract.default_contract
       withdraw_amount = 0
       withdraw_transaction_ids = Set.new

@@ -126,6 +126,38 @@ class CellOutput < ApplicationRecord
       $redis.del(*cache_keys)
     end
   end
+
+  # 由于地址上的余额实际就是 live cell 的 capacity 总和
+  # 所以这里通过SQL直接在数据库内部修订余额
+  def self.refresh_address_balances
+    puts "refreshing all balances"
+    # 修订余额和live cell count
+    connection.execute <<-sql
+    UPDATE addresses SET balance=sq.balance, live_cells_count=c
+    FROM  (
+      SELECT address_id, SUM(capacity) as balance, COUNT(*) as c
+      FROM  cell_outputs
+      WHERE status = 0
+      GROUP  BY address_id
+      ) AS sq
+    WHERE  addresses.id=sq.address_id;
+  sql
+    # 修订占用的capacity
+    puts "refreshing all occupied balances"
+    connection.execute <<-sql
+    UPDATE addresses SET balance_occupied=sq.balance
+    FROM  (
+      SELECT address_id, SUM(capacity) as balance
+      FROM  cell_outputs
+      WHERE status = 0
+            AND NOT ("cell_outputs"."type_hash" IS NULL AND "cell_outputs"."data" = '\x3078')
+      GROUP  BY address_id
+      ) AS sq
+    WHERE  addresses.id=sq.address_id;
+  sql
+
+
+  end
 end
 
 # == Schema Information

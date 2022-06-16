@@ -78,8 +78,6 @@ group :production do
 end
 
 # Deployment
-gem "mina", require: false
-gem "mina-multistage", require: false
 gem "rack-attack"
 
 group :development, :test do
