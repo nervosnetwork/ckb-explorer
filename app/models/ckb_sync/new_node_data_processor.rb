@@ -248,7 +248,7 @@ module CkbSync
         end
         DaoEvent.insert_all!(dao_events_attributes) if dao_events_attributes.present?
       end
-      binding.pry if $pry
+
       # update dao contract info
       dao_contract.update!(
         total_deposit: dao_contract.total_deposit - withdraw_amount, 
