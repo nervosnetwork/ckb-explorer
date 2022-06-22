@@ -24,5 +24,13 @@ FactoryBot.define do
         cell_output.update(lock_script_id: lock.id)
       end
     end
+
+    after(:create) do |cell, _evaluator|
+      if cell.live?
+        cell.address.increment! :balance, cell.capacity
+        cell.address.increment! :balance_occupied, cell.capacity if cell.occupied?
+        cell.address.increment! :live_cells_count
+      end
+    end
   end
 end

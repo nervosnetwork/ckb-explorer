@@ -132,11 +132,11 @@ class CellOutput < ApplicationRecord
     end
   end
 
-  # 由于地址上的余额实际就是 live cell 的 capacity 总和
-  # 所以这里通过SQL直接在数据库内部修订余额
+  # Because the balance of address equals to the total capacity of all live cells in this address,
+  # So we can directly aggregate balance by address from database.
   def self.refresh_address_balances
     puts "refreshing all balances"
-    # 修订余额和live cell count
+    # fix balance and live cell count for all addresses
     connection.execute <<-sql
     UPDATE addresses SET balance=sq.balance, live_cells_count=c
     FROM  (
@@ -147,7 +147,7 @@ class CellOutput < ApplicationRecord
       ) AS sq
     WHERE  addresses.id=sq.address_id;
   sql
-    # 修订占用的capacity
+    # fix occupied balances for all addresses
     puts "refreshing all occupied balances"
     connection.execute <<-sql
     UPDATE addresses SET balance_occupied=sq.balance

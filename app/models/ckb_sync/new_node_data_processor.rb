@@ -93,7 +93,7 @@ module CkbSync
           update_pool_tx_status(local_block)
           # maybe can be changed to asynchronous update
           update_udt_info(local_block)
-          process_dao_events!
+          process_dao_events!(local_block)
           update_addresses_info(addrs_changes)
         end
 
@@ -155,7 +155,7 @@ module CkbSync
       ckb_transaction_counter.increment!(:count, normal_transactions.count) if normal_transactions.present?
     end
 
-    def process_dao_events!
+    def process_dao_events!(local_tip_block=@local_tip_block)
       local_block = local_tip_block
       new_dao_depositors = {}
       dao_contract = DaoContract.default_contract
@@ -420,9 +420,9 @@ module CkbSync
         dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
         ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
         # addrs << addr
-        puts addr.id
-        puts addr.address_hash
-        puts addr.balance
+        # puts addr.id
+        # puts addr.address_hash
+        # puts addr.balance
         addr.update!(
           balance: addr.balance + balance_diff, 
           balance_occupied: addr.balance_occupied + balance_occupied_diff, 
@@ -432,6 +432,7 @@ module CkbSync
         ) rescue binding.pry
       end
     end
+
 
     def update_block_info!(local_block)
       local_block.update!(total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
