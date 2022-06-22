@@ -1049,6 +1049,11 @@ module CkbSync
         Rails.logger.error "decrease_records_count: %5.3f" % result
         result =
           Benchmark.realtime do
+            local_tip_block.invalid!
+          end
+        Rails.logger.error "invalid! block: %5.3f" % result
+        result =
+          Benchmark.realtime do
             recalculate_udt_accounts(udt_type_hashes, local_tip_block)
           end
         Rails.logger.error "recalculate_udt_accounts: %5.3f" % result
@@ -1057,11 +1062,6 @@ module CkbSync
             update_address_balance_and_ckb_transactions_count(local_tip_block)
           end
         Rails.logger.error "update_address_balance_and_ckb_transactions_count: %5.3f" % result
-        result =
-          Benchmark.realtime do
-            local_tip_block.invalid!
-          end
-        Rails.logger.error "invalid! block: %5.3f" % result
         result =
           Benchmark.realtime do
             revert_block_rewards(local_tip_block)
@@ -1083,34 +1083,10 @@ module CkbSync
 
     def update_address_balance_and_ckb_transactions_count(local_tip_block)
       local_tip_block.contained_addresses.each do |address|
-        # orig_balance = address.balance
-        this_block_balance_change = address.cell_outputs.inner_block(local_tip_block.id).live.sum(:capacity)
-        this_block_balance_occupied = address.cal_balance_occupied_inner_block(local_tip_block.id)
-        address.balance -= this_block_balance_change
-        address.live_cells_count = address.live_cells_count - address.cell_outputs.inner_block(local_tip_block.id).live.count
-        address.ckb_transactions_count -= address.custom_ckb_transactions.inner_block(local_tip_block.id).count
-        address.dao_transactions_count -= address.ckb_dao_transactions.inner_block(local_tip_block.id).count
-        address.balance_occupied -= this_block_balance_occupied
-        if address.balance < 0 || address.balance_occupied < 0
-          puts "#{address.address_hash} balance < 0, #{address.balance}, #{address.balance_occupied} resetting"
-          wrong_balance = address.balance
-          address.cal_balance!
-          puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}, #{this_block_balance_change}, #{this_block_balance_occupied}"
-
-          address.balance -= this_block_balance_change
-          address.balance_occupied -= this_block_balance_occupied
-          Sentry.capture_message(
-            'Reset balance', 
-            extra: {
-              address: address.address_hash, 
-              wrong_balance: wrong_balance,
-              calced_balance: address.balance,
-              calced_occupied_balance: address.balance_occupied,
-              balance_change_in_this_block: this_block_balance_change,
-              this_block_balance_occupied: this_block_balance_occupied
-            })
-
-        end
+        address.live_cells_count = address.cell_outputs.live.count
+        address.ckb_transactions_count = address.custom_ckb_transactions.count
+        address.dao_transactions_count = address.ckb_dao_transactions.count
+        address.cal_balance!
         address.save!
       end
     end
@@ -1178,8 +1154,8 @@ module CkbSync
 
           case udt_account.udt_type
           when "sudt"
-            forked_amount = address.cell_outputs.inner_block(local_tip_block.id).live.udt.where(type_hash: type_hash).sum(:udt_amount)
-            udt_account.decrement!(:amount, forked_amount)
+            amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
+            udt_account.update!(amount: amount)
           when "m_nft_token"
             udt_account.destroy
           when "nrc_721_token"

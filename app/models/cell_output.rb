@@ -53,6 +53,11 @@ class CellOutput < ApplicationRecord
     address.address_hash
   end
 
+  def self.find_by_pointer(tx_hash, index)
+    tx = CkbTransaction.find_by_tx_hash(tx_hash)
+    find_by(generated_by_id: tx.id, cell_index: index) if tx
+  end
+
   def node_output
     lock = CKB::Types::Script.new(**lock_script.to_node_lock)
     type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node_type) : nil
@@ -155,9 +160,8 @@ class CellOutput < ApplicationRecord
       ) AS sq
     WHERE  addresses.id=sq.address_id;
   sql
+  end  
 
-
-  end
 end
 
 # == Schema Information
