@@ -1661,7 +1661,7 @@ module CkbSync
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         new_local_block = node_data_processor.call
 
-        assert_equal 300 * 10 **8, new_local_block.contained_addresses.sum(:balance_occupied)
+        assert_equal 0, new_local_block.contained_addresses.sum(:balance_occupied)
       end
     end
 
@@ -2486,12 +2486,21 @@ module CkbSync
       block = create(:block, :with_block_hash)
       previous_cell_output_lock_script = create(:lock_script, code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
       address = previous_cell_output_lock_script.address
-      address.update(balance_occupied: 300 * 10**8)
       udt_lock_script = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x3954acece65096bfa81258983ddb83915fc56bd8", hash_type: "type")
       udt_amount = 1000000
       create(:udt_account, address: address, amount: udt_amount, type_hash: udt_type_script.compute_hash)
       previous_ckb_transaction = create(:ckb_transaction, address: address)
-      previous_cell_output = create(:cell_output, ckb_transaction: previous_ckb_transaction, generated_by: previous_ckb_transaction, block: block, cell_type: "udt", address: address, udt_amount: udt_amount, cell_index: 0, tx_hash: previous_ckb_transaction.tx_hash, capacity: 300 * 10**8, type_hash: udt_type_script.compute_hash)
+      previous_cell_output = create(:cell_output, 
+        ckb_transaction: previous_ckb_transaction, 
+        generated_by: previous_ckb_transaction, 
+        block: block, 
+        cell_type: "udt", 
+        address: address, 
+        udt_amount: udt_amount, 
+        cell_index: 0, 
+        tx_hash: previous_ckb_transaction.tx_hash, 
+        capacity: 300 * 10**8, 
+        type_hash: udt_type_script.compute_hash)
       previous_cell_output_type_script = create(:type_script, code_hash: ENV["SUDT_CELL_TYPE_HASH"], args: issuer_address.lock_hash, hash_type: "data", cell_output: previous_cell_output)
       previous_cell_output.type_script_id = previous_cell_output_type_script.id
       previous_cell_output.lock_script_id = previous_cell_output_lock_script.id
