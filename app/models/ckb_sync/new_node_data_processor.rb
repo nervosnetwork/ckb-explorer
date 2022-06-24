@@ -386,6 +386,7 @@ module CkbSync
     end
 
     def update_addresses_info(addrs_change)
+      ### Backup the old upsert code
       # addrs = []
       # attributes =
       #   addrs_change.map do |addr_id, values|
@@ -411,18 +412,16 @@ module CkbSync
       #   Address.upsert_all(attributes)
       #   addrs.each(&:touch)
       # end
+
+      ### because `upsert` don't validate record, so it may pass invalid data into database.
+      ### here we use one by one update (maybe slower)
       addrs_change.each do |addr_id, values|
-        # addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at, :balance_occupied).take!
         addr = Address.find addr_id
         balance_diff = values[:balance_diff]
         balance_occupied_diff = values[:balance_occupied_diff].presence || 0
         live_cells_diff = values[:cells_diff]
         dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
         ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
-        # addrs << addr
-        # puts addr.id
-        # puts addr.address_hash
-        # puts addr.balance
         addr.update!(
           balance: addr.balance + balance_diff, 
           balance_occupied: addr.balance_occupied + balance_occupied_diff, 

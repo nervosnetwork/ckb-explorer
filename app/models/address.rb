@@ -171,19 +171,6 @@ class Address < ApplicationRecord
     end.compact.sum
   end
 
-  def cal_dao_deposit
-    last_take_all = DaoEvent.where(address_id: id, event_type: :take_away_all_deposit, status: :processed).order(id: :desc).first
-    
-    scope = DaoEvent.where(address_id: id, status: :processed)
-    if last_take_all.present?
-      scope = scope.where('id > ?', last_take_all.id)
-    end
-    deposits = scope.where(event_type: :deposit_to_dao).sum(:value)
-    withdraws = scope.where(event_type: :withdraw_from_dao).sum(:value)
-    interests = scope.where(event_type: :issue_interest).sum(:value)
-    deposits - withdraws + interests
-  end
-
   private
 
   def phase1_dao_interests
