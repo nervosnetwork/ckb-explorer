@@ -428,7 +428,7 @@ module CkbSync
           ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
           live_cells_count: addr.live_cells_count + live_cells_diff, 
           dao_transactions_count: addr.dao_transactions_count + dao_txs_count, 
-        ) rescue binding.pry
+        ) 
       end
     end
 
