@@ -51,7 +51,7 @@ class Address < ApplicationRecord
     address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     address_hash_crc = CkbUtils.generate_crc32(address_hash)    
     address_hash_2021 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
-    address_hash_crc_2021 = CkbUtils.generate_crc32(address_hash)    
+    address_hash_crc_2021 = CkbUtils.generate_crc32(address_hash_2021)    
 
     unless address = Address.find_by(lock_hash: lock_hash)
       # first try 2019 version style address hash

@@ -10,7 +10,7 @@ It supports searching block, transaction, address and includes two parts: [front
 [![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/nervosnetwork/ckb-explorer/blob/develop/COPYING)
 [![TravisCI](https://travis-ci.com/nervosnetwork/ckb-explorer.svg?branch=develop)](https://travis-ci.com/nervosnetwork/ckb-explorer)
 [![Codecov](https://codecov.io/gh/nervosnetwork/ckb-explorer/branch/master/graph/badge.svg)](https://codecov.io/gh/nervosnetwork/ckb-explorer/branch/master)
-[![Telegram Group](https://cdn.rawgit.com/Patrolavia/telegram-badge/8fe3382b/chat.svg)](https://t.me/nervos_ckb_dev)
+[![Discord](https://img.shields.io/discord/956765352514183188?label=Discord&logo=discord&style=default&color=grey&labelColor=5865F2&logoColor=white)](https://discord.gg/RsyKyejxAW)
 
 A blockchain explorer cache server of [Nervos CKB](https://github.com/nervosnetwork/ckb).
 

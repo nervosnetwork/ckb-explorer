@@ -9,6 +9,7 @@ module CkbSync
     #           :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
     #           :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
     #           :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
+    attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes
 
     def initialize
       @local_cache = LocalCache.new
@@ -34,7 +35,7 @@ module CkbSync
     # returns the remaining block numbers to process
     def call
       sentry_transaction
-      local_tip_block = Block.recent.first
+      @local_tip_block = Block.recent.first
       tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
       return if target_block_number > tip_block_number
@@ -70,7 +71,7 @@ module CkbSync
           outputs = []
           outputs_data = []
 
-          ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
+          @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
           build_udts!(local_block, outputs, outputs_data.flatten)
 
           tags = []
@@ -154,11 +155,12 @@ module CkbSync
       ckb_transaction_counter.increment!(:count, normal_transactions.count) if normal_transactions.present?
     end
 
-    def process_dao_events!(local_block)
+    def process_dao_events!(local_tip_block=@local_tip_block)
+      local_block = local_tip_block
       new_dao_depositors = {}
       dao_contract = DaoContract.default_contract
       process_deposit_dao_events!(local_block, new_dao_depositors, dao_contract)
-      process_withdraw_dao_events!(local_block, dao_contract)
+      process_withdraw_dao_events!(local_block, new_dao_depositors, dao_contract)
       build_new_dao_depositor_events!(local_block, new_dao_depositors, dao_contract)
 
       # update dao contract ckb_transactions_count
@@ -185,7 +187,8 @@ module CkbSync
       end
     end
 
-    def process_withdraw_dao_events!(local_block, dao_contract)
+    def process_withdraw_dao_events!(local_block, new_dao_depositors, dao_contract)
+      dao_contract = DaoContract.default_contract
       withdraw_amount = 0
       withdraw_transaction_ids = Set.new
       addrs_withdraw_info = {}
@@ -205,7 +208,8 @@ module CkbSync
           end
           addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
           dao_events_attributes << {
-            ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
+            ckb_transaction_id: dao_input.ckb_transaction_id, 
+            block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
             updated_at: Time.current }
           dao_events_attributes << {
             ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "issue_interest", value: interest, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
@@ -382,25 +386,52 @@ module CkbSync
     end
 
     def update_addresses_info(addrs_change)
-      addrs = []
-      attributes =
-        addrs_change.map do |addr_id, values|
-          addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at, :balance_occupied).take!
-          balance_diff = values[:balance_diff]
-          balance_occupied_diff = values[:balance_occupied_diff].presence || 0
-          live_cells_diff = values[:cells_diff]
-          dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
-          ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
-          addrs << addr
-          {
-            id: addr.id, balance: addr.balance + balance_diff, balance_occupied: addr.balance_occupied + balance_occupied_diff, ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
-            live_cells_count: addr.live_cells_count + live_cells_diff, dao_transactions_count: addr.dao_transactions_count + dao_txs_count, created_at: addr.created_at, updated_at: Time.current }
-        end
-      if attributes.present?
-        Address.upsert_all(attributes)
-        addrs.each(&:touch)
+      ### Backup the old upsert code
+      # addrs = []
+      # attributes =
+      #   addrs_change.map do |addr_id, values|
+      #     addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at, :balance_occupied).take!
+      #     balance_diff = values[:balance_diff]
+      #     balance_occupied_diff = values[:balance_occupied_diff].presence || 0
+      #     live_cells_diff = values[:cells_diff]
+      #     dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
+      #     ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
+      #     addrs << addr
+      #     {
+      #       id: addr.id, 
+      #       balance: addr.balance + balance_diff, 
+      #       balance_occupied: addr.balance_occupied + balance_occupied_diff, 
+      #       ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
+      #       live_cells_count: addr.live_cells_count + live_cells_diff, 
+      #       dao_transactions_count: addr.dao_transactions_count + dao_txs_count, 
+      #       created_at: addr.created_at, 
+      #       updated_at: Time.current 
+      #     }
+      #   end
+      # if attributes.present?
+      #   Address.upsert_all(attributes)
+      #   addrs.each(&:touch)
+      # end
+
+      ### because `upsert` don't validate record, so it may pass invalid data into database.
+      ### here we use one by one update (maybe slower)
+      addrs_change.each do |addr_id, values|
+        addr = Address.find addr_id
+        balance_diff = values[:balance_diff]
+        balance_occupied_diff = values[:balance_occupied_diff].presence || 0
+        live_cells_diff = values[:cells_diff]
+        dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
+        ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
+        addr.update!(
+          balance: addr.balance + balance_diff, 
+          balance_occupied: addr.balance_occupied + balance_occupied_diff, 
+          ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
+          live_cells_count: addr.live_cells_count + live_cells_diff, 
+          dao_transactions_count: addr.dao_transactions_count + dao_txs_count, 
+        ) 
       end
     end
+
 
     def update_block_info!(local_block)
       local_block.update!(total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
@@ -1018,6 +1049,11 @@ module CkbSync
         Rails.logger.error "decrease_records_count: %5.3f" % result
         result =
           Benchmark.realtime do
+            local_tip_block.invalid!
+          end
+        Rails.logger.error "invalid! block: %5.3f" % result
+        result =
+          Benchmark.realtime do
             recalculate_udt_accounts(udt_type_hashes, local_tip_block)
           end
         Rails.logger.error "recalculate_udt_accounts: %5.3f" % result
@@ -1026,11 +1062,6 @@ module CkbSync
             update_address_balance_and_ckb_transactions_count(local_tip_block)
           end
         Rails.logger.error "update_address_balance_and_ckb_transactions_count: %5.3f" % result
-        result =
-          Benchmark.realtime do
-            local_tip_block.invalid!
-          end
-        Rails.logger.error "invalid! block: %5.3f" % result
         result =
           Benchmark.realtime do
             revert_block_rewards(local_tip_block)
@@ -1052,34 +1083,10 @@ module CkbSync
 
     def update_address_balance_and_ckb_transactions_count(local_tip_block)
       local_tip_block.contained_addresses.each do |address|
-        # orig_balance = address.balance
-        this_block_balance_change = address.cell_outputs.inner_block(local_tip_block.id).live.sum(:capacity)
-        this_block_balance_occupied = address.cal_balance_occupied_inner_block(local_tip_block.id)
-        address.balance -= this_block_balance_change
-        address.live_cells_count = address.live_cells_count - address.cell_outputs.inner_block(local_tip_block.id).live.count
-        address.ckb_transactions_count -= address.custom_ckb_transactions.inner_block(local_tip_block.id).count
-        address.dao_transactions_count -= address.ckb_dao_transactions.inner_block(local_tip_block.id).count
-        address.balance_occupied -= this_block_balance_occupied
-        if address.balance < 0 || address.balance_occupied < 0
-          puts "#{address.address_hash} balance < 0, #{address.balance}, #{address.balance_occupied} resetting"
-          wrong_balance = address.balance
-          address.cal_balance!
-          puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}, #{this_block_balance_change}, #{this_block_balance_occupied}"
-
-          address.balance -= this_block_balance_change
-          address.balance_occupied -= this_block_balance_occupied
-          Sentry.capture_message(
-            'Reset balance', 
-            extra: {
-              address: address.address_hash, 
-              wrong_balance: wrong_balance,
-              calced_balance: address.balance,
-              calced_occupied_balance: address.balance_occupied,
-              balance_change_in_this_block: this_block_balance_change,
-              this_block_balance_occupied: this_block_balance_occupied
-            })
-
-        end
+        address.live_cells_count = address.cell_outputs.live.count
+        address.ckb_transactions_count = address.custom_ckb_transactions.count
+        address.dao_transactions_count = address.ckb_dao_transactions.count
+        address.cal_balance!
         address.save!
       end
     end
@@ -1147,8 +1154,8 @@ module CkbSync
 
           case udt_account.udt_type
           when "sudt"
-            forked_amount = address.cell_outputs.inner_block(local_tip_block.id).live.udt.where(type_hash: type_hash).sum(:udt_amount)
-            udt_account.decrement!(:amount, forked_amount)
+            amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
+            udt_account.update!(amount: amount)
           when "m_nft_token"
             udt_account.destroy
           when "nrc_721_token"
