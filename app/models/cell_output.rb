@@ -53,6 +53,11 @@ class CellOutput < ApplicationRecord
     address.address_hash
   end
 
+  def self.find_by_pointer(tx_hash, index)
+    tx = CkbTransaction.find_by_tx_hash(tx_hash)
+    find_by(generated_by_id: tx.id, cell_index: index) if tx
+  end
+
   def node_output
     lock = CKB::Types::Script.new(**lock_script.to_node_lock)
     type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node_type) : nil
@@ -126,6 +131,37 @@ class CellOutput < ApplicationRecord
       $redis.del(*cache_keys)
     end
   end
+
+  # Because the balance of address equals to the total capacity of all live cells in this address,
+  # So we can directly aggregate balance by address from database.
+  def self.refresh_address_balances
+    puts "refreshing all balances"
+    # fix balance and live cell count for all addresses
+    connection.execute <<-sql
+    UPDATE addresses SET balance=sq.balance, live_cells_count=c
+    FROM  (
+      SELECT address_id, SUM(capacity) as balance, COUNT(*) as c
+      FROM  cell_outputs
+      WHERE status = 0
+      GROUP  BY address_id
+      ) AS sq
+    WHERE  addresses.id=sq.address_id;
+  sql
+    # fix occupied balances for all addresses
+    puts "refreshing all occupied balances"
+    connection.execute <<-sql
+    UPDATE addresses SET balance_occupied=sq.balance
+    FROM  (
+      SELECT address_id, SUM(capacity) as balance
+      FROM  cell_outputs
+      WHERE status = 0
+            AND NOT ("cell_outputs"."type_hash" IS NULL AND "cell_outputs"."data" = '\x3078')
+      GROUP  BY address_id
+      ) AS sq
+    WHERE  addresses.id=sq.address_id;
+  sql
+  end  
+
 end
 
 # == Schema Information
