@@ -216,7 +216,6 @@ module CkbSync
           addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
           dao_events_attributes << {
             ckb_transaction_id: dao_input.ckb_transaction_id,
-            ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
             block_id: local_block.id,
             block_timestamp: local_block.timestamp,
             address_id: previous_cell_output.address_id,
