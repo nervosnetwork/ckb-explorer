@@ -44,6 +44,6 @@ Rails.application.routes.draw do
       resources :monetary_data, only: :show
     end
   end
-
+  draw "v2"
   match "/:anything" => "errors#routing_error", via: :all, constraints: { anything: /.*/ }
 end
