@@ -1,0 +1,21 @@
+name: Request to deploy mainnet
+
+on:
+  push:
+    branches: [testnet]
+
+jobs:
+  request-to-deploy-mainnet:
+    name: Request to deploy mainnet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Request PR
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: 'testnet'
+          destination_branch: 'master'
+          pr_title: 'Deploy to mainnet'
+          pr_reviewer: 'ShiningRay,keith-cy'
+          pr_label: 'auto-pr'
+          github_token: ${{ secrets.GITHUB_TOKEN }}

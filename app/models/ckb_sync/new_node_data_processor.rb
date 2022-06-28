@@ -1,5 +1,5 @@
 require "benchmark_methods"
-require 'sentry-rails'
+require "sentry-rails"
 
 module CkbSync
   class NewNodeDataProcessor
@@ -28,7 +28,7 @@ module CkbSync
           def set_data(key, val)
           end
         end
-        block.call(obj)
+        yield(obj)
       end
     end
 
@@ -54,13 +54,13 @@ module CkbSync
       sleep 1 # wait to submit the exception to sentry
       raise e
     ensure
-      sentry_transaction&.finish 
+      sentry_transaction&.finish
     end
 
     def process_block(node_block)
       local_block = nil
-      
-      with_child_span(op: :process_block, description: 'process_block') do |span|
+
+      with_child_span(op: :process_block, description: "process_block") do |span|
         ApplicationRecord.transaction do
           # build node data
           local_block = build_block!(node_block)
@@ -155,12 +155,13 @@ module CkbSync
       ckb_transaction_counter.increment!(:count, normal_transactions.count) if normal_transactions.present?
     end
 
-    def process_dao_events!(local_tip_block=@local_tip_block)
+    def process_dao_events!(local_tip_block = @local_tip_block)
       local_block = local_tip_block
       new_dao_depositors = {}
       dao_contract = DaoContract.default_contract
       process_deposit_dao_events!(local_block, new_dao_depositors, dao_contract)
       process_withdraw_dao_events!(local_block, new_dao_depositors, dao_contract)
+      process_interest_dao_events!(local_block, dao_contract)
       build_new_dao_depositor_events!(local_block, new_dao_depositors, dao_contract)
 
       # update dao contract ckb_transactions_count
@@ -187,6 +188,9 @@ module CkbSync
       end
     end
 
+    # Process DAO withdraw
+    # Warning：because DAO withdraw is also a cell, to the destination address of withdrawl is the address of the withdraw cell output.
+    # So it's possible that the deposit address is different with the withrawal address.
     def process_withdraw_dao_events!(local_block, new_dao_depositors, dao_contract)
       dao_contract = DaoContract.default_contract
       withdraw_amount = 0
@@ -194,6 +198,71 @@ module CkbSync
       addrs_withdraw_info = {}
       claimed_compensation = 0
       take_away_all_deposit_count = 0
+      # When DAO Deposit Cell appears in cell inputs, the transcation is DAO withdrawal
+      local_block.cell_inputs.nervos_dao_deposit.select(:id, :ckb_transaction_id, :previous_cell_output_id).find_in_batches do |dao_inputs|
+        dao_events_attributes = []
+        dao_inputs.each do |dao_input|
+          previous_cell_output = CellOutput.where(id: dao_input.previous_cell_output_id).select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).take!
+          address = previous_cell_output.address
+          if addrs_withdraw_info.key?(address.id)
+            addrs_withdraw_info[address.id][:dao_deposit] -= previous_cell_output.capacity
+          else
+            addrs_withdraw_info[address.id] = {
+              dao_deposit: address.dao_deposit - previous_cell_output.capacity,
+              is_depositor: address.is_depositor,
+              created_at: address.created_at
+            }
+          end
+          addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
+          dao_events_attributes << {
+            ckb_transaction_id: dao_input.ckb_transaction_id,
+            block_id: local_block.id,
+            block_timestamp: local_block.timestamp,
+            address_id: previous_cell_output.address_id,
+            event_type: "withdraw_from_dao",
+            value: previous_cell_output.capacity,
+            status: "processed",
+            contract_id: dao_contract.id, created_at: Time.current,
+            updated_at: Time.current
+          }
+          address_dao_deposit = Address.where(id: previous_cell_output.address_id).pick(:dao_deposit)
+          if (address_dao_deposit - previous_cell_output.capacity).zero?
+            take_away_all_deposit_count += 1
+            addrs_withdraw_info[address.id][:is_depositor] = false
+            dao_events_attributes << {
+              ckb_transaction_id: dao_input.ckb_transaction_id,
+              block_id: local_block.id,
+              block_timestamp: local_block.timestamp,
+              address_id: previous_cell_output.address_id,
+              event_type: "take_away_all_deposit",
+              value: 1,
+              status: "processed",
+              contract_id: dao_contract.id,
+              created_at: Time.current,
+              updated_at: Time.current
+            }
+          end
+          withdraw_amount += previous_cell_output.capacity
+          withdraw_transaction_ids << dao_input.ckb_transaction_id
+        end
+        DaoEvent.insert_all!(dao_events_attributes) if dao_events_attributes.present?
+      end
+
+      # update dao contract info
+      dao_contract.update!(
+        total_deposit: dao_contract.total_deposit - withdraw_amount,
+        withdraw_transactions_count: dao_contract.withdraw_transactions_count + withdraw_transaction_ids.size,
+        depositors_count: dao_contract.depositors_count - take_away_all_deposit_count
+      )
+      update_addresses_dao_info(addrs_withdraw_info)
+    end
+
+    # Process the interest of DAO deposit
+    # After the previous withdraw step, destruct the nervos_dao_withdraw cell，returning free CKB，plus interest
+    # eg. https://explorer.nervos.org/transaction/0xfbaaa415c34542148a15ead5c9f3e1e2cefd39ace57107244a1404ba0d56b8f1
+    def process_interest_dao_events!(local_block, dao_contract)
+      addrs_withdraw_info = {}
+      claimed_compensation = 0
       local_block.cell_inputs.nervos_dao_withdrawing.select(:id, :ckb_transaction_id, :previous_cell_output_id).find_in_batches do |dao_inputs|
         dao_events_attributes = []
         dao_inputs.each do |dao_input|
@@ -201,35 +270,36 @@ module CkbSync
           address = previous_cell_output.address
           interest = CkbUtils.dao_interest(previous_cell_output)
           if addrs_withdraw_info.key?(address.id)
-            addrs_withdraw_info[address.id][:dao_deposit] -= previous_cell_output.capacity
             addrs_withdraw_info[address.id][:interest] += interest
           else
-            addrs_withdraw_info[address.id] = { dao_deposit: address.dao_deposit - previous_cell_output.capacity, interest: address.interest + interest, is_depositor: address.is_depositor, created_at: address.created_at }
+            addrs_withdraw_info[address.id] = {
+              interest: address.interest + interest,
+              is_depositor: address.is_depositor,
+              created_at: address.created_at
+            }
           end
-          addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
+          # addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
           dao_events_attributes << {
-            ckb_transaction_id: dao_input.ckb_transaction_id, 
-            block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "withdraw_from_dao", value: previous_cell_output.capacity, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
-            updated_at: Time.current }
-          dao_events_attributes << {
-            ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "issue_interest", value: interest, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
-            updated_at: Time.current }
+            ckb_transaction_id: dao_input.ckb_transaction_id,
+            block_id: local_block.id,
+            block_timestamp: local_block.timestamp,
+            address_id: previous_cell_output.address_id,
+            event_type: "issue_interest",
+            value: interest,
+            status: "processed",
+            contract_id: dao_contract.id,
+            created_at: Time.current,
+            updated_at: Time.current
+          }
           address_dao_deposit = Address.where(id: previous_cell_output.address_id).pick(:dao_deposit)
-          if (address_dao_deposit - previous_cell_output.capacity).zero?
-            take_away_all_deposit_count += 1
-            addrs_withdraw_info[address.id][:is_depositor] = false
-            dao_events_attributes << {
-              ckb_transaction_id: dao_input.ckb_transaction_id, block_id: local_block.id, block_timestamp: local_block.timestamp, address_id: previous_cell_output.address_id, event_type: "take_away_all_deposit", value: 1, status: "processed", contract_id: dao_contract.id, created_at: Time.current,
-              updated_at: Time.current }
-          end
-          withdraw_amount += previous_cell_output.capacity
           claimed_compensation += interest
-          withdraw_transaction_ids << dao_input.ckb_transaction_id
         end
         DaoEvent.insert_all!(dao_events_attributes) if dao_events_attributes.present?
       end
       # update dao contract info
-      dao_contract.update!(total_deposit: dao_contract.total_deposit - withdraw_amount, withdraw_transactions_count: dao_contract.withdraw_transactions_count + withdraw_transaction_ids.size, claimed_compensation: dao_contract.claimed_compensation + claimed_compensation, depositors_count: dao_contract.depositors_count - take_away_all_deposit_count)
+      dao_contract.update!(
+        claimed_compensation: dao_contract.claimed_compensation + claimed_compensation
+      )
       update_addresses_dao_info(addrs_withdraw_info)
     end
 
@@ -253,8 +323,15 @@ module CkbSync
           deposit_amount += dao_output.capacity
           deposit_transaction_ids << dao_output.ckb_transaction_id
           deposit_dao_events_attributes << {
-            ckb_transaction_id: dao_output.ckb_transaction_id, block_id: local_block.id, address_id: address.id, event_type: "deposit_to_dao",
-            value: dao_output.capacity, status: "processed", contract_id: dao_contract.id, block_timestamp: local_block.timestamp, created_at: Time.current,
+            ckb_transaction_id: dao_output.ckb_transaction_id,
+            block_id: local_block.id,
+            address_id: address.id,
+            event_type: "deposit_to_dao",
+            value: dao_output.capacity,
+            status: "processed",
+            contract_id: dao_contract.id,
+            block_timestamp: local_block.timestamp,
+            created_at: Time.current,
             updated_at: Time.current }
         end
         DaoEvent.insert_all!(deposit_dao_events_attributes) if deposit_dao_events_attributes.present?
@@ -267,7 +344,13 @@ module CkbSync
     def update_addresses_dao_info(addrs_deposit_info)
       addresses_deposit_attributes = []
       addrs_deposit_info.each do |address_id, address_info|
-        addresses_deposit_attributes << { id: address_id, dao_deposit: address_info[:dao_deposit], interest: address_info[:interest], created_at: address_info[:created_at], updated_at: Time.current }
+        addresses_deposit_attributes << {
+          id: address_id,
+          dao_deposit: address_info[:dao_deposit],
+          interest: address_info[:interest],
+          created_at: address_info[:created_at],
+          updated_at: Time.current
+        }
       end
       Address.upsert_all(addresses_deposit_attributes) if addresses_deposit_attributes.present?
     end
@@ -304,6 +387,7 @@ module CkbSync
       udt_accounts_attributes = Set.new
       local_block.cell_outputs.select(:id, :address_id, :type_hash, :cell_type, :type_script_id).each do |udt_output|
         next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token))
+
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
         udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
@@ -323,6 +407,7 @@ module CkbSync
       local_block.ckb_transactions.pluck(:id).each do |tx_id| # iterator over each tx id for better sql performance
         CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id, :type_hash, :cell_type).each do |udt_output|
           next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token))
+
           address = Address.find(udt_output.address_id)
           udt_type = udt_type(udt_output.cell_type)
           udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :created_at).first
@@ -398,14 +483,14 @@ module CkbSync
       #     ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
       #     addrs << addr
       #     {
-      #       id: addr.id, 
-      #       balance: addr.balance + balance_diff, 
-      #       balance_occupied: addr.balance_occupied + balance_occupied_diff, 
+      #       id: addr.id,
+      #       balance: addr.balance + balance_diff,
+      #       balance_occupied: addr.balance_occupied + balance_occupied_diff,
       #       ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
-      #       live_cells_count: addr.live_cells_count + live_cells_diff, 
-      #       dao_transactions_count: addr.dao_transactions_count + dao_txs_count, 
-      #       created_at: addr.created_at, 
-      #       updated_at: Time.current 
+      #       live_cells_count: addr.live_cells_count + live_cells_diff,
+      #       dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
+      #       created_at: addr.created_at,
+      #       updated_at: Time.current
       #     }
       #   end
       # if attributes.present?
@@ -423,15 +508,14 @@ module CkbSync
         dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
         ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
         addr.update!(
-          balance: addr.balance + balance_diff, 
-          balance_occupied: addr.balance_occupied + balance_occupied_diff, 
+          balance: addr.balance + balance_diff,
+          balance_occupied: addr.balance_occupied + balance_occupied_diff,
           ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
-          live_cells_count: addr.live_cells_count + live_cells_diff, 
-          dao_transactions_count: addr.dao_transactions_count + dao_txs_count, 
-        ) 
+          live_cells_count: addr.live_cells_count + live_cells_diff,
+          dao_transactions_count: addr.dao_transactions_count + dao_txs_count
+        )
       end
     end
-
 
     def update_block_info!(local_block)
       local_block.update!(total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
@@ -477,13 +561,13 @@ module CkbSync
           #   type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
           #   code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
           Udt.find_or_create_by!({
-            type_hash: type_hash, 
-            udt_type: udt_type(cell_type), 
-            block_timestamp: local_block.timestamp, 
+            type_hash: type_hash,
+            udt_type: udt_type(cell_type),
+            block_timestamp: local_block.timestamp,
             args: output.type.args,
-            code_hash: output.type.code_hash, 
-            hash_type: output.type.hash_type 
-          }.merge(nft_token_attr))          
+            code_hash: output.type.code_hash,
+            hash_type: output.type.hash_type
+          }.merge(nft_token_attr))
         end
       end
       # Udt.insert_all!(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if udts_attributes.present?
