@@ -20,6 +20,9 @@ log/*
 tmp/*
 !log/.keep
 !tmp/.keep
+*.orig
+*.swp
+*.swo
 
 # Ignore uploaded files in development
 storage/*
