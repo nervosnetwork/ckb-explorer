@@ -135,6 +135,7 @@ class CellOutput < ApplicationRecord
     end
   end
 
+
   # Because the balance of address equals to the total capacity of all live cells in this address,
   # So we can directly aggregate balance by address from database.
   def self.refresh_address_balances
