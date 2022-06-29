@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  resources :token_transfers
+  resources :token_items
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   require "sidekiq/web"
   require "sidekiq_unique_jobs/web"
