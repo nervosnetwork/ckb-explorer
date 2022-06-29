@@ -273,7 +273,7 @@ module CkbSync
             addrs_withdraw_info[address.id][:interest] += interest
           else
             addrs_withdraw_info[address.id] = {
-              interest: address.interest + interest,
+              interest: address.interest.to_i + interest,
               is_depositor: address.is_depositor,
               created_at: address.created_at
             }
