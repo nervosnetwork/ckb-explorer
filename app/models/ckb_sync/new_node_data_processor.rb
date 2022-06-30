@@ -227,7 +227,7 @@ module CkbSync
             updated_at: Time.current
           }
           address_dao_deposit = Address.where(id: previous_cell_output.address_id).pick(:dao_deposit)
-          if (address_dao_deposit - previous_cell_output.capacity).zero?
+          if address_dao_deposit && (address_dao_deposit - previous_cell_output.capacity).zero?
             take_away_all_deposit_count += 1
             addrs_withdraw_info[address.id][:is_depositor] = false
             dao_events_attributes << {
@@ -242,6 +242,8 @@ module CkbSync
               created_at: Time.current,
               updated_at: Time.current
             }
+          else
+            puts "Cannot find address dao for #{previous_cell_output.address_id}"
           end
           withdraw_amount += previous_cell_output.capacity
           withdraw_transaction_ids << dao_input.ckb_transaction_id
