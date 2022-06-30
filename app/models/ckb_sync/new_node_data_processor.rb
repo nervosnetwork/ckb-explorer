@@ -313,10 +313,11 @@ module CkbSync
         deposit_dao_events_attributes = []
         dao_outputs.each do |dao_output|
           address = dao_output.address
+          address.dao_deposit ||= 0
           if addresses_deposit_info.key?(address.id)
             addresses_deposit_info[address.id][:dao_deposit] += dao_output.capacity
           else
-            addresses_deposit_info[address.id] = { dao_deposit: address.dao_deposit + dao_output.capacity, interest: address.interest, is_depositor: address.is_depositor, created_at: address.created_at }
+            addresses_deposit_info[address.id] = { dao_deposit: address.dao_deposit.to_i + dao_output.capacity, interest: address.interest, is_depositor: address.is_depositor, created_at: address.created_at }
           end
           if address.dao_deposit.zero? && !new_dao_depositors.key?(address.id)
             new_dao_depositors[address.id] = dao_output.ckb_transaction_id
