@@ -13,8 +13,6 @@ class AddressAverageDepositTimeGenerator
     end
   end
 
-  private
-
   # return average deposit time of specific address (unit in day)
   def cal_average_deposit_time(address, ended_at = CkbUtils.time_in_milliseconds(Time.current))
     total_ckb_deposit_time = 0 #   unlocked CKBs
@@ -26,11 +24,11 @@ class AddressAverageDepositTimeGenerator
     # we calculate the locked duration from lock to now.
     address.cell_outputs.nervos_dao_deposit.each do |cell|
       total_deposits += cell.capacity
-      total_ckb_deposit_time += cell.capacity * ((cell.consumed_by_id ? cell.consumed_block_timestamp : ended_at) - cell.block_timestamp) / MilliSecondsInDay
+      total_ckb_deposit_time += cell.capacity * ((cell.consumed_by_id ? cell.consumed_block_timestamp : ended_at) - cell.block_timestamp) 
     end
-
+    
     return 0 if total_deposits.zero?
 
-    (total_ckb_deposit_time / total_deposits).truncate(6)
+    (total_ckb_deposit_time / total_deposits / MilliSecondsInDay).truncate(6)
   end
 end
