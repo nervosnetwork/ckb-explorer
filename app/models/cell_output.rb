@@ -3,7 +3,7 @@ class CellOutput < ApplicationRecord
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   MIN_SUDT_AMOUNT_BYTESIZE = 16
   enum status: { live: 0, dead: 1 }
-  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class:5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8 }
+  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8 }
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
@@ -23,9 +23,8 @@ class CellOutput < ApplicationRecord
   scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
-  scope :free, -> { where(type_hash: nil, data: '0x') }
-  scope :occupied, -> { where.not(type_hash: nil, data: '0x') }
-
+  scope :free, -> { where(type_hash: nil, data: "0x") }
+  scope :occupied, -> { where.not(type_hash: nil, data: "0x") }
 
   after_commit :flush_cache
 
@@ -36,8 +35,6 @@ class CellOutput < ApplicationRecord
   def free?
     type_hash.blank? && (data.present? && data == "0x")
   end
-
-    
 
   # will remove this method after the migration task processed
   def lock_script
@@ -103,7 +100,7 @@ class CellOutput < ApplicationRecord
         value = { class_name: "", token_id: "", total: "" }
       end
     else
-      raise RuntimeError.new("invalid cell type")
+      raise "invalid cell type"
     end
     CkbUtils.hash_value_to_s(value)
   end
@@ -121,7 +118,7 @@ class CellOutput < ApplicationRecord
       factory_cell = NrcFactoryCell.where(id: udt.nrc_factory_cell_id, verified: true).first
       value = { symbol: factory_cell&.symbol, amount: UdtAccount.where(udt_id: udt.id).first.nft_token_id }
     else
-      raise RuntimeError.new("invalid cell type")
+      raise "invalid cell type"
     end
     CkbUtils.hash_value_to_s(value)
   end
@@ -137,7 +134,7 @@ class CellOutput < ApplicationRecord
   def self.refresh_address_balances
     puts "refreshing all balances"
     # fix balance and live cell count for all addresses
-    connection.execute <<-sql
+    connection.execute <<-SQL
     UPDATE addresses SET balance=sq.balance, live_cells_count=c
     FROM  (
       SELECT address_id, SUM(capacity) as balance, COUNT(*) as c
@@ -146,10 +143,10 @@ class CellOutput < ApplicationRecord
       GROUP  BY address_id
       ) AS sq
     WHERE  addresses.id=sq.address_id;
-  sql
+    SQL
     # fix occupied balances for all addresses
     puts "refreshing all occupied balances"
-    connection.execute <<-sql
+    connection.execute <<-SQL
     UPDATE addresses SET balance_occupied=sq.balance
     FROM  (
       SELECT address_id, SUM(capacity) as balance
@@ -159,9 +156,20 @@ class CellOutput < ApplicationRecord
       GROUP  BY address_id
       ) AS sq
     WHERE  addresses.id=sq.address_id;
-  sql
-  end  
-
+    SQL
+    puts "refreshing dao deposits"
+    connection.execute <<-SQL
+    UPDATE addresses SET dao_deposit=sq.sum, is_depositor = sq.sum > 0
+    FROM  (
+      SELECT address_id, SUM(capacity) as sum
+      FROM  cell_outputs
+      WHERE status = 0
+            AND cell_type = 1
+      GROUP  BY address_id
+      ) AS sq
+    WHERE  addresses.id=sq.address_id;
+    SQL
+  end
 end
 
 # == Schema Information

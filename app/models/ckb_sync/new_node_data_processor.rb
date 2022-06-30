@@ -273,7 +273,7 @@ module CkbSync
             addrs_withdraw_info[address.id][:interest] += interest
           else
             addrs_withdraw_info[address.id] = {
-              interest: address.interest + interest,
+              interest: address.interest.to_i + interest,
               is_depositor: address.is_depositor,
               created_at: address.created_at
             }
@@ -550,7 +550,7 @@ module CkbSync
             nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args)
             if nrc_721_factory_cell.verified
               nft_token_attr[:full_name] = nrc_721_factory_cell.name
-              nft_token_attr[:symbol] = nrc_721_factory_cell.symbol
+              nft_token_attr[:symbol] = nrc_721_factory_cell.symbol.to_s[0,16]
               nft_token_attr[:icon_file] = "#{nrc_721_factory_cell.base_token_uri}/#{factory_cell.token_id}"
               nft_token_attr[:nrc_factory_cell_id] = nrc_721_factory_cell.id
             end
