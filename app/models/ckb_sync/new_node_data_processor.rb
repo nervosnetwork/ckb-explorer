@@ -204,11 +204,12 @@ module CkbSync
         dao_inputs.each do |dao_input|
           previous_cell_output = CellOutput.where(id: dao_input.previous_cell_output_id).select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).take!
           address = previous_cell_output.address
+          address.dao_deposit ||= 0
           if addrs_withdraw_info.key?(address.id)
             addrs_withdraw_info[address.id][:dao_deposit] -= previous_cell_output.capacity
           else
             addrs_withdraw_info[address.id] = {
-              dao_deposit: address.dao_deposit - previous_cell_output.capacity,
+              dao_deposit: address.dao_deposit.to_i - previous_cell_output.capacity,
               is_depositor: address.is_depositor,
               created_at: address.created_at
             }
@@ -550,7 +551,7 @@ module CkbSync
             nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args)
             if nrc_721_factory_cell.verified
               nft_token_attr[:full_name] = nrc_721_factory_cell.name
-              nft_token_attr[:symbol] = nrc_721_factory_cell.symbol.to_s[0,16]
+              nft_token_attr[:symbol] = nrc_721_factory_cell.symbol.to_s[0, 16]
               nft_token_attr[:icon_file] = "#{nrc_721_factory_cell.base_token_uri}/#{factory_cell.token_id}"
               nft_token_attr[:nrc_factory_cell_id] = nrc_721_factory_cell.id
             end
