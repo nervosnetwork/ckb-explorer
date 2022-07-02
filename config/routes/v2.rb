@@ -3,12 +3,12 @@ namespace :api do
     namespace :nft do
       resources :collections do
         resources :transfers, only: :index
-        resources :items do 
-          resources :transfers, only: :index
+        resources :items do
+          resources :transfers, only: [:index, :show]
         end
       end
       resources :items, only: :index
-      resources :transfers, only: :show
+      resources :transfers, only: [:index, :show]
     end
   end
 end
