@@ -1,8 +1,20 @@
 class TokenCollection < ApplicationRecord
-  has_many :items, class_name: 'TokenItem', foreign_key: :collection_id
-  belongs_to :creator, class_name: 'Address', optional: true
-  has_many :transfers, class_name: 'TokenTransfer', through: :items
-  
+  has_many :items, class_name: "TokenItem", foreign_key: :collection_id
+  belongs_to :creator, class_name: "Address", optional: true
+  has_many :transfers, class_name: "TokenTransfer", through: :items
+
+  def as_json(options = {})
+    {
+      id: id,
+      standard: standard,
+      name: name,
+      description: description,
+      icon_url: icon_url,
+      creator: creator&.address_hash || "",
+      items_count: items.count,
+      holders_count: items.distinct(:owner_id).count
+    }
+  end
 end
 
 # == Schema Information
