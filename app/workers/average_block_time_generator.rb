@@ -1,3 +1,4 @@
+# refresh materialized views periodically
 class AverageBlockTimeGenerator
   include Sidekiq::Worker
 
