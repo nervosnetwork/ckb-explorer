@@ -27,7 +27,7 @@ cal_address_average_deposit_time:
   class: "AddressAverageDepositTimeGenerator"
 
 cal_average_block_time:
-  cron: "3 0 * * *"
+  cron: "0 * * * *"
   class: "AverageBlockTimeGenerator"
 
 cal_address_unclaimed_compensation:
