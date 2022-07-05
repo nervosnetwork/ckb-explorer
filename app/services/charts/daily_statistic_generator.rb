@@ -30,7 +30,7 @@ module Charts
                              address_balance_distribution: address_balance_distribution, total_tx_fee: total_tx_fee, occupied_capacity: occupied_capacity,
                              daily_dao_deposit: daily_dao_deposit, daily_dao_depositors_count: daily_dao_depositors_count, daily_dao_withdraw: daily_dao_withdraw,
                              total_supply: total_supply, circulating_supply: circulating_supply, circulation_ratio: circulation_ratio, block_time_distribution: block_time_distribution,
-                             epoch_time_distribution: epoch_time_distribution, epoch_length_distribution: epoch_length_distribution, average_block_time: average_block_time, locked_capacity: locked_capacity)
+                             epoch_time_distribution: epoch_time_distribution, epoch_length_distribution: epoch_length_distribution, locked_capacity: locked_capacity)
     end
 
     private
@@ -40,25 +40,6 @@ module Charts
     def locked_capacity
       market_data = MarketData.new(tip_block_number: current_tip_block.number)
       market_data.ecosystem_locked + market_data.team_locked + market_data.private_sale_locked + market_data.founding_partners_locked + market_data.foundation_reserve_locked + market_data.bug_bounty_locked
-    end
-
-    def average_block_time
-      Block.connection.select_all(avg_block_time_rolling_by_hour_sql).to_a.map do |item|
-        { timestamp: item["stat_timestamp"].to_i, avg_block_time_daily: item["avg_bt1"], avg_block_time_weekly: item["avg_bt2"] }
-      end
-    end
-
-    def avg_block_time_rolling_by_hour_sql
-      <<-SQL
-        with avg_block_time_24_hours_rolling_by_hour as (
-          select stat_timestamp,
-          avg(avg_block_time_per_hour) over(order by stat_timestamp rows between 24 preceding and current row) as avg_bt,
-          avg(avg_block_time_per_hour) over(order by stat_timestamp rows between 7 * 24 preceding and current row) as avg_bt1
-          from block_time_statistics
-        )
-        -- 840 = 24 * 35, show data for the last 35 days
-        select stat_timestamp, round(avg_bt, 2) avg_bt1, round(avg_bt1, 2) avg_bt2 from avg_block_time_24_hours_rolling_by_hour where stat_timestamp >= #{35.days.ago.end_of_day.to_i} order by stat_timestamp limit 840
-      SQL
     end
 
     def epoch_length_distribution

@@ -17,27 +17,6 @@ class DailyStatistic < ApplicationRecord
   def liquidity
     circulating_supply - total_dao_deposit.to_d
   end
-
-  def self.full_average_block_time
-    first_time = order(id: :asc).first.created_at_unixtimestamp
-    last_rec = recent.first
-    last_time = last_rec.created_at_unixtimestamp
-    interval = 35.days
-    times = []
-    loop do
-      first_time += interval
-      if first_time <= last_time
-        times << first_time
-      else
-        break
-      end
-    end
-    records = where(created_at_unixtimestamp: times).pluck(:average_block_time).flatten.compact.sort{|i,j| i['timestamp'] <=> j['timestamp']}
-    if first_time > last_time
-      t = records.last['timestamp']
-      records += last_rec.average_block_time.reject{|i| i['timestamp'] <= t}
-    end
-  end
 end
 
 # == Schema Information
