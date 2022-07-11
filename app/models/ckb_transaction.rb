@@ -231,6 +231,7 @@ end
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
 #  index_ckb_transactions_on_block_timestamp_and_id        (block_timestamp DESC NULLS LAST,id DESC)
 #  index_ckb_transactions_on_contained_address_ids         (contained_address_ids) USING gin
+#  index_ckb_transactions_on_contained_address_ids_and_id  (contained_address_ids,id) USING gin
 #  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
 #  index_ckb_transactions_on_dao_address_ids               (dao_address_ids) USING gin
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)
