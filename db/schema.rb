@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_11_144809) do
+ActiveRecord::Schema.define(version: 2022_07_11_181425) do
 
   # These are extensions that must be enabled in order to support this database
+  enable_extension "btree_gin"
   enable_extension "plpgsql"
 
   create_table "account_books", force: :cascade do |t|
@@ -93,7 +94,6 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.integer "proposals_count"
     t.decimal "cell_consumed", precision: 30
     t.binary "miner_hash"
-    t.string "miner_message"
     t.decimal "reward", precision: 30
     t.decimal "total_transaction_fee", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
@@ -120,6 +120,7 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.integer "block_size"
     t.decimal "proposal_reward", precision: 30
     t.decimal "commit_reward", precision: 30
+    t.string "miner_message"
     t.jsonb "extension"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["block_size"], name: "index_blocks_on_block_size"
@@ -161,7 +162,7 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.integer "data_size"
     t.decimal "occupied_capacity", precision: 30
     t.decimal "block_timestamp", precision: 30
-    t.decimal "consumed_block_timestamp", precision: 30
+    t.decimal "consumed_block_timestamp", precision: 30, default: "0"
     t.string "type_hash"
     t.decimal "udt_amount", precision: 40
     t.string "dao"
@@ -202,6 +203,7 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.bigint "udt_address_ids", default: [], array: true
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["block_timestamp", "id"], name: "index_ckb_transactions_on_block_timestamp_and_id", order: { block_timestamp: "DESC NULLS LAST", id: :desc }
+    t.index ["contained_address_ids", "id"], name: "index_ckb_transactions_on_contained_address_ids_and_id", using: :gin
     t.index ["contained_address_ids"], name: "index_ckb_transactions_on_contained_address_ids", using: :gin
     t.index ["contained_udt_ids"], name: "index_ckb_transactions_on_contained_udt_ids", using: :gin
     t.index ["dao_address_ids"], name: "index_ckb_transactions_on_dao_address_ids", using: :gin
@@ -416,6 +418,46 @@ ActiveRecord::Schema.define(version: 2022_03_11_144809) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["table_name", "count"], name: "index_table_record_counts_on_table_name_and_count"
+  end
+
+  create_table "token_collections", force: :cascade do |t|
+    t.string "standard"
+    t.string "name"
+    t.text "description"
+    t.integer "creator_id"
+    t.string "icon_url"
+    t.integer "items_count"
+    t.integer "holders_count"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "token_items", force: :cascade do |t|
+    t.integer "collection_id"
+    t.string "token_id"
+    t.string "name"
+    t.string "icon_url"
+    t.integer "owner_id"
+    t.string "metadata_url"
+    t.integer "cell_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["cell_id"], name: "index_token_items_on_cell_id"
+    t.index ["collection_id", "token_id"], name: "index_token_items_on_collection_id_and_token_id", unique: true
+    t.index ["owner_id"], name: "index_token_items_on_owner_id"
+  end
+
+  create_table "token_transfers", force: :cascade do |t|
+    t.integer "item_id"
+    t.integer "from_id"
+    t.integer "to_id"
+    t.integer "transaction_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["from_id"], name: "index_token_transfers_on_from_id"
+    t.index ["item_id"], name: "index_token_transfers_on_item_id"
+    t.index ["to_id"], name: "index_token_transfers_on_to_id"
+    t.index ["transaction_id"], name: "index_token_transfers_on_transaction_id"
   end
 
   create_table "transaction_propagation_delays", force: :cascade do |t|
