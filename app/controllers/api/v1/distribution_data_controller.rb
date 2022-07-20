@@ -5,7 +5,15 @@ module Api
 
       def show
         if params[:id] == 'average_block_time'
-          render json: {data: {id: Time.current.to_i, type: "distribution_data", attributes: {average_block_time: DailyStatistic.full_average_block_time}}}
+          render json: {
+            data: {
+              id: Time.current.to_i, 
+              type: "distribution_data", 
+              attributes: {
+                average_block_time: RollingAvgBlockTime.all
+              }
+            }
+          }
         else
           distribution_data = DistributionData.new
           render json: DistributionDataSerializer.new(distribution_data, params: { indicator: params[:id] })
