@@ -10,11 +10,9 @@ end
 #  id                 :bigint           not null, primary key
 #  address_id         :bigint
 #  ckb_transaction_id :bigint
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
 #
 # Indexes
 #
-#  index_account_books_on_address_id          (address_id)
-#  index_account_books_on_ckb_transaction_id  (ckb_transaction_id)
+#  index_account_books_on_address_id_and_ckb_transaction_id  (address_id,ckb_transaction_id) UNIQUE
+#  index_account_books_on_ckb_transaction_id                 (ckb_transaction_id)
 #
