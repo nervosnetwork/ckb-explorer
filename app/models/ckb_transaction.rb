@@ -7,7 +7,7 @@ class CkbTransaction < ApplicationRecord
   enum tx_status: { pending: 0, proposed: 1, committed: 2 }, _prefix: :ckb_transaction
 
   belongs_to :block
-  has_many :account_books, dependent: :destroy
+  has_many :account_books, dependent: :delete_all
   has_many :addresses, through: :account_books
   has_many :cell_inputs, dependent: :delete_all
   has_many :cell_outputs, dependent: :delete_all
@@ -228,9 +228,9 @@ end
 #
 # Indexes
 #
+#  alter_pk                                                (id,contained_address_ids) USING gin
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
 #  index_ckb_transactions_on_block_timestamp_and_id        (block_timestamp DESC NULLS LAST,id DESC)
-#  index_ckb_transactions_on_contained_address_ids         (contained_address_ids) USING gin
 #  index_ckb_transactions_on_contained_address_ids_and_id  (contained_address_ids,id) USING gin
 #  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
 #  index_ckb_transactions_on_dao_address_ids               (dao_address_ids) USING gin
