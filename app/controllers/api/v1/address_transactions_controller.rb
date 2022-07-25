@@ -14,12 +14,12 @@ module Api
           service = ListCacheService.new
           @ckb_transactions =
             service.fetch(@address.tx_list_cache_key, @page, @page_size, CkbTransaction, records_counter) do
-              @address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
+              CkbTransaction.joins(:account_books).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).where(:account_books => {:address_id => @address.id}).order('account_books.ckb_transaction_id' => :desc)
             end
           @options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: @ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
           json = json_result
         else
-          @ckb_transactions = @address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(@page).per(@page_size)
+          @ckb_transactions = CkbTransaction.joins(:account_books).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).where(:account_books => {:address_id => @address.id}).order('account_books.ckb_transaction_id' => :desc).page(@page).per(@page_size)
           json =
             Rails.cache.realize("#{@ckb_transactions.cache_key}/#{@address.query_address}", version: @ckb_transactions.cache_version) do
               records_counter = RecordCounters::AddressTransactions.new(@address)
