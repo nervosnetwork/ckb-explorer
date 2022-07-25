@@ -1,4 +1,4 @@
-name: Explorer service
+name: Unit test
 on: [push, pull_request]
 
 jobs:
