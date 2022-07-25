@@ -1,4 +1,4 @@
-name: CI
+name: Deploy to mainnet
 
 on: 
   push:
@@ -17,7 +17,7 @@ jobs:
         uses: dokku/github-action@master
         with:
           # specify the `main` branch as the remote branch to push to
-          branch: 'main'
+          branch: 'master'
           git_push_flags: '--force'
           git_remote_url: ${{ secrets.MAINNET_HOST_URL }}
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
