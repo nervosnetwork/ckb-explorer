@@ -1,6 +1,7 @@
 class TokenCollection < ApplicationRecord
   has_many :items, class_name: "TokenItem", foreign_key: :collection_id
   belongs_to :creator, class_name: "Address", optional: true
+  belongs_to :cell, class_name: 'CellOutput', optional: true
   has_many :transfers, class_name: "TokenTransfer", through: :items
 
   def as_json(options = {})
@@ -31,4 +32,7 @@ end
 #  holders_count :integer
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
+#  symbol        :string
+#  cell_id       :integer
+#  verified      :boolean          default(FALSE)
 #

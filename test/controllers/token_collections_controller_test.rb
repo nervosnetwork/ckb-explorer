@@ -12,6 +12,9 @@
 #  holders_count :integer
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
+#  symbol        :string
+#  cell_id       :integer
+#  verified      :boolean          default(FALSE)
 #
 require "test_helper"
 

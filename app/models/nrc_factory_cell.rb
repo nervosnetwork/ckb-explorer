@@ -1,4 +1,13 @@
 class NrcFactoryCell < ApplicationRecord
+  after_create :create_token_collection
+
+  def create_token_collection
+    TokenCollection.find_or_create_by(
+      standard: 'nrc721',
+      name: name,
+      symbol: symbol,
+    )
+  end
 end
 
 # == Schema Information

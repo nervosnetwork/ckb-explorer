@@ -560,6 +560,13 @@ module CkbSync
             if m_nft_class_type.present?
               m_nft_class_cell = m_nft_class_type.cell_outputs.last
               parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+              coll = TokenCollection.find_or_create_by(
+                standard: 'm_nft',
+                name: parsed_class_data.name,
+                cell_id: m_nft_class_cell.id,
+                icon_url: parsed_class_data.renderer
+              )
+  
               nft_token_attr[:full_name] = parsed_class_data.name
               nft_token_attr[:icon_file] = parsed_class_data.renderer
               nft_token_attr[:published] = true
