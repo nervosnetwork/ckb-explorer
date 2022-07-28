@@ -789,7 +789,8 @@ module CkbSync
 
             prev_cell_outputs_attributes << attributes[1]
             contained_addr_ids[tx_index] << attributes[4]
-            if attributes[1][:cell_type].in?(%w(nervos_dao_withdrawing))
+            cell_type = attributes[1][:cell_type]
+            if cell_type.in?(%w(nervos_dao_withdrawing))
               tags[tx_index] << "dao"
               dao_address_ids[tx_index] << attributes[4]
               if addrs_changes[attributes[4]][:dao_txs].present?
@@ -797,13 +798,17 @@ module CkbSync
               else
                 addrs_changes[attributes[4]][:dao_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
               end
+            elsif cell_type.in?(%w(m_nft_token nrc_721_token))
+              TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
             end
-            if attributes[1][:cell_type] == "udt"
+
+
+            case attributes[1][:cell_type] 
+            when "udt"
               tags[tx_index] << "udt"
               udt_address_ids[tx_index] << attributes[4]
               contained_udt_ids[tx_index] << Udt.where(type_hash: attributes[3], udt_type: "sudt").pick(:id)
-            end
-            if attributes[1][:cell_type] == "nrc_721_token"
+            when "nrc_721_token"
               tags[tx_index] << "nrc_721_token"
               udt_address_ids[tx_index] << attributes[4]
               contained_udt_ids[tx_index] << Udt.where(type_hash: attributes[3], udt_type: "nrc_721_token").pick(:id)
@@ -861,10 +866,13 @@ module CkbSync
               addrs_changes[address.id][:dao_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
             end
           end
+
           if attr[:cell_type] == "udt"
             tags[tx_index] << "udt"
             udt_address_ids[tx_index] << address.id
             contained_udt_ids[tx_index] << Udt.where(type_hash: item.type.compute_hash, udt_type: "sudt").pick(:id)
+          elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token))
+            TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
           end
 
           output_capacities[tx_index] += item.capacity if tx_index != 0

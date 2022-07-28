@@ -2,19 +2,20 @@
 #
 # Table name: token_collections
 #
-#  id            :bigint           not null, primary key
-#  standard      :string
-#  name          :string
-#  description   :text
-#  creator_id    :integer
-#  icon_url      :string
-#  items_count   :integer
-#  holders_count :integer
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  symbol        :string
-#  cell_id       :integer
-#  verified      :boolean          default(FALSE)
+#  id             :bigint           not null, primary key
+#  standard       :string
+#  name           :string
+#  description    :text
+#  creator_id     :integer
+#  icon_url       :string
+#  items_count    :integer
+#  holders_count  :integer
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  symbol         :string
+#  cell_id        :integer
+#  verified       :boolean          default(FALSE)
+#  type_script_id :integer
 #
 require "test_helper"
 

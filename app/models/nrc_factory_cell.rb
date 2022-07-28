@@ -6,6 +6,7 @@ class NrcFactoryCell < ApplicationRecord
       standard: 'nrc721',
       name: name,
       symbol: symbol,
+      type_script_id: TypeScript.find_by(hash_type: hash_type, code_hash: code_hash, args: args).id
     )
   end
 end

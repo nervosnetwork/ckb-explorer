@@ -1,15 +1,17 @@
 class TokenTransfer < ApplicationRecord
+  enum :action, [:normal, :mint, :destroy]
   belongs_to :item, class_name: 'TokenItem'
-  belongs_to :from, class_name: 'Address'
-  belongs_to :to, class_name: 'Address'
+  belongs_to :from, class_name: 'Address', optional: true
+  belongs_to :to, class_name: 'Address', optional: true
   belongs_to :ckb_transaction, class_name: 'CkbTransaction', foreign_key: :transaction_id
 
   def as_json(options={})
     {
       id: id,
-      from: from.address_hash,
-      to: to.address_hash,
+      from: from&.address_hash,
+      to: to&.address_hash,
       item: item.as_json,
+      action: action, 
       transaction: {
         tx_hash: ckb_transaction.tx_hash,
         block_number: ckb_transaction.block_number,
@@ -30,6 +32,7 @@ end
 #  transaction_id :integer
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
+#  action         :integer
 #
 # Indexes
 #

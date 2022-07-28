@@ -2,16 +2,17 @@
 #
 # Table name: token_items
 #
-#  id            :bigint           not null, primary key
-#  collection_id :integer
-#  token_id      :string
-#  name          :string
-#  icon_url      :string
-#  owner_id      :integer
-#  metadata_url  :string
-#  cell_id       :integer
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
+#  id             :bigint           not null, primary key
+#  collection_id  :integer
+#  token_id       :string
+#  name           :string
+#  icon_url       :string
+#  owner_id       :integer
+#  metadata_url   :string
+#  cell_id        :integer
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  type_script_id :integer
 #
 # Indexes
 #
