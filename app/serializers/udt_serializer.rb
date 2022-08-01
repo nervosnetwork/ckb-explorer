@@ -1,7 +1,7 @@
 class UdtSerializer
   include FastJsonapi::ObjectSerializer
 
-  attributes :symbol, :full_name, :icon_file, :published, :description, :type_hash, :type_script, :issuer_address
+  attributes :symbol, :full_name, :icon_file, :published, :description, :type_hash, :type_script, :issuer_address, :display_name, :uan
 
   attribute :total_amount do |object|
     object.total_amount.to_s
