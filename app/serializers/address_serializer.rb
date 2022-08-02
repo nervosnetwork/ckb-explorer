@@ -43,7 +43,9 @@ class AddressSerializer
             amount: udt_account.amount.to_s,
             type_hash: udt_account.type_hash,
             udt_icon_file: udt_account.udt_icon_file,
-            udt_type: udt_account.udt_type
+            udt_type: udt_account.udt_type,
+            display_name: udt_account.display_name,
+            uan: udt_account.uan
           }
         elsif udt_account.udt_type == "m_nft_token"
           {
