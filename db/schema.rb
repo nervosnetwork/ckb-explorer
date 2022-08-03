@@ -10,18 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_07_11_181425) do
+ActiveRecord::Schema.define(version: 2022_08_01_080617) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
+  enable_extension "pg_hint_plan"
   enable_extension "plpgsql"
 
   create_table "account_books", force: :cascade do |t|
     t.bigint "address_id"
     t.bigint "ckb_transaction_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["address_id"], name: "index_account_books_on_address_id"
+    t.index ["address_id", "ckb_transaction_id"], name: "index_account_books_on_address_id_and_ckb_transaction_id", unique: true
     t.index ["ckb_transaction_id"], name: "index_account_books_on_ckb_transaction_id"
   end
 
@@ -204,9 +203,9 @@ ActiveRecord::Schema.define(version: 2022_07_11_181425) do
     t.index ["block_id", "block_timestamp"], name: "index_ckb_transactions_on_block_id_and_block_timestamp"
     t.index ["block_timestamp", "id"], name: "index_ckb_transactions_on_block_timestamp_and_id", order: { block_timestamp: "DESC NULLS LAST", id: :desc }
     t.index ["contained_address_ids", "id"], name: "index_ckb_transactions_on_contained_address_ids_and_id", using: :gin
-    t.index ["contained_address_ids"], name: "index_ckb_transactions_on_contained_address_ids", using: :gin
     t.index ["contained_udt_ids"], name: "index_ckb_transactions_on_contained_udt_ids", using: :gin
     t.index ["dao_address_ids"], name: "index_ckb_transactions_on_dao_address_ids", using: :gin
+    t.index ["id", "contained_address_ids"], name: "alter_pk", using: :gin
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["tags"], name: "index_ckb_transactions_on_tags", using: :gin
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
@@ -430,6 +429,10 @@ ActiveRecord::Schema.define(version: 2022_07_11_181425) do
     t.integer "holders_count"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "symbol"
+    t.integer "cell_id"
+    t.boolean "verified", default: false
+    t.integer "type_script_id"
   end
 
   create_table "token_items", force: :cascade do |t|
@@ -442,6 +445,7 @@ ActiveRecord::Schema.define(version: 2022_07_11_181425) do
     t.integer "cell_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "type_script_id"
     t.index ["cell_id"], name: "index_token_items_on_cell_id"
     t.index ["collection_id", "token_id"], name: "index_token_items_on_collection_id_and_token_id", unique: true
     t.index ["owner_id"], name: "index_token_items_on_owner_id"
@@ -454,6 +458,7 @@ ActiveRecord::Schema.define(version: 2022_07_11_181425) do
     t.integer "transaction_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "action"
     t.index ["from_id"], name: "index_token_transfers_on_from_id"
     t.index ["item_id"], name: "index_token_transfers_on_item_id"
     t.index ["to_id"], name: "index_token_transfers_on_to_id"
@@ -530,6 +535,8 @@ ActiveRecord::Schema.define(version: 2022_07_11_181425) do
     t.binary "issuer_address"
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
     t.bigint "nrc_factory_cell_id"
+    t.string "display_name"
+    t.string "uan"
     t.index ["type_hash"], name: "index_udts_on_type_hash", unique: true
   end
 
