@@ -3,7 +3,7 @@
 class RollingAvgBlockTime < ApplicationRecord
   self.table_name = 'rolling_avg_block_time'
   def self.refresh
-    connection.execute "refresh materialized view rolling_avg_block_time CONCURRENTLY"
+    connection.execute "refresh materialized view CONCURRENTLY rolling_avg_block_time "
   end
 end
 
@@ -14,4 +14,8 @@ end
 #  timestamp             :integer
 #  avg_block_time_daily  :decimal(, )
 #  avg_block_time_weekly :decimal(, )
+#
+# Indexes
+#
+#  index_rolling_avg_block_time_on_timestamp  (timestamp) UNIQUE
 #
