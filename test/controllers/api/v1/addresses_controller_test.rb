@@ -138,7 +138,17 @@ module Api
         address.query_address = address.address_hash
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal [{ "symbol" => udt_account.symbol, "decimal" => udt_account.decimal.to_s, "amount" => udt_account.amount.to_s, "type_hash" => udt_account.type_hash, "udt_icon_file" => udt_account.udt_icon_file, "udt_type" => udt_account.udt_type }], json.dig("data", "attributes", "udt_accounts")
+        assert_equal [
+          { 
+            "symbol" => udt_account.symbol, 
+            "decimal" => udt_account.decimal.to_s, 
+            "amount" => udt_account.amount.to_s, 
+            "type_hash" => udt_account.type_hash, 
+            "udt_icon_file" => udt_account.udt_icon_file, 
+            "udt_type" => udt_account.udt_type,
+            "display_name" => nil,
+            "uan" => nil
+          }], json.dig("data", "attributes", "udt_accounts")
       end
 
       test "should not return unpublished udt accounts with given address hash" do

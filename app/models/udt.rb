@@ -58,6 +58,8 @@ end
 #  issuer_address         :binary
 #  ckb_transactions_count :decimal(30, )    default(0)
 #  nrc_factory_cell_id    :bigint
+#  display_name           :string
+#  uan                    :string
 #
 # Indexes
 #
