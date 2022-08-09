@@ -122,7 +122,7 @@ class AddressTest < ActiveSupport::TestCase
     block = create(:block)
     ckb_transactions = create_list(:ckb_transaction, 30, block: block, address: address, contained_address_ids: [address.id])
     ckb_transactions.each do |tx|
-      AccountBook.create(address: address, ckb_transaction: tx)
+      AccountBook.find_or_create_by(address: address, ckb_transaction: tx)
     end
 
     ckb_transaction_ids = address.account_books.select(:ckb_transaction_id).distinct
@@ -138,7 +138,7 @@ class AddressTest < ActiveSupport::TestCase
       block = create(:block, :with_block_hash)
       contained_address_ids = number % 2 == 0 ? [address.id] : [address1.id]
       tx = create(:ckb_transaction, block: block, tags: ["dao"], dao_address_ids: [contained_address_ids], contained_address_ids: contained_address_ids)
-      AccountBook.create(address: address, ckb_transaction: tx)
+      AccountBook.find_or_create_by(address: address, ckb_transaction: tx)
       cell_type = number % 2 == 0 ? "nervos_dao_deposit" : "nervos_dao_withdrawing"
       cell_output_address = number % 2 == 0 ? address : address1
       create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, generated_by: tx, cell_type: cell_type)
