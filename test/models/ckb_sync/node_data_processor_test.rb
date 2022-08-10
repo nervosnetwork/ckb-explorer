@@ -1399,8 +1399,9 @@ module CkbSync
     test "should update abandoned block's contained address transactions count" do
       prepare_node_data(19)
       local_block = Block.find_by(number: 19)
+      ApplicationRecord.connection.execute 'CALL sync_full_account_book()'
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-
+      
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         assert_difference -> { local_block.contained_addresses.map(&:ckb_transactions_count).flatten.sum }, -1 do
           node_data_processor.call

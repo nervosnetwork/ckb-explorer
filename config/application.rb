@@ -34,5 +34,6 @@ module Server
     # Skip views, helpers and assets when generating a new resource.
     config.time_zone = "Beijing"
     config.api_only = true
+    config.active_record.schema_format = :sql
   end
 end
