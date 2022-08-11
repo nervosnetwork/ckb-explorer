@@ -36,7 +36,7 @@ module CkbSync
     def call
       sentry_transaction
       @local_tip_block = Block.recent.first
-      tip_block_number = CkbSync::Api.instance.get_tip_block_number
+      tip_block_number = @tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
       return if target_block_number > tip_block_number
 
@@ -103,7 +103,22 @@ module CkbSync
         flush_inputs_outputs_caches(local_block)
         generate_statistics_data(local_block)
       end
+      
       local_block
+    end
+
+    def check_invalid_address(address)
+      if address.balance < 0 or address.balance_occupied < 0
+        wrong_balance, wrong_balance_occupied = address.balance, address.balance_occupied
+        Sentry.capture_message(
+          'balance invalid', 
+          extra: {
+            block: @tip_block_number,
+            address: address.address_hash, 
+            wrong_balance: wrong_balance,
+            wrong_balance_occupied: wrong_balance_occupied,
+          })
+      end
     end
 
     private
@@ -506,6 +521,7 @@ module CkbSync
       ### here we use one by one update (maybe slower)
       addrs_change.each do |addr_id, values|
         addr = Address.find addr_id
+        check_invalid_address(addr)        
         balance_diff = values[:balance_diff]
         balance_occupied_diff = values[:balance_occupied_diff].presence || 0
         live_cells_diff = values[:cells_diff]
@@ -1172,7 +1188,8 @@ module CkbSync
     def update_address_balance_and_ckb_transactions_count(local_tip_block)
       local_tip_block.contained_addresses.each do |address|
         address.live_cells_count = address.cell_outputs.live.count
-        address.ckb_transactions_count = address.custom_ckb_transactions.count
+        # address.ckb_transactions_count = address.custom_ckb_transactions.count
+        address.ckb_transactions_count = AccountBook.where(address_id: address.id).count  
         address.dao_transactions_count = address.ckb_dao_transactions.count
         address.cal_balance!
         address.save!
@@ -1325,6 +1342,8 @@ module CkbSync
         factory_cell.update(name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, base_token_uri: parsed_factory_data.base_token_uri, extra_data: parsed_factory_data.extra_data)
       end
     end
+
+
 
     class LocalCache
       attr_accessor :cache

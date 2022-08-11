@@ -44,8 +44,9 @@ FactoryBot.define do
 
         ckb_transactions.each do |tx|
           tx.contained_address_ids << address.id
+          tx.save
         end
-        address.ckb_transactions << ckb_transactions
+        # address.ckb_transactions << ckb_transactions
         address.update(ckb_transactions_count: address.ckb_transactions.count)
       end
     end
@@ -58,8 +59,8 @@ FactoryBot.define do
           transaction = create(:ckb_transaction, block: block, udt_address_ids: [address.id], contained_address_ids: [address.id], tags: ["udt"], contained_udt_ids: [evaluator.udt.id])
           transaction1 = create(:ckb_transaction, block: block, udt_address_ids: [address.id], contained_address_ids: [address.id], tags: ["udt"], contained_udt_ids: [evaluator.udt.id])
           create(:cell_output, address: address, block: block, ckb_transaction: transaction, generated_by: transaction, consumed_by: transaction1, type_hash: evaluator.udt.type_hash, cell_type: "udt", data: "0x000050ad321ea12e0000000000000000")
-          address.ckb_transactions << transaction
-          address.ckb_transactions << transaction1
+          # address.ckb_transactions << transaction
+          # address.ckb_transactions << transaction1
         end
       end
     end

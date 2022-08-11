@@ -113,7 +113,7 @@ module Api
         generated_ckb_transaction1 = create(:ckb_transaction, block: block, block_timestamp: "1567131126596", contained_address_ids: [address.id])
         create(:cell_output, capacity: 10**8 * 8, ckb_transaction: generated_ckb_transaction1, block: generated_ckb_transaction1.block, tx_hash: generated_ckb_transaction1.tx_hash, cell_index: 0, generated_by: generated_ckb_transaction1, address: address)
         create(:cell_output, capacity: 10**8 * 6, ckb_transaction: consumed_ckb_transaction, block: consumed_ckb_transaction.block, tx_hash: consumed_ckb_transaction.tx_hash, cell_index: 0, generated_by: generated_ckb_transaction, consumed_by: consumed_ckb_transaction, address: address)
-        address.ckb_transactions << [generated_ckb_transaction1, consumed_ckb_transaction, generated_ckb_transaction]
+        # address.ckb_transactions << [generated_ckb_transaction1, consumed_ckb_transaction, generated_ckb_transaction]
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 
@@ -245,7 +245,7 @@ module Api
         address = create(:address)
         block = create(:block, :with_block_hash)
         ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block, contained_address_ids: [address.id])
-        address.ckb_transactions << ckb_transaction
+        # address.ckb_transactions << ckb_transaction
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 
@@ -257,7 +257,7 @@ module Api
         address = create(:address)
         block = create(:block, :with_block_hash)
         ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block, contained_address_ids: [address.id])
-        address.ckb_transactions << ckb_transaction
+        # address.ckb_transactions << ckb_transaction
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 
