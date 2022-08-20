@@ -872,7 +872,7 @@ module CkbSync
             udt_address_ids[tx_index] << address.id
             contained_udt_ids[tx_index] << Udt.where(type_hash: item.type.compute_hash, udt_type: "sudt").pick(:id)
           elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token))
-            TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
+            TokenEventDetectWorker.perform_async(ckb_txs[tx_index]["id"])
           end
 
           output_capacities[tx_index] += item.capacity if tx_index != 0

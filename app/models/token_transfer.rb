@@ -1,5 +1,5 @@
 class TokenTransfer < ApplicationRecord
-  enum :action, [:normal, :mint, :destroy]
+  enum action: [:normal, :mint, :destruction]
   belongs_to :item, class_name: 'TokenItem'
   belongs_to :from, class_name: 'Address', optional: true
   belongs_to :to, class_name: 'Address', optional: true

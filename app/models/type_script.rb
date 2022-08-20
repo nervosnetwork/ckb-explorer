@@ -6,6 +6,8 @@ class TypeScript < ApplicationRecord
 
   attribute :code_hash, :ckb_hash
 
+  before_validation :generate_script_hash
+
   def to_node_type
     {
       args: args,
@@ -16,6 +18,10 @@ class TypeScript < ApplicationRecord
 
   def short_code_hash
     code_hash[-4..]
+  end
+
+  def generate_script_hash
+    self.script_hash ||= CKB::Types::Script.new(**to_node_type).compute_hash
   end
 end
 
