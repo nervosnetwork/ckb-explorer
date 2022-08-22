@@ -3,7 +3,14 @@ module Api
     class NFT::TransfersController < BaseController
       # GET /token_transfers
       def index
-        @collection = TokenCollection.find_by id: params[:collection_id] if params[:collection_id]
+        if params[:collection_id].present?
+          if params[:id] =~ /\A\d+\z/
+            @collection = TokenCollection.find params[:collection_id]
+          else
+            @type_script = TypeScript.find_by script_hash: params[:collection_id]
+            @collection = TokenCollection.find_by type_script_id: @type_script.id
+          end
+        end        
         @item = @collection.items.find_by token_id: params[:item_id] if params[:item_id]
         
         if @item
