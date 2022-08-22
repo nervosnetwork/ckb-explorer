@@ -25,6 +25,7 @@ module Api
         @to = Address.find_by_address_hash(params[:to]) if params[:to]
         scope = scope.where(from: @from) if @from
         scope = scope.where(to: @to) if @to
+        scope = scope.order(cell_id: :desc)
         @pagy, @token_transfers = pagy(scope)
 
         render json: {
