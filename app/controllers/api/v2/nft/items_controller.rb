@@ -29,7 +29,14 @@ module Api
       protected
 
       def find_collection
-        @collection = TokenCollection.find_by_id params[:collection_id] if params[:collection_id].present?
+        if params[:collection_id].present?
+          if params[:id] =~ /\A\d+\z/
+            @collection = TokenCollection.find params[:collection_id]
+          else
+            @type_script = TypeScript.find_by script_hash: params[:collection_id]
+            @collection = TokenCollection.find_by type_script_id: @type_script.id
+          end
+        end
       end
     end
   end

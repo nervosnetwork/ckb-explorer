@@ -19,11 +19,11 @@ class TokenItem < ApplicationRecord
       token_id: token_id,
       owner: owner.address_hash,
       cell: {
-        status: cell.status,
-        tx_hash: cell.tx_hash,
-        cell_index: cell.cell_index
+        status: cell&.status,
+        tx_hash: cell&.tx_hash,
+        cell_index: cell&.cell_index
       },
-      type_script: type_script.to_node_type,
+      type_script: type_script&.as_json,
       name: name,
       metadata_url: metadata_url,
       icon_url: icon_url,

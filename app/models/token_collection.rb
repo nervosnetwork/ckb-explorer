@@ -15,7 +15,7 @@ class TokenCollection < ApplicationRecord
       creator: creator&.address_hash || "",
       items_count: items.count,
       holders_count: items.distinct(:owner_id).count,
-      type_script: type_script&.to_node_type
+      type_script: type_script&.as_json
     }
   end
 

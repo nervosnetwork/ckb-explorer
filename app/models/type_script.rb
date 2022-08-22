@@ -19,7 +19,8 @@ class TypeScript < ApplicationRecord
     {
       args: args,
       code_hash: code_hash,
-      hash_type: hash_type
+      hash_type: hash_type,
+      script_hash: script_hash
     }  
   end
 
