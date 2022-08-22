@@ -12,6 +12,25 @@ class TokenItem < ApplicationRecord
   def update_type_script
     self.type_script_id = cell&.type_script_id  if cell
   end
+
+  def as_json(options={})
+    {
+      id: id,
+      token_id: token_id,
+      owner: owner.address_hash,
+      cell: {
+        status: cell.status,
+        tx_hash: cell.tx_hash,
+        cell_index: cell.cell_index
+      },
+      type_script: type_script.to_node_type,
+      name: name,
+      metadata_url: metadata_url,
+      icon_url: icon_url,
+      created_at: created_at,
+      updated_at: updated_at
+    }
+  end
 end
 
 # == Schema Information
