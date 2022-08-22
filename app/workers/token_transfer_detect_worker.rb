@@ -60,6 +60,12 @@ class TokenTransferDetectWorker
       item.cell = cell
     end
     item.owner_id = item.cell.address_id
+    item.token_id = case cell.cell_type 
+    when 'm_nft_token'
+      type_script.args[50..-1].hex
+    when 'nrc_721_token'
+      type_script.args[130..-1].hex
+    end
     item.save!
     item
   end

@@ -9,9 +9,9 @@ module Api
 
         scope = scope.where(standard) if params[:standard]
         scope = scope.where(owner_id: @owner.id) if params[:owner]
-        @pagy, @collections = pagy(scope)
+        @pagy, @items = pagy(scope)
         render json: {
-          data: @collections,
+          data: @items,
           pagination: pagy_metadata(@pagy)
         }
       end
@@ -19,8 +19,11 @@ module Api
       def show
         @collection = TokenCollection.find params[:collection_id]
         @item = @collection.items.find_by token_id: params[:id]
-
-        render json: @item.as_json.merge(collection: @item.collection.as_json)
+        if @item
+          render json: @item.as_json.merge(collection: @item.collection.as_json)
+        else
+          head :not_found
+        end
       end
 
       protected
