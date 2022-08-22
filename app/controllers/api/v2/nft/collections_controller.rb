@@ -10,8 +10,18 @@ module Api
       end      
 
       def show
-        @collection = TokenCollection.find params[:id]
-        render json: @collection
+        if params[:id] =~ /\A\d+\z/
+          @collection = TokenCollection.find params[:id]
+        else
+          @type_script = TypeScript.find_by script_hash: params[:id]
+          @collection = TokenCollection.find_by type_script_id: @type_script.id
+        end
+        
+        if @collection
+          render json: @collection
+        else
+          head :not_found
+        end
       end
     end
   end

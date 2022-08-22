@@ -17,6 +17,11 @@
 #  verified       :boolean          default(FALSE)
 #  type_script_id :integer
 #
+# Indexes
+#
+#  index_token_collections_on_cell_id         (cell_id)
+#  index_token_collections_on_type_script_id  (type_script_id)
+#
 require "test_helper"
 
 class TokenCollectionsControllerTest < ActionDispatch::IntegrationTest

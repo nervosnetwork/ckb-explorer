@@ -10,7 +10,7 @@ class TokenItem < ApplicationRecord
   before_save :update_type_script
 
   def update_type_script
-    self.type_script_id = cell&.type_script_id  if cell
+    self.type_script_id = cell&.type_script_id
   end
 
   def as_json(options={})
@@ -54,4 +54,5 @@ end
 #  index_token_items_on_cell_id                     (cell_id)
 #  index_token_items_on_collection_id_and_token_id  (collection_id,token_id) UNIQUE
 #  index_token_items_on_owner_id                    (owner_id)
+#  index_token_items_on_type_script_id              (type_script_id)
 #

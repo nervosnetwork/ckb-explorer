@@ -19,6 +19,7 @@
 #  index_token_items_on_cell_id                     (cell_id)
 #  index_token_items_on_collection_id_and_token_id  (collection_id,token_id) UNIQUE
 #  index_token_items_on_owner_id                    (owner_id)
+#  index_token_items_on_type_script_id              (type_script_id)
 #
 require "test_helper"
 

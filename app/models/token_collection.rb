@@ -2,9 +2,8 @@ class TokenCollection < ApplicationRecord
   has_many :items, class_name: "TokenItem", foreign_key: :collection_id
   belongs_to :creator, class_name: "Address", optional: true
   belongs_to :cell, class_name: 'CellOutput', optional: true
+  belongs_to :type_script, optional: true
   has_many :transfers, class_name: "TokenTransfer", through: :items
-
-
 
   def as_json(options = {})
     {
@@ -15,7 +14,8 @@ class TokenCollection < ApplicationRecord
       icon_url: icon_url,
       creator: creator&.address_hash || "",
       items_count: items.count,
-      holders_count: items.distinct(:owner_id).count
+      holders_count: items.distinct(:owner_id).count,
+      type_script: type_script&.to_node_type
     }
   end
 
@@ -44,4 +44,9 @@ end
 #  cell_id        :integer
 #  verified       :boolean          default(FALSE)
 #  type_script_id :integer
+#
+# Indexes
+#
+#  index_token_collections_on_cell_id         (cell_id)
+#  index_token_collections_on_type_script_id  (type_script_id)
 #
