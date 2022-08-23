@@ -4,7 +4,7 @@ module Api
       # GET /token_transfers
       def index
         if params[:collection_id].present?
-          if params[:id] =~ /\A\d+\z/
+          if params[:collection_id] =~ /\A\d+\z/
             @collection = TokenCollection.find params[:collection_id]
           else
             @type_script = TypeScript.find_by script_hash: params[:collection_id]
@@ -25,7 +25,7 @@ module Api
         @to = Address.find_by_address_hash(params[:to]) if params[:to]
         scope = scope.where(from: @from) if @from
         scope = scope.where(to: @to) if @to
-        scope = scope.order(cell_id: :desc)
+        # scope = scope.order(cell_id: :desc)
         @pagy, @token_transfers = pagy(scope)
 
         render json: {

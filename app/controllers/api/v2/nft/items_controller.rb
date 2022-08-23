@@ -17,7 +17,9 @@ module Api
       end
 
       def show
-        @collection = TokenCollection.find params[:collection_id]
+        if !@collection
+          return head(:not_found)
+        end
         @item = @collection.items.find_by token_id: params[:id]
         if @item
           render json: @item.as_json.merge(collection: @item.collection.as_json)
@@ -30,7 +32,7 @@ module Api
 
       def find_collection
         if params[:collection_id].present?
-          if params[:id] =~ /\A\d+\z/
+          if params[:collection_id] =~ /\A\d+\z/
             @collection = TokenCollection.find params[:collection_id]
           else
             @type_script = TypeScript.find_by script_hash: params[:collection_id]
