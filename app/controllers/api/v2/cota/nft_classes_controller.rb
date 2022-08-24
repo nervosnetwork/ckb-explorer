@@ -1,6 +1,6 @@
 module Api
   module V2
-    class Cota::NftClassesController < BaseController
+    class Cota::NFTClassesController < BaseController
 
       def index
       end

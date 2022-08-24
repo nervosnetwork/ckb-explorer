@@ -34,6 +34,22 @@ class CotaAggregator
       cota_id: cota_id
     }
   end
+
+  def is_claimed(lock_script:, cota_id:, token_index:)
+    send_request 'is_claimed', {
+      cota_id: cota_id,
+      lock_script: lock_script,
+      token_index: '0x'+token_index.to_s(16)
+    }
+  end
+
+  def get_cota_nft_sender(lock_script:, cota_id:, token_index:)
+    send_request 'get_cota_nft_sender', {
+      cota_id: cota_id, 
+      lock_script: lock_script,
+      token_index: '0x'+token_index.to_s(16)
+    }
+  end
   
   def send_request(method, params)
     @req_id += 1
