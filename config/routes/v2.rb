@@ -8,6 +8,10 @@ namespace :api do
           resources :transfers, only: [:index, :show]
         end
       end
+      namespace :cota do
+        resources :transactions, only: :index
+        resources :issuers, only: :show
+      end
       resources :items, only: :index
       resources :transfers, only: [:index, :show]
     end
