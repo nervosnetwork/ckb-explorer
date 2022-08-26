@@ -18,7 +18,11 @@ namespace :api do
           end
         end
         resources :transactions, only: :index
-        resources :issuers, only: :show
+        resources :issuers, only: :show do
+          member do 
+            get :minted
+          end
+        end
         
       end
       resources :items, only: :index

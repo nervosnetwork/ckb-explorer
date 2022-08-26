@@ -43,6 +43,14 @@ class CotaAggregator
     }
   end
 
+  def get_mint_cota_nft(lock_script:, page: nil, page_size: nil)
+    send_request 'is_claimed', {
+      lock_script: lock_script,
+      page: page,
+      page_size: page_size
+    }    
+  end
+
   def get_cota_nft_sender(lock_script:, cota_id:, token_index:)
     send_request 'get_cota_nft_sender', {
       cota_id: cota_id, 
