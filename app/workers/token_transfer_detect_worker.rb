@@ -82,6 +82,11 @@ class TokenTransferDetectWorker
   def find_or_create_nrc_721_collection(cell, type_script)
     factory_cell = CkbUtils.parse_nrc_721_args(type_script.args)
     nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args)
+
+    if nrc_721_factory_cell.name.blank? or nrc_721_factory_cell.symbol.blank?
+      nrc_721_factory_cell.parse_data
+    end
+
     coll = TokenCollection.find_or_create_by(
       standard: 'nrc_721',
       symbol:  nrc_721_factory_cell.symbol.to_s[0, 16],

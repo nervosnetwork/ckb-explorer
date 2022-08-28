@@ -24,6 +24,16 @@ class TokenCollection < ApplicationRecord
   def update_type_script
     self.type_script_id = cell.type_script_id if cell
   end
+
+  def self.update_cell
+    where(cell_id: nil).where.not(type_script_id: nil).find_each do |tc|
+      c = tc.type_script.cell_outputs.last
+      tc.cell_id = c.id
+      tc.creator_id = c.address_id
+
+      tc.save
+    end
+  end
 end
 
 # == Schema Information
