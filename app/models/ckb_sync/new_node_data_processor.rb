@@ -1354,7 +1354,9 @@ module CkbSync
     def update_nrc_factory_cell_info(type_script, output_data)
       factory_cell = NrcFactoryCell.find_by(code_hash: type_script.code_hash, hash_type: type_script.hash_type, args: type_script.args)
       # if factory_cell&.verified
-      factory_cell.parse_data
+      parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(output_data)
+      factory_cell.update(name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, base_token_uri: parsed_factory_data.base_token_uri, extra_data: parsed_factory_data.extra_data)
+      
       # end
     end
 

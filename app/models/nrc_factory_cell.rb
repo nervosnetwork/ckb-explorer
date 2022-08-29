@@ -7,11 +7,15 @@ class NrcFactoryCell < ApplicationRecord
   end
   
   def type_script
-    @type_script ||= TypeScript.find_by(hash_type: hash_type, code_hash: code_hash, args: args)
+    if defined?(@type_script)
+      @type_script 
+    else
+      @type_script = TypeScript.find_by(hash_type: hash_type, code_hash: code_hash, args: args)
+    end
   end
 
   def first_cell
-    @first_cell ||= CellOutput.where(type_script_id: type_script.id).first
+    @first_cell ||= CellOutput.where(type_script_id: type_script.id).first if type_script
   end
 
   def token_collection 
@@ -19,8 +23,8 @@ class NrcFactoryCell < ApplicationRecord
       standard: 'nrc721',
       name: name,
       symbol: symbol,
-      type_script_id: type_script.id,
-      creator_id: first_cell.address_id
+      type_script_id: type_script&.id,
+      creator_id: first_cell&.address_id
     )
   end
 
@@ -29,8 +33,8 @@ class NrcFactoryCell < ApplicationRecord
       standard: 'nrc721',
       name: name,
       symbol: symbol,
-      type_script_id: type_script.id,
-      creator_id: first_cell.address_id
+      type_script_id: type_script&.id,
+      creator_id: first_cell&.address_id
     )
   end
 
@@ -42,9 +46,11 @@ class NrcFactoryCell < ApplicationRecord
   end
 
   def parse_data 
+    
     factory_data = CellOutput.where(
       type_script_id: nrc_721_factory_cell_type.id, 
-      cell_type: "nrc_721_factory").last.data
+      cell_type: "nrc_721_factory").last&.data
+    return if factory_data.blank?
     parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(factory_data)
     update(name: parsed_factory_data.name, 
       symbol: parsed_factory_data.symbol, 

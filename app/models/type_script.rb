@@ -29,7 +29,8 @@ class TypeScript < ApplicationRecord
   end
 
   def generate_script_hash
-    self.script_hash ||= CKB::Types::Script.new(**to_node_type).compute_hash
+    self.hash_type ||= 'type'
+    self.script_hash ||= CKB::Types::Script.new(**to_node_type).compute_hash rescue nil
   end
 end
 
