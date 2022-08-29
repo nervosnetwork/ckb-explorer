@@ -2,7 +2,7 @@ module Api
   module V2
     class NFT::CollectionsController < BaseController
       def index
-        @pagy, @collections = pagy(TokenCollection)
+        @pagy, @collections = pagy(TokenCollection.order(id: :desc))
         render json: { 
               data: @collections,
                pagination: pagy_metadata(@pagy) 
