@@ -9,6 +9,7 @@ module Api
 
         scope = scope.where(standard) if params[:standard]
         scope = scope.where(owner_id: @owner.id) if params[:owner]
+        scope = scope.order(token_id: :asc)
         @pagy, @items = pagy(scope)
         render json: {
           data: @items,
@@ -20,6 +21,7 @@ module Api
         if !@collection
           return head(:not_found)
         end
+
         @item = @collection.items.find_by token_id: params[:id]
         if @item
           render json: @item.as_json.merge(collection: @item.collection.as_json)
@@ -32,7 +34,7 @@ module Api
 
       def find_collection
         if params[:collection_id].present?
-          if params[:collection_id] =~ /\A\d+\z/
+          if /\A\d+\z/.match?(params[:collection_id])
             @collection = TokenCollection.find params[:collection_id]
           else
             @type_script = TypeScript.find_by script_hash: params[:collection_id]
