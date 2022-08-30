@@ -560,6 +560,14 @@ module CkbSync
             if m_nft_class_type.present?
               m_nft_class_cell = m_nft_class_type.cell_outputs.last
               parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+              coll = TokenCollection.find_or_create_by(
+                standard: 'm_nft',
+                name: parsed_class_data.name,
+                cell_id: m_nft_class_cell.id,
+                icon_url: parsed_class_data.renderer,
+                creator_id: m_nft_class_cell.address_id,
+              )
+  
               nft_token_attr[:full_name] = parsed_class_data.name
               nft_token_attr[:icon_file] = parsed_class_data.renderer
               nft_token_attr[:published] = true
@@ -782,7 +790,8 @@ module CkbSync
 
             prev_cell_outputs_attributes << attributes[1]
             contained_addr_ids[tx_index] << attributes[4]
-            if attributes[1][:cell_type].in?(%w(nervos_dao_withdrawing))
+            cell_type = attributes[1][:cell_type]
+            if cell_type.in?(%w(nervos_dao_withdrawing))
               tags[tx_index] << "dao"
               dao_address_ids[tx_index] << attributes[4]
               if addrs_changes[attributes[4]][:dao_txs].present?
@@ -790,13 +799,17 @@ module CkbSync
               else
                 addrs_changes[attributes[4]][:dao_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
               end
+            elsif cell_type.in?(%w(m_nft_token nrc_721_token))
+              TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
             end
-            if attributes[1][:cell_type] == "udt"
+
+
+            case attributes[1][:cell_type] 
+            when "udt"
               tags[tx_index] << "udt"
               udt_address_ids[tx_index] << attributes[4]
               contained_udt_ids[tx_index] << Udt.where(type_hash: attributes[3], udt_type: "sudt").pick(:id)
-            end
-            if attributes[1][:cell_type] == "nrc_721_token"
+            when "nrc_721_token"
               tags[tx_index] << "nrc_721_token"
               udt_address_ids[tx_index] << attributes[4]
               contained_udt_ids[tx_index] << Udt.where(type_hash: attributes[3], udt_type: "nrc_721_token").pick(:id)
@@ -854,10 +867,13 @@ module CkbSync
               addrs_changes[address.id][:dao_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
             end
           end
+
           if attr[:cell_type] == "udt"
             tags[tx_index] << "udt"
             udt_address_ids[tx_index] << address.id
             contained_udt_ids[tx_index] << Udt.where(type_hash: item.type.compute_hash, udt_type: "sudt").pick(:id)
+          elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token))
+            TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
           end
 
           output_capacities[tx_index] += item.capacity if tx_index != 0
@@ -1337,13 +1353,12 @@ module CkbSync
 
     def update_nrc_factory_cell_info(type_script, output_data)
       factory_cell = NrcFactoryCell.find_by(code_hash: type_script.code_hash, hash_type: type_script.hash_type, args: type_script.args)
-      if factory_cell&.verified
-        parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(output_data)
-        factory_cell.update(name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, base_token_uri: parsed_factory_data.base_token_uri, extra_data: parsed_factory_data.extra_data)
-      end
+      # if factory_cell&.verified
+      parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(output_data)
+      factory_cell.update(name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, base_token_uri: parsed_factory_data.base_token_uri, extra_data: parsed_factory_data.extra_data)
+      
+      # end
     end
-
-
 
     class LocalCache
       attr_accessor :cache

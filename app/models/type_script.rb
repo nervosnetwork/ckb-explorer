@@ -1,10 +1,11 @@
 class TypeScript < ApplicationRecord
   has_many :cell_outputs
   belongs_to :cell_output, optional: true # will remove this later
-
   validates_presence_of :code_hash
 
   attribute :code_hash, :ckb_hash
+
+  before_validation :generate_script_hash
 
   def to_node_type
     {
@@ -14,8 +15,22 @@ class TypeScript < ApplicationRecord
     }
   end
 
+  def as_json(options={})
+    {
+      args: args,
+      code_hash: code_hash,
+      hash_type: hash_type,
+      script_hash: script_hash
+    }  
+  end
+
   def short_code_hash
     code_hash[-4..]
+  end
+
+  def generate_script_hash
+    self.hash_type ||= 'type'
+    self.script_hash ||= CKB::Types::Script.new(**to_node_type).compute_hash rescue nil
   end
 end
 

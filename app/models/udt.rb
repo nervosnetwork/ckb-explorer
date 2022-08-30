@@ -22,6 +22,8 @@ class Udt < ApplicationRecord
     end
   end
 
+  
+
   def type_script
     return unless published
 
@@ -31,6 +33,8 @@ class Udt < ApplicationRecord
       hash_type: hash_type
     }
   end
+
+
 end
 
 # == Schema Information

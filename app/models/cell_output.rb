@@ -135,6 +135,40 @@ class CellOutput < ApplicationRecord
     end
   end
 
+  def create_token
+    case cell_type
+    when "m_nft_class"
+      parsed_class_data = CkbUtils.parse_token_class_data(data)
+      TokenCollection.find_or_create_by(
+        standard: 'm_nft',
+        name: parsed_class_data.name,
+        cell_id: id,
+        icon_url: parsed_class_data.renderer
+      )      
+    when "m_nft_token"
+      m_nft_class_type = TypeScript.where(
+        code_hash: CkbSync::Api.instance.token_class_script_code_hash, 
+        args: type_script.args[0..49]
+      ).first
+      if m_nft_class_type.present?
+        m_nft_class_cell = m_nft_class_type.cell_outputs.last
+        parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+        coll = TokenCollection.find_or_create_by(
+          standard: 'm_nft',
+          name: parsed_class_data.name,
+          cell_id: m_nft_class_cell.id,
+          icon_url: parsed_class_data.renderer
+        )
+        item = coll.items.find_or_create_by(
+          token_id: type_script.args[50..-1].hex,
+          owner_id: address_id,
+          cell_id: id
+        )          
+      end      
+    end
+  end
+
+
   # Because the balance of address equals to the total capacity of all live cells in this address,
   # So we can directly aggregate balance by address from database.
   def self.refresh_address_balances
