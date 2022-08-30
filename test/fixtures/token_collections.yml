@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  standard: MyString
+  name: MyString
+  description: MyText
+  creator_id: 1
+  icon_url: MyString
+  items_count: 1
+  holders_count: 1
+
+two:
+  standard: MyString
+  name: MyString
+  description: MyText
+  creator_id: 1
+  icon_url: MyString
+  items_count: 1
+  holders_count: 1
