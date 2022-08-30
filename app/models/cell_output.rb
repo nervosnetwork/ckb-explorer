@@ -77,9 +77,9 @@ class CellOutput < ApplicationRecord
     udt_info = Udt.find_by(type_hash: type_hash, published: true)
     CkbUtils.hash_value_to_s(
       symbol: udt_info&.symbol,
-      amount: udt_amount, 
-      decimal: udt_info&.decimal, 
-      type_hash: type_hash, 
+      amount: udt_amount,
+      decimal: udt_info&.decimal,
+      type_hash: type_hash,
       published: !!udt_info&.published,
       display_name: udt_info&.display_name,
       uan: udt_info&.uan
@@ -103,7 +103,7 @@ class CellOutput < ApplicationRecord
         parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
         value = { class_name: parsed_class_data.name, token_id: type_script.args[50..-1], total: parsed_class_data.total }
       else
-        value = { class_name: "", token_id: "", total: "" }
+        value = { class_name: "", token_id: nil, total: "" }
       end
     else
       raise "invalid cell type"
@@ -132,6 +132,41 @@ class CellOutput < ApplicationRecord
   def flush_cache
     $redis.pipelined do
       $redis.del(*cache_keys)
+    end
+  end
+
+  def create_token
+    case cell_type
+    when "m_nft_class"
+      parsed_class_data = CkbUtils.parse_token_class_data(data)
+      TokenCollection.find_or_create_by(
+        standard: "m_nft",
+        name: parsed_class_data.name,
+        cell_id: id,
+        icon_url: parsed_class_data.renderer,
+        creator_id: address.id
+      )
+    when "m_nft_token"
+      m_nft_class_type = TypeScript.where(
+        code_hash: CkbSync::Api.instance.token_class_script_code_hash,
+        args: type_script.args[0..49]
+      ).first
+      if m_nft_class_type.present?
+        m_nft_class_cell = m_nft_class_type.cell_outputs.last
+        parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+        coll = TokenCollection.find_or_create_by(
+          standard: "m_nft",
+          name: parsed_class_data.name,
+          cell_id: m_nft_class_cell.id,
+          creator_id: m_nft_class_cell.address_id,
+          icon_url: parsed_class_data.renderer
+        )
+        item = coll.items.find_or_create_by(
+          token_id: type_script.args[50..-1].hex,
+          owner_id: address_id,
+          cell_id: id
+        )
+      end
     end
   end
 

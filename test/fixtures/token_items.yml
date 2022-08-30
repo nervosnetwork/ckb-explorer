@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  collection_id: 1
+  token_id: MyString
+  name: MyString
+  icon_url: MyString
+  owner_id: 1
+  metadata_url: MyString
+  cell_id: 1
+
+two:
+  collection_id: 1
+  token_id: MyString
+  name: MyString
+  icon_url: MyString
+  owner_id: 1
+  metadata_url: MyString
+  cell_id: 1
