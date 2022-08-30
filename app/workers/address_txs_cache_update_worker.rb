@@ -39,7 +39,8 @@ class AddressTxsCacheUpdateWorker
         if address.present?
           records_counter = RecordCounters::AddressTransactions.new(address)
           service.fetch(key, 1, CkbTransaction::DEFAULT_PAGINATES_PER, CkbTransaction, records_counter) do
-            CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [k]).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent
+            tx_ids = AccountBook.where(address_id: k).order("ckb_transaction_id" => :desc).select("ckb_transaction_id")
+            CkbTransaction.where(id: tx_ids.map(&:ckb_transaction_id)).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).order(id: :desc)
           end
           service.expire(key, 30)
         end
