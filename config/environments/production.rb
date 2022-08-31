@@ -105,4 +105,10 @@ Rails.application.configure do
   # config.active_record.database_resolver = ActiveRecord::Middleware::DatabaseSelector::Resolver
   # config.active_record.database_resolver_context = ActiveRecord::Middleware::DatabaseSelector::Resolver::Session
   #
+  # config/application.rb
+  config.action_dispatch.rack_cache = {
+    verbose: true,
+    metastore: File.join(ENV["MEMCACHED_URL"], "meta"),
+    entitystore: File.join(ENV["MEMCACHED_URL"], "body")
+  }
 end
