@@ -89,11 +89,18 @@ class TokenTransferDetectWorker
 
     coll = TokenCollection.find_or_create_by(
       standard: 'nrc_721',
-      symbol:  nrc_721_factory_cell.symbol.to_s[0, 16],
-      name: nrc_721_factory_cell.name,
-      cell_id: nrc_721_factory_cell.id,
-      icon_url: nrc_721_factory_cell.base_token_uri
+      type_script: nrc_721_factory_cell.type_script
     )
+
+    if coll.cell_id.blank? or coll.cell_id < nrc_721_factory_cell.id
+      coll.update(
+        cell_id: nrc_721_factory_cell.id,
+        symbol:  nrc_721_factory_cell.symbol.to_s[0, 16],
+        name: nrc_721_factory_cell.name,
+        icon_url: nrc_721_factory_cell.base_token_uri
+      )
+    end
+    coll
   end
 
   def find_or_create_m_nft_collection(cell, type_script)
@@ -101,15 +108,19 @@ class TokenTransferDetectWorker
       code_hash: CkbSync::Api.instance.token_class_script_code_hash, 
       args: type_script.args[0..49]
     )
+    coll = TokenCollection.find_or_create_by(
+      standard: 'm_nft',
+      type_script_id: m_nft_class_type.id,
+    )
     m_nft_class_cell = m_nft_class_type.cell_outputs.last
-    if m_nft_class_cell.present?
+    if m_nft_class_cell.present? and (coll.cell_id.blank? or coll.cell_id < m_nft_class_cell.id)
       parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
-      coll = TokenCollection.find_or_create_by(
-        standard: 'm_nft',
-        name: parsed_class_data.name,
-        cell_id: m_nft_class_cell.id,
-        icon_url: parsed_class_data.renderer
-      )
+      coll.cell_id = m_nft_class_cell.id
+      coll.icon_url = parsed_class_data.renderer
+      coll.name = parsed_class_data.name
+      coll.description = parsed_class_data.description
+      coll.save
     end     
+    coll
   end
 end

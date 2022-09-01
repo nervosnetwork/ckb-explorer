@@ -176,7 +176,16 @@ module Api
         address.query_address = address.address_hash
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal [{ "symbol" => factory_cell.symbol, "amount" => udt_account.nft_token_id.to_s, "type_hash" => udt_account.type_hash, "udt_icon_file" => "https://dev.nrc.com/1a2b3c", "udt_type" => udt_account.udt_type }], json.dig("data", "attributes", "udt_accounts")
+        assert_equal [
+          { 
+            "symbol" => factory_cell.symbol, 
+            "amount" => udt_account.nft_token_id.to_s, 
+            "type_hash" => udt_account.type_hash, 
+            "udt_icon_file" => "https://dev.nrc.com/1a2b3c", 
+            "udt_type" => udt_account.udt_type,
+            "collection" => {"type_hash" => nil}
+          }
+        ], json.dig("data", "attributes", "udt_accounts")
       end
     end
   end

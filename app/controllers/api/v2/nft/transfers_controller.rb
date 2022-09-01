@@ -7,11 +7,13 @@ module Api
           if /\A\d+\z/.match?(params[:collection_id])
             @collection = TokenCollection.find params[:collection_id]
           else
-            @type_script = TypeScript.find_by script_hash: params[:collection_id]
-            @collection = TokenCollection.find_by type_script_id: @type_script.id
+            @type_script = TypeScript.find_by! script_hash: params[:collection_id]
+            @collection = TokenCollection.find_by! type_script_id: @type_script.id
           end
         end
-        @item = @collection.items.find_by token_id: params[:item_id] if params[:item_id]
+        if @collection && params[:token_id]
+          @item = @collection.items.find_by token_id: params[:token_id]
+        end
 
         if @item
           scope = @item.transfers

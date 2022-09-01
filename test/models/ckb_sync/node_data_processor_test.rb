@@ -2847,11 +2847,6 @@ module CkbSync
       Sidekiq::Testing.inline!
       block = node_data_processor.process_block(node_block)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-      block.ckb_transactions.pluck(:contained_address_ids).uniq.each do |ids|
-        ids.each do |id|
-          assert $redis.zcard("Address/txs/#{id}") > 0
-        end
-      end
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_data_processor.call
