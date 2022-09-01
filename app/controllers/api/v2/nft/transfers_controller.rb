@@ -11,7 +11,9 @@ module Api
             @collection = TokenCollection.find_by! type_script_id: @type_script.id
           end
         end
-        @item = @collection.items.find_by token_id: params[:item_id] if params[:item_id]
+        if @collection && params[:token_id]
+          @item = @collection.items.find_by token_id: params[:token_id]
+        end
 
         if @item
           scope = @item.transfers
