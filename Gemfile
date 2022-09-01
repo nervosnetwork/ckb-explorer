@@ -113,4 +113,6 @@ end
 gem "tzinfo-data", platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 gem "redis-objects"
 gem "pagy"
-gem 'http'
+gem "http"
+gem "rack-cache"
+gem "dalli"

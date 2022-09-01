@@ -5,6 +5,11 @@ class TokenCollection < ApplicationRecord
   belongs_to :type_script, optional: true
   has_many :transfers, class_name: "TokenTransfer", through: :items
 
+  def self.find_by_type_hash(type_hash)
+    ts = TypeScript.find_by! script_hash: type_hash
+    TokenCollection.find_by! type_script_id: ts.id
+  end
+
   def as_json(options = {})
     {
       id: id,
@@ -25,13 +30,49 @@ class TokenCollection < ApplicationRecord
     self.type_script_id = cell.type_script_id if cell
   end
 
-  def self.update_cell
-    where(cell_id: nil).where.not(type_script_id: nil).find_each do |tc|
-      c = tc.type_script.cell_outputs.last
-      tc.cell_id = c.id
-      tc.creator_id = c.address_id
+  def update_info
+    tc = self
+    ts = tc.type_script
+    c = ts.cell_outputs.last
+    tc.cell_id = c.id
+    tc.creator_id = c.address_id
 
-      tc.save
+    case tc.standard 
+    when 'm_nft'
+      parsed_class_data = CkbUtils.parse_token_class_data(c.data)
+      tc.icon_url = parsed_class_data.renderer
+      tc.name = parsed_class_data.name
+      tc.description = parsed_class_data.description
+    when 'nrc_721'
+      # nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: ts.code_hash, hash_type: ts.hash_type, args: ts.args)
+      parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(c.data)
+      tc.symbol = parsed_factory_data.symbol
+      tc.name = parsed_factory_data.name
+      tc.icon_url = parsed_factory_data.base_token_uri
+    end
+
+    tc.save    
+  end
+
+  def update_udt_info
+    items.find_each do |item|
+      ts = item.type_script
+      Udt.where(
+        code_hash: ts.code_hash, 
+        hash_type: ts.hash_type,
+        args: ts.args
+      ).update_all(
+        symbol: symbol,
+        full_name: name,
+        description: description,
+        icon_file: icon_url
+      )      
+    end
+  end
+
+  def self.update_cell
+    where.not(type_script_id: nil).find_each do |tc|
+      tc.update_info
     end
   end
 end

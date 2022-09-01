@@ -4,11 +4,12 @@ module Api
       before_action :validate_query_params, only: :show
 
       def show
-        if params[:id] == 'average_block_time'
+        expires_in 1.hour, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 1.hour
+        if params[:id] == "average_block_time"
           render json: {
             data: {
-              id: Time.current.to_i, 
-              type: "distribution_data", 
+              id: Time.current.to_i,
+              type: "distribution_data",
               attributes: {
                 average_block_time: RollingAvgBlockTime.all
               }
