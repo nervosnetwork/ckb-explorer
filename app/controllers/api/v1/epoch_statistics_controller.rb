@@ -4,7 +4,7 @@ module Api
       before_action :validate_query_params
 
       def show
-        
+        expires_in 30.minutes, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 10.minutes
         if params[:limit]
           scope = EpochStatistic.order(epoch_number: :desc)
           scope = scope.limit(params[:limit])
