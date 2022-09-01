@@ -112,6 +112,7 @@ GEM
     crack (0.4.5)
       rexml
     crass (1.0.6)
+    dalli (3.2.2)
     database_cleaner (2.0.1)
       database_cleaner-active_record (~> 2.0.0)
     database_cleaner-active_record (2.0.1)
@@ -262,6 +263,8 @@ GEM
     rack (2.2.3.1)
     rack-attack (6.5.0)
       rack (>= 1.0, < 3)
+    rack-cache (1.13.0)
+      rack (>= 0.4)
     rack-cors (1.1.1)
       rack (>= 2.0.0)
     rack-test (1.1.0)
@@ -426,6 +429,7 @@ DEPENDENCIES
   ckb-sdk-ruby!
   codecov
   config
+  dalli
   database_cleaner
   digest-crc
   dotenv-rails
@@ -446,6 +450,7 @@ DEPENDENCIES
   pry-rails
   puma (~> 4.3.12)
   rack-attack
+  rack-cache
   rack-cors
   rails (~> 6.1.0)
   redis (~> 4.2.0)
