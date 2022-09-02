@@ -1,7 +1,7 @@
 class TokenCollection < ApplicationRecord
   has_many :items, class_name: "TokenItem", foreign_key: :collection_id
   belongs_to :creator, class_name: "Address", optional: true
-  belongs_to :cell, class_name: 'CellOutput', optional: true
+  belongs_to :cell, class_name: "CellOutput", optional: true
   belongs_to :type_script, optional: true
   has_many :transfers, class_name: "TokenTransfer", through: :items
 
@@ -37,13 +37,13 @@ class TokenCollection < ApplicationRecord
     tc.cell_id = c.id
     tc.creator_id = c.address_id
 
-    case tc.standard 
-    when 'm_nft'
+    case tc.standard
+    when "m_nft"
       parsed_class_data = CkbUtils.parse_token_class_data(c.data)
       tc.icon_url = parsed_class_data.renderer
       tc.name = parsed_class_data.name
       tc.description = parsed_class_data.description
-    when 'nrc_721'
+    when "nrc721"
       # nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: ts.code_hash, hash_type: ts.hash_type, args: ts.args)
       parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(c.data)
       tc.symbol = parsed_factory_data.symbol
@@ -51,14 +51,14 @@ class TokenCollection < ApplicationRecord
       tc.icon_url = parsed_factory_data.base_token_uri
     end
 
-    tc.save    
+    tc.save
   end
 
   def update_udt_info
     items.find_each do |item|
       ts = item.type_script
       Udt.where(
-        code_hash: ts.code_hash, 
+        code_hash: ts.code_hash,
         hash_type: ts.hash_type,
         args: ts.args
       ).update_all(
@@ -66,7 +66,7 @@ class TokenCollection < ApplicationRecord
         full_name: name,
         description: description,
         icon_file: icon_url
-      )      
+      )
     end
   end
 
