@@ -1,9 +1,10 @@
-class TokenTransferDetectWorker 
+class TokenTransferDetectWorker
   include Sidekiq::Worker
 
   def perform(tx_id)
     tx = CkbTransaction.find tx_id
     return unless tx
+
     source_tokens = {}
     source_collections = []
 
@@ -22,7 +23,7 @@ class TokenTransferDetectWorker
         attrs = {
           item: item,
           transaction_id: tx.id,
-          action: :normal, 
+          action: :normal,
           to_id: output.address_id
         }
 
@@ -41,15 +42,16 @@ class TokenTransferDetectWorker
     # so they are destruction.
     source_tokens.each do |type_script_id, cell|
       item = TokenItem.find_by type_script_id: type_script_id
-      t = TokenTransfer
-            .create_with(action: :destruction, from_id: cell.address_id)
-            .find_or_create_by( item_id: item.id, transaction_id: tx.id)
+      t = TokenTransfer.
+        create_with(action: :destruction, from_id: cell.address_id).
+        find_or_create_by(item_id: item.id, transaction_id: tx.id)
     end
   end
 
   def find_or_create_item(cell, type_script)
     coll = find_or_create_collection(cell, type_script)
     return unless coll
+
     item = TokenItem.find_or_initialize_by(type_script_id: type_script.id)
     item.collection = coll
     if item.cell
@@ -60,21 +62,22 @@ class TokenTransferDetectWorker
       item.cell = cell
     end
     item.owner_id = item.cell.address_id
-    item.token_id = case cell.cell_type 
-    when 'm_nft_token'
-      type_script.args[50..-1].hex
-    when 'nrc_721_token'
-      type_script.args[130..-1].hex
-    end
+    item.token_id =
+      case cell.cell_type
+         when "m_nft_token"
+           type_script.args[50..-1].hex
+         when "nrc_721_token"
+           type_script.args[130..-1].hex
+      end
     item.save!
     item
   end
 
   def find_or_create_collection(cell, type_script)
-    case cell.cell_type 
-    when 'nrc_721_token'
+    case cell.cell_type
+    when "nrc_721_token"
       find_or_create_nrc_721_collection(cell, type_script)
-    when 'm_nft_token'
+    when "m_nft_token"
       find_or_create_m_nft_collection(cell, type_script)
     end
   end
@@ -83,19 +86,19 @@ class TokenTransferDetectWorker
     factory_cell = CkbUtils.parse_nrc_721_args(type_script.args)
     nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args)
 
-    if nrc_721_factory_cell.name.blank? or nrc_721_factory_cell.symbol.blank?
+    if nrc_721_factory_cell.name.blank? || nrc_721_factory_cell.symbol.blank?
       nrc_721_factory_cell.parse_data
     end
 
     coll = TokenCollection.find_or_create_by(
-      standard: 'nrc_721',
+      standard: "nrc721",
       type_script: nrc_721_factory_cell.type_script
     )
 
-    if coll.cell_id.blank? or coll.cell_id < nrc_721_factory_cell.id
+    if coll.cell_id.blank? || (coll.cell_id < nrc_721_factory_cell.id)
       coll.update(
         cell_id: nrc_721_factory_cell.id,
-        symbol:  nrc_721_factory_cell.symbol.to_s[0, 16],
+        symbol: nrc_721_factory_cell.symbol.to_s[0, 16],
         name: nrc_721_factory_cell.name,
         icon_url: nrc_721_factory_cell.base_token_uri
       )
@@ -104,23 +107,23 @@ class TokenTransferDetectWorker
   end
 
   def find_or_create_m_nft_collection(cell, type_script)
-    m_nft_class_type = TypeScript.create_with(hash_type: 'type').find_or_create_by!(
-      code_hash: CkbSync::Api.instance.token_class_script_code_hash, 
+    m_nft_class_type = TypeScript.create_with(hash_type: "type").find_or_create_by!(
+      code_hash: CkbSync::Api.instance.token_class_script_code_hash,
       args: type_script.args[0..49]
     )
     coll = TokenCollection.find_or_create_by(
-      standard: 'm_nft',
-      type_script_id: m_nft_class_type.id,
+      standard: "m_nft",
+      type_script_id: m_nft_class_type.id
     )
     m_nft_class_cell = m_nft_class_type.cell_outputs.last
-    if m_nft_class_cell.present? and (coll.cell_id.blank? or coll.cell_id < m_nft_class_cell.id)
+    if m_nft_class_cell.present? && (coll.cell_id.blank? || (coll.cell_id < m_nft_class_cell.id))
       parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
       coll.cell_id = m_nft_class_cell.id
       coll.icon_url = parsed_class_data.renderer
       coll.name = parsed_class_data.name
       coll.description = parsed_class_data.description
       coll.save
-    end     
+    end
     coll
   end
 end
