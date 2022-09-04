@@ -58,6 +58,12 @@ class CotaAggregator
       token_index: '0x'+token_index.to_s(16)
     }
   end
+
+  def get_transactions_by_block_number(block_number)
+    send_request 'get_transactions_by_block_number', {
+      block_number: block_number.to_s
+    }
+  end
   
   def send_request(method, params)
     @req_id += 1

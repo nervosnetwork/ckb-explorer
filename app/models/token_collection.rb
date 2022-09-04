@@ -5,6 +5,19 @@ class TokenCollection < ApplicationRecord
   belongs_to :type_script, optional: true
   has_many :transfers, class_name: "TokenTransfer", through: :items
 
+  validates :sn, uniqueness: true, allow_nil: true
+
+  def self.find_by_sn(sn)
+    c = find_by sn: sn
+    return c if c
+    c = find_by_type_hash(sn)
+    if c
+      c.sn = sn
+      c.save
+    end
+    c
+  end
+
   def self.find_by_type_hash(type_hash)
     ts = TypeScript.find_by! script_hash: type_hash
     TokenCollection.find_by! type_script_id: ts.id
