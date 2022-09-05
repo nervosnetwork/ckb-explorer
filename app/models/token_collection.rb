@@ -10,6 +10,7 @@ class TokenCollection < ApplicationRecord
   def self.find_by_sn(sn)
     c = find_by sn: sn
     return c if c
+
     c = find_by_type_hash(sn)
     if c
       c.sn = sn
@@ -108,9 +109,11 @@ end
 #  cell_id        :integer
 #  verified       :boolean          default(FALSE)
 #  type_script_id :integer
+#  sn             :string
 #
 # Indexes
 #
 #  index_token_collections_on_cell_id         (cell_id)
+#  index_token_collections_on_sn              (sn) UNIQUE
 #  index_token_collections_on_type_script_id  (type_script_id)
 #
