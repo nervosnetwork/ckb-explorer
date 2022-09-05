@@ -10,7 +10,7 @@ class FetchCotaWorker
       puts t.inspect
       collection = find_or_create_collection(t)
       item = find_or_create_item(collection, t)
-      type =
+      action =
         case t["type"]
              when "mint"
                "mint"
@@ -18,11 +18,11 @@ class FetchCotaWorker
                "normal"
         end
       tx = CkbTransaction.find_by tx_hash: t["tx_hash"]
-      t = TokenTransfer.find_or_initialize_by item_id: item.id, transaction_id: tx.id
-      unless t.persisted?
+      tt = TokenTransfer.find_or_initialize_by item_id: item.id, transaction_id: tx.id
+      unless tt.persisted?
         from = Address.find_by_address_hash(t["from"])
         to = Address.find_by_address_hash(t["to"])
-        t.update(from: from, to: to, type: type)
+        tt.update(from: from, to: to, action: action)
       end
     end
   end
