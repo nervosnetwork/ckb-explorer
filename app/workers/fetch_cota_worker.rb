@@ -20,9 +20,9 @@ class FetchCotaWorker
       tx = CkbTransaction.find_by tx_hash: t["tx_hash"]
       tt = TokenTransfer.find_or_initialize_by item_id: item.id, transaction_id: tx.id
       unless tt.persisted?
-        from = Address.find_by_address_hash(t["from"])
-        to = Address.find_by_address_hash(t["to"])
-        tt.update(from: from, to: to, action: action)
+        from = Address.find_or_create_by_address_hash(t["from"])
+        to = Address.find_or_create_by_address_hash(t["to"])
+        tt.update!(from: from, to: to, action: action)
       end
     end
   end
@@ -33,21 +33,27 @@ class FetchCotaWorker
       find_or_initialize_by(standard: "cota", sn: cota_id)
     unless c.persisted?
       info = CotaAggregator.instance.get_define_info(cota_id)
+      issuer = CotaAggregator.instance.get_issuer_info_by_cota_id(cota_id)
+      block = Block.find_by number: t['block_number']
+      
+      addr = Address.cached_find issuer['lock_hash']
       c.update(
         name: info["name"],
         symbol: info["symbol"],
         description: info["description"],
+        creator_id: addr.id,
         icon_url: info["image"]
       )
-      c.save
+      c.save!
     end
     c
   end
 
   def find_or_create_item(collection, t)
-    to = Address.find_by_address_hash t["to"]
+    to = Address.find_or_create_by_address_hash t["to"]
     i = collection.items.find_or_create_by(token_id: t["token_index"].hex)
-    i.update owner: to
+    i.update! owner: to
     i
   end
+
 end

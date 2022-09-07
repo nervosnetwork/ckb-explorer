@@ -103,6 +103,7 @@ module CkbSync
         flush_inputs_outputs_caches(local_block)
         generate_statistics_data(local_block)
       end
+      FetchCotaWorker.perform_async(local_block.number)
 
       local_block
     end

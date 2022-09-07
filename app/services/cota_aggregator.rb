@@ -35,6 +35,12 @@ class CotaAggregator
     }
   end
 
+  def get_issuer_info_by_cota_id(cota_id)
+    send_request 'get_issuer_info_by_cota_id', {
+      cota_id: cota_id
+    }
+  end
+
   def is_claimed(lock_script:, cota_id:, token_index:)
     send_request 'is_claimed', {
       cota_id: cota_id,

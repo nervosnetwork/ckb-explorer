@@ -31,13 +31,6 @@ COMMENT ON EXTENSION btree_gin IS 'support for indexing common datatypes in GIN'
 
 
 --
--- Name: pg_hint_plan; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS pg_hint_plan WITH SCHEMA hint_plan;
-
-
---
 -- Name: array_subtract(anyarray, anyarray); Type: FUNCTION; Schema: public; Owner: -
 --
 

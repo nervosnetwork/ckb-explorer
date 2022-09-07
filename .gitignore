@@ -10,6 +10,7 @@ ckb-explorer.iml
 .bundle
 .env.local
 .env.test
+.env.test.local
 
 # server config
 config/settings.local.yml
@@ -37,3 +38,4 @@ config/master.key
 # Ignore coverage results
 coverage/*
 data
+.env.test.local
