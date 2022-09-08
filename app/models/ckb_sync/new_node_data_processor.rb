@@ -12,8 +12,8 @@ module CkbSync
     #           :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes
 
-    def initialize(enable_cota: ENV.fetch('ENABLE_COTA', 'true'))
-      @enable_cota = (enable_cota == 'true') || (enable_cota == true) 
+    def initialize(enable_cota=ENV['COTA_AGGREGATOR_URL'].present?)
+      @enable_cota = enable_cota
       @local_cache = LocalCache.new
     end
 
