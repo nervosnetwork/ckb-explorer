@@ -103,21 +103,23 @@ module CkbSync
         flush_inputs_outputs_caches(local_block)
         generate_statistics_data(local_block)
       end
-      
+
       local_block
     end
 
     def check_invalid_address(address)
-      if address.balance < 0 or address.balance_occupied < 0
-        wrong_balance, wrong_balance_occupied = address.balance, address.balance_occupied
+      if (address.balance < 0) || (address.balance_occupied < 0)
+        wrong_balance = address.balance
+        wrong_balance_occupied = address.balance_occupied
         Sentry.capture_message(
-          'balance invalid', 
+          "balance invalid",
           extra: {
             block: @tip_block_number,
-            address: address.address_hash, 
+            address: address.address_hash,
             wrong_balance: wrong_balance,
-            wrong_balance_occupied: wrong_balance_occupied,
-          })
+            wrong_balance_occupied: wrong_balance_occupied
+          }
+        )
       end
     end
 
@@ -521,7 +523,7 @@ module CkbSync
       ### here we use one by one update (maybe slower)
       addrs_change.each do |addr_id, values|
         addr = Address.find addr_id
-        check_invalid_address(addr)        
+        check_invalid_address(addr)
         balance_diff = values[:balance_diff]
         balance_occupied_diff = values[:balance_occupied_diff].presence || 0
         live_cells_diff = values[:cells_diff]
@@ -561,13 +563,13 @@ module CkbSync
               m_nft_class_cell = m_nft_class_type.cell_outputs.last
               parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
               coll = TokenCollection.find_or_create_by(
-                standard: 'm_nft',
+                standard: "m_nft",
                 name: parsed_class_data.name,
                 cell_id: m_nft_class_cell.id,
                 icon_url: parsed_class_data.renderer,
-                creator_id: m_nft_class_cell.address_id,
+                creator_id: m_nft_class_cell.address_id
               )
-  
+
               nft_token_attr[:full_name] = parsed_class_data.name
               nft_token_attr[:icon_file] = parsed_class_data.renderer
               nft_token_attr[:published] = true
@@ -803,8 +805,7 @@ module CkbSync
               TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
             end
 
-
-            case attributes[1][:cell_type] 
+            case attributes[1][:cell_type]
             when "udt"
               tags[tx_index] << "udt"
               udt_address_ids[tx_index] << attributes[4]
@@ -1205,7 +1206,7 @@ module CkbSync
       local_tip_block.contained_addresses.each do |address|
         address.live_cells_count = address.cell_outputs.live.count
         # address.ckb_transactions_count = address.custom_ckb_transactions.count
-        address.ckb_transactions_count = AccountBook.where(address_id: address.id).count  
+        address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
         address.dao_transactions_count = address.ckb_dao_transactions.count
         address.cal_balance!
         address.save!
@@ -1352,12 +1353,10 @@ module CkbSync
     end
 
     def update_nrc_factory_cell_info(type_script, output_data)
-      factory_cell = NrcFactoryCell.find_by(code_hash: type_script.code_hash, hash_type: type_script.hash_type, args: type_script.args)
-      # if factory_cell&.verified
+      factory_cell = NrcFactoryCell.find_or_create_by(code_hash: type_script.code_hash, hash_type: type_script.hash_type, args: type_script.args)
+      # if  factory_cell&.verified
       parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(output_data)
       factory_cell.update(name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, base_token_uri: parsed_factory_data.base_token_uri, extra_data: parsed_factory_data.extra_data)
-      
-      # end
     end
 
     class LocalCache
