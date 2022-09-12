@@ -35,6 +35,12 @@ class CotaAggregator
     }
   end
 
+  def get_issuer_info_by_cota_id(cota_id)
+    send_request 'get_issuer_info_by_cota_id', {
+      cota_id: cota_id
+    }
+  end
+
   def is_claimed(lock_script:, cota_id:, token_index:)
     send_request 'is_claimed', {
       cota_id: cota_id,
@@ -56,6 +62,12 @@ class CotaAggregator
       cota_id: cota_id, 
       lock_script: lock_script,
       token_index: '0x'+token_index.to_s(16)
+    }
+  end
+
+  def get_transactions_by_block_number(block_number)
+    send_request 'get_transactions_by_block_number', {
+      block_number: block_number.to_s
     }
   end
   

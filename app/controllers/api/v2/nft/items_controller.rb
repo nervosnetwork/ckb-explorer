@@ -3,14 +3,20 @@ module Api
     class NFT::ItemsController < BaseController
       before_action :find_collection
       def index
-        scope = TokenItem.all
-        @owner = Address.find_address!(params[:owner]) if params[:owner]
+        scope = TokenItem.includes(:collection)
+        if params[:owner]
+          @owner = Address.find_address!(params[:owner]) 
+          scope = scope.where(owner_id: @owner.id)
+        end
         scope = scope.where(collection_id: @collection.id) if @collection
-
-        scope = scope.where(standard) if params[:standard]
-        scope = scope.where(owner_id: @owner.id) if params[:owner]
+        scope = scope.where(collection:{standard: params[:standard]}) if params[:standard]
         scope = scope.order(token_id: :asc)
         @pagy, @items = pagy(scope)
+        @items = @items.map do |i| 
+          j = i.as_json
+          j['collection'] = i.collection.as_json
+          j
+        end
         render json: {
           data: @items,
           pagination: pagy_metadata(@pagy)
@@ -37,8 +43,7 @@ module Api
           if /\A\d+\z/.match?(params[:collection_id])
             @collection = TokenCollection.find params[:collection_id]
           else
-            @type_script = TypeScript.find_by script_hash: params[:collection_id]
-            @collection = TokenCollection.find_by type_script_id: @type_script.id
+            @collection = TokenCollection.find_by_sn params[:collection_id]
           end
         end
       end

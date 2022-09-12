@@ -301,6 +301,19 @@ class AddressTest < ActiveSupport::TestCase
     assert_equal address, actual_address
   end
 
+  test "#find_or_create_by_address_hash" do
+    lock_script = CKB::Types::Script.new(
+      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99")
+    lock_hash = lock_script.compute_hash
+    full_addr = CkbUtils.generate_address(lock_script)
+    addr = Address.find_or_create_by_address_hash(full_addr)
+    assert addr.persisted?
+    assert_equal addr.lock_hash, lock_hash
+    assert_equal addr.address_hash, full_addr
+    assert_equal addr, Address.find_by_address_hash(full_addr)
+  end
+
+
   test "tx_list_cache_key should return right key" do
     addr = create(:address)
     assert_equal "Address/txs/#{addr.id}", addr.tx_list_cache_key
