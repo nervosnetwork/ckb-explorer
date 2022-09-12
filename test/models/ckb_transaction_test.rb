@@ -335,10 +335,16 @@ class CkbTransactionTest < ActiveSupport::TestCase
     address = create(:address)
     udt_account = create(:udt_account, udt: udt, address: address, nft_token_id: "22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8")
 
-    factory_info = {:symbol => "TTF"} 
-    token_info = {:symbol => "TTF", :amount => udt_account.nft_token_id}
+    factory_info = { symbol: "TTF" }
+    token_info = { symbol: "TTF", amount: udt_account.nft_token_id }
     display_outputs = nrc_721_token_output_transaction.display_outputs
     assert_equal factory_info.to_a, display_outputs.first[:nrc_721_token_info].to_a
     assert_equal token_info, display_outputs.last[:nrc_721_token_info]
+  end
+
+  test "#to_raw should return raw tx json structure" do
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
+    json = ckb_transaction.to_raw
+    assert_equal %w(hash header_deps inputs outputs outputs_data version witnesses).sort, json.keys.sort
   end
 end
