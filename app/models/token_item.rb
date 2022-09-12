@@ -39,7 +39,7 @@ end
 #
 #  id             :bigint           not null, primary key
 #  collection_id  :integer
-#  token_id       :integer
+#  token_id       :decimal(80, )
 #  name           :string
 #  icon_url       :string
 #  owner_id       :integer

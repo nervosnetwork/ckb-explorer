@@ -31,6 +31,13 @@ COMMENT ON EXTENSION btree_gin IS 'support for indexing common datatypes in GIN'
 
 
 --
+-- Name: pg_hint_plan; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_hint_plan WITH SCHEMA hint_plan;
+
+
+--
 -- Name: array_subtract(anyarray, anyarray); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1100,7 +1107,7 @@ ALTER SEQUENCE public.token_issuers_id_seq OWNED BY public.token_issuers.id;
 CREATE TABLE public.token_items (
     id bigint NOT NULL,
     collection_id integer,
-    token_id integer,
+    token_id numeric(80,0),
     name character varying,
     icon_url character varying,
     owner_id integer,
@@ -2589,6 +2596,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220822155712'),
 ('20220830023203'),
 ('20220830163001'),
-('20220904005610');
+('20220904005610'),
+('20220912154933');
 
 
