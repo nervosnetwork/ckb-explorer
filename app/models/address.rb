@@ -46,6 +46,23 @@ class Address < ApplicationRecord
     find_by lock_hash: lock_hash
   end
 
+  def self.find_or_create_by_address_hash(address_hash, block_timestamp=0)
+    
+    parsed = CkbUtils.parse_address(address_hash)
+    lock_hash = parsed.script.compute_hash
+    lock_script = LockScript.find_by(
+      code_hash: parsed.code_hash,
+      hash_type: parsed.hash_type,
+      args: parsed.args
+    )
+
+    create_with(
+      address_hash: CkbUtils.generate_address(parsed.script), 
+      block_timestamp: block_timestamp,
+      lock_script_id: lock_script&.id,
+    ).find_or_create_by lock_hash: lock_hash
+  end
+
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     lock_hash = lock_script.compute_hash
     address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
@@ -130,7 +147,7 @@ class Address < ApplicationRecord
   end
 
   def cache_keys
-    %W(#{self.class.name}/#{address_hash} #{self.class.name}/#{lock_hash})
+    %W(#{self.class.name}/#{lock_hash})
   end
 
   def special?

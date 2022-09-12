@@ -14,7 +14,6 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
-  enable_extension "pg_hint_plan"
   enable_extension "plpgsql"
 
   create_table "account_books", force: :cascade do |t|

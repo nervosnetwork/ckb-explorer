@@ -5,13 +5,15 @@ module CkbSync
   class NewNodeDataProcessor
     # include BenchmarkMethods
 
+    attr_accessor :enable_cota
     # benchmark :call, :process_block, :build_block!, :build_uncle_blocks!, :build_ckb_transactions!, :build_udts!, :process_ckb_txs, :build_cells_and_locks!,
     #           :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
     #           :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
     #           :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes
 
-    def initialize
+    def initialize(enable_cota=ENV['COTA_AGGREGATOR_URL'].present?)
+      @enable_cota = enable_cota
       @local_cache = LocalCache.new
     end
 
@@ -103,6 +105,7 @@ module CkbSync
         flush_inputs_outputs_caches(local_block)
         generate_statistics_data(local_block)
       end
+      FetchCotaWorker.perform_async(local_block.number) if enable_cota
 
       local_block
     end
