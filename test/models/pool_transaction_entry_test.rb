@@ -10,4 +10,10 @@ class PoolTransactionEntryTest < ActiveSupport::TestCase
     tx = create(:pool_transaction_entry)
     assert_nil tx.income
   end
+  test "#to_raw should return raw tx json structure" do
+    tx = create(:pool_transaction_entry)
+    json = tx.to_raw
+    assert_equal %w(hash header_deps inputs outputs outputs_data version witnesses).sort, tx.keys.sort
+  end
+
 end

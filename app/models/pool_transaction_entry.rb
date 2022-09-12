@@ -22,6 +22,19 @@ class PoolTransactionEntry < ApplicationRecord
   end
 
   def display_inputs_info; end
+
+  def to_raw
+    {
+      hash: tx_hash,
+      header_deps:  header_deps,
+      cell_deps: cell_deps,
+      inputs: inputs.map{|i| i['since'] = "0x#{i['since'].to_s(16)}"; i},
+      outputs: outputs.map{|i| i['capacity'] = "0x#{i['capacity'].to_s(16)}"; i},
+      outputs_data: outputs_data,
+      version: "0x#{version.to_s(16)}",
+      witnesses: witnesses,
+    }
+  end
 end
 
 # == Schema Information
