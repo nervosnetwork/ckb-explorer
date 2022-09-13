@@ -80,7 +80,10 @@ class CkbTransaction < ApplicationRecord
     {
       hash: tx_hash,
       header_deps: Array.wrap(header_deps),
-      cell_deps: cell_deps,
+      cell_deps: Array.wrap(cell_deps).map do |d|
+        d["out_point"]["index"] = "0x#{d['out_point']['index'].to_s(16)}"
+        d
+      end,
       inputs: cell_inputs.map(&:to_raw),
       outputs: _outputs.map(&:to_raw),
       outputs_data: _outputs.map(&:data),

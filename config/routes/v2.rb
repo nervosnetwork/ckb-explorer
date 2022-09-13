@@ -1,5 +1,10 @@
 namespace :api do
   namespace :v2 do
+    resources :transactions, only: [:index, :show] do
+      member do
+        get :raw
+      end
+    end
     namespace :nft do
       resources :collections do
         resources :holders, only: :index
@@ -10,7 +15,7 @@ namespace :api do
       end
       namespace :cota do
         resources :nft_classes, only: :index do
-          resources :tokens, only: :index do 
+          resources :tokens, only: :index do
             member do
               get :claimed
               get :sender
@@ -19,11 +24,10 @@ namespace :api do
         end
         resources :transactions, only: :index
         resources :issuers, only: :show do
-          member do 
+          member do
             get :minted
           end
         end
-        
       end
       resources :items, only: :index
       resources :transfers, only: [:index, :show]

@@ -73,7 +73,7 @@ class CellOutput < ApplicationRecord
 
   def to_raw
     {
-      capacity: "0x#{capacity.to_s(16)}",
+      capacity: "0x#{capacity.to_i.to_s(16)}",
       lock: lock_script&.to_node_lock,
       type: type_script&.to_node_type
     }
