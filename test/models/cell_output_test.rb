@@ -24,7 +24,7 @@ class CellOutputTest < ActiveSupport::TestCase
     block = create(:block)
     cell_output = create(:cell_output, :with_full_transaction, block: block)
     raw = cell_output.to_raw
-    assert_equal %w(capacity lock type).sort, raw.keys.sort
+    assert_equal %i(capacity lock type).sort, raw.keys.sort
     assert_equal raw[:lock][:code_hash], cell_output.lock_script.code_hash
     assert_equal raw[:lock][:args], cell_output.lock_script.args
     assert_equal raw[:lock][:hash_type], cell_output.lock_script.hash_type
