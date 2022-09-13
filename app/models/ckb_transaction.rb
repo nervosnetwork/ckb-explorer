@@ -14,6 +14,7 @@ class CkbTransaction < ApplicationRecord
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
   has_many :dao_events
+  has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all
 
   attribute :tx_hash, :ckb_hash
   attribute :header_deps, :ckb_array_hash, hash_length: ENV["DEFAULT_HASH_LENGTH"]

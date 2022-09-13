@@ -1,11 +1,11 @@
 class TokenItem < ApplicationRecord
-  belongs_to :collection, class_name: 'TokenCollection'
-  belongs_to :owner, class_name: 'Address'
-  belongs_to :cell, class_name: 'CellOutput', optional: true
+  belongs_to :collection, class_name: "TokenCollection"
+  belongs_to :owner, class_name: "Address"
+  belongs_to :cell, class_name: "CellOutput", optional: true
   belongs_to :type_script, optional: true
-  has_many :transfers, class_name: 'TokenTransfer', foreign_key: :item_id
+  has_many :transfers, class_name: "TokenTransfer", foreign_key: :item_id
 
-  validates :token_id, uniqueness:{scope: :collection_id}
+  validates :token_id, uniqueness: { scope: :collection_id }
 
   before_save :update_type_script
 
@@ -13,7 +13,7 @@ class TokenItem < ApplicationRecord
     self.type_script_id = cell&.type_script_id
   end
 
-  def as_json(options={})
+  def as_json(options = {})
     {
       id: id,
       token_id: token_id,
@@ -39,7 +39,7 @@ end
 #
 #  id             :bigint           not null, primary key
 #  collection_id  :integer
-#  token_id       :string
+#  token_id       :decimal(80, )
 #  name           :string
 #  icon_url       :string
 #  owner_id       :integer
