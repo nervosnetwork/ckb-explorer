@@ -26,13 +26,13 @@ class PoolTransactionEntry < ApplicationRecord
   def to_raw
     {
       hash: tx_hash,
-      header_deps:  header_deps,
-      cell_deps: cell_deps,
-      inputs: inputs.map{|i| i['since'] = "0x#{i['since'].to_s(16)}"; i},
-      outputs: outputs.map{|i| i['capacity'] = "0x#{i['capacity'].to_s(16)}"; i},
-      outputs_data: outputs_data,
-      version: "0x#{version.to_s(16)}",
-      witnesses: witnesses,
+      header_deps:  Array.wrap(header_deps),
+      cell_deps: Array.wrap(cell_deps),
+      inputs: Array.wrap(inputs).map{|i| i['since'] = "0x#{i['since'].to_s(16)}"; i},
+      outputs: Array.wrap(outputs).map{|i| i['capacity'] = "0x#{i['capacity'].to_s(16)}"; i},
+      outputs_data: Array.wrap(outputs_data),
+      version: "0x#{(version||0).to_s(16)}",
+      witnesses: Array.wrap(witnesses),
     }
   end
 end

@@ -345,6 +345,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
   test "#to_raw should return raw tx json structure" do
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs)
     json = ckb_transaction.to_raw
-    assert_equal %w(hash header_deps inputs outputs outputs_data version witnesses).sort, json.keys.sort
+    assert_equal %w(hash header_deps cell_deps inputs outputs outputs_data version witnesses).sort, json.keys.map(&:to_s).sort
   end
 end
