@@ -75,6 +75,23 @@ class CkbTransaction < ApplicationRecord
     nil
   end
 
+  def to_raw
+    _outputs = cell_outputs.order(cell_index: :asc).to_a
+    {
+      hash: tx_hash,
+      header_deps: Array.wrap(header_deps),
+      cell_deps: Array.wrap(cell_deps).map do |d|
+        d["out_point"]["index"] = "0x#{d['out_point']['index'].to_s(16)}"
+        d
+      end,
+      inputs: cell_inputs.map(&:to_raw),
+      outputs: _outputs.map(&:to_raw),
+      outputs_data: _outputs.map(&:data),
+      version: "0x#{version.to_s(16)}",
+      witnesses: witnesses
+    }
+  end
+
   def tx_display_info
     TxDisplayInfo.find_by(ckb_transaction_id: self.id)
   end
@@ -108,8 +125,8 @@ class CkbTransaction < ApplicationRecord
   private
 
   def normal_tx_display_outputs(previews)
-    cell_outputs_for_display = outputs.sort{|a,b| a.id <=> b.id }
-    if previews 
+    cell_outputs_for_display = outputs.sort_by(&:id)
+    if previews
       cell_outputs_for_display = cell_outputs_for_display[0, 10]
     end
     cell_outputs_for_display.map do |output|
@@ -124,7 +141,7 @@ class CkbTransaction < ApplicationRecord
   end
 
   def cellbase_display_outputs
-    cell_outputs_for_display = outputs.to_a.sort{|a,b| a.id <=> b.id}
+    cell_outputs_for_display = outputs.to_a.sort_by(&:id)
     cellbase = Cellbase.new(block)
     cell_outputs_for_display.map do |output|
       consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
@@ -133,20 +150,20 @@ class CkbTransaction < ApplicationRecord
   end
 
   def normal_tx_display_inputs(previews)
-    cell_inputs_for_display = cell_inputs.to_a.sort{|a,b| a.id <=> b.id }
-    if previews 
+    cell_inputs_for_display = cell_inputs.to_a.sort_by(&:id)
+    if previews
       cell_inputs_for_display = cell_inputs_for_display[0, 10]
-    end    
+    end
     cell_inputs_for_display.each_with_index.map do |cell_input, index|
       previous_cell_output = cell_input.previous_cell_output
-      display_input = { 
-        id: previous_cell_output.id, 
-        from_cellbase: false, 
-        capacity: previous_cell_output.capacity, 
-        address_hash: previous_cell_output.address_hash, 
-        generated_tx_hash: previous_cell_output.generated_by.tx_hash, 
-        cell_index: previous_cell_output.cell_index, 
-        cell_type: previous_cell_output.cell_type 
+      display_input = {
+        id: previous_cell_output.id,
+        from_cellbase: false,
+        capacity: previous_cell_output.capacity,
+        address_hash: previous_cell_output.address_hash,
+        generated_tx_hash: previous_cell_output.generated_by.tx_hash,
+        cell_index: previous_cell_output.cell_index,
+        cell_type: previous_cell_output.cell_type
       }
       display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
       display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
