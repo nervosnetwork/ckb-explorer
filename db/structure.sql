@@ -2054,13 +2054,6 @@ CREATE INDEX index_cell_outputs_on_type_script_id_and_id ON public.cell_outputs 
 
 
 --
--- Name: index_cell_outputs_on_type_script_id_and_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_on_type_script_id_and_id ON public.cell_outputs USING btree (type_script_id, id);
-
-
---
 -- Name: index_ckb_transactions_on_block_id_and_block_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2591,6 +2584,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220830163001'),
 ('20220904005610'),
 ('20220912154933');
-('20220830163001');
 
 
