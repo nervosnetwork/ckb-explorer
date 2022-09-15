@@ -3,8 +3,9 @@ module Api
     class TransactionsController < BaseController
       before_action :find_transaction, only: [:raw]
       def raw
-        fresh_when etag: @transaction.tx_hash, public: true
-        render json: @transaction.to_raw
+        if stale?(etag: @transaction.tx_hash, public: true)
+          render json: @transaction.to_raw
+        end
       end
 
       protected
