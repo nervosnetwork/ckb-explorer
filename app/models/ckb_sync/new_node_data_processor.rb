@@ -48,7 +48,9 @@ module CkbSync
         Rails.logger.error "process_block: #{target_block_number}"
         process_block(target_block)
       else
+        self.reorg_started_at = Time.now
         invalid_block(local_tip_block)
+        self.reorg_started_at.delete
       end
     rescue => e
       Rails.logger.error e.message
