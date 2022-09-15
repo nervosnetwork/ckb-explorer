@@ -71,6 +71,14 @@ class CellOutput < ApplicationRecord
     )
   end
 
+  def to_raw
+    {
+      capacity: "0x#{capacity.to_i.to_s(16)}",
+      lock: lock_script&.to_node_lock,
+      type: type_script&.to_node_type
+    }
+  end
+
   def udt_info
     return unless udt?
 
