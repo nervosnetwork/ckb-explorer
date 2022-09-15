@@ -10,13 +10,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: hint_plan; Type: SCHEMA; Schema: -; Owner: -
---
-
-CREATE SCHEMA hint_plan;
-
-
---
 -- Name: btree_gin; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -28,13 +21,6 @@ CREATE EXTENSION IF NOT EXISTS btree_gin WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION btree_gin IS 'support for indexing common datatypes in GIN';
-
-
---
--- Name: pg_hint_plan; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS pg_hint_plan WITH SCHEMA hint_plan;
 
 
 --

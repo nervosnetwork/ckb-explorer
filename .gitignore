@@ -8,9 +8,7 @@ ckb-explorer.iml
 # server
 # Ignore bundler config.
 .bundle
-.env.local
-.env.test
-.env.test.local
+.env.*
 
 # server config
 config/settings.local.yml
