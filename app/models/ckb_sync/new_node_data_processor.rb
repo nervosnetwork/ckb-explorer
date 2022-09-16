@@ -4,7 +4,8 @@ require "sentry-rails"
 module CkbSync
   class NewNodeDataProcessor
     # include BenchmarkMethods
-
+    include Redis::Objects
+    value :reorg_started_at, global: true
     attr_accessor :enable_cota
     # benchmark :call, :process_block, :build_block!, :build_uncle_blocks!, :build_ckb_transactions!, :build_udts!, :process_ckb_txs, :build_cells_and_locks!,
     #           :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
@@ -12,7 +13,7 @@ module CkbSync
     #           :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes
 
-    def initialize(enable_cota=ENV['COTA_AGGREGATOR_URL'].present?)
+    def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
       @local_cache = LocalCache.new
     end
@@ -47,7 +48,10 @@ module CkbSync
         Rails.logger.error "process_block: #{target_block_number}"
         process_block(target_block)
       else
-        invalid_block(local_tip_block)
+        self.reorg_started_at = Time.now
+        res = invalid_block(local_tip_block)
+        self.reorg_started_at.delete
+        res
       end
     rescue => e
       Rails.logger.error e.message

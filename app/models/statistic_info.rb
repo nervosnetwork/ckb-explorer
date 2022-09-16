@@ -16,6 +16,10 @@ class StatisticInfo
     tip_block.number
   end
 
+  def tip_block_hash
+    tip_block.block_hash
+  end
+
   def epoch_info
     { epoch_number: tip_block.epoch.to_s, epoch_length: tip_block.length.to_s, index: (tip_block_number - tip_block.start_number).to_s }
   end
