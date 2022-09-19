@@ -64,7 +64,7 @@ module Api
         create_list(:block, 15, :with_block_hash)
         valid_get api_v1_statistics_url
 
-        assert_equal %w(average_block_time current_epoch_difficulty hash_rate tip_block_number epoch_info estimated_epoch_time transactions_last_24hrs transactions_count_per_minute).sort, json.dig("data", "attributes").keys.sort
+        assert_equal %w(average_block_time current_epoch_difficulty hash_rate tip_block_number epoch_info estimated_epoch_time transactions_last_24hrs transactions_count_per_minute reorg_started_at).sort, json.dig("data", "attributes").keys.sort
       end
 
       test "should return right index statistic info" do
