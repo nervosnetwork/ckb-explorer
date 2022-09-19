@@ -25,4 +25,7 @@ class IndexStatisticSerializer
   attribute :transactions_count_per_minute do |object|
     object.transactions_count_per_minute.to_s
   end
+  attribute :reorg_started_at do |_o|
+    CkbSync::NewNodeDataProcessor.reorg_started_at.value
+  end
 end
