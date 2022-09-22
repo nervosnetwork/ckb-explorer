@@ -332,6 +332,20 @@ module Api
         response_ckb_transactions = CkbTransactionListSerializer.new(ckb_transactions, options).serialized_json
         assert_equal response_ckb_transactions, response.body
       end
+
+      test "should return corresponding ckb transactions with given address hash" do
+        page = 1
+        page_size = 10
+        address = create(:address, :with_transactions)
+        ckb_transactions = address.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+
+        valid_post api_v1_query_transactions_url, address: address.address_hash
+
+        records_counter = RecordCounters::AddressTransactions.new(address)
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+
+        assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address: address })).serialized_json, response.body
+      end
     end
   end
 end
