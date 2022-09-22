@@ -394,7 +394,7 @@ module RequestHelpers
   def valid_post(uri, **params)
     params[:params] ||= {}
     params[:headers] = { "Content-Type": "application/vnd.api+json", "Accept": "application/vnd.api+json" }
-    post uri, params: params
+    post uri, as: :json, **params
   end
 end
 

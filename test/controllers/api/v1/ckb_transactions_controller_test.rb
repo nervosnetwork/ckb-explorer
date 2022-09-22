@@ -339,7 +339,7 @@ module Api
         address = create(:address, :with_transactions)
         ckb_transactions = address.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
 
-        valid_post api_v1_query_transactions_url, address: address.address_hash
+        valid_post api_v1_query_ckb_transactions_url, params: {address: address.address_hash}
 
         records_counter = RecordCounters::AddressTransactions.new(address)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call

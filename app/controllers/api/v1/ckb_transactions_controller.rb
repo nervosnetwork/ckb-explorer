@@ -25,24 +25,26 @@ module Api
       end
 
       def query
-        @page = params[:page]
-        @page_size = params[:page_size]
+        @page = params[:page] || 1
+        @page_size = params[:page_size]  || 10
+
         if params[:address]
           @address = Address.cached_find(params[:address])
         end
 
         ckb_transactions =
           if @address
-            @scope = @scope.where
-            @tx_ids = AccountBook.where(address_id: @address.id).order("ckb_transaction_id" => :desc).select("ckb_transaction_id").page(@page).per(@page_size)
-            CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).order(id: :desc)
+            records_counter = @tx_ids = AccountBook.where(address_id: @address.id).order("ckb_transaction_id" => :desc).select("ckb_transaction_id").page(@page).per(@page_size)
+            CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
           else
-            CkbTransaction.recent.normal.page(@page).per(@page_size).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
+            records_counter = RecordCounters::Transactions.new
+            CkbTransaction.recent.normal.page(@page).per(@page_size)
           end
-        Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
-          records_counter = RecordCounters::Transactions.new
+        ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
+        json = Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
+          
           options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
-          CkbTransactionListSerializer.new(ckb_transactions, options).serialized_json
+          CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address: @address })).serialized_json
         end
         render json: json
       end
