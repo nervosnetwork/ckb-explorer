@@ -14,7 +14,7 @@ puts "start"
 remain = 0
 duration = 0
 loop do
-  ApplicationRecord.with_advisory_lock("CkbSyncer") do
+  ApplicationRecord.with_advisory_lock("CkbSyncer") do # use advisory lock to prevent two node processor
     start = Time.now.to_f
     block = CkbSync::NewNodeDataProcessor.new.call
     if block

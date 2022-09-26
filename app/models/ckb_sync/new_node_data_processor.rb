@@ -44,10 +44,6 @@ module CkbSync
       raise e
     end
 
-    add_transaction_tracer :call, category: :task
-    add_method_tracer :process_block
-    add_method_tracer :invalid_block
-
     def process_block(node_block)
       local_block = nil
 
@@ -96,6 +92,7 @@ module CkbSync
 
       local_block
     end
+    add_transaction_tracer :process_block, category: :task
 
     def check_invalid_address(address)
       if (address.balance < 0) || (address.balance_occupied < 0)
@@ -1191,7 +1188,7 @@ module CkbSync
         local_tip_block
       end
     end
-
+    add_transaction_tracer :invalid_block, category: :task
     def update_address_balance_and_ckb_transactions_count(local_tip_block)
       local_tip_block.contained_addresses.each do |address|
         address.live_cells_count = address.cell_outputs.live.count
