@@ -1,11 +1,9 @@
 require "benchmark_methods"
-require 'new_relic/agent/method_tracer'
-require 'new_relic/agent/tracer'
+require "new_relic/agent/method_tracer"
 
 module CkbSync
   class NewNodeDataProcessor
     include NewRelic::Agent::MethodTracer
-    extend ::NewRelic::Agent::MethodTracer
     # include BenchmarkMethods
     include Redis::Objects
     value :reorg_started_at, global: true
@@ -45,52 +43,53 @@ module CkbSync
     end
 
     add_method_tracer :call
+    add_method_tracer :process_block
+    add_method_tracer :invalid_block
 
     def process_block(node_block)
       local_block = nil
 
-      self.class.trace_execution_scoped(['ckb_sync/new_node_data_processor/process_block']) do
-        ApplicationRecord.transaction do
-          # build node data
-          local_block = build_block!(node_block)
-          local_cache.write("BlockNumber", local_block.number)
-          build_uncle_blocks!(node_block, local_block.id)
-          inputs = []
-          outputs = []
-          outputs_data = []
+      ApplicationRecord.transaction do
+        # build node data
+        local_block = build_block!(node_block)
+        local_cache.write("BlockNumber", local_block.number)
+        build_uncle_blocks!(node_block, local_block.id)
+        inputs = []
+        outputs = []
+        outputs_data = []
 
-          @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
-          build_udts!(local_block, outputs, outputs_data.flatten)
+        @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
+        build_udts!(local_block, outputs, outputs_data.flatten)
 
-          tags = []
-          udt_address_ids = []
-          dao_address_ids = []
-          contained_udt_ids = []
-          contained_address_ids = []
-          process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
-          addrs_changes = Hash.new { |hash, key| hash[key] = {} }
-          input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
+        tags = []
+        udt_address_ids = []
+        dao_address_ids = []
+        contained_udt_ids = []
+        contained_address_ids = []
+        process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
+        addrs_changes = Hash.new { |hash, key| hash[key] = {} }
+        input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
 
-          # update explorer data
-          update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
-          update_block_info!(local_block)
-          update_block_reward_info!(local_block)
-          update_mining_info(local_block)
-          update_table_records_count(local_block)
-          update_or_create_udt_accounts!(local_block)
-          update_pool_tx_status(local_block)
-          # maybe can be changed to asynchronous update
-          update_udt_info(local_block)
-          process_dao_events!(local_block)
-          update_addresses_info(addrs_changes)
-        end
-
-        cache_address_txs(local_block)
-        generate_tx_display_info(local_block)
-        remove_tx_display_infos(local_block)
-        flush_inputs_outputs_caches(local_block)
-        generate_statistics_data(local_block)
+        # update explorer data
+        update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
+        update_block_info!(local_block)
+        update_block_reward_info!(local_block)
+        update_mining_info(local_block)
+        update_table_records_count(local_block)
+        update_or_create_udt_accounts!(local_block)
+        update_pool_tx_status(local_block)
+        # maybe can be changed to asynchronous update
+        update_udt_info(local_block)
+        process_dao_events!(local_block)
+        update_addresses_info(addrs_changes)
       end
+
+      cache_address_txs(local_block)
+      generate_tx_display_info(local_block)
+      remove_tx_display_infos(local_block)
+      flush_inputs_outputs_caches(local_block)
+      generate_statistics_data(local_block)
+
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
 
       local_block
@@ -1026,7 +1025,7 @@ module CkbSync
     def build_block!(node_block)
       block = nil
 
-      self.class.trace_execution_scoped(['ckb_sync/new_node_data_processor/build_block']) do
+      self.class.trace_execution_scoped(["ckb_sync/new_node_data_processor/build_block"]) do
         header = node_block.header
         epoch_info = CkbUtils.parse_epoch_info(header)
         cellbase = node_block.transactions.first
