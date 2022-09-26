@@ -1,8 +1,11 @@
 require "benchmark_methods"
-require "sentry-rails"
+require 'new_relic/agent/method_tracer'
+require 'new_relic/agent/tracer'
 
 module CkbSync
   class NewNodeDataProcessor
+    include NewRelic::Agent::MethodTracer
+    extend ::NewRelic::Agent::MethodTracer
     # include BenchmarkMethods
     include Redis::Objects
     value :reorg_started_at, global: true
@@ -18,26 +21,8 @@ module CkbSync
       @local_cache = LocalCache.new
     end
 
-    def sentry_transaction
-      @transaction ||= Sentry.start_transaction(op: "NewNodeDataProcessor", description: "NewNodeDataProcessor")
-    end
-
-    def with_child_span(**args, &block)
-      if sentry_transaction
-        sentry_transaction.with_child_span(**args, &block)
-      else
-        obj = Object.new
-        class << obj
-          def set_data(key, val)
-          end
-        end
-        yield(obj)
-      end
-    end
-
     # returns the remaining block numbers to process
     def call
-      sentry_transaction
       @local_tip_block = Block.recent.first
       tip_block_number = @tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
@@ -56,21 +41,18 @@ module CkbSync
     rescue => e
       Rails.logger.error e.message
       puts e.backtrace.join("\n")
-      Sentry.capture_exception(e)
-      sleep 1 # wait to submit the exception to sentry
       raise e
-    ensure
-      sentry_transaction&.finish
     end
+
+    add_method_tracer :call
 
     def process_block(node_block)
       local_block = nil
 
-      with_child_span(op: :process_block, description: "process_block") do |span|
+      self.class.trace_execution_scoped(['ckb_sync/new_node_data_processor/process_block']) do
         ApplicationRecord.transaction do
           # build node data
           local_block = build_block!(node_block)
-          span.set_data(:block_number, local_block.number)
           local_cache.write("BlockNumber", local_block.number)
           build_uncle_blocks!(node_block, local_block.id)
           inputs = []
@@ -1043,9 +1025,9 @@ module CkbSync
 
     def build_block!(node_block)
       block = nil
-      with_child_span(op: :build_block) do |span|
+
+      self.class.trace_execution_scoped(['ckb_sync/new_node_data_processor/build_block']) do
         header = node_block.header
-        span.set_data(:block_number, header.number)
         epoch_info = CkbUtils.parse_epoch_info(header)
         cellbase = node_block.transactions.first
 
