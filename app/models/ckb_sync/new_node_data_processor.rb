@@ -1,8 +1,10 @@
 require "benchmark_methods"
+require "newrelic_rpm"
 require "new_relic/agent/method_tracer"
 
 module CkbSync
   class NewNodeDataProcessor
+    include ::NewRelic::Agent::Instrumentation::ControllerInstrumentation
     include NewRelic::Agent::MethodTracer
     # include BenchmarkMethods
     include Redis::Objects
@@ -42,7 +44,7 @@ module CkbSync
       raise e
     end
 
-    add_method_tracer :call
+    add_transaction_tracer :call, category: :task
     add_method_tracer :process_block
     add_method_tracer :invalid_block
 
