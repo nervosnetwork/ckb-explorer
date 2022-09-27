@@ -39,12 +39,12 @@ class SuggestQuery
   end
 
   def find_address_by_lock_hash
-    address = Address.cached_find(query_key)
+    address = Address.direct_find(query_key)
     LockHashSerializer.new(address) if address.present?
   end
 
   def find_cached_address
-    address = Address.cached_find(query_key)
+    address = Address.direct_find(query_key)
     raise Api::V1::Exceptions::AddressNotFoundError if address.blank?
 
     AddressSerializer.new(address)
