@@ -27,7 +27,7 @@ class SuggestQuery
   end
 
   def find_cached_block
-    block = Block.cached_find(query_key)
+    block = Block.direct_find(query_key)
     raise Api::V1::Exceptions::BlockNotFoundError if block.blank?
 
     block
@@ -61,6 +61,6 @@ class SuggestQuery
   end
 
   def find_by_hex
-    Block.cached_find(query_key) || find_ckb_transaction_by_hash || find_pool_tx_by_hash || find_address_by_lock_hash || find_udt_by_type_hash
+    Block.direct_find(query_key) || find_ckb_transaction_by_hash || find_pool_tx_by_hash || find_address_by_lock_hash || find_udt_by_type_hash
   end
 end
