@@ -28,10 +28,6 @@ class CellInput < ApplicationRecord
     CellOutput.find_by(tx_hash: previous_output["tx_hash"], cell_index: previous_output["index"])
   end
 
-  def self.cached_find(id)
-    Rails.cache.realize([name, id], race_condition_ttl: 3.seconds) { find(id) }
-  end
-
   def cache_keys
     %W(CellInput/#{id}/lock_script CellInput/#{id}/type_script)
   end
