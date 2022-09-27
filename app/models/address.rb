@@ -35,9 +35,7 @@ class Address < ApplicationRecord
   end
 
   def lock_script
-    Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
-      LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
-    end
+    LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
   end
 
   def self.find_by_address_hash(address_hash, *args, **kargs)
@@ -47,7 +45,7 @@ class Address < ApplicationRecord
   end
 
   def self.find_or_create_by_address_hash(address_hash, block_timestamp=0)
-    
+
     parsed = CkbUtils.parse_address(address_hash)
     lock_hash = parsed.script.compute_hash
     lock_script = LockScript.find_by(
@@ -57,7 +55,7 @@ class Address < ApplicationRecord
     )
 
     create_with(
-      address_hash: CkbUtils.generate_address(parsed.script), 
+      address_hash: CkbUtils.generate_address(parsed.script),
       block_timestamp: block_timestamp,
       lock_script_id: lock_script&.id,
     ).find_or_create_by lock_hash: lock_hash
@@ -66,9 +64,9 @@ class Address < ApplicationRecord
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     lock_hash = lock_script.compute_hash
     address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
-    address_hash_crc = CkbUtils.generate_crc32(address_hash)    
+    address_hash_crc = CkbUtils.generate_crc32(address_hash)
     address_hash_2021 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
-    address_hash_crc_2021 = CkbUtils.generate_crc32(address_hash_2021)    
+    address_hash_crc_2021 = CkbUtils.generate_crc32(address_hash_2021)
 
     unless address = Address.find_by(lock_hash: lock_hash)
       # first try 2019 version style address hash
@@ -94,9 +92,9 @@ class Address < ApplicationRecord
       address.cal_balance!
       puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}"
       Sentry.capture_message(
-        'Reset balance', 
+        'Reset balance',
         extra: {
-          address: address.address_hash, 
+          address: address.address_hash,
           wrong_balance: wrong_balance,
           calced_balance: address.balance,
           calced_occupied_balance: address.balance_occupied
@@ -107,23 +105,24 @@ class Address < ApplicationRecord
   end
 
   def self.find_address!(query_key)
-    cached_find(query_key) || raise(Api::V1::Exceptions::AddressNotFoundError)
+    direct_find(query_key) || raise(Api::V1::Exceptions::AddressNotFoundError)
   end
 
-  def self.cached_find(query_key)
+  # query without cache
+  def self.direct_find(query_key)
     cache_key = query_key
     unless QueryKeyUtils.valid_hex?(query_key)
       cache_key = CkbUtils.parse_address(query_key).script.compute_hash
     end
-    address =
-      Rails.cache.realize([name, cache_key], race_condition_ttl: 3.seconds) do
-        if QueryKeyUtils.valid_hex?(query_key)
-          find_by(lock_hash: query_key)
-        else
-          lock_hash = CkbUtils.parse_address(query_key).script.compute_hash
-          find_by(lock_hash: lock_hash)
-        end
-      end
+
+    if QueryKeyUtils.valid_hex?(query_key)
+      address = find_by(lock_hash: query_key)
+    else
+      lock_hash = CkbUtils.parse_address(query_key).script.compute_hash
+      address = find_by(lock_hash: lock_hash)
+    end
+
+    # after query, append query_address attribute to address
     unless QueryKeyUtils.valid_hex?(query_key)
       if address.present?
         address.query_address = query_key
@@ -135,9 +134,7 @@ class Address < ApplicationRecord
   end
 
   def cached_lock_script
-    Rails.cache.realize([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
-      lock_script.to_node_lock
-    end
+    lock_script.to_node_lock
   end
 
   def flush_cache

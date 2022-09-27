@@ -101,10 +101,8 @@ class MarketData
   def first_released_timestamp_may
     @first_released_timestamp_may ||=
       begin
-        Rails.cache.realize("first_released_timestamp_may") do
-          lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323t90gna20lusyshreg32qee4fhkt9jj2t6qrqzzqxzq8yqt8kmd9")
-          lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-05-01"))
-        end
+        lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323t90gna20lusyshreg32qee4fhkt9jj2t6qrqzzqxzq8yqt8kmd9")
+        lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-05-01"))
       end
   end
 
@@ -130,10 +128,8 @@ class MarketData
   def first_released_timestamp_other
     @first_released_timestamp_other ||=
       begin
-        Rails.cache.realize("first_released_timestamp_may") do
-          lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32s3y29vjv73cfm8qax220dwwmpdccl4upy4s9qzzqxzq8yqyd09am")
-          lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-07-01"))
-        end
+        lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32s3y29vjv73cfm8qax220dwwmpdccl4upy4s9qzzqxzq8yqyd09am")
+        lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-07-01"))
       end
   end
 

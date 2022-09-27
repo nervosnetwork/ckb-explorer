@@ -29,12 +29,6 @@ class CkbTransaction < ApplicationRecord
   after_commit :flush_cache
   before_destroy :recover_dead_cell
 
-  def self.cached_find(query_key)
-    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
-      find_by(tx_hash: query_key)
-    end
-  end
-
   def address_ids
     attributes["address_ids"]
   end
@@ -233,9 +227,9 @@ end
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
 #  is_cellbase           :boolean          default(FALSE)
-#  witnesses             :jsonb
 #  header_deps           :binary
 #  cell_deps             :jsonb
+#  witnesses             :jsonb
 #  live_cell_changes     :integer
 #  capacity_involved     :decimal(30, )
 #  contained_address_ids :bigint           default([]), is an Array
@@ -246,10 +240,9 @@ end
 #
 # Indexes
 #
-#  alter_pk                                                (id,contained_address_ids) USING gin
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
 #  index_ckb_transactions_on_block_timestamp_and_id        (block_timestamp DESC NULLS LAST,id DESC)
-#  index_ckb_transactions_on_contained_address_ids         (contained_address_ids) USING gin
+#  index_ckb_transactions_on_contained_address_ids_and_id  (contained_address_ids,id) USING gin
 #  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
 #  index_ckb_transactions_on_dao_address_ids               (dao_address_ids) USING gin
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)
