@@ -110,10 +110,6 @@ class Address < ApplicationRecord
 
   # query without cache
   def self.direct_find(query_key)
-    cache_key = query_key
-    unless QueryKeyUtils.valid_hex?(query_key)
-      cache_key = CkbUtils.parse_address(query_key).script.compute_hash
-    end
 
     if QueryKeyUtils.valid_hex?(query_key)
       address = find_by(lock_hash: query_key)

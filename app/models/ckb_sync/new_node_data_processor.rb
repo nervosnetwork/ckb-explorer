@@ -1346,6 +1346,7 @@ module CkbSync
       factory_cell.update(name: parsed_factory_data.name, symbol: parsed_factory_data.symbol, base_token_uri: parsed_factory_data.base_token_uri, extra_data: parsed_factory_data.extra_data)
     end
 
+    # TODO remove this cache
     class LocalCache
       attr_accessor :cache
 
