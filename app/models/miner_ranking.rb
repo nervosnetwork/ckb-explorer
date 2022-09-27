@@ -9,9 +9,7 @@ class MinerRanking
 
   def ranking(limit = nil)
     limit = limit.presence || DEFAULT_LIMIT
-    Rails.cache.realize("miner_ranking", expires_in: 1.hour, race_condition_ttl: 10.seconds) do
-      ranking_infos.take(limit)
-    end
+    ranking_infos.take(limit)
   end
 
   def ranking_infos

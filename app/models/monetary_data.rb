@@ -12,31 +12,25 @@ class MonetaryData
   end
 
   def nominal_apc(max_year = 20)
-    Rails.cache.realize("nominal_apc#{max_year}") do
-      total_supplies_per_year(max_year).each_with_index.map do |_, index|
-        cumulative_total_supply = index.zero? ? 0 : (0..index).reduce(0) { |memo, value| memo + total_supplies_per_year(max_year)[value] }
-        total_supply_so_far = INITIAL_SUPPLY + cumulative_total_supply
-        (SECONDARY_SUPPLY_PER_YEAR / total_supply_so_far * 100).truncate(8)
-      end
+    total_supplies_per_year(max_year).each_with_index.map do |_, index|
+      cumulative_total_supply = index.zero? ? 0 : (0..index).reduce(0) { |memo, value| memo + total_supplies_per_year(max_year)[value] }
+      total_supply_so_far = INITIAL_SUPPLY + cumulative_total_supply
+      (SECONDARY_SUPPLY_PER_YEAR / total_supply_so_far * 100).truncate(8)
     end
   end
 
   def nominal_inflation_rate(max_year = 50)
-    Rails.cache.realize("nominal_inflation_rate#{max_year}") do
-      secondary_issuance_monthly = SECONDARY_SUPPLY_PER_YEAR / 12
-      rs =
-        total_supplies_per_year(max_year).each_with_index.map do |_, index|
-          cumulative_total_supply = index.zero? ? 0 : (0..index).reduce(0) { |memo, value| memo + total_supplies_per_year(max_year)[value] }
-          INITIAL_SUPPLY + cumulative_total_supply
-        end
-      primary_supplies_per_year.map { |item| item + secondary_issuance_monthly }.zip(rs).map { |item| (item.reduce(:/) * 12 * 100).truncate(8) }
-    end
+    secondary_issuance_monthly = SECONDARY_SUPPLY_PER_YEAR / 12
+    rs =
+      total_supplies_per_year(max_year).each_with_index.map do |_, index|
+        cumulative_total_supply = index.zero? ? 0 : (0..index).reduce(0) { |memo, value| memo + total_supplies_per_year(max_year)[value] }
+        INITIAL_SUPPLY + cumulative_total_supply
+      end
+    primary_supplies_per_year.map { |item| item + secondary_issuance_monthly }.zip(rs).map { |item| (item.reduce(:/) * 12 * 100).truncate(8) }
   end
 
   def real_inflation_rate(max_year = 50)
-    Rails.cache.realize("real_inflation#{max_year}") do
-      nominal_inflation_rate(max_year).zip(nominal_apc(max_year)).map { |item| item.reduce(:-).truncate(8) }
-    end
+    nominal_inflation_rate(max_year).zip(nominal_apc(max_year)).map { |item| item.reduce(:-).truncate(8) }
   end
 
   private
