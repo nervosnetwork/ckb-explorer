@@ -7,15 +7,11 @@ class CellInput < ApplicationRecord
   after_commit :flush_cache
 
   def find_lock_script!
-    Rails.cache.realize(["CellInput", id, "lock_script"], race_condition_ttl: 3.seconds) do
-      previous_cell_output!.lock_script
-    end
+    previous_cell_output!.lock_script
   end
 
   def find_type_script!
-    Rails.cache.realize(["CellInput", id, "type_script"], race_condition_ttl: 3.seconds) do
-      previous_cell_output!.type_script
-    end
+    previous_cell_output!.type_script
   end
 
   def find_cell_output!
@@ -56,9 +52,7 @@ class CellInput < ApplicationRecord
     tx_hash = previous_output["tx_hash"]
     cell_index = previous_output["index"].to_i
 
-    Rails.cache.realize("cell_input_#{id}/previous_cell_output/#{tx_hash}/#{cell_index}", race_condition_ttl: 3.seconds) do
-      CellOutput.find_by!(tx_hash: tx_hash, cell_index: cell_index)
-    end
+    CellOutput.find_by!(tx_hash: tx_hash, cell_index: cell_index)
   end
 end
 

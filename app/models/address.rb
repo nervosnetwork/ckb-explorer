@@ -35,9 +35,7 @@ class Address < ApplicationRecord
   end
 
   def lock_script
-    Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
-      LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
-    end
+    LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
   end
 
   def self.find_by_address_hash(address_hash, *args, **kargs)
@@ -136,9 +134,7 @@ class Address < ApplicationRecord
   end
 
   def cached_lock_script
-    Rails.cache.realize([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
-      lock_script.to_node_lock
-    end
+    lock_script.to_node_lock
   end
 
   def flush_cache
