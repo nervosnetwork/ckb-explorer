@@ -65,18 +65,16 @@ class Block < ApplicationRecord
   end
 
   def self.find_block!(query_key)
-    cached_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
+    direct_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
   end
 
-  def self.cached_find(query_key)
-    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
-      if QueryKeyUtils.valid_hex?(query_key)
-        block = where(block_hash: query_key).first
-      else
-        block = where(number: query_key).first
-      end
-      BlockSerializer.new(block) if block.present?
+  def self.direct_find(query_key)
+    if QueryKeyUtils.valid_hex?(query_key)
+      block = where(block_hash: query_key).first
+    else
+      block = where(number: query_key).first
     end
+    BlockSerializer.new(block) if block.present?
   end
 
   def miner_address
