@@ -19,7 +19,8 @@ module Api
       end
 
       def show
-        ckb_transaction = CkbTransaction.find(params[:id]) || PoolTransactionEntry.find_by(tx_hash: params[:id])
+
+        ckb_transaction = CkbTransaction.find_by(id: params[:id]) || CkbTransaction.find_by(tx_hash: params[:id]) || PoolTransactionEntry.find_by(tx_hash: params[:id])
 
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if ckb_transaction.blank?
 
