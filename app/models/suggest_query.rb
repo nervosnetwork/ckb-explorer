@@ -14,11 +14,11 @@ class SuggestQuery
   def find_record_by_query_key!
     result =
       if QueryKeyUtils.integer_string?(query_key)
-        find_cached_block
+        find_block
       elsif QueryKeyUtils.valid_hex?(query_key)
         find_by_hex
       elsif QueryKeyUtils.valid_address?(query_key)
-        find_cached_address
+        find_address
       end
 
     raise ActiveRecord::RecordNotFound if result.blank?
@@ -26,7 +26,7 @@ class SuggestQuery
     result
   end
 
-  def find_cached_block
+  def find_block
     block = Block.direct_find(query_key)
     raise Api::V1::Exceptions::BlockNotFoundError if block.blank?
 
@@ -43,7 +43,7 @@ class SuggestQuery
     LockHashSerializer.new(address) if address.present?
   end
 
-  def find_cached_address
+  def find_address
     address = Address.direct_find(query_key)
     raise Api::V1::Exceptions::AddressNotFoundError if address.blank?
 
