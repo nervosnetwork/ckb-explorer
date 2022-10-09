@@ -219,20 +219,19 @@ end
 #  dao_deposit            :decimal(30, )    default(0)
 #  interest               :decimal(30, )    default(0)
 #  block_timestamp        :decimal(30, )
-#  visible                :boolean          default(TRUE)
 #  live_cells_count       :decimal(30, )    default(0)
 #  mined_blocks_count     :integer          default(0)
+#  visible                :boolean          default(TRUE)
 #  average_deposit_time   :decimal(, )
 #  unclaimed_compensation :decimal(30, )
 #  is_depositor           :boolean          default(FALSE)
 #  dao_transactions_count :decimal(30, )    default(0)
 #  lock_script_id         :bigint
 #  balance_occupied       :decimal(30, )    default(0)
-#  address_hash_crc       :bigint
 #
 # Indexes
 #
-#  index_addresses_on_address_hash_crc  (address_hash_crc)
-#  index_addresses_on_is_depositor      (is_depositor) WHERE (is_depositor = true)
-#  index_addresses_on_lock_hash         (lock_hash) UNIQUE
+#  index_addresses_on_address_hash  (address_hash)
+#  index_addresses_on_is_depositor  (is_depositor) WHERE (is_depositor = true)
+#  index_addresses_on_lock_hash     (lock_hash) USING hash
 #
