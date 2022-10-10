@@ -445,7 +445,8 @@ CREATE TABLE public.cell_outputs (
     udt_amount numeric(40,0),
     dao character varying,
     lock_script_id bigint,
-    type_script_id bigint
+    type_script_id bigint,
+    tx_hash_cell_index character varying
 );
 
 
@@ -1969,6 +1970,13 @@ CREATE INDEX index_cell_outputs_on_status ON public.cell_outputs USING btree (st
 
 
 --
+-- Name: index_cell_outputs_on_tx_hash_cell_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_outputs_on_tx_hash_cell_index ON public.cell_outputs USING hash (tx_hash_cell_index);
+
+
+--
 -- Name: index_cell_outputs_on_type_script_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2511,6 +2519,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221009080035'),
 ('20221009080306'),
 ('20221009080708'),
-('20221009081118');
+('20221009081118'),
+('20221010090239');
 
 
