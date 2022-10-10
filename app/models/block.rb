@@ -66,18 +66,16 @@ class Block < ApplicationRecord
   end
 
   def self.find_block!(query_key)
-    cached_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
+    direct_find(query_key) || raise(Api::V1::Exceptions::BlockNotFoundError)
   end
 
-  def self.cached_find(query_key)
-    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
-      if QueryKeyUtils.valid_hex?(query_key)
-        block = where(block_hash: query_key).first
-      else
-        block = where(number: query_key).first
-      end
-      BlockSerializer.new(block) if block.present?
+  def self.direct_find(query_key)
+    if QueryKeyUtils.valid_hex?(query_key)
+      block = where(block_hash: query_key).first
+    else
+      block = where(number: query_key).first
     end
+    BlockSerializer.new(block) if block.present?
   end
 
   def self.largest_in_epoch(epoch_number)
@@ -108,7 +106,6 @@ class Block < ApplicationRecord
 
   def invalid!
     uncle_blocks.delete_all
-    delete_address_txs_cache
     delete_tx_display_infos
     ckb_transactions.destroy_all
     ForkedBlock.create(attributes)
@@ -140,25 +137,6 @@ class Block < ApplicationRecord
     TxDisplayInfo.where(ckb_transaction_id: ckb_transactions.ids).delete_all
   end
 
-  def delete_address_txs_cache
-    address_txs = Hash.new
-    ckb_transactions.each do |tx|
-      tx.contained_address_ids.each do |id|
-        if address_txs[id].present?
-          address_txs[id] << tx.id
-        else
-          address_txs[id] = [tx.id]
-        end
-      end
-    end
-    service = ListCacheService.new
-    $redis.pipelined do
-      address_txs.each do |k, v|
-        members = CkbTransaction.where(id: v).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).map(&:to_json)
-        service.zrem("Address/txs/#{k}", members)
-      end
-    end
-  end
 end
 
 # == Schema Information

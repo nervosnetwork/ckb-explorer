@@ -16,9 +16,7 @@ class UdtAccount < ApplicationRecord
   scope :published, -> { where(published: true) }
 
   def udt_icon_file
-    Rails.cache.realize([self.class.name, "udt_icon_file", id], race_condition_ttl: 3.seconds, expires_in: 1.day) do
-      udt.icon_file
-    end
+    udt.icon_file
   end
 end
 

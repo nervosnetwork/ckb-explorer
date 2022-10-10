@@ -17,12 +17,8 @@ class Udt < ApplicationRecord
   end
 
   def h24_ckb_transactions_count
-    Rails.cache.realize("udt_h24_ckb_transactions_count_#{id}", expires_in: 1.hour) do
-      ckb_transactions.where("block_timestamp >= ?", CkbUtils.time_in_milliseconds(24.hours.ago)).count
-    end
+    ckb_transactions.where("block_timestamp >= ?", CkbUtils.time_in_milliseconds(24.hours.ago)).count
   end
-
-  
 
   def type_script
     return unless published

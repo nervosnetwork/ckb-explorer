@@ -42,7 +42,6 @@ module CkbSync
         DaoEvent.import!(dao_events, validate: false)
         update_dao_contract_related_info(local_block)
         increase_records_count(ckb_transactions)
-        cache_address_txs(local_block.ckb_transactions)
         generate_tx_display_info(local_block.ckb_transactions)
       end
       local_block
@@ -55,21 +54,6 @@ module CkbSync
       if enabled
         TxDisplayInfoGeneratorWorker.perform_async(ckb_transactions.pluck(:id))
       end
-    end
-
-    def cache_address_txs(ckb_transactions)
-      address_txs = Hash.new
-      ckb_transactions.each do |tx|
-        tx.contained_address_ids.each do |id|
-          if address_txs[id].present?
-            address_txs[id] << tx.id
-          else
-            address_txs[id] = [tx.id]
-          end
-        end
-      end
-
-      AddressTxsCacheUpdateWorker.perform_async(address_txs)
     end
 
     def update_pool_tx_status(ckb_transactions)

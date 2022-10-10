@@ -23,15 +23,13 @@ class StatisticInfoChart
   def difficulty
     current_epoch_number = CkbSync::Api.instance.get_current_epoch.number
 
-    Rails.cache.realize("statistic_info_difficulty_#{current_epoch_number}", expires_in: 10.minutes, race_condition_ttl: 10.seconds) do
-      from = Block.where(epoch: 0).recent.first&.number.to_i
-      to = Block.maximum(:number).to_i
-      hash_rate_block_numbers = (from + 1).step(to, 100).to_a
-      hash_rate_blocks = Block.where(number: hash_rate_block_numbers).order(:timestamp)
-      blocks = Block.order(:epoch, :timestamp).select("distinct on (epoch) *")
-      (blocks + hash_rate_blocks).uniq.map do |block|
-        { epoch_number: block.epoch.to_i, block_number: block.number.to_i, difficulty: block.difficulty }
-      end
+    from = Block.where(epoch: 0).recent.first&.number.to_i
+    to = Block.maximum(:number).to_i
+    hash_rate_block_numbers = (from + 1).step(to, 100).to_a
+    hash_rate_blocks = Block.where(number: hash_rate_block_numbers).order(:timestamp)
+    blocks = Block.order(:epoch, :timestamp).select("distinct on (epoch) *")
+    (blocks + hash_rate_blocks).uniq.map do |block|
+      { epoch_number: block.epoch.to_i, block_number: block.number.to_i, difficulty: block.difficulty }
     end
   end
 

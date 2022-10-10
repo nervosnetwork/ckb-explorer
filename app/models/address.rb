@@ -37,9 +37,7 @@ class Address < ApplicationRecord
 
   def lock_script
     if lock_script_id
-      Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
-        LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
-      end
+      LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
     else
       create_lock_script
     end
@@ -123,23 +121,20 @@ class Address < ApplicationRecord
   end
 
   def self.find_address!(query_key)
-    cached_find(query_key) || raise(Api::V1::Exceptions::AddressNotFoundError)
+    direct_find(query_key) || raise(Api::V1::Exceptions::AddressNotFoundError)
   end
 
-  def self.cached_find(query_key)
-    cache_key = query_key
-    unless QueryKeyUtils.valid_hex?(query_key)
-      cache_key = CkbUtils.parse_address(query_key).script.compute_hash
+  # query without cache
+  def self.direct_find(query_key)
+
+    if QueryKeyUtils.valid_hex?(query_key)
+      address = find_by(lock_hash: query_key)
+    else
+      lock_hash = CkbUtils.parse_address(query_key).script.compute_hash
+      address = find_by(lock_hash: lock_hash)
     end
-    address =
-      Rails.cache.realize([name, cache_key], race_condition_ttl: 3.seconds) do
-        if QueryKeyUtils.valid_hex?(query_key)
-          find_by(lock_hash: query_key)
-        else
-          lock_hash = CkbUtils.parse_address(query_key).script.compute_hash
-          find_by(lock_hash: lock_hash)
-        end
-      end
+
+    # after query, append query_address attribute to address
     unless QueryKeyUtils.valid_hex?(query_key)
       if address.present?
         address.query_address = query_key
@@ -152,9 +147,7 @@ class Address < ApplicationRecord
 
   def cached_lock_script
     if lock_script_id
-      Rails.cache.realize([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
-        lock_script.to_node_lock
-      end
+      lock_script.to_node_lock
     else
       addr = CkbUtils.parse_address address_hash
       script = addr.script

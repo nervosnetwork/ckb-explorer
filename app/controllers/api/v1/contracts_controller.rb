@@ -5,10 +5,7 @@ module Api
         raise Api::V1::Exceptions::ContractNotFoundError if params[:id] != DaoContract::CONTRACT_NAME
 
         dao_contract = DaoContract.default_contract
-        json =
-          Rails.cache.realize(dao_contract.cache_key, version: dao_contract.cache_version, race_condition_ttl: 3.seconds) do
-            DaoContractSerializer.new(dao_contract).serialized_json
-          end
+        json = DaoContractSerializer.new(dao_contract).serialized_json
 
         render json: json
       end

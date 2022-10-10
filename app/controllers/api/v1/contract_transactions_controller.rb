@@ -8,12 +8,9 @@ module Api
 
         dao_contract = DaoContract.default_contract
         ckb_transactions = dao_contract.ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(@page).per(@page_size)
-        json =
-          Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
-            records_counter = RecordCounters::DaoTransactions.new(dao_contract)
-            options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
-            CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true })).serialized_json
-          end
+        records_counter = RecordCounters::DaoTransactions.new(dao_contract)
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
+        json = CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true })).serialized_json
 
         render json: json
       end

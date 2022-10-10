@@ -4,7 +4,7 @@ module Api
       before_action :validate_query_params
 
       def show
-        cell_input = CellInput.cached_find(params[:id])
+        cell_input = CellInput.find(params[:id])
         type_script = cell_input.find_type_script!
 
         render json: TypeScriptSerializer.new(type_script)

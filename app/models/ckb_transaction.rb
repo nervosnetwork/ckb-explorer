@@ -198,7 +198,7 @@ class CkbTransaction < ApplicationRecord
 
   def attributes_for_udt_cell(udt_cell)
     info = CkbUtils.hash_value_to_s(udt_cell.udt_info)
-    { 
+    {
       udt_info: info,
       extra_info: info
     }
