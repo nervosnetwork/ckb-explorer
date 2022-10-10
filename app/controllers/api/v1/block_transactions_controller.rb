@@ -10,16 +10,13 @@ module Api
           block.ckb_transactions
                 .select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
                 .where(block_timestamp: block.timestamp)
-                .order(:id), 
-          items: params[:page_size] || 10, 
+                .order(:id),
+          items: params[:page_size] || 10,
           overflow: :empty_page)
 
-        json =
-          Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
-            records_counter = RecordCounters::BlockTransactions.new(block)
-            options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @pagy.page, page_size: @pagy.items, records_counter: records_counter).call
-            CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true })).serialized_json
-          end
+        records_counter = RecordCounters::BlockTransactions.new(block)
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @pagy.page, page_size: @pagy.items, records_counter: records_counter).call
+        json = CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true })).serialized_json
 
         render json: json
       rescue ActiveRecord::RecordNotFound

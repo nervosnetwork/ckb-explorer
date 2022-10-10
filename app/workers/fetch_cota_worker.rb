@@ -35,8 +35,8 @@ class FetchCotaWorker
       info = CotaAggregator.instance.get_define_info(cota_id)
       issuer = CotaAggregator.instance.get_issuer_info_by_cota_id(cota_id)
       block = Block.find_by number: t['block_number']
-      
-      addr = Address.cached_find issuer['lock_hash']
+
+      addr = Address.direct_find issuer['lock_hash']
       c.update(
         name: info["name"],
         symbol: info["symbol"],
