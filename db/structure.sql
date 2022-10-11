@@ -445,8 +445,7 @@ CREATE TABLE public.cell_outputs (
     udt_amount numeric(40,0),
     dao character varying,
     lock_script_id bigint,
-    type_script_id bigint,
-    tx_hash_cell_index character varying
+    type_script_id bigint
 );
 
 
@@ -1781,6 +1780,14 @@ ALTER TABLE ONLY public.uncle_blocks
 
 
 --
+-- Name: udts unique_type_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udts
+    ADD CONSTRAINT unique_type_hash UNIQUE (type_hash);
+
+
+--
 -- Name: index_account_books_on_address_id_and_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1967,13 +1974,6 @@ CREATE INDEX index_cell_outputs_on_lock_script_id ON public.cell_outputs USING b
 --
 
 CREATE INDEX index_cell_outputs_on_status ON public.cell_outputs USING btree (status);
-
-
---
--- Name: index_cell_outputs_on_tx_hash_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_on_tx_hash_cell_index ON public.cell_outputs USING hash (tx_hash_cell_index);
 
 
 --
@@ -2519,7 +2519,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221009080035'),
 ('20221009080306'),
 ('20221009080708'),
-('20221009081118'),
-('20221010090239');
+('20221009081118');
 
 

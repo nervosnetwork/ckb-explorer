@@ -914,7 +914,6 @@ module CkbSync
         block_id: local_block.id,
         tx_hash: ckb_transaction["tx_hash"],
         cell_index: cell_index,
-        tx_hash_cell_index: "#{ckb_transaction["tx_hash"]}-#{cell_index}",
         generated_by_id: ckb_transaction["id"],
         cell_type: cell_type,
         block_timestamp: local_block.timestamp,
