@@ -1,8 +1,11 @@
 require "benchmark_methods"
-require "sentry-rails"
+require "newrelic_rpm"
+require "new_relic/agent/method_tracer"
 
 module CkbSync
   class NewNodeDataProcessor
+    include ::NewRelic::Agent::Instrumentation::ControllerInstrumentation
+    include NewRelic::Agent::MethodTracer
     # include BenchmarkMethods
     include Redis::Objects
     value :reorg_started_at, global: true
@@ -18,26 +21,8 @@ module CkbSync
       @local_cache = LocalCache.new
     end
 
-    def sentry_transaction
-      @transaction ||= Sentry.start_transaction(op: "NewNodeDataProcessor", description: "NewNodeDataProcessor")
-    end
-
-    def with_child_span(**args, &block)
-      if sentry_transaction
-        sentry_transaction.with_child_span(**args, &block)
-      else
-        obj = Object.new
-        class << obj
-          def set_data(key, val)
-          end
-        end
-        yield(obj)
-      end
-    end
-
     # returns the remaining block numbers to process
     def call
-      sentry_transaction
       @local_tip_block = Block.recent.first
       tip_block_number = @tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
@@ -56,63 +41,58 @@ module CkbSync
     rescue => e
       Rails.logger.error e.message
       puts e.backtrace.join("\n")
-      Sentry.capture_exception(e)
-      sleep 1 # wait to submit the exception to sentry
       raise e
-    ensure
-      sentry_transaction&.finish
     end
 
     def process_block(node_block)
       local_block = nil
 
-      with_child_span(op: :process_block, description: "process_block") do |span|
-        ApplicationRecord.transaction do
-          # build node data
-          local_block = build_block!(node_block)
-          span.set_data(:block_number, local_block.number)
-          local_cache.write("BlockNumber", local_block.number)
-          build_uncle_blocks!(node_block, local_block.id)
-          inputs = []
-          outputs = []
-          outputs_data = []
+      ApplicationRecord.transaction do
+        # build node data
+        local_block = build_block!(node_block)
+        local_cache.write("BlockNumber", local_block.number)
+        build_uncle_blocks!(node_block, local_block.id)
+        inputs = []
+        outputs = []
+        outputs_data = []
 
-          @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
-          build_udts!(local_block, outputs, outputs_data.flatten)
+        @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
+        build_udts!(local_block, outputs, outputs_data.flatten)
 
-          tags = []
-          udt_address_ids = []
-          dao_address_ids = []
-          contained_udt_ids = []
-          contained_address_ids = []
-          process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
-          addrs_changes = Hash.new { |hash, key| hash[key] = {} }
-          input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
+        tags = []
+        udt_address_ids = []
+        dao_address_ids = []
+        contained_udt_ids = []
+        contained_address_ids = []
+        process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
+        addrs_changes = Hash.new { |hash, key| hash[key] = {} }
+        input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
 
-          # update explorer data
-          update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
-          update_block_info!(local_block)
-          update_block_reward_info!(local_block)
-          update_mining_info(local_block)
-          update_table_records_count(local_block)
-          update_or_create_udt_accounts!(local_block)
-          update_pool_tx_status(local_block)
-          # maybe can be changed to asynchronous update
-          update_udt_info(local_block)
-          process_dao_events!(local_block)
-          update_addresses_info(addrs_changes)
-        end
-
-        cache_address_txs(local_block)
-        generate_tx_display_info(local_block)
-        remove_tx_display_infos(local_block)
-        flush_inputs_outputs_caches(local_block)
-        generate_statistics_data(local_block)
+        # update explorer data
+        update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids)
+        update_block_info!(local_block)
+        update_block_reward_info!(local_block)
+        update_mining_info(local_block)
+        update_table_records_count(local_block)
+        update_or_create_udt_accounts!(local_block)
+        update_pool_tx_status(local_block)
+        # maybe can be changed to asynchronous update
+        update_udt_info(local_block)
+        process_dao_events!(local_block)
+        update_addresses_info(addrs_changes)
       end
+
+      cache_address_txs(local_block)
+      generate_tx_display_info(local_block)
+      remove_tx_display_infos(local_block)
+      flush_inputs_outputs_caches(local_block)
+      generate_statistics_data(local_block)
+
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
 
       local_block
     end
+    add_transaction_tracer :process_block, category: :task
 
     def check_invalid_address(address)
       if (address.balance < 0) || (address.balance_occupied < 0)
@@ -1043,9 +1023,9 @@ module CkbSync
 
     def build_block!(node_block)
       block = nil
-      with_child_span(op: :build_block) do |span|
+
+      self.class.trace_execution_scoped(["ckb_sync/new_node_data_processor/build_block"]) do
         header = node_block.header
-        span.set_data(:block_number, header.number)
         epoch_info = CkbUtils.parse_epoch_info(header)
         cellbase = node_block.transactions.first
 
@@ -1208,7 +1188,7 @@ module CkbSync
         local_tip_block
       end
     end
-
+    add_transaction_tracer :invalid_block, category: :task
     def update_address_balance_and_ckb_transactions_count(local_tip_block)
       local_tip_block.contained_addresses.each do |address|
         address.live_cells_count = address.cell_outputs.live.count
