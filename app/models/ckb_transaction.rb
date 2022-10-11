@@ -29,12 +29,6 @@ class CkbTransaction < ApplicationRecord
   after_commit :flush_cache
   before_destroy :recover_dead_cell
 
-  def self.cached_find(query_key)
-    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
-      find_by(tx_hash: query_key)
-    end
-  end
-
   def address_ids
     attributes["address_ids"]
   end

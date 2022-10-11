@@ -71,18 +71,14 @@ class StatisticInfo
   end
 
   def address_balance_ranking
-    Rails.cache.realize("address_balance_ranking", expires_in: 4.hours) do
-      addresses = Address.visible.where("balance > 0").order(balance: :desc).limit(50)
-      addresses.each.with_index(1).map do |address, index|
-        { ranking: index.to_s, address: address.address_hash, balance: address.balance.to_s }
-      end
+    addresses = Address.visible.where("balance > 0").order(balance: :desc).limit(50)
+    addresses.each.with_index(1).map do |address, index|
+      { ranking: index.to_s, address: address.address_hash, balance: address.balance.to_s }
     end
   end
 
   def blockchain_info
-    Rails.cache.realize("blockchain_info", expires_in: 6.hours) do
-      CkbSync::Api.instance.get_blockchain_info
-    end
+    CkbSync::Api.instance.get_blockchain_info
   end
 
   def maintenance_info
