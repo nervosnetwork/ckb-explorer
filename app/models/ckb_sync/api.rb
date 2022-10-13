@@ -44,6 +44,22 @@ module CkbSync
       end
     end
 
+    def cota_registry_code_hash
+      if mode == CKB::MODE::MAINNET
+        Settings.mainnet_cota_registry_code_hash
+      else
+        Settings.testnet_cota_registry_code_hash
+      end
+    end
+
+    def cota_regular_code_hash
+      if mode == CKB::MODE::MAINNET
+        Settings.mainnet_cota_regular_code_hash
+      else
+        Settings.testnet_cota_regular_code_hash
+      end
+    end
+
     METHOD_NAMES.each do |name|
       define_method name do |*params|
         call_rpc(name, params: params)
