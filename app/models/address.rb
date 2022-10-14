@@ -135,8 +135,18 @@ class Address < ApplicationRecord
   end
 
   def cached_lock_script
-    Rails.cache.realize([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
-      lock_script.to_node_lock
+    if lock_script_id
+      Rails.cache.realize([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
+        lock_script.to_node_lock
+      end
+    else
+      addr = CkbUtils.parse_address address_hash
+      script = addr.script
+      {
+        code_hash: script.code_hash,
+        args: script.args,
+        hash_type: script.hash_type
+      }
     end
   end
 
