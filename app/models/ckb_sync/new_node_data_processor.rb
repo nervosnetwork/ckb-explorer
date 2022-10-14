@@ -40,12 +40,23 @@ module CkbSync
       sentry_transaction
       @local_tip_block = Block.recent.first
       tip_block_number = @tip_block_number = CkbSync::Api.instance.get_tip_block_number
+
+      Rails.logger.info "== tip_block_number ( local ckb node): #{tip_block_number}"
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
       return if target_block_number > tip_block_number
 
+      Rails.logger.info "== target_block_number: #{target_block_number.inspect}"
+      process_specific_block_by_number target_block_number
+    rescue => e
+      Rails.logger.error e.message
+      Rails.logger.error e.backtrace.join("\n")
+      raise e
+    end
+
+    def process_specific_block_by_number target_block_number
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
       if !forked?(target_block, local_tip_block)
-        Rails.logger.error "process_block: #{target_block_number}"
+        Rails.logger.info "== process_block: #{target_block_number}"
         process_block(target_block)
       else
         self.reorg_started_at = Time.now
@@ -53,14 +64,6 @@ module CkbSync
         self.reorg_started_at.delete
         res
       end
-    rescue => e
-      Rails.logger.error e.message
-      puts e.backtrace.join("\n")
-      Sentry.capture_exception(e)
-      sleep 1 # wait to submit the exception to sentry
-      raise e
-    ensure
-      sentry_transaction&.finish
     end
 
     def process_block(node_block)
