@@ -35,10 +35,25 @@ class Address < ApplicationRecord
   end
 
   def lock_script
-    Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
-      LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
+    if lock_script_id
+      Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
+        LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
+      end
+    else
+      create_lock_script
     end
   end
+
+  def create_lock_script
+    addr = CkbUtils.parse_address address_hash
+    script = addr.script
+    ls = LockScript.find_or_create_by code_hash: script.code_hash, hash_type: script.hash_type, args: script.args
+    ls.update address_id: self.id
+    self.update lock_script_id: ls.id
+    ls
+  end
+
+
 
   def self.find_by_address_hash(address_hash, *args, **kargs)
     parsed = CkbUtils.parse_address(address_hash)
@@ -135,8 +150,18 @@ class Address < ApplicationRecord
   end
 
   def cached_lock_script
-    Rails.cache.realize([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
-      lock_script.to_node_lock
+    if lock_script_id
+      Rails.cache.realize([self.class.name, "lock_script", lock_hash], race_condition_ttl: 3.seconds) do
+        lock_script.to_node_lock
+      end
+    else
+      addr = CkbUtils.parse_address address_hash
+      script = addr.script
+      {
+        code_hash: script.code_hash,
+        args: script.args,
+        hash_type: script.hash_type
+      }
     end
   end
 
