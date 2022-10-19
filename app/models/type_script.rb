@@ -57,5 +57,5 @@ end
 #
 #  index_type_scripts_on_cell_output_id                    (cell_output_id)
 #  index_type_scripts_on_code_hash_and_hash_type_and_args  (code_hash,hash_type,args)
-#  index_type_scripts_on_script_hash                       (script_hash)
+#  index_type_scripts_on_script_hash                       (script_hash) USING hash
 #

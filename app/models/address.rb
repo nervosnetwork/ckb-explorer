@@ -80,33 +80,22 @@ class Address < ApplicationRecord
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     lock_hash = lock_script.compute_hash
     address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
-    address_hash_crc = CkbUtils.generate_crc32(address_hash)
     address_hash_2021 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
-    address_hash_crc_2021 = CkbUtils.generate_crc32(address_hash_2021)
 
-    unless address = Address.find_by(lock_hash: lock_hash)
-      # first try 2019 version style address hash
-      address = Address.find_by(address_hash_crc: address_hash_crc, address_hash: address_hash)
-
-      # then try 2021 version style address hash
-      address ||= Address.find_by(address_hash_crc: address_hash_crc_2021, address_hash: address_hash_2021)
-
-      # either exists, then create new address
-      address ||= Address.new
-
-      # fill missing lock_hash field
-      address.lock_hash ||= lock_hash
+    address = Address.find_by(lock_hash: lock_hash)
+    if address.blank?
+      address = Address.new lock_hash: lock_hash
     end
+
     # force use new version address
     address.address_hash = address_hash_2021
-    address.address_hash_crc = address_hash_crc_2021
     address.block_timestamp ||= block_timestamp
     address.lock_script_id ||= lock_script_id
     if address.balance < 0 || address.balance_occupied < 0 # wrong balance, recalculate balance
-      puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied} < 0, resetting"
+      Rails.logger.info "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied} < 0, resetting"
       wrong_balance = address.balance
       address.cal_balance!
-      puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}"
+      Rails.logger.info "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}"
       Sentry.capture_message(
         'Reset balance',
         extra: {
@@ -247,11 +236,10 @@ end
 #  dao_transactions_count :decimal(30, )    default(0)
 #  lock_script_id         :bigint
 #  balance_occupied       :decimal(30, )    default(0)
-#  address_hash_crc       :bigint
 #
 # Indexes
 #
-#  index_addresses_on_address_hash_crc  (address_hash_crc)
-#  index_addresses_on_is_depositor      (is_depositor) WHERE (is_depositor = true)
-#  index_addresses_on_lock_hash         (lock_hash) UNIQUE
+#  index_addresses_on_address_hash  (address_hash)
+#  index_addresses_on_is_depositor  (is_depositor) WHERE (is_depositor = true)
+#  index_addresses_on_lock_hash     (lock_hash) USING hash
 #
