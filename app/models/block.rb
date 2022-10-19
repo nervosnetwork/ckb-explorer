@@ -78,7 +78,7 @@ class Block < ApplicationRecord
   end
 
   def miner_address
-    Address.find_by_address_hash(miner_hash, address_hash_crc: CkbUtils.generate_crc32(miner_hash))
+    Address.find_by_address_hash(miner_hash)
   end
 
   def flush_cache
@@ -118,6 +118,7 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
+#  uncles_count               :integer
 #  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
@@ -125,7 +126,6 @@ end
 #  proposals_count            :integer
 #  cell_consumed              :decimal(30, )
 #  miner_hash                 :binary
-#  miner_message              :string
 #  reward                     :decimal(30, )
 #  total_transaction_fee      :decimal(30, )
 #  ckb_transactions_count     :decimal(30, )    default(0)
@@ -145,18 +145,18 @@ end
 #  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
-#  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
 #  block_size                 :integer
 #  proposal_reward            :decimal(30, )
 #  commit_reward              :decimal(30, )
+#  miner_message              :string
 #  extension                  :jsonb
 #
 # Indexes
 #
-#  index_blocks_on_block_hash  (block_hash) UNIQUE
+#  index_blocks_on_block_hash  (block_hash) USING hash
 #  index_blocks_on_block_size  (block_size)
 #  index_blocks_on_block_time  (block_time)
 #  index_blocks_on_epoch       (epoch)
