@@ -341,6 +341,10 @@ class CkbUtils
       "m_nft_class"
     when CkbSync::Api.instance.token_script_code_hash
       "m_nft_token"
+    when CkbSync::Api.instance.cota_registry_code_hash
+      "cota_registry"
+    when CkbSync::Api.instance.cota_regular_code_hash
+      "cota_regular"
     else
       if is_nrc_721_token_cell?(output_data)
         "nrc_721_token"
