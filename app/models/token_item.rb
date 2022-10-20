@@ -16,7 +16,7 @@ class TokenItem < ApplicationRecord
   def as_json(options = {})
     {
       id: id,
-      token_id: token_id,
+      token_id: token_id.to_s,
       owner: owner.address_hash,
       cell: {
         status: cell&.status,
