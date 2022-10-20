@@ -226,16 +226,14 @@ class CellOutput < ApplicationRecord
       TypeScript.where('code_hash = ?', CkbSync::Api.instance.cota_registry_code_hash).each do |type_script|
         CellOutput.where('type_script_id = ?', type_script.id).each do |cell_output|
           cell_output.cell_type = 'cota_registry'
-          puts "=== not save...#{cell_output.id}, cota_registry"
-          #cell_output.save!
+          cell_output.save!
         end
       end
 
       TypeScript.where('code_hash = ?', CkbSync::Api.instance.cota_regular_code_hash).each do |type_script|
         CellOutput.where('type_script_id = ?', type_script.id).each do |cell_output|
           cell_output.cell_type = 'cota_regular'
-          puts "=== not save...#{cell_output.id}, cota_regular"
-          #cell_output.save!
+          cell_output.save!
         end
       end
     end
