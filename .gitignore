@@ -22,6 +22,7 @@ tmp/*
 *.orig
 *.swp
 *.swo
+*.swn
 
 # Ignore uploaded files in development
 storage/*
