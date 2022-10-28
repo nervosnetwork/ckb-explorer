@@ -779,7 +779,7 @@ module CkbSync
 
             prev_cell_outputs_attributes << attributes[1]
             contained_addr_ids[tx_index] << attributes[4]
-            cell_type = attributes[1][:cell_type]
+            cell_type = CellOutput.cell_types[attributes[1][:cell_type]]
             if cell_type.in?(%w(nervos_dao_withdrawing))
               tags[tx_index] << "dao"
               dao_address_ids[tx_index] << attributes[4]
