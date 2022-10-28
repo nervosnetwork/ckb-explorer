@@ -927,7 +927,8 @@ CREATE TABLE public.pool_transaction_entries (
     display_outputs jsonb,
     tx_status integer DEFAULT 0,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    detailed_message text
 );
 
 
@@ -2511,6 +2512,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220830023203'),
 ('20220830163001'),
 ('20220904005610'),
-('20220912154933');
+('20220912154933'),
+('20221024021923');
 
 
