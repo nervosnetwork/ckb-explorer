@@ -881,7 +881,7 @@ module CkbSync
           local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}")
         end
       udt_amount = udt_amount(cell_type(output.type, output_data), output_data, output.type&.args)
-      cell_type = cell_type(output.type, output_data)
+      cell_type = CellOutput.cell_types[cell_type(output.type, output_data).to_s]
       update_nrc_factory_cell_info(output.type, output_data) if cell_type == "nrc_721_factory"
 
       {
