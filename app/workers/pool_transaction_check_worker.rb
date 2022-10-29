@@ -34,29 +34,11 @@ class PoolTransactionCheckWorker
   end
 
   def perform
-    pool_tx_entry_attributes = []
-    PoolTransactionEntry.pool_transaction_pending.select(:id, :inputs, :created_at, :cell_deps).each do |tx|
-
-      tx.inputs.each do |input|
-        reason = get_failed_reason tx_id: input["previous_output"]["tx_hash"], json_rpc_id: generate_json_rpc_id
-        if reason[:status] == 'rejected'
-          pool_tx_entry_attributes << { id: tx.id, tx_status: "rejected", detailed_message: reason[:reason], created_at: tx.created_at, updated_at: Time.current }
-          break
-        end
+    PoolTransactionEntry.pool_transaction_pending.select(:id, :tx_hash, :inputs, :created_at, :cell_deps).find_each do |tx|
+      reason = get_failed_reason tx_id: tx.tx_hash, json_rpc_id: generate_json_rpc_id
+      if reason[:status] == 'rejected'
+        tx.update(tx_status: "rejected", detailed_message: reason[:reason])
       end
-      tx.cell_deps.each do |input|
-        reason = get_failed_reason tx_id: input["out_point"]["tx_hash"], json_rpc_id: generate_json_rpc_id
-        if reason[:status] == 'rejected'
-          pool_tx_entry_attributes << { id: tx.id, tx_status: "rejected", detailed_message: reason[:reason], created_at: tx.created_at, updated_at: Time.current }
-          break
-        end
-      end
-    end
-
-    pool_tx_entry_attributes = pool_tx_entry_attributes.group_by {|tx| tx[:id]}.map {|_, items| items[0]}.flatten
-    if pool_tx_entry_attributes.present?
-      Rails.logger.debug {"== found rejected item, upsert_all: #{pool_tx_entry_attributes}"}
-      PoolTransactionEntry.upsert_all(pool_tx_entry_attributes)
     end
   end
 end
