@@ -12,11 +12,11 @@ class PoolTransactionCheckWorker
     }
 
     url = ENV['CKB_NODE_URL']
-    Rails.logger.info "== in get_failed_reason, url: #{url}, payload: #{payload}"
+    Rails.logger.debug {"== in get_failed_reason, url: #{url}, payload: #{payload}"}
 
     res = HTTP.post(url, json: payload)
     data = JSON.parse res.to_s
-    Rails.logger.info "== in get_failed_reason, result: #{data.inspect}"
+    Rails.logger.debug {"== in get_failed_reason, result: #{data.inspect}"}
 
     status = data['result']['tx_status']['status']
     reason = ''
@@ -55,7 +55,7 @@ class PoolTransactionCheckWorker
 
     pool_tx_entry_attributes = pool_tx_entry_attributes.group_by {|tx| tx[:id]}.map {|_, items| items[0]}.flatten
     if pool_tx_entry_attributes.present?
-      Rails.logger.info "== found rejected item, upsert_all: #{pool_tx_entry_attributes}"
+      Rails.logger.debug {"== found rejected item, upsert_all: #{pool_tx_entry_attributes}"}
       PoolTransactionEntry.upsert_all(pool_tx_entry_attributes)
     end
   end
