@@ -180,10 +180,10 @@ module Api
           { 
             "symbol" => factory_cell.symbol, 
             "amount" => udt_account.nft_token_id.to_s, 
-            "type_hash" => udt_account.type_hash, 
+            "type_hash" => "0x477bc734f701085f12fadc10675b3d5c8508bc55cd8c7cbb60fa79f1460f7efc", 
             "udt_icon_file" => "https://dev.nrc.com/1a2b3c", 
             "udt_type" => udt_account.udt_type,
-            "collection" => {"type_hash" => nil}
+            "collection" => {"type_hash" => "0x76fd1e89b69fca39d953591632145eae5a0a184385d536e9004dcd6d81bc55bd"}
           }
         ], json.dig("data", "attributes", "udt_accounts")
       end
