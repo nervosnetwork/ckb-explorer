@@ -40,6 +40,7 @@ class PoolTransactionCheckWorker
       if reason[:status] == 'rejected'
         tx.update(tx_status: "rejected", detailed_message: reason[:reason])
       end
+      sleep 0.1
     end
   end
 end
