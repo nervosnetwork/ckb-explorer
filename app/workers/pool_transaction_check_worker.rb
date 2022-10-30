@@ -43,7 +43,7 @@ class PoolTransactionCheckWorker
     # If any of the input or dependency cells is used, the transaction will never be valid.
     # Thus we can directly mark this transaction rejected without requesting to CKB Node.
     # Only request the CKB Node for reject reason after we find the transaction is rejeceted.
-    PoolTransactionEntry.pool_transaction_pending.select(:id, :tx_hash, :inputs, :created_at, :cell_deps).each do |tx|
+    PoolTransactionEntry.pool_transaction_pending.select(:id, :tx_hash, :inputs, :created_at, :cell_deps).find_each do |tx|
       rejected = nil
       tx.inputs.each do |input|
         if CellOutput.where(tx_hash: input["previous_output"]["tx_hash"], cell_index: input["previous_output"]["index"], status: "dead").exists?
