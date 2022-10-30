@@ -1,5 +1,6 @@
 class PoolTransactionCheckWorker
   include Sidekiq::Worker
+  sidekiq_options retry: 0
   @@latest_json_rpc_id = 0
 
   # currently there's no such method in Ruby SDK, so let's use HTTP post request.
