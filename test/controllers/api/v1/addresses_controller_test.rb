@@ -169,8 +169,16 @@ module Api
       end
 
       test "should return nrc 721 udt accounts with given address hash" do
+        type_script = create :type_script
         address = create(:address, :with_lock_script)
-        factory_cell = create(:nrc_factory_cell, verified: true, name: "NrcFactoryToken", symbol: "NFT", base_token_uri: "https://dev.nrc.com")
+        factory_cell = create(:nrc_factory_cell, 
+          verified: true, 
+          name: "NrcFactoryToken", 
+          symbol: "NFT", 
+          base_token_uri: "https://dev.nrc.com",
+          code_hash: type_script.code_hash,
+          hash_type: type_script.hash_type
+        )
         udt = create(:udt, udt_type: "nrc_721_token", nrc_factory_cell_id: factory_cell.id, full_name: "OldName", symbol: "ON")
         udt_account = create(:udt_account, published: true, address: address, udt_id: udt.id, nft_token_id: "1a2b3c", udt_type: "nrc_721_token")
         address.query_address = address.address_hash
@@ -180,10 +188,10 @@ module Api
           { 
             "symbol" => factory_cell.symbol, 
             "amount" => udt_account.nft_token_id.to_s, 
-            "type_hash" => "0x477bc734f701085f12fadc10675b3d5c8508bc55cd8c7cbb60fa79f1460f7efc", 
+            "type_hash" => nil, 
             "udt_icon_file" => "https://dev.nrc.com/1a2b3c", 
             "udt_type" => udt_account.udt_type,
-            "collection" => {"type_hash" => "0x76fd1e89b69fca39d953591632145eae5a0a184385d536e9004dcd6d81bc55bd"}
+            "collection" => {"type_hash" => type_script.script_hash}
           }
         ], json.dig("data", "attributes", "udt_accounts")
       end
