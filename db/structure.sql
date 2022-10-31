@@ -246,7 +246,8 @@ CREATE TABLE public.blocks (
     proposal_reward numeric(30,0),
     commit_reward numeric(30,0),
     miner_message character varying,
-    extension jsonb
+    extension jsonb,
+    median_timestamp numeric DEFAULT 0.0
 );
 
 
@@ -2513,6 +2514,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220830163001'),
 ('20220904005610'),
 ('20220912154933'),
-('20221024021923');
+('20221024021923'),
+('20221030235723');
 
 
