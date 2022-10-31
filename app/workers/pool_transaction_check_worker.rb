@@ -71,10 +71,10 @@ class PoolTransactionCheckWorker
         end
       end
       if rejected
+        pool_tx_entry_attributes << rejected
         reason = get_failed_reason tx_id: tx.tx_hash
         if reason[:status] == 'rejected'
           rejected[:detailed_message] = reason[:reason]
-          pool_tx_entry_attributes << rejected
         end
       end
     end
