@@ -104,8 +104,11 @@ class Block < ApplicationRecord
 
   # update existing block data. to update its median_timestamp
   # only run once.
-  def self.update_block_median_timestamp
-    Block.where('created_at < ?', Time.now).find_in_batches(batch_size: 2000) do |blocks|
+  # usage:
+  # 1. bundle exec rails console
+  # 2. Block.update_block_median_timestamp <block_number>
+  def self.update_block_median_timestamp block_number
+    Block.where('id < ?', block_number).find_in_batches(batch_size: 2000) do |blocks|
       single_payload = []
       blocks.each do |block|
         single_payload << %Q{{ "id": #{block.id}, "jsonrpc": "2.0", "method": "get_block_median_time", "params": ["#{block.block_hash}"] }}
