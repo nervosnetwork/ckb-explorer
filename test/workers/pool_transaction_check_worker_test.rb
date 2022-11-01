@@ -7,7 +7,8 @@ class PoolTransactionCheckWorkerTest < ActiveSupport::TestCase
   test "should detect and mark failed tx from pending tx, for inputs" do
     Sidekiq::Testing.inline!
     rejected_tx_id = '0xed2049c21ffccfcd26281d60f8f77ff117adb9df9d3f8cbe5fe86e893c66d359'
-    create :pool_transaction_entry, tx_status: 'pending',
+    tx = create :pool_transaction_entry, tx_status: 'pending',
+      tx_hash: rejected_tx_id,
       inputs: [
         {
           "since": 0,
@@ -18,10 +19,14 @@ class PoolTransactionCheckWorkerTest < ActiveSupport::TestCase
         },
       ],
       cell_deps: []
+    block = create(:block)
+    cell_output = create(:cell_output, :with_full_transaction, block: block, ckb_transaction_id: rejected_tx_id)
+    cell_output.update tx_hash: rejected_tx_id, cell_index: 0, status: 'dead'
 
     VCR.use_cassette('get_rejected_transaction') do
       PoolTransactionCheckWorker.perform_async
       pool_transaction_entry = PoolTransactionEntry.last
+
       assert_equal 'rejected', pool_transaction_entry.tx_status
       assert pool_transaction_entry.detailed_message.include?("Resolve failed Dead")
     end
@@ -29,8 +34,10 @@ class PoolTransactionCheckWorkerTest < ActiveSupport::TestCase
 
   test "should detect and mark failed tx from pending tx, for cell_deps" do
     Sidekiq::Testing.inline!
+
     rejected_tx_id = '0xed2049c21ffccfcd26281d60f8f77ff117adb9df9d3f8cbe5fe86e893c66d359'
-    create :pool_transaction_entry, tx_status: 'pending',
+    tx = create :pool_transaction_entry, tx_status: 'pending',
+      tx_hash: rejected_tx_id,
       inputs: [],
       cell_deps: [
         {
@@ -48,6 +55,9 @@ class PoolTransactionCheckWorkerTest < ActiveSupport::TestCase
           }
         }
       ]
+    block = create(:block)
+    cell_output = create(:cell_output, :with_full_transaction, block: block, ckb_transaction_id: rejected_tx_id)
+    cell_output.update tx_hash: rejected_tx_id, cell_index: 0, status: 'dead'
 
     VCR.use_cassette('get_rejected_transaction') do
       PoolTransactionCheckWorker.perform_async
