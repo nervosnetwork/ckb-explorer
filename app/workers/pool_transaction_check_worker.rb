@@ -41,10 +41,11 @@ class PoolTransactionCheckWorker
       end
       if is_rejected
         pool_tx_entry_attributes << rejected_cell_output
-        reason = CkbSync::Api.instance.directly_single_call_rpc method: 'get_failed_reason', params: "[#{tx.tx_hash}]"
+        response_string = CkbSync::Api.instance.directly_single_call_rpc method: 'get_transaction', params: [tx.tx_hash]
+        reason = response_string['result']['tx_status']
 
-        if reason[:status] == 'rejected'
-          rejected_cell_output[:detailed_message] = reason[:reason]
+        if reason['status'] == 'rejected'
+          rejected_cell_output[:detailed_message] = reason['reason']
         end
       end
     end

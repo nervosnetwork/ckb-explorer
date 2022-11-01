@@ -2,7 +2,7 @@ require "test_helper"
 
 class PoolTransactionCheckWorkerTest < ActiveSupport::TestCase
   setup do
-    PoolTransactionCheckWorker.any_instance.stubs(:generate_json_rpc_id).returns(1)
+    CkbSync::Api.any_instance.stubs(:generate_json_rpc_id).returns(1)
   end
   test "should detect and mark failed tx from pending tx, for inputs" do
     Sidekiq::Testing.inline!
@@ -62,7 +62,7 @@ class PoolTransactionCheckWorkerTest < ActiveSupport::TestCase
     VCR.use_cassette('get_rejected_transaction') do
       PoolTransactionCheckWorker.perform_async
 
-      pool_transaction_entry = PoolTransactionEntry.last
+      pool_transaction_entry = PoolTransactionEntry.find_by_tx_hash rejected_tx_id
       assert_equal 'rejected', pool_transaction_entry.tx_status
       assert pool_transaction_entry.detailed_message.include?("Resolve failed Dead")
     end
