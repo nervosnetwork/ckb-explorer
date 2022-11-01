@@ -40,18 +40,9 @@ class PoolTransactionCheckWorker
         end
       end
       if is_rejected
-        pool_tx_entry_attributes << rejected_transaction
-        response_string = CkbSync::Api.instance.directly_single_call_rpc method: 'get_transaction', params: [tx.tx_hash]
-        reason = response_string['result']['tx_status']
-
-        if reason['status'] == 'rejected'
-          rejected_transaction[:detailed_message] = reason['reason']
-        end
+        PoolTransactionUpdateRejectReasonWorker.perform_async tx.tx_hash, rejected_transaction
       end
     end
 
-    pool_tx_entry_attributes.uniq!{|i| i[:id]}
-
-    PoolTransactionEntry.upsert_all(pool_tx_entry_attributes) if pool_tx_entry_attributes.present?
   end
 end
