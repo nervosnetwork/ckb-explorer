@@ -43,6 +43,5 @@ class PoolTransactionCheckWorker
         PoolTransactionUpdateRejectReasonWorker.perform_async tx.tx_hash, rejected_transaction
       end
     end
-
   end
 end
