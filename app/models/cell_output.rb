@@ -222,19 +222,17 @@ class CellOutput < ApplicationRecord
 
   # update the history data, which cell_type should be "cota_registry" or "cota_regular"
   def self.update_cell_types_for_cota
-    CellOutput.transaction do
-      TypeScript.where('code_hash = ?', CkbSync::Api.instance.cota_registry_code_hash).each do |type_script|
-        CellOutput.where('type_script_id = ?', type_script.id).each do |cell_output|
-          cell_output.cell_type = 'cota_registry'
-          cell_output.save!
-        end
+    TypeScript.where(code_hash: CkbSync::Api.instance.cota_registry_code_hash).each do |type_script|
+      CellOutput.where(type_script_id: type_script.id).each do |cell_output|
+        cell_output.cell_type = 'cota_registry'
+        cell_output.save!
       end
+    end
 
-      TypeScript.where('code_hash = ?', CkbSync::Api.instance.cota_regular_code_hash).each do |type_script|
-        CellOutput.where('type_script_id = ?', type_script.id).each do |cell_output|
-          cell_output.cell_type = 'cota_regular'
-          cell_output.save!
-        end
+    TypeScript.where(code_hash: CkbSync::Api.instance.cota_regular_code_hash).each do |type_script|
+      CellOutput.where(type_script_id: type_script.id).each do |cell_output|
+        cell_output.cell_type = 'cota_regular'
+        cell_output.save!
       end
     end
   end

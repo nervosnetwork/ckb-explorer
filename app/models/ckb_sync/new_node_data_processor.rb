@@ -779,7 +779,7 @@ module CkbSync
 
             prev_cell_outputs_attributes << attributes[1]
             contained_addr_ids[tx_index] << attributes[4]
-            cell_type = attributes[1][:cell_type]
+            cell_type = attributes[1][:cell_type].to_s
             if cell_type.in?(%w(nervos_dao_withdrawing))
               tags[tx_index] << "dao"
               dao_address_ids[tx_index] << attributes[4]
@@ -863,7 +863,7 @@ module CkbSync
           elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token))
             TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
           end
-
+          
           output_capacities[tx_index] += item.capacity if tx_index != 0
           cell_index += 1
         end
@@ -881,7 +881,7 @@ module CkbSync
           local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}")
         end
       udt_amount = udt_amount(cell_type(output.type, output_data), output_data, output.type&.args)
-      cell_type = cell_type(output.type, output_data)
+      cell_type = cell_type(output.type, output_data).to_s
       update_nrc_factory_cell_info(output.type, output_data) if cell_type == "nrc_721_factory"
 
       {
