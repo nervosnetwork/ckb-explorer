@@ -54,7 +54,7 @@ module Api
 
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if ckb_transaction.blank?
 
-        if ckb_transaction.class == PoolTransactionEntry && ckb_transaction.tx_status.to_s == "rejected" && ckb_transaction.detailed_message.blank?
+        if ckb_transaction.is_a?(PoolTransactionEntry) && ckb_transaction.tx_status.to_s == "rejected" && ckb_transaction.detailed_message.blank?
           ckb_transaction.update_detailed_message_for_rejected_transaction
         end
 
