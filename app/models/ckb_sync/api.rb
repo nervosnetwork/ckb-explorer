@@ -89,6 +89,7 @@ module CkbSync
       }
 
       url = ENV['CKB_NODE_URL']
+
       Rails.logger.debug "== in directly_call_rpc, url: #{url}, payload: #{payload}"
 
       res = HTTP.post(url, json: payload)
@@ -125,6 +126,7 @@ module CkbSync
 
       return result
     end
+
 
     # this methods calls the ruby-sdk, but not directly from rpc
     # some of the method is missing, e.g. get_block_median_time

@@ -14,7 +14,7 @@ class CkbTransactionSerializer
     if object.tx_status.to_s == "rejected"
       object.detailed_message
     else
-      'This transaction is not rejected.'
+      nil
     end
   end
 
