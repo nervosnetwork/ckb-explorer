@@ -44,31 +44,41 @@ class PoolTransactionEntry < ApplicationRecord
       witnesses: Array.wrap(witnesses)
     }
   end
+
+  def update_detailed_message_for_rejected_transaction
+
+    response_string = CkbSync::Api.instance.directly_single_call_rpc method: 'get_transaction', params: [tx_hash]
+    reason = response_string['result']['tx_status']
+    self.update detailed_message: response_string['result']['tx_status']['reason']
+    return self
+  end
+
 end
 
 # == Schema Information
 #
 # Table name: pool_transaction_entries
 #
-#  id              :bigint           not null, primary key
-#  cell_deps       :jsonb
-#  tx_hash         :binary
-#  header_deps     :jsonb
-#  inputs          :jsonb
-#  outputs         :jsonb
-#  outputs_data    :jsonb
-#  version         :integer
-#  witnesses       :jsonb
-#  transaction_fee :decimal(30, )
-#  block_number    :decimal(30, )
-#  block_timestamp :decimal(30, )
-#  cycles          :decimal(30, )
-#  tx_size         :decimal(30, )
-#  display_inputs  :jsonb
-#  display_outputs :jsonb
-#  tx_status       :integer          default("pending")
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
+#  id               :bigint           not null, primary key
+#  cell_deps        :jsonb
+#  tx_hash          :binary
+#  header_deps      :jsonb
+#  inputs           :jsonb
+#  outputs          :jsonb
+#  outputs_data     :jsonb
+#  version          :integer
+#  witnesses        :jsonb
+#  transaction_fee  :decimal(30, )
+#  block_number     :decimal(30, )
+#  block_timestamp  :decimal(30, )
+#  cycles           :decimal(30, )
+#  tx_size          :decimal(30, )
+#  display_inputs   :jsonb
+#  display_outputs  :jsonb
+#  tx_status        :integer          default("pending")
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  detailed_message :text
 #
 # Indexes
 #
