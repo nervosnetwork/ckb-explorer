@@ -52,4 +52,5 @@ class CkbTransactionsSerializer
       end
     end
   end
+
 end

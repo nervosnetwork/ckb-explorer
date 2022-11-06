@@ -75,4 +75,8 @@ class CkbTransactionSerializer
       # end
     end
   end
+
+  attribute :bytes do |object|
+    object.bytes
+  end
 end

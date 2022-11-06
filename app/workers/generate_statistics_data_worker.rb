@@ -17,6 +17,10 @@ class GenerateStatisticsDataWorker
     end
 
     CellOutput.upsert_all(cell_outputs_attributes) if cell_outputs_attributes.present?
-
+    block.ckb_transactions.find_each do |c|
+      res = CkbSync::Api.instance.directly_single_call_rpc(method: :get_transaction, params: [c.tx_hash, '0x0'])
+      c.bytes = (res['result']['transaction'].size - 2)/2
+      c.save
+    end
   end
 end

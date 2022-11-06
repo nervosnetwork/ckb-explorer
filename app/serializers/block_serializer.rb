@@ -3,7 +3,6 @@ class BlockSerializer
 
   attributes :block_hash, :uncle_block_hashes, :miner_hash, :transactions_root,
              :reward_status, :received_tx_fee_status, :miner_message
-
   attribute :number do |object|
     object.number.to_s
   end
@@ -58,4 +57,7 @@ class BlockSerializer
   attribute :miner_reward do |object|
     (object.received_tx_fee + object.reward).to_s
   end
+  attribute :size do |object|
+    object.block_size
+  end  
 end
