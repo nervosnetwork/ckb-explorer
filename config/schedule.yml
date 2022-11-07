@@ -37,3 +37,7 @@ cal_address_unclaimed_compensation:
 update_pool_txs_status:
   cron: "*/5 * * * *"
   class: "PoolTransactionCheckWorker"
+
+clean_up_worker:
+  cron: "0 * * * *"
+  class: 'CleanUpWorker'

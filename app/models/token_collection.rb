@@ -89,6 +89,21 @@ class TokenCollection < ApplicationRecord
       tc.update_info
     end
   end
+
+  # removed the wrong token collections
+  def self.remove_corrupted
+    where(standard: 'nrc721').where(type_script_id: nil).or(where(creator_id: nil)).find_each do |tc|
+      tc.update_info rescue nil
+      
+      if tc.cell.blank?
+        tc.destroy
+      end
+
+      unless CkbUtils.is_nrc_721_factory_cell?(tc.cell.data)
+        tc.destroy
+      end
+    end
+  end
 end
 
 # == Schema Information
