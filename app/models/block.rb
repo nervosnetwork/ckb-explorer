@@ -140,6 +140,7 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
+#  uncles_count               :integer
 #  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
@@ -147,7 +148,6 @@ end
 #  proposals_count            :integer
 #  cell_consumed              :decimal(30, )
 #  miner_hash                 :binary
-#  miner_message              :string
 #  reward                     :decimal(30, )
 #  total_transaction_fee      :decimal(30, )
 #  ckb_transactions_count     :decimal(30, )    default(0)
@@ -167,14 +167,15 @@ end
 #  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
-#  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
 #  block_size                 :integer
 #  proposal_reward            :decimal(30, )
 #  commit_reward              :decimal(30, )
+#  miner_message              :string
 #  extension                  :jsonb
+#  median_timestamp           :decimal(, )      default(0.0)
 #
 # Indexes
 #

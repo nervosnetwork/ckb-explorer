@@ -2150,6 +2150,13 @@ CREATE UNIQUE INDEX index_nrc_factory_cells_on_code_hash_and_hash_type_and_args 
 
 
 --
+-- Name: index_pool_transaction_entries_on_id_and_tx_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pool_transaction_entries_on_id_and_tx_status ON public.pool_transaction_entries USING btree (id, tx_status);
+
+
+--
 -- Name: index_pool_transaction_entries_on_tx_hash; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2521,6 +2528,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221030235723'),
 ('20221031085901'),
 ('20221106174818'),
-('20221106182302');
+('20221106182302'),
+('20221108035020');
 
 
