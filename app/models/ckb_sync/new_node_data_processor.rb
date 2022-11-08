@@ -1066,10 +1066,16 @@ module CkbSync
           block_time: block_time(header.timestamp, header.number),
           block_size: 0,
           miner_message: CkbUtils.miner_message(cellbase),
-          extension: node_block.extension
+          extension: node_block.extension,
+          median_timestamp: get_median_timestamp(header.hash)
         )
       end
       block
+    end
+
+    def get_median_timestamp block_hash
+      response = CkbSync::Api.instance.directly_single_call_rpc method: "get_block_median_time", params: [block_hash]
+      return response['result'].to_i(16)
     end
 
     def from_cell_base?(node_input)

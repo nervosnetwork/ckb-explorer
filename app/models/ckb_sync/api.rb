@@ -89,14 +89,51 @@ module CkbSync
       }
 
       url = ENV['CKB_NODE_URL']
+
+      Rails.logger.debug "== in directly_call_rpc, url: #{url}, payload: #{payload}"
+
       res = HTTP.post(url, json: payload)
       result = JSON.parse res.to_s
+      Rails.logger.debug "== in directly_call_rpc result: #{result.inspect}"
 
       return result
     end
 
+    # in case that some method you call is not implemented in ruby sdk
+    # payload:
+    #  [
+    #      {
+    #          "id": 3, "jsonrpc": "2.0", "method": "get_transaction", "params": ["0xed2049c21ffccfcd26281d60f8f77ff117adb9df9d3f8cbe5fe86e893c66d359"]
+    #      },
+    #      {
+    #          "id": 4, "jsonrpc": "2.0", "method": "get_transaction", "params": ["0x6c80c63f956583569b1f8222c5846edc18fbb19757671b47a4e35cb98782804e"]
+    #      }
+    #  ]
+    # return:
+    #   parsed json
+    #   `[
+    #      {"jsonrpc":"2.0","result":"0x16e8100f3fe","id":4996},
+    #      {"jsonrpc":"2.0","result":"0x16e81010c18","id":4997}
+    #    ]`
+    def directly_batch_call_rpc payload
+
+      url = ENV['CKB_NODE_URL']
+      Rails.logger.debug "== in directly_batch_call_rpc, url: #{url}, payload: #{payload}"
+
+      res = HTTP.post(url, json: payload)
+      result = JSON.parse res.to_s
+      Rails.logger.debug "== in directly_batch_call_rpc result: #{result.inspect}"
+
+      return result
+    end
+
+
+    # this methods calls the ruby-sdk, but not directly from rpc
+    # some of the method is missing, e.g. get_block_median_time
     def call_rpc(method, params: [])
       @api.send(method, *params)
     end
+
+
   end
 end

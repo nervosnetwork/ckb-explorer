@@ -156,6 +156,7 @@ class CkbTransaction < ApplicationRecord
     end
     cell_inputs_for_display.each_with_index.map do |cell_input, index|
       previous_cell_output = cell_input.previous_cell_output
+
       display_input = {
         id: previous_cell_output.id,
         from_cellbase: false,
@@ -163,7 +164,11 @@ class CkbTransaction < ApplicationRecord
         address_hash: previous_cell_output.address_hash,
         generated_tx_hash: previous_cell_output.generated_by.tx_hash,
         cell_index: previous_cell_output.cell_index,
-        cell_type: previous_cell_output.cell_type
+        cell_type: previous_cell_output.cell_type,
+        since: {
+          raw: hex_since(cell_input.since.to_i),
+          median_timestamp: cell_input.block.median_timestamp.to_i
+        }
       }
       display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
       display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
@@ -173,6 +178,10 @@ class CkbTransaction < ApplicationRecord
 
       CkbUtils.hash_value_to_s(display_input)
     end
+  end
+
+  def hex_since int_since_value
+    return "0x#{int_since_value.to_s(16).rjust(16, '0')}"
   end
 
   def attributes_for_udt_cell(udt_cell)

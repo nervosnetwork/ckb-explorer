@@ -44,6 +44,15 @@ class PoolTransactionEntry < ApplicationRecord
       witnesses: Array.wrap(witnesses)
     }
   end
+
+  def update_detailed_message_for_rejected_transaction
+
+    response_string = CkbSync::Api.instance.directly_single_call_rpc method: 'get_transaction', params: [tx_hash]
+    reason = response_string['result']['tx_status']
+    self.update detailed_message: response_string['result']['tx_status']['reason']
+    return self
+  end
+
 end
 
 # == Schema Information

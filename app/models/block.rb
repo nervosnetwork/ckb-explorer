@@ -102,6 +102,26 @@ class Block < ApplicationRecord
     destroy
   end
 
+  # update existing block data. to update its median_timestamp
+  # only run once.
+  # usage:
+  # 1. bundle exec rails console
+  # 2. Block.update_block_median_timestamp <block_number>
+  def self.update_block_median_timestamp block_number
+    Block.where('id < ?', block_number).find_in_batches(batch_size: 2000) do |blocks|
+      single_payload = []
+      blocks.each do |block|
+        single_payload << %Q{{ "id": #{block.id}, "jsonrpc": "2.0", "method": "get_block_median_time", "params": ["#{block.block_hash}"] }}
+      end
+
+      response = CkbSync::Api.instance.directly_batch_call_rpc JSON.parse("[ #{single_payload.join(',')}]")
+      response.each do |json_result|
+        Block.find(json_result['id']).update median_timestamp: json_result['result'].to_i(16)
+      end
+
+    end
+  end
+
   private
 
   def delete_tx_display_infos
