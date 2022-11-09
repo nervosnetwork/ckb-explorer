@@ -1780,6 +1780,30 @@ ALTER TABLE ONLY public.uncle_blocks
 
 
 --
+-- Name: addresses unique_lock_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.addresses
+    ADD CONSTRAINT unique_lock_hash UNIQUE (lock_hash);
+
+
+--
+-- Name: token_collections unique_sn; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.token_collections
+    ADD CONSTRAINT unique_sn UNIQUE (sn);
+
+
+--
+-- Name: pool_transaction_entries unique_tx_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pool_transaction_entries
+    ADD CONSTRAINT unique_tx_hash UNIQUE (tx_hash);
+
+
+--
 -- Name: udts unique_type_hash; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1798,7 +1822,7 @@ CREATE UNIQUE INDEX index_account_books_on_address_id_and_ckb_transaction_id ON 
 -- Name: index_account_books_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_account_books_on_ckb_transaction_id ON public.account_books USING hash (ckb_transaction_id);
+CREATE INDEX index_account_books_on_ckb_transaction_id ON public.account_books USING btree (ckb_transaction_id);
 
 
 --
@@ -1974,6 +1998,13 @@ CREATE INDEX index_cell_outputs_on_lock_script_id ON public.cell_outputs USING b
 --
 
 CREATE INDEX index_cell_outputs_on_status ON public.cell_outputs USING btree (status);
+
+
+--
+-- Name: index_cell_outputs_on_tx_hash_and_cell_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_outputs_on_tx_hash_and_cell_index ON public.cell_outputs USING btree (tx_hash, cell_index);
 
 
 --
@@ -2512,7 +2543,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220830163001'),
 ('20220904005610'),
 ('20220912154933'),
-('20221009070434'),
 ('20221009072146'),
 ('20221009073948'),
 ('20221009075753'),

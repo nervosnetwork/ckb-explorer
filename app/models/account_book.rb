@@ -14,5 +14,5 @@ end
 # Indexes
 #
 #  index_account_books_on_address_id_and_ckb_transaction_id  (address_id,ckb_transaction_id) UNIQUE
-#  index_account_books_on_ckb_transaction_id                 (ckb_transaction_id) USING hash
+#  index_account_books_on_ckb_transaction_id                 (ckb_transaction_id)
 #
