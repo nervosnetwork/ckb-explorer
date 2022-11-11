@@ -5,7 +5,8 @@ redis_url = redis_config["url"]
 redis_password = redis_config["password"]
 
 Sidekiq.configure_server do |config|
-  config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
+  config.redis = { url: redis_url, driver: :ruby, password: redis_password }
+  #config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
 
   config.death_handlers << ->(job, _ex) do
     SidekiqUniqueJobs::Digests.del(digest: job["unique_digest"]) if job["unique_digest"]
@@ -18,7 +19,8 @@ Sidekiq.configure_server do |config|
   end
 end
 Sidekiq.configure_client do |config|
-  config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
+  #config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
+  config.redis = { url: redis_url, driver: :ruby, password: redis_password }
 end
 
 # Auth sidekiq user in production env.
