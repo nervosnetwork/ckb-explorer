@@ -11,16 +11,14 @@ class GenerateStatisticsDataWorker
     cell_outputs_attributes = []
     cell_outputs.each do |cell_output|
       cell_outputs_attributes << {
-        id: cell_output.id, data_size: CKB::Utils.hex_to_bin(cell_output.data).bytesize,
+        id: cell_output.id, 
+        data_size: CKB::Utils.hex_to_bin(cell_output.data).bytesize,
         occupied_capacity: CkbUtils.calculate_cell_min_capacity(cell_output.node_output, cell_output.data),
-        created_at: cell_output.created_at, updated_at: Time.current }
+        created_at: cell_output.created_at, 
+        updated_at: Time.current 
+      }
     end
 
     CellOutput.upsert_all(cell_outputs_attributes) if cell_outputs_attributes.present?
-    block.ckb_transactions.find_each do |c|
-      res = CkbSync::Api.instance.directly_single_call_rpc(method: :get_transaction, params: [c.tx_hash, '0x0'])
-      c.bytes = (res['result']['transaction'].size - 2)/2
-      c.save
-    end
   end
 end

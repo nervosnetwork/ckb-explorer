@@ -11,6 +11,7 @@ module CkbSync
           start_number: "0x0"
         )
       )
+      ::CKB::Types::Transaction.any_instance.stubs( :serialized_size_in_block).returns( 0 )
       create(:table_record_count, :block_counter)
       create(:table_record_count, :ckb_transactions_counter)
       CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
@@ -293,6 +294,7 @@ module CkbSync
       DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
+      
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_interest_transaction(node_block)
         output = tx.cell_outputs.first
