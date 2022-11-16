@@ -1798,10 +1798,10 @@ CREATE INDEX index_account_books_on_ckb_transaction_id ON public.account_books U
 
 
 --
--- Name: index_addresses_on_address_hash; Type: INDEX; Schema: public; Owner: -
+-- Name: index_addresses_on_address_hash_crc; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_addresses_on_address_hash ON public.addresses USING btree (address_hash);
+CREATE INDEX index_addresses_on_address_hash_crc ON public.addresses USING btree (address_hash_crc);
 
 
 --
@@ -1815,7 +1815,7 @@ CREATE INDEX index_addresses_on_is_depositor ON public.addresses USING btree (is
 -- Name: index_addresses_on_lock_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_addresses_on_lock_hash ON public.addresses USING hash (lock_hash);
+CREATE UNIQUE INDEX index_addresses_on_lock_hash ON public.addresses USING btree (lock_hash);
 
 
 --
@@ -1850,7 +1850,7 @@ CREATE UNIQUE INDEX index_block_time_statistics_on_stat_timestamp ON public.bloc
 -- Name: index_blocks_on_block_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_blocks_on_block_hash ON public.blocks USING hash (block_hash);
+CREATE UNIQUE INDEX index_blocks_on_block_hash ON public.blocks USING btree (block_hash);
 
 
 --
@@ -2123,7 +2123,7 @@ CREATE INDEX index_lock_scripts_on_code_hash_and_hash_type_and_args ON public.lo
 -- Name: index_lock_scripts_on_script_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_lock_scripts_on_script_hash ON public.lock_scripts USING hash (script_hash);
+CREATE INDEX index_lock_scripts_on_script_hash ON public.lock_scripts USING btree (script_hash);
 
 
 --
@@ -2151,7 +2151,7 @@ CREATE UNIQUE INDEX index_nrc_factory_cells_on_code_hash_and_hash_type_and_args 
 -- Name: index_pool_transaction_entries_on_tx_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_pool_transaction_entries_on_tx_hash ON public.pool_transaction_entries USING hash (tx_hash);
+CREATE UNIQUE INDEX index_pool_transaction_entries_on_tx_hash ON public.pool_transaction_entries USING btree (tx_hash);
 
 
 --
@@ -2186,7 +2186,7 @@ CREATE INDEX index_token_collections_on_cell_id ON public.token_collections USIN
 -- Name: index_token_collections_on_sn; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_token_collections_on_sn ON public.token_collections USING hash (sn);
+CREATE UNIQUE INDEX index_token_collections_on_sn ON public.token_collections USING btree (sn);
 
 
 --
@@ -2277,7 +2277,7 @@ CREATE INDEX index_type_scripts_on_code_hash_and_hash_type_and_args ON public.ty
 -- Name: index_type_scripts_on_script_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_type_scripts_on_script_hash ON public.type_scripts USING hash (script_hash);
+CREATE INDEX index_type_scripts_on_script_hash ON public.type_scripts USING btree (script_hash);
 
 
 --
@@ -2305,7 +2305,7 @@ CREATE INDEX index_udt_accounts_on_udt_id ON public.udt_accounts USING btree (ud
 -- Name: index_udts_on_type_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_udts_on_type_hash ON public.udts USING hash (type_hash);
+CREATE UNIQUE INDEX index_udts_on_type_hash ON public.udts USING btree (type_hash);
 
 
 --
@@ -2515,13 +2515,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220830163001'),
 ('20220904005610'),
 ('20220912154933'),
-('20221009072146'),
-('20221009073948'),
-('20221009075753'),
-('20221009080035'),
-('20221009080306'),
-('20221009080708'),
-('20221009081118'),
 ('20221024021923'),
 ('20221030235723'),
 ('20221031085901');
