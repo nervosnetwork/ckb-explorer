@@ -6,9 +6,7 @@ class ErrorsControllerTest < ActionDispatch::IntegrationTest
       post "/"
     rescue Exception => e
       assert_equal e.class, ActionController::RoutingError
-      puts "== e: #{e.inspect}"
       assert e.to_s.match("No route matches")
-      #assert_response :not_found
     end
 
   end
