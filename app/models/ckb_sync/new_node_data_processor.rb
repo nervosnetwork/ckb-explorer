@@ -31,7 +31,9 @@ module CkbSync
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
       if !forked?(target_block, local_tip_block)
         Rails.logger.error "process_block: #{target_block_number}"
-        process_block(target_block)
+        res = process_block(target_block)
+        self.reorg_started_at.delete
+        res
       else
         self.reorg_started_at = Time.now
         res = invalid_block(local_tip_block)
@@ -596,18 +598,29 @@ module CkbSync
       ckb_txs.each do |tx|
         if tx_index == 0
           ckb_transactions_attributes << {
-            id: tx["id"], dao_address_ids: dao_address_ids[tx_index].to_a,
-            udt_address_ids: udt_address_ids[tx_index].to_a, contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            contained_address_ids: contained_addr_ids[tx_index].to_a, tags: tags[tx_index].to_a,
-            capacity_involved: input_capacities[tx_index], transaction_fee: 0,
-            created_at: tx["created_at"], updated_at: Time.current }
+            id: tx["id"], 
+            dao_address_ids: dao_address_ids[tx_index].to_a,
+            udt_address_ids: udt_address_ids[tx_index].to_a, 
+            contained_udt_ids: contained_udt_ids[tx_index].to_a,
+            contained_address_ids: contained_addr_ids[tx_index].to_a, 
+            tags: tags[tx_index].to_a,
+            capacity_involved: input_capacities[tx_index], 
+            transaction_fee: 0,
+            created_at: tx["created_at"], 
+            updated_at: Time.current 
+          }
         else
           ckb_transactions_attributes << {
-            id: tx["id"], dao_address_ids: dao_address_ids[tx_index].to_a,
-            udt_address_ids: udt_address_ids[tx_index].to_a, contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            contained_address_ids: contained_addr_ids[tx_index].to_a, tags: tags[tx_index].to_a,
-            capacity_involved: input_capacities[tx_index], transaction_fee: CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index]),
-            created_at: tx["created_at"], updated_at: Time.current }
+            id: tx["id"], 
+            dao_address_ids: dao_address_ids[tx_index].to_a,
+            udt_address_ids: udt_address_ids[tx_index].to_a, 
+            contained_udt_ids: contained_udt_ids[tx_index].to_a,
+            contained_address_ids: contained_addr_ids[tx_index].to_a, 
+            tags: tags[tx_index].to_a,
+            capacity_involved: input_capacities[tx_index], 
+            transaction_fee: CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index]),
+            created_at: tx["created_at"], updated_at: Time.current 
+          }
         end
         tx_index += 1
       end
@@ -992,6 +1005,7 @@ module CkbSync
         witnesses: tx.witnesses,
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
+        bytes: tx.serialized_size_in_block,
         created_at: Time.current,
         updated_at: Time.current
       }
