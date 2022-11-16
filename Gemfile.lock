@@ -464,7 +464,7 @@ DEPENDENCIES
   rack-attack
   rack-cache
   rack-cors
-  rails (>= 7.0.4)
+  rails (~> 7.0.4)
   redis
   redis-objects
   rubocop
