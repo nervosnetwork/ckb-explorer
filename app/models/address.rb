@@ -257,7 +257,7 @@ end
 #
 # Indexes
 #
-#  index_addresses_on_address_hash  (address_hash)
-#  index_addresses_on_is_depositor  (is_depositor) WHERE (is_depositor = true)
-#  index_addresses_on_lock_hash     (lock_hash) USING hash
+#  index_addresses_on_address_hash_crc  (address_hash_crc)
+#  index_addresses_on_is_depositor      (is_depositor) WHERE (is_depositor = true)
+#  index_addresses_on_lock_hash         (lock_hash) UNIQUE
 #

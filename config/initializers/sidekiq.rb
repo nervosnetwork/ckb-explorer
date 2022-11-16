@@ -4,6 +4,8 @@ redis_config = Rails.application.config_for(:redis)
 redis_url = redis_config["url"]
 redis_password = redis_config["password"]
 
+Sidekiq.strict_args!(false)
+
 Sidekiq.configure_server do |config|
   config.redis = { url: redis_url, driver: :ruby, password: redis_password }
   #config.redis = { url: redis_url, driver: :hiredis, password: redis_password }

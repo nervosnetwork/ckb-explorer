@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/faker-ruby/faker.git
-  revision: 6098379d79ff45226188598023d3bc0b7149ef9d
+  revision: 97af5a0f093138e717819e0df998ddd0cdb95d28
   branch: main
   specs:
     faker (3.0.0)
@@ -111,7 +111,7 @@ GEM
       simplecov (>= 0.15, < 0.22)
     coderay (1.1.3)
     concurrent-ruby (1.1.10)
-    config (4.0.0)
+    config (4.1.0)
       deep_merge (~> 1.2, >= 1.2.1)
       dry-validation (~> 1.0, >= 1.0.0)
     connection_pool (2.3.0)
@@ -324,7 +324,7 @@ GEM
     reverse_markdown (2.1.1)
       nokogiri
     rexml (3.2.5)
-    rubocop (1.38.0)
+    rubocop (1.39.0)
       json (~> 2.3)
       parallel (~> 1.10)
       parser (>= 3.1.2.1)
@@ -495,4 +495,4 @@ RUBY VERSION
    ruby 3.1.2p20
 
 BUNDLED WITH
-   2.3.23
+   2.3.25
