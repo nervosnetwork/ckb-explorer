@@ -42,7 +42,7 @@ module Api
           end
         ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
         json = Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
-          
+
           options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
           CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address: @address })).serialized_json
         end
@@ -54,10 +54,15 @@ module Api
 
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if ckb_transaction.blank?
 
+        if ckb_transaction.is_a?(PoolTransactionEntry) && ckb_transaction.tx_status.to_s == "rejected" && ckb_transaction.detailed_message.blank?
+          ckb_transaction.update_detailed_message_for_rejected_transaction
+        end
+
         render json: CkbTransactionSerializer.new(ckb_transaction)
       end
 
       private
+
 
       def from_home_page?
         params[:page].blank? || params[:page_size].blank?

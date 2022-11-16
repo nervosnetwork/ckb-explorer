@@ -409,6 +409,8 @@ module ActiveSupport
     def before_setup
       super
       DatabaseCleaner.start
+
+      CkbSync::NewNodeDataProcessor.any_instance.stubs(:get_median_timestamp).returns(1573852190812)
     end
 
     def after_setup
