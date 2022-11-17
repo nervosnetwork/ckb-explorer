@@ -156,6 +156,7 @@ class CkbTransaction < ApplicationRecord
     end
     cell_inputs_for_display.each_with_index.map do |cell_input, index|
       previous_cell_output = cell_input.previous_cell_output
+
       display_input = {
         id: previous_cell_output.id,
         from_cellbase: false,
@@ -163,7 +164,11 @@ class CkbTransaction < ApplicationRecord
         address_hash: previous_cell_output.address_hash,
         generated_tx_hash: previous_cell_output.generated_by.tx_hash,
         cell_index: previous_cell_output.cell_index,
-        cell_type: previous_cell_output.cell_type
+        cell_type: previous_cell_output.cell_type,
+        since: {
+          raw: hex_since(cell_input.since.to_i),
+          median_timestamp: cell_input.block.median_timestamp.to_i
+        }
       }
       display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
       display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
@@ -173,6 +178,10 @@ class CkbTransaction < ApplicationRecord
 
       CkbUtils.hash_value_to_s(display_input)
     end
+  end
+
+  def hex_since int_since_value
+    return "0x#{int_since_value.to_s(16).rjust(16, '0')}"
   end
 
   def attributes_for_udt_cell(udt_cell)
@@ -233,9 +242,9 @@ end
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
 #  is_cellbase           :boolean          default(FALSE)
-#  witnesses             :jsonb
 #  header_deps           :binary
 #  cell_deps             :jsonb
+#  witnesses             :jsonb
 #  live_cell_changes     :integer
 #  capacity_involved     :decimal(30, )
 #  contained_address_ids :bigint           default([]), is an Array
@@ -243,13 +252,13 @@ end
 #  contained_udt_ids     :bigint           default([]), is an Array
 #  dao_address_ids       :bigint           default([]), is an Array
 #  udt_address_ids       :bigint           default([]), is an Array
+#  bytes                 :integer          default(0)
 #
 # Indexes
 #
-#  alter_pk                                                (id,contained_address_ids) USING gin
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
 #  index_ckb_transactions_on_block_timestamp_and_id        (block_timestamp DESC NULLS LAST,id DESC)
-#  index_ckb_transactions_on_contained_address_ids         (contained_address_ids) USING gin
+#  index_ckb_transactions_on_contained_address_ids_and_id  (contained_address_ids,id) USING gin
 #  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
 #  index_ckb_transactions_on_dao_address_ids               (dao_address_ids) USING gin
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)

@@ -14,7 +14,7 @@ class CkbTransactionSerializer
     if object.tx_status.to_s == "rejected"
       object.detailed_message
     else
-      'This transaction is not rejected.'
+      nil
     end
   end
 
@@ -74,5 +74,9 @@ class CkbTransactionSerializer
         object.income(params[:address])
       # end
     end
+  end
+
+  attribute :bytes do |object|
+    object.bytes
   end
 end

@@ -10,7 +10,7 @@ class NrcFactoryCell < ApplicationRecord
     if defined?(@type_script)
       @type_script
     else
-      @type_script = TypeScript.find_by(hash_type: hash_type, code_hash: code_hash, args: args)
+      @type_script = TypeScript.find_or_create_by(hash_type: hash_type, code_hash: code_hash, args: args)
     end
   end
 
@@ -42,6 +42,8 @@ class NrcFactoryCell < ApplicationRecord
     token_collection.update(
       name: name,
       symbol: symbol,
+      creator_id: last_cell&.address_id,
+      type_script_id: type_script&.id,
       icon_url: base_token_uri
     )
   end

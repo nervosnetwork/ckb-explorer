@@ -31,7 +31,9 @@ module CkbSync
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
       if !forked?(target_block, local_tip_block)
         Rails.logger.error "process_block: #{target_block_number}"
-        process_block(target_block)
+        res = process_block(target_block)
+        self.reorg_started_at.delete
+        res
       else
         self.reorg_started_at = Time.now
         res = invalid_block(local_tip_block)
@@ -596,18 +598,29 @@ module CkbSync
       ckb_txs.each do |tx|
         if tx_index == 0
           ckb_transactions_attributes << {
-            id: tx["id"], dao_address_ids: dao_address_ids[tx_index].to_a,
-            udt_address_ids: udt_address_ids[tx_index].to_a, contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            contained_address_ids: contained_addr_ids[tx_index].to_a, tags: tags[tx_index].to_a,
-            capacity_involved: input_capacities[tx_index], transaction_fee: 0,
-            created_at: tx["created_at"], updated_at: Time.current }
+            id: tx["id"], 
+            dao_address_ids: dao_address_ids[tx_index].to_a,
+            udt_address_ids: udt_address_ids[tx_index].to_a, 
+            contained_udt_ids: contained_udt_ids[tx_index].to_a,
+            contained_address_ids: contained_addr_ids[tx_index].to_a, 
+            tags: tags[tx_index].to_a,
+            capacity_involved: input_capacities[tx_index], 
+            transaction_fee: 0,
+            created_at: tx["created_at"], 
+            updated_at: Time.current 
+          }
         else
           ckb_transactions_attributes << {
-            id: tx["id"], dao_address_ids: dao_address_ids[tx_index].to_a,
-            udt_address_ids: udt_address_ids[tx_index].to_a, contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            contained_address_ids: contained_addr_ids[tx_index].to_a, tags: tags[tx_index].to_a,
-            capacity_involved: input_capacities[tx_index], transaction_fee: CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index]),
-            created_at: tx["created_at"], updated_at: Time.current }
+            id: tx["id"], 
+            dao_address_ids: dao_address_ids[tx_index].to_a,
+            udt_address_ids: udt_address_ids[tx_index].to_a, 
+            contained_udt_ids: contained_udt_ids[tx_index].to_a,
+            contained_address_ids: contained_addr_ids[tx_index].to_a, 
+            tags: tags[tx_index].to_a,
+            capacity_involved: input_capacities[tx_index], 
+            transaction_fee: CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index]),
+            created_at: tx["created_at"], updated_at: Time.current 
+          }
         end
         tx_index += 1
       end
@@ -779,7 +792,7 @@ module CkbSync
 
             prev_cell_outputs_attributes << attributes[1]
             contained_addr_ids[tx_index] << attributes[4]
-            cell_type = attributes[1][:cell_type]
+            cell_type = attributes[1][:cell_type].to_s
             if cell_type.in?(%w(nervos_dao_withdrawing))
               tags[tx_index] << "dao"
               dao_address_ids[tx_index] << attributes[4]
@@ -863,7 +876,7 @@ module CkbSync
           elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token))
             TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
           end
-
+          
           output_capacities[tx_index] += item.capacity if tx_index != 0
           cell_index += 1
         end
@@ -881,7 +894,7 @@ module CkbSync
           local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}")
         end
       udt_amount = udt_amount(cell_type(output.type, output_data), output_data, output.type&.args)
-      cell_type = cell_type(output.type, output_data)
+      cell_type = cell_type(output.type, output_data).to_s
       update_nrc_factory_cell_info(output.type, output_data) if cell_type == "nrc_721_factory"
 
       {
@@ -992,6 +1005,7 @@ module CkbSync
         witnesses: tx.witnesses,
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
+        bytes: tx.serialized_size_in_block,
         created_at: Time.current,
         updated_at: Time.current
       }
@@ -1066,10 +1080,16 @@ module CkbSync
           block_time: block_time(header.timestamp, header.number),
           block_size: 0,
           miner_message: CkbUtils.miner_message(cellbase),
-          extension: node_block.extension
+          extension: node_block.extension,
+          median_timestamp: get_median_timestamp(header.hash)
         )
       end
       block
+    end
+
+    def get_median_timestamp block_hash
+      response = CkbSync::Api.instance.directly_single_call_rpc method: "get_block_median_time", params: [block_hash]
+      return response['result'].to_i(16)
     end
 
     def from_cell_base?(node_input)

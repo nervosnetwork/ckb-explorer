@@ -1,0 +1,751 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '39'
+      Date:
+      - Mon, 31 Oct 2022 07:27:25 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":1}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:27:25 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":33,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:27:33 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":33}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:27:33 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":35,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:28:33 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":35}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:28:33 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":36,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:29:47 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":36}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:29:47 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":38,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:30:35 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":38}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:30:35 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":40,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:31:06 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":40}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:31:06 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":6,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '39'
+      Date:
+      - Mon, 31 Oct 2022 07:31:47 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":6}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:31:47 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":8,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '39'
+      Date:
+      - Mon, 31 Oct 2022 07:32:21 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":8}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:32:21 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":9,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '39'
+      Date:
+      - Mon, 31 Oct 2022 07:32:21 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":9}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:32:21 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":11,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:32:22 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":11}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:32:22 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":12,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:32:23 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":12}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:32:23 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":14,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:32:23 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":14}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:32:23 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":15,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:32:23 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":15}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:32:23 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":16,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:32:23 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":16}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:32:23 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":17,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:32:24 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":17}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:32:24 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":18,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:32:24 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":18}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:32:24 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":2,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '39'
+      Date:
+      - Mon, 31 Oct 2022 07:44:14 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":2}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:44:14 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":3,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '39'
+      Date:
+      - Mon, 31 Oct 2022 07:44:14 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":3}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:44:14 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":5,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '39'
+      Date:
+      - Mon, 31 Oct 2022 07:44:14 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":5}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:44:15 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":10,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:44:16 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":"0x16e8100f3fe","id":10}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:44:16 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":13,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '40'
+      Date:
+      - Mon, 31 Oct 2022 07:47:50 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":null,"id":13}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:47:50 GMT
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":7,"jsonrpc":"2.0","method":"get_block_median_time","params":["0xec599b3c2612a1ced3826bdc24894b2036e6fbfe648fe6624ce7707b0da52a58"]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - localhost:8114
+      User-Agent:
+      - http.rb/5.0.4
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Connection:
+      - close
+      Content-Length:
+      - '39'
+      Date:
+      - Mon, 31 Oct 2022 07:49:43 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":null,"id":7}
+
+        '
+  recorded_at: Mon, 31 Oct 2022 07:49:43 GMT
+recorded_with: VCR 6.0.0

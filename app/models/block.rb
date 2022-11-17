@@ -102,6 +102,26 @@ class Block < ApplicationRecord
     destroy
   end
 
+  # update existing block data. to update its median_timestamp
+  # only run once.
+  # usage:
+  # 1. bundle exec rails console
+  # 2. Block.update_block_median_timestamp <block_number>
+  def self.update_block_median_timestamp block_number
+    Block.where('id < ?', block_number).find_in_batches(batch_size: 2000) do |blocks|
+      single_payload = []
+      blocks.each do |block|
+        single_payload << %Q{{ "id": #{block.id}, "jsonrpc": "2.0", "method": "get_block_median_time", "params": ["#{block.block_hash}"] }}
+      end
+
+      response = CkbSync::Api.instance.directly_batch_call_rpc JSON.parse("[ #{single_payload.join(',')}]")
+      response.each do |json_result|
+        Block.find(json_result['id']).update median_timestamp: json_result['result'].to_i(16)
+      end
+
+    end
+  end
+
   private
 
   def delete_tx_display_infos
@@ -140,6 +160,7 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
+#  uncles_count               :integer
 #  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
@@ -147,7 +168,6 @@ end
 #  proposals_count            :integer
 #  cell_consumed              :decimal(30, )
 #  miner_hash                 :binary
-#  miner_message              :string
 #  reward                     :decimal(30, )
 #  total_transaction_fee      :decimal(30, )
 #  ckb_transactions_count     :decimal(30, )    default(0)
@@ -167,14 +187,15 @@ end
 #  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
-#  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
 #  block_size                 :integer
 #  proposal_reward            :decimal(30, )
 #  commit_reward              :decimal(30, )
+#  miner_message              :string
 #  extension                  :jsonb
+#  median_timestamp           :decimal(, )      default(0.0)
 #
 # Indexes
 #
