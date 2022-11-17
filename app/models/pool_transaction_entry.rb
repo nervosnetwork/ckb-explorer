@@ -79,9 +79,11 @@ end
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #  detailed_message :text
+#  bytes            :integer          default(0)
 #
 # Indexes
 #
-#  index_pool_transaction_entries_on_tx_hash    (tx_hash) UNIQUE
-#  index_pool_transaction_entries_on_tx_status  (tx_status)
+#  index_pool_transaction_entries_on_id_and_tx_status  (id,tx_status)
+#  index_pool_transaction_entries_on_tx_hash           (tx_hash) UNIQUE
+#  index_pool_transaction_entries_on_tx_status         (tx_status)
 #

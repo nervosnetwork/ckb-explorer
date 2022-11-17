@@ -494,7 +494,8 @@ CREATE TABLE public.ckb_transactions (
     tags character varying[] DEFAULT '{}'::character varying[],
     contained_udt_ids bigint[] DEFAULT '{}'::bigint[],
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
-    udt_address_ids bigint[] DEFAULT '{}'::bigint[]
+    udt_address_ids bigint[] DEFAULT '{}'::bigint[],
+    bytes integer DEFAULT 0
 );
 
 
@@ -930,7 +931,8 @@ CREATE TABLE public.pool_transaction_entries (
     tx_status integer DEFAULT 0,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    detailed_message text
+    detailed_message text,
+    bytes integer DEFAULT 0
 );
 
 
@@ -2148,6 +2150,13 @@ CREATE UNIQUE INDEX index_nrc_factory_cells_on_code_hash_and_hash_type_and_args 
 
 
 --
+-- Name: index_pool_transaction_entries_on_id_and_tx_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_pool_transaction_entries_on_id_and_tx_status ON public.pool_transaction_entries USING btree (id, tx_status);
+
+
+--
 -- Name: index_pool_transaction_entries_on_tx_hash; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2517,6 +2526,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220912154933'),
 ('20221024021923'),
 ('20221030235723'),
-('20221031085901');
+('20221031085901'),
+('20221106174818'),
+('20221106182302'),
+('20221108035020');
 
 

@@ -252,6 +252,7 @@ end
 #  contained_udt_ids     :bigint           default([]), is an Array
 #  dao_address_ids       :bigint           default([]), is an Array
 #  udt_address_ids       :bigint           default([]), is an Array
+#  bytes                 :integer          default(0)
 #
 # Indexes
 #
