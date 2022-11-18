@@ -1,0 +1,41 @@
+name: Update K8S workload image
+on: 
+  workflow_call:
+    inputs:
+      image: 
+        required: true
+        type: string
+      k8s-namespace:
+        required: true
+        type: string
+      k8s-workload:
+        required: true
+        type: string
+    secrets:
+      KUBOARD_USERNAME:
+        required: true
+      KUBOARD_ACCESS_KEY:
+        required: true
+      KUBOARD_API_URL:
+        required: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update image on K8S
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.KUBOARD_API_URL }}/cluster/ckb/kind/CICDApi/ops/resource/updateImageTag
+          method: 'PUT'
+          customHeaders: '{"Content-Type": "application/json", "Cookie": "KuboardUsername=${{ secrets.KUBOARD_USERNAME }}; KuboardAccessKey=${{ secrets.KUBOARD_ACCESS_KEY }}"}'
+          data: '{"kind":"deployments","namespace":"${{ inputs.k8s-namespace }}","name":"${{ inputs.k8s-workload }}","images":{"${{ inputs.k8s-workload }}":"${{ inputs.image }}"}}'
+      - name: Restart container
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.KUBOARD_API_URL }}/cluster/ckb/kind/CICDApi/ops/resource/restartWorkload
+          method: 'PUT'
+          customHeaders: '{"Content-Type": "application/json", "Cookie": "KuboardUsername=${{ secrets.KUBOARD_USERNAME }}; KuboardAccessKey=${{ secrets.KUBOARD_ACCESS_KEY }}"}'
+          data: '{"kind":"deployments","namespace":"${{ inputs.k8s-namespace }}","name":"${{ inputs.k8s-workload }}"}'
+
+

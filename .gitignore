@@ -38,3 +38,4 @@ config/master.key
 coverage/*
 data
 .env.test.local
+.secrets

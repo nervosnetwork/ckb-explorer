@@ -1,0 +1,33 @@
+name: Pull, build docker image and push to repository
+on: 
+  workflow_call:
+    secrets:
+      GHCR_USERNAME:
+        required: true
+      GHCR_TOKEN:
+        required: true
+    outputs:
+      image:
+        description: URL for docker image with tag
+        value: ${{ jobs.build.outputs.image }}
+jobs:        
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image: '${{ steps.docker_build.outputs.imageFullName }}:${{ steps.docker_build.outputs.tags }}'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
+      - name: Build and push
+        id: docker_build
+        uses: mr-smithers-excellent/docker-build-push@v5
+        with:
+          image: ckb-explorer-api
+          registry: ghcr.io
+          githubOrg: magickbase # optional
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
