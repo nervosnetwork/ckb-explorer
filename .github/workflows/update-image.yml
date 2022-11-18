@@ -29,7 +29,7 @@ jobs:
           url: ${{ secrets.KUBOARD_API_URL }}/cluster/ckb/kind/CICDApi/ops/resource/updateImageTag
           method: 'PUT'
           customHeaders: '{"Content-Type": "application/json", "Cookie": "KuboardUsername=${{ secrets.KUBOARD_USERNAME }}; KuboardAccessKey=${{ secrets.KUBOARD_ACCESS_KEY }}"}'
-          data: '{"kind":"deployments","namespace":"${{ inputs.k8s-namespace }}","name":"${{ inputs.k8s-workload }}","images":{"ckb-explorer-frontend":"${{ steps.docker_build.outputs.imageFullName }}:${{ steps.docker_build.outputs.tags }}"}}'
+          data: '{"kind":"deployments","namespace":"${{ inputs.k8s-namespace }}","name":"${{ inputs.k8s-workload }}","images":{"${{ inputs.k8s-workload }}":"${{ inputs.image }}"}}'
       - name: Restart container
         uses: fjogeleit/http-request-action@v1
         with:

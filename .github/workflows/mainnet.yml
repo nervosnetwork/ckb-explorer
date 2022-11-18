@@ -21,13 +21,18 @@ jobs:
       matrix:
         workload: [ckb-explorer-api, ckb-explorer-syncer, ckb-explorer-worker]
     steps:
-      - uses: ./.github/workflows/k8s/update-image.yml 
+      - uses: ./.github/workflows/update-image.yml 
         with:
           k8s-namespace: testnet
           k8s-workload: ${{ matrix.workload }}
           image: ${{ needs.build.outputs.image }}
-        secrets: inherit
-      - uses: ./.github/workflows/k8s/restart-workload.yml 
+          api-url: ${{ secrets.KUBOARD_API_URL }}
+          username: ${{ secrets.KUBOARD_USERNAME }}
+          access-key: ${{ secrets.KUBOARD_ACCESS_KEY}}
+      - uses: ./.github/workflows/restart-workload.yml 
         with: 
           k8s-namespace: testnet
           k8s-workload: ${{ matrix.workload }}
+          api-url: ${{ secrets.KUBOARD_API_URL }}
+          username: ${{ secrets.KUBOARD_USERNAME }}
+          access-key: ${{ secrets.KUBOARD_ACCESS_KEY}}          
