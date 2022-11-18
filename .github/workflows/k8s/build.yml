@@ -1,4 +1,4 @@
-name: Pull, build, push
+name: Pull, build docker image and push to repository
 on: 
   workflow_call:
     secrets:

@@ -1,4 +1,4 @@
-name: Pull, build, push and deploy
+name: Restart K8S workload
 on: 
   workflow_call:
     inputs:

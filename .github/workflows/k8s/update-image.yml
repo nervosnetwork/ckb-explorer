@@ -1,4 +1,4 @@
-name: Pull, build, push and deploy
+name: Update K8S workload image
 on: 
   workflow_call:
     inputs:

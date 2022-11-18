@@ -6,14 +6,8 @@ on:
       - develop
 jobs:
   build:
-    runs-on: ubuntu-latest
-    outputs:
-      image: ${{ steps.docker_build.outputs.image }}
-    steps:
-      - name: Build and push
-        id: docker_build
-        uses: ./.github/workflows/k8s/build.yml 
-        secrets: inherit
+    uses: ./.github/workflows/k8s/build.yml 
+    secrets: inherit
   deploy:
     needs: build
     runs-on: ubuntu-latest

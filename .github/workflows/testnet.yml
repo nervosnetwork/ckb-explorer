@@ -13,6 +13,7 @@ jobs:
       - name: Build and push
         id: docker_build
         uses: ./.github/workflows/k8s/build.yml 
+        with:
         secrets: inherit
   deploy:
     needs: build
