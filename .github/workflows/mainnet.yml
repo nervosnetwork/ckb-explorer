@@ -5,19 +5,29 @@ on:
     branches:
       - master
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
+    outputs:
+      image: ${{ steps.docker_build.outputs.image }}
     steps:
-      - uses: actions/checkout@v1
+      - name: Build and push
+        id: docker_build
+        uses: ./.github/workflows/k8s/build.yml 
+        secrets: inherit
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workload: [ckb-explorer-api, ckb-explorer-syncer, ckb-explorer-worker]
+    steps:
+      - uses: ./.github/workflows/k8s/update-image.yml 
         with:
-          fetch-depth: 0
-
-      - name: Push to dokku
-        uses: dokku/github-action@master
-        with:
-          # specify the `main` branch as the remote branch to push to
-          branch: 'master'
-          git_push_flags: '--force'
-          git_remote_url: ${{ secrets.MAINNET_HOST_URL }}
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          k8s-namespace: testnet
+          k8s-workload: ${{ matrix.workload }}
+          image: ${{ needs.build.outputs.image }}
+        secrets: inherit
+      - uses: ./.github/workflows/k8s/restart-workload.yml 
+        with: 
+          k8s-namespace: testnet
+          k8s-workload: ${{ matrix.workload }}
