@@ -21,13 +21,23 @@ jobs:
         ports: ['6379:6379']
         options: --entrypoint redis-server
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - name: Set up SECP256k1
+      - name: Cache SECP256k1 package
+        id: cache_secp256k1
+        uses: actions/cache@v3
+        with:
+          key: compiled_secp256k1_cache
+          path: secp256k1
+      - name: Compile SECP256k1
+        if: steps.cache_secp256k1.outputs.cache-hit != 'true'
         run: |
-          git clone https://github.com/bitcoin-core/secp256k1.git && cd secp256k1 && ./autogen.sh && ./configure && make && ./tests && sudo make install && cd ..
+          git clone https://github.com/bitcoin-core/secp256k1.git && cd secp256k1 && ./autogen.sh && ./configure && make
+      - name: Install SECP256k1
+        run: |
+          cd secp256k1 && sudo make install 
       - name: Build and test with Rake
         run: |
           sudo gem install bundler:2.0.1
