@@ -1,5 +1,4 @@
-# refresh materialized views periodically
-class AverageBlockTimeGenerator
+class CleanUpWorker
   include Sidekiq::Worker
 
   def perform
