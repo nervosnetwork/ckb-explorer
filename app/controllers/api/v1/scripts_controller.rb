@@ -13,9 +13,6 @@ module Api
           }
         }.flatten
 
-        puts "== deployed_cells: #{deployed_cells.map(&:id)}"
-        puts "== referring_cells: #{referring_cells.map(&:id)}"
-
         render json: ScriptSerializer.new(script, params: {
           ckb_transactions: ckb_transactions,
           deployed_cells: deployed_cells,

@@ -8,6 +8,9 @@ class ScriptSerializer
   end
 
   attribute :capacity_of_referring_cells do |object, params|
+
+    # it's not a rails query result, but a regular array,
+    # so let's get the sum via "inject" function
     params[:referring_cells].inject(0){ |sum, x| sum + x.capacity }
   end
 
