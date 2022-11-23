@@ -4,20 +4,22 @@ on:
   push:
     branches:
       - develop
+      - staging
+    tags:
+      - staging
+      - '*-rc*'
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v1
-        with:
-          fetch-depth: 0
-
-      - name: Push to dokku
-        uses: dokku/github-action@master
-        with:
-          # specify the `main` branch as the remote branch to push to
-          branch: 'develop'
-          git_push_flags: '--force'
-          git_remote_url: ${{ secrets.STAGING_HOST_URL }}
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+  build:
+    uses: ./.github/workflows/build.yml 
+    secrets: inherit
+  deploy-update:
+    needs: build
+    strategy:
+      matrix:
+        workload: [ckb-explorer-api, ckb-explorer-syncer, ckb-explorer-worker]
+    uses: ./.github/workflows/update-image.yml 
+    with:
+      k8s-namespace: staging
+      k8s-workload: ${{ matrix.workload }}
+      image: ${{ needs.build.outputs.image }}
+    secrets: inherit

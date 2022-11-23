@@ -414,6 +414,7 @@ module ActiveSupport
     end
 
     def after_setup
+      super
       prepare_api_wrapper
       CKB::Types::Block.any_instance.stubs(:serialized_size_without_uncle_proposals).returns(400)
     end

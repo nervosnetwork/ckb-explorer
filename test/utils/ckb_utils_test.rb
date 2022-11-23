@@ -238,9 +238,8 @@ class CkbUtilsTest < ActiveSupport::TestCase
       tx = node_block.transactions.last
       tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
       tx.witnesses = %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x4e52933358ae2f26863b8c1c71bf20f17489328820f8f2cd84a070069f10ceef784bc3693c3c51b93475a7b5dbf652ba6532d0580ecc1faf909f9fd53c5f6405000000000000000000)
-
+      tx.stubs( :serialized_size_in_block).returns( 0 )
       node_data_processor.process_block(node_block)
-
       node_tx = node_block.transactions.last
       ckb_transaction = CkbTransaction.find_by(tx_hash: node_tx.hash)
       input_capacities = ckb_transaction.inputs.sum(:capacity)
@@ -271,7 +270,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       tx.inputs.unshift(input)
       tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
       tx.witnesses = %w(0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef00 0x4e52933358ae2f26863b8c1c71bf20f17489328820f8f2cd84a070069f10ceef784bc3693c3c51b93475a7b5dbf652ba6532d0580ecc1faf909f9fd53c5f6405000000000000000000)
-
+      tx.stubs(:serialized_size_in_block).returns(0)
       node_data_processor.process_block(node_block)
       node_tx = node_block.transactions.last
       ckb_transaction = CkbTransaction.find_by(tx_hash: node_tx.hash)
