@@ -27,6 +27,11 @@ Rails.application.routes.draw do
       resources :cell_output_lock_scripts, only: :show
       resources :cell_output_type_scripts, only: :show
       resources :cell_output_data, only: :show
+      resources :scripts, only: [] do
+        collection do
+          get :details
+        end
+      end
       resources :suggest_queries, only: :index
       resources :statistics, only: %i(index show)
       resources :nets, only: %i(index show)
