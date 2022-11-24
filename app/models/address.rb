@@ -7,6 +7,7 @@ class Address < ApplicationRecord
   has_many :ckb_transactions, through: :account_books
   has_many :mining_infos
   has_many :udt_accounts
+  has_many :dao_events
   validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :lock_hash, presence: true, uniqueness: true
 
@@ -62,7 +63,7 @@ class Address < ApplicationRecord
   end
 
   def self.find_or_create_by_address_hash(address_hash, block_timestamp=0)
-    
+
     parsed = CkbUtils.parse_address(address_hash)
     lock_hash = parsed.script.compute_hash
     lock_script = LockScript.find_by(
@@ -72,7 +73,7 @@ class Address < ApplicationRecord
     )
 
     create_with(
-      address_hash: CkbUtils.generate_address(parsed.script), 
+      address_hash: CkbUtils.generate_address(parsed.script),
       block_timestamp: block_timestamp,
       lock_script_id: lock_script&.id,
     ).find_or_create_by lock_hash: lock_hash
@@ -81,9 +82,9 @@ class Address < ApplicationRecord
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     lock_hash = lock_script.compute_hash
     address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
-    address_hash_crc = CkbUtils.generate_crc32(address_hash)    
+    address_hash_crc = CkbUtils.generate_crc32(address_hash)
     address_hash_2021 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
-    address_hash_crc_2021 = CkbUtils.generate_crc32(address_hash_2021)    
+    address_hash_crc_2021 = CkbUtils.generate_crc32(address_hash_2021)
 
     unless address = Address.find_by(lock_hash: lock_hash)
       # first try 2019 version style address hash
@@ -109,9 +110,9 @@ class Address < ApplicationRecord
       address.cal_balance!
       puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}"
       Sentry.capture_message(
-        'Reset balance', 
+        'Reset balance',
         extra: {
-          address: address.address_hash, 
+          address: address.address_hash,
           wrong_balance: wrong_balance,
           calced_balance: address.balance,
           calced_occupied_balance: address.balance_occupied
