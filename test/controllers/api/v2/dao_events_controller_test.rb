@@ -2,7 +2,7 @@ require "test_helper"
 
 module Api
   module V2
-    class DasAccountsControllerTest < ActionDispatch::IntegrationTest
+    class DaoEventsControllerTest < ActionDispatch::IntegrationTest
       def setup
         super
         @block = create(:block)
@@ -10,7 +10,7 @@ module Api
         @ckb_transaction = create(:ckb_transaction, block: @block)
         @dao_contract = create(:dao_contract)
       end
-      test "should return corresponding address alias" do
+      test "should get index" do
 
         create(:dao_event_with_block, block_id: @block.id, contract_id: @dao_contract.id, address_id: @address.id,
                             ckb_transaction_id: @ckb_transaction.id,
@@ -20,7 +20,6 @@ module Api
 
         assert_response :success
         data = JSON.parse response.body
-        puts "data: #{data.inspect}"
         activity = data["data"]['attributes']['activities'].first
         assert_equal activity['type'], "deposit_to_dao"
       end
