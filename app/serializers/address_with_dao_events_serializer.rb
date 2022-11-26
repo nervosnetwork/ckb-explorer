@@ -20,8 +20,8 @@ class AddressWithDaoEventsSerializer
       ckb_transaction = dao_event.ckb_transaction
       {
         tx_hash: ckb_transaction.tx_hash.to_s,
-        from: '...TODO',
-        to: 'TODO',
+        from: '-',
+        to: dao_event.address.address_hash.to_s,
         block_number: ckb_transaction.block_number.to_s,
         timestamp: dao_event.block_timestamp.to_s,
         type: dao_event.event_type.to_s,
