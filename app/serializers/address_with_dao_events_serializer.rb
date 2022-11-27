@@ -18,9 +18,20 @@ class AddressWithDaoEventsSerializer
 
     dao_events.map {|dao_event|
       ckb_transaction = dao_event.ckb_transaction
+
+      if dao_event.event_type == :deposit_to_dao
+        from = ckb_transaction.display_inputs.map{ |display_input|
+          display_input.address_hash.to_s
+        }
+
+      # when event_type = withdraw_from_dao
+      else
+        from = [dao_event.address.address_hash.to_s]
+      end
+
       {
         tx_hash: ckb_transaction.tx_hash.to_s,
-        #from: '-',
+        from: from,
         to: dao_event.address.address_hash.to_s,
         block_number: ckb_transaction.block_number.to_s,
         timestamp: dao_event.block_timestamp.to_s,
