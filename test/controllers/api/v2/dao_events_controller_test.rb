@@ -21,12 +21,12 @@ module Api
 
         assert_response :success
         data = JSON.parse response.body
-        activity = data["data"]['attributes']['activities'].first
+        activity = data["data"]['activities'].first
         assert_equal activity['type'], "deposit_to_dao"
         assert_equal activity['amount'], @amount.to_s
       end
 
-      test "should get index" do
+      test "should get index with 'withdraw_from_dao'" do
 
         create(:dao_event_with_block, block_id: @block.id, contract_id: @dao_contract.id, address_id: @address.id,
                             ckb_transaction_id: @ckb_transaction.id,
@@ -36,8 +36,23 @@ module Api
 
         assert_response :success
         data = JSON.parse response.body
-        activity = data["data"]['attributes']['activities'].first
+        activity = data["data"]['activities'].first
         assert_equal activity['type'], "withdraw_from_dao"
+        assert_equal activity['amount'], @amount.to_s
+      end
+
+      test "should get index with 'issue_interest'" do
+
+        create(:dao_event_with_block, block_id: @block.id, contract_id: @dao_contract.id, address_id: @address.id,
+                            ckb_transaction_id: @ckb_transaction.id,
+                            event_type: :issue_interest, value: @amount
+              )
+        get api_v2_dao_events_url, params: {address: @address.address_hash}
+
+        assert_response :success
+        data = JSON.parse response.body
+        activity = data["data"]['activities'].first
+        assert_equal activity['type'], "issue_interest"
         assert_equal activity['amount'], @amount.to_s
       end
     end

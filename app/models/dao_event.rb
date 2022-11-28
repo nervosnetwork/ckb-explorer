@@ -1,10 +1,7 @@
 class DaoEvent < ApplicationRecord
 
-  MAX_PAGINATES_PER = 100
-  DEFAULT_PAGINATES_PER = 10
-  paginates_per DEFAULT_PAGINATES_PER
-  max_paginates_per MAX_PAGINATES_PER
-
+  # withdraw_phase_1: withdraw_from_dao
+  # withdraw_phase_2: issue_interest
   enum event_type: { deposit_to_dao: 0, new_dao_depositor: 1, withdraw_from_dao: 2, issue_interest: 3, take_away_all_deposit: 4 }
   enum status: { pending: 0, processed: 1, reverted: 2 }
   validates :value, presence: true, numericality: { greater_than_or_equal_to: 0 }
@@ -15,6 +12,22 @@ class DaoEvent < ApplicationRecord
 
   scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :created_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+
+  def get_froms
+
+    froms = []
+    if event_type == :deposit_to_dao
+      froms = ckb_transaction.display_inputs.map{ |display_input|
+        CkbUtils.generate_address(display_input.address.lock_script)
+      }
+
+    # when event_type = withdraw_from_dao | issue_interest
+    else
+      froms = [address.address_hash.to_s]
+    end
+
+    return froms
+  end
 end
 
 # == Schema Information
