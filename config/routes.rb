@@ -6,7 +6,6 @@ Rails.application.routes.draw do
   require "sidekiq_unique_jobs/web"
   require "sidekiq/cron/web"
   mount Sidekiq::Web => "/sidekiq"
-  Sidekiq::Web.set :session_secret, Rails.application.credentials[:secret_key_base]
 
   root "application#homepage"
   namespace :api do
@@ -45,6 +44,10 @@ Rails.application.routes.draw do
       resources :address_udt_transactions, only: :show
       resources :distribution_data, only: :show
       resources :monetary_data, only: :show
+    end
+
+    namespace :v2 do
+      post '/das_accounts' => 'das_accounts#query', as: :das_accounts
     end
   end
   draw "v2"

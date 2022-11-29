@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - develop
+      - staging
+    tags:
+      - staging
+      - '*-rc*'
 jobs:
   build:
     uses: ./.github/workflows/build.yml 
