@@ -3,15 +3,15 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby "3.1.2"
 
-gem 'net-smtp'
-gem 'net-imap'
-gem 'net-pop'
+gem "net-smtp"
+gem "net-imap"
+gem "net-pop"
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem "rails", "~> 7.0.4"
 # Use postgresql as the database for Active Record
 gem "pg", ">= 0.18", "< 2.0"
 # Use Puma as the app server
-gem "puma"#, "~> 4.3.12", require: false
+gem "puma" # , "~> 4.3.12", require: false
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 # gem 'jbuilder', '~> 2.5'
 # Use Redis adapter to run Action Cable in production
@@ -26,7 +26,7 @@ gem "puma"#, "~> 4.3.12", require: false
 # gem 'capistrano-rails', group: :development
 
 # Reduces boot times through caching; required in config/boot.rb
-gem "bootsnap"#, ">= 1.1.0", require: false
+gem "bootsnap" # , ">= 1.1.0", require: false
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem "rack-cors", require: "rack/cors"
@@ -41,8 +41,8 @@ gem "config"
 gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", tag: "v0.103.0"
 
 # Redis
-gem "hiredis"#, "~> 0.6.3"
-gem "redis"#, "~> 4.2.0"
+gem "hiredis" # , "~> 0.6.3"
+gem "redis" # , "~> 4.2.0"
 
 gem "digest-crc"
 
@@ -51,7 +51,7 @@ gem "digest-crc"
 group :production, :staging, :development do
   gem "sidekiq"
   gem "sidekiq-statistic"
-  gem "sidekiq-cron"
+  gem "sidekiq-cron", github: "serprex/sidekiq-cron"
   gem "sidekiq-unique-jobs"
   gem "sidekiq-status"
   gem "sidekiq-failures"
@@ -96,8 +96,8 @@ group :test do
   gem "database_cleaner"
   gem "mocha"
   gem "factory_bot_rails"
-#  gem "faker", git: "https://github.com/faker-ruby/faker.git", branch: "master"
-  gem 'faker', :git => 'https://github.com/faker-ruby/faker.git', :branch => 'main'
+  #  gem "faker", git: "https://github.com/faker-ruby/faker.git", branch: "master"
+  gem "faker", git: "https://github.com/faker-ruby/faker.git", branch: "main"
   gem "codecov", require: false
 end
 
