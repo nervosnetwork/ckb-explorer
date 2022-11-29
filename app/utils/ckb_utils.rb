@@ -86,7 +86,7 @@ class CkbUtils
 
     epoch_info = get_epoch_info(epoch_number)
     start_number = epoch_info.start_number.to_i
-    epoch_reward = ENV["DEFAULT_EPOCH_REWARD"].to_i
+    epoch_reward = Settings.DEFAULT_EPOCH_REWARD.to_i
     base_reward = epoch_reward / epoch_info.length.to_i
     remainder_reward = epoch_reward % epoch_info.length.to_i
     if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward
@@ -317,19 +317,19 @@ class CkbUtils
 
   def self.cell_type(type_script, output_data)
     return "normal" unless ([
-      ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"],
+      Settings.DAO_CODE_HASH, Settings.DAO_TYPE_HASH, Settings.SUDT_CELL_TYPE_HASH, Settings.SUDT1_CELL_TYPE_HASH,
       CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
       CkbSync::Api.instance.token_script_code_hash
     ].include?(type_script&.code_hash) && type_script&.hash_type == "type") || is_nrc_721_token_cell?(output_data) || is_nrc_721_factory_cell?(output_data)
 
     case type_script&.code_hash
-    when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
+    when Settings.DAO_CODE_HASH, Settings.DAO_TYPE_HASH
       if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
         "nervos_dao_deposit"
       else
         "nervos_dao_withdrawing"
       end
-    when ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]
+    when Settings.SUDT_CELL_TYPE_HASH, Settings.SUDT1_CELL_TYPE_HASH
       if CKB::Utils.hex_to_bin(output_data).bytesize >= CellOutput::MIN_SUDT_AMOUNT_BYTESIZE
         "udt"
       else

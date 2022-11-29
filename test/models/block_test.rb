@@ -213,7 +213,7 @@ class BlockTest < ActiveSupport::TestCase
       block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       uncle_block_hashes = block.uncle_block_hashes
 
-      assert_equal unpack_array_attribute(block, "uncle_block_hashes", block.uncles_count, ENV["DEFAULT_HASH_LENGTH"]), uncle_block_hashes
+      assert_equal unpack_array_attribute(block, "uncle_block_hashes", block.uncles_count, Settings.DEFAULT_HASH_LENGTH), uncle_block_hashes
     end
   end
 
@@ -221,7 +221,7 @@ class BlockTest < ActiveSupport::TestCase
     block = create(:block, :with_uncle_block_hashes)
     uncle_block_hashes = block.uncle_block_hashes
 
-    assert_equal unpack_array_attribute(block, "uncle_block_hashes", block.uncles_count, ENV["DEFAULT_HASH_LENGTH"]), uncle_block_hashes
+    assert_equal unpack_array_attribute(block, "uncle_block_hashes", block.uncles_count, Settings.DEFAULT_HASH_LENGTH), uncle_block_hashes
   end
 
   test "#proposals should decodes packed string" do
@@ -241,14 +241,14 @@ class BlockTest < ActiveSupport::TestCase
       block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       proposals = block.proposals
 
-      assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, ENV["DEFAULT_SHORT_HASH_LENGTH"]), proposals
+      assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, Settings.DEFAULT_SHORT_HASH_LENGTH), proposals
     end
   end
 
   test "#proposals should return super when proposal transactions is empty" do
     block = create(:block, :with_proposals)
     proposals = block.proposals
-    assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, ENV["DEFAULT_SHORT_HASH_LENGTH"]), proposals
+    assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, Settings.DEFAULT_SHORT_HASH_LENGTH), proposals
   end
 
   test "#proposals= should encode proposals" do
@@ -257,7 +257,7 @@ class BlockTest < ActiveSupport::TestCase
     block.proposals_count = block.proposals.size
     block.save
 
-    assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, ENV["DEFAULT_SHORT_HASH_LENGTH"]), block.proposals
+    assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, Settings.DEFAULT_SHORT_HASH_LENGTH), block.proposals
   end
 
   def node_data_processor

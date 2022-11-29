@@ -9,15 +9,15 @@ module QueryKeyUtils
     end
 
     def start_with_default_hash_prefix?(query_key)
-      query_key.start_with?(ENV["DEFAULT_HASH_PREFIX"])
+      query_key.start_with?(Settings.DEFAULT_HASH_PREFIX)
     end
 
     def length_is_valid?(query_key)
-      query_key.length == ENV["DEFAULT_WITH_PREFIX_HASH_LENGTH"].to_i
+      query_key.length == Settings.DEFAULT_WITH_PREFIX_HASH_LENGTH.to_i
     end
 
     def hex_string?(query_key)
-      !query_key.delete_prefix(ENV["DEFAULT_HASH_PREFIX"])[/\H/]
+      !query_key.delete_prefix(Settings.DEFAULT_HASH_PREFIX)[/\H/]
     end
 
     def valid_address?(query_key)

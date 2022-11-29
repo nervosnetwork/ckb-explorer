@@ -26,7 +26,7 @@ class LockScript < ApplicationRecord
 
   def lock_info
     bin_args = CKB::Utils.hex_to_bin(args)
-    if code_hash == ENV["SECP_MULTISIG_CELL_TYPE_HASH"] && bin_args.bytesize == 28
+    if code_hash == Settings.SECP_MULTISIG_CELL_TYPE_HASH && bin_args.bytesize == 28
       since = CKB::Utils.bin_to_hex(bin_args[-8..-1]).delete_prefix("0x")
       begin
         since_value = SinceParser.new(since).parse

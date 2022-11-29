@@ -20,7 +20,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     ENV["CKB_NET_MODE"] = "mainnet"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
-      ENV["CODE_HASH"],
+      Settings.CODE_HASH,
       "data"
     )
 
@@ -48,7 +48,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     short_payload_blake160_address = "ckt1q2tnhkeh8ja36aftftqqdc4mt0wtvdp3a54kuw2tyfepezgx52khydkr98kkxrtvuag8z2j8w4pkw2k6k4l5cwfw473"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
-      ENV["CODE_HASH"],
+      Settings.CODE_HASH,
       "data"
     )
 
@@ -62,7 +62,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     short_payload_blake160_address = "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfkcv576ccddnn4quf2ga65xee2m26h7nq4sds0r"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
-      ENV["SECP_CELL_TYPE_HASH"]
+      Settings.SECP_CELL_TYPE_HASH
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)
@@ -74,7 +74,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     short_payload_blake160_address = "ckt1qtqlkzhxj9wn6nk76dyc4m04ltwa330khkyjrc8ch74at67t7fvmcdkr98kkxrtvuag8z2j8w4pkw2k6k4l5ce7s8yp"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
-      ENV["SECP_MULTISIG_CELL_CODE_HASH"],
+      Settings.SECP_MULTISIG_CELL_CODE_HASH,
       "data"
     )
 
@@ -88,7 +88,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     short_payload_blake160_address = "ckt1qpw9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32sqfkcv576ccddnn4quf2ga65xee2m26h7nqwuqak4"
     lock_script = CKB::Types::Script.generate_lock(
       "0x36c329ed630d6ce750712a477543672adab57f4c",
-      ENV["SECP_MULTISIG_CELL_TYPE_HASH"]
+      Settings.SECP_MULTISIG_CELL_TYPE_HASH
     )
 
     assert_equal short_payload_blake160_address, CkbUtils.generate_address(lock_script)

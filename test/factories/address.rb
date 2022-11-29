@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :address do
     address_hash do
-      script = CKB::Types::Script.new(code_hash: ENV["SECP_CELL_TYPE_HASH"], args: "0x#{SecureRandom.hex(20)}", hash_type: "type")
+      script = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, args: "0x#{SecureRandom.hex(20)}", hash_type: "type")
       CKB::Address.new(script).generate
     end
 
