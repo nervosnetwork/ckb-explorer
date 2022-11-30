@@ -50,8 +50,10 @@ gem "digest-crc"
 
 group :production, :staging, :development do
   gem "sidekiq"
-  gem "sidekiq-statistic"
-  gem "sidekiq-cron"
+  # fixed sidekiq7 bug.
+  gem "sidekiq-statistic", github: 'dougmrqs/sidekiq-statistic', branch: 'fix-problem-with-sidekiq-7'
+  gem 'sidekiq-cron', github: 'serprex/sidekiq-cron', branch: 'master'
+
   gem "sidekiq-unique-jobs"
   gem "sidekiq-status"
   gem "sidekiq-failures"
