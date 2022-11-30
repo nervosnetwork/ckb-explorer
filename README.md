@@ -16,8 +16,8 @@ A blockchain explorer cache server of [Nervos CKB](https://github.com/nervosnetw
 
 ## Prerequisites
 
-- [PostgreSQL](https://www.postgresql.org/) 9.4 and above
-- [Redis](https://redis.io/) 4.0.9 and above
+- [PostgreSQL](https://www.postgresql.org/) 14.3
+- [Redis](https://redis.io/) 6+
 - [libsodium](https://libsodium.gitbook.io/doc/installation)
 - [secp256k1](https://github.com/bitcoin-core/secp256k1.git)
 
@@ -34,6 +34,15 @@ $ cd ckb-explorer/
 $ touch .env.local (overwrite `.env` config if you need in `.env.local`, such as DB_USERNAME, DB_PASSWORD...)
 $ touch config/settings.local.yml (overwrite `config/settings.yml` to config available hosts)
 $ bin/setup
+```
+
+## Create & Setup database
+
+```shell
+
+bundle exec rake db:create                 (create db for development and test )
+bundle exec rake db:migrate                (run migration for development db)
+bundle exec rake db:migrate RAILS_ENV=test (run migration for test db)
 ```
 
 ## Running Test
@@ -75,5 +84,4 @@ Please see this [Documentation](https://nervosnetwork.github.io/ckb-explorer/pub
 ## License
 
 CKB Explorer is released under the terms of the MIT license. See [COPYING](COPYING) for more information or see [https://opensource.org/licenses/MIT](https://opensource.org/licenses/MIT).
-
 

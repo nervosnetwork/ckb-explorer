@@ -32,5 +32,7 @@ namespace :api do
       resources :items, only: :index
       resources :transfers, only: [:index, :show]
     end
+
+    resources :dao_events, only: [:index]
   end
 end
