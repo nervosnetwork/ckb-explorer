@@ -19,8 +19,7 @@ class DaoEvent < ApplicationRecord
 
     if event_type == 'deposit_to_dao'
       froms = ckb_transaction.display_inputs.map{ |display_input|
-        #CkbUtils.generate_address(CkbUtils.address_to_lock_hash(display_input[:address_hash]))
-        display_input[:address_hash]
+        CkbUtils.generate_address(CkbUtils.parse_address(display_input[:address_hash]).script)
       }
 
     # when event_type = withdraw_from_dao | issue_interest
