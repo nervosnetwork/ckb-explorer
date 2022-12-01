@@ -2,20 +2,18 @@ module Api::V2
   class DaoEventsController < BaseController
     def index
       address = Address.find_by(lock_hash: address_to_lock_hash(params[:address]))
-      Rails.logger.info "== address: #{address.inspect}"
 
       dao_events = DaoEvent
         .includes(:ckb_transaction)
         .where(address_id: address.id)
         .where(event_type: [:deposit_to_dao, :withdraw_from_dao, :issue_interest])
-
+        .order('dao_events.block_id desc')
 
       page = params[:page] || 1
       page_size = params[:page_size] || 10
 
       total = dao_events.count
       dao_events = dao_events.page(page).per(page_size)
-      Rails.logger.info "== dao_events: #{dao_events.inspect}"
 
       render json: {
         data: {
