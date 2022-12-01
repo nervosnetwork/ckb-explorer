@@ -26,14 +26,29 @@ module Api::V2
           activities: dao_events.map {|dao_event|
             ckb_transaction = dao_event.ckb_transaction
 
+            type = ''
+            amount = ''
+
+            if dao_event.event_type == 'issue_interest'
+              # conver this event_type name to "nervos_dao_withdrawing" for frontend
+              type = 'nervos_dao_withdrawing'
+              display_input = ckb_transaction.display_inputs.select { |display_input|
+                display_input[:address_hash] == dao_event.address.address_hash
+              }[0]
+              amount = display_input[:capacity].to_i + display_input[:interest].to_i
+            else
+              type = dao_event.event_type.to_s
+              amount = dao_event.value
+            end
+
             {
               tx_hash: ckb_transaction.tx_hash.to_s,
               from: dao_event.get_froms,
               to: address.address_hash.to_s,
               block_number: ckb_transaction.block_number.to_s,
               timestamp: dao_event.block_timestamp.to_s,
-              type: dao_event.event_type.to_s,
-              amount: dao_event.value.to_s
+              type: type,
+              amount: amount.to_s
             }
           }
         },
