@@ -17,7 +17,7 @@ class DaoEvent < ApplicationRecord
 
     froms = []
 
-    if event_type == 'deposit_to_dao' || event_type == 'issue_interest'
+    if event_type == 'deposit_to_dao'
       froms = ckb_transaction.display_inputs.map{ |display_input|
         CkbUtils.generate_address(CkbUtils.parse_address(display_input[:address_hash]).script)
       }
@@ -28,7 +28,15 @@ class DaoEvent < ApplicationRecord
       }.map{ |display_input|
         CkbUtils.generate_address(CkbUtils.parse_address(display_input[:address_hash]).script)
       }
+    elsif event_type == 'issue_interest'
+      froms = ckb_transaction.display_inputs.select { |display_input|
+        display_input[:cell_type] == 'nervos_dao_withdrawing'
+      }.map{ |display_input|
+        CkbUtils.generate_address(CkbUtils.parse_address(display_input[:address_hash]).script)
+      }
+
     else
+
     end
 
     return froms
