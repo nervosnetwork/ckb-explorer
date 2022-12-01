@@ -26,6 +26,7 @@ module Api::V2
 
             type = ''
             amount = ''
+            to = ''
 
             if dao_event.event_type == 'issue_interest'
               # conver this event_type name to "nervos_dao_withdrawing" for frontend
@@ -34,15 +35,19 @@ module Api::V2
                 display_input[:address_hash] == dao_event.address.address_hash
               }[0]
               amount = display_input[:capacity].to_i + display_input[:interest].to_i
+              to = ckb_transaction.display_outputs.select { |display_output|
+                display_output[:capacity].to_i == amount
+              }[0][:address_hash]
             else
               type = dao_event.event_type.to_s
               amount = dao_event.value
+              to = address.address_hash.to_s
             end
 
             {
               tx_hash: ckb_transaction.tx_hash.to_s,
               from: dao_event.get_froms,
-              to: address.address_hash.to_s,
+              to: to,
               block_number: ckb_transaction.block_number.to_s,
               timestamp: dao_event.block_timestamp.to_s,
               type: type,
