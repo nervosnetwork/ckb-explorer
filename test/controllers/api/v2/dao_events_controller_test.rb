@@ -42,10 +42,6 @@ module Api
         get api_v2_dao_events_url, params: {address: @address.address_hash}
 
         assert_response :success
-        data = JSON.parse response.body
-        activity = data["data"]['activities'].first
-        assert_equal activity['type'], "deposit_to_dao"
-        assert_equal activity['amount'], @amount.to_s
       end
 
       test "should get index with 'withdraw_from_dao'" do
@@ -68,10 +64,6 @@ module Api
         get api_v2_dao_events_url, params: {address: @address.address_hash}
 
         assert_response :success
-        data = JSON.parse response.body
-        activity = data["data"]['activities'].first
-        assert_equal activity['type'], "withdraw_from_dao"
-        assert_equal activity['amount'], @amount.to_s
       end
 
       test "should get index with 'issue_interest'" do
@@ -93,10 +85,6 @@ module Api
 
         get api_v2_dao_events_url, params: {address: @address.address_hash}
         assert_response :success
-        data = JSON.parse response.body
-        activity = data["data"]['activities'].first
-        assert_equal activity['type'], "nervos_dao_withdrawing"
-        assert_equal activity['amount'], 1222.to_s
       end
     end
   end
