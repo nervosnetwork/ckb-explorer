@@ -87,7 +87,7 @@ module Api
           cell_type: 'nervos_dao_withdrawing'
         }])
         CkbTransaction.any_instance.stubs(:display_outputs).returns([{
-          capacity: 2000,
+          capacity: 1222,
           address_hash: @address.address_hash
         }])
 
@@ -96,7 +96,7 @@ module Api
         data = JSON.parse response.body
         activity = data["data"]['activities'].first
         assert_equal activity['type'], "nervos_dao_withdrawing"
-        assert_equal activity['amount'], @amount.to_s
+        assert_equal activity['amount'], 1222.to_s
       end
     end
   end
