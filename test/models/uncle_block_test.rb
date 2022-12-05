@@ -83,7 +83,7 @@ class UncleBlockTest < ActiveSupport::TestCase
       uncle_block = block.uncle_blocks.first
       proposals = uncle_block.proposals
 
-      assert_equal unpack_array_attribute(uncle_block, "proposals", uncle_block.proposals_count, Settings.DEFAULT_SHORT_HASH_LENGTH), proposals
+      assert_equal unpack_array_attribute(uncle_block, "proposals", uncle_block.proposals_count, Settings.default_short_hash_length), proposals
     end
   end
 
@@ -103,6 +103,6 @@ class UncleBlockTest < ActiveSupport::TestCase
     uncle_block.proposals_count = uncle_block.proposals.size
     uncle_block.save
 
-    assert_equal unpack_array_attribute(uncle_block, "proposals", uncle_block.proposals_count, Settings.DEFAULT_SHORT_HASH_LENGTH), uncle_block.proposals
+    assert_equal unpack_array_attribute(uncle_block, "proposals", uncle_block.proposals_count, Settings.default_short_hash_length), uncle_block.proposals
   end
 end

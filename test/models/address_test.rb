@@ -53,7 +53,7 @@ class AddressTest < ActiveSupport::TestCase
       tx = node_block.transactions.first
       output = tx.outputs.first
       output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
-      output.lock.instance_variable_set(:@code_hash, Settings.CODE_HASH)
+      output.lock.instance_variable_set(:@code_hash, Settings.code_hash)
 
       CkbSync::NewNodeDataProcessor.new.process_block(node_block)
 
@@ -80,7 +80,7 @@ class AddressTest < ActiveSupport::TestCase
       tx = node_block.transactions.first
       output = tx.outputs.first
       output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
-      output.lock.instance_variable_set(:@code_hash, Settings.CODE_HASH)
+      output.lock.instance_variable_set(:@code_hash, Settings.code_hash)
 
       CkbSync::NewNodeDataProcessor.new.process_block(node_block)
 

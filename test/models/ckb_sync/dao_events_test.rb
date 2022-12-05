@@ -171,9 +171,9 @@ module CkbSync
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx4.tx_hash, index: 0)),
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx5.tx_hash, index: 0))
       ]
-      lock1 = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
-      lock2 = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
-      lock3 = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock1 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock2 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock3 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
       outputs = [
         CKB::Types::Output.new(capacity: 50000 * 10**8, lock: lock1),
         CKB::Types::Output.new(capacity: 60000 * 10**8, lock: lock2),
@@ -184,7 +184,7 @@ module CkbSync
         CKB::Types::Output.new(capacity: 60000 * 10**8, lock: lock2),
         CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
       ]
-      miner_lock = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      miner_lock = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
       cellbase_inputs = [
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295), since: 3000)
       ]
@@ -714,7 +714,7 @@ module CkbSync
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, capacity: 10**8 * 1000, address: address)
       tx1 = node_block.transactions.first
       output1 = tx1.outputs.first
-      output1.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: Settings.DAO_TYPE_HASH)
+      output1.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: Settings.dao_type_hash)
       output1.capacity = 10**8 * 1000
       tx1.outputs << output1
       tx1.outputs_data << CKB::Utils.bin_to_hex("\x00" * 8)
@@ -736,7 +736,7 @@ module CkbSync
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, capacity: 10**8 * 1000, address: address)
       tx1 = node_block.transactions.first
       output1 = tx1.outputs.first
-      output1.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: Settings.DAO_TYPE_HASH)
+      output1.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: Settings.dao_type_hash)
       output1.capacity = 10**8 * 1000
       tx1.outputs << output1
       tx1.outputs_data << CKB::Utils.bin_to_hex("\x00" * 8)
@@ -775,10 +775,10 @@ module CkbSync
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx4.tx_hash, index: 0)),
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx5.tx_hash, index: 0))
       ]
-      lock1 = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
-      lock2 = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
-      lock3 = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
-      dao_type = CKB::Types::Script.new(code_hash: Settings.DAO_TYPE_HASH, hash_type: "type", args: "0x")
+      lock1 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock2 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock3 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      dao_type = CKB::Types::Script.new(code_hash: Settings.dao_type_hash, hash_type: "type", args: "0x")
       outputs = [
         CKB::Types::Output.new(capacity: 50000 * 10**8, lock: lock1, type: dao_type),
         CKB::Types::Output.new(capacity: 60000 * 10**8, lock: lock2, type: dao_type),
@@ -789,7 +789,7 @@ module CkbSync
         CKB::Types::Output.new(capacity: 60000 * 10**8, lock: lock2, type: dao_type),
         CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
       ]
-      miner_lock = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      miner_lock = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
       cellbase_inputs = [
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295), since: 3000)
       ]
@@ -832,18 +832,18 @@ module CkbSync
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx2.tx_hash, index: 1)),
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx3.tx_hash, index: 2))
       ]
-      lock1 = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
-      lock2 = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
-      lock3 = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
-      udt_script = CKB::Types::Script.new(code_hash: Settings.SUDT_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(32)}")
+      lock1 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock2 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      lock3 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      udt_script = CKB::Types::Script.new(code_hash: Settings.sudt_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(32)}")
       Address.create(lock_hash: udt_script.args, address_hash: "0x#{SecureRandom.hex(32)}")
-      dao_type = CKB::Types::Script.new(code_hash: Settings.DAO_TYPE_HASH, hash_type: "type", args: "0x")
+      dao_type = CKB::Types::Script.new(code_hash: Settings.dao_type_hash, hash_type: "type", args: "0x")
       outputs = [
         CKB::Types::Output.new(capacity: 50000 * 10**8, lock: lock1, type: dao_type),
         CKB::Types::Output.new(capacity: 60000 * 10**8, lock: lock2, type: dao_type),
         CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3, type: udt_script)
       ]
-      miner_lock = CKB::Types::Script.new(code_hash: Settings.SECP_CELL_TYPE_HASH, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
+      miner_lock = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type", args: "0x#{SecureRandom.hex(20)}")
       cellbase_inputs = [
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295), since: 3000)
       ]
@@ -893,7 +893,7 @@ private
       cell_output2.address.update(balance: 10 ** 8 * 1000)
       tx = node_block.transactions.last
       output = tx.outputs.first
-      output.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: Settings.DAO_TYPE_HASH)
+      output.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: Settings.dao_type_hash)
       tx.outputs_data[0] = CKB::Utils.bin_to_hex("\x02" * 8)
       output.capacity = 10**8 * 1000
       tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]
@@ -935,7 +935,7 @@ private
       cell_output2.address.update(balance: 10 ** 8 * 1000)
       tx = node_block.transactions.first
       output = tx.outputs.first
-      output.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: Settings.DAO_TYPE_HASH)
+      output.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: Settings.dao_type_hash)
       tx.outputs_data[0] = CKB::Utils.bin_to_hex("\x00" * 8)
       output.capacity = 10**8 * 1000
 

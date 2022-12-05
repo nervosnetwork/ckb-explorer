@@ -17,7 +17,7 @@ class CkbTransaction < ApplicationRecord
   has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all
 
   attribute :tx_hash, :ckb_hash
-  attribute :header_deps, :ckb_array_hash, hash_length: Settings.DEFAULT_HASH_LENGTH
+  attribute :header_deps, :ckb_array_hash, hash_length: Settings.default_hash_length
 
   scope :recent, -> { order("block_timestamp desc nulls last, id desc") }
   scope :cellbase, -> { where(is_cellbase: true) }
