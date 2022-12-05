@@ -21,6 +21,7 @@ FactoryBot.define do
     epoch { "0" }
     start_number { "0" }
     length { "1000" }
+    block_size { 2_000_000 }
 
     transient do
       transactions_count { 10 }
