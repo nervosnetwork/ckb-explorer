@@ -7,6 +7,7 @@ FactoryBot.define do
     transaction_fee { 0 }
     version { 0 }
     witnesses {}
+    bytes { 2000 }
 
     transient do
       address { nil }

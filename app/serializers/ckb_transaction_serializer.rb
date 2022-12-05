@@ -4,7 +4,6 @@
 class CkbTransactionSerializer
   include FastJsonapi::ObjectSerializer
 
-
   # for the tx_status,
   # CkbTransaction will always be "commited"
   # PoolTransactionEntry will give: 0, 1, 2, 3
@@ -13,8 +12,6 @@ class CkbTransactionSerializer
   attribute :detailed_message do |object|
     if object.tx_status.to_s == "rejected"
       object.detailed_message
-    else
-      nil
     end
   end
 
@@ -57,12 +54,10 @@ class CkbTransactionSerializer
       else
         object.display_outputs(previews: true)
       end
+    elsif object.display_inputs_info.present?
+      object.display_outputs_info
     else
-      if object.display_inputs_info.present?
-        object.display_outputs_info
-      else
-        object.display_outputs
-      end
+      object.display_outputs
     end
   end
 
@@ -71,12 +66,13 @@ class CkbTransactionSerializer
       # if object.tx_display_info.present?
       #   object.tx_display_info.income[params[:address].address_hash]
       # else
-        object.income(params[:address])
+      object.income(params[:address])
       # end
     end
   end
 
   attribute :bytes do |object|
+    UpdateTxBytesWorker.perform_async object.id if object.bytes.blank?
     object.bytes
   end
 end
