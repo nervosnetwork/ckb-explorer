@@ -5,14 +5,14 @@ class CkbHashType < ActiveRecord::Type::Binary
     if value.is_a?(String)
       value = ActiveRecord::Base.connection.unescape_bytea(value)
     end
-    "#{ENV['DEFAULT_HASH_PREFIX']}#{value.to_s.unpack1('H*')}"
+    "#{Settings.default_hash_prefix}#{value.to_s.unpack1('H*')}"
   end
 
   def serialize(value)
     return if value.nil?
 
     if value.is_a?(String) && value.start_with?("0x")
-      value = [value.delete_prefix(ENV["DEFAULT_HASH_PREFIX"])].pack("H*")
+      value = [value.delete_prefix(Settings.default_hash_prefix)].pack("H*")
       ActiveRecord::Base.connection.escape_bytea(value)
     else
       super
@@ -35,7 +35,7 @@ class CkbArrayHashType < ActiveRecord::Type::Binary
     array_size = value.unpack1("S!")
     template = Array.new(array_size || 0).reduce("") { |memo, _item| "#{memo}H#{@hash_length}" }
     template = "S!#{template}"
-    value.unpack(template.to_s).drop(1).map { |hash| "#{ENV['DEFAULT_HASH_PREFIX']}#{hash}" }.reject(&:blank?)
+    value.unpack(template.to_s).drop(1).map { |hash| "#{Settings.default_hash_prefix}#{hash}" }.reject(&:blank?)
   end
 
   def serialize(value)
@@ -43,8 +43,8 @@ class CkbArrayHashType < ActiveRecord::Type::Binary
     return if value.is_a?(Array) && value.all?(&:nil?)
 
     if value.is_a?(Array) && value.all? { |item| item.start_with?("0x") }
-      template = Array.new(value.size).reduce("") { |memo, _item| "#{memo}H#{ENV['DEFAULT_HASH_LENGTH']}" }
-      real_value = value.map { |hash| hash.delete_prefix(ENV["DEFAULT_HASH_PREFIX"]) }
+      template = Array.new(value.size).reduce("") { |memo, _item| "#{memo}H#{Settings.default_hash_length}" }
+      real_value = value.map { |hash| hash.delete_prefix(Settings.default_hash_prefix) }
       real_value.unshift(real_value.size)
       template = "S!#{template}"
       value = real_value.pack(template)
