@@ -1,7 +1,3 @@
-# TODO not used, removed it?
-hosts:
-  - "http://localhost:8114"
-
 # special addreses (also check config/settings folder, there are more special addresses defined there)
 special_addresses:
   short_address: "0x"
@@ -38,11 +34,6 @@ default_short_hash_length: "10"
 # prefix string for hash, e.g. 0xa1b2c3d4...
 default_hash_prefix: "0x"
 
-# code hash for test only. TODO remove it?
-code_hash: "0x973bdb373cbb1d752b4ac006e2bb5bdcb63431ed2b6e394b22721c8906a2ad72"
-secp_cell_type_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
-secp_multisig_cell_code_hash: "0xc1fb0ae6915d3d4eded3498aedf5faddd8c5f6bd8921e0f8bfabd5ebcbf259bc"
-
 # used to get lock info
 secp_multisig_cell_type_hash: "0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876c876320fc9634e2a8"
 
@@ -52,8 +43,14 @@ dao_type_hash: "0x82d76d1b75fe2fd9a27dfbaa65a039221a380d76c926f378d3f81cf3e7e13f
 sudt_cell_type_hash: "0x48dbf59b4c7ee1547238021b4869bceedf4eea6b43772e5d66ef8865b6ae7212"
 sudt1_cell_type_hash: '0xc5e5dcf215925f7ef4dfaf5f4b4f105bc321c02776d6e7d52a1db3fcd9d011a4'
 
+# epoch reward
+default_epoch_reward: "1_917_808_21917808"
+
 # code hash for test only. TODO remove it?
 initial_block_reward: "5_000_000_000_000"
 
-# epoch reward
-default_epoch_reward: "1_917_808_21917808"
+# code hash for test only. TODO remove it?
+code_hash: "0x973bdb373cbb1d752b4ac006e2bb5bdcb63431ed2b6e394b22721c8906a2ad72"
+secp_cell_type_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
+secp_multisig_cell_code_hash: "0xc1fb0ae6915d3d4eded3498aedf5faddd8c5f6bd8921e0f8bfabd5ebcbf259bc"
+
