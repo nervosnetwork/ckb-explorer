@@ -386,7 +386,15 @@ module CkbSync
       udts_attributes = Set.new
       type_hashes.each do |type_hash|
         udt = Udt.where(type_hash: type_hash).select(:id).take!
-        udts_attributes << { type_hash: type_hash, total_amount: amount_info[type_hash], addresses_count: addresses_count_info[type_hash], ckb_transactions_count: udt.ckb_transactions.count }
+        ckb_transactions_count = Rails.cache.fetch("udt_txs_count_#{udt.id}", expires_in: 3600) do
+          udt.ckb_transactions.count
+        end
+        udts_attributes << {
+          type_hash: type_hash,
+          total_amount: amount_info[type_hash],
+          addresses_count: addresses_count_info[type_hash],
+          ckb_transactions_count: ckb_transactions_count
+        }
       end
 
       Udt.upsert_all(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }, unique_by: :type_hash) if udts_attributes.present?
@@ -598,28 +606,28 @@ module CkbSync
       ckb_txs.each do |tx|
         if tx_index == 0
           ckb_transactions_attributes << {
-            id: tx["id"], 
+            id: tx["id"],
             dao_address_ids: dao_address_ids[tx_index].to_a,
-            udt_address_ids: udt_address_ids[tx_index].to_a, 
+            udt_address_ids: udt_address_ids[tx_index].to_a,
             contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            contained_address_ids: contained_addr_ids[tx_index].to_a, 
+            contained_address_ids: contained_addr_ids[tx_index].to_a,
             tags: tags[tx_index].to_a,
-            capacity_involved: input_capacities[tx_index], 
+            capacity_involved: input_capacities[tx_index],
             transaction_fee: 0,
-            created_at: tx["created_at"], 
-            updated_at: Time.current 
+            created_at: tx["created_at"],
+            updated_at: Time.current
           }
         else
           ckb_transactions_attributes << {
-            id: tx["id"], 
+            id: tx["id"],
             dao_address_ids: dao_address_ids[tx_index].to_a,
-            udt_address_ids: udt_address_ids[tx_index].to_a, 
+            udt_address_ids: udt_address_ids[tx_index].to_a,
             contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            contained_address_ids: contained_addr_ids[tx_index].to_a, 
+            contained_address_ids: contained_addr_ids[tx_index].to_a,
             tags: tags[tx_index].to_a,
-            capacity_involved: input_capacities[tx_index], 
+            capacity_involved: input_capacities[tx_index],
             transaction_fee: CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index]),
-            created_at: tx["created_at"], updated_at: Time.current 
+            created_at: tx["created_at"], updated_at: Time.current
           }
         end
         tx_index += 1
@@ -876,7 +884,7 @@ module CkbSync
           elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token))
             TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
           end
-          
+
           output_capacities[tx_index] += item.capacity if tx_index != 0
           cell_index += 1
         end

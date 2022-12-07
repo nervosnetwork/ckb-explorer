@@ -34,7 +34,6 @@ default_short_hash_length: "10"
 # prefix string for hash, e.g. 0xa1b2c3d4...
 default_hash_prefix: "0x"
 
-
 # used to get lock info
 secp_multisig_cell_type_hash: "0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876c876320fc9634e2a8"
 
