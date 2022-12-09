@@ -2,7 +2,10 @@ module Api::V2
   class DaoEventsController < BaseController
 
     def index
-      address = Address.find_by(lock_hash: address_to_lock_hash(params[:address]))
+      address = Address.find_by(lock_hash: address_to_lock_hash(params[:address])) rescue nil
+      if address.blank? || address.ckb_dao_transactions.blank?
+        head :not_found and return
+      end
 
       ckb_transactions = address.ckb_dao_transactions
 
