@@ -367,7 +367,8 @@ types:
           "maxLength": 66,
       },
       "number": {
-        "type": "string"
+        type: "string",
+        description: "block number"
       },
       "transactions_count": {
         "type": "string"
@@ -1127,6 +1128,37 @@ types:
     properties: {
       "data": {
         "type": dao_depositor_attributes
+      }
+    }
+  }
+
+  dao_events_response: {
+    type: object,
+    properties: {
+      "data": {
+        "id": {
+          "type": "integer",
+        },
+        "address": {
+          "type": "string"
+        },
+        "deposit_capacity": {
+          "type": "string",
+        },
+        "average_deposit_time": {
+          "type": "string",
+        },
+        "activities": {
+          "type": "transaction_attributes[]"
+        }
+      },
+      "meta": {
+        "total": {
+          "type": "integer",
+        },
+        "page_size": {
+          "type": "integer"
+        }
       }
     }
   }
@@ -4272,3 +4304,80 @@ types:
                     }
                   ]
                 }
+
+/api/v2/dao_events:
+  get:
+    description: Returns address' dao events
+    queryParameters:
+      address:
+        description: an address which you want to query its dao events.
+        type: string
+        example: ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcq0lf97rp9es3ld5nj6dxa0zxlhrufm6xngdyf8r2
+      page_size:
+        description: show how many records(dao_events) per page.
+        required: false
+        type: integer
+        default: 10
+      page:
+        description: the page number you want query
+        required: false
+        type: integer
+        default: 1
+    responses:
+      200:
+        body:
+          application/vnd.api+json:
+            type: dao_events_response
+            example: |
+              {
+                  "data":{
+                      "id":73981,
+                      "address":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcq0lf97rp9es3ld5nj6dxa0zxlhrufm6xngdyf8r2",
+                      "deposit_capacity":"0",
+                      "average_deposit_time":"633.571916",
+                      "activities":[
+                          {
+                              "transaction_hash":"0x3773f347a5305b5ffdd91236b6cf4ab817c54de2c80db32d82c3dc3a50a67767",
+                              "block_number":"3948496",
+                              "block_timestamp":"1615764732296",
+                              "display_inputs":[
+                                  {
+                                      "id":"5076691",
+                                      "from_cellbase":false,
+                                      "capacity":"4100000000000.0",
+                                      "address_hash":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcq0lf97rp9es3ld5nj6dxa0zxlhrufm6xngdyf8r2",
+                                      "generated_tx_hash":"0x0e842de2e2827c164c27bbeb41a244e9fb43c98078125a241af09c8a6da07146",
+                                      "cell_index":"0",
+                                      "cell_type":"normal",
+                                      "since":{
+                                          "raw":"0x0000000000000000",
+                                          "median_timestamp":"1615764205850"
+                                      }
+                                  }
+                              ],
+                              "display_outputs":[
+                                  {
+                                      "id":"5076697",
+                                      "capacity":"3000000000000.0",
+                                      "address_hash":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcq0lf97rp9es3ld5nj6dxa0zxlhrufm6xngdyf8r2",
+                                      "status":"dead",
+                                      "consumed_tx_hash":"0x6e1a7ab6699b379d7184c876f7d7130316bec2b71fb257ab23be00ca23cb5cc2",
+                                      "cell_type":"nervos_dao_deposit"
+                                  },
+                                  {
+                                      "id":"5076698",
+                                      "capacity":"1099999999401.0",
+                                      "address_hash":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcq0lf97rp9es3ld5nj6dxa0zxlhrufm6xngdyf8r2",
+                                      "status":"dead",
+                                      "consumed_tx_hash":"0x6e1a7ab6699b379d7184c876f7d7130316bec2b71fb257ab23be00ca23cb5cc2",
+                                      "cell_type":"normal"
+                                  }
+                              ]
+                          }
+                      ]
+                  },
+                  "meta":{
+                      "total":2,
+                      "page_size":"1"
+                  }
+              }
