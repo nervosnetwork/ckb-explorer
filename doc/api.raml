@@ -1144,6 +1144,7 @@ types:
         example: 0x0e842de2e2827c164c27bbeb41a244e9fb43c98078125a241af09c8a6da07146
   lock:
     type: object
+    description: lock script
     properties:
       args:
         type: string
@@ -1165,11 +1166,10 @@ types:
     properties:
       capaity:
         type: string
-
       lock:
         type: lock
       type:
-        type: "type"
+        type: lock
 
 
   transactons_raw_response:
@@ -4526,3 +4526,242 @@ types:
                       "0x5500000010000000550000005500000041000000f023c4940e6b70f5575ba6ecd058f325e95cf261cce210d611e0450b0e1ee5fc254eb08586f12c3b1b18fcdb8de5a57a362d531e8b623f9259cc208b43c7617201"
                   ]
               }
+
+/api/v2/das_accounts/{addresses}/query:
+  uriParameters:
+    addresses:
+      description: many addresses you want to query
+      type: string
+      example: TODO
+  get:
+    responses:
+      200:
+        body:
+          application/vnd.api+json:
+            type: string # das_accounts_query_response
+            example: |
+              TODO
+
+/api/v2/cota/issuers:
+  /{id}:
+    uriParameters:
+      id:
+        type: string
+        example: TODO
+    get:
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: string # das_accounts_query_response
+              example: |
+                TODO
+    /minted:
+      get:
+        responses:
+          200:
+            body:
+              application/vnd.api+json:
+                type: string # das_accounts_query_response
+                example: |
+                  TODO
+
+/api/v2/nft/cota/nft_classes/{id}:
+  uriParameters:
+    id:
+      type: string
+      example: TODO
+  get:
+    responses:
+      200:
+        body:
+          application/vnd.api+json:
+            type: string # das_accounts_query_response
+            example: |
+              TODO
+
+/api/v2/nft/cota/nft_classes/{nft_class_id}/tokens:
+  /:
+    uriParameters:
+      nft_class_id:
+        type: string
+        example: TODO
+    get:
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: string # das_accounts_query_response
+              example: |
+                TODO
+  /{id}:
+    uriParameters:
+      nft_class_id:
+        type: string
+        example: TODO
+    get:
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: string # das_accounts_query_response
+              example: |
+                TODO
+
+  /{id}/sender:
+    uriParameters:
+      id:
+        type: string
+        example: TODO
+    get:
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: string # das_accounts_query_response
+              example: |
+                TODO
+  /{id}/claimed:
+    uriParameters:
+      id:
+        type: string
+        example: TODO
+    get:
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: string # das_accounts_query_response
+              example: |
+                TODO
+
+/api/v2/nft/cota/transactions:
+  uriParameters:
+    id:
+      type: string
+      example: TODO
+  queryParameters:
+    class_id:
+      type: string
+      example: TODO
+    token_id:
+      type: string
+      example: TODO
+    page:
+      type: string
+      example: TODO
+  get:
+    responses:
+      200:
+        body:
+          application/vnd.api+json:
+            type: string # das_accounts_query_response
+            example: |
+              TODO
+
+/api/v2/nft/collections:
+  /:
+    get:
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: string # das_accounts_query_response
+              example: |
+                TODO
+  /{id}:
+    uriParameters:
+      id:
+        type: string
+        example: TODO
+    get:
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: string # das_accounts_query_response
+              example: |
+                TODO
+  /{collection_id}/holders:
+    collection_id:
+      id:
+        type: string
+        example: TODO
+    get:
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: string # das_accounts_query_response
+              example: |
+                TODO
+  /{collection_id}/transfers:
+    uriParameters:
+      collection_id:
+        type: string
+        example: TODO
+    get:
+      responses:
+        200:
+          body:
+            application/vnd.api+json:
+              type: string # das_accounts_query_response
+              example: |
+                TODO
+  /{collection_id}/items:
+    /:
+      uriParameters:
+        collection_id:
+          type: string
+          example: TODO
+      get:
+        responses:
+          200:
+            body:
+              application/vnd.api+json:
+                type: string # das_accounts_query_response
+                example: |
+                  TODO
+
+    /{id}:
+      uriParameters:
+        collection_id:
+          type: string
+          example: TODO
+      get:
+        responses:
+          200:
+            body:
+              application/vnd.api+json:
+                type: string # das_accounts_query_response
+                example: |
+                  TODO
+
+    /{item_id}/transfers:
+      /:
+        uriParameters:
+          collection_id:
+            type: string
+            example: TODO
+        get:
+          responses:
+            200:
+              body:
+                application/vnd.api+json:
+                  type: string # das_accounts_query_response
+                  example: |
+                    TODO
+
+      /{id}:
+        uriParameters:
+          collection_id:
+            type: string
+            example: TODO
+        get:
+          responses:
+            200:
+              body:
+                application/vnd.api+json:
+                  type: string # das_accounts_query_response
+                  example: |
+                    TODO
