@@ -8,6 +8,11 @@ documentation:
    content: |
      These are the APIs that serve the Explorer, we do not provide external services and cannot guarantee service availability.
      It is recommended to maintain the ckb node by yourself.
+
+# =======================
+# types segment starts
+# =======================
+
 types:
   indicator: {
     type: string,
@@ -105,7 +110,7 @@ types:
     type: object,
     properties: {
       "address_hash": {
-        "type": "string"
+        "type": string
       },
       "balance": {
         "type": integer
@@ -119,7 +124,7 @@ types:
       "lock_hash": {
         "type": script
       },
-     "dao_deposit": {
+      "dao_deposit": {
         "type": string
       },
       "interest": {
@@ -161,24 +166,18 @@ types:
     }
   }
 
-  lock_info_attributes: {
-    type: object,
-    properties: {
-      "status": {
-        "type": string
-        "enum": ["locked", "unlocked"]
-      },
-      "epoch_number": {
-        "type": string
-      },
-      "epoch_index": {
-       "type": string
-      }
-      "estimated_unlock_time": {
-        "type": string
-      }
-    }
-  }
+  lock_info_attributes:
+    type: object
+    properties:
+      status:
+        type: string
+        enum: [locked, unlocked]
+      epoch_number:
+        type: string
+      epoch_index:
+        type: string
+      estimated_unlock_time:
+        type: string
 
   address: {
     type: object,
@@ -1132,36 +1131,98 @@ types:
     }
   }
 
-  dao_events_response: {
-    type: object,
-    properties: {
-      "data": {
-        "id": {
-          "type": "integer",
-        },
-        "address": {
-          "type": "string"
-        },
-        "deposit_capacity": {
-          "type": "string",
-        },
-        "average_deposit_time": {
-          "type": "string",
-        },
-        "activities": {
-          "type": "transaction_attributes[]"
-        }
-      },
-      "meta": {
-        "total": {
-          "type": "integer",
-        },
-        "page_size": {
-          "type": "integer"
-        }
-      }
-    }
-  }
+  previous_output:
+    type: object
+    properties:
+      index:
+        type: string
+        description: index of this previous output
+        example: 0x0
+      tx_hash:
+        type: string
+        description: hash of this transaction
+        example: 0x0e842de2e2827c164c27bbeb41a244e9fb43c98078125a241af09c8a6da07146
+  lock:
+    type: object
+    properties:
+      args:
+        type: string
+      code_hash:
+        type: string
+      hash_type:
+        type: string
+  input:
+    type: object
+    properties:
+      previous_output:
+        type: previous_output
+      since:
+        type: string
+        description: "see: https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0017-tx-valid-since/0017-tx-valid-since.md"
+        example: '0x0'
+  output:
+    type: object
+    properties:
+      capaity:
+        type: string
+
+      lock:
+        type: lock
+      type:
+        type: "type"
+
+
+  transactons_raw_response:
+    type: object
+    properties:
+      hash:
+        type: string
+        description: transaction hash
+      header_deps:
+        type: "string[]"
+        description: header deps
+      cell_deps:
+        type: "cell_dep[]"
+        description: cell deps
+      inputs:
+        type: "input[]"
+      outputs:
+        type: "output[]"
+
+
+  dao_events_response:
+    type: object
+    properties:
+      data:
+        type: object
+        description: dao events
+        properties:
+          id:
+            type: integer
+            description: the address id
+          address:
+            type: string
+            description: the address you want to query
+          deposit_capacity:
+            type: string
+          average_deposit_time:
+            type: string
+          activities:
+            type: "transaction_attributes[]"
+            description: this is the dao events of this address, its an array of transaction_attributes
+      meta:
+        type: object
+        properties:
+          total:
+            type: integer
+            description: how many dao events in total
+          page_size:
+            type: integer
+            description: current page you are viewing
+
+# =======================
+# API segment starts
+# =======================
 
 /blocks:
   get:
@@ -4380,4 +4441,88 @@ types:
                       "total":2,
                       "page_size":"1"
                   }
+              }
+
+/api/v2/transactions/{transaction_id}/raw:
+  uriParameters:
+    transaction_id:
+      description: an address which you want to query its dao events.
+      type: string
+      example: 0x3773f347a5305b5ffdd91236b6cf4ab817c54de2c80db32d82c3dc3a50a67767
+  get:
+    responses:
+      200:
+        body:
+          application/vnd.api+json:
+            type: transactons_raw_response
+            example: |
+              {
+                  "hash":"0x3773f347a5305b5ffdd91236b6cf4ab817c54de2c80db32d82c3dc3a50a67767",
+                  "header_deps":[
+
+                  ],
+                  "cell_deps":[
+                      {
+                          "dep_type":"dep_group",
+                          "out_point":{
+                              "index":"0x0",
+                              "tx_hash":"0x71a7ba8fc96349fea0ed3a5c47992e3b4084b031a42264a018e0072e8172e46c"
+                          }
+                      },
+                      {
+                          "dep_type":"code",
+                          "out_point":{
+                              "index":"0x0",
+                              "tx_hash":"0x1d60cb8f4666e039f418ea94730b1a8c5aa0bf2f7781474406387462924d15d4"
+                          }
+                      },
+                      {
+                          "dep_type":"code",
+                          "out_point":{
+                              "index":"0x2",
+                              "tx_hash":"0xe2fb199810d49a4d8beec56718ba2593b665db9d52299a0f9e6e75416d73ff5c"
+                          }
+                      }
+                  ],
+                  "inputs":[
+                      {
+                          "previous_output":{
+                              "index":"0x0",
+                              "tx_hash":"0x0e842de2e2827c164c27bbeb41a244e9fb43c98078125a241af09c8a6da07146"
+                          },
+                          "since":"0x0"
+                      }
+                  ],
+                  "outputs":[
+                      {
+                          "capacity":"0x2ba7def3000",
+                          "lock":{
+                              "args":"0xff497c3097308fdb49cb4d375e237ee3e277a34d",
+                              "code_hash":"0xbf43c3602455798c1a61a596e0d95278864c552fafe231c063b3fabf97a8febc",
+                              "hash_type":"type"
+                          },
+                          "type":{
+                              "args":"0x",
+                              "code_hash":"0x82d76d1b75fe2fd9a27dfbaa65a039221a380d76c926f378d3f81cf3e7e13f2e",
+                              "hash_type":"type"
+                          }
+                      },
+                      {
+                          "capacity":"0x1001d1bf5a9",
+                          "lock":{
+                              "args":"0xff497c3097308fdb49cb4d375e237ee3e277a34d",
+                              "code_hash":"0xbf43c3602455798c1a61a596e0d95278864c552fafe231c063b3fabf97a8febc",
+                              "hash_type":"type"
+                          },
+                          "type":null
+                      }
+                  ],
+                  "outputs_data":[
+                      "0x0000000000000000",
+                      "0x"
+                  ],
+                  "version":"0x0",
+                  "witnesses":[
+                      "0x5500000010000000550000005500000041000000f023c4940e6b70f5575ba6ecd058f325e95cf261cce210d611e0450b0e1ee5fc254eb08586f12c3b1b18fcdb8de5a57a362d531e8b623f9259cc208b43c7617201"
+                  ]
               }
