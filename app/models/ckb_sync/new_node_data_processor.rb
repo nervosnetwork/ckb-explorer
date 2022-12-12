@@ -22,19 +22,26 @@ module CkbSync
     end
 
     # returns the remaining block numbers to process
-    def call
+    def call specified_block_number = nil
       @local_tip_block = Block.recent.first
       tip_block_number = @tip_block_number = CkbSync::Api.instance.get_tip_block_number
-      target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
-      return if target_block_number > tip_block_number
+
+      target_block_number = 0
+      if specified_block_number == nil
+        target_block_number = local_tip_block.number + 1 if local_tip_block.present?
+        return if target_block_number > tip_block_number
+      else
+        target_block_number = specified_block_number
+      end
 
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
       if !forked?(target_block, local_tip_block)
-        Rails.logger.error "process_block: #{target_block_number}"
+        Rails.logger.info "== process_block: #{target_block_number}"
         process_block(target_block)
       else
         self.reorg_started_at = Time.now
         res = invalid_block(local_tip_block)
+        Rails.logger.info "== forked, process_block: #{target_block_number}, invalid_block: #{res.inspect}"
         self.reorg_started_at.delete
         res
       end
