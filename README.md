@@ -32,6 +32,7 @@ If you want to contribute to the API documentation you need to install [raml2htm
 
 ```shell
 $ cd ckb-explorer/
+$ cp .env.example .env (in this config file, please modify the items according to your local environment)
 $ touch .env.local (overwrite `.env` config if you need in `.env.local`, such as DB_USERNAME, DB_PASSWORD...)
 $ touch config/settings.local.yml (overwrite `config/settings.yml` to config available hosts)
 $ bin/setup
