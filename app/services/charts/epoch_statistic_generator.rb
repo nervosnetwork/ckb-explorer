@@ -20,8 +20,23 @@ module Charts
       hash_rate = difficulty * epoch_length / epoch_time
 
       epoch_statistic = ::EpochStatistic.find_or_create_by(epoch_number: target_epoch_number)
-      epoch_statistic.update(difficulty: difficulty, uncle_rate: uncle_rate, hash_rate: hash_rate,
-                             epoch_time: epoch_time, epoch_length: epoch_length)
+      unless epoch_statistic.largest_block_number
+        largest_block = Block.where(epoch: target_epoch_number).order(block_size: :desc).first
+        epoch_statistic.largest_block_number = largest_block.number
+        epoch_statistic.largest_block_size = largest_block.block_size
+      end
+      unless epoch_statistic.largest_tx_hash
+        largest_tx = CkbTransaction.where(blocks: { epoch: target_epoch_number }).joins(:block).order(bytes: :desc).first
+        epoch_statistic.largest_tx_hash = largest_tx.tx_hash
+        epoch_statistic.largest_tx_bytes = largest_tx.bytes
+      end
+      epoch_statistic.update(
+        difficulty: difficulty,
+        uncle_rate: uncle_rate,
+        hash_rate: hash_rate,
+        epoch_time: epoch_time,
+        epoch_length: epoch_length
+      )
     end
 
     private

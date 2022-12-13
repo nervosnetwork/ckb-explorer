@@ -61,4 +61,7 @@ class BlockSerializer
     UpdateBlockSizeWorker.perform_async object.id if object.block_size.blank? or object.block_size == 0
     object.block_size
   end
+  attribute :largest_block_in_epoch do |object|
+    object.epoch_statistic&.largest_block_size
+  end
 end
