@@ -47,3 +47,7 @@ Config.setup do |config|
   #   required(:email).filled(format?: EMAIL_REGEX)
   # end
 end
+
+config_yml_file = "./config/settings.#{ENV['CKB_NET_MODE']}.yml"
+Config.load_and_set_settings config_yml_file
+

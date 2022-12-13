@@ -81,7 +81,7 @@ class UdtRelatedDataGenerator
       icon_file_data = Base64.encode64(File.read("#{Rails.root}/tmp/kfc.png")).gsub("\n", "")
       icon_file = "data:image/png;base64,#{icon_file_data}"
     end
-    code_hash = ["0x48dbf59b4c7ee1547238021b4869bceedf4eea6b43772e5d66ef8865b6ae7212".delete_prefix(ENV["DEFAULT_HASH_PREFIX"])].pack("H*")
+    code_hash = ["0x48dbf59b4c7ee1547238021b4869bceedf4eea6b43772e5d66ef8865b6ae7212".delete_prefix(Settings.default_hash_prefix)].pack("H*")
     {
       "code_hash": code_hash,
       "hash_type": "data",
@@ -93,16 +93,16 @@ class UdtRelatedDataGenerator
   end
 
   def cell_type(type_script, output_data)
-      return "normal" unless [ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"]].include?(type_script&.code_hash)
+      return "normal" unless [Settings.dao_code_hash, Settings.dao_type_hash, Settings.sudt_cell_type_hash].include?(type_script&.code_hash)
 
       case type_script&.code_hash
-      when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
+      when Settings.dao_code_hash, Settings.dao_type_hash
         if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
           "nervos_dao_deposit"
         else
           "nervos_dao_withdrawing"
         end
-      when ENV["SUDT_CELL_TYPE_HASH"]
+      when Settings.sudt_cell_type_hash
         "udt"
       else
         "normal"

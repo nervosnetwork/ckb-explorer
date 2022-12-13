@@ -22,8 +22,9 @@ A blockchain explorer cache server of [Nervos CKB](https://github.com/nervosnetw
 - [secp256k1](https://github.com/bitcoin-core/secp256k1.git)
 
 ```shell
-  $ git clone https://github.com/bitcoin-core/secp256k1.git && cd secp256k1 && ./autogen.sh && ./configure --enable-module-recovery --enable-experimental --enable-module-ecdh && make && sudo make install && cd ..
+$ git clone https://github.com/bitcoin-core/secp256k1.git && cd secp256k1 && ./autogen.sh && ./configure --enable-module-recovery --enable-experimental --enable-module-ecdh && make && sudo make install && cd ..
 ```
+
 ## Optional prerequisites
 If you want to contribute to the API documentation you need to install [raml2html](https://github.com/raml2html/raml2html#raml2html) to generate HTML documentation.
 
@@ -31,6 +32,7 @@ If you want to contribute to the API documentation you need to install [raml2htm
 
 ```shell
 $ cd ckb-explorer/
+$ cp .env.example .env (in this config file, please modify the items according to your local environment)
 $ touch .env.local (overwrite `.env` config if you need in `.env.local`, such as DB_USERNAME, DB_PASSWORD...)
 $ touch config/settings.local.yml (overwrite `config/settings.yml` to config available hosts)
 $ bin/setup
