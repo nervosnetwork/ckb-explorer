@@ -33,8 +33,8 @@ module Api::V2
                        })
         },
         meta: {
-          total: total,
-          page_size: page_size
+          total: total.to_i,
+          page_size: page_size.to_i
         }
       }
     end
