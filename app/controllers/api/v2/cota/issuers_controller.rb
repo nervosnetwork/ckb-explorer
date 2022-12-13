@@ -1,11 +1,10 @@
 module Api
   module V2
     class Cota::IssuersController < BaseController
-      
+
       def index
       end
 
-      # GET /token_transfers/1
       def show
         address = params[:id]
         lock_script = get_lock_hash
