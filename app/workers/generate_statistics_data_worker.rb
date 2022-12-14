@@ -3,7 +3,10 @@ class GenerateStatisticsDataWorker
 
   def perform(block_id)
     block = Block.find_by(id: block_id)
-    return if block.blank?
+    if block.blank?
+      # maybe the block record has not been persisted, so retry later
+      return GenerateStatisticsDataWorker.perform_in(30.seconds, block_id)
+    end
 
     node_block = CkbSync::Api.instance.get_block_by_number(block.number)
     block.update(block_size: node_block.serialized_size_without_uncle_proposals)
