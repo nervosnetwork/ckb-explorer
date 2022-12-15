@@ -271,7 +271,7 @@ GEM
       net-protocol
     newrelic_rpm (8.12.0)
     nio4r (2.5.8)
-    nokogiri (1.13.9-x86_64-linux)
+    nokogiri (1.13.10-x86_64-linux)
       racc (~> 1.4)
     numerizer (0.1.1)
     pagy (5.10.1)
