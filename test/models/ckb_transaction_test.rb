@@ -200,7 +200,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
     cell_input = ckb_transaction.cell_inputs.first
     cell_input.update(previous_output: { "tx_hash": udt_input_transaction.tx_hash, "index": "0" })
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash udt_info cell_index cell_type since).sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash udt_info cell_index cell_type since extra_info).sort
     expected_udt_attributes = %i(symbol amount decimal type_hash published display_name uan).sort
     expected_display_input = CkbUtils.hash_value_to_s(id: udt_cell_output.id, from_cellbase: false, capacity: udt_cell_output.capacity, address_hash: udt_cell_output.address_hash, generated_tx_hash: udt_cell_output.generated_by.tx_hash, cell_index: udt_cell_output.cell_index, cell_type: udt_cell_output.cell_type, udt_info: udt_cell_output.udt_info, since: {raw: "0x0000000000000000", median_timestamp: "0"})
     display_inputs = ckb_transaction.display_inputs
@@ -216,7 +216,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     type_script = create(:type_script, cell_output: udt_cell_output)
     create(:udt, code_hash: type_script.code_hash)
 
-    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type udt_info).sort
+    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type udt_info extra_info).sort
     expected_udt_attributes = %i(symbol amount decimal type_hash published display_name uan).sort
     expected_display_input = CkbUtils.hash_value_to_s(id: udt_cell_output.id, capacity: udt_cell_output.capacity, address_hash: udt_cell_output.address_hash, status: udt_cell_output.status, consumed_tx_hash: nil, cell_type: udt_cell_output.cell_type, udt_info: udt_cell_output.udt_info)
 
@@ -233,7 +233,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
     cell_input = ckb_transaction.cell_inputs.first
     cell_input.update(previous_output: { "tx_hash": m_nft_input_transaction.tx_hash, "index": "0" })
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type since).sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type since extra_info).sort
     expected_m_nft_attributes = %i(issuer_name).sort
     expected_display_input = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, from_cellbase: false, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, generated_tx_hash: m_nft_cell_output.generated_by.tx_hash, cell_index: m_nft_cell_output.cell_index, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info, since: {raw: "0x0000000000000000", median_timestamp: "0"})
     display_inputs = ckb_transaction.display_inputs
@@ -250,7 +250,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
     cell_input = ckb_transaction.cell_inputs.first
     cell_input.update(previous_output: { "tx_hash": m_nft_input_transaction.tx_hash, "index": "0" })
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type since).sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type since extra_info).sort
     expected_m_nft_attributes = %i(class_name total).sort
     expected_display_input = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, from_cellbase: false, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, generated_tx_hash: m_nft_cell_output.generated_by.tx_hash, cell_index: m_nft_cell_output.cell_index, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info,since: {raw: "0x0000000000000000", median_timestamp: "0"} )
     display_inputs = ckb_transaction.display_inputs
@@ -269,7 +269,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     m_nft_class_cell_output = create(:cell_output, block: m_nft_input_block, ckb_transaction: m_nft_input_transaction, consumed_by: ckb_transaction, generated_by: m_nft_input_transaction, cell_type: "m_nft_class", cell_index: 0, tx_hash: m_nft_input_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x", type_script_id: type_script1.id)
     cell_input = ckb_transaction.cell_inputs.first
     cell_input.update(previous_output: { "tx_hash": m_nft_input_transaction.tx_hash, "index": "0" })
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type since).sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash m_nft_info cell_index cell_type since extra_info).sort
     expected_m_nft_attributes = %i(class_name token_id total).sort
     expected_display_input = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, from_cellbase: false, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, generated_tx_hash: m_nft_cell_output.generated_by.tx_hash, cell_index: m_nft_cell_output.cell_index, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info, since: {raw: "0x0000000000000000", median_timestamp: "0"} )
     display_inputs = ckb_transaction.display_inputs
@@ -284,7 +284,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     m_nft_output_transaction = create(:ckb_transaction, block: m_nft_output_block)
     m_nft_cell_output = create(:cell_output, block: m_nft_output_block, ckb_transaction: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_issuer", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x00000000000000000000107b226e616d65223a22616c696365227d", type_hash: "0x")
 
-    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type m_nft_info).sort
+    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type m_nft_info extra_info).sort
     expected_m_nft_attributes = %i(issuer_name).sort
     expected_display_output = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, status: m_nft_cell_output.status, consumed_tx_hash: nil, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)
 
@@ -298,7 +298,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     m_nft_output_transaction = create(:ckb_transaction, block: m_nft_output_block)
     m_nft_cell_output = create(:cell_output, block: m_nft_output_block, ckb_transaction: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_class", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x")
 
-    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type m_nft_info).sort
+    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type m_nft_info extra_info).sort
     expected_m_nft_attributes = %i(class_name total).sort
     expected_display_output = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, status: m_nft_cell_output.status, consumed_tx_hash: nil, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)
 
@@ -314,7 +314,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     m_nft_cell_output = create(:cell_output, block: m_nft_output_block, ckb_transaction: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_token", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x000000000000000000c000", type_hash: "0x", type_script_id: type_script.id)
     type_script1 = create(:type_script, code_hash: CkbSync::Api.instance.token_class_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c1110700000005")
     create(:cell_output, block: m_nft_output_block, ckb_transaction: m_nft_output_transaction, consumed_by: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_class", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x", type_script_id: type_script1.id)
-    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type m_nft_info).sort
+    expected_attributes = %i(id capacity address_hash status consumed_tx_hash cell_type m_nft_info extra_info).sort
     expected_m_nft_attributes = %i(class_name token_id total).sort
     expected_display_output = CkbUtils.hash_value_to_s(id: m_nft_cell_output.id, capacity: m_nft_cell_output.capacity, address_hash: m_nft_cell_output.address_hash, status: m_nft_cell_output.status, consumed_tx_hash: nil, cell_type: m_nft_cell_output.cell_type, m_nft_info: m_nft_cell_output.m_nft_info)
     display_outputs = m_nft_output_transaction.display_outputs
