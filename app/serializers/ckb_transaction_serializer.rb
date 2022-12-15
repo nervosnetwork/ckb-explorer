@@ -77,7 +77,7 @@ class CkbTransactionSerializer
   end
 
   attribute :largest_tx_in_epoch do |object|
-    object.block.epoch_statistic&.largest_tx_bytes
+    object.block&.epoch_statistic&.largest_tx_bytes
   end
 
   attribute :largest_tx do

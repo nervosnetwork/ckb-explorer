@@ -112,7 +112,7 @@ module Api
         valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
 
         response_tx_transaction = json["data"]
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee bytes version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps tx_status detailed_message).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee bytes version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps tx_status detailed_message largest_tx largest_tx_in_epoch).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "returned income should be null" do
@@ -339,7 +339,7 @@ module Api
         address = create(:address, :with_transactions)
         ckb_transactions = address.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
 
-        valid_post api_v1_query_ckb_transactions_url, params: {address: address.address_hash}
+        valid_post api_v1_query_ckb_transactions_url, params: { address: address.address_hash }
 
         records_counter = RecordCounters::AddressTransactions.new(address)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
