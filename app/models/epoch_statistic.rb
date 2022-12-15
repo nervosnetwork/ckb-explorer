@@ -1,5 +1,17 @@
 class EpochStatistic < ApplicationRecord
   VALID_INDICATORS = %w(difficulty uncle_rate hash_rate epoch_time epoch_length).freeze
+
+  def self.largest_block_size
+    Rails.cache.fetch("largest_block_size", expires_in: 10.minutes) do
+      EpochStatistic.maximum(:largest_block_size)
+    end
+  end
+
+  def self.largest_tx_bytes
+    Rails.cache.fetch("largest_tx_bytes", expires_in: 10.minutes) do
+      EpochStatistic.maximum(:largest_tx_bytes)
+    end
+  end
 end
 
 # == Schema Information
