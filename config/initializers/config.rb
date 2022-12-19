@@ -51,3 +51,8 @@ end
 config_yml_file = "./config/settings.#{ENV['CKB_NET_MODE']}.yml"
 Config.load_and_set_settings config_yml_file
 
+if ENV['CKB_NET_MODE'].blank?
+  raise "environment: CKB_NET_MODE not found, please check '.env' and restart."
+else
+  Rails.logger.debug "== starting Rails normally, with CKB_NET_MODE: #{ENV['CKB_NET_MODE']}"
+end
