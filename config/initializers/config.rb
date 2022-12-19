@@ -51,8 +51,30 @@ end
 config_yml_file = "./config/settings.#{ENV['CKB_NET_MODE']}.yml"
 Config.load_and_set_settings config_yml_file
 
-if ENV['CKB_NET_MODE'].blank?
-  raise "environment: CKB_NET_MODE not found, please check '.env' and restart."
-else
-  Rails.logger.debug "== starting Rails normally, with CKB_NET_MODE: #{ENV['CKB_NET_MODE']}"
+def check_environments
+
+  # rule 1: CKB_NET_MODE and CKB_NODE_URL must exist
+  if ENV['CKB_NET_MODE'].blank? || ENV['CKB_NODE_URL'].blank?
+    raise "environment: CKB_NET_MODE or CKB_NET_MODE not found, please check '.env' and restart."
+  end
+
+  # rule 2: CKB_NET_MODE and CKB_NODE_URL must match
+  command = %Q{
+  echo '{
+      "id": 1,
+      "jsonrpc": "2.0",
+      "method": "get_blockchain_info",
+      "params": []
+  }' | tr -d '\n' | curl -H 'content-type: application/json' -d @- #{ENV['CKB_NODE_URL']}
+  }
+
+  node_mode_from_json_rpc = JSON.parse(`#{command}`)['result']['chain'] rescue nil
+
+  is_net_mode_match_json_rpc_result = ENV['CKB_NET_MODE'] == 'mainnet' && node_mode_from_json_rpc == 'ckb' || ENV['CKB_NET_MODE'] == 'testnet' && node_mode_from_json_rpc == 'ckb_testnet'
+
+  unless is_net_mode_match_json_rpc_result
+    raise "environment: CKB_NET_MODE(#{ENV['CKB_NET_MODE']}) does not match json rpc result (#{node_mode_from_json_rpc}), please check and restart."
+  end
 end
+
+check_environments()
