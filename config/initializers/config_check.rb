@@ -1,3 +1,5 @@
+require 'http'
+
 Config.setup do |config|
   # Name of the constant exposing loaded settings
   config.const_name = "Settings"
@@ -59,16 +61,11 @@ def check_environments
   end
 
   # rule 2: CKB_NET_MODE and CKB_NODE_URL must match
-  command = %Q{
-  echo '{
-      "id": 1,
-      "jsonrpc": "2.0",
-      "method": "get_blockchain_info",
-      "params": []
-  }' | tr -d '\n' | curl -H 'content-type: application/json' -d @- #{ENV['CKB_NODE_URL']}
-  }
+  response = HTTP
+    .headers("content-type": "application/json")
+    .post(ENV['CKB_NODE_URL'], json: {"id": 1, "jsonrpc": "2.0" , "method": "get_blockchain_info",  "params": [] })
 
-  node_mode_from_json_rpc = JSON.parse(`#{command}`)['result']['chain'] rescue nil
+  node_mode_from_json_rpc = JSON.parse(response)['result']['chain'] rescue nil
 
   is_net_mode_match_json_rpc_result = ENV['CKB_NET_MODE'] == 'mainnet' && node_mode_from_json_rpc == 'ckb' || ENV['CKB_NET_MODE'] == 'testnet' && node_mode_from_json_rpc == 'ckb_testnet'
 
