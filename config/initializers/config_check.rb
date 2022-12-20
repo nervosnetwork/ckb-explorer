@@ -74,4 +74,4 @@ def check_environments
   end
 end
 
-check_environments() if Rails.env == 'production'
+check_environments() if Rails.env.production?
