@@ -86,7 +86,7 @@ class CkbUtils
 
     epoch_info = get_epoch_info(epoch_number)
     start_number = epoch_info.start_number.to_i
-    epoch_reward = ENV["DEFAULT_EPOCH_REWARD"].to_i
+    epoch_reward = Settings.default_epoch_reward.to_i
     base_reward = epoch_reward / epoch_info.length.to_i
     remainder_reward = epoch_reward % epoch_info.length.to_i
     if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward
@@ -317,19 +317,19 @@ class CkbUtils
 
   def self.cell_type(type_script, output_data)
     return "normal" unless ([
-      ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"], ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"],
+      Settings.dao_code_hash, Settings.dao_type_hash, Settings.sudt_cell_type_hash, Settings.sudt1_cell_type_hash,
       CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
       CkbSync::Api.instance.token_script_code_hash
     ].include?(type_script&.code_hash) && type_script&.hash_type == "type") || is_nrc_721_token_cell?(output_data) || is_nrc_721_factory_cell?(output_data)
 
     case type_script&.code_hash
-    when ENV["DAO_CODE_HASH"], ENV["DAO_TYPE_HASH"]
+    when Settings.dao_code_hash, Settings.dao_type_hash
       if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
         "nervos_dao_deposit"
       else
         "nervos_dao_withdrawing"
       end
-    when ENV["SUDT_CELL_TYPE_HASH"], ENV["SUDT1_CELL_TYPE_HASH"]
+    when Settings.sudt_cell_type_hash, Settings.sudt1_cell_type_hash
       if CKB::Utils.hex_to_bin(output_data).bytesize >= CellOutput::MIN_SUDT_AMOUNT_BYTESIZE
         "udt"
       else
@@ -431,5 +431,15 @@ class CkbUtils
     factory_base_token_uri_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length), base_token_uri_length *2]
     extra_data_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length + base_token_uri_length *2)..-1]
     OpenStruct.new(name: [factory_name_hex].pack("H*"), symbol: [factory_symbol_hex].pack("H*"), base_token_uri: [factory_base_token_uri_hex].pack("H*"), extra_data: extra_data_hex)
+  end
+
+  # comes from api/v2/base_controller.rb
+  def self.address_to_lock_hash(address)
+    if address =~ /\A0x/
+      address
+    else
+      parsed = CkbUtils.parse_address(address)
+      parsed.script.compute_hash
+    end
   end
 end

@@ -58,6 +58,7 @@ class BlockSerializer
     (object.received_tx_fee + object.reward).to_s
   end
   attribute :size do |object|
+    UpdateBlockSizeWorker.perform_async object.id if object.block_size.blank? or object.block_size == 0
     object.block_size
-  end  
+  end
 end

@@ -10,8 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_08_01_080617) do
-
+ActiveRecord::Schema[7.0].define(version: 2022_11_15_112050) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "plpgsql"
@@ -28,15 +27,15 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.binary "address_hash"
     t.decimal "cell_consumed", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.binary "lock_hash"
     t.decimal "dao_deposit", precision: 30, default: "0"
     t.decimal "interest", precision: 30, default: "0"
     t.decimal "block_timestamp", precision: 30
-    t.boolean "visible", default: true
     t.decimal "live_cells_count", precision: 30, default: "0"
     t.integer "mined_blocks_count", default: 0
+    t.boolean "visible", default: true
     t.decimal "average_deposit_time"
     t.decimal "unclaimed_compensation", precision: 30
     t.boolean "is_depositor", default: false
@@ -53,8 +52,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.string "block_hash"
     t.integer "created_at_unixtimestamp"
     t.jsonb "durations"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["created_at_unixtimestamp"], name: "index_block_propagation_delays_on_created_at_unixtimestamp"
   end
 
@@ -64,8 +63,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.string "live_cells_count", default: "0"
     t.string "dead_cells_count", default: "0"
     t.decimal "block_number", precision: 30
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.decimal "epoch_number", precision: 30
     t.index ["block_number"], name: "index_block_statistics_on_block_number", unique: true
   end
@@ -73,8 +72,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
   create_table "block_time_statistics", force: :cascade do |t|
     t.decimal "stat_timestamp", precision: 30
     t.decimal "avg_block_time_per_hour"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["stat_timestamp"], name: "index_block_time_statistics_on_stat_timestamp", unique: true
   end
 
@@ -85,6 +84,7 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
+    t.integer "uncles_count"
     t.binary "extra_hash"
     t.binary "uncle_block_hashes"
     t.integer "version"
@@ -97,8 +97,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
     t.decimal "total_cell_capacity", precision: 30
     t.decimal "epoch", precision: 30
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "address_ids", array: true
     t.integer "reward_status", default: 0
     t.integer "received_tx_fee_status", default: 0
@@ -111,7 +111,6 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.decimal "nonce", precision: 50, default: "0"
     t.decimal "start_number", precision: 30, default: "0"
     t.decimal "length", precision: 30, default: "0"
-    t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
     t.integer "live_cell_changes"
     t.decimal "block_time", precision: 13
@@ -120,6 +119,7 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.decimal "commit_reward", precision: 30
     t.string "miner_message"
     t.jsonb "extension"
+    t.decimal "median_timestamp", default: "0.0"
     t.index ["block_hash"], name: "index_blocks_on_block_hash", unique: true
     t.index ["block_size"], name: "index_blocks_on_block_size"
     t.index ["block_time"], name: "index_blocks_on_block_time"
@@ -131,8 +131,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
   create_table "cell_inputs", force: :cascade do |t|
     t.jsonb "previous_output"
     t.bigint "ckb_transaction_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.bigint "previous_cell_output_id"
     t.boolean "from_cell_base", default: false
     t.decimal "block_id", precision: 30
@@ -147,8 +147,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.decimal "capacity", precision: 64, scale: 2
     t.binary "data"
     t.bigint "ckb_transaction_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.integer "status", limit: 2, default: 0
     t.decimal "address_id", precision: 30
     t.decimal "block_id", precision: 30
@@ -176,6 +176,7 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.index ["lock_script_id"], name: "index_cell_outputs_on_lock_script_id"
     t.index ["status"], name: "index_cell_outputs_on_status"
     t.index ["tx_hash", "cell_index"], name: "index_cell_outputs_on_tx_hash_and_cell_index"
+    t.index ["type_script_id", "id"], name: "index_cell_outputs_on_type_script_id_and_id"
     t.index ["type_script_id"], name: "index_cell_outputs_on_type_script_id"
   end
 
@@ -186,12 +187,12 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.decimal "block_timestamp", precision: 30
     t.decimal "transaction_fee", precision: 30
     t.integer "version"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.boolean "is_cellbase", default: false
-    t.jsonb "witnesses"
     t.binary "header_deps"
     t.jsonb "cell_deps"
+    t.jsonb "witnesses"
     t.integer "live_cell_changes"
     t.decimal "capacity_involved", precision: 30
     t.bigint "contained_address_ids", default: [], array: true
@@ -204,7 +205,6 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.index ["contained_address_ids", "id"], name: "index_ckb_transactions_on_contained_address_ids_and_id", using: :gin
     t.index ["contained_udt_ids"], name: "index_ckb_transactions_on_contained_udt_ids", using: :gin
     t.index ["dao_address_ids"], name: "index_ckb_transactions_on_dao_address_ids", using: :gin
-    t.index ["id", "contained_address_ids"], name: "alter_pk", using: :gin
     t.index ["is_cellbase"], name: "index_ckb_transactions_on_is_cellbase"
     t.index ["tags"], name: "index_ckb_transactions_on_tags", using: :gin
     t.index ["tx_hash", "block_id"], name: "index_ckb_transactions_on_tx_hash_and_block_id", unique: true
@@ -217,8 +217,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.string "total_dao_deposit", default: "0.0"
     t.decimal "block_timestamp", precision: 30
     t.integer "created_at_unixtimestamp"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "dao_depositors_count", default: "0"
     t.string "unclaimed_compensation", default: "0"
     t.string "claimed_compensation", default: "0"
@@ -233,8 +233,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.string "avg_difficulty", default: "0"
     t.string "uncle_rate", default: "0"
     t.string "total_depositors_count", default: "0"
-    t.jsonb "address_balance_distribution"
     t.decimal "total_tx_fee", precision: 30
+    t.jsonb "address_balance_distribution"
     t.decimal "occupied_capacity", precision: 30
     t.decimal "daily_dao_deposit", precision: 30
     t.integer "daily_dao_depositors_count"
@@ -259,8 +259,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.bigint "withdraw_transactions_count", default: 0
     t.integer "depositors_count", default: 0
     t.bigint "total_depositors_count", default: 0
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.decimal "unclaimed_compensation", precision: 30
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
   end
@@ -273,8 +273,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.integer "event_type", limit: 2
     t.decimal "value", precision: 30, default: "0"
     t.integer "status", limit: 2, default: 0
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.decimal "block_timestamp", precision: 30
     t.index ["block_id"], name: "index_dao_events_on_block_id"
     t.index ["block_timestamp"], name: "index_dao_events_on_block_timestamp"
@@ -285,8 +285,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.string "difficulty"
     t.string "uncle_rate"
     t.decimal "epoch_number", precision: 30
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "hash_rate"
     t.decimal "epoch_time", precision: 13
     t.integer "epoch_length"
@@ -300,6 +300,7 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.decimal "timestamp", precision: 30
     t.binary "transactions_root"
     t.binary "proposals_hash"
+    t.integer "uncles_count"
     t.binary "extra_hash"
     t.binary "uncle_block_hashes"
     t.integer "version"
@@ -319,14 +320,13 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.integer "target_block_reward_status", default: 0
     t.binary "miner_lock_hash"
     t.string "dao"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.decimal "primary_reward", precision: 30, default: "0"
     t.decimal "secondary_reward", precision: 30, default: "0"
     t.decimal "nonce", precision: 50, default: "0"
     t.decimal "start_number", precision: 30, default: "0"
     t.decimal "length", precision: 30, default: "0"
-    t.integer "uncles_count"
     t.decimal "compact_target", precision: 20
     t.integer "live_cell_changes"
     t.decimal "block_time", precision: 13
@@ -335,6 +335,7 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.decimal "commit_reward", precision: 30
     t.string "miner_message"
     t.jsonb "extension"
+    t.decimal "median_timestamp", default: "0.0"
   end
 
   create_table "forked_events", force: :cascade do |t|
@@ -342,8 +343,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.decimal "epoch_number", precision: 30
     t.decimal "block_timestamp", precision: 30
     t.integer "status", limit: 2, default: 0
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["status"], name: "index_forked_events_on_status"
   end
 
@@ -352,8 +353,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.binary "code_hash"
     t.bigint "cell_output_id"
     t.bigint "address_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "hash_type"
     t.string "script_hash"
     t.index ["address_id"], name: "index_lock_scripts_on_address_id"
@@ -367,8 +368,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.bigint "block_id"
     t.decimal "block_number", precision: 30
     t.integer "status", limit: 2, default: 0
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["block_id"], name: "index_mining_infos_on_block_id"
     t.index ["block_number"], name: "index_mining_infos_on_block_number"
   end
@@ -382,8 +383,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.string "base_token_uri"
     t.string "extra_data"
     t.boolean "verified", default: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["code_hash", "hash_type", "args"], name: "index_nrc_factory_cells_on_code_hash_and_hash_type_and_args", unique: true
   end
 
@@ -404,8 +405,9 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.jsonb "display_inputs"
     t.jsonb "display_outputs"
     t.integer "tx_status", default: 0
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "detailed_message"
     t.index ["tx_hash"], name: "index_pool_transaction_entries_on_tx_hash", unique: true
     t.index ["tx_status"], name: "index_pool_transaction_entries_on_tx_status"
   end
@@ -413,8 +415,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
   create_table "table_record_counts", force: :cascade do |t|
     t.string "table_name"
     t.bigint "count"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["table_name", "count"], name: "index_table_record_counts_on_table_name_and_count"
   end
 
@@ -426,28 +428,33 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.string "icon_url"
     t.integer "items_count"
     t.integer "holders_count"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "symbol"
     t.integer "cell_id"
     t.boolean "verified", default: false
     t.integer "type_script_id"
+    t.string "sn"
+    t.index ["cell_id"], name: "index_token_collections_on_cell_id"
+    t.index ["sn"], name: "index_token_collections_on_sn", unique: true
+    t.index ["type_script_id"], name: "index_token_collections_on_type_script_id"
   end
 
   create_table "token_items", force: :cascade do |t|
     t.integer "collection_id"
-    t.string "token_id"
+    t.decimal "token_id", precision: 80
     t.string "name"
     t.string "icon_url"
     t.integer "owner_id"
     t.string "metadata_url"
     t.integer "cell_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.integer "type_script_id"
     t.index ["cell_id"], name: "index_token_items_on_cell_id"
     t.index ["collection_id", "token_id"], name: "index_token_items_on_collection_id_and_token_id", unique: true
     t.index ["owner_id"], name: "index_token_items_on_owner_id"
+    t.index ["type_script_id"], name: "index_token_items_on_type_script_id"
   end
 
   create_table "token_transfers", force: :cascade do |t|
@@ -455,8 +462,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.integer "from_id"
     t.integer "to_id"
     t.integer "transaction_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.integer "action"
     t.index ["from_id"], name: "index_token_transfers_on_from_id"
     t.index ["item_id"], name: "index_token_transfers_on_item_id"
@@ -468,16 +475,16 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.string "tx_hash"
     t.integer "created_at_unixtimestamp"
     t.jsonb "durations"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["created_at_unixtimestamp"], name: "index_tx_propagation_timestamp"
   end
 
   create_table "tx_display_infos", primary_key: "ckb_transaction_id", id: :bigint, default: nil, force: :cascade do |t|
     t.jsonb "inputs"
     t.jsonb "outputs"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.jsonb "income"
   end
 
@@ -485,8 +492,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.string "args"
     t.binary "code_hash"
     t.bigint "cell_output_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "hash_type"
     t.string "script_hash"
     t.index ["cell_output_id"], name: "index_type_scripts_on_cell_output_id"
@@ -504,8 +511,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.binary "code_hash"
     t.string "type_hash"
     t.bigint "address_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.bigint "udt_id"
     t.string "nft_token_id"
     t.index ["address_id"], name: "index_udt_accounts_on_address_id"
@@ -528,8 +535,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.decimal "total_amount", precision: 40, default: "0"
     t.integer "udt_type"
     t.boolean "published", default: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.decimal "block_timestamp", precision: 30
     t.binary "issuer_address"
     t.decimal "ckb_transactions_count", precision: 30, default: "0"
@@ -552,8 +559,8 @@ ActiveRecord::Schema.define(version: 2022_08_01_080617) do
     t.integer "proposals_count"
     t.bigint "block_id"
     t.decimal "epoch", precision: 30
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "dao"
     t.decimal "nonce", precision: 50, default: "0"
     t.decimal "compact_target", precision: 20

@@ -6,7 +6,6 @@ Rails.application.routes.draw do
   require "sidekiq_unique_jobs/web"
   require "sidekiq/cron/web"
   mount Sidekiq::Web => "/sidekiq"
-  Sidekiq::Web.set :session_secret, Rails.application.credentials[:secret_key_base]
 
   root "application#homepage"
   namespace :api do

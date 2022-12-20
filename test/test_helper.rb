@@ -89,7 +89,7 @@ def unpack_attribute(obj, attribute_name)
 
   attribute_before_type_cast = obj.attributes_before_type_cast[attribute_name]
   unescapted_attribute = ActiveRecord::Base.connection.unescape_bytea(attribute_before_type_cast)
-  "#{ENV['DEFAULT_HASH_PREFIX']}#{unescapted_attribute.unpack1('H*')}" if unescapted_attribute.present?
+  "#{Settings.default_hash_prefix}#{unescapted_attribute.unpack1('H*')}" if unescapted_attribute.present?
 end
 
 def unpack_array_attribute(obj, attribute_name, array_size, hash_length)
@@ -99,7 +99,7 @@ def unpack_array_attribute(obj, attribute_name, array_size, hash_length)
   value = ActiveRecord::Base.connection.unescape_bytea(value)
   template = Array.new(array_size || 0).reduce("") { |memo, _item| "#{memo}H#{hash_length}" }
   template = "S!#{template}"
-  value.unpack(template.to_s).drop(1).map { |hash| "#{ENV['DEFAULT_HASH_PREFIX']}#{hash}" }.reject(&:blank?)
+  value.unpack(template.to_s).drop(1).map { |hash| "#{Settings.default_hash_prefix}#{hash}" }.reject(&:blank?)
 end
 
 def format_node_block(node_block)
@@ -138,7 +138,7 @@ def build_display_input_from_node_input(input)
   cell = input["previous_output"]["cell"]
 
   if cell.blank?
-    { id: nil, from_cellbase: true, capacity: ENV["INITIAL_BLOCK_REWARD"].to_i, address_hash: nil }.stringify_keys
+    { id: nil, from_cellbase: true, capacity: Settings.initial_block_reward.to_i, address_hash: nil }.stringify_keys
   else
     VCR.use_cassette("blocks/9") do
       previous_transaction_hash = cell["tx_hash"]

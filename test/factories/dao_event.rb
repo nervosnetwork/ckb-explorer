@@ -5,4 +5,11 @@ FactoryBot.define do
     ckb_transaction
     status { "pending" }
   end
+
+  factory :dao_event_with_block, class: 'DaoEvent' do
+    block
+    address
+    ckb_transaction
+    status { "pending" }
+  end
 end
