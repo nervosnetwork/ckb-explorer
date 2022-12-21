@@ -36,7 +36,7 @@ module Api::V2
 
       render json: {
         data: get_script_content(@script).merge({
-          my_referring_cells: Kaminari.paginate_array(@my_referring_cells).page(@page).per(@page_size)
+          referring_cells: Kaminari.paginate_array(@my_referring_cells).page(@page).per(@page_size)
         }),
         meta: {
           total: @my_referring_cells.count.to_i,
