@@ -1,5 +1,5 @@
 module Api::V2
-  class ScriptsController < ApplicationController
+  class ScriptsController < BaseController
     before_action :set_page_and_page_size
     before_action :find_script
 
