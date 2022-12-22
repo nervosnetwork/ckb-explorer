@@ -70,7 +70,7 @@ module Api::V2
     def find_script
       @script = TypeScript.find_by(code_hash: params[:code_hash], hash_type: params[:hash_type])
       if @script.blank?
-        @script = HashScript.find_by(code_hash: params[:code_hash], hash_type: params[:hash_type])
+        @script = LockScript.find_by(code_hash: params[:code_hash], hash_type: params[:hash_type])
       end
       if @script.present?
 
