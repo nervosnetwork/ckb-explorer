@@ -1,27 +1,13 @@
-class TypeScript < ApplicationRecord
-  has_many :cell_outputs
+class TypeScript < Script
+  has_many :ckb_transactions
   belongs_to :cell_output, optional: true # will remove this later
-  validates_presence_of :code_hash
-
-  attribute :code_hash, :ckb_hash
 
   before_validation :generate_script_hash
 
-  def to_node_type
-    {
-      args: args,
-      code_hash: code_hash,
-      hash_type: hash_type
-    }
-  end
+  has_many :cell_outputs
 
-  def as_json(options={})
-    {
-      args: args,
-      code_hash: code_hash,
-      hash_type: hash_type,
-      script_hash: script_hash
-    }  
+  def ckb_transactions
+    CkbTransaction.where(:id => cell_outputs.map(&:id))
   end
 
   def short_code_hash
@@ -30,7 +16,7 @@ class TypeScript < ApplicationRecord
 
   def generate_script_hash
     self.hash_type ||= 'type'
-    self.script_hash ||= CKB::Types::Script.new(**to_node_type).compute_hash rescue nil
+    self.script_hash ||= CKB::Types::Script.new(**to_node).compute_hash rescue nil
   end
 end
 
