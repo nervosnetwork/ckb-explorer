@@ -1,11 +1,17 @@
 class TypeScript < ApplicationRecord
   has_many :cell_outputs
+  has_many :ckb_transactions
+
   belongs_to :cell_output, optional: true # will remove this later
   validates_presence_of :code_hash
 
   attribute :code_hash, :ckb_hash
 
   before_validation :generate_script_hash
+
+  def ckb_transactions
+    CkbTransaction.where(:id => cell_outputs.map(&:id))
+  end
 
   def to_node_type
     {
@@ -21,7 +27,7 @@ class TypeScript < ApplicationRecord
       code_hash: code_hash,
       hash_type: hash_type,
       script_hash: script_hash
-    }  
+    }
   end
 
   def short_code_hash
