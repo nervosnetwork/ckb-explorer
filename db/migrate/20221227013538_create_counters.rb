@@ -1,6 +1,6 @@
-class CreateCounts < ActiveRecord::Migration[7.0]
-  def change
-    create_table :counts do |t|
+class CreateCounters < ActiveRecord::Migration[7.0]
+  def self.up
+    create_table :counters do |t|
       t.string :name, comment: 'the name of the table'
       t.integer :value, comment: 'the count value of the table'
       t.timestamps
@@ -11,7 +11,7 @@ class CreateCounts < ActiveRecord::Migration[7.0]
     raw_sql = %Q{
 CREATE FUNCTION increase_ckb_transactions_count() RETURNS TRIGGER AS
 $$begin
-    UPDATE counts SET value = value + 1 WHERE name = 'ckb_transactions';
+    UPDATE counters SET value = value + 1 WHERE name = 'ckb_transactions';
     RETURN NEW;
 end;$$
 LANGUAGE PLPGSQL VOLATILE;
@@ -22,7 +22,7 @@ FOR EACH ROW EXECUTE PROCEDURE increase_ckb_transactions_count();
 
 CREATE FUNCTION decrease_ckb_transactions_count() RETURNS TRIGGER AS
 $$begin
-    UPDATE counts SET value = value - 1 WHERE name = 'ckb_transactions';
+    UPDATE counters SET value = value - 1 WHERE name = 'ckb_transactions';
     RETURN NEW;
 end;$$
 LANGUAGE PLPGSQL VOLATILE;
@@ -34,8 +34,26 @@ FOR EACH ROW EXECUTE PROCEDURE decrease_ckb_transactions_count();
 
     ActiveRecord::Base.connection.execute(raw_sql)
 
-    # set the init value for this table
-    Count.create! name: 'ckb_transactions', value: CkbTransaction.count
+    Counter.transaction do
+      CkbTransaction.lock
+      count = CkbTransaction.count
+      # set the init value for this table
+      Counter.create! name: 'ckb_transactions', value: count
+    end
 
+  end
+
+  def self.down
+
+    raw_sql = %Q{
+DROP FUNCTION IF EXISTS increase_ckb_transactions_count() CASCADE;
+DROP FUNCTION IF EXISTS decrease_ckb_transactions_count() CASCADE;
+DROP TRIGGER IF EXISTS after_insert_update_ckb_transactions_count ON ckb_transactions;
+DROP TRIGGER IF EXISTS after_delete_update_ckb_transactions_count ON ckb_transactions;
+    }
+
+    ActiveRecord::Base.connection.execute(raw_sql)
+
+    drop_table :counters
   end
 end
