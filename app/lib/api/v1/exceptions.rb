@@ -168,6 +168,22 @@ module Api
           super code: 1026, status: 404, title: "UDT Not Found", detail: "No UDT records found by given type hash", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
         end
       end
+
+      class ScriptCodeHashParamsInvalidError < Error
+        def initialize
+          super code: 1027, status: 404, title: "URI parameters invalid", detail: "code hash should be start with 0x", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
+      class ScriptHashTypeParamsInvalidError < Error
+        def initialize
+          super code: 1028, status: 404, title: "URI parameters invalid", detail: "hash type should be 'type'", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
+      class ScriptNotFoundError < Error
+        def initialize
+          super code: 1029, status: 404, title: "Script not found", detail: "Script not found", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
     end
   end
 end

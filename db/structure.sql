@@ -39,6 +39,30 @@ $_$;
 
 
 --
+-- Name: decrease_ckb_transactions_count(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.decrease_ckb_transactions_count() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$begin
+    UPDATE counters SET value = value - 1 WHERE name = 'ckb_transactions';
+    RETURN NEW;
+end;$$;
+
+
+--
+-- Name: increase_ckb_transactions_count(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.increase_ckb_transactions_count() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$begin
+    UPDATE counters SET value = value + 1 WHERE name = 'ckb_transactions';
+    RETURN NEW;
+end;$$;
+
+
+--
 -- Name: sync_full_account_book(); Type: PROCEDURE; Schema: public; Owner: -
 --
 
@@ -519,6 +543,52 @@ ALTER SEQUENCE public.ckb_transactions_id_seq OWNED BY public.ckb_transactions.i
 
 
 --
+-- Name: counters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.counters (
+    id bigint NOT NULL,
+    name character varying,
+    value integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: COLUMN counters.name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.counters.name IS 'the name of the table';
+
+
+--
+-- Name: COLUMN counters.value; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.counters.value IS 'the count value of the table';
+
+
+--
+-- Name: counters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.counters_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: counters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.counters_id_seq OWNED BY public.counters.id;
+
+
+--
 -- Name: daily_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -672,7 +742,11 @@ CREATE TABLE public.epoch_statistics (
     updated_at timestamp(6) without time zone NOT NULL,
     hash_rate character varying,
     epoch_time numeric(13,0),
-    epoch_length integer
+    epoch_length integer,
+    largest_block_number integer,
+    largest_block_size integer,
+    largest_tx_hash bytea,
+    largest_tx_bytes integer
 );
 
 
@@ -960,7 +1034,7 @@ ALTER SEQUENCE public.pool_transaction_entries_id_seq OWNED BY public.pool_trans
 --
 
 CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
- SELECT (EXTRACT(epoch FROM average_block_time_by_hour.hour))::integer AS "timestamp",
+ SELECT (date_part('epoch'::text, average_block_time_by_hour.hour))::integer AS "timestamp",
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
    FROM public.average_block_time_by_hour
@@ -1405,6 +1479,13 @@ ALTER TABLE ONLY public.ckb_transactions ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: counters id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.counters ALTER COLUMN id SET DEFAULT nextval('public.counters_id_seq'::regclass);
+
+
+--
 -- Name: daily_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1615,6 +1696,14 @@ ALTER TABLE ONLY public.cell_outputs
 
 ALTER TABLE ONLY public.ckb_transactions
     ADD CONSTRAINT ckb_transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: counters counters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.counters
+    ADD CONSTRAINT counters_pkey PRIMARY KEY (id);
 
 
 --
@@ -2332,6 +2421,20 @@ CREATE INDEX index_uncle_blocks_on_block_id ON public.uncle_blocks USING btree (
 
 
 --
+-- Name: ckb_transactions after_delete_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER after_delete_update_ckb_transactions_count AFTER DELETE ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.decrease_ckb_transactions_count();
+
+
+--
+-- Name: ckb_transactions after_insert_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.increase_ckb_transactions_count();
+
+
+--
 -- Name: ckb_transactions sync_to_account_book; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2529,6 +2632,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221031085901'),
 ('20221106174818'),
 ('20221106182302'),
-('20221108035020');
+('20221108035020'),
+('20221213075412');
+('20221227013538');
+
 
 

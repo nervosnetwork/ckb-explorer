@@ -13,6 +13,7 @@ class Block < ApplicationRecord
   has_many :cell_inputs
   has_many :dao_events
   has_many :mining_infos
+  belongs_to :epoch_statistic, primary_key: :epoch_number, foreign_key: :epoch, optional: true
 
   validates_presence_of :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :extra_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
   validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed, numericality: { greater_than_or_equal_to: 0 }
@@ -79,6 +80,18 @@ class Block < ApplicationRecord
     end
   end
 
+  def self.largest_in_epoch(epoch_number)
+    Rails.cache.fetch([:epoch, epoch_number, :largest_block]) do
+      b = Block.where(epoch: epoch_number).order(block_size: :desc).first
+      if b&.block_size
+        {
+          number: b.number,
+          bytes: b.block_size
+        }
+      end
+    end
+  end
+
   def miner_address
     Address.find_by_address_hash(miner_hash, address_hash_crc: CkbUtils.generate_crc32(miner_hash))
   end
@@ -107,18 +120,17 @@ class Block < ApplicationRecord
   # usage:
   # 1. bundle exec rails console
   # 2. Block.update_block_median_timestamp <block_number>
-  def self.update_block_median_timestamp block_number
-    Block.where('id < ?', block_number).find_in_batches(batch_size: 2000) do |blocks|
+  def self.update_block_median_timestamp(block_number)
+    Block.where("id < ?", block_number).find_in_batches(batch_size: 2000) do |blocks|
       single_payload = []
       blocks.each do |block|
-        single_payload << %Q{{ "id": #{block.id}, "jsonrpc": "2.0", "method": "get_block_median_time", "params": ["#{block.block_hash}"] }}
+        single_payload << %{{ "id": #{block.id}, "jsonrpc": "2.0", "method": "get_block_median_time", "params": ["#{block.block_hash}"] }}
       end
 
       response = CkbSync::Api.instance.directly_batch_call_rpc JSON.parse("[ #{single_payload.join(',')}]")
       response.each do |json_result|
-        Block.find(json_result['id']).update median_timestamp: json_result['result'].to_i(16)
+        Block.find(json_result["id"]).update median_timestamp: json_result["result"].to_i(16)
       end
-
     end
   end
 
