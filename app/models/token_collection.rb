@@ -33,7 +33,7 @@ class TokenCollection < ApplicationRecord
       icon_url: icon_url,
       creator: creator&.address_hash || "",
       items_count: items.count,
-      holders_count: items.distinct(:owner_id).count,
+      holders_count: items.normal.distinct(:owner_id).count,
       type_script: type_script&.as_json
     }
   end
@@ -94,7 +94,7 @@ class TokenCollection < ApplicationRecord
   def self.remove_corrupted
     where(standard: 'nrc721').where(type_script_id: nil).or(where(creator_id: nil)).find_each do |tc|
       tc.update_info rescue nil
-      
+
       if tc.cell.blank?
         tc.destroy
       end

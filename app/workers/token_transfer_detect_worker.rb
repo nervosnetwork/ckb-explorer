@@ -42,9 +42,13 @@ class TokenTransferDetectWorker
     # so they are destruction.
     source_tokens.each do |type_script_id, cell|
       item = TokenItem.find_by type_script_id: type_script_id
-      t = TokenTransfer.
-        create_with(action: :destruction, from_id: cell.address_id).
-        find_or_create_by(item_id: item.id, transaction_id: tx.id)
+      TokenTransfer.transaction do
+        t = TokenTransfer.
+          create_with(action: :destruction, from_id: cell.address_id).
+          find_or_create_by(item_id: item.id, transaction_id: tx.id)
+
+        item.update status: :destroyed
+      end
     end
   end
 

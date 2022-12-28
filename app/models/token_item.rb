@@ -1,4 +1,6 @@
 class TokenItem < ApplicationRecord
+  enum status: {normal: 1, destroyed: 0}
+
   belongs_to :collection, class_name: "TokenCollection"
   belongs_to :owner, class_name: "Address"
   belongs_to :cell, class_name: "CellOutput", optional: true
@@ -48,6 +50,7 @@ end
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  type_script_id :integer
+#  status         :integer          default("normal")
 #
 # Indexes
 #
