@@ -742,7 +742,11 @@ CREATE TABLE public.epoch_statistics (
     updated_at timestamp(6) without time zone NOT NULL,
     hash_rate character varying,
     epoch_time numeric(13,0),
-    epoch_length integer
+    epoch_length integer,
+    largest_block_number integer,
+    largest_block_size integer,
+    largest_tx_hash bytea,
+    largest_tx_bytes integer
 );
 
 
@@ -1030,7 +1034,7 @@ ALTER SEQUENCE public.pool_transaction_entries_id_seq OWNED BY public.pool_trans
 --
 
 CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
- SELECT (EXTRACT(epoch FROM average_block_time_by_hour.hour))::integer AS "timestamp",
+ SELECT (date_part('epoch'::text, average_block_time_by_hour.hour))::integer AS "timestamp",
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
    FROM public.average_block_time_by_hour
@@ -2629,6 +2633,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221106174818'),
 ('20221106182302'),
 ('20221108035020'),
+('20221213075412');
 ('20221227013538');
+
 
 

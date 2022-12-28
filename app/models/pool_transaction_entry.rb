@@ -1,6 +1,10 @@
 class PoolTransactionEntry < ApplicationRecord
   enum tx_status: { pending: 0, proposed: 1, committed: 2, rejected: 3 }, _prefix: :pool_transaction
 
+  def block
+    nil
+  end
+
   def is_cellbase
     false
   end
@@ -46,13 +50,11 @@ class PoolTransactionEntry < ApplicationRecord
   end
 
   def update_detailed_message_for_rejected_transaction
-
-    response_string = CkbSync::Api.instance.directly_single_call_rpc method: 'get_transaction', params: [tx_hash]
-    reason = response_string['result']['tx_status']
-    self.update detailed_message: response_string['result']['tx_status']['reason']
+    response_string = CkbSync::Api.instance.directly_single_call_rpc method: "get_transaction", params: [tx_hash]
+    reason = response_string["result"]["tx_status"]
+    self.update detailed_message: response_string["result"]["tx_status"]["reason"]
     return self
   end
-
 end
 
 # == Schema Information

@@ -35,6 +35,18 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
+  def self.largest_in_epoch(epoch_number)
+    Rails.cache.fetch(["epoch", epoch_number, "largest_tx"]) do
+      tx = CkbTransaction.where(block: { epoch_number: epoch_number }).order(bytes: :desc).first
+      if tx.bytes
+        {
+          tx_hash: tx.tx_hash,
+          bytes: tx.bytes
+        }
+      end
+    end
+  end
+
   def address_ids
     attributes["address_ids"]
   end
@@ -180,7 +192,7 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
-  def hex_since int_since_value
+  def hex_since(int_since_value)
     return "0x#{int_since_value.to_s(16).rjust(16, '0')}"
   end
 
