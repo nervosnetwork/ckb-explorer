@@ -82,7 +82,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;    
+    END LOOP;
     close c;
 end
 $$;
@@ -104,21 +104,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null 
+	if old is null
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-	
+
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP 
+	   LOOP
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id) 
+			insert into account_books (ckb_transaction_id, address_id)
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -742,7 +742,11 @@ CREATE TABLE public.epoch_statistics (
     updated_at timestamp(6) without time zone NOT NULL,
     hash_rate character varying,
     epoch_time numeric(13,0),
-    epoch_length integer
+    epoch_length integer,
+    largest_block_number integer,
+    largest_block_size integer,
+    largest_tx_hash bytea,
+    largest_tx_bytes integer
 );
 
 
@@ -1030,7 +1034,7 @@ ALTER SEQUENCE public.pool_transaction_entries_id_seq OWNED BY public.pool_trans
 --
 
 CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
- SELECT (EXTRACT(epoch FROM average_block_time_by_hour.hour))::integer AS "timestamp",
+ SELECT (date_part('epoch'::text, average_block_time_by_hour.hour))::integer AS "timestamp",
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
    FROM public.average_block_time_by_hour
@@ -2632,5 +2636,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221108035020'),
 ('20221227013538'),
 ('20221228102920');
-
-
+('20221213075412');
+('20221227013538');
