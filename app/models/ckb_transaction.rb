@@ -197,15 +197,21 @@ class CkbTransaction < ApplicationRecord
   end
 
   def attributes_for_udt_cell(udt_cell)
-    { udt_info: CkbUtils.hash_value_to_s(udt_cell.udt_info) }
+    info = CkbUtils.hash_value_to_s(udt_cell.udt_info)
+    { 
+      udt_info: info,
+      extra_info: info
+    }
   end
 
   def attributes_for_m_nft_cell(m_nft_cell)
-    { m_nft_info: m_nft_cell.m_nft_info }
+    info = m_nft_cell.m_nft_info
+    { m_nft_info: info, extra_info: info }
   end
 
   def attributes_for_nrc_721_cell(nrc_721_cell)
-    { nrc_721_token_info: nrc_721_cell.nrc_721_nft_info }
+    info = nrc_721_cell.nrc_721_nft_info
+    { nrc_721_token_info: info, extra_info: info }
   end
 
   def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)

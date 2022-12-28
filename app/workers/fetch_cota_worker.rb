@@ -11,7 +11,7 @@ class FetchCotaWorker
       collection = find_or_create_collection(t)
       item = find_or_create_item(collection, t)
       action =
-        case t["type"]
+        case (t["type"] || t["tx_type"]) # compatible with old field name
              when "mint"
                "mint"
              when "transfer"
@@ -34,9 +34,9 @@ class FetchCotaWorker
     unless c.persisted?
       info = CotaAggregator.instance.get_define_info(cota_id)
       issuer = CotaAggregator.instance.get_issuer_info_by_cota_id(cota_id)
-      block = Block.find_by number: t['block_number']
-      
-      addr = Address.cached_find issuer['lock_hash']
+      block = Block.find_by number: t["block_number"]
+
+      addr = Address.cached_find issuer["lock_hash"]
       c.update(
         name: info["name"],
         symbol: info["symbol"],
@@ -55,5 +55,4 @@ class FetchCotaWorker
     i.update! owner: to
     i
   end
-
 end
