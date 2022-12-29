@@ -134,6 +134,24 @@ class Block < ApplicationRecord
     end
   end
 
+  def self.set_ckb_node_versions_from_miner_message
+    Block.find_each do |block|
+      next if block.miner_message.blank?
+
+      matched = [block.miner_message.gsub('0x', '')].pack('H*').match(/\d\.\d\d\d\.\d/)
+      if matched.present?
+        version = matched[0]
+        counter = Counter.find_by(name: version)
+        if counter.present?
+          counter.value += 1
+          counter.save!
+        else
+          Counter.create name: version, value: 1
+        end
+      end
+    end
+  end
+
   private
 
   def delete_tx_display_infos

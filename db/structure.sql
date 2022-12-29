@@ -1034,7 +1034,7 @@ ALTER SEQUENCE public.pool_transaction_entries_id_seq OWNED BY public.pool_trans
 --
 
 CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
- SELECT (date_part('epoch'::text, average_block_time_by_hour.hour))::integer AS "timestamp",
+ SELECT (EXTRACT(epoch FROM average_block_time_by_hour.hour))::integer AS "timestamp",
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
    FROM public.average_block_time_by_hour
@@ -1139,7 +1139,8 @@ CREATE TABLE public.token_items (
     cell_id integer,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    type_script_id integer
+    type_script_id integer,
+    status integer DEFAULT 1
 );
 
 
@@ -2633,8 +2634,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221106174818'),
 ('20221106182302'),
 ('20221108035020'),
-('20221213075412');
-('20221227013538');
-
+('20221213075412'),
+('20221227013538'),
+('20221228102920');
 
 
