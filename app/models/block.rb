@@ -134,21 +134,26 @@ class Block < ApplicationRecord
     end
   end
 
-  def self.set_ckb_node_versions_from_miner_message
-    Block.find_each do |block|
-      next if block.miner_message.blank?
+  def self.update_counter_for_ckb_node_version version
 
+    name = "ckb_node_version_#{version}"
+    counter = Counter.find_by(name: name)
+    if counter.present?
+      counter.value += 1
+      counter.save!
+    else
+      Counter.create! name: name, value: 1
+    end
+  end
+
+  def self.set_ckb_node_versions_from_miner_message
+    Counter.where('name like ?', "ckb_node_version_%").delete_all
+    Block.find_each(batch_size: 50000) do |block|
+      next if block.miner_message.blank?
       matched = [block.miner_message.gsub('0x', '')].pack('H*').match(/\d\.\d\d\d\.\d/)
-      if matched.present?
-        version = matched[0]
-        counter = Counter.find_by(name: version)
-        if counter.present?
-          counter.value += 1
-          counter.save!
-        else
-          Counter.create name: version, value: 1
-        end
-      end
+      next if matched.blank?
+
+      self.update_counter_for_ckb_node_version matched[0]
     end
   end
 
