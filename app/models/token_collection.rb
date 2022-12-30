@@ -92,7 +92,7 @@ class TokenCollection < ApplicationRecord
 
   # removed the wrong token collections
   def self.remove_corrupted
-    where(standard: 'nrc721').where(type_script_id: nil).or(where(creator_id: nil)).find_each do |tc|
+    where(standard: "nrc721").where(type_script_id: nil).or(where(creator_id: nil)).find_each do |tc|
       tc.update_info rescue nil
 
       if tc.cell.blank?
