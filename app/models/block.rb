@@ -134,10 +134,12 @@ class Block < ApplicationRecord
     end
   end
 
-  def self.update_counter_for_ckb_node_version block
-    return if block.miner_message.blank?
-    matched = [block.miner_message.gsub('0x', '')].pack('H*').match(/\d\.\d\d\d\.\d/)
+  def update_counter_for_ckb_node_version
+    return if self.miner_message.blank?
+    matched = [self.miner_message.gsub('0x', '')].pack('H*').match(/\d\.\d\d\d\.\d/)
     return if matched.blank?
+
+    # setup global ckb_node_version
     name = "ckb_node_version_#{matched[0]}"
     counter = Counter.find_by(name: name)
     if counter.present?
@@ -146,6 +148,10 @@ class Block < ApplicationRecord
     else
       Counter.create! name: name, value: 1
     end
+
+    # update the current block's ckb_node_version
+    self.ckb_node_version = matched[0]
+    self.save!
   end
 
   # NOTICE: this method would do a fresh calculate for all the block's ckb_node_version, it will:
@@ -161,7 +167,7 @@ class Block < ApplicationRecord
     Counter.where('name like ?', "ckb_node_version_%").delete_all
     to_block_number = options[:to_block_number] || Block.last.number
     Block.where('number <= ?', to_block_number).find_each(batch_size: 50000) do |block|
-      Block.update_counter_for_ckb_node_version block
+      block.update_counter_for_ckb_node_version
     end
   end
 
@@ -239,6 +245,7 @@ end
 #  miner_message              :string
 #  extension                  :jsonb
 #  median_timestamp           :decimal(, )      default(0.0)
+#  ckb_node_version           :string
 #
 # Indexes
 #

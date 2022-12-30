@@ -271,8 +271,16 @@ CREATE TABLE public.blocks (
     commit_reward numeric(30,0),
     miner_message character varying,
     extension jsonb,
-    median_timestamp numeric DEFAULT 0.0
+    median_timestamp numeric DEFAULT 0.0,
+    ckb_node_version character varying
 );
+
+
+--
+-- Name: COLUMN blocks.ckb_node_version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.blocks.ckb_node_version IS 'ckb node version, e.g. 0.105.1';
 
 
 --
@@ -816,8 +824,16 @@ CREATE TABLE public.forked_blocks (
     commit_reward numeric(30,0),
     miner_message character varying,
     extension jsonb,
-    median_timestamp numeric DEFAULT 0.0
+    median_timestamp numeric DEFAULT 0.0,
+    ckb_node_version character varying
 );
+
+
+--
+-- Name: COLUMN forked_blocks.ckb_node_version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.forked_blocks.ckb_node_version IS 'ckb node version, e.g. 0.105.1';
 
 
 --
@@ -2636,6 +2652,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221108035020'),
 ('20221213075412'),
 ('20221227013538'),
-('20221228102920');
+('20221228102920'),
+('20221230022643');
 
 
