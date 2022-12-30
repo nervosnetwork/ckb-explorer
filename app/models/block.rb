@@ -134,9 +134,11 @@ class Block < ApplicationRecord
     end
   end
 
-  def self.update_counter_for_ckb_node_version version
-
-    name = "ckb_node_version_#{version}"
+  def self.update_counter_for_ckb_node_version block
+    return if block.miner_message.blank?
+    matched = [block.miner_message.gsub('0x', '')].pack('H*').match(/\d\.\d\d\d\.\d/)
+    return if matched.blank?
+    name = "ckb_node_version_#{matched[0]}"
     counter = Counter.find_by(name: name)
     if counter.present?
       counter.value += 1
@@ -146,14 +148,20 @@ class Block < ApplicationRecord
     end
   end
 
-  def self.set_ckb_node_versions_from_miner_message
+  # NOTICE: this method would do a fresh calculate for all the block's ckb_node_version, it will:
+  # 1. delete all the existing ckb_node_version_x.yyy.z
+  # 2. do a fresh calculate from block number 1 to the latest block at the moment
+  #
+  # USAGE:
+  #
+  # $ bundle exec rails c
+  # rails> Block.set_ckb_node_versions_from_miner_message
+  #
+  def self.set_ckb_node_versions_from_miner_message options = {}
     Counter.where('name like ?', "ckb_node_version_%").delete_all
-    Block.find_each(batch_size: 50000) do |block|
-      next if block.miner_message.blank?
-      matched = [block.miner_message.gsub('0x', '')].pack('H*').match(/\d\.\d\d\d\.\d/)
-      next if matched.blank?
-
-      self.update_counter_for_ckb_node_version matched[0]
+    to_block_number = options[:to_block_number] || Block.last.number
+    Block.where('number <= ?', to_block_number).find_each(batch_size: 50000) do |block|
+      Block.update_counter_for_ckb_node_version block
     end
   end
 

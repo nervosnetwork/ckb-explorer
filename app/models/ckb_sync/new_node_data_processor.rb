@@ -91,6 +91,7 @@ module CkbSync
       generate_statistics_data(local_block)
 
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
+      Block.update_counter_for_ckb_node_version local_block
 
       local_block
     end
