@@ -41,5 +41,11 @@ namespace :api do
         get :referring_cells
       end
     end
+
+    resources :blocks, only: [] do
+      collection do
+        get :ckb_node_versions
+      end
+    end
   end
 end
