@@ -58,8 +58,8 @@ module Api::V2
         id: script.id,
         code_hash: script.code_hash,
         hash_type: script.hash_type,
-        script_type: 'TODO',
-        script_name: 'TODO',
+        script_type: 'TODO.',
+        script_name: 'TODO.',
         capacity_of_deployed_cells: script.cell_outputs.where(status: :live).sum(:capacity),
         capacity_of_referring_cells: @my_referring_cells.inject(0){ |sum, x| sum + x.capacity }
       }
