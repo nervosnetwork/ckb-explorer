@@ -3,13 +3,44 @@ module Api::V2
     before_action :set_page_and_page_size
     before_action :find_script
 
+    def general_info
+      head :not_found and return if @script.blank?
+      render json: {
+        data: get_script_content(@script)
+      }
+    end
+
     def ckb_transactions
       head :not_found and return if @script.blank?
 
       render json: {
-        data: get_script_content(@script).merge({
-          ckb_transactions: @script.ckb_transactions.page(@page).per(@page_size)
-        }),
+        data: {
+          ckb_transactions: @script.ckb_transactions.page(@page).per(@page_size).map {|tx|
+            {
+              id: tx.id,
+              tx_hash: tx.tx_hash,
+              block_id: tx.block_id,
+              block_number: tx.block_number,
+              block_timestamp: tx.block_timestamp,
+              transaction_fee: tx.transaction_fee,
+              is_cellbase: tx.is_cellbase,
+              header_deps: tx.header_deps,
+              cell_deps: tx.cell_deps,
+              witnesses: tx.witnesses,
+              live_cell_changes: tx.live_cell_changes,
+              capacity_involved: tx.capacity_involved,
+              contained_address_ids: tx.contained_address_ids,
+              tags: tx.tags,
+              contained_udt_ids: tx.contained_udt_ids,
+              dao_address_ids: tx.dao_address_ids,
+              udt_address_ids: tx.udt_address_ids,
+              bytes: tx.bytes,
+              tx_status: tx.tx_status,
+              display_inputs: tx.display_inputs,
+              display_outputs: tx.display_outputs
+            }
+          }
+        },
         meta: {
           total: @script.ckb_transactions.count.to_i,
           page_size: @page_size.to_i
@@ -21,9 +52,9 @@ module Api::V2
       head :not_found and return if @script.blank?
 
       render json: {
-        data: get_script_content(@script).merge({
+        data: {
           deployed_cells: @script.cell_outputs.where(status: :live).page(@page).per(@page_size)
-        }),
+        },
         meta: {
           total: @script.cell_outputs.where(status: :live).count.to_i,
           page_size: @page_size.to_i
@@ -35,9 +66,9 @@ module Api::V2
       head :not_found and return if @script.blank?
 
       render json: {
-        data: get_script_content(@script).merge({
+        data: {
           referring_cells: Kaminari.paginate_array(@my_referring_cells).page(@page).per(@page_size)
-        }),
+        },
         meta: {
           total: @my_referring_cells.count.to_i,
           page_size: @page_size.to_i
@@ -58,10 +89,12 @@ module Api::V2
         id: script.id,
         code_hash: script.code_hash,
         hash_type: script.hash_type,
-        script_type: 'TODO.',
-        script_name: 'TODO.',
+        script_type: script.class.to_s,
         capacity_of_deployed_cells: script.cell_outputs.where(status: :live).sum(:capacity),
-        capacity_of_referring_cells: @my_referring_cells.inject(0){ |sum, x| sum + x.capacity }
+        capacity_of_referring_cells: @my_referring_cells.inject(0){ |sum, x| sum + x.capacity },
+        count_of_transactions: script.ckb_transactions.count.to_i,
+        count_of_deployed_cells: script.cell_outputs.where(status: :live).count.to_i,
+        count_of_referring_cells: @my_referring_cells.size.to_i
       }
     end
     def set_page_and_page_size
