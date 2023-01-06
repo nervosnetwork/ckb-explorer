@@ -38,6 +38,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
       ckb_transaction = block.ckb_transactions.first
       assert_equal unpack_attribute(ckb_transaction, "tx_hash"), ckb_transaction.tx_hash
+      assert ckb_transaction.cycles.nil?
     end
   end
 
