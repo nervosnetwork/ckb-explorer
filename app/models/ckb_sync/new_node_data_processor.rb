@@ -992,7 +992,7 @@ module CkbSync
       tx_index = 0
       node_block.transactions.each do |tx|
         attrs = ckb_transaction_attributes(local_block, tx, tx_index)
-        attrs[:cycles] = cycles[tx_index - 1]&.hex
+        attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
         ckb_transactions_attributes << attrs
         inputs << tx_index
         inputs.concat tx.inputs

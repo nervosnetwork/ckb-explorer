@@ -155,11 +155,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".base_reward should return 0 for genesis block" do
-    CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
-      [
-        "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
-      ]
-    )
     VCR.use_cassette("genesis_block", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(0)
 
@@ -170,11 +165,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".calculate_cell_min_capacity should return output's min capacity" do
-    CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
-      [
-        "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
-      ]
-    )
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
