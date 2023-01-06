@@ -7,6 +7,9 @@ services:
       POSTGRES_USER: ckb
       POSTGRES_PASSWORD: nervos
       POSTGRES_DB: explorer
+    ports:
+      - 5432:5432
+
     volumes:
       - ./data/pg:/var/lib/postgresql/data
   redis:
@@ -14,7 +17,11 @@ services:
     user: redis:redis
     volumes:
       - ./data/redis:/data
-  worker: &rails
+    ports:
+      - 6379:6379
+
+  worker:
+    &rails
     build: .
     entrypoint: foreman run
     env_file:
@@ -23,14 +30,14 @@ services:
       DATABASE_URL: postgresql://ckb:nervos@pg/explorer
       REDIS_URL: redis://redis
     depends_on:
-    - redis
-    - pg
+      - redis
+      - pg
     command: worker
   blocksyncer:
     <<: *rails
-    command: blocksyncer  
-  web: 
+    command: blocksyncer
+  web:
     <<: *rails
     command: web
-    ports: 
-      - 3000:3000    
+    ports:
+      - 3000:3000
