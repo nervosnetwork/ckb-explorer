@@ -3,7 +3,7 @@ require "test_helper"
 module Api
   module V1
     class BlocksControllerTest < ActionDispatch::IntegrationTest
-      BlockJSONKeys = %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp difficulty version nonce epoch start_number length transactions_root reward_status received_tx_fee received_tx_fee_status block_index_in_epoch miner_reward miner_message size largest_block largest_block_in_epoch cycles).sort
+      BlockKeys = %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp difficulty version nonce epoch start_number length transactions_root reward_status received_tx_fee received_tx_fee_status block_index_in_epoch miner_reward miner_message size largest_block largest_block_in_epoch cycles max_cycles_in_epoch max_cycles).sort
       test "should get success code when visit index" do
         valid_get api_v1_blocks_url
 
@@ -286,7 +286,7 @@ module Api
         valid_get api_v1_block_url(block.block_hash)
 
         response_block = json["data"]
-        assert_equal BlockJSONKeys, response_block["attributes"].keys.sort
+        assert_equal BlockKeys, response_block["attributes"].keys.sort
       end
 
       test "should return error object when no records found by id" do

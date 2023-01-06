@@ -3,6 +3,7 @@ require "test_helper"
 module Api
   module V1
     class CkbTransactionsControllerTest < ActionDispatch::IntegrationTest
+      TransactionKeys = %w(block_number transaction_hash block_timestamp transaction_fee bytes version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps tx_status detailed_message largest_tx largest_tx_in_epoch cycles max_cycles_in_epoch max_cycles).sort
       setup do
         CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
       end
@@ -112,7 +113,7 @@ module Api
         valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
 
         response_tx_transaction = json["data"]
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee bytes version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps tx_status detailed_message largest_tx largest_tx_in_epoch cycles).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal TransactionKeys, response_tx_transaction["attributes"].keys.sort
       end
 
       test "returned income should be null" do
