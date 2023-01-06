@@ -827,7 +827,8 @@ CREATE TABLE public.forked_blocks (
     commit_reward numeric(30,0),
     miner_message character varying,
     extension jsonb,
-    median_timestamp numeric DEFAULT 0.0
+    median_timestamp numeric DEFAULT 0.0,
+    cycles integer
 );
 
 
@@ -2712,6 +2713,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221213075412'),
 ('20221227013538'),
 ('20230101045136'),
-('20230104093413');
+('20230104093413'),
+('20230106111415');
 
 

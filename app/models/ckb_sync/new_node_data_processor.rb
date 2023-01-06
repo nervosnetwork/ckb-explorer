@@ -986,8 +986,7 @@ module CkbSync
     end
 
     def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
-      data_with_cycles = CkbSync::Api.instance.directly_single_call_rpc method: "get_block", params: [node_block.header.hash, "0x0", true]
-      cycles = data_with_cycles["result"]["cycles"]
+      cycles = CkbSync::Api.instance.get_block_cycles node_block.header.hash
       txs = nil
       ckb_transactions_attributes = []
       tx_index = 0

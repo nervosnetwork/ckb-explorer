@@ -25,6 +25,11 @@ class TypeScriptTest < ActiveSupport::TestCase
         start_number: "0x0"
       )
     )
+    CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
+      [
+        "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
+      ]
+    )
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)

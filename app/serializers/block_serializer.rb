@@ -63,6 +63,10 @@ class BlockSerializer
     object.block_size
   end
 
+  attribute :cycles do |object|
+    object.cycles
+  end
+
   attribute :largest_block_in_epoch do |object|
     object.epoch_statistic&.largest_block_size
   end
