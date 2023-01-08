@@ -84,7 +84,6 @@ module CkbSync
         update_addresses_info(addrs_changes)
       end
 
-      cache_address_txs(local_block)
       generate_tx_display_info(local_block)
       remove_tx_display_infos(local_block)
       flush_inputs_outputs_caches(local_block)
