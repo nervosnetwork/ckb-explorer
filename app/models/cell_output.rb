@@ -278,6 +278,7 @@ end
 #  index_cell_outputs_on_generated_by_id           (generated_by_id)
 #  index_cell_outputs_on_lock_script_id            (lock_script_id)
 #  index_cell_outputs_on_status                    (status)
+#  index_cell_outputs_on_tx_hash_and_cell_index    (tx_hash,cell_index)
 #  index_cell_outputs_on_type_script_id            (type_script_id)
 #  index_cell_outputs_on_type_script_id_and_id     (type_script_id,id)
 #

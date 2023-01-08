@@ -1033,7 +1033,7 @@ ALTER SEQUENCE public.pool_transaction_entries_id_seq OWNED BY public.pool_trans
 --
 
 CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
- SELECT (date_part('epoch'::text, average_block_time_by_hour.hour))::integer AS "timestamp",
+ SELECT (EXTRACT(epoch FROM average_block_time_by_hour.hour))::integer AS "timestamp",
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
    FROM public.average_block_time_by_hour
@@ -1874,8 +1874,30 @@ ALTER TABLE ONLY public.uncle_blocks
 
 
 --
-<<<<<<< HEAD
-=======
+-- Name: addresses unique_lock_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.addresses
+    ADD CONSTRAINT unique_lock_hash UNIQUE (lock_hash);
+
+
+--
+-- Name: token_collections unique_sn; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.token_collections
+    ADD CONSTRAINT unique_sn UNIQUE (sn);
+
+
+--
+-- Name: pool_transaction_entries unique_tx_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pool_transaction_entries
+    ADD CONSTRAINT unique_tx_hash UNIQUE (tx_hash);
+
+
+--
 -- Name: udts unique_type_hash; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1884,7 +1906,6 @@ ALTER TABLE ONLY public.udts
 
 
 --
->>>>>>> da17cce4... Change index type to hash (#1025)
 -- Name: index_account_books_on_address_id_and_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1895,7 +1916,7 @@ CREATE UNIQUE INDEX index_account_books_on_address_id_and_ckb_transaction_id ON 
 -- Name: index_account_books_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_account_books_on_ckb_transaction_id ON public.account_books USING hash (ckb_transaction_id);
+CREATE INDEX index_account_books_on_ckb_transaction_id ON public.account_books USING btree (ckb_transaction_id);
 
 
 --
@@ -2071,6 +2092,13 @@ CREATE INDEX index_cell_outputs_on_lock_script_id ON public.cell_outputs USING b
 --
 
 CREATE INDEX index_cell_outputs_on_status ON public.cell_outputs USING btree (status);
+
+
+--
+-- Name: index_cell_outputs_on_tx_hash_and_cell_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_outputs_on_tx_hash_and_cell_index ON public.cell_outputs USING btree (tx_hash, cell_index);
 
 
 --
@@ -2630,7 +2658,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220830163001'),
 ('20220904005610'),
 ('20220912154933'),
-('20221009070434'),
 ('20221009072146'),
 ('20221009073948'),
 ('20221009075753'),
@@ -2646,3 +2673,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221108035020'),
 ('20221213075412'),
 ('20221227013538');
+
+
