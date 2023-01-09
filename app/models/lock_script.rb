@@ -1,12 +1,8 @@
-class LockScript < ApplicationRecord
+class LockScript < Script
   has_many :cell_outputs
   has_many :generated_by_txs, source: :generated_by, through: :cell_outputs
   has_many :consumed_by_txs, source: :consumed_by, through: :cell_outputs
   belongs_to :address, optional: true # will remove this later
-
-  validates_presence_of :code_hash
-
-  attribute :code_hash, :ckb_hash
 
   def ckb_transactions
     CkbTransaction.from("(#{consumed_by_txs.to_sql} union #{generated_by_txs.to_sql}) as ckb_transactions")
@@ -14,14 +10,6 @@ class LockScript < ApplicationRecord
 
   def cell_output
     CellOutput.find(cell_output_id)
-  end
-
-  def to_node_lock
-    {
-      args: args,
-      code_hash: code_hash,
-      hash_type: hash_type
-    }
   end
 
   def lock_info

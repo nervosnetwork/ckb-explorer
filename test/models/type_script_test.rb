@@ -53,11 +53,11 @@ class TypeScriptTest < ActiveSupport::TestCase
     end
   end
 
-  test "#to_node_type should return correct hash" do
+  test "#to_node should return correct hash" do
     cell_output = create_cell_output
     type_script = cell_output.type_script
     node_type = { args: type_script.args, code_hash: type_script.code_hash, hash_type: type_script.hash_type }
 
-    assert_equal node_type, type_script.to_node_type
+    assert_equal node_type, type_script.to_node
   end
 end

@@ -86,7 +86,9 @@ module Api
           i += 1
           o_date = i.days.ago
         end
-        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).recent_year.valid_indicators
+        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp)
+          .where('created_at_unixtimestamp > ?', target_date.to_i)
+          .valid_indicators
         valid_get api_v1_daily_statistic_url("transactions_count")
 
         assert_equal [%w(transactions_count created_at_unixtimestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
