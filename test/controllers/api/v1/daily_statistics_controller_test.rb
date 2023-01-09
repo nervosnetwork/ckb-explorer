@@ -87,7 +87,6 @@ module Api
           i += 1
           o_date = i.days.ago
         end
-
         daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp)
           .where('created_at_unixtimestamp > ?', target_date.to_i)
           .valid_indicators

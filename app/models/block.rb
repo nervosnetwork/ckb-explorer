@@ -208,7 +208,6 @@ end
 #  miner_message              :string
 #  extension                  :jsonb
 #  median_timestamp           :decimal(, )      default(0.0)
-#  cycles                     :integer
 #  ckb_node_version           :string
 #
 # Indexes
