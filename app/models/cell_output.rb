@@ -56,8 +56,8 @@ class CellOutput < ApplicationRecord
   end
 
   def node_output
-    lock = CKB::Types::Script.new(**lock_script.to_node_lock)
-    type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node_type) : nil
+    lock = CKB::Types::Script.new(**lock_script.to_node)
+    type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node) : nil
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
   end
 
@@ -74,8 +74,8 @@ class CellOutput < ApplicationRecord
   def to_raw
     {
       capacity: "0x#{capacity.to_i.to_s(16)}",
-      lock: lock_script&.to_node_lock,
-      type: type_script&.to_node_type
+      lock: lock_script&.to_node,
+      type: type_script&.to_node
     }
   end
 
