@@ -33,7 +33,7 @@ class TokenCollection < ApplicationRecord
       icon_url: icon_url,
       creator: creator&.address_hash || "",
       items_count: items.count,
-      holders_count: items.count("distinct owner_id"),
+      holders_count: items.normal.count("distinct owner_id"),
       type_script: type_script&.as_json
     }
   end

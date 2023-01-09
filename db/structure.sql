@@ -1185,7 +1185,8 @@ CREATE TABLE public.token_items (
     cell_id integer,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    type_script_id integer
+    type_script_id integer,
+    status integer DEFAULT 1
 );
 
 
@@ -2712,8 +2713,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221108035020'),
 ('20221213075412'),
 ('20221227013538'),
+('20221228102920'),
 ('20230101045136'),
 ('20230104093413'),
 ('20230106111415');
-
-
