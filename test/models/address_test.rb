@@ -5,6 +5,11 @@ class AddressTest < ActiveSupport::TestCase
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
+    CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
+      [
+        "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
+      ]
+    )
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
   end
 
@@ -23,6 +28,7 @@ class AddressTest < ActiveSupport::TestCase
         start_number: "0x0"
       )
     )
+
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -47,6 +53,7 @@ class AddressTest < ActiveSupport::TestCase
         start_number: "0x0"
       )
     )
+
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -303,7 +310,8 @@ class AddressTest < ActiveSupport::TestCase
 
   test "#find_or_create_by_address_hash" do
     lock_script = CKB::Types::Script.new(
-      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99")
+      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99"
+    )
     lock_hash = lock_script.compute_hash
     full_addr = CkbUtils.generate_address(lock_script)
     addr = Address.find_or_create_by_address_hash(full_addr)
@@ -312,7 +320,6 @@ class AddressTest < ActiveSupport::TestCase
     assert_equal addr.address_hash, full_addr
     assert_equal addr, Address.find_by_address_hash(full_addr)
   end
-
 
   test "tx_list_cache_key should return right key" do
     addr = create(:address)

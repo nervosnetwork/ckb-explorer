@@ -11,6 +11,11 @@ module CkbSync
           start_number: "0x0"
         )
       )
+      CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
+        [
+          "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
+        ]
+      )      
       create(:table_record_count, :block_counter)
       create(:table_record_count, :ckb_transactions_counter)
       CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))

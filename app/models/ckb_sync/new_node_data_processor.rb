@@ -386,9 +386,10 @@ module CkbSync
       udts_attributes = Set.new
       type_hashes.each do |type_hash|
         udt = Udt.where(type_hash: type_hash).select(:id).take!
-        ckb_transactions_count = Rails.cache.fetch("udt_txs_count_#{udt.id}", expires_in: 3600) do
-          udt.ckb_transactions.count
-        end
+        ckb_transactions_count =
+          Rails.cache.fetch("udt_txs_count_#{udt.id}", expires_in: 3600) do
+            udt.ckb_transactions.count
+          end
         udts_attributes << {
           type_hash: type_hash,
           total_amount: amount_info[type_hash],
@@ -464,6 +465,7 @@ module CkbSync
     end
 
     def update_table_records_count(local_block)
+      Block.connection.execute "UPDATE blocks SET cycles=(SELECT SUM(cycles) FROM ckb_transactions WHERE block_id=#{local_block.id}) WHERE id=#{local_block.id}"
       block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       block_counter.increment!(:count)
       ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
@@ -984,11 +986,14 @@ module CkbSync
     end
 
     def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
+      cycles = CkbSync::Api.instance.get_block_cycles node_block.header.hash
       txs = nil
       ckb_transactions_attributes = []
       tx_index = 0
       node_block.transactions.each do |tx|
-        ckb_transactions_attributes << ckb_transaction_attributes(local_block, tx, tx_index)
+        attrs = ckb_transaction_attributes(local_block, tx, tx_index)
+        attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
+        ckb_transactions_attributes << attrs
         inputs << tx_index
         inputs.concat tx.inputs
         outputs << tx_index
@@ -1095,9 +1100,9 @@ module CkbSync
       block
     end
 
-    def get_median_timestamp block_hash
+    def get_median_timestamp(block_hash)
       response = CkbSync::Api.instance.directly_single_call_rpc method: "get_block_median_time", params: [block_hash]
-      return response['result'].to_i(16)
+      return response["result"].to_i(16)
     end
 
     def from_cell_base?(node_input)

@@ -68,6 +68,11 @@ module CkbSync
       end
     end
 
+    def get_block_cycles(block_hash)
+      data_with_cycles = CkbSync::Api.instance.directly_single_call_rpc method: "get_block", params: [block_hash, "0x0", true]
+      data_with_cycles["result"]["cycles"]
+    end
+
     def generate_json_rpc_id
       @@latest_json_rpc_id += 1
       return @@latest_json_rpc_id
@@ -79,8 +84,7 @@ module CkbSync
     #   params: parameters of this method, is an array, e.g. `["0xa1b2x3"]`
     # return:
     #   parsed json,  e.g. `{"jsonrpc":"2.0","result":"0x1842749a5c0","id":1}`
-    def directly_single_call_rpc options
-
+    def directly_single_call_rpc(options)
       payload = {
         "id": generate_json_rpc_id,
         "jsonrpc": "2.0",
@@ -88,7 +92,7 @@ module CkbSync
         "params": options[:params]
       }
 
-      url = ENV['CKB_NODE_URL']
+      url = ENV["CKB_NODE_URL"]
 
       Rails.logger.debug "== in directly_call_rpc, url: #{url}, payload: #{payload}"
 
@@ -115,9 +119,8 @@ module CkbSync
     #      {"jsonrpc":"2.0","result":"0x16e8100f3fe","id":4996},
     #      {"jsonrpc":"2.0","result":"0x16e81010c18","id":4997}
     #    ]`
-    def directly_batch_call_rpc payload
-
-      url = ENV['CKB_NODE_URL']
+    def directly_batch_call_rpc(payload)
+      url = ENV["CKB_NODE_URL"]
       Rails.logger.debug "== in directly_batch_call_rpc, url: #{url}, payload: #{payload}"
 
       res = HTTP.post(url, json: payload)
@@ -127,13 +130,10 @@ module CkbSync
       return result
     end
 
-
     # this methods calls the ruby-sdk, but not directly from rpc
     # some of the method is missing, e.g. get_block_median_time
     def call_rpc(method, params: [])
       @api.send(method, *params)
     end
-
-
   end
 end
