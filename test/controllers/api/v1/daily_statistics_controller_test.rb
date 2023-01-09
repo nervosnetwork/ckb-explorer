@@ -79,13 +79,15 @@ module Api
 
       test "should return recent year transactions count and timestamp" do
         target_date = Time.current.beginning_of_year
+
         i = 1
         o_date = i.days.ago
         while o_date > target_date
-          create(:daily_statistic, created_at_unixtimestamp: o_date)
+          newly_created_object = create(:daily_statistic, created_at_unixtimestamp: o_date)
           i += 1
           o_date = i.days.ago
         end
+
         daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp)
           .where('created_at_unixtimestamp > ?', target_date.to_i)
           .valid_indicators
