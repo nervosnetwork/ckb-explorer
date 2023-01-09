@@ -48,6 +48,7 @@ end
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  type_script_id :integer
+#  status         :integer          default(1)
 #
 # Indexes
 #
