@@ -9,7 +9,7 @@ class LockHashSerializer
     object.lock_script.lock_info
   end
   attribute :lock_script do |object|
-    object.lock_script.to_node_lock
+    object.lock_script.to_node
   end
   attribute :balance do |object|
     object.balance.to_s
