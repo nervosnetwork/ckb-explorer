@@ -47,7 +47,7 @@ class TokenTransferDetectWorker
           create_with(action: :destruction, from_id: cell.address_id).
           find_or_create_by(item_id: item.id, transaction_id: tx.id)
 
-        item.update status: :destroyed
+        item.update status: :is_destroyed
       end
     end
   end
