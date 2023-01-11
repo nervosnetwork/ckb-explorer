@@ -75,4 +75,12 @@ class CkbTransactionSerializer
     UpdateTxBytesWorker.perform_async object.id if object.bytes.blank?
     object.bytes
   end
+
+  attribute :largest_tx_in_epoch do |object|
+    object.block&.epoch_statistic&.largest_tx_bytes
+  end
+
+  attribute :largest_tx do
+    EpochStatistic.largest_tx_bytes
+  end
 end

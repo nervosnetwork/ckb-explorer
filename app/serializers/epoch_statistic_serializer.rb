@@ -30,4 +30,18 @@ class EpochStatisticSerializer
   } do |object|
     object.epoch_length.to_s
   end
+
+  attribute :largest_block do |object|
+    {
+      number: object.largest_block_number,
+      size: object.largest_block_size
+    }
+  end
+
+  attribute :largest_tx do |object|
+    {
+      tx_hash: object.largest_tx_hash,
+      bytes: object.largest_tx_bytes
+    }
+  end
 end

@@ -35,6 +35,18 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
+  def self.largest_in_epoch(epoch_number)
+    Rails.cache.fetch(["epoch", epoch_number, "largest_tx"]) do
+      tx = CkbTransaction.where(block: { epoch_number: epoch_number }).order(bytes: :desc).first
+      if tx.bytes
+        {
+          tx_hash: tx.tx_hash,
+          bytes: tx.bytes
+        }
+      end
+    end
+  end
+
   def address_ids
     attributes["address_ids"]
   end
@@ -180,20 +192,26 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
-  def hex_since int_since_value
+  def hex_since(int_since_value)
     return "0x#{int_since_value.to_s(16).rjust(16, '0')}"
   end
 
   def attributes_for_udt_cell(udt_cell)
-    { udt_info: CkbUtils.hash_value_to_s(udt_cell.udt_info) }
+    info = CkbUtils.hash_value_to_s(udt_cell.udt_info)
+    { 
+      udt_info: info,
+      extra_info: info
+    }
   end
 
   def attributes_for_m_nft_cell(m_nft_cell)
-    { m_nft_info: m_nft_cell.m_nft_info }
+    info = m_nft_cell.m_nft_info
+    { m_nft_info: info, extra_info: info }
   end
 
   def attributes_for_nrc_721_cell(nrc_721_cell)
-    { nrc_721_token_info: nrc_721_cell.nrc_721_nft_info }
+    info = nrc_721_cell.nrc_721_nft_info
+    { nrc_721_token_info: info, extra_info: info }
   end
 
   def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
