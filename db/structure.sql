@@ -279,7 +279,7 @@ CREATE TABLE public.blocks (
     miner_message character varying,
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
-    ckb_node_version character varying
+    ckb_node_version character varying,
     cycles integer
 );
 
@@ -836,7 +836,7 @@ CREATE TABLE public.forked_blocks (
     miner_message character varying,
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
-    ckb_node_version character varying
+    ckb_node_version character varying,
     cycles integer
 );
 
