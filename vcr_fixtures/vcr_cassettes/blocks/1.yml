@@ -444,4 +444,40 @@ http_interactions:
 
         '
   recorded_at: Mon, 31 Oct 2022 07:49:46 GMT
-recorded_with: VCR 6.0.0
+- request:
+    method: post
+    uri: http://testnet-ckb.testnet.layerview.io/
+    body:
+      encoding: UTF-8
+      string: '{"id":15,"jsonrpc":"2.0","method":"get_block","params":["0x068f283b2bf7e3e269c06dca05dc8274235f810c005cdc2bd0a08365b70ab631","0x0",true]}'
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+      Host:
+      - testnet-ckb.testnet.layerview.io
+      User-Agent:
+      - http.rb/5.1.0
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Server:
+      - nginx
+      Date:
+      - Thu, 05 Jan 2023 17:02:23 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '40'
+      Connection:
+      - close
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":null,"id":15}
+
+        '
+  recorded_at: Thu, 05 Jan 2023 17:02:23 GMT
+recorded_with: VCR 6.1.0

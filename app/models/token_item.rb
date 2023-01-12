@@ -1,4 +1,6 @@
 class TokenItem < ApplicationRecord
+  enum status: {normal: 1, burnt: 0}
+
   belongs_to :collection, class_name: "TokenCollection"
   belongs_to :owner, class_name: "Address"
   belongs_to :cell, class_name: "CellOutput", optional: true

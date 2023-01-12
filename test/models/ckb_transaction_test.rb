@@ -5,6 +5,11 @@ class CkbTransactionTest < ActiveSupport::TestCase
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
+    CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
+      [
+        "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
+      ]
+    )
   end
 
   context "associations" do
@@ -33,6 +38,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
       ckb_transaction = block.ckb_transactions.first
       assert_equal unpack_attribute(ckb_transaction, "tx_hash"), ckb_transaction.tx_hash
+      assert ckb_transaction.cycles.nil?
     end
   end
 

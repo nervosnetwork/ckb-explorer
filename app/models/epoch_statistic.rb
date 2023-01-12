@@ -12,6 +12,18 @@ class EpochStatistic < ApplicationRecord
       EpochStatistic.maximum(:largest_tx_bytes)
     end
   end
+
+  def self.max_block_cycles
+    Rails.cache.fetch("max_block_cycles", expires_in: 10.minutes) do
+      EpochStatistic.maximum(:max_block_cycles)
+    end
+  end
+
+  def self.max_tx_cycles
+    Rails.cache.fetch("max_tx_cycles", expires_in: 10.minutes) do
+      EpochStatistic.maximum(:max_tx_cycles)
+    end
+  end
 end
 
 # == Schema Information
@@ -31,6 +43,8 @@ end
 #  largest_block_size   :integer
 #  largest_tx_hash      :binary
 #  largest_tx_bytes     :integer
+#  max_block_cycles     :integer
+#  max_tx_cycles        :integer
 #
 # Indexes
 #
