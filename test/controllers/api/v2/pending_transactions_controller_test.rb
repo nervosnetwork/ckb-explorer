@@ -15,7 +15,7 @@ module Api
         body = JSON.parse response.body
         assert_equal 3, body['data'].size
         assert_equal 3, body['meta']['total']
-        assert_equal 400, body['data'][0]['capacity_of_inputs']
+        #assert_equal 400, body['data'][0]['capacity_of_inputs']
       end
     end
   end

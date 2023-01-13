@@ -6,15 +6,7 @@ module Api::V2
       head :not_found and return if pending_transactions.blank?
 
       render json: {
-        data: pending_transactions.map { |tx|
-          {
-            id: tx.id,
-            tx_hash: tx.tx_hash,
-            capacity_of_inputs: (tx.display_inputs.inject(0) { |sum, x| sum + x['capacity'] } rescue 0),
-            transaction_fee: tx.transaction_fee,
-            created_at: tx.created_at,
-          }
-        },
+        data: pending_transactions,
         meta: {
           total: PoolTransactionEntry.count,
           page_size: @page_size.to_i
