@@ -41,5 +41,10 @@ namespace :api do
         get :referring_cells
       end
     end
+    resources :statistics, only: [] do
+      collection do
+        get :transaction_fees
+      end
+    end
   end
 end
