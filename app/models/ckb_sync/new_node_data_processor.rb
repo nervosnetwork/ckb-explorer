@@ -1002,9 +1002,8 @@ module CkbSync
       tx_index = 0
       node_block.transactions.each do |tx|
         attrs = ckb_transaction_attributes(local_block, tx, tx_index)
-        if cycles
-          attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
-        end
+        attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
+
         ckb_transactions_attributes << attrs
         inputs << tx_index
         inputs.concat tx.inputs
@@ -1018,6 +1017,7 @@ module CkbSync
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)
+
       {
         block_id: local_block.id,
         tx_hash: tx.hash,
@@ -1031,6 +1031,7 @@ module CkbSync
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
         bytes: tx.serialized_size_in_block,
+        confirmation_time: (Time.now.to_i - PoolTransactionEntry.find_by(tx_hash: tx.hash).created_at.to_i),
         created_at: Time.current,
         updated_at: Time.current
       }

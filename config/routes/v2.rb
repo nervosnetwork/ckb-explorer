@@ -49,5 +49,11 @@ namespace :api do
         get :ckb_node_versions
       end
     end
+
+    resources :statistics, only: [] do
+      collection do
+        get :transaction_fees
+      end
+    end
   end
 end
