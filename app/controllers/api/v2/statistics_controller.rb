@@ -33,10 +33,9 @@ module Api::V2
           }
         },
         last_n_days_transaction_fee_rates: last_n_days_transaction_fee_rates.map { |day_fee_rate|
-          puts "== day_fee_rate: #{day_fee_rate.inspect}"
           {
             date: day_fee_rate[0],
-            fee_rate: day_fee_rate[1]
+            fee_rate: day_fee_rate[1].to_f
           }
         }
       }
