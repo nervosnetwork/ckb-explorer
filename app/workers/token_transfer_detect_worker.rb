@@ -120,7 +120,8 @@ class TokenTransferDetectWorker
     )
     coll = TokenCollection.find_or_create_by(
       standard: "m_nft",
-      type_script_id: m_nft_class_type.id
+      type_script_id: m_nft_class_type.id,
+      sn: m_nft_class_type.script_hash
     )
     m_nft_class_cell = m_nft_class_type.cell_outputs.last
     if m_nft_class_cell.present? && (coll.cell_id.blank? || (coll.cell_id < m_nft_class_cell.id))
