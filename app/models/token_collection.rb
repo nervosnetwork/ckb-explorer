@@ -4,8 +4,8 @@ class TokenCollection < ApplicationRecord
   belongs_to :cell, class_name: "CellOutput", optional: true
   belongs_to :type_script, optional: true
   has_many :transfers, class_name: "TokenTransfer", through: :items
-
-  validates :sn, uniqueness: true, allow_nil: true
+  before_validation :generate_sn
+  validates :sn, uniqueness: true, presence: true
 
   def self.find_by_sn(sn)
     c = find_by sn: sn
@@ -102,6 +102,46 @@ class TokenCollection < ApplicationRecord
       unless CkbUtils.is_nrc_721_factory_cell?(tc.cell.data)
         tc.destroy
       end
+    end
+  end
+
+  def self.fix_sn
+    TokenCollection.where(standard: %w(m_nft nrc721)).where.not(sn: nil).find_each do |tc|
+      tc2 = TokenCollection.find_by type_script_id: tc.type_script_id, sn: nil
+      next unless tc2
+
+      begin
+        tc2.items.update_all collection_id: tc.id
+      rescue
+        puts "destroy all items"
+      end
+      tc2.destroy!
+    end
+
+    TokenCollection.where(sn: nil).find_each do |tc|
+      ts = tc.type_script
+      next unless ts
+
+      ts.generate_script_hash
+      ts.save!
+      tc.sn = ts.script_hash
+      tc.save!
+    end
+  end
+
+  def generate_sn
+    # cota doesn't have type_script and cell
+    if cell && !type_script
+      self.type_script = cell.type_script
+    end
+
+    # cota doesn't have type_script
+    if type_script && !sn?
+      unless type_script.script_hash
+        type_script.generate_script_hash
+        type_script.save
+      end
+      self.sn = type_script.script_hash
     end
   end
 end
