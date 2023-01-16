@@ -38,7 +38,8 @@ gem "dotenv-rails"
 gem "config"
 
 # CKB SDK
-gem "ckb-sdk-ruby", git: "git@github.com:ShiningRay/ckb-sdk-ruby.git", require: "ckb", branch: "move_to_-rbsecp256k1"
+# gem "ckb-sdk-ruby", git: "git@github.com:ShiningRay/ckb-sdk-ruby.git", require: "ckb", branch: "move_to_-rbsecp256k1"
+gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb", tag: "v0.103.0"
 
 # Redis
 gem "hiredis" # , "~> 0.6.3"
