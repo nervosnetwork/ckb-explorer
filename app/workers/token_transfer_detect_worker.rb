@@ -5,46 +5,53 @@ class TokenTransferDetectWorker
     tx = CkbTransaction.find tx_id
     return unless tx
 
-    source_tokens = {}
-    source_collections = []
+    @lock = Redis::Lock.new("token_transfer_#{tx_id}", expiration: 180, timeout: 30)
+    @lock.lock do
+      source_tokens = {}
+      source_collections = []
 
-    tx.cell_inputs.each do |input|
-      if input.cell_type.in?(%w(m_nft_token nrc_721_token))
-        cell = input.find_cell_output!
-        type_script = input.find_type_script!
-        source_tokens[type_script.id] = cell
-      end
-    end
-
-    tx.cell_outputs.each do |output|
-      if output.cell_type.in?(%w(m_nft_token nrc_721_token))
-        type_script = output.type_script
-        item = find_or_create_item(output, type_script)
-        attrs = {
-          item: item,
-          transaction_id: tx.id,
-          action: :normal,
-          to_id: output.address_id
-        }
-
-        if source_tokens[type_script.id]
-          # this is a transfer event
-          attrs[:from_id] = source_tokens[type_script.id].address_id
-        else
-          # this is a mint event
-          attrs[:action] = :mint
+      tx.cell_inputs.each do |input|
+        if input.cell_type.in?(%w(m_nft_token nrc_721_token))
+          cell = input.find_cell_output!
+          type_script = input.find_type_script!
+          source_tokens[type_script.id] = cell
         end
-        transfer = TokenTransfer.find_or_create_by!(attrs)
-        source_tokens.delete(type_script.id)
       end
-    end
-    # remaining source token has no correspond output,
-    # so they are destruction.
-    source_tokens.each do |type_script_id, cell|
-      item = TokenItem.find_by type_script_id: type_script_id
-      t = TokenTransfer.
-        create_with(action: :destruction, from_id: cell.address_id).
-        find_or_create_by(item_id: item.id, transaction_id: tx.id)
+
+      tx.cell_outputs.each do |output|
+        if output.cell_type.in?(%w(m_nft_token nrc_721_token))
+          type_script = output.type_script
+          item = find_or_create_item(output, type_script)
+          attrs = {
+            item: item,
+            transaction_id: tx.id,
+            action: :normal,
+            to_id: output.address_id
+          }
+
+          if source_tokens[type_script.id]
+            # this is a transfer event
+            attrs[:from_id] = source_tokens[type_script.id].address_id
+          else
+            # this is a mint event
+            attrs[:action] = :mint
+          end
+          transfer = TokenTransfer.find_or_create_by!(attrs)
+          source_tokens.delete(type_script.id)
+        end
+      end
+      # remaining source token has no correspond output,
+      # so they are destruction.
+      source_tokens.each do |type_script_id, cell|
+        item = TokenItem.find_by type_script_id: type_script_id
+        TokenTransfer.transaction do
+          t = TokenTransfer.
+            create_with(action: :destruction, from_id: cell.address_id).
+            find_or_create_by(item_id: item.id, transaction_id: tx.id)
+
+          item.update status: :burnt
+        end
+      end
     end
   end
 
@@ -113,7 +120,8 @@ class TokenTransferDetectWorker
     )
     coll = TokenCollection.find_or_create_by(
       standard: "m_nft",
-      type_script_id: m_nft_class_type.id
+      type_script_id: m_nft_class_type.id,
+      sn: m_nft_class_type.script_hash
     )
     m_nft_class_cell = m_nft_class_type.cell_outputs.last
     if m_nft_class_cell.present? && (coll.cell_id.blank? || (coll.cell_id < m_nft_class_cell.id))
