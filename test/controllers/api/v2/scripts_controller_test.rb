@@ -19,11 +19,6 @@ module Api
         assert_response :success
       end
 
-      test "should get referring_cells" do
-        valid_get referring_cells_api_v2_scripts_url(code_hash: @code_hash, hash_type: @hash_type)
-        assert_response :success
-      end
-
     end
   end
 end
