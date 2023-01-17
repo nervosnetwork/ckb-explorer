@@ -10,6 +10,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
 -- Name: btree_gin; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -271,8 +278,17 @@ CREATE TABLE public.blocks (
     commit_reward numeric(30,0),
     miner_message character varying,
     extension jsonb,
-    median_timestamp numeric DEFAULT 0.0
+    median_timestamp numeric DEFAULT 0.0,
+    ckb_node_version character varying,
+    cycles integer
 );
+
+
+--
+-- Name: COLUMN blocks.ckb_node_version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.blocks.ckb_node_version IS 'ckb node version, e.g. 0.105.1';
 
 
 --
@@ -519,7 +535,8 @@ CREATE TABLE public.ckb_transactions (
     contained_udt_ids bigint[] DEFAULT '{}'::bigint[],
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
     udt_address_ids bigint[] DEFAULT '{}'::bigint[],
-    bytes integer DEFAULT 0
+    bytes integer DEFAULT 0,
+    cycles integer
 );
 
 
@@ -746,7 +763,9 @@ CREATE TABLE public.epoch_statistics (
     largest_block_number integer,
     largest_block_size integer,
     largest_tx_hash bytea,
-    largest_tx_bytes integer
+    largest_tx_bytes integer,
+    max_block_cycles integer,
+    max_tx_cycles integer
 );
 
 
@@ -816,8 +835,17 @@ CREATE TABLE public.forked_blocks (
     commit_reward numeric(30,0),
     miner_message character varying,
     extension jsonb,
-    median_timestamp numeric DEFAULT 0.0
+    median_timestamp numeric DEFAULT 0.0,
+    ckb_node_version character varying,
+    cycles integer
 );
+
+
+--
+-- Name: COLUMN forked_blocks.ckb_node_version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.forked_blocks.ckb_node_version IS 'ckb node version, e.g. 0.105.1';
 
 
 --
@@ -1034,7 +1062,7 @@ ALTER SEQUENCE public.pool_transaction_entries_id_seq OWNED BY public.pool_trans
 --
 
 CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
- SELECT (date_part('epoch'::text, average_block_time_by_hour.hour))::integer AS "timestamp",
+ SELECT (EXTRACT(epoch FROM average_block_time_by_hour.hour))::integer AS "timestamp",
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
    FROM public.average_block_time_by_hour
@@ -1139,7 +1167,8 @@ CREATE TABLE public.token_items (
     cell_id integer,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    type_script_id integer
+    type_script_id integer,
+    status integer DEFAULT 1
 );
 
 
@@ -2634,7 +2663,12 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221106182302'),
 ('20221108035020'),
 ('20221213075412'),
-('20221227013538');
+('20221227013538'),
+('20221228102920'),
+('20221230022643'),
+('20230101045136'),
+('20230104093413'),
+('20230106111415');
 
 
 

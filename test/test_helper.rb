@@ -68,6 +68,11 @@ def prepare_node_data(node_tip_block_number = 30)
             proposal: "0xa"
           ))
         )
+        CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
+          [
+            "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
+          ]
+        )
         CkbSync::NewNodeDataProcessor.new.process_block(node_block)
         CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
           CKB::Types::BlockReward.new(
