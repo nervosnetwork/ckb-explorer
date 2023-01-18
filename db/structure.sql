@@ -518,6 +518,43 @@ ALTER SEQUENCE public.ckb_transactions_id_seq OWNED BY public.ckb_transactions.i
 
 
 --
+-- Name: contracts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.contracts (
+    id bigint NOT NULL,
+    code_hash bytea,
+    hash_type character varying,
+    deployed_args character varying,
+    role character varying,
+    name character varying,
+    symbol character varying,
+    verified boolean DEFAULT false,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: contracts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.contracts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: contracts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.contracts_id_seq OWNED BY public.contracts.id;
+
+
+--
 -- Name: daily_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1403,6 +1440,13 @@ ALTER TABLE ONLY public.ckb_transactions ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: contracts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.contracts ALTER COLUMN id SET DEFAULT nextval('public.contracts_id_seq'::regclass);
+
+
+--
 -- Name: daily_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1613,6 +1657,14 @@ ALTER TABLE ONLY public.cell_outputs
 
 ALTER TABLE ONLY public.ckb_transactions
     ADD CONSTRAINT ckb_transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: contracts contracts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.contracts
+    ADD CONSTRAINT contracts_pkey PRIMARY KEY (id);
 
 
 --
@@ -2524,6 +2576,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221009081118'),
 ('20221024021923'),
 ('20221030235723'),
-('20221031085901');
+('20221031085901'),
+('20230117035205');
 
 
