@@ -6,7 +6,7 @@ module Api::V2
       render json: {
         data: result.map { |k, v|
           {
-            version: k,
+            version: (k || 'others'),
             blocks_count: v
           }
         }

@@ -35,9 +35,8 @@ class Block < ApplicationRecord
 
   def self.last_7_days_ckb_node_version
     from = 7.days.ago.to_i * 1000
-    sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version;"
-    result = ActiveRecord::Base.connection.execute(sql).values
-    return result
+    sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version order by 1 asc;"
+    return ActiveRecord::Base.connection.execute(sql).values
   end
 
   def contained_addresses
