@@ -14,11 +14,11 @@ ENV RAILS_ENV=$RAILS_ENV
 
 RUN echo ${BUNDLER_VERSION}
 RUN gem i -N bundler:${BUNDLER_VERSION} foreman
-RUN bundle config --global frozen 1 && \
-  bundle config without 'development:test' && \
+RUN bundle config --local frozen 1 && \
+  bundle config --local without 'development:test' && \
   bundle config set --local path 'vendor/bundle' && \
   # bundle config mirror.https://rubygems.org https://gems.ruby-china.com && \
-  bundle config deployment true
+  bundle config --local deployment true
 COPY Gemfile* ./
 RUN bundle install -j4 --retry 3 && rm -rf vendor/cache
 ADD . /usr/src/
@@ -28,7 +28,7 @@ FROM ruby:${RUBY_VERSION}-slim
 # RUN sed --in-place --regexp-extended "s/(\/\/)(deb|security).debian.org/\1mirrors.ustc.edu.cn/" /etc/apt/sources.list && \
 #   apt-get update && apt-get upgrade --yes
 RUN apt-get update && apt-get install -y \
-  libpq \
+  libpq5 libsodium23 \
   libcurl4 libjemalloc2 \
   && rm -rf /var/lib/apt/lists/*
 ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2

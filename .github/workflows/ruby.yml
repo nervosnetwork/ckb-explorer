@@ -25,23 +25,11 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - name: Cache SECP256k1 package
-        id: cache_secp256k1
-        uses: actions/cache@v3
-        with:
-          key: compiled_secp256k1_cache
-          path: secp256k1
-      - name: Compile SECP256k1
-        if: steps.cache_secp256k1.outputs.cache-hit != 'true'
-        run: |
-          git clone https://github.com/bitcoin-core/secp256k1.git && cd secp256k1 && ./autogen.sh && ./configure && make
-      - name: Install SECP256k1
-        run: |
-          cd secp256k1 && sudo make install 
       - name: Build and test with Rake
         run: |
           sudo gem install bundler:2.0.1
           bundle install --jobs 4 --retry 3
           bundle exec rails db:create RAILS_ENV=test
           bundle exec rails db:migrate RAILS_ENV=test
+          cp .env.test.local.travis .env.test.local
           bundle exec rails test RAILS_ENV=test
