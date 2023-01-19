@@ -33,6 +33,12 @@ class Block < ApplicationRecord
 
   after_commit :flush_cache
 
+  def self.last_7_days_ckb_node_version
+    from = 7.days.ago.to_i * 1000
+    sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version;"
+    result_sql = ActiveRecord::Base.connection.execute(sql).values
+  end
+
   def contained_addresses
     Address.where(id: address_ids)
   end
@@ -141,13 +147,8 @@ class Block < ApplicationRecord
 
     # setup global ckb_node_version
     name = "ckb_node_version_#{matched[0]}"
-    counter = Counter.find_by(name: name)
-    if counter.present?
-      counter.value += 1
-      counter.save!
-    else
-      Counter.create! name: name, value: 1
-    end
+    counter = Counter.find_or_create_by(name: name)
+    counter.increment!(:value)
 
     # update the current block's ckb_node_version
     self.ckb_node_version = matched[0]

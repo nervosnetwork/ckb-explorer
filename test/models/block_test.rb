@@ -265,6 +265,15 @@ class BlockTest < ActiveSupport::TestCase
     assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, Settings.default_short_hash_length), block.proposals
   end
 
+  test "it should last_7_days_ckb_node_version" do
+    result_last_7_days_ckb_node_version = Block.last_7_days_ckb_node_version
+    from = 7.days.ago.to_i * 1000
+    sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version;"
+    result_sql = ActiveRecord::Base.connection.execute(sql).values
+
+    assert_equal result_last_7_days_ckb_node_version, result_sql
+  end
+
   test "it should update_counter_for_ckb_node_version" do
     block1 = create(:block, block_hash: '001', miner_message: "0x22302e3130332e3020286537373133386520323032322d30342d31312920346436393665363536343432373935363639363134323534343322")
 
