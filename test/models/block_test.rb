@@ -265,7 +265,7 @@ class BlockTest < ActiveSupport::TestCase
     assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, Settings.default_short_hash_length), block.proposals
   end
 
-  test "it should last_7_days_ckb_node_version" do
+  test "it should get last_7_days_ckb_node_version" do
     result_last_7_days_ckb_node_version = Block.last_7_days_ckb_node_version
     from = 7.days.ago.to_i * 1000
     sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version;"
