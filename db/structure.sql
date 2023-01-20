@@ -536,8 +536,16 @@ CREATE TABLE public.ckb_transactions (
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
     udt_address_ids bigint[] DEFAULT '{}'::bigint[],
     bytes integer DEFAULT 0,
-    cycles integer
+    cycles integer,
+    confirmation_time integer
 );
+
+
+--
+-- Name: COLUMN ckb_transactions.confirmation_time; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.ckb_transactions.confirmation_time IS 'it cost how many seconds to confirm this transaction';
 
 
 --
@@ -557,6 +565,43 @@ CREATE SEQUENCE public.ckb_transactions_id_seq
 --
 
 ALTER SEQUENCE public.ckb_transactions_id_seq OWNED BY public.ckb_transactions.id;
+
+
+--
+-- Name: contracts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.contracts (
+    id bigint NOT NULL,
+    code_hash bytea,
+    hash_type character varying,
+    deployed_args character varying,
+    role character varying,
+    name character varying,
+    symbol character varying,
+    verified boolean DEFAULT false,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: contracts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.contracts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: contracts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.contracts_id_seq OWNED BY public.contracts.id;
 
 
 --
@@ -1508,6 +1553,13 @@ ALTER TABLE ONLY public.ckb_transactions ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: contracts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.contracts ALTER COLUMN id SET DEFAULT nextval('public.contracts_id_seq'::regclass);
+
+
+--
 -- Name: counters id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1725,6 +1777,14 @@ ALTER TABLE ONLY public.cell_outputs
 
 ALTER TABLE ONLY public.ckb_transactions
     ADD CONSTRAINT ckb_transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: contracts contracts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.contracts
+    ADD CONSTRAINT contracts_pkey PRIMARY KEY (id);
 
 
 --
@@ -2174,6 +2234,48 @@ CREATE UNIQUE INDEX index_ckb_transactions_on_tx_hash_and_block_id ON public.ckb
 --
 
 CREATE INDEX index_ckb_transactions_on_udt_address_ids ON public.ckb_transactions USING gin (udt_address_ids);
+
+
+--
+-- Name: index_contracts_on_code_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_code_hash ON public.contracts USING btree (code_hash);
+
+
+--
+-- Name: index_contracts_on_hash_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_hash_type ON public.contracts USING btree (hash_type);
+
+
+--
+-- Name: index_contracts_on_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_name ON public.contracts USING btree (name);
+
+
+--
+-- Name: index_contracts_on_role; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_role ON public.contracts USING btree (role);
+
+
+--
+-- Name: index_contracts_on_symbol; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_symbol ON public.contracts USING btree (symbol);
+
+
+--
+-- Name: index_contracts_on_verified; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_verified ON public.contracts USING btree (verified);
 
 
 --
@@ -2668,6 +2770,10 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221230022643'),
 ('20230101045136'),
 ('20230104093413'),
-('20230106111415');
+('20230106111415'),
+('20230114022147'),
+('20230114022237'),
+('20230117035205'),
+('20230119025507');
 
 
