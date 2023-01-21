@@ -80,8 +80,11 @@ class StatisticInfo
   end
 
   def blockchain_info
+    message_need_to_be_fitlered_out = "CKB v0.105.* have bugs. Please upgrade to the latest version."
     Rails.cache.realize("blockchain_info", expires_in: 6.hours) do
-      CkbSync::Api.instance.get_blockchain_info
+      result = CkbSync::Api.instance.get_blockchain_info
+      result.alerts.delete_if{ |alert| alert.message == message_need_to_be_fitlered_out }
+      result
     end
   end
 
