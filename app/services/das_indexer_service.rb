@@ -20,7 +20,11 @@ class DasIndexerService
                       }
                     })
     data = JSON.parse res.to_s
-    if data["errno"] != 0
+    case data["errno"]
+    when 0
+    when 20007
+      return ""
+    else
       raise data["errmsg"]
     end
 

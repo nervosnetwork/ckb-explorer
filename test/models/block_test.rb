@@ -265,7 +265,53 @@ class BlockTest < ActiveSupport::TestCase
     assert_equal unpack_array_attribute(block, "proposals", block.proposals_count, Settings.default_short_hash_length), block.proposals
   end
 
+  test "it should get last_7_days_ckb_node_version" do
+    result_last_7_days_ckb_node_version = Block.last_7_days_ckb_node_version
+    from = 7.days.ago.to_i * 1000
+    sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version;"
+    result_sql = ActiveRecord::Base.connection.execute(sql).values
+
+    assert_equal result_last_7_days_ckb_node_version, result_sql
+  end
+
+  test "it should update_counter_for_ckb_node_version" do
+    block1 = create(:block, block_hash: '001', miner_message: "0x22302e3130332e3020286537373133386520323032322d30342d31312920346436393665363536343432373935363639363134323534343322")
+
+    block1.update_counter_for_ckb_node_version
+    block1.update_counter_for_ckb_node_version
+    block1.update_counter_for_ckb_node_version
+
+    assert_equal Counter.find_by(name: "ckb_node_version_0.103.0").value, 3
+  end
+
+  test "it should update the block version" do
+    block1 = create(:block, block_hash: '001', miner_message: "0x22302e3130332e3020286537373133386520323032322d30342d31312920346436393665363536343432373935363639363134323534343322")
+    block2 = create(:block, block_hash: '002', miner_message: "0x22302e3130312e332028376338393031382d646972747920323032312d31333232643331333432393230303030303030303022")
+    Block.set_ckb_node_versions_from_miner_message
+    assert_equal Counter.find_by(name: "ckb_node_version_0.103.0").value, 1
+    assert_equal Counter.find_by(name: "ckb_node_version_0.101.3").value, 1
+
+    assert_equal Block.find_by(block_hash: '001').ckb_node_version, "0.103.0"
+    assert_equal Block.find_by(block_hash: '002').ckb_node_version, "0.101.3"
+  end
+
+  test "it should update the block version by: to_block_number" do
+    block1 = create(:block, block_hash: '001', miner_message: "0x22302e3130332e3020286537373133386520323032322d30342d31312920346436393665363536343432373935363639363134323534343322", number: 1)
+    block2 = create(:block, block_hash: '002', miner_message: "0x22302e3130312e332028376338393031382d646972747920323032312d31333232643331333432393230303030303030303022", number: 2)
+    block3 = create(:block, block_hash: '003', miner_message: "0x22302e3130312e332028376338393031382d646972747920323032312d31333232643331333432393230303030303030303022", number: 3)
+    block4 = create(:block, block_hash: '004', miner_message: "0x22302e3130312e332028376338393031382d646972747920323032312d31333232643331333432393230303030303030303022", number: 4)
+    block5 = create(:block, block_hash: '005', miner_message: "0x22302e3130312e332028376338393031382d646972747920323032312d31333232643331333432393230303030303030303022", number: 5)
+    Block.set_ckb_node_versions_from_miner_message to_block_number: 3
+    assert_equal Counter.find_by(name: "ckb_node_version_0.103.0").value, 1
+    assert_equal Counter.find_by(name: "ckb_node_version_0.101.3").value, 2
+
+    assert_equal Block.find_by(number: 1).ckb_node_version, "0.103.0"
+    assert_equal Block.find_by(number: 2).ckb_node_version, "0.101.3"
+    assert_equal Block.find_by(number: 3).ckb_node_version, "0.101.3"
+  end
+
   def node_data_processor
     CkbSync::NewNodeDataProcessor.new
   end
+
 end
