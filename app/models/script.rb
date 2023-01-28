@@ -1,6 +1,6 @@
 class Script < ActiveRecord::Base
-  self.abstract_class = true
-
+  has_many :lock_scripts
+  has_many :type_scripts
   validates_presence_of :code_hash
   attribute :code_hash, :ckb_hash
 
@@ -20,4 +20,17 @@ class Script < ActiveRecord::Base
       script_hash: script_hash
     }
   end
+
 end
+
+# == Schema Information
+#
+# Table name: scripts
+#
+#  id          :bigint           not null, primary key
+#  args        :string
+#  script_hash :string
+#  is_contract :boolean          default(FALSE)
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#
