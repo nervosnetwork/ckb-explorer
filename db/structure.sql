@@ -785,6 +785,39 @@ ALTER SEQUENCE public.dao_events_id_seq OWNED BY public.dao_events.id;
 
 
 --
+-- Name: deployed_cells; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.deployed_cells (
+    id bigint NOT NULL,
+    cell_id bigint,
+    contract_id bigint,
+    is_initialized boolean DEFAULT false,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: deployed_cells_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.deployed_cells_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: deployed_cells_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.deployed_cells_id_seq OWNED BY public.deployed_cells.id;
+
+
+--
 -- Name: epoch_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -952,7 +985,8 @@ CREATE TABLE public.lock_scripts (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     hash_type character varying,
-    script_hash character varying
+    script_hash character varying,
+    script_id bigint
 );
 
 
@@ -1114,6 +1148,39 @@ CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
 CREATE TABLE public.schema_migrations (
     version character varying NOT NULL
 );
+
+
+--
+-- Name: scripts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.scripts (
+    id bigint NOT NULL,
+    args character varying,
+    script_hash character varying,
+    is_contract boolean DEFAULT false,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: scripts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.scripts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: scripts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.scripts_id_seq OWNED BY public.scripts.id;
 
 
 --
@@ -1323,7 +1390,8 @@ CREATE TABLE public.type_scripts (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     hash_type character varying,
-    script_hash character varying
+    script_hash character varying,
+    script_id bigint
 );
 
 
@@ -1591,6 +1659,13 @@ ALTER TABLE ONLY public.dao_events ALTER COLUMN id SET DEFAULT nextval('public.d
 
 
 --
+-- Name: deployed_cells id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.deployed_cells ALTER COLUMN id SET DEFAULT nextval('public.deployed_cells_id_seq'::regclass);
+
+
+--
 -- Name: epoch_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1637,6 +1712,13 @@ ALTER TABLE ONLY public.nrc_factory_cells ALTER COLUMN id SET DEFAULT nextval('p
 --
 
 ALTER TABLE ONLY public.pool_transaction_entries ALTER COLUMN id SET DEFAULT nextval('public.pool_transaction_entries_id_seq'::regclass);
+
+
+--
+-- Name: scripts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scripts ALTER COLUMN id SET DEFAULT nextval('public.scripts_id_seq'::regclass);
 
 
 --
@@ -1823,6 +1905,14 @@ ALTER TABLE ONLY public.dao_events
 
 
 --
+-- Name: deployed_cells deployed_cells_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.deployed_cells
+    ADD CONSTRAINT deployed_cells_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: epoch_statistics epoch_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1884,6 +1974,14 @@ ALTER TABLE ONLY public.pool_transaction_entries
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: scripts scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scripts
+    ADD CONSTRAINT scripts_pkey PRIMARY KEY (id);
 
 
 --
@@ -2808,6 +2906,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230114022237'),
 ('20230117035205'),
 ('20230119025507'),
+('20230128015428'),
+('20230128015956'),
+('20230128031939'),
 ('20230129165127');
 
 
