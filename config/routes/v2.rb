@@ -5,6 +5,8 @@ namespace :api do
         get :raw
       end
     end
+    resources :pending_transactions, only: [:index] do
+    end
     namespace :nft do
       resources :collections do
         resources :holders, only: :index
