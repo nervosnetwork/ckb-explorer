@@ -8,9 +8,11 @@ module Api::V2
       render json: {
         data: pending_transactions.map {|tx|
           tx.as_json
-            .merge(transaction_hash: tx.tx_hash)
-            .merge(capacity_involved: tx.display_inputs.sum{|e| e["capacity"] })
-            .merge(create_timestamp: (tx.created_at.to_f * 1000).to_i )
+            .merge({
+              transaction_hash: tx.tx_hash,
+              capacity_involved: tx.display_inputs.sum{|e| e["capacity"] },
+              create_timestamp: (tx.created_at.to_f * 1000).to_i
+            })
         },
         meta: {
           total: PoolTransactionEntry.count,
