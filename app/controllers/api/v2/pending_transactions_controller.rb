@@ -2,7 +2,7 @@ module Api::V2
   class PendingTransactionsController < BaseController
     before_action :set_page_and_page_size
     def index
-      pending_transactions = PoolTransactionEntry.order('id desc').page(@page).per(@page_size)
+      pending_transactions = PoolTransactionEntry.pool_transaction_pending.order('id desc').page(@page).per(@page_size)
       head :not_found and return if pending_transactions.blank?
 
       render json: {
@@ -15,7 +15,7 @@ module Api::V2
             })
         },
         meta: {
-          total: PoolTransactionEntry.count,
+          total: PoolTransactionEntry.pool_transaction_pending.count,
           page_size: @page_size.to_i
         }
       }
