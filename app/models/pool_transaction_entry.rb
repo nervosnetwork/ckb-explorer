@@ -15,11 +15,42 @@ class PoolTransactionEntry < ApplicationRecord
   end
 
   def display_outputs(previews: false)
-    self.attributes["display_outputs"]
+    cell_inputs_for_display = cell_inputs.to_a.sort_by(&:id)
+    if previews
+      cell_inputs_for_display = cell_inputs_for_display[0, 10]
+    end
+    cell_inputs_for_display.each_with_index.map do |cell_input, index|
+      previous_cell_output = cell_input.previous_cell_output
+
+      display_input = {
+        id: previous_cell_output.id,
+        from_cellbase: false,
+        capacity: previous_cell_output.capacity,
+        address_hash: previous_cell_output.address_hash,
+        generated_tx_hash: previous_cell_output.generated_by.tx_hash,
+        cell_index: previous_cell_output.cell_index,
+        cell_type: previous_cell_output.cell_type,
+        since: {
+          raw: hex_since(cell_input.since.to_i),
+          median_timestamp: cell_input.block.median_timestamp.to_i
+        }
+      }
+      display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
+      display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
+      display_input.merge!(attributes_for_udt_cell(previous_cell_output)) if previous_cell_output.udt?
+      display_input.merge!(attributes_for_m_nft_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
+      display_input.merge!(attributes_for_nrc_721_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(nrc_721_token nrc_721_factory))
+
+      CkbUtils.hash_value_to_s(display_input)
+    end
   end
 
   def display_inputs(previews: false)
-    self.attributes["display_inputs"]
+    if is_cellbase
+      cellbase_display_inputs
+    else
+      normal_tx_display_inputs(previews)
+    end
   end
 
   def proposal_short_id
