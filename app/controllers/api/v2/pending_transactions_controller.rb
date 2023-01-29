@@ -15,7 +15,7 @@ module Api::V2
             })
         },
         meta: {
-          total: PoolTransactionEntry.count,
+          total: PoolTransactionEntry.pool_transaction_pending.count,
           page_size: @page_size.to_i
         }
       }
