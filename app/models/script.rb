@@ -14,23 +14,6 @@ class Script < ActiveRecord::Base
     end
   end
 
-  def to_node
-    {
-      args: args,
-      code_hash: code_hash,
-      hash_type: hash_type
-    }
-  end
-
-  def as_json(options={})
-    {
-      args: args,
-      code_hash: code_hash,
-      hash_type: hash_type,
-      script_hash: script_hash
-    }
-  end
-
 end
 
 # == Schema Information
