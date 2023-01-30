@@ -606,14 +606,19 @@ module CkbSync
     def update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
       ckb_transactions_attributes = []
       tx_index = 0
+      full_tx_address_ids = []
+      full_tx_udt_ids = []
       ckb_txs.each do |tx|
+        tx_id = tx["id"]
+        full_tx_address_ids += contained_addr_ids[tx_index].to_a.map { |a| { address_id: a, ckb_transaction_id: tx_id } }
+        full_tx_udt_ids += contained_udt_ids[tx_index].to_a.map { |u| { udt_id: u, ckb_transaction_id: tx_id } }
         if tx_index == 0
           ckb_transactions_attributes << {
-            id: tx["id"],
+            id: tx_id,
             dao_address_ids: dao_address_ids[tx_index].to_a,
             udt_address_ids: udt_address_ids[tx_index].to_a,
-            contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            contained_address_ids: contained_addr_ids[tx_index].to_a,
+            # contained_udt_ids: contained_udt_ids[tx_index].to_a,
+            # contained_address_ids: contained_addr_ids[tx_index].to_a,
             tags: tags[tx_index].to_a,
             capacity_involved: input_capacities[tx_index],
             transaction_fee: 0,
@@ -622,21 +627,25 @@ module CkbSync
           }
         else
           ckb_transactions_attributes << {
-            id: tx["id"],
+            id: tx_id,
             dao_address_ids: dao_address_ids[tx_index].to_a,
             udt_address_ids: udt_address_ids[tx_index].to_a,
-            contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            contained_address_ids: contained_addr_ids[tx_index].to_a,
+            # contained_udt_ids: contained_udt_ids[tx_index].to_a,
+            # contained_address_ids: contained_addr_ids[tx_index].to_a,
             tags: tags[tx_index].to_a,
             capacity_involved: input_capacities[tx_index],
             transaction_fee: CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index]),
-            created_at: tx["created_at"], updated_at: Time.current
+            created_at: tx["created_at"],
+            updated_at: Time.current
           }
         end
         tx_index += 1
       end
-
-      CkbTransaction.upsert_all(ckb_transactions_attributes) if ckb_transactions_attributes.present?
+      if ckb_transactions_attributes.present?
+        CkbTransaction.upsert_all(ckb_transactions_attributes)
+      end
+      AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present?
+      UdtTransaction.upsert_all full_tx_udt_ids if full_tx_udt_ids.present?
     end
 
     def build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
@@ -993,7 +1002,9 @@ module CkbSync
       tx_index = 0
       node_block.transactions.each do |tx|
         attrs = ckb_transaction_attributes(local_block, tx, tx_index)
-        attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
+        if cycles
+          attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
+        end
         ckb_transactions_attributes << attrs
         inputs << tx_index
         inputs.concat tx.inputs
