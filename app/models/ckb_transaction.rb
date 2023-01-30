@@ -19,8 +19,8 @@ class CkbTransaction < ApplicationRecord
   has_and_belongs_to_many :contained_udts, class_name: "Udt", join_table: :udt_transactions
 
   def self.migrate_contained_udt_ids
-    Address.select(%i[id contained_udt_ids]).find_each do |a|
-      a.contained_udt_ids = a["contained_udt_ids"]
+    CkbTransaction.select(%i[id contained_udt_ids]).find_each do |a|
+      a.contained_udt_ids = a["contained_udt_ids"] if a["contained_udt_ids"].present?
     end
   end
 

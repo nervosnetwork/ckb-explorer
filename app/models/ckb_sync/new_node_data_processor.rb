@@ -644,8 +644,8 @@ module CkbSync
       if ckb_transactions_attributes.present?
         CkbTransaction.upsert_all(ckb_transactions_attributes)
       end
-      AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present?
-      UdtTransaction.upsert_all full_tx_udt_ids if full_tx_udt_ids.present?
+      AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present? # , unique_by: [:ckb_transaction_id, :address_id]
+      UdtTransaction.upsert_all full_tx_udt_ids, unique_by: [:udt_id, :ckb_transaction_id] if full_tx_udt_ids.present?
     end
 
     def build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
