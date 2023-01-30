@@ -797,9 +797,8 @@ ALTER SEQUENCE public.dao_events_id_seq OWNED BY public.dao_events.id;
 
 CREATE TABLE public.deployed_cells (
     id bigint NOT NULL,
-    cell_id bigint,
+    cell_output_id bigint,
     contract_id bigint,
-    is_initialized boolean DEFAULT false,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -1166,9 +1165,9 @@ CREATE TABLE public.scripts (
     args character varying,
     script_hash character varying,
     is_contract boolean DEFAULT false,
+    contract_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    contract_id bigint
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -2873,10 +2872,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230114022147'),
 ('20230114022237'),
 ('20230117035205'),
-('20230119025507'),
 ('20230128015428'),
 ('20230128015956'),
-('20230128031939'),
-('20230129012303');
+('20230128031939');
 
 

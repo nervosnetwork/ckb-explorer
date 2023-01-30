@@ -3,7 +3,7 @@ class TypeScript < ActiveRecord::Base
   has_many :ckb_transactions
 
   belongs_to :cell_output, optional: true # will remove this later
-  belongs_to :scripts, optional: true
+  belongs_to :script, optional: true
 
   before_validation :generate_script_hash
   validates_presence_of :code_hash

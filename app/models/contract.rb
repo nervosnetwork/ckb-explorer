@@ -1,4 +1,6 @@
 class Contract < ApplicationRecord
+  has_many :scripts
+
 end
 
 # == Schema Information
