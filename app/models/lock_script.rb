@@ -4,6 +4,7 @@ class LockScript < ActiveRecord::Base
   has_many :consumed_by_txs, source: :consumed_by, through: :cell_outputs
   belongs_to :address, optional: true # will remove this later
   belongs_to :scripts, optional: true
+  belongs_to :contract, optional: true, primary_key: "code_hash", foreign_key: "code_hash"
 
   validates_presence_of :code_hash
   attribute :code_hash, :ckb_hash

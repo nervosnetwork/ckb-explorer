@@ -5,21 +5,35 @@ class DeployedCell < ApplicationRecord
   has_many :type_scripts
 
   def self.create_initial_data
-    DeployedCell.transaction do
-      CellOutput.find_each do | cell_output |
-        if cell_output.type_script_id.present?
-          contract_id = cell_output.type_script.script.contract_id
-          if contract_id.present?
-            DeployedCell.create cell_output_id: cell_output.id, contract_id: contract_id
-          else
-            Rails.logger.info "the contract id for this TypeScript is blank"
+    TypeScript.transaction do
+      TypeScript.find_each do |type_script|
+        contract = type_script.contract
+        if contract.present?
+          type_script.cell_outputs.each do | cell_output |
+            DeployedCell.create cell_output_id: cell_output.id, contract_id: contract.id
           end
+        else
+          Rails.logger.info "the contract id for this TypeScript is blank"
+        end
+      end
+    end
+
+    LockScript.transaction do
+      LockScript.find_each do |type_script|
+        contract = type_script.contract
+        if contract.present?
+          type_script.cell_outputs.each do | cell_output |
+            DeployedCell.create cell_output_id: cell_output.id, contract_id: contract.id
+          end
+        else
+          Rails.logger.info "the contract id for this LockScript is blank"
         end
       end
     end
   end
 
 end
+
 
 # == Schema Information
 #
@@ -28,7 +42,6 @@ end
 #  id             :bigint           not null, primary key
 #  cell_output_id :bigint
 #  contract_id    :bigint
-#  is_initialized :boolean          default(FALSE)
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #

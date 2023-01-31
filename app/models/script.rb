@@ -5,8 +5,8 @@ class Script < ActiveRecord::Base
   belongs_to :contract, optional: true
 
   def self.create_initial_data
-    Script.transaction do
-      TypeScript.find_each do |type_script|
+    TypeScript.find_each do |type_script|
+      Script.transaction do
         contract_id = 0
         Contract.all.each {|contract|
           if contract.code_hash == type_script.code_hash
@@ -25,8 +25,8 @@ class Script < ActiveRecord::Base
       end
     end
 
-    Script.transaction do
-      LockScript.find_each do |lock_script|
+    LockScript.find_each do |lock_script|
+      Script.transaction do
         script = Script.find_or_create_by(args: lock_script.args, script_hash: lock_script.script_hash)
         lock_script.update script_id: script.id
       end
