@@ -11,9 +11,10 @@ end
 #  code_hash     :binary
 #  hash_type     :string
 #  deployed_args :string
-#  role          :string
+#  role          :string           default("type_script")
 #  name          :string
 #  symbol        :string
+#  description   :string
 #  verified      :boolean          default(FALSE)
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null

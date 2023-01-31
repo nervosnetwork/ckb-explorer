@@ -569,9 +569,10 @@ CREATE TABLE public.contracts (
     code_hash bytea,
     hash_type character varying,
     deployed_args character varying,
-    role character varying,
+    role character varying DEFAULT 'type_script'::character varying,
     name character varying,
     symbol character varying,
+    description character varying,
     verified boolean DEFAULT false,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
@@ -2910,5 +2911,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230128031939'),
 ('20230129012303'),
 ('20230129165127');
+
 
 

@@ -4,6 +4,7 @@ class TypeScript < ActiveRecord::Base
 
   belongs_to :cell_output, optional: true # will remove this later
   belongs_to :script, optional: true
+  belongs_to :contract, optional: true, primary_key: "code_hash", foreign_key: "code_hash"
 
   before_validation :generate_script_hash
   validates_presence_of :code_hash
