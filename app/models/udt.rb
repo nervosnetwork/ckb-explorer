@@ -12,17 +12,13 @@ class Udt < ApplicationRecord
 
   attribute :code_hash, :ckb_hash
 
-  def ckb_transactions
-    CkbTransaction.where("contained_udt_ids @> array[?]::bigint[]", [id]) # .optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_udt_ids)")
-  end
+  has_and_belongs_to_many :ckb_transactions, join_table: :udt_transactions
 
   def h24_ckb_transactions_count
     Rails.cache.realize("udt_h24_ckb_transactions_count_#{id}", expires_in: 1.hour) do
       ckb_transactions.where("block_timestamp >= ?", CkbUtils.time_in_milliseconds(24.hours.ago)).count
     end
   end
-
-  
 
   def type_script
     return unless published
@@ -33,8 +29,6 @@ class Udt < ApplicationRecord
       hash_type: hash_type
     }
   end
-
-
 end
 
 # == Schema Information

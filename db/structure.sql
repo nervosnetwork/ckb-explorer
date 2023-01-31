@@ -10,13 +10,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
 -- Name: btree_gin; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -1350,6 +1343,16 @@ ALTER SEQUENCE public.udt_accounts_id_seq OWNED BY public.udt_accounts.id;
 
 
 --
+-- Name: udt_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.udt_transactions (
+    udt_id bigint,
+    ckb_transaction_id bigint
+);
+
+
+--
 -- Name: udts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2429,6 +2432,20 @@ CREATE INDEX index_udt_accounts_on_udt_id ON public.udt_accounts USING btree (ud
 
 
 --
+-- Name: index_udt_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_udt_transactions_on_ckb_transaction_id ON public.udt_transactions USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_udt_transactions_on_udt_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_udt_transactions_on_udt_id ON public.udt_transactions USING btree (udt_id);
+
+
+--
 -- Name: index_udts_on_type_hash; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2450,6 +2467,13 @@ CREATE INDEX index_uncle_blocks_on_block_id ON public.uncle_blocks USING btree (
 
 
 --
+-- Name: pk; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX pk ON public.udt_transactions USING btree (udt_id, ckb_transaction_id);
+
+
+--
 -- Name: ckb_transactions after_delete_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2464,10 +2488,19 @@ CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public
 
 
 --
--- Name: ckb_transactions sync_to_account_book; Type: TRIGGER; Schema: public; Owner: -
+-- Name: udt_transactions fk_rails_6a09774940; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-CREATE TRIGGER sync_to_account_book AFTER INSERT OR UPDATE ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.synx_tx_to_account_book();
+ALTER TABLE ONLY public.udt_transactions
+    ADD CONSTRAINT fk_rails_6a09774940 FOREIGN KEY (ckb_transaction_id) REFERENCES public.ckb_transactions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: udt_transactions fk_rails_b9a9ee04fc; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udt_transactions
+    ADD CONSTRAINT fk_rails_b9a9ee04fc FOREIGN KEY (udt_id) REFERENCES public.udts(id) ON DELETE CASCADE;
 
 
 --
@@ -2668,5 +2701,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20221230022643'),
 ('20230101045136'),
 ('20230104093413'),
-('20230106111415');
+('20230106111415'),
+('20230129165127');
+
 
