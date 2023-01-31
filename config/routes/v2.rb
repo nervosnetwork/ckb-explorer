@@ -5,6 +5,8 @@ namespace :api do
         get :raw
       end
     end
+    resources :pending_transactions, only: [:index] do
+    end
     namespace :nft do
       resources :collections do
         resources :holders, only: :index
@@ -44,6 +46,12 @@ namespace :api do
     resources :statistics, only: [] do
       collection do
         get :transaction_fees
+      end
+    end
+
+    resources :blocks, only: [] do
+      collection do
+        get :ckb_node_versions
       end
     end
   end

@@ -33,6 +33,12 @@ class Block < ApplicationRecord
 
   after_commit :flush_cache
 
+  def self.last_7_days_ckb_node_version
+    from = 7.days.ago.to_i * 1000
+    sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version order by 1 asc;"
+    return ActiveRecord::Base.connection.execute(sql).values
+  end
+
   def contained_addresses
     Address.where(id: address_ids)
   end
@@ -131,6 +137,38 @@ class Block < ApplicationRecord
       response.each do |json_result|
         Block.find(json_result["id"]).update median_timestamp: json_result["result"].to_i(16)
       end
+    end
+  end
+
+  def update_counter_for_ckb_node_version
+    return if self.miner_message.blank?
+    matched = [self.miner_message.gsub('0x', '')].pack('H*').match(/\d\.\d\d\d\.\d/)
+    return if matched.blank?
+
+    # setup global ckb_node_version
+    name = "ckb_node_version_#{matched[0]}"
+    counter = Counter.find_or_create_by(name: name)
+    counter.increment!(:value)
+
+    # update the current block's ckb_node_version
+    self.ckb_node_version = matched[0]
+    self.save!
+  end
+
+  # NOTICE: this method would do a fresh calculate for all the block's ckb_node_version, it will:
+  # 1. delete all the existing ckb_node_version_x.yyy.z
+  # 2. do a fresh calculate from block number 1 to the latest block at the moment
+  #
+  # USAGE:
+  #
+  # $ bundle exec rails c
+  # rails> Block.set_ckb_node_versions_from_miner_message
+  #
+  def self.set_ckb_node_versions_from_miner_message options = {}
+    Counter.where('name like ?', "ckb_node_version_%").delete_all
+    to_block_number = options[:to_block_number] || Block.last.number
+    Block.where('number <= ?', to_block_number).find_each(batch_size: 50000) do |block|
+      block.update_counter_for_ckb_node_version
     end
   end
 
