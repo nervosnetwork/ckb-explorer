@@ -42,11 +42,12 @@ FactoryBot.define do
           ckb_transactions << create(:ckb_transaction, block: block, block_timestamp: Time.current.to_i + i)
         end
 
-        ckb_transactions.each do |tx|
-          tx.contained_address_ids << address.id
-          tx.save
-        end
-        # address.ckb_transactions << ckb_transactions
+        # ckb_transactions.each do |tx|
+        #   tx.contained_address_ids << address.id
+        #   tx.save
+        # end
+        # binding.pry
+        AccountBook.upsert_all ckb_transactions.map { |t| { address_id: address.id, ckb_transaction_id: t.id } }
         address.update(ckb_transactions_count: address.ckb_transactions.count)
       end
     end
@@ -56,11 +57,13 @@ FactoryBot.define do
       after(:create) do |address, evaluator|
         evaluator.transactions_count.times do
           block = create(:block, :with_block_hash)
-          transaction = create(:ckb_transaction, block: block, udt_address_ids: [address.id], contained_address_ids: [address.id], tags: ["udt"], contained_udt_ids: [evaluator.udt.id])
-          transaction1 = create(:ckb_transaction, block: block, udt_address_ids: [address.id], contained_address_ids: [address.id], tags: ["udt"], contained_udt_ids: [evaluator.udt.id])
+          transaction = create(:ckb_transaction, block: block, udt_address_ids: [address.id], tags: ["udt"])
+          transaction.contained_address_ids = [address.id]
+          transaction.contained_udt_ids = [evaluator.udt.id]
+          transaction1 = create(:ckb_transaction, block: block, udt_address_ids: [address.id], tags: ["udt"])
+          transaction1.contained_address_ids = [address.id]
+          transaction1.contained_udt_ids = [evaluator.udt.id]
           create(:cell_output, address: address, block: block, ckb_transaction: transaction, generated_by: transaction, consumed_by: transaction1, type_hash: evaluator.udt.type_hash, cell_type: "udt", data: "0x000050ad321ea12e0000000000000000")
-          # address.ckb_transactions << transaction
-          # address.ckb_transactions << transaction1
         end
       end
     end
