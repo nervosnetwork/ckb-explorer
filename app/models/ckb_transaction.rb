@@ -15,7 +15,7 @@ class CkbTransaction < ApplicationRecord
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
   has_many :dao_events
   has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all
-  has_and_belongs_to_many :contained_addresses, join_table: "account_books"
+  has_and_belongs_to_many :contained_addresses, class_name: "Address", join_table: "account_books"
   has_and_belongs_to_many :contained_udts, class_name: "Udt", join_table: :udt_transactions
 
   def self.migrate_contained_udt_ids

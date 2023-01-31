@@ -4,7 +4,7 @@ class Address < ApplicationRecord
 
   has_many :cell_outputs, dependent: :destroy
   has_many :account_books, dependent: :destroy
-  has_many :ckb_transactions, through: :account_books
+  has_many :ckb_transactions, through: :account_books, counter_cache: true
   has_many :mining_infos
   has_many :udt_accounts
   has_many :dao_events
@@ -31,8 +31,8 @@ class Address < ApplicationRecord
   end
 
   def ckb_udt_transactions(udt)
-    udt = Udt.find(udt) unless udt.is_a?(Udt)
-    udt.ckb_transactions
+    udt = Udt.find_by_id(udt) unless udt.is_a?(Udt)
+    udt&.ckb_transactions || []
   end
 
   def lock_info

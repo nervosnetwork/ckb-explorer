@@ -543,7 +543,7 @@ module CkbSync
       local_block.update!(total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
                           ckb_transactions_count: local_block.ckb_transactions.count,
                           live_cell_changes: local_block.ckb_transactions.sum(&:live_cell_changes),
-                          address_ids: local_block.ckb_transactions.pluck(:contained_address_ids).flatten.uniq)
+                          address_ids: local_block.ckb_transactions.map(&:contained_address_ids).flatten.uniq)
     end
 
     def build_udts!(local_block, outputs, outputs_data)
@@ -1277,12 +1277,17 @@ module CkbSync
     end
 
     def recalculate_udt_transactions_count(local_tip_block)
-      udt_ids = local_tip_block.ckb_transactions.where("tags @> array[?]::varchar[]", ["udt"]).pluck(:contained_udt_ids).flatten
+      udt_ids = local_tip_block.ckb_transactions.map(&:contained_udt_ids).flatten
       udt_counts = udt_ids.each_with_object(Hash.new(0)) { |udt_id, counts| counts[udt_id] += 1 }
       udt_counts_value =
         udt_counts.map do |udt_id, count|
           udt = Udt.find(udt_id)
-          { id: udt_id, ckb_transactions_count: udt.ckb_transactions_count - count, created_at: udt.created_at, updated_at: Time.current }
+          {
+            id: udt_id,
+            ckb_transactions_count: udt.ckb_transactions_count - count,
+            created_at: udt.created_at,
+            updated_at: Time.current
+          }
         end
 
       Udt.upsert_all(udt_counts_value) if udt_counts_value.present?
