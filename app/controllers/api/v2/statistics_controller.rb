@@ -9,11 +9,10 @@ module Api::V2
       pending_transaction_fee_rates = PoolTransactionEntry.select(:id, :transaction_fee, :bytes).pool_transaction_pending.order('id desc').page(@pending_page).per(@pending_page_size)
 
       timestamp = @last_n_day.days.ago.to_i * 1000
-      sql = %Q{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count / total_cell_capacity) fee_rate
+      sql = %Q{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
         from blocks
         where timestamp > #{timestamp}
           and ckb_transactions_count != 0
-          and total_cell_capacity != 0
         group by 1 order by 1 desc}
       last_n_days_transaction_fee_rates = ActiveRecord::Base.connection.execute(sql).values
 
