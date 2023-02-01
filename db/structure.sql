@@ -82,7 +82,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;    
+    END LOOP;
     close c;
 end
 $$;
@@ -104,21 +104,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null 
+	if old is null
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-	
+
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP 
+	   LOOP
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id) 
+			insert into account_books (ckb_transaction_id, address_id)
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -1383,6 +1383,16 @@ ALTER SEQUENCE public.udt_accounts_id_seq OWNED BY public.udt_accounts.id;
 
 
 --
+-- Name: udt_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.udt_transactions (
+    udt_id bigint,
+    ckb_transaction_id bigint
+);
+
+
+--
 -- Name: udts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2477,6 +2487,20 @@ CREATE INDEX index_udt_accounts_on_udt_id ON public.udt_accounts USING btree (ud
 
 
 --
+-- Name: index_udt_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_udt_transactions_on_ckb_transaction_id ON public.udt_transactions USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_udt_transactions_on_udt_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_udt_transactions_on_udt_id ON public.udt_transactions USING btree (udt_id);
+
+
+--
 -- Name: index_udts_on_type_hash; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2498,6 +2522,13 @@ CREATE INDEX index_uncle_blocks_on_block_id ON public.uncle_blocks USING btree (
 
 
 --
+-- Name: pk; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX pk ON public.udt_transactions USING btree (udt_id, ckb_transaction_id);
+
+
+--
 -- Name: ckb_transactions after_delete_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2512,10 +2543,19 @@ CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public
 
 
 --
--- Name: ckb_transactions sync_to_account_book; Type: TRIGGER; Schema: public; Owner: -
+-- Name: udt_transactions fk_rails_6a09774940; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-CREATE TRIGGER sync_to_account_book AFTER INSERT OR UPDATE ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.synx_tx_to_account_book();
+ALTER TABLE ONLY public.udt_transactions
+    ADD CONSTRAINT fk_rails_6a09774940 FOREIGN KEY (ckb_transaction_id) REFERENCES public.ckb_transactions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: udt_transactions fk_rails_b9a9ee04fc; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udt_transactions
+    ADD CONSTRAINT fk_rails_b9a9ee04fc FOREIGN KEY (udt_id) REFERENCES public.udts(id) ON DELETE CASCADE;
 
 
 --
@@ -2718,6 +2758,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230104093413'),
 ('20230106111415'),
 ('20230114022237'),
+('20230129165127'),
 ('20230130005447');
 
 
