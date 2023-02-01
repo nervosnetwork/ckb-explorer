@@ -23,6 +23,7 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
+#  uncles_count               :integer
 #  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
@@ -49,7 +50,6 @@ end
 #  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
-#  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
@@ -60,4 +60,5 @@ end
 #  extension                  :jsonb
 #  median_timestamp           :decimal(, )      default(0.0)
 #  ckb_node_version           :string
+#  cycles                     :integer
 #
