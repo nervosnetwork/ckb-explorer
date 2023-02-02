@@ -142,6 +142,19 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
+  # please run this method when deploy
+  def self.update_last_n_transaction_confirmation_time n
+    CkbTransaction.last(n).each do |ckb_transaction|
+      confirmation_time = 0
+      pool_transaction_entry = PoolTransactionEntry.find_by(tx_hash: ckb_transaction.hash)
+
+      if pool_transaction_entry.present?
+        confirmation_time = ckb_transaction.created_at.to_i - pool_transaction_entry.created_at.to_i
+      end
+      ckb_transaction.update confirmation_time: confirmation_time
+    end
+  end
+
   private
 
   def normal_tx_display_outputs(previews)
