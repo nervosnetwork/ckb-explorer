@@ -1031,7 +1031,7 @@ module CkbSync
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
         bytes: tx.serialized_size_in_block,
-        confirmation_time: (Time.now.to_i - PoolTransactionEntry.find_by(tx_hash: tx.hash).created_at.to_i),
+        confirmation_time: (Time.now.to_i - PoolTransactionEntry.find_by(tx_hash: tx.hash).created_at.to_i rescue 0),
         created_at: Time.current,
         updated_at: Time.current
       }

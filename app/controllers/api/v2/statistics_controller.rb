@@ -4,17 +4,14 @@ module Api::V2
 
     def transaction_fees
 
-      transaction_fee_rates = CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes, :confirmation_time).where('bytes > 0').order('id desc').limit(10000)
+      transaction_fee_rates = Rails.cache.fetch("transaction_fees", expires_in: 10.seconds) do
+        CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes, :confirmation_time).where('bytes > 0').order('id desc').limit(10000)
+      end
 
       pending_transaction_fee_rates = PoolTransactionEntry.select(:id, :transaction_fee, :bytes).pool_transaction_pending.order('id desc').page(@pending_page).per(@pending_page_size)
 
       timestamp = @last_n_day.days.ago.to_i * 1000
-      sql = %Q{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
-        from blocks
-        where timestamp > #{timestamp}
-          and ckb_transactions_count != 0
-        group by 1 order by 1 desc}
-      last_n_days_transaction_fee_rates = ActiveRecord::Base.connection.execute(sql).values
+      last_n_days_transaction_fee_rates = StatisticInfo.last_n_days_transaction_fee_rates timestamp
 
       render json: {
         transaction_fee_rates: transaction_fee_rates.map {|tx|
