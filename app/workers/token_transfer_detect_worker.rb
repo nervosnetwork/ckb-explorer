@@ -74,7 +74,7 @@ class TokenTransferDetectWorker
          when "m_nft_token"
            type_script.args[50..-1].hex
          when "nrc_721_token"
-           type_script.args[130..-1].hex
+           type_script.args[132..-1].hex
       end
     item.save!
     item
