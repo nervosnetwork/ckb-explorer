@@ -1,5 +1,30 @@
 class BlockStatistic < ApplicationRecord
   VALID_INDICATORS = %w(difficulty hash_rate live_cells_count dead_cells_count).freeze
+  belongs_to :block, foreign_key: :block_number, primary_key: :number
+  delegate :block_hash, to: :block
+  CkbToShannon = 10**8
+  def reset_primary_issuance
+    val = get_block_economic_state&.issuance&.primary || 0
+    self.primary_issuance = val.to_d / CkbToShannon
+  end
+
+  def reset_secondary_issuance
+    val = get_block_economic_state&.issuance&.secondary || 0
+    self.secondary_issuance = val.to_d / CkbToShannon
+  end
+
+  def get_block_economic_state
+    @res ||= CkbSync::Api.instance.get_block_economic_state(block_hash)
+  end
+
+  def self.full_reset
+    find_each do |s|
+      puts s.block_number
+      s.reset_primary_issuance
+      s.reset_secondary_issuance
+      s.save
+    end
+  end
 end
 
 # == Schema Information
