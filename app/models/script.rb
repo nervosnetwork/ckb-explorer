@@ -27,7 +27,19 @@ class Script < ActiveRecord::Base
 
     LockScript.find_each do |lock_script|
       Script.transaction do
-        script = Script.find_or_create_by(args: lock_script.args, script_hash: lock_script.script_hash)
+        contract_id = 0
+        Contract.all.each {|contract|
+          if contract.code_hash == lock_script.code_hash
+            contract_id = contract.id
+            break
+          end
+        }
+
+        temp_hash = {args: lock_script.args, script_hash: lock_script.script_hash, is_contract: false}
+        if contract_id != 0
+          temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
+        end
+        script = Script.find_or_create_by temp_hash
         lock_script.update script_id: script.id
       end
     end
