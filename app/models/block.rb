@@ -143,7 +143,7 @@ class Block < ApplicationRecord
   def update_counter_for_ckb_node_version
 
     witness = self.ckb_transactions.first.witnesses[0]
-    matched = [witness.gsub('0x', '')].pack("H*").match(/\d\.\d\d\d\.\d/)
+    matched = [witness.gsub('0x', '')].pack("H*").match(/\d\.\d+\.\d/)
     if matched.blank?
       Rails.logger.warn "== this block does not have version information from 1st tx's 1st witness: #{witness}"
       return
@@ -171,7 +171,8 @@ class Block < ApplicationRecord
   def self.set_ckb_node_versions_from_miner_message(options = {})
     Counter.where("name like ?", "ckb_node_version_%").delete_all
     to_block_number = options[:to_block_number] || Block.last.number
-    Block.where("number <= ?", to_block_number).find_each(batch_size: 50000) do |block|
+    # we only need last 100k blocks updated.
+    Block.last(100000).each do |block|
       block.update_counter_for_ckb_node_version
     end
   end
