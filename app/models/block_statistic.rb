@@ -19,30 +19,30 @@ class BlockStatistic < ApplicationRecord
   end
 
   # has '0x' prefix
-  def dao_header
-    block.dao
+  def dao_infos
+    @values ||= [block.dao[2..-1]].pack("H*").unpack("Q<4").map { |i| i.to_d / CkbToShannon }
   end
 
-  def reset_total_issuance
-    self.total_issuance = (dao_header[2, 16]&.hex || 0).to_d / CkbToShannon
+  def reset_accumulated_total_deposits
+    self.accumulated_total_deposits = dao_infos[0]
   end
 
   def reset_accumulated_rate
-    self.accumulated_rate = (dao_header[18, 16]&.hex || 0).to_d / CkbToShannon
+    self.accumulated_rate = dao_infos[1]
   end
 
   def reset_unissued_secondary_issuance
-    self.unissued_secondary_issuance = (dao_header[34, 16]&.hex || 0).to_d / CkbToShannon
+    self.unissued_secondary_issuance = dao_infos[2]
   end
 
   def reset_total_occupied_capacities
-    self.total_occupied_capacities = (dao_header[50, 16]&.hex || 0).to_d / CkbToShannon
+    self.total_occupied_capacities = dao_infos[3]
   end
 
   def reset_all
     reset_primary_issuance
     reset_secondary_issuance
-    reset_total_issuance
+    reset_accumulated_total_deposits
     reset_accumulated_rate
     reset_unissued_secondary_issuance
     reset_total_occupied_capacities
@@ -61,21 +61,15 @@ end
 #
 # Table name: block_statistics
 #
-#  id                          :bigint           not null, primary key
-#  difficulty                  :string
-#  hash_rate                   :string
-#  live_cells_count            :string           default("0")
-#  dead_cells_count            :string           default("0")
-#  block_number                :decimal(30, )
-#  created_at                  :datetime         not null
-#  updated_at                  :datetime         not null
-#  epoch_number                :decimal(30, )
-#  primary_issuance            :decimal(36, 8)
-#  secondary_issuance          :decimal(36, 8)
-#  total_issuance              :decimal(36, 8)
-#  accumulated_rate            :decimal(36, 8)
-#  unissued_secondary_issuance :decimal(36, 8)
-#  total_occupied_capacities   :decimal(36, 8)
+#  id               :bigint           not null, primary key
+#  difficulty       :string
+#  hash_rate        :string
+#  live_cells_count :string           default("0")
+#  dead_cells_count :string           default("0")
+#  block_number     :decimal(30, )
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  epoch_number     :decimal(30, )
 #
 # Indexes
 #
