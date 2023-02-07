@@ -82,7 +82,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;    
+    END LOOP;
     close c;
 end
 $$;
@@ -104,21 +104,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null 
+	if old is null
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-	
+
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP 
+	   LOOP
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id) 
+			insert into account_books (ckb_transaction_id, address_id)
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -529,8 +529,16 @@ CREATE TABLE public.ckb_transactions (
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
     udt_address_ids bigint[] DEFAULT '{}'::bigint[],
     bytes integer DEFAULT 0,
-    cycles integer
+    cycles integer,
+    confirmation_time integer
 );
+
+
+--
+-- Name: COLUMN ckb_transactions.confirmation_time; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.ckb_transactions.confirmation_time IS 'it cost how many seconds to confirm this transaction';
 
 
 --
@@ -550,6 +558,44 @@ CREATE SEQUENCE public.ckb_transactions_id_seq
 --
 
 ALTER SEQUENCE public.ckb_transactions_id_seq OWNED BY public.ckb_transactions.id;
+
+
+--
+-- Name: contracts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.contracts (
+    id bigint NOT NULL,
+    code_hash bytea,
+    hash_type character varying,
+    deployed_args character varying,
+    role character varying DEFAULT 'type_script'::character varying,
+    name character varying,
+    symbol character varying,
+    description character varying,
+    verified boolean DEFAULT false,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: contracts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.contracts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: contracts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.contracts_id_seq OWNED BY public.contracts.id;
 
 
 --
@@ -740,6 +786,38 @@ ALTER SEQUENCE public.dao_events_id_seq OWNED BY public.dao_events.id;
 
 
 --
+-- Name: deployed_cells; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.deployed_cells (
+    id bigint NOT NULL,
+    cell_output_id bigint,
+    contract_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: deployed_cells_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.deployed_cells_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: deployed_cells_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.deployed_cells_id_seq OWNED BY public.deployed_cells.id;
+
+
+--
 -- Name: epoch_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -907,7 +985,8 @@ CREATE TABLE public.lock_scripts (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     hash_type character varying,
-    script_hash character varying
+    script_hash character varying,
+    script_id bigint
 );
 
 
@@ -1069,6 +1148,40 @@ CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
 CREATE TABLE public.schema_migrations (
     version character varying NOT NULL
 );
+
+
+--
+-- Name: scripts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.scripts (
+    id bigint NOT NULL,
+    args character varying,
+    script_hash character varying,
+    is_contract boolean DEFAULT false,
+    contract_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: scripts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.scripts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: scripts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.scripts_id_seq OWNED BY public.scripts.id;
 
 
 --
@@ -1278,7 +1391,8 @@ CREATE TABLE public.type_scripts (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     hash_type character varying,
-    script_hash character varying
+    script_hash character varying,
+    script_id bigint
 );
 
 
@@ -1511,6 +1625,13 @@ ALTER TABLE ONLY public.ckb_transactions ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: contracts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.contracts ALTER COLUMN id SET DEFAULT nextval('public.contracts_id_seq'::regclass);
+
+
+--
 -- Name: counters id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1536,6 +1657,13 @@ ALTER TABLE ONLY public.dao_contracts ALTER COLUMN id SET DEFAULT nextval('publi
 --
 
 ALTER TABLE ONLY public.dao_events ALTER COLUMN id SET DEFAULT nextval('public.dao_events_id_seq'::regclass);
+
+
+--
+-- Name: deployed_cells id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.deployed_cells ALTER COLUMN id SET DEFAULT nextval('public.deployed_cells_id_seq'::regclass);
 
 
 --
@@ -1585,6 +1713,13 @@ ALTER TABLE ONLY public.nrc_factory_cells ALTER COLUMN id SET DEFAULT nextval('p
 --
 
 ALTER TABLE ONLY public.pool_transaction_entries ALTER COLUMN id SET DEFAULT nextval('public.pool_transaction_entries_id_seq'::regclass);
+
+
+--
+-- Name: scripts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scripts ALTER COLUMN id SET DEFAULT nextval('public.scripts_id_seq'::regclass);
 
 
 --
@@ -1731,6 +1866,14 @@ ALTER TABLE ONLY public.ckb_transactions
 
 
 --
+-- Name: contracts contracts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.contracts
+    ADD CONSTRAINT contracts_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: counters counters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1760,6 +1903,14 @@ ALTER TABLE ONLY public.dao_contracts
 
 ALTER TABLE ONLY public.dao_events
     ADD CONSTRAINT dao_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: deployed_cells deployed_cells_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.deployed_cells
+    ADD CONSTRAINT deployed_cells_pkey PRIMARY KEY (id);
 
 
 --
@@ -1824,6 +1975,14 @@ ALTER TABLE ONLY public.pool_transaction_entries
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: scripts scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scripts
+    ADD CONSTRAINT scripts_pkey PRIMARY KEY (id);
 
 
 --
@@ -2177,6 +2336,48 @@ CREATE UNIQUE INDEX index_ckb_transactions_on_tx_hash_and_block_id ON public.ckb
 --
 
 CREATE INDEX index_ckb_transactions_on_udt_address_ids ON public.ckb_transactions USING gin (udt_address_ids);
+
+
+--
+-- Name: index_contracts_on_code_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_code_hash ON public.contracts USING btree (code_hash);
+
+
+--
+-- Name: index_contracts_on_hash_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_hash_type ON public.contracts USING btree (hash_type);
+
+
+--
+-- Name: index_contracts_on_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_name ON public.contracts USING btree (name);
+
+
+--
+-- Name: index_contracts_on_role; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_role ON public.contracts USING btree (role);
+
+
+--
+-- Name: index_contracts_on_symbol; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_symbol ON public.contracts USING btree (symbol);
+
+
+--
+-- Name: index_contracts_on_verified; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_verified ON public.contracts USING btree (verified);
 
 
 --
@@ -2702,6 +2903,14 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230101045136'),
 ('20230104093413'),
 ('20230106111415'),
+('20230114022147'),
+('20230114022237'),
+('20230117035205'),
+('20230128015428'),
+('20230128015956'),
+('20230128031939'),
+('20230129012303'),
 ('20230129165127');
+
 
 
