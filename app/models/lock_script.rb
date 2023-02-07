@@ -1,8 +1,30 @@
-class LockScript < Script
+class LockScript < ActiveRecord::Base
   has_many :cell_outputs
   has_many :generated_by_txs, source: :generated_by, through: :cell_outputs
   has_many :consumed_by_txs, source: :consumed_by, through: :cell_outputs
   belongs_to :address, optional: true # will remove this later
+  belongs_to :scripts, optional: true
+  belongs_to :contract, optional: true, primary_key: "code_hash", foreign_key: "code_hash"
+
+  validates_presence_of :code_hash
+  attribute :code_hash, :ckb_hash
+
+  def to_node
+    {
+      args: args,
+      code_hash: code_hash,
+      hash_type: hash_type
+    }
+  end
+
+  def as_json(options={})
+    {
+      args: args,
+      code_hash: code_hash,
+      hash_type: hash_type,
+      script_hash: script_hash
+    }
+  end
 
   def ckb_transactions
     CkbTransaction.from("(#{consumed_by_txs.to_sql} union #{generated_by_txs.to_sql}) as ckb_transactions")
@@ -88,6 +110,7 @@ end
 #  updated_at     :datetime         not null
 #  hash_type      :string
 #  script_hash    :string
+#  script_id      :bigint
 #
 # Indexes
 #

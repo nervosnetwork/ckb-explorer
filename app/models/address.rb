@@ -4,7 +4,7 @@ class Address < ApplicationRecord
 
   has_many :cell_outputs, dependent: :destroy
   has_many :account_books, dependent: :destroy
-  has_many :ckb_transactions, through: :account_books
+  has_many :ckb_transactions, through: :account_books, counter_cache: true
   has_many :mining_infos
   has_many :udt_accounts
   has_many :dao_events
@@ -20,15 +20,19 @@ class Address < ApplicationRecord
   attr_accessor :query_address
 
   def custom_ckb_transactions
-    CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id])#.optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_address_ids)")
+    # CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id]) # .optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_address_ids)")
+    ckb_transactions
   end
+
+  # has_and_belongs_to_many :ckb_dao_transactions,
 
   def ckb_dao_transactions
-    CkbTransaction.where("dao_address_ids @> array[?]::bigint[]", [id])#.optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_dao_address_ids)")
+    CkbTransaction.where("dao_address_ids @> array[?]::bigint[]", [id]) # .optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_dao_address_ids)")
   end
 
-  def ckb_udt_transactions(udt_id)
-    CkbTransaction.where("udt_address_ids @> array[?]::bigint[]", [id])#.where("contained_udt_ids @> array[?]::bigint[]", [udt_id]).optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_udt_ids)")
+  def ckb_udt_transactions(udt)
+    udt = Udt.find_by_id(udt) unless udt.is_a?(Udt)
+    udt&.ckb_transactions || []
   end
 
   def lock_info
@@ -54,16 +58,13 @@ class Address < ApplicationRecord
     ls
   end
 
-
-
   def self.find_by_address_hash(address_hash, *args, **kargs)
     parsed = CkbUtils.parse_address(address_hash)
     lock_hash = parsed.script.compute_hash
     find_by lock_hash: lock_hash
   end
 
-  def self.find_or_create_by_address_hash(address_hash, block_timestamp=0)
-
+  def self.find_or_create_by_address_hash(address_hash, block_timestamp = 0)
     parsed = CkbUtils.parse_address(address_hash)
     lock_hash = parsed.script.compute_hash
     lock_script = LockScript.find_by(
@@ -75,7 +76,7 @@ class Address < ApplicationRecord
     create_with(
       address_hash: CkbUtils.generate_address(parsed.script),
       block_timestamp: block_timestamp,
-      lock_script_id: lock_script&.id,
+      lock_script_id: lock_script&.id
     ).find_or_create_by lock_hash: lock_hash
   end
 
@@ -110,13 +111,14 @@ class Address < ApplicationRecord
       address.cal_balance!
       puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}"
       Sentry.capture_message(
-        'Reset balance',
+        "Reset balance",
         extra: {
           address: address.address_hash,
           wrong_balance: wrong_balance,
           calced_balance: address.balance,
           calced_occupied_balance: address.balance_occupied
-        })
+        }
+      )
     end
     address.save!
     address
@@ -199,19 +201,19 @@ class Address < ApplicationRecord
   end
 
   def cal_balance_occupied
-    cell_outputs.live.find_each.map do |cell|
+    cell_outputs.live.find_each.map { |cell|
       next if cell.type_hash.blank? && (cell.data.present? && cell.data == "0x")
 
       cell.capacity
-    end.compact.sum
+    }.compact.sum
   end
 
   def cal_balance_occupied_inner_block(block_id)
-    cell_outputs.inner_block(block_id).live.find_each.map do |cell|
+    cell_outputs.inner_block(block_id).live.find_each.map { |cell|
       next if cell.type_hash.blank? && (cell.data.present? && cell.data == "0x")
 
       cell.capacity
-    end.compact.sum
+    }.compact.sum
   end
 
   private
