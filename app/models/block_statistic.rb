@@ -1,6 +1,6 @@
 class BlockStatistic < ApplicationRecord
   VALID_INDICATORS = %w(difficulty hash_rate live_cells_count dead_cells_count).freeze
-  belongs_to :block, foreign_key: :block_number, primary_key: :number
+  belongs_to :block, foreign_key: :block_number, primary_key: :number, optional: true
   delegate :block_hash, to: :block
 
   CkbToShannon = 10**8
