@@ -88,6 +88,7 @@ end
 #  updated_at     :datetime         not null
 #  hash_type      :string
 #  script_hash    :string
+#  script_id      :bigint
 #
 # Indexes
 #
