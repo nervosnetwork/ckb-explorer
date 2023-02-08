@@ -89,7 +89,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;
+    END LOOP;    
     close c;
 end
 $$;
@@ -111,21 +111,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null
+	if old is null 
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-
+	
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP
+	   LOOP 
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id)
+			insert into account_books (ckb_transaction_id, address_id) 
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -536,16 +536,8 @@ CREATE TABLE public.ckb_transactions (
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
     udt_address_ids bigint[] DEFAULT '{}'::bigint[],
     bytes integer DEFAULT 0,
-    cycles integer,
-    confirmation_time integer
+    cycles integer
 );
-
-
---
--- Name: COLUMN ckb_transactions.confirmation_time; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.ckb_transactions.confirmation_time IS 'it cost how many seconds to confirm this transaction';
 
 
 --
@@ -569,44 +561,6 @@ ALTER SEQUENCE public.ckb_transactions_id_seq OWNED BY public.ckb_transactions.i
 
 --
 -- Name: contracts; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.contracts (
-    id bigint NOT NULL,
-    code_hash bytea,
-    hash_type character varying,
-    deployed_args character varying,
-    role character varying DEFAULT 'type_script'::character varying,
-    name character varying,
-    symbol character varying,
-    description character varying,
-    verified boolean DEFAULT false,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: contracts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.contracts_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: contracts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.contracts_id_seq OWNED BY public.contracts.id;
-
-
---
--- Name: counters; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.contracts (
@@ -1679,13 +1633,6 @@ ALTER TABLE ONLY public.contracts ALTER COLUMN id SET DEFAULT nextval('public.co
 
 
 --
--- Name: counters id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.contracts ALTER COLUMN id SET DEFAULT nextval('public.contracts_id_seq'::regclass);
-
-
---
 -- Name: daily_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1921,14 +1868,6 @@ ALTER TABLE ONLY public.ckb_transactions
 
 --
 -- Name: contracts contracts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.contracts
-    ADD CONSTRAINT contracts_pkey PRIMARY KEY (id);
-
-
---
--- Name: counters counters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.contracts
@@ -2972,15 +2911,11 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230101045136'),
 ('20230104093413'),
 ('20230106111415'),
-('20230114022147'),
-('20230114022237'),
 ('20230117035205'),
 ('20230128015428'),
 ('20230128015956'),
 ('20230128031939'),
-('20230129012303'),
 ('20230129165127'),
 ('20230208081700');
-
 
 

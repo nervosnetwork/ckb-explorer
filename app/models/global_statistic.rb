@@ -11,9 +11,11 @@ end
 #
 # Table name: global_statistics
 #
-#  id         :bigint           not null, primary key
-#  name       :string
-#  value      :integer
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
+#  id                                                              :bigint           not null, primary key
+#  name                                                            :string
+#  value                                                           :integer
+#  created_at                                                      :datetime         not null
+#  updated_at                                                      :datetime         not null
+#  comment                                                         :string
+#  #<ActiveRecord::ConnectionAdapters::PostgreSQL::TableDefinition :string
 #
