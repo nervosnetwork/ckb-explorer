@@ -1,10 +1,31 @@
-class TypeScript < Script
+class TypeScript < ActiveRecord::Base
   has_many :cell_outputs
   has_many :ckb_transactions
 
   belongs_to :cell_output, optional: true # will remove this later
+  belongs_to :script, optional: true
+  belongs_to :contract, optional: true, primary_key: "code_hash", foreign_key: "code_hash"
 
   before_validation :generate_script_hash
+  validates_presence_of :code_hash
+  attribute :code_hash, :ckb_hash
+
+  def to_node
+    {
+      args: args,
+      code_hash: code_hash,
+      hash_type: hash_type
+    }
+  end
+
+  def as_json(options={})
+    {
+      args: args,
+      code_hash: code_hash,
+      hash_type: hash_type,
+      script_hash: script_hash
+    }
+  end
 
   def ckb_transactions
     CkbTransaction.where(:id => cell_outputs.map(&:id))
