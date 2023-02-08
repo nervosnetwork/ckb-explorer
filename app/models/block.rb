@@ -141,9 +141,13 @@ class Block < ApplicationRecord
   end
 
   def update_counter_for_ckb_node_version
-    return if self.miner_message.blank?
-    matched = [self.miner_message.gsub('0x', '')].pack('H*').match(/\d\.\d\d\d\.\d/)
-    return if matched.blank?
+
+    witness = self.ckb_transactions.first.witnesses[0]
+    matched = [witness.gsub('0x', '')].pack("H*").match(/\d\.\d+\.\d/)
+    if matched.blank?
+      Rails.logger.warn "== this block does not have version information from 1st tx's 1st witness: #{witness}"
+      return
+    end
 
     # setup global ckb_node_version
     name = "ckb_node_version_#{matched[0]}"
@@ -164,10 +168,11 @@ class Block < ApplicationRecord
   # $ bundle exec rails c
   # rails> Block.set_ckb_node_versions_from_miner_message
   #
-  def self.set_ckb_node_versions_from_miner_message options = {}
-    Counter.where('name like ?', "ckb_node_version_%").delete_all
+  def self.set_ckb_node_versions_from_miner_message(options = {})
+    Counter.where("name like ?", "ckb_node_version_%").delete_all
     to_block_number = options[:to_block_number] || Block.last.number
-    Block.where('number <= ?', to_block_number).find_each(batch_size: 50000) do |block|
+    # we only need last 100k blocks updated.
+    Block.last(100000).each do |block|
       block.update_counter_for_ckb_node_version
     end
   end
@@ -210,6 +215,7 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
+#  uncles_count               :integer
 #  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
@@ -236,7 +242,6 @@ end
 #  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
-#  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
@@ -247,6 +252,7 @@ end
 #  extension                  :jsonb
 #  median_timestamp           :decimal(, )      default(0.0)
 #  ckb_node_version           :string
+#  cycles                     :integer
 #
 # Indexes
 #
