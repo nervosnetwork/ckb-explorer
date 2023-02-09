@@ -10,6 +10,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
 -- Name: btree_gin; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -45,7 +52,7 @@ $_$;
 CREATE FUNCTION public.decrease_ckb_transactions_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$begin
-    UPDATE counters SET value = value - 1 WHERE name = 'ckb_transactions';
+    UPDATE global_statistics SET value = value - 1 WHERE name = 'ckb_transactions';
     RETURN NEW;
 end;$$;
 
@@ -57,7 +64,7 @@ end;$$;
 CREATE FUNCTION public.increase_ckb_transactions_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$begin
-    UPDATE counters SET value = value + 1 WHERE name = 'ckb_transactions';
+    UPDATE global_statistics SET value = value + 1 WHERE name = 'ckb_transactions';
     RETURN NEW;
 end;$$;
 
@@ -82,7 +89,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;
+    END LOOP;    
     close c;
 end
 $$;
@@ -104,21 +111,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null
+	if old is null 
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-
+	
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP
+	   LOOP 
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id)
+			insert into account_books (ckb_transaction_id, address_id) 
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -529,16 +536,8 @@ CREATE TABLE public.ckb_transactions (
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
     udt_address_ids bigint[] DEFAULT '{}'::bigint[],
     bytes integer DEFAULT 0,
-    cycles integer,
-    confirmation_time integer
+    cycles integer
 );
-
-
---
--- Name: COLUMN ckb_transactions.confirmation_time; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.ckb_transactions.confirmation_time IS 'it cost how many seconds to confirm this transaction';
 
 
 --
@@ -596,52 +595,6 @@ CREATE SEQUENCE public.contracts_id_seq
 --
 
 ALTER SEQUENCE public.contracts_id_seq OWNED BY public.contracts.id;
-
-
---
--- Name: counters; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.counters (
-    id bigint NOT NULL,
-    name character varying,
-    value integer,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: COLUMN counters.name; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.counters.name IS 'the name of the table';
-
-
---
--- Name: COLUMN counters.value; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.counters.value IS 'the count value of the table';
-
-
---
--- Name: counters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.counters_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: counters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.counters_id_seq OWNED BY public.counters.id;
 
 
 --
@@ -970,6 +923,54 @@ CREATE SEQUENCE public.forked_events_id_seq
 --
 
 ALTER SEQUENCE public.forked_events_id_seq OWNED BY public.forked_events.id;
+
+
+--
+-- Name: global_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.global_statistics (
+    id bigint NOT NULL,
+    name character varying,
+    value integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    comment character varying,
+    "#<ActiveRecord::ConnectionAdapters::PostgreSQL::TableDefinition" character varying
+);
+
+
+--
+-- Name: COLUMN global_statistics.name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.global_statistics.name IS 'the name of something, e.g. my_table_rows_count';
+
+
+--
+-- Name: COLUMN global_statistics.value; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.global_statistics.value IS 'value of something, e.g. 888';
+
+
+--
+-- Name: global_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.global_statistics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: global_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.global_statistics_id_seq OWNED BY public.global_statistics.id;
 
 
 --
@@ -1632,13 +1633,6 @@ ALTER TABLE ONLY public.contracts ALTER COLUMN id SET DEFAULT nextval('public.co
 
 
 --
--- Name: counters id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.counters ALTER COLUMN id SET DEFAULT nextval('public.counters_id_seq'::regclass);
-
-
---
 -- Name: daily_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1685,6 +1679,13 @@ ALTER TABLE ONLY public.forked_blocks ALTER COLUMN id SET DEFAULT nextval('publi
 --
 
 ALTER TABLE ONLY public.forked_events ALTER COLUMN id SET DEFAULT nextval('public.forked_events_id_seq'::regclass);
+
+
+--
+-- Name: global_statistics id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.global_statistics ALTER COLUMN id SET DEFAULT nextval('public.global_statistics_id_seq'::regclass);
 
 
 --
@@ -1874,14 +1875,6 @@ ALTER TABLE ONLY public.contracts
 
 
 --
--- Name: counters counters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.counters
-    ADD CONSTRAINT counters_pkey PRIMARY KEY (id);
-
-
---
 -- Name: daily_statistics daily_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1935,6 +1928,14 @@ ALTER TABLE ONLY public.forked_blocks
 
 ALTER TABLE ONLY public.forked_events
     ADD CONSTRAINT forked_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: global_statistics global_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.global_statistics
+    ADD CONSTRAINT global_statistics_pkey PRIMARY KEY (id);
 
 
 --
@@ -2689,6 +2690,13 @@ CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public
 
 
 --
+-- Name: ckb_transactions sync_to_account_book; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER sync_to_account_book AFTER INSERT OR UPDATE ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.synx_tx_to_account_book();
+
+
+--
 -- Name: udt_transactions fk_rails_6a09774940; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2903,14 +2911,11 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230101045136'),
 ('20230104093413'),
 ('20230106111415'),
-('20230114022147'),
-('20230114022237'),
 ('20230117035205'),
 ('20230128015428'),
 ('20230128015956'),
 ('20230128031939'),
-('20230129012303'),
-('20230129165127');
-
+('20230129165127'),
+('20230208081700');
 
 
