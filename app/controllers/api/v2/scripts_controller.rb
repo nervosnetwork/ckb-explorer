@@ -64,17 +64,8 @@ module Api::V2
 
     private
     def get_script_content script
-      # query only once, so that action referring_cells (line 39) can re-use this variable
       column_name = script.class == TypeScript ? "type_script_id" : "lock_script_id"
-      Rails.logger.info "=== script.class: #{script.class}"
       @my_referring_cells = CellOutput.live.where("#{column_name} = ?", script.id )
-      #@my_referring_cells = script.ckb_transactions.map { |ckb_transaction|
-      #  ckb_transaction.addresses.map { |address|
-      #    address.cell_outputs.where(status: :live)
-      #  }
-      #}.flatten
-
-      Rails.logger.info "== @my_referring_cells: #{@my_referring_cells.size}"
 
       {
         id: script.id,
@@ -82,7 +73,6 @@ module Api::V2
         hash_type: script.hash_type,
         script_type: script.class.to_s,
         capacity_of_deployed_cells: script.cell_outputs.where(status: :live).sum(:capacity),
-        #capacity_of_referring_cells: @my_referring_cells.sum(:capacity),
         capacity_of_referring_cells: @my_referring_cells.inject(0){ |sum, x| sum + x.capacity },
         count_of_transactions: script.ckb_transactions.count.to_i,
         count_of_deployed_cells: script.cell_outputs.where(status: :live).count.to_i,
