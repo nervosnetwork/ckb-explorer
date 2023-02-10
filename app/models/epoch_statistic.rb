@@ -3,19 +3,19 @@ class EpochStatistic < ApplicationRecord
   has_many :blocks, primary_key: :epoch_number, foreign_key: :epoch
   has_many :ckb_transactions, through: :blocks
   def max_cycles_block
-    @max_cycles_block ||= blocks.order(cycles: :desc).first
+    @max_cycles_block ||= blocks.where.not(cycles: nil).order(cycles: :desc).first
   end
 
   def max_cycles_tx
-    @max_cycles_tx ||= ckb_transactions.order(cycles: :desc).first
+    @max_cycles_tx ||= ckb_transactions.where.not(cycles: nil).order(cycles: :desc).first
   end
 
   def largest_block
-    @largest_block ||= blocks.order(block_size: :desc).first
+    @largest_block ||= blocks.where.not(block_size: nil).order(block_size: :desc).first
   end
 
   def largest_tx
-    @largest_tx ||= ckb_transactions.order(bytes: :desc).first
+    @largest_tx ||= ckb_transactions.where.not(bytes: nil).order(bytes: :desc).first
   end
 
   def reset_largest_tx_hash
@@ -85,7 +85,7 @@ end
 #  largest_block_size   :integer
 #  largest_tx_hash      :binary
 #  largest_tx_bytes     :integer
-#  max_block_cycles     :integer
+#  max_block_cycles     :bigint
 #  max_tx_cycles        :integer
 #
 # Indexes
