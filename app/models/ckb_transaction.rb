@@ -55,6 +55,10 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
+  def reset_cycles
+    block.get_block_cycles
+  end
+
   def address_ids
     attributes["address_ids"]
   end
@@ -280,7 +284,6 @@ end
 #  udt_address_ids       :bigint           default([]), is an Array
 #  bytes                 :integer          default(0)
 #  cycles                :integer
-#  confirmation_time     :integer
 #
 # Indexes
 #

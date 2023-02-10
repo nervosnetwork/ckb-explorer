@@ -10,13 +10,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
 -- Name: btree_gin; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -2687,13 +2680,6 @@ CREATE TRIGGER after_delete_update_ckb_transactions_count AFTER DELETE ON public
 --
 
 CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.increase_ckb_transactions_count();
-
-
---
--- Name: ckb_transactions sync_to_account_book; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER sync_to_account_book AFTER INSERT OR UPDATE ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.synx_tx_to_account_book();
 
 
 --
