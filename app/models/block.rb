@@ -141,9 +141,9 @@ class Block < ApplicationRecord
   end
 
   def update_counter_for_ckb_node_version
-    return if witness.blank?
 
     witness = self.ckb_transactions.first.witnesses[0]
+    return if witness.blank?
     matched = [witness.gsub('0x', '')].pack("H*").match(/\d\.\d+\.\d/)
     if matched.blank?
       Rails.logger.warn "== this block does not have version information from 1st tx's 1st witness: #{witness}"
