@@ -33,6 +33,12 @@ class Block < ApplicationRecord
 
   after_commit :flush_cache
 
+  def self.last_7_days_ckb_node_version
+    from = 7.days.ago.to_i * 1000
+    sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version order by 1 asc;"
+    return ActiveRecord::Base.connection.execute(sql).values
+  end
+
   def contained_addresses
     Address.where(id: address_ids)
   end
@@ -134,6 +140,44 @@ class Block < ApplicationRecord
     end
   end
 
+  def update_counter_for_ckb_node_version
+
+    witness = self.ckb_transactions.first.witnesses[0]
+    return if witness.blank?
+    matched = [witness.gsub('0x', '')].pack("H*").match(/\d\.\d+\.\d/)
+    if matched.blank?
+      Rails.logger.warn "== this block does not have version information from 1st tx's 1st witness: #{witness}"
+      return
+    end
+
+    # setup global ckb_node_version
+    name = "ckb_node_version_#{matched[0]}"
+    global_statistic = GlobalStatistic.find_or_create_by(name: name)
+    global_statistic.increment!(:value)
+
+    # update the current block's ckb_node_version
+    self.ckb_node_version = matched[0]
+    self.save!
+  end
+
+  # NOTICE: this method would do a fresh calculate for all the block's ckb_node_version, it will:
+  # 1. delete all the existing ckb_node_version_x.yyy.z
+  # 2. do a fresh calculate from block number 1 to the latest block at the moment
+  #
+  # USAGE:
+  #
+  # $ bundle exec rails c
+  # rails> Block.set_ckb_node_versions_from_miner_message
+  #
+  def self.set_ckb_node_versions_from_miner_message(options = {})
+    GlobalStatistic.where("name like ?", "ckb_node_version_%").delete_all
+    to_block_number = options[:to_block_number] || Block.last.number
+    # we only need last 100k blocks updated.
+    Block.last(100000).each do |block|
+      block.update_counter_for_ckb_node_version
+    end
+  end
+
   private
 
   def delete_tx_display_infos
@@ -209,6 +253,7 @@ end
 #  extension                  :jsonb
 #  median_timestamp           :decimal(, )      default(0.0)
 #  ckb_node_version           :string
+#  cycles                     :integer
 #
 # Indexes
 #

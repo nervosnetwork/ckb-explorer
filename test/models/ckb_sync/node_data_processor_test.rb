@@ -11,6 +11,11 @@ module CkbSync
           start_number: "0x0"
         )
       )
+      CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
+        [
+          "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
+        ]
+      )
       create(:table_record_count, :block_counter)
       create(:table_record_count, :ckb_transactions_counter)
       CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
@@ -646,7 +651,6 @@ module CkbSync
       end
     end
 
-
     test "should create forked event when block is invalid " do
       node_block = fake_node_block
       create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -685,7 +689,6 @@ module CkbSync
         assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
-
 
     test "#process_block should update cell status" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
@@ -1399,7 +1402,7 @@ module CkbSync
     test "should update abandoned block's contained address transactions count" do
       prepare_node_data(19)
       local_block = Block.find_by(number: 19)
-      ApplicationRecord.connection.execute 'CALL sync_full_account_book()'
+      ApplicationRecord.connection.execute "CALL sync_full_account_book()"
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
@@ -1415,10 +1418,9 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       ckb_transaction_ids = local_block.ckb_transactions.pluck(:id)
       balance_diff = CellOutput.where(ckb_transaction_id: ckb_transaction_ids).sum(:capacity)
-      contained_address = local_block.contained_addresses
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
-        assert_difference -> { contained_address.sum(:balance) }, -balance_diff do
+        assert_difference -> { local_block.contained_addresses.sum(:balance) }, -balance_diff do
           node_data_processor.call
         end
       end
@@ -1853,16 +1855,16 @@ module CkbSync
       create(:udt_account, address: address, amount: udt_amount, type_hash: udt_type_script.compute_hash)
       previous_ckb_transaction = create(:ckb_transaction, address: address)
       previous_cell_output = create(:cell_output,
-        ckb_transaction: previous_ckb_transaction,
-        generated_by: previous_ckb_transaction,
-        block: block,
-        cell_type: "udt",
-        address: address,
-        udt_amount: udt_amount,
-        cell_index: 0,
-        tx_hash: previous_ckb_transaction.tx_hash,
-        capacity: 300 * 10**8,
-        type_hash: udt_type_script.compute_hash)
+                                    ckb_transaction: previous_ckb_transaction,
+                                    generated_by: previous_ckb_transaction,
+                                    block: block,
+                                    cell_type: "udt",
+                                    address: address,
+                                    udt_amount: udt_amount,
+                                    cell_index: 0,
+                                    tx_hash: previous_ckb_transaction.tx_hash,
+                                    capacity: 300 * 10**8,
+                                    type_hash: udt_type_script.compute_hash)
       previous_cell_output_type_script = create(:type_script, code_hash: Settings.sudt_cell_type_hash, args: issuer_address.lock_hash, hash_type: "data", cell_output: previous_cell_output)
       previous_cell_output.type_script_id = previous_cell_output_type_script.id
       previous_cell_output.lock_script_id = previous_cell_output_lock_script.id
@@ -1951,8 +1953,8 @@ module CkbSync
       address3 = Address.find_by(lock_hash: lock3.compute_hash)
       tx = block.ckb_transactions.where(is_cellbase: false).first
       tx1 = block.ckb_transactions.where(is_cellbase: false).second
-      assert_equal [address1.id, address2.id, address3.id, input_address1.id, input_address2.id, input_address3.id], tx.contained_address_ids
-      assert_equal [address1.id, address2.id, address3.id, input_address4.id, input_address5.id], tx1.contained_address_ids
+      assert_equal [address1.id, address2.id, address3.id, input_address1.id, input_address2.id, input_address3.id].sort, tx.contained_address_ids.sort
+      assert_equal [address1.id, address2.id, address3.id, input_address4.id, input_address5.id].sort, tx1.contained_address_ids.sort
     end
 
     test "should update tx's tags when output have nervos_dao_deposit cells" do
@@ -2084,8 +2086,6 @@ module CkbSync
         end
       end
     end
-
-
 
     test "should update tx's tags when output have udt cells" do
       block1 = create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 2)
@@ -2986,7 +2986,7 @@ module CkbSync
       ]
       transactions = [
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: cellbase_inputs, outputs: cellbase_outputs, outputs_data: %w[0x], witnesses: ["0x590000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd800000000"]),
-        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: inputs, outputs: outputs, outputs_data: %w[0x24ff5a9ab8c38d195ce2b4ea75ca89870009522b4b205631204e310009522b4b205631204e3100156465762e6b6f6c6c6563742e6d652f746f6b656e73000000030000000100000000], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
+        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: inputs, outputs: outputs, outputs_data: %w[0x24ff5a9ab8c38d195ce2b4ea75ca89870009522b4b205631204e310009522b4b205631204e3100156465762e6b6f6c6c6563742e6d652f746f6b656e73000000030000000100000000], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"])
       ]
       node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions: transactions, header: header)
       block = node_data_processor.process_block(node_block)
@@ -3007,9 +3007,9 @@ module CkbSync
       cell_output1 = create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, cell_type: "nervos_dao_withdrawing", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x02" * 8), lock_script_id: lock.id)
       cell_output2 = create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 1, tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", generated_by: ckb_transaction1, block: block, consumed_by: ckb_transaction2, cell_type: "nervos_dao_deposit", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x00" * 8), lock_script_id: lock.id)
       cell_output3 = create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, lock_script_id: lock.id)
-      cell_output1.address.update(balance: 10 ** 8 * 1000)
-      cell_output2.address.update(balance: 10 ** 8 * 1000)
-      cell_output3.address.update(balance: 10 ** 8 * 1000)
+      cell_output1.address.update(balance: 10**8 * 1000)
+      cell_output2.address.update(balance: 10**8 * 1000)
+      cell_output3.address.update(balance: 10**8 * 1000)
       create(:cell_input, block: ckb_transaction2.block, ckb_transaction: ckb_transaction2, previous_output: { "tx_hash": "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", "index": "1" })
       create(:cell_input, block: ckb_transaction2.block, ckb_transaction: ckb_transaction2, previous_output: { "tx_hash": "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "2" })
       create(:cell_input, block: ckb_transaction1.block, ckb_transaction: ckb_transaction1, previous_output: { "tx_hash": "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "1" })
@@ -3029,8 +3029,8 @@ module CkbSync
       ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
       cell_output1 = create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction2, block: block, capacity: 10**8 * 1000, lock_script_id: lock.id)
       cell_output2 = create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, capacity: 10**8 * 1000, lock_script_id: lock.id)
-      cell_output1.address.update(balance: 10 ** 8 * 1000)
-      cell_output2.address.update(balance: 10 ** 8 * 1000)
+      cell_output1.address.update(balance: 10**8 * 1000)
+      cell_output2.address.update(balance: 10**8 * 1000)
       tx = node_block.transactions.first
       output = tx.outputs.first
       output.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type", code_hash: Settings.dao_type_hash)

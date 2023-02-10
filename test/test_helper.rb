@@ -68,6 +68,11 @@ def prepare_node_data(node_tip_block_number = 30)
             proposal: "0xa"
           ))
         )
+        CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
+          [
+            "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
+          ]
+        )
         CkbSync::NewNodeDataProcessor.new.process_block(node_block)
         CkbSync::Api.any_instance.stubs(:get_cellbase_output_capacity_details).returns(
           CKB::Types::BlockReward.new(
@@ -327,13 +332,14 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   cellbases_part3 = cellbases[9..-1]
   address1 = create(:address, :with_lock_script)
   cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1, generated_by: cellbase) }
-  address1.ckb_transactions << cellbases_part1
+  # address1.ckb_transactions << cellbases_part1
+  AccountBook.insert_all(cellbases_part1.map { |c| { address_id: address1.id, ckb_transaction_id: c.id } })
   address2 = create(:address, :with_lock_script)
   cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2, generated_by: cellbase) }
-  address2.ckb_transactions << cellbases_part2
+  AccountBook.insert_all(cellbases_part2.map { |c| { address_id: address2.id, ckb_transaction_id: c.id } }) # address2.ckb_transactions << cellbases_part2
   address3 = create(:address, :with_lock_script)
   cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3, generated_by: cellbase) }
-  address3.ckb_transactions << cellbases_part3
+  AccountBook.insert_all(cellbases_part3.map { |c| { address_id: address3.id, ckb_transaction_id: c.id } }) # address3.ckb_transactions << cellbases_part3
 
   return address1, address2, address3
 end

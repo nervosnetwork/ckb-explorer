@@ -30,6 +30,10 @@ module Charts
         epoch_statistic.largest_tx_hash = largest_tx.tx_hash
         epoch_statistic.largest_tx_bytes = largest_tx.bytes
       end
+      max_cycles_block = Block.where(epoch: target_epoch_number).order(cycles: :desc).first
+      epoch_statistic.max_block_cycles = max_cycles_block.cycles
+      max_cycles_tx = CkbTransaction.where(blocks: { epoch: target_epoch_number }).joins(:block).order(cycles: :desc).first
+      epoch_statistic.max_tx_cycles = max_cycles_tx.cycles
       epoch_statistic.update(
         difficulty: difficulty,
         uncle_rate: uncle_rate,

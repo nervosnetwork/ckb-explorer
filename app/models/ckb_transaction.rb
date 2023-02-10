@@ -15,6 +15,14 @@ class CkbTransaction < ApplicationRecord
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
   has_many :dao_events
   has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all
+  has_and_belongs_to_many :contained_addresses, class_name: "Address", join_table: "account_books"
+  has_and_belongs_to_many :contained_udts, class_name: "Udt", join_table: :udt_transactions
+
+  def self.migrate_contained_udt_ids
+    CkbTransaction.select(%i[id contained_udt_ids]).find_each do |a|
+      a.contained_udt_ids = a["contained_udt_ids"] if a["contained_udt_ids"].present?
+    end
+  end
 
   attribute :tx_hash, :ckb_hash
   attribute :header_deps, :ckb_array_hash, hash_length: Settings.default_hash_length
@@ -198,7 +206,7 @@ class CkbTransaction < ApplicationRecord
 
   def attributes_for_udt_cell(udt_cell)
     info = CkbUtils.hash_value_to_s(udt_cell.udt_info)
-    { 
+    {
       udt_info: info,
       extra_info: info
     }
@@ -271,6 +279,8 @@ end
 #  dao_address_ids       :bigint           default([]), is an Array
 #  udt_address_ids       :bigint           default([]), is an Array
 #  bytes                 :integer          default(0)
+#  cycles                :integer
+#  confirmation_time     :integer
 #
 # Indexes
 #

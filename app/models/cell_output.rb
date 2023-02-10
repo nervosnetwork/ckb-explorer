@@ -9,9 +9,11 @@ class CellOutput < ApplicationRecord
   belongs_to :generated_by, class_name: "CkbTransaction"
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
   belongs_to :address
+  belongs_to :deployed_cell, optional: true
   belongs_to :block
-  # belongs_to :lock_script, optional: true
-  # belongs_to :type_script, optional: true
+  belongs_to :lock_script, optional: true
+  belongs_to :type_script, optional: true
+
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 

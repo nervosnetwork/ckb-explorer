@@ -91,6 +91,7 @@ module CkbSync
       generate_statistics_data(local_block)
 
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
+      local_block.update_counter_for_ckb_node_version
 
       local_block
     end
@@ -386,9 +387,10 @@ module CkbSync
       udts_attributes = Set.new
       type_hashes.each do |type_hash|
         udt = Udt.where(type_hash: type_hash).select(:id).take!
-        ckb_transactions_count = Rails.cache.fetch("udt_txs_count_#{udt.id}", expires_in: 3600) do
-          udt.ckb_transactions.count
-        end
+        ckb_transactions_count =
+          Rails.cache.fetch("udt_txs_count_#{udt.id}", expires_in: 3600) do
+            udt.ckb_transactions.count
+          end
         udts_attributes << {
           type_hash: type_hash,
           total_amount: amount_info[type_hash],
@@ -464,6 +466,7 @@ module CkbSync
     end
 
     def update_table_records_count(local_block)
+      Block.connection.execute "UPDATE blocks SET cycles=(SELECT SUM(cycles) FROM ckb_transactions WHERE block_id=#{local_block.id}) WHERE id=#{local_block.id}"
       block_counter = TableRecordCount.find_or_initialize_by(table_name: "blocks")
       block_counter.increment!(:count)
       ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
@@ -540,7 +543,7 @@ module CkbSync
       local_block.update!(total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
                           ckb_transactions_count: local_block.ckb_transactions.count,
                           live_cell_changes: local_block.ckb_transactions.sum(&:live_cell_changes),
-                          address_ids: local_block.ckb_transactions.pluck(:contained_address_ids).flatten.uniq)
+                          address_ids: local_block.ckb_transactions.map(&:contained_address_ids).flatten.uniq)
     end
 
     def build_udts!(local_block, outputs, outputs_data)
@@ -603,14 +606,19 @@ module CkbSync
     def update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids)
       ckb_transactions_attributes = []
       tx_index = 0
+      full_tx_address_ids = []
+      full_tx_udt_ids = []
       ckb_txs.each do |tx|
+        tx_id = tx["id"]
+        full_tx_address_ids += contained_addr_ids[tx_index].to_a.map { |a| { address_id: a, ckb_transaction_id: tx_id } }
+        full_tx_udt_ids += contained_udt_ids[tx_index].to_a.map { |u| { udt_id: u, ckb_transaction_id: tx_id } }
         if tx_index == 0
           ckb_transactions_attributes << {
-            id: tx["id"],
+            id: tx_id,
             dao_address_ids: dao_address_ids[tx_index].to_a,
             udt_address_ids: udt_address_ids[tx_index].to_a,
-            contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            contained_address_ids: contained_addr_ids[tx_index].to_a,
+            # contained_udt_ids: contained_udt_ids[tx_index].to_a,
+            # contained_address_ids: contained_addr_ids[tx_index].to_a,
             tags: tags[tx_index].to_a,
             capacity_involved: input_capacities[tx_index],
             transaction_fee: 0,
@@ -619,21 +627,25 @@ module CkbSync
           }
         else
           ckb_transactions_attributes << {
-            id: tx["id"],
+            id: tx_id,
             dao_address_ids: dao_address_ids[tx_index].to_a,
             udt_address_ids: udt_address_ids[tx_index].to_a,
-            contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            contained_address_ids: contained_addr_ids[tx_index].to_a,
+            # contained_udt_ids: contained_udt_ids[tx_index].to_a,
+            # contained_address_ids: contained_addr_ids[tx_index].to_a,
             tags: tags[tx_index].to_a,
             capacity_involved: input_capacities[tx_index],
             transaction_fee: CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index]),
-            created_at: tx["created_at"], updated_at: Time.current
+            created_at: tx["created_at"],
+            updated_at: Time.current
           }
         end
         tx_index += 1
       end
-
-      CkbTransaction.upsert_all(ckb_transactions_attributes) if ckb_transactions_attributes.present?
+      if ckb_transactions_attributes.present?
+        CkbTransaction.upsert_all(ckb_transactions_attributes)
+      end
+      AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present? # , unique_by: [:ckb_transaction_id, :address_id]
+      UdtTransaction.upsert_all full_tx_udt_ids, unique_by: [:udt_id, :ckb_transaction_id] if full_tx_udt_ids.present?
     end
 
     def build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
@@ -645,11 +657,45 @@ module CkbSync
       lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
       if lock_scripts_attributes.present?
         lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
-        LockScript.insert_all!(lock_scripts_attributes)
+        lock_script_ids = LockScript.insert_all!(lock_scripts_attributes)
+        lock_script_ids.each do | lock_script_id|
+          lock_script = LockScript.where('id = ?', lock_script_id['id']).first
+          next if lock_script.blank?
+          contract_id = 0
+          Contract.all.each {|contract|
+            if contract.code_hash == lock_script.code_hash
+              contract_id = contract.id
+              break
+            end
+          }
+          temp_hash = {script_hash: (lock_script.script_hash rescue ''), is_contract: false}
+          if contract_id != 0
+            temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
+          end
+          script = Script.find_or_create_by temp_hash
+          lock_script.update script_id: script.id
+        end
       end
       if type_scripts_attributes.present?
         type_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
-        TypeScript.insert_all!(type_scripts_attributes)
+        type_script_ids = TypeScript.insert_all!(type_scripts_attributes)
+        type_script_ids.each do |type_script_id|
+          type_script = LockScript.where('id = ?', type_script_id['id']).first
+          next if type_script.blank?
+          contract_id = 0
+          Contract.all.each {|contract|
+            if contract.code_hash == type_script.code_hash
+              contract_id = contract.id
+              break
+            end
+          }
+          temp_hash = {script_hash: (type_script.script_hash rescue ''), is_contract: false}
+          if contract_id != 0
+            temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
+          end
+          script = Script.find_or_create_by temp_hash
+          type_script.update script_id: script.id if type_script.present?
+        end
       end
       build_addresses!(outputs, local_block)
       # prepare script ids for insert cell_outputs
@@ -984,11 +1030,16 @@ module CkbSync
     end
 
     def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
+      cycles = CkbSync::Api.instance.get_block_cycles node_block.header.hash
       txs = nil
       ckb_transactions_attributes = []
       tx_index = 0
       node_block.transactions.each do |tx|
-        ckb_transactions_attributes << ckb_transaction_attributes(local_block, tx, tx_index)
+        attrs = ckb_transaction_attributes(local_block, tx, tx_index)
+        if cycles
+          attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
+        end
+        ckb_transactions_attributes << attrs
         inputs << tx_index
         inputs.concat tx.inputs
         outputs << tx_index
@@ -1095,9 +1146,9 @@ module CkbSync
       block
     end
 
-    def get_median_timestamp block_hash
+    def get_median_timestamp(block_hash)
       response = CkbSync::Api.instance.directly_single_call_rpc method: "get_block_median_time", params: [block_hash]
-      return response['result'].to_i(16)
+      return response["result"].to_i(16)
     end
 
     def from_cell_base?(node_input)
@@ -1260,12 +1311,17 @@ module CkbSync
     end
 
     def recalculate_udt_transactions_count(local_tip_block)
-      udt_ids = local_tip_block.ckb_transactions.where("tags @> array[?]::varchar[]", ["udt"]).pluck(:contained_udt_ids).flatten
+      udt_ids = local_tip_block.ckb_transactions.map(&:contained_udt_ids).flatten
       udt_counts = udt_ids.each_with_object(Hash.new(0)) { |udt_id, counts| counts[udt_id] += 1 }
       udt_counts_value =
         udt_counts.map do |udt_id, count|
           udt = Udt.find(udt_id)
-          { id: udt_id, ckb_transactions_count: udt.ckb_transactions_count - count, created_at: udt.created_at, updated_at: Time.current }
+          {
+            id: udt_id,
+            ckb_transactions_count: udt.ckb_transactions_count - count,
+            created_at: udt.created_at,
+            updated_at: Time.current
+          }
         end
 
       Udt.upsert_all(udt_counts_value) if udt_counts_value.present?

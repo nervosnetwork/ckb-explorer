@@ -1,4 +1,6 @@
 class TokenItem < ApplicationRecord
+  enum status: { normal: 1, burnt: 0 }
+
   belongs_to :collection, class_name: "TokenCollection"
   belongs_to :owner, class_name: "Address"
   belongs_to :cell, class_name: "CellOutput", optional: true
@@ -31,6 +33,14 @@ class TokenItem < ApplicationRecord
       updated_at: updated_at
     }
   end
+
+  def self.fix_nrc721_token_id
+    TokenItem.where(collection: { standard: "nrc721" }).find_each do |_item|
+      token_id = token.token_id.to_s(16)
+      token.token_id = token_id[2..-1].hex
+      token.save
+    end
+  end
 end
 
 # == Schema Information
@@ -48,7 +58,7 @@ end
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  type_script_id :integer
-#  status         :integer          default(1)
+#  status         :integer          default("normal")
 #
 # Indexes
 #
