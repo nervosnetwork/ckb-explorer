@@ -34,11 +34,11 @@ FOR EACH ROW EXECUTE PROCEDURE decrease_ckb_transactions_count();
 
     ActiveRecord::Base.connection.execute(raw_sql)
 
-    Counter.transaction do
+    ActiveRecord::Base.transaction do
       CkbTransaction.lock
       count = CkbTransaction.count
       # set the init value for this table
-      Counter.create! name: 'ckb_transactions', value: count
+      Counter.create! name: 'ckb_transactions', value: count if Object.const_defined?('Counter')
     end
 
   end

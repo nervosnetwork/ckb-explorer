@@ -1,5 +1,5 @@
 class TokenItem < ApplicationRecord
-  enum status: {normal: 1, burnt: 0}
+  enum status: { normal: 1, burnt: 0 }
 
   belongs_to :collection, class_name: "TokenCollection"
   belongs_to :owner, class_name: "Address"
@@ -32,6 +32,14 @@ class TokenItem < ApplicationRecord
       created_at: created_at,
       updated_at: updated_at
     }
+  end
+
+  def self.fix_nrc721_token_id
+    TokenItem.where(collection: { standard: "nrc721" }).find_each do |_item|
+      token_id = token.token_id.to_s(16)
+      token.token_id = token_id[2..-1].hex
+      token.save
+    end
   end
 end
 

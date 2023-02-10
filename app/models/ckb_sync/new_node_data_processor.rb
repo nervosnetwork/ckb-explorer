@@ -657,11 +657,43 @@ module CkbSync
       lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
       if lock_scripts_attributes.present?
         lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
-        LockScript.insert_all!(lock_scripts_attributes)
+        lock_script_ids = LockScript.insert_all!(lock_scripts_attributes)
+        lock_script_ids.each do | lock_script_id|
+          lock_script = LockScript.where('id = ?', lock_script_id['id']).first
+          contract_id = 0
+          Contract.all.each {|contract|
+            if contract.code_hash == lock_script.code_hash
+              contract_id = contract.id
+              break
+            end
+          }
+          temp_hash = {script_hash: (lock_script.script_hash rescue ''), is_contract: false}
+          if contract_id != 0
+            temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
+          end
+          script = Script.find_or_create_by temp_hash
+          lock_script.update script_id: script.id
+        end
       end
       if type_scripts_attributes.present?
         type_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
-        TypeScript.insert_all!(type_scripts_attributes)
+        type_script_ids = TypeScript.insert_all!(type_scripts_attributes)
+        type_script_ids.each do |type_script_id|
+          type_script = LockScript.where('id = ?', type_script_id['id']).first
+          contract_id = 0
+          Contract.all.each {|contract|
+            if contract.code_hash == type_script.code_hash
+              contract_id = contract.id
+              break
+            end
+          }
+          temp_hash = {script_hash: (type_script.script_hash rescue ''), is_contract: false}
+          if contract_id != 0
+            temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
+          end
+          script = Script.find_or_create_by temp_hash
+          type_script.update script_id: script.id if type_script.present?
+        end
       end
       build_addresses!(outputs, local_block)
       # prepare script ids for insert cell_outputs

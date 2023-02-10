@@ -160,15 +160,18 @@ class Block < ApplicationRecord
   end
 
   def update_counter_for_ckb_node_version
-    return if self.miner_message.blank?
 
-    matched = [self.miner_message.gsub("0x", "")].pack("H*").match(/\d\.\d\d\d\.\d/)
-    return if matched.blank?
+    witness = self.ckb_transactions.first.witnesses[0]
+    matched = [witness.gsub('0x', '')].pack("H*").match(/\d\.\d+\.\d/)
+    if matched.blank?
+      Rails.logger.warn "== this block does not have version information from 1st tx's 1st witness: #{witness}"
+      return
+    end
 
     # setup global ckb_node_version
     name = "ckb_node_version_#{matched[0]}"
-    counter = Counter.find_or_create_by(name: name)
-    counter.increment!(:value)
+    global_statistic = GlobalStatistic.find_or_create_by(name: name)
+    global_statistic.increment!(:value)
 
     # update the current block's ckb_node_version
     self.ckb_node_version = matched[0]
@@ -185,9 +188,10 @@ class Block < ApplicationRecord
   # rails> Block.set_ckb_node_versions_from_miner_message
   #
   def self.set_ckb_node_versions_from_miner_message(options = {})
-    Counter.where("name like ?", "ckb_node_version_%").delete_all
+    GlobalStatistic.where("name like ?", "ckb_node_version_%").delete_all
     to_block_number = options[:to_block_number] || Block.last.number
-    Block.where("number <= ?", to_block_number).find_each(batch_size: 50000) do |block|
+    # we only need last 100k blocks updated.
+    Block.last(100000).each do |block|
       block.update_counter_for_ckb_node_version
     end
   end
