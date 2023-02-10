@@ -1,3 +1,4 @@
+require 'date'
 class Block < ApplicationRecord
   MAX_PAGINATES_PER = 100
   paginates_per 10
@@ -32,6 +33,24 @@ class Block < ApplicationRecord
   scope :h24, -> { where("timestamp > ?", 24.hours.ago.to_datetime.strftime("%Q")) }
 
   after_commit :flush_cache
+
+  def self.query_transaction_fee_rate date_string
+    date = DateTime.strptime date_string, "%Y-%m-%d"
+    sql = %Q{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
+      from blocks
+      where timestamp >= #{date.beginning_of_day.to_i * 1000} and timestamp <= #{date.end_of_day.to_i * 1000}
+        and ckb_transactions_count != 0
+      group by 1 order by 1 desc}
+
+    # [[2022-02-10 00:00:00 +0000, 0.585996275650410425301290958e7]]
+    result = ActiveRecord::Base.connection.execute(sql).values[0]
+  end
+
+  def self.fetch_transaction_fee_rate_from_cache date_string
+    Rails.cache.fetch("transaction_fee_rate_#{date_string}", expires_in: 10.minutes) do
+      self.query_transaction_fee_rate date_string
+    end
+  end
 
   def self.last_7_days_ckb_node_version
     from = 7.days.ago.to_i * 1000

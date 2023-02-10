@@ -44,8 +44,7 @@ module Api
 
         get transaction_fees_api_v2_statistics_url
         data = JSON.parse(response.body)
-        puts "== data: #{data.inspect}"
-        assert_equal 2, data['last_n_days_transaction_fee_rates'].size
+        assert_equal 7, data['last_n_days_transaction_fee_rates'].size
         assert_equal "#{Time.now.strftime("%Y-%m-%d")}T00:00:00.000+00:00", data['last_n_days_transaction_fee_rates'].first['date']
         assert_equal 35, data['last_n_days_transaction_fee_rates'].first['fee_rate']
 

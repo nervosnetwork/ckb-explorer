@@ -8,10 +8,14 @@ module Api::V2
         CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes, :confirmation_time).where('bytes > 0').order('id desc').limit(10000)
       end
 
-      pending_transaction_fee_rates = PoolTransactionEntry.select(:id, :transaction_fee, :bytes).pool_transaction_pending.order('id desc').page(@pending_page).per(@pending_page_size)
+      pending_transaction_fee_rates = PoolTransactionEntry.select(:id, :transaction_fee, :bytes).pool_transaction_pending
+        .where('bytes > 0')
+        .order('id desc').page(@pending_page).per(@pending_page_size)
 
-      timestamp = @last_n_day.days.ago.to_i * 1000
-      last_n_days_transaction_fee_rates = StatisticInfo.last_n_days_transaction_fee_rates timestamp
+      dates = (0..@last_n_day).map { |i| i.days.ago.strftime("%Y-%m-%d") }
+      last_n_days_transaction_fee_rates = dates.map { |date|
+        Block.fetch_transaction_fee_rate_from_cache date
+      }
 
       render json: {
         transaction_fee_rates: transaction_fee_rates.map {|tx|
@@ -30,8 +34,8 @@ module Api::V2
         },
         last_n_days_transaction_fee_rates: last_n_days_transaction_fee_rates.map { |day_fee_rate|
           {
-            date: day_fee_rate[0],
-            fee_rate: day_fee_rate[1].to_f
+            date: (day_fee_rate[0] rescue '-'),
+            fee_rate: (day_fee_rate[1].to_f rescue 0)
           }
         }
       }
