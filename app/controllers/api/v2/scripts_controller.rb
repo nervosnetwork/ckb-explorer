@@ -62,22 +62,6 @@ module Api::V2
       }
     end
 
-    def referring_cells
-      head :not_found and return if @script.blank?
-
-      get_script_content(@script)
-
-      render json: {
-        data: {
-          referring_cells: Kaminari.paginate_array(@my_referring_cells).page(@page).per(@page_size)
-        },
-        meta: {
-          total: @my_referring_cells.count.to_i,
-          page_size: @page_size.to_i
-        }
-      }
-    end
-
     private
     def get_script_content script
       # query only once, so that action referring_cells (line 39) can re-use this variable
