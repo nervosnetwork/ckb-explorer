@@ -2474,7 +2474,7 @@ module CkbSync
       tx = block.ckb_transactions.where(is_cellbase: false).first
       tx1 = block.ckb_transactions.where(is_cellbase: false).second
 
-      assert_equal [udt1.id, udt2.id], tx.contained_udt_ids
+      assert_equal [udt1.id, udt2.id], tx.contained_udt_ids.sort
       assert_equal [udt1.id, udt2.id], tx1.contained_udt_ids
       assert_equal 2, udt1.ckb_transactions_count
       assert_equal 2, udt2.ckb_transactions_count
