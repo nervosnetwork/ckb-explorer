@@ -31,7 +31,7 @@ class LockScript < ActiveRecord::Base
   end
 
   def ckb_transactions
-    CkbTransaction.where(:id => cell_outputs.map(&:id))
+    CkbTransaction.where(:id => CellOutput.where(lock_script_id: self.id).pluck('generated_by_id', 'consumed_by_id').flatten)
   end
 
   def cell_output
