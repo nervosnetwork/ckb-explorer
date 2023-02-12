@@ -28,7 +28,7 @@ class TypeScript < ActiveRecord::Base
   end
 
   def ckb_transactions
-    CkbTransaction.where(:id => cell_outputs.map(&:ckb_transaction_id))
+    CkbTransaction.where(:id => cell_outputs.pluck(&:ckb_transaction_id))
   end
 
   def short_code_hash
