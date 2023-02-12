@@ -19,19 +19,19 @@ class EpochStatistic < ApplicationRecord
   end
 
   def reset_largest_tx_hash
-    self.largest_tx_hash = largest_tx.tx_hash
+    self.largest_tx_hash = largest_tx&.tx_hash
   end
 
   def reset_largest_tx_bytes
-    self.largest_tx_bytes = largest_tx.bytes
+    self.largest_tx_bytes = largest_tx&.bytes
   end
 
   def reset_max_tx_cycles
-    self.max_tx_cycles = max_cycles_tx.cycles
+    self.max_tx_cycles = max_cycles_tx&.cycles
   end
 
   def reset_max_block_cycles
-    self.max_block_cycles = max_cycles_block.cycles
+    self.max_block_cycles = max_cycles_block&.cycles
   end
 
   def reset_largest_block_number
