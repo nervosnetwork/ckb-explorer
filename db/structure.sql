@@ -570,8 +570,16 @@ CREATE TABLE public.ckb_transactions (
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
     udt_address_ids bigint[] DEFAULT '{}'::bigint[],
     bytes integer DEFAULT 0,
-    cycles integer
+    cycles integer,
+    confirmation_time integer
 );
+
+
+--
+-- Name: COLUMN ckb_transactions.confirmation_time; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.ckb_transactions.confirmation_time IS 'it cost how many seconds to confirm this transaction';
 
 
 --
@@ -3010,6 +3018,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230101045136'),
 ('20230104093413'),
 ('20230106111415'),
+('20230114022237'),
 ('20230117035205'),
 ('20230128015428'),
 ('20230128015956'),
