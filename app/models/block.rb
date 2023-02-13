@@ -40,7 +40,7 @@ class Block < ApplicationRecord
       from blocks
       where timestamp >= #{date.beginning_of_day.to_i * 1000} and timestamp <= #{date.end_of_day.to_i * 1000}
         and ckb_transactions_count != 0
-      group by 1 order by 1 desc}
+      group by date order by date desc}
 
     # [[2022-02-10 00:00:00 +0000, 0.585996275650410425301290958e7]]
     result = ActiveRecord::Base.connection.execute(sql).values[0]
