@@ -1,8 +1,12 @@
 class LockScript < ActiveRecord::Base
   has_many :cell_outputs
+
+  # TODO remove this
   has_many :generated_by_txs, source: :generated_by, through: :cell_outputs
   has_many :consumed_by_txs, source: :consumed_by, through: :cell_outputs
+
   belongs_to :address, optional: true # will remove this later
+
   belongs_to :scripts, optional: true
   belongs_to :contract, optional: true, primary_key: "code_hash", foreign_key: "code_hash"
 
@@ -27,7 +31,7 @@ class LockScript < ActiveRecord::Base
   end
 
   def ckb_transactions
-    CkbTransaction.from("(#{consumed_by_txs.to_sql} union #{generated_by_txs.to_sql}) as ckb_transactions")
+    CkbTransaction.where(:id => CellOutput.where(lock_script_id: self.id).pluck('generated_by_id', 'consumed_by_id').flatten)
   end
 
   def cell_output
