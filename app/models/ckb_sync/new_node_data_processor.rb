@@ -660,6 +660,7 @@ module CkbSync
         lock_script_ids = LockScript.insert_all!(lock_scripts_attributes)
         lock_script_ids.each do | lock_script_id|
           lock_script = LockScript.where('id = ?', lock_script_id['id']).first
+          next if lock_script.blank?
           contract_id = 0
           Contract.all.each {|contract|
             if contract.code_hash == lock_script.code_hash
@@ -680,6 +681,7 @@ module CkbSync
         type_script_ids = TypeScript.insert_all!(type_scripts_attributes)
         type_script_ids.each do |type_script_id|
           type_script = LockScript.where('id = ?', type_script_id['id']).first
+          next if type_script.blank?
           contract_id = 0
           Contract.all.each {|contract|
             if contract.code_hash == type_script.code_hash

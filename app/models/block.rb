@@ -58,6 +58,38 @@ class Block < ApplicationRecord
     return ActiveRecord::Base.connection.execute(sql).values
   end
 
+  def raw_block
+    @raw_block ||=
+      Rails.cache.fetch(["raw_block", number], expires_in: 10.minutes) do
+        CkbSync::Api.instance.get_block_by_number(number)
+      end
+  end
+
+  def get_block_cycles
+    @block_cycles ||= CkbSync::Api.instance.get_block_cycles(block_hash)
+  end
+
+  def reset_cycles
+    i = 0
+    cycles = 0
+    ckb_transactions.find_each do |transaction|
+      if i > 0
+        c = get_block_cycles[i - 1]
+        if c
+          transaction.cycles = c.hex
+          cycles += transaction.cycles
+          transaction.save
+        end
+      end
+      i += 1
+    end
+    self.cycles = cycles # ckb_transactions.sum(:cycles)
+  end
+
+  def reset_block_size
+    self.block_size = raw_block.serialized_size_without_uncle_proposals
+  end
+
   def contained_addresses
     Address.where(id: address_ids)
   end
@@ -160,9 +192,9 @@ class Block < ApplicationRecord
   end
 
   def update_counter_for_ckb_node_version
-
     witness = self.ckb_transactions.first.witnesses[0]
     return if witness.blank?
+
     matched = [witness.gsub('0x', '')].pack("H*").match(/\d\.\d+\.\d/)
     if matched.blank?
       Rails.logger.warn "== this block does not have version information from 1st tx's 1st witness: #{witness}"
@@ -235,7 +267,6 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
-#  uncles_count               :integer
 #  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
@@ -262,6 +293,7 @@ end
 #  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
+#  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
@@ -271,8 +303,8 @@ end
 #  miner_message              :string
 #  extension                  :jsonb
 #  median_timestamp           :decimal(, )      default(0.0)
+#  cycles                     :bigint
 #  ckb_node_version           :string
-#  cycles                     :integer
 #
 # Indexes
 #
