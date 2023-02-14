@@ -94,11 +94,11 @@ module CkbSync
 
       url = ENV["CKB_NODE_URL"]
 
-      Rails.logger.debug "== in directly_call_rpc, url: #{url}, payload: #{payload}"
+      # Rails.logger.debug "== in directly_call_rpc, url: #{url}, payload: #{payload}"
 
       res = HTTP.post(url, json: payload)
       result = JSON.parse res.to_s
-      Rails.logger.debug "== in directly_call_rpc result: #{result.inspect}"
+      # Rails.logger.debug "== in directly_call_rpc result: #{result.inspect}"
 
       return result
     end

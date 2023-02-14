@@ -2,7 +2,7 @@
 class GlobalStatistic < ApplicationRecord
   def self.reset_ckb_transactions_count
     ckb_transactions_count = CkbTransaction.count
-    global_statistic = GlobalStatistic.find_or_create_by(name: 'ckb_transactions')
+    global_statistic = GlobalStatistic.find_or_create_by(name: "ckb_transactions")
     global_statistic.update value: ckb_transactions_count
   end
 end

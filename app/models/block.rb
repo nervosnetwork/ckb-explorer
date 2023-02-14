@@ -1,3 +1,4 @@
+require 'date'
 class Block < ApplicationRecord
   MAX_PAGINATES_PER = 100
   paginates_per 10
@@ -33,10 +34,60 @@ class Block < ApplicationRecord
 
   after_commit :flush_cache
 
+  def self.query_transaction_fee_rate date_string
+    date = DateTime.strptime date_string, "%Y-%m-%d"
+    sql = %Q{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
+      from blocks
+      where timestamp >= #{date.beginning_of_day.to_i * 1000} and timestamp <= #{date.end_of_day.to_i * 1000}
+        and ckb_transactions_count != 0
+      group by date order by date desc}
+
+    # [[2022-02-10 00:00:00 +0000, 0.585996275650410425301290958e7]]
+    result = ActiveRecord::Base.connection.execute(sql).values[0]
+  end
+
+  def self.fetch_transaction_fee_rate_from_cache date_string
+    Rails.cache.fetch("transaction_fee_rate_#{date_string}", expires_in: 10.minutes) do
+      self.query_transaction_fee_rate date_string
+    end
+  end
+
   def self.last_7_days_ckb_node_version
     from = 7.days.ago.to_i * 1000
     sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version order by 1 asc;"
     return ActiveRecord::Base.connection.execute(sql).values
+  end
+
+  def raw_block
+    @raw_block ||=
+      Rails.cache.fetch(["raw_block", number], expires_in: 10.minutes) do
+        CkbSync::Api.instance.get_block_by_number(number)
+      end
+  end
+
+  def get_block_cycles
+    @block_cycles ||= CkbSync::Api.instance.get_block_cycles(block_hash)
+  end
+
+  def reset_cycles
+    i = 0
+    cycles = 0
+    ckb_transactions.find_each do |transaction|
+      if i > 0
+        c = get_block_cycles[i - 1]
+        if c
+          transaction.cycles = c.hex
+          cycles += transaction.cycles
+          transaction.save
+        end
+      end
+      i += 1
+    end
+    self.cycles = cycles # ckb_transactions.sum(:cycles)
+  end
+
+  def reset_block_size
+    self.block_size = raw_block.serialized_size_without_uncle_proposals
   end
 
   def contained_addresses
@@ -141,9 +192,9 @@ class Block < ApplicationRecord
   end
 
   def update_counter_for_ckb_node_version
-
     witness = self.ckb_transactions.first.witnesses[0]
     return if witness.blank?
+
     matched = [witness.gsub('0x', '')].pack("H*").match(/\d\.\d+\.\d/)
     if matched.blank?
       Rails.logger.warn "== this block does not have version information from 1st tx's 1st witness: #{witness}"
@@ -216,7 +267,6 @@ end
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
-#  uncles_count               :integer
 #  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
@@ -243,6 +293,7 @@ end
 #  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
+#  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
@@ -252,8 +303,8 @@ end
 #  miner_message              :string
 #  extension                  :jsonb
 #  median_timestamp           :decimal(, )      default(0.0)
+#  cycles                     :bigint
 #  ckb_node_version           :string
-#  cycles                     :integer
 #
 # Indexes
 #
