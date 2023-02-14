@@ -424,6 +424,40 @@ ALTER SEQUENCE public.blocks_id_seq OWNED BY public.blocks.id;
 
 
 --
+-- Name: cell_dependencies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cell_dependencies (
+    id bigint NOT NULL,
+    contract_id bigint,
+    ckb_transaction_id bigint,
+    dep_type integer,
+    contract_cell_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: cell_dependencies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.cell_dependencies_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: cell_dependencies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.cell_dependencies_id_seq OWNED BY public.cell_dependencies.id;
+
+
+--
 -- Name: cell_inputs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -536,8 +570,16 @@ CREATE TABLE public.ckb_transactions (
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
     udt_address_ids bigint[] DEFAULT '{}'::bigint[],
     bytes integer DEFAULT 0,
-    cycles integer
+    cycles integer,
+    confirmation_time integer
 );
+
+
+--
+-- Name: COLUMN ckb_transactions.confirmation_time; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.ckb_transactions.confirmation_time IS 'it cost how many seconds to confirm this transaction';
 
 
 --
@@ -1605,6 +1647,13 @@ ALTER TABLE ONLY public.blocks ALTER COLUMN id SET DEFAULT nextval('public.block
 
 
 --
+-- Name: cell_dependencies id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cell_dependencies ALTER COLUMN id SET DEFAULT nextval('public.cell_dependencies_id_seq'::regclass);
+
+
+--
 -- Name: cell_inputs id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1840,6 +1889,14 @@ ALTER TABLE ONLY public.block_time_statistics
 
 ALTER TABLE ONLY public.blocks
     ADD CONSTRAINT blocks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: cell_dependencies cell_dependencies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cell_dependencies
+    ADD CONSTRAINT cell_dependencies_pkey PRIMARY KEY (id);
 
 
 --
@@ -2911,11 +2968,14 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230101045136'),
 ('20230104093413'),
 ('20230106111415'),
+('20230114022147'),
+('20230114022237'),
 ('20230117035205'),
 ('20230128015428'),
 ('20230128015956'),
 ('20230128031939'),
 ('20230129165127'),
-('20230208081700');
+('20230208081700'),
+('20230211062045');
 
 

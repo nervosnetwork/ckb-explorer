@@ -7,7 +7,7 @@ class LockScript < ActiveRecord::Base
 
   belongs_to :address, optional: true # will remove this later
 
-  belongs_to :scripts, optional: true
+  belongs_to :script, optional: true
   belongs_to :contract, optional: true, primary_key: "code_hash", foreign_key: "code_hash"
 
   validates_presence_of :code_hash
