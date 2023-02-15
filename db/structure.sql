@@ -352,7 +352,7 @@ CREATE TABLE public.block_statistics (
     epoch_number numeric(30,0),
     primary_issuance numeric(36,8),
     secondary_issuance numeric(36,8),
-    total_issuance numeric(36,8),
+    accumulated_total_deposits numeric(36,8),
     accumulated_rate numeric(36,8),
     unissued_secondary_issuance numeric(36,8),
     total_occupied_capacities numeric(36,8)
@@ -360,10 +360,10 @@ CREATE TABLE public.block_statistics (
 
 
 --
--- Name: COLUMN block_statistics.total_issuance; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN block_statistics.accumulated_total_deposits; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.block_statistics.total_issuance IS 'C_i in DAO header';
+COMMENT ON COLUMN public.block_statistics.accumulated_total_deposits IS 'C_i in DAO header';
 
 
 --
@@ -3025,6 +3025,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230128031939'),
 ('20230129165127'),
 ('20230206073806'),
+('20230207112513'),
 ('20230208081700'),
 ('20230210124237');
 

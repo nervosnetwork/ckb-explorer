@@ -284,6 +284,7 @@ end
 #  udt_address_ids       :bigint           default([]), is an Array
 #  bytes                 :integer          default(0)
 #  cycles                :integer
+#  confirmation_time     :integer
 #
 # Indexes
 #
