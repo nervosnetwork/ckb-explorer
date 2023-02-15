@@ -1,9 +1,8 @@
 class CellDependency < ActiveRecord::Base
 
-  belongs_to :contracts, optional: true
-  belongs_to :ckb_transactions, optional: true
-  belongs_to :contract_cells, optional: true
-  belongs_to :cell_outputs, optional: true
+  belongs_to :contract
+  belongs_to :ckb_transaction
+  belongs_to :cell_output, foreign_key: "contract_cell_id", class_name: "CellOutput"
 
   # the_scripts:  type_scripts or lock_scripts
   # Usage:
