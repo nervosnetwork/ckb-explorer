@@ -19,6 +19,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
       through(:account_books)
     should have_many(:cell_inputs)
     should have_many(:cell_outputs)
+    should have_many(:dao_address_transactions)
+    should have_many(:udt_address_transactions)
   end
 
   test "#tx_hash should decodes packed string" do
