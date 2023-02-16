@@ -40,13 +40,19 @@ namespace :api do
       collection do
         get :ckb_transactions
         get :deployed_cells
-        get :referring_cells
+        get :general_info
       end
     end
 
     resources :blocks, only: [] do
       collection do
         get :ckb_node_versions
+      end
+    end
+
+    resources :statistics, only: [] do
+      collection do
+        get :transaction_fees
       end
     end
   end

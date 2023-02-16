@@ -281,7 +281,7 @@ class BlockTest < ActiveSupport::TestCase
 
     block1.update_counter_for_ckb_node_version
 
-    assert_equal Counter.find_by(name: "ckb_node_version_0.104.1").value, 1
+    assert_equal GlobalStatistic.find_by(name: "ckb_node_version_0.104.1").value, 1
   end
 
   test "it should update the block version" do
@@ -291,8 +291,8 @@ class BlockTest < ActiveSupport::TestCase
     tx = create(:ckb_transaction, block: block3, witnesses: ["0x640000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000004a336470564d07ca7059b7980481c2d59809d6370b000000302e3130342e3120282029"])
 
     Block.set_ckb_node_versions_from_miner_message
-    assert_equal Counter.find_by(name: "ckb_node_version_0.104.1").value, 1
-    assert_equal Counter.find_by(name: "ckb_node_version_0.103.0").value, 1
+    assert_equal GlobalStatistic.find_by(name: "ckb_node_version_0.104.1").value, 1
+    assert_equal GlobalStatistic.find_by(name: "ckb_node_version_0.103.0").value, 1
   end
 
   def node_data_processor

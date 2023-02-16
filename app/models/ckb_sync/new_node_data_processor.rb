@@ -660,6 +660,7 @@ module CkbSync
         lock_script_ids = LockScript.insert_all!(lock_scripts_attributes)
         lock_script_ids.each do | lock_script_id|
           lock_script = LockScript.where('id = ?', lock_script_id['id']).first
+          next if lock_script.blank?
           contract_id = 0
           Contract.all.each {|contract|
             if contract.code_hash == lock_script.code_hash
@@ -680,6 +681,7 @@ module CkbSync
         type_script_ids = TypeScript.insert_all!(type_scripts_attributes)
         type_script_ids.each do |type_script_id|
           type_script = LockScript.where('id = ?', type_script_id['id']).first
+          next if type_script.blank?
           contract_id = 0
           Contract.all.each {|contract|
             if contract.code_hash == type_script.code_hash
@@ -1037,6 +1039,7 @@ module CkbSync
         if cycles
           attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
         end
+
         ckb_transactions_attributes << attrs
         inputs << tx_index
         inputs.concat tx.inputs
@@ -1050,6 +1053,7 @@ module CkbSync
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)
+
       {
         block_id: local_block.id,
         tx_hash: tx.hash,
@@ -1063,6 +1067,7 @@ module CkbSync
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
         bytes: tx.serialized_size_in_block,
+        confirmation_time: (Time.now.to_i - PoolTransactionEntry.find_by(tx_hash: tx.hash).created_at.to_i rescue 0),
         created_at: Time.current,
         updated_at: Time.current
       }

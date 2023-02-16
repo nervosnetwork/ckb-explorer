@@ -45,7 +45,7 @@ $_$;
 CREATE FUNCTION public.decrease_ckb_transactions_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$begin
-    UPDATE counters SET value = value - 1 WHERE name = 'ckb_transactions';
+    UPDATE global_statistics SET value = value - 1 WHERE name = 'ckb_transactions';
     RETURN NEW;
 end;$$;
 
@@ -57,7 +57,7 @@ end;$$;
 CREATE FUNCTION public.increase_ckb_transactions_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$begin
-    UPDATE counters SET value = value + 1 WHERE name = 'ckb_transactions';
+    UPDATE global_statistics SET value = value + 1 WHERE name = 'ckb_transactions';
     RETURN NEW;
 end;$$;
 
@@ -82,10 +82,17 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;
+    END LOOP;    
     close c;
 end
 $$;
+
+
+--
+-- Name: PROCEDURE sync_full_account_book(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON PROCEDURE public.sync_full_account_book() IS 'sync contained_address_ids in ckb_transactions to account_books';
 
 
 --
@@ -104,21 +111,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null
+	if old is null 
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-
+	
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP
+	   LOOP 
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id)
+			insert into account_books (ckb_transaction_id, address_id) 
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -180,9 +187,9 @@ CREATE TABLE public.addresses (
     dao_deposit numeric(30,0) DEFAULT 0.0,
     interest numeric(30,0) DEFAULT 0.0,
     block_timestamp numeric(30,0),
+    visible boolean DEFAULT true,
     live_cells_count numeric(30,0) DEFAULT 0.0,
     mined_blocks_count integer DEFAULT 0,
-    visible boolean DEFAULT true,
     average_deposit_time numeric,
     unclaimed_compensation numeric(30,0),
     is_depositor boolean DEFAULT false,
@@ -236,7 +243,6 @@ CREATE TABLE public.blocks (
     "timestamp" numeric(30,0),
     transactions_root bytea,
     proposals_hash bytea,
-    uncles_count integer,
     extra_hash bytea,
     uncle_block_hashes bytea,
     version integer,
@@ -263,6 +269,7 @@ CREATE TABLE public.blocks (
     nonce numeric(50,0) DEFAULT 0.0,
     start_number numeric(30,0) DEFAULT 0.0,
     length numeric(30,0) DEFAULT 0.0,
+    uncles_count integer,
     compact_target numeric(20,0),
     live_cell_changes integer,
     block_time numeric(13,0),
@@ -272,8 +279,8 @@ CREATE TABLE public.blocks (
     miner_message character varying,
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
-    ckb_node_version character varying,
-    cycles integer
+    cycles bigint,
+    ckb_node_version character varying
 );
 
 
@@ -342,8 +349,42 @@ CREATE TABLE public.block_statistics (
     block_number numeric(30,0),
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    epoch_number numeric(30,0)
+    epoch_number numeric(30,0),
+    primary_issuance numeric(36,8),
+    secondary_issuance numeric(36,8),
+    total_issuance numeric(36,8),
+    accumulated_rate numeric(36,8),
+    unissued_secondary_issuance numeric(36,8),
+    total_occupied_capacities numeric(36,8)
 );
+
+
+--
+-- Name: COLUMN block_statistics.total_issuance; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.block_statistics.total_issuance IS 'C_i in DAO header';
+
+
+--
+-- Name: COLUMN block_statistics.accumulated_rate; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.block_statistics.accumulated_rate IS 'AR_i in DAO header';
+
+
+--
+-- Name: COLUMN block_statistics.unissued_secondary_issuance; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.block_statistics.unissued_secondary_issuance IS 'S_i in DAO header';
+
+
+--
+-- Name: COLUMN block_statistics.total_occupied_capacities; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.block_statistics.total_occupied_capacities IS 'U_i in DAO header';
 
 
 --
@@ -518,9 +559,9 @@ CREATE TABLE public.ckb_transactions (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     is_cellbase boolean DEFAULT false,
+    witnesses jsonb,
     header_deps bytea,
     cell_deps jsonb,
-    witnesses jsonb,
     live_cell_changes integer,
     capacity_involved numeric(30,0),
     contained_address_ids bigint[] DEFAULT '{}'::bigint[],
@@ -599,60 +640,14 @@ ALTER SEQUENCE public.contracts_id_seq OWNED BY public.contracts.id;
 
 
 --
--- Name: counters; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.counters (
-    id bigint NOT NULL,
-    name character varying,
-    value integer,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: COLUMN counters.name; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.counters.name IS 'the name of the table';
-
-
---
--- Name: COLUMN counters.value; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.counters.value IS 'the count value of the table';
-
-
---
--- Name: counters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.counters_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: counters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.counters_id_seq OWNED BY public.counters.id;
-
-
---
 -- Name: daily_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.daily_statistics (
     id bigint NOT NULL,
-    transactions_count character varying DEFAULT 0,
-    addresses_count character varying DEFAULT 0,
-    total_dao_deposit character varying DEFAULT 0.0,
+    transactions_count character varying DEFAULT '0'::character varying,
+    addresses_count character varying DEFAULT '0'::character varying,
+    total_dao_deposit character varying DEFAULT '0.0'::character varying,
     block_timestamp numeric(30,0),
     created_at_unixtimestamp integer,
     created_at timestamp(6) without time zone NOT NULL,
@@ -671,8 +666,8 @@ CREATE TABLE public.daily_statistics (
     avg_difficulty character varying DEFAULT '0'::character varying,
     uncle_rate character varying DEFAULT '0'::character varying,
     total_depositors_count character varying DEFAULT '0'::character varying,
-    total_tx_fee numeric(30,0),
     address_balance_distribution jsonb,
+    total_tx_fee numeric(30,0),
     occupied_capacity numeric(30,0),
     daily_dao_deposit numeric(30,0),
     daily_dao_depositors_count integer,
@@ -835,7 +830,7 @@ CREATE TABLE public.epoch_statistics (
     largest_block_size integer,
     largest_tx_hash bytea,
     largest_tx_bytes integer,
-    max_block_cycles integer,
+    max_block_cycles bigint,
     max_tx_cycles integer
 );
 
@@ -871,7 +866,6 @@ CREATE TABLE public.forked_blocks (
     "timestamp" numeric(30,0),
     transactions_root bytea,
     proposals_hash bytea,
-    uncles_count integer,
     extra_hash bytea,
     uncle_block_hashes bytea,
     version integer,
@@ -898,6 +892,7 @@ CREATE TABLE public.forked_blocks (
     nonce numeric(50,0) DEFAULT 0.0,
     start_number numeric(30,0) DEFAULT 0.0,
     length numeric(30,0) DEFAULT 0.0,
+    uncles_count integer,
     compact_target numeric(20,0),
     live_cell_changes integer,
     block_time numeric(13,0),
@@ -907,8 +902,8 @@ CREATE TABLE public.forked_blocks (
     miner_message character varying,
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
-    ckb_node_version character varying,
-    cycles integer
+    cycles integer,
+    ckb_node_version character varying
 );
 
 
@@ -970,6 +965,54 @@ CREATE SEQUENCE public.forked_events_id_seq
 --
 
 ALTER SEQUENCE public.forked_events_id_seq OWNED BY public.forked_events.id;
+
+
+--
+-- Name: global_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.global_statistics (
+    id bigint NOT NULL,
+    name character varying,
+    value integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    comment character varying,
+    "#<ActiveRecord::ConnectionAdapters::PostgreSQL::TableDefinition" character varying
+);
+
+
+--
+-- Name: COLUMN global_statistics.name; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.global_statistics.name IS 'the name of something, e.g. my_table_rows_count';
+
+
+--
+-- Name: COLUMN global_statistics.value; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.global_statistics.value IS 'value of something, e.g. 888';
+
+
+--
+-- Name: global_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.global_statistics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: global_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.global_statistics_id_seq OWNED BY public.global_statistics.id;
 
 
 --
@@ -1256,6 +1299,40 @@ CREATE SEQUENCE public.token_collections_id_seq
 --
 
 ALTER SEQUENCE public.token_collections_id_seq OWNED BY public.token_collections.id;
+
+
+--
+-- Name: token_issuers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.token_issuers (
+    id bigint NOT NULL,
+    name character varying,
+    avatar character varying,
+    description character varying,
+    address_id integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: token_issuers_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.token_issuers_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: token_issuers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.token_issuers_id_seq OWNED BY public.token_issuers.id;
 
 
 --
@@ -1632,13 +1709,6 @@ ALTER TABLE ONLY public.contracts ALTER COLUMN id SET DEFAULT nextval('public.co
 
 
 --
--- Name: counters id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.counters ALTER COLUMN id SET DEFAULT nextval('public.counters_id_seq'::regclass);
-
-
---
 -- Name: daily_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1688,6 +1758,13 @@ ALTER TABLE ONLY public.forked_events ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: global_statistics id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.global_statistics ALTER COLUMN id SET DEFAULT nextval('public.global_statistics_id_seq'::regclass);
+
+
+--
 -- Name: lock_scripts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1734,6 +1811,13 @@ ALTER TABLE ONLY public.table_record_counts ALTER COLUMN id SET DEFAULT nextval(
 --
 
 ALTER TABLE ONLY public.token_collections ALTER COLUMN id SET DEFAULT nextval('public.token_collections_id_seq'::regclass);
+
+
+--
+-- Name: token_issuers id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.token_issuers ALTER COLUMN id SET DEFAULT nextval('public.token_issuers_id_seq'::regclass);
 
 
 --
@@ -1874,14 +1958,6 @@ ALTER TABLE ONLY public.contracts
 
 
 --
--- Name: counters counters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.counters
-    ADD CONSTRAINT counters_pkey PRIMARY KEY (id);
-
-
---
 -- Name: daily_statistics daily_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1935,6 +2011,14 @@ ALTER TABLE ONLY public.forked_blocks
 
 ALTER TABLE ONLY public.forked_events
     ADD CONSTRAINT forked_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: global_statistics global_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.global_statistics
+    ADD CONSTRAINT global_statistics_pkey PRIMARY KEY (id);
 
 
 --
@@ -2002,6 +2086,14 @@ ALTER TABLE ONLY public.token_collections
 
 
 --
+-- Name: token_issuers token_issuers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.token_issuers
+    ADD CONSTRAINT token_issuers_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: token_items token_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2063,6 +2155,13 @@ ALTER TABLE ONLY public.udts
 
 ALTER TABLE ONLY public.uncle_blocks
     ADD CONSTRAINT uncle_blocks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: alter_pk; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX alter_pk ON public.ckb_transactions USING gin (id, contained_address_ids);
 
 
 --
@@ -2290,10 +2389,10 @@ CREATE INDEX index_ckb_transactions_on_block_timestamp_and_id ON public.ckb_tran
 
 
 --
--- Name: index_ckb_transactions_on_contained_address_ids_and_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_ckb_transactions_on_contained_address_ids; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_ckb_transactions_on_contained_address_ids_and_id ON public.ckb_transactions USING gin (contained_address_ids, id);
+CREATE INDEX index_ckb_transactions_on_contained_address_ids ON public.ckb_transactions USING gin (contained_address_ids);
 
 
 --
@@ -2528,6 +2627,13 @@ CREATE INDEX index_token_collections_on_type_script_id ON public.token_collectio
 
 
 --
+-- Name: index_token_issuers_on_address_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_token_issuers_on_address_id ON public.token_issuers USING btree (address_id);
+
+
+--
 -- Name: index_token_items_on_cell_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2686,6 +2792,13 @@ CREATE TRIGGER after_delete_update_ckb_transactions_count AFTER DELETE ON public
 --
 
 CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.increase_ckb_transactions_count();
+
+
+--
+-- Name: ckb_transactions sync_to_account_book; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER sync_to_account_book AFTER INSERT OR UPDATE ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.synx_tx_to_account_book();
 
 
 --
@@ -2885,6 +2998,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220727000610'),
 ('20220801080617'),
 ('20220803030716'),
+('20220805174502'),
+('20220816171251'),
 ('20220822155712'),
 ('20220830023203'),
 ('20220830163001'),
@@ -2903,14 +3018,14 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230101045136'),
 ('20230104093413'),
 ('20230106111415'),
-('20230114022147'),
 ('20230114022237'),
 ('20230117035205'),
 ('20230128015428'),
 ('20230128015956'),
 ('20230128031939'),
-('20230129012303'),
-('20230129165127');
-
+('20230129165127'),
+('20230206073806'),
+('20230208081700'),
+('20230210124237');
 
 

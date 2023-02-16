@@ -20,20 +20,14 @@ module Charts
       hash_rate = difficulty * epoch_length / epoch_time
 
       epoch_statistic = ::EpochStatistic.find_or_create_by(epoch_number: target_epoch_number)
-      unless epoch_statistic.largest_block_number
-        largest_block = Block.where(epoch: target_epoch_number).order(block_size: :desc).first
-        epoch_statistic.largest_block_number = largest_block.number
-        epoch_statistic.largest_block_size = largest_block.block_size
-      end
-      unless epoch_statistic.largest_tx_hash
-        largest_tx = CkbTransaction.where(blocks: { epoch: target_epoch_number }).joins(:block).order(bytes: :desc).first
-        epoch_statistic.largest_tx_hash = largest_tx.tx_hash
-        epoch_statistic.largest_tx_bytes = largest_tx.bytes
-      end
-      max_cycles_block = Block.where(epoch: target_epoch_number).order(cycles: :desc).first
-      epoch_statistic.max_block_cycles = max_cycles_block.cycles
-      max_cycles_tx = CkbTransaction.where(blocks: { epoch: target_epoch_number }).joins(:block).order(cycles: :desc).first
-      epoch_statistic.max_tx_cycles = max_cycles_tx.cycles
+
+      epoch_statistic.reset_largest_tx_hash
+      epoch_statistic.reset_largest_tx_bytes
+      epoch_statistic.reset_max_tx_cycles
+      epoch_statistic.reset_max_block_cycles
+      epoch_statistic.reset_largest_block_number
+      epoch_statistic.reset_largest_block_size
+
       epoch_statistic.update(
         difficulty: difficulty,
         uncle_rate: uncle_rate,
