@@ -657,6 +657,8 @@ module CkbSync
       input_capacities = []
       output_capacities = []
       lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
+      lock_script_ids = []
+      type_script_ids = []
       if lock_scripts_attributes.present?
         lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
         lock_script_ids = LockScript.insert_all!(lock_scripts_attributes)
@@ -710,6 +712,8 @@ module CkbSync
 
       CellInput.insert_all!(cell_inputs_attributes)
       CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
+      CellDependency.create_from_scripts TypeScript.where(id: type_script_ids)
+      CellDependency.create_from_scripts LockScript.where(id: lock_script_ids)
       return input_capacities, output_capacities
     end
 
