@@ -89,6 +89,7 @@ module CkbSync
       remove_tx_display_infos(local_block)
       flush_inputs_outputs_caches(local_block)
       generate_statistics_data(local_block)
+      generate_deployed_cells(local_block)
 
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
       local_block.update_counter_for_ckb_node_version
@@ -114,6 +115,12 @@ module CkbSync
     end
 
     private
+
+    def generate_deployed_cells(local_block)
+      local_block.ckb_transactions.each do |ckb_transaction|
+        DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction
+      end
+    end
 
     def generate_statistics_data(local_block)
       GenerateStatisticsDataWorker.perform_async(local_block.id)
@@ -657,14 +664,18 @@ module CkbSync
       lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
       lock_script_ids = []
       type_script_ids = []
+
+      contracts = Contract.all
+
       if lock_scripts_attributes.present?
         lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
         lock_script_ids = LockScript.insert_all!(lock_scripts_attributes)
+
         lock_script_ids.each do | lock_script_id|
-          lock_script = LockScript.where('id = ?', lock_script_id['id']).first
-          next if lock_script.blank?
+          lock_script = LockScript.find lock_script_id['id']
+
           contract_id = 0
-          Contract.all.each {|contract|
+          contracts.each {|contract|
             if contract.code_hash == lock_script.code_hash
               contract_id = contract.id
               break
@@ -674,10 +685,12 @@ module CkbSync
           if contract_id != 0
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
           end
+
           script = Script.find_or_create_by temp_hash
           lock_script.update script_id: script.id
         end
       end
+
       if type_scripts_attributes.present?
         type_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
         type_script_ids = TypeScript.insert_all!(type_scripts_attributes)
@@ -685,7 +698,7 @@ module CkbSync
           type_script = LockScript.where('id = ?', type_script_id['id']).first
           next if type_script.blank?
           contract_id = 0
-          Contract.all.each {|contract|
+          contracts.each {|contract|
             if contract.code_hash == type_script.code_hash
               contract_id = contract.id
               break
