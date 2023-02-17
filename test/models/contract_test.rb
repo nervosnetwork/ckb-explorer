@@ -11,6 +11,11 @@ class ContractTest < ActiveSupport::TestCase
     @cell_dependency = create :cell_dependency, contract_id: @contract.id, ckb_transaction_id: @ckb_transaction.id, contract_cell_id: @cell_output.id
   end
 
+  context "associations" do
+    should have_many(:referring_cells)
+    should have_many(:deployed_cells)
+  end
+
   test "it should create contract" do
     assert_equal false, @contract.verified
     assert_equal 'type', @contract.hash_type

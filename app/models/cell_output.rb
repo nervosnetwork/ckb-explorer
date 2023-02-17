@@ -15,6 +15,7 @@ class CellOutput < ApplicationRecord
   belongs_to :type_script, optional: true
 
   has_many :cell_dependencies, foreign_key: :contract_cell_id, dependent: :delete_all
+  has_many :referring_cells
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 

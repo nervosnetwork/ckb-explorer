@@ -1,6 +1,7 @@
 class Contract < ApplicationRecord
   has_many :scripts
   has_many :deployed_cells
+  has_many :referring_cells
   has_many :cell_dependencies
 
 end
