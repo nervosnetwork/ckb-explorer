@@ -44,4 +44,8 @@ class ContractTest < ActiveSupport::TestCase
     assert_equal @script, @contract.scripts.first
   end
 
+  test "it should has_many ckb_transactions" do
+    assert_equal [@ckb_transaction], @contract.ckb_transactions
+  end
+
 end
