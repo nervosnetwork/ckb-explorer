@@ -89,7 +89,7 @@ module CkbSync
       remove_tx_display_infos(local_block)
       flush_inputs_outputs_caches(local_block)
       generate_statistics_data(local_block)
-      generate_deployed_cells(local_block)
+      generate_deployed_cells_and_referring_cells(local_block)
 
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
       local_block.update_counter_for_ckb_node_version
@@ -116,9 +116,10 @@ module CkbSync
 
     private
 
-    def generate_deployed_cells(local_block)
+    def generate_deployed_cells_and_referring_cells(local_block)
       local_block.ckb_transactions.each do |ckb_transaction|
         DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction
+        ReferringCell.create_initial_data_for_ckb_transaction ckb_transaction
       end
     end
 

@@ -1,3 +1,5 @@
+# TODO
+# referring cell
 class CellDependency < ActiveRecord::Base
 
   belongs_to :contract

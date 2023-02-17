@@ -51,12 +51,15 @@ module Api::V2
     def deployed_cells
       head :not_found and return if @script.blank?
 
+      contract = @script.contract
+      head :not_found and return if @script.contract.blank?
+
       render json: {
         data: {
-          deployed_cells: @script.cell_outputs.where(status: :live).page(@page).per(@page_size)
+          deployed_cells: contract.deployed_cells.page(@page).per(@page_size)
         },
         meta: {
-          total: @script.cell_outputs.where(status: :live).count.to_i,
+          total: contract.deployed_cells.count.to_i,
           page_size: @page_size.to_i
         }
       }

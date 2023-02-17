@@ -4,10 +4,16 @@ class DeployedCell < ApplicationRecord
   belongs_to :cell_output
 
   # create initial data for this table
-  # before running this method , you shoul run Script.create_initial_data
-  def self.create_initial_data
-    DeployedCell.transaction do
-      CkbTransaction.find_each do |ckb_transaction|
+  # before running this method,
+  # 1. run Script.create_initial_data
+  # 2. `ruby lib/ckb_block_node_processor.rb`
+  # 3. please pass in (current) the last ckb_transaction_id
+  def self.create_initial_data ckb_transaction_id = nil
+    if ckb_transaction_id.blank?
+      ckb_transaction_id = CkbTransaction.last.id
+    end
+    CkbTransaction.where("id <= ?", ckb_transaction_id).find_each do |ckb_transaction|
+      DeployedCell.transaction do
         self.create_initial_data_for_ckb_transaction ckb_transaction
       end
     end
@@ -16,23 +22,29 @@ class DeployedCell < ApplicationRecord
 
   private
   def self.create_initial_data_for_ckb_transaction ckb_transaction
-    if ckb_transaction.cell_outputs.present?
-      ckb_transaction.cell_outputs.each do |cell_output|
-        self.create_initial_data_by_cell_output cell_output
+    begin
+      if ckb_transaction.cell_outputs.present?
+        ckb_transaction.cell_outputs.each do |cell_output|
+          self.create_initial_data_by_cell_output cell_output, ckb_transaction
+        end
       end
-    end
 
-    if ckb_transaction.cell_inputs.present?
-      ckb_transaction.cell_inputs.each do |cell_input|
-        cell_output = cell_input.previous_cell_output
-        next if cell_output.blank?
+      if ckb_transaction.cell_inputs.present?
+        ckb_transaction.cell_inputs.each do |cell_input|
+          cell_output = cell_input.previous_cell_output
+          next if cell_output.blank?
 
-        self.create_initial_data_by_cell_output cell_output
+          self.create_initial_data_by_cell_output cell_output, ckb_transaction
+        end
       end
+    rescue Exception => e
+      Rails.logger.warn "If you have not finished creating Script table, just ignore this error message"
+      #Rails.logger.error e
+      #Rails.logger.error e.backtrace.join("\n")
     end
   end
 
-  def self.create_initial_data_by_cell_output cell_output
+  def self.create_initial_data_by_cell_output cell_output, ckb_transaction
     lock_script = cell_output.lock_script
     if lock_script.present?
       self.create_deployed_cells lock_script_or_type_script: lock_script, ckb_transaction: ckb_transaction, contract_id: lock_script.script.contract_id
