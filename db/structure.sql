@@ -468,7 +468,8 @@ CREATE TABLE public.cell_dependencies (
     dep_type integer,
     contract_cell_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    script_id bigint
 );
 
 
@@ -3158,6 +3159,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230211062045'),
 ('20230216015150'),
 ('20230216015231'),
-('20230216084358');
+('20230216084358'),
+('20230218154437');
 
 
