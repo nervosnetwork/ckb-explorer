@@ -13,13 +13,9 @@ module Api::V2
     def ckb_transactions
       head :not_found and return if @script.blank?
 
-      # TODO only find the tx of those scripts which has contract
-      contract = @script.contract
-      head :not_found and return if @script.contract.blank?
-
       render json: {
         data: {
-          ckb_transactions: contract.ckb_transactions.page(@page).per(@page_size).map {|tx|
+          ckb_transactions: @script.script.ckb_transactions.page(@page).per(@page_size).map {|tx|
             {
               id: tx.id,
               tx_hash: tx.tx_hash,
@@ -46,7 +42,7 @@ module Api::V2
           }
         },
         meta: {
-          total: contract.ckb_transactions.count.to_i,
+          total: @script.script.ckb_transactions.count.to_i,
           page_size: @page_size.to_i
         }
       }

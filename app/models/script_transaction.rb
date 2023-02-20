@@ -10,16 +10,20 @@ class ScriptTransaction < ApplicationRecord
   # 3. run these methods:
   #    ScriptTransaction.create_initial_data 888
   def self.create_initial_data to_script_id
-    ScriptTransaction.delete_all
-    #
     Script.where('id <= ?', to_script_id).find_each do |script|
-      next if script.ckb_transactions.blank?
-      script.ckb_transactions.each do |ckb_transaction|
-        ScriptTransaction.create ckb_transaction_id: ckb_transaction.id, script_id: script.id
-      end
+      self.create_from_scripts script.type_scripts
+      self.create_from_scripts script.lock_scripts
     end
   end
 
+  def self.create_from_scripts type_scripts_or_lock_scripts
+
+    type_scripts_or_lock_scripts.each do |temp_script|
+      temp_script.cell_outputs.each do |cell_output|
+        ScriptTransaction.find_or_create_by ckb_transaction_id: cell_output.ckb_transaction_id, script_id: temp_script.script_id
+      end
+    end
+  end
 end
 
 

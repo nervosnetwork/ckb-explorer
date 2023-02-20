@@ -15,6 +15,8 @@ class CkbTransaction < ApplicationRecord
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
   has_many :dao_events
   has_many :script_transactions
+  has_many :scripts, through: :script_transactions
+
   has_many :referring_cells
   has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all
   has_many :cell_dependencies, dependent: :delete_all

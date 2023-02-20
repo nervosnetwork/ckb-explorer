@@ -2,14 +2,13 @@ class Script < ActiveRecord::Base
   has_many :lock_scripts
   has_many :type_scripts
   has_many :cell_dependencies
-  has_many :ckb_transactions, through: :cell_dependencies
+
   has_many :script_transactions
+  has_many :ckb_transactions, through: :script_transactions
 
   belongs_to :contract, optional: true
 
   def self.create_initial_data
-
-    Script.delete_all
     TypeScript.find_each do |type_script|
       contract_id = 0
       Contract.all.each {|contract|
@@ -47,6 +46,7 @@ class Script < ActiveRecord::Base
 
     Rails.logger.info "== Script.create_initial_data done"
   end
+
 
 end
 

@@ -12,10 +12,9 @@ class CellDependency < ActiveRecord::Base
   # 2. record the last TypeScript id(e.g. 666), and last LockScript id(e.g. 888)
   # 3. start the latest syncer process : bundle exec ruby lib/ckb_block_node_processor.rb
   # 3. run these methods:
-  #    CellDependency.create_initial_data TypeScript.where('id <= ?', 666)
-  #    CellDependency.create_initial_data LockScript.where('id <= ?', 888)
-  def self.create_initial_data the_scripts
-    CellDependency.delete_all
+  #    CellDependency.create_from_scripts TypeScript.where('id <= ?', 666)
+  #    CellDependency.create_from_scripts LockScript.where('id <= ?', 888)
+  def self.create_from_scripts the_scripts
     the_scripts.find_each do |the_script|
       Rails.logger.info "== processing the_script: #{the_script.id}"
       next if the_script.ckb_transactions.blank?
@@ -33,7 +32,6 @@ class CellDependency < ActiveRecord::Base
       end
     end
   end
-
 end
 
 # == Schema Information

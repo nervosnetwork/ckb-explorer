@@ -12,6 +12,7 @@ class DeployedCell < ApplicationRecord
   # 5. call this method,please pass in (current) the last ckb_transaction_id
   #     e.g. DeployedCell.create_initial_data 8888
   def self.create_initial_data ckb_transaction_id = nil
+
     if ckb_transaction_id.blank?
       ckb_transaction_id = CkbTransaction.last.id
     end
@@ -23,7 +24,6 @@ class DeployedCell < ApplicationRecord
     Rails.logger.info "== done"
   end
 
-  private
   def self.create_initial_data_for_ckb_transaction ckb_transaction
     begin
       if ckb_transaction.cell_outputs.present?
@@ -41,7 +41,7 @@ class DeployedCell < ApplicationRecord
         end
       end
     rescue Exception => e
-      Rails.logger.warn "If you have not finished creating Script table, just ignore this error message"
+      Rails.logger.warn "If you have not finished creating Script table, just ignore this error message, #{e}"
       #Rails.logger.error e
       #Rails.logger.error e.backtrace.join("\n")
     end
@@ -106,9 +106,4 @@ end
 #  contract_id    :bigint
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
-#
-# Indexes
-#
-#  index_deployed_cells_on_cell_output_id  (cell_output_id)
-#  index_deployed_cells_on_contract_id     (contract_id)
 #
