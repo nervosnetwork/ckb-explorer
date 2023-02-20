@@ -6,8 +6,11 @@ class DeployedCell < ApplicationRecord
   # create initial data for this table
   # before running this method,
   # 1. run Script.create_initial_data
-  # 2. `ruby lib/ckb_block_node_processor.rb`
-  # 3. please pass in (current) the last ckb_transaction_id
+  # 2. stop `ruby lib/ckb_block_node_processor.rb`
+  # 3. record the last ckb_transaction_id, eg 8888
+  # 4. start  `ruby lib/ckb_block_node_processor.rb`
+  # 5. call this method,please pass in (current) the last ckb_transaction_id
+  #     e.g. DeployedCell.create_initial_data 8888
   def self.create_initial_data ckb_transaction_id = nil
     if ckb_transaction_id.blank?
       ckb_transaction_id = CkbTransaction.last.id
