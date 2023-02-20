@@ -37,3 +37,9 @@ end
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #
+# Indexes
+#
+#  index_referring_cells_on_cell_output_id      (cell_output_id)
+#  index_referring_cells_on_ckb_transaction_id  (ckb_transaction_id)
+#  index_referring_cells_on_contract_id         (contract_id)
+#

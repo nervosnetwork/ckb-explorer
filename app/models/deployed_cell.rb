@@ -107,3 +107,8 @@ end
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #
+# Indexes
+#
+#  index_deployed_cells_on_cell_output_id  (cell_output_id)
+#  index_deployed_cells_on_contract_id     (contract_id)
+#

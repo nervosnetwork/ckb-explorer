@@ -2644,6 +2644,20 @@ CREATE INDEX index_dao_events_on_status_and_event_type ON public.dao_events USIN
 
 
 --
+-- Name: index_deployed_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
+
+
+--
+-- Name: index_deployed_cells_on_contract_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_deployed_cells_on_contract_id ON public.deployed_cells USING btree (contract_id);
+
+
+--
 -- Name: index_epoch_statistics_on_epoch_number; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2725,6 +2739,27 @@ CREATE UNIQUE INDEX index_pool_transaction_entries_on_tx_hash ON public.pool_tra
 --
 
 CREATE INDEX index_pool_transaction_entries_on_tx_status ON public.pool_transaction_entries USING btree (tx_status);
+
+
+--
+-- Name: index_referring_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_referring_cells_on_cell_output_id ON public.referring_cells USING btree (cell_output_id);
+
+
+--
+-- Name: index_referring_cells_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_referring_cells_on_ckb_transaction_id ON public.referring_cells USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_referring_cells_on_contract_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_referring_cells_on_contract_id ON public.referring_cells USING btree (contract_id);
 
 
 --
@@ -3160,6 +3195,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230216015150'),
 ('20230216015231'),
 ('20230216084358'),
-('20230218154437');
+('20230218154437'),
+('20230220011635');
 
 

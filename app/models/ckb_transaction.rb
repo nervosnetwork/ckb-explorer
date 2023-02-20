@@ -16,7 +16,7 @@ class CkbTransaction < ApplicationRecord
   has_many :dao_events
   has_many :referring_cells
   has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all
-  has_many :cell_dependencies, foreign_key: :ckb_transaction_id, dependent: :delete_all
+  has_many :cell_dependencies, dependent: :delete_all
   has_and_belongs_to_many :contained_addresses, class_name: "Address", join_table: "account_books"
   has_and_belongs_to_many :contained_udts, class_name: "Udt", join_table: :udt_transactions
 
