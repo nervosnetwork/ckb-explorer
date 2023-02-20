@@ -58,7 +58,11 @@ end
 #  args        :string
 #  script_hash :string
 #  is_contract :boolean          default(FALSE)
+#  contract_id :bigint
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
-#  contract_id :bigint
+#
+# Indexes
+#
+#  index_scripts_on_contract_id  (contract_id)
 #

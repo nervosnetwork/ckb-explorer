@@ -47,3 +47,9 @@ end
 #  updated_at         :datetime         not null
 #  script_id          :bigint
 #
+# Indexes
+#
+#  index_cell_dependencies_on_contract_cell_id  (contract_cell_id)
+#  index_cell_dependencies_on_contract_id       (contract_id)
+#  index_cell_dependencies_on_script_id         (script_id)
+#

@@ -2453,6 +2453,27 @@ CREATE INDEX index_blocks_on_timestamp ON public.blocks USING btree ("timestamp"
 
 
 --
+-- Name: index_cell_dependencies_on_contract_cell_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_contract_cell_id ON public.cell_dependencies USING btree (contract_cell_id);
+
+
+--
+-- Name: index_cell_dependencies_on_contract_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_contract_id ON public.cell_dependencies USING btree (contract_id);
+
+
+--
+-- Name: index_cell_dependencies_on_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_script_id ON public.cell_dependencies USING btree (script_id);
+
+
+--
 -- Name: index_cell_inputs_on_block_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2691,6 +2712,20 @@ CREATE INDEX index_dao_events_on_status_and_event_type ON public.dao_events USIN
 
 
 --
+-- Name: index_deployed_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
+
+
+--
+-- Name: index_deployed_cells_on_contract_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_deployed_cells_on_contract_id ON public.deployed_cells USING btree (contract_id);
+
+
+--
 -- Name: index_epoch_statistics_on_epoch_number; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2793,6 +2828,13 @@ CREATE INDEX index_script_transactions_on_ckb_transaction_id ON public.script_tr
 --
 
 CREATE INDEX index_script_transactions_on_script_id ON public.script_transactions USING btree (script_id);
+
+
+--
+-- Name: index_scripts_on_contract_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_scripts_on_contract_id ON public.scripts USING btree (contract_id);
 
 
 --
@@ -3222,6 +3264,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230216015231'),
 ('20230216084358'),
 ('20230218154437'),
-('20230220013604');
+('20230220013604'),
+('20230220060922');
 
 
