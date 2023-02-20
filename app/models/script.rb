@@ -3,6 +3,7 @@ class Script < ActiveRecord::Base
   has_many :type_scripts
   has_many :cell_dependencies
   has_many :ckb_transactions, through: :cell_dependencies
+  has_many :script_transactions
 
   belongs_to :contract, optional: true
 

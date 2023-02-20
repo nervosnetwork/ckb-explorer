@@ -1294,6 +1294,38 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: script_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.script_transactions (
+    id bigint NOT NULL,
+    script_id bigint,
+    ckb_transaction_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: script_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.script_transactions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: script_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.script_transactions_id_seq OWNED BY public.script_transactions.id;
+
+
+--
 -- Name: scripts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1912,6 +1944,13 @@ ALTER TABLE ONLY public.referring_cells ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
+-- Name: script_transactions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.script_transactions ALTER COLUMN id SET DEFAULT nextval('public.script_transactions_id_seq'::regclass);
+
+
+--
 -- Name: scripts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2202,6 +2241,14 @@ ALTER TABLE ONLY public.referring_cells
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: script_transactions script_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.script_transactions
+    ADD CONSTRAINT script_transactions_pkey PRIMARY KEY (id);
 
 
 --
@@ -2644,20 +2691,6 @@ CREATE INDEX index_dao_events_on_status_and_event_type ON public.dao_events USIN
 
 
 --
--- Name: index_deployed_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
-
-
---
--- Name: index_deployed_cells_on_contract_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_deployed_cells_on_contract_id ON public.deployed_cells USING btree (contract_id);
-
-
---
 -- Name: index_epoch_statistics_on_epoch_number; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2742,31 +2775,24 @@ CREATE INDEX index_pool_transaction_entries_on_tx_status ON public.pool_transact
 
 
 --
--- Name: index_referring_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_referring_cells_on_cell_output_id ON public.referring_cells USING btree (cell_output_id);
-
-
---
--- Name: index_referring_cells_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_referring_cells_on_ckb_transaction_id ON public.referring_cells USING btree (ckb_transaction_id);
-
-
---
--- Name: index_referring_cells_on_contract_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_referring_cells_on_contract_id ON public.referring_cells USING btree (contract_id);
-
-
---
 -- Name: index_rolling_avg_block_time_on_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_rolling_avg_block_time_on_timestamp ON public.rolling_avg_block_time USING btree ("timestamp");
+
+
+--
+-- Name: index_script_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_script_transactions_on_ckb_transaction_id ON public.script_transactions USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_script_transactions_on_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_script_transactions_on_script_id ON public.script_transactions USING btree (script_id);
 
 
 --
@@ -3196,6 +3222,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230216015231'),
 ('20230216084358'),
 ('20230218154437'),
-('20230220011635');
+('20230220013604');
 
 
