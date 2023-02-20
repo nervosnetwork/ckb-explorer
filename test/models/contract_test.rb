@@ -8,7 +8,7 @@ class ContractTest < ActiveSupport::TestCase
     @ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: @block)
     @cell_output = create :cell_output, :with_full_transaction, block: @block
     @deployed_cell = create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output.id
-    @cell_dependency = create :cell_dependency, contract_id: @contract.id, ckb_transaction_id: @ckb_transaction.id, contract_cell_id: @cell_output.id
+    @cell_dependency = create :cell_dependency, contract_id: @contract.id, ckb_transaction_id: @ckb_transaction.id, contract_cell_id: @cell_output.id, script_id: @script.id
   end
 
   context "associations" do
