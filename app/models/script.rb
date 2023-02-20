@@ -1,6 +1,7 @@
 class Script < ActiveRecord::Base
   has_many :lock_scripts
   has_many :type_scripts
+  has_many :cell_dependencies
 
   belongs_to :contract, optional: true
 

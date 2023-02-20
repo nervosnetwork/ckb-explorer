@@ -3,6 +3,13 @@ require "test_helper"
 class ScriptTest < ActiveSupport::TestCase
   setup do
     @script = create :script
+
+    # create for @cell_dependency
+    @block = create :block, :with_block_hash
+    @ckb_transaction = create :ckb_transaction, :with_multiple_inputs_and_outputs, block: @block
+    @cell_output = create :cell_output, :with_full_transaction, block: @block
+    @cell_dependency = create :cell_dependency, ckb_transaction_id: @ckb_transaction.id, contract_cell_id: @cell_output.id,
+      script_id: @script.id
   end
 
   test "create script" do
@@ -17,4 +24,7 @@ class ScriptTest < ActiveSupport::TestCase
     assert_equal '0x34551bdd3db215970d4dd031146c4bb5adc74a1faea5c717773c1a72c8f018551', @script.script_hash
   end
 
+  test "it should have many cell_dependencies" do
+    assert_equal [@cell_dependency], @script.cell_dependencies
+  end
 end
