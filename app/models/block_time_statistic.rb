@@ -39,8 +39,8 @@ class BlockTimeStatistic < ApplicationRecord
         avg(block_time) avg_block_time_per_hour
       from blocks
       where timestamp >= #{started_at} and timestamp <= #{ended_at}
-      group by 1
-      order by 1
+      group by stat_timestamp
+      order by stat_timestamp
     SQL
   end
 end
