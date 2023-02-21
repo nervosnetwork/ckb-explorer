@@ -73,7 +73,7 @@ class DeployedCell < ApplicationRecord
         cell_output = temp_ckb_transaction.cell_outputs[point_index]
 
         if lock_script_or_type_script.code_hash == cell_output.lock_script.code_hash
-          DeployedCell.create! cell_output_id: cell_output.id, contract_id: contract_id
+          DeployedCell.find_or_create_by(cell_output_id: cell_output.id, contract_id: contract_id)
         end
       end
     end
@@ -88,7 +88,7 @@ class DeployedCell < ApplicationRecord
         cell_output = temp_ckb_transaction.cell_outputs[point_index]
 
         if lock_script_or_type_script.code_hash == CKB::Blake2b.hexdigest(cell_output.data)
-          DeployedCell.create! cell_output_id: cell_output.id, contract_id: contract_id
+          DeployedCell.find_or_create_by(cell_output_id: cell_output.id, contract_id: contract_id)
         end
       end
     end

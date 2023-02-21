@@ -27,7 +27,7 @@ class CellDependency < ActiveRecord::Base
           if contract_id.present?
             the_hash.merge contract_id: contract_id
           end
-          CellDependency.create! the_hash
+          CellDependency.find_or_create_by(the_hash)
         end
       end
     end
