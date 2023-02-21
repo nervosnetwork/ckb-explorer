@@ -21,10 +21,14 @@ end
 #
 # Table name: udt_address_transactions
 #
-#  id                             :bigint             not null, primary key
-#  udt_address_id                 :bigint
-#  ckb_transaction_id             :bigint
+#  id                 :bigint           not null, primary key
+#  udt_address_id     :bigint
+#  ckb_transaction_id :bigint
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
 #
 # Indexes
 #
+#  index_udt_address_transactions_on_ckb_transaction_id  (ckb_transaction_id)
+#  index_udt_address_transactions_on_udt_address_id      (udt_address_id)
 #

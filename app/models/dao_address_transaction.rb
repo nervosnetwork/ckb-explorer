@@ -21,10 +21,14 @@ end
 #
 # Table name: dao_address_transactions
 #
-#  id                             :bigint             not null, primary key
-#  dao_address_id                 :bigint
-#  ckb_transaction_id             :bigint
+#  id                 :bigint           not null, primary key
+#  dao_address_id     :bigint
+#  ckb_transaction_id :bigint
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
 #
 # Indexes
 #
+#  index_dao_address_transactions_on_ckb_transaction_id  (ckb_transaction_id)
+#  index_dao_address_transactions_on_dao_address_id      (dao_address_id)
 #
