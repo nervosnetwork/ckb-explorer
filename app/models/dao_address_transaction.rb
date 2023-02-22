@@ -10,7 +10,7 @@ class DaoAddressTransaction < ActiveRecord::Base
       DaoAddressTransaction.transaction do
         next if ckb_transaction.dao_address_ids.blank?
         ckb_transaction.dao_address_ids.each do |dao_address_id|
-          DaoAddressTransaction.create dao_address_id: dao_address_id, ckb_transaction_id: ckb_transaction.id
+          DaoAddressTransaction.find_or_create_by dao_address_id: dao_address_id, ckb_transaction_id: ckb_transaction.id
         end
       end
     end

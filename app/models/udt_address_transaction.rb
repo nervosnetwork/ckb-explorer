@@ -10,7 +10,7 @@ class UdtAddressTransaction < ActiveRecord::Base
       UdtAddressTransaction.transaction do
         next if ckb_transaction.udt_address_ids.blank?
         ckb_transaction.udt_address_ids.each do |udt_address_id|
-          UdtAddressTransaction.create udt_address_id: udt_address_id, ckb_transaction_id: ckb_transaction.id
+          UdtAddressTransaction.find_or_create_by udt_address_id: udt_address_id, ckb_transaction_id: ckb_transaction.id
         end
       end
     end
