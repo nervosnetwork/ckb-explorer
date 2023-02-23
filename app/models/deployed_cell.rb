@@ -6,12 +6,9 @@ class DeployedCell < ApplicationRecord
   # create initial data for this table
   # before running this method,
   # 1. run Script.create_initial_data
-  # 2. stop `ruby lib/ckb_block_node_processor.rb`
-  # 3. record the last ckb_transaction_id, eg 8888
-  # 4. start  `ruby lib/ckb_block_node_processor.rb`
-  # 5. call this method,please pass in (current) the last ckb_transaction_id
-  #     e.g. DeployedCell.create_initial_data 8888
+  # 2. run this method: DeployedCell.create_initial_data
   def self.create_initial_data ckb_transaction_id = nil
+    Rails.logger.info "=== ckb_transaction_id: #{ckb_transaction_id.inspect}"
 
     if ckb_transaction_id.blank?
       ckb_transaction_id = CkbTransaction.last.id
@@ -71,6 +68,7 @@ class DeployedCell < ApplicationRecord
 
         temp_ckb_transaction = CkbTransaction.find_by(tx_hash: tx_hash)
         cell_output = temp_ckb_transaction.cell_outputs[point_index]
+
 
         if lock_script_or_type_script.code_hash == cell_output.lock_script.code_hash
           DeployedCell.find_or_create_by(cell_output_id: cell_output.id, contract_id: contract_id)
