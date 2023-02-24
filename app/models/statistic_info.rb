@@ -88,18 +88,6 @@ class StatisticInfo
     end
   end
 
-  def self.last_n_days_transaction_fee_rates timestamp
-    sql = %Q{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
-      from blocks
-      where timestamp > #{timestamp}
-        and ckb_transactions_count != 0
-      group by 1 order by 1 desc}
-    last_n_days_transaction_fee_rates = Rails.cache.fetch("last_n_days_transaction_fee_rates", expires_in: 10.seconds) do
-      ActiveRecord::Base.connection.execute(sql).values
-    end
-    return last_n_days_transaction_fee_rates
-  end
-
   def maintenance_info
     Rails.cache.fetch("maintenance_info")
   end
