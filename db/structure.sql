@@ -172,6 +172,16 @@ ALTER SEQUENCE public.account_books_id_seq OWNED BY public.account_books.id;
 
 
 --
+-- Name: address_dao_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.address_dao_transactions (
+    ckb_transaction_id bigint,
+    address_id bigint
+);
+
+
+--
 -- Name: addresses; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2348,6 +2358,20 @@ ALTER TABLE ONLY public.uncle_blocks
 
 
 --
+-- Name: address_dao_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX address_dao_tx_alt_pk ON public.address_dao_transactions USING btree (address_id, ckb_transaction_id);
+
+
+--
+-- Name: alter_pk; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX alter_pk ON public.ckb_transactions USING gin (id, contained_address_ids);
+
+
+--
 -- Name: index_account_books_on_address_id_and_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2359,6 +2383,13 @@ CREATE UNIQUE INDEX index_account_books_on_address_id_and_ckb_transaction_id ON 
 --
 
 CREATE INDEX index_account_books_on_ckb_transaction_id ON public.account_books USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_address_dao_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_address_dao_transactions_on_ckb_transaction_id ON public.address_dao_transactions USING btree (ckb_transaction_id);
 
 
 --
@@ -3248,7 +3279,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230101045136'),
 ('20230104093413'),
 ('20230106111415'),
-('20230114022147'),
 ('20230114022237'),
 ('20230117035205'),
 ('20230128015428'),
@@ -3263,8 +3293,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230216015150'),
 ('20230216015231'),
 ('20230216084358'),
+('20230217064540'),
 ('20230218154437'),
 ('20230220013604'),
 ('20230220060922');
-
-

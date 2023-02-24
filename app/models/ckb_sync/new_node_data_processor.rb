@@ -616,37 +616,25 @@ module CkbSync
       tx_index = 0
       full_tx_address_ids = []
       full_tx_udt_ids = []
+      full_dao_address_ids = []
       ckb_txs.each do |tx|
         tx_id = tx["id"]
         full_tx_address_ids += contained_addr_ids[tx_index].to_a.map { |a| { address_id: a, ckb_transaction_id: tx_id } }
+        full_dao_address_ids += dao_address_ids[tx_index].to_a.map { |a| { address_id: a, ckb_transaction_id: tx_id } }
         full_tx_udt_ids += contained_udt_ids[tx_index].to_a.map { |u| { udt_id: u, ckb_transaction_id: tx_id } }
-        if tx_index == 0
-          ckb_transactions_attributes << {
-            id: tx_id,
-            dao_address_ids: dao_address_ids[tx_index].to_a,
-            udt_address_ids: udt_address_ids[tx_index].to_a,
-            # contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            # contained_address_ids: contained_addr_ids[tx_index].to_a,
-            tags: tags[tx_index].to_a,
-            capacity_involved: input_capacities[tx_index],
-            transaction_fee: 0,
-            created_at: tx["created_at"],
-            updated_at: Time.current
-          }
-        else
-          ckb_transactions_attributes << {
-            id: tx_id,
-            dao_address_ids: dao_address_ids[tx_index].to_a,
-            udt_address_ids: udt_address_ids[tx_index].to_a,
-            # contained_udt_ids: contained_udt_ids[tx_index].to_a,
-            # contained_address_ids: contained_addr_ids[tx_index].to_a,
-            tags: tags[tx_index].to_a,
-            capacity_involved: input_capacities[tx_index],
-            transaction_fee: CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index]),
-            created_at: tx["created_at"],
-            updated_at: Time.current
-          }
-        end
+        attr = {
+          id: tx_id,
+          # dao_address_ids: dao_address_ids[tx_index].to_a,
+          udt_address_ids: udt_address_ids[tx_index].to_a,
+          # contained_udt_ids: contained_udt_ids[tx_index].to_a,
+          # contained_address_ids: contained_addr_ids[tx_index].to_a,
+          tags: tags[tx_index].to_a,
+          capacity_involved: input_capacities[tx_index],
+          transaction_fee: tx_index == 0 ? 0 : CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index]),
+          created_at: tx["created_at"],
+          updated_at: Time.current
+        }
+        ckb_transactions_attributes << attr
         tx_index += 1
       end
       if ckb_transactions_attributes.present?
@@ -654,6 +642,7 @@ module CkbSync
       end
       AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present? # , unique_by: [:ckb_transaction_id, :address_id]
       UdtTransaction.upsert_all full_tx_udt_ids, unique_by: [:udt_id, :ckb_transaction_id] if full_tx_udt_ids.present?
+      AddressDaoTransaction.upsert_all full_dao_address_ids, unique_by: [:address_id, :ckb_transaction_id] if full_dao_address_ids.present?
     end
 
     def build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
@@ -681,8 +670,8 @@ module CkbSync
               contract_id = contract.id
               break
             end
-          }
-          temp_hash = {script_hash: (lock_script.script_hash rescue ''), is_contract: false}
+          end
+          temp_hash = { script_hash: (lock_script.script_hash rescue ""), is_contract: false }
           if contract_id != 0
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
           end
@@ -703,8 +692,8 @@ module CkbSync
               contract_id = contract.id
               break
             end
-          }
-          temp_hash = {script_hash: (type_script.script_hash rescue ''), is_contract: false}
+          end
+          temp_hash = { script_hash: (type_script.script_hash rescue ""), is_contract: false }
           if contract_id != 0
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
           end
@@ -1075,7 +1064,6 @@ module CkbSync
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)
-
       {
         block_id: local_block.id,
         tx_hash: tx.hash,

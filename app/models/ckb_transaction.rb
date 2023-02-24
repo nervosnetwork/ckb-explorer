@@ -22,10 +22,21 @@ class CkbTransaction < ApplicationRecord
   has_many :cell_dependencies, dependent: :delete_all
   has_and_belongs_to_many :contained_addresses, class_name: "Address", join_table: "account_books"
   has_and_belongs_to_many :contained_udts, class_name: "Udt", join_table: :udt_transactions
+  has_and_belongs_to_many :contained_dao_addresses, class_name: "Address", join_table: "address_dao_transactions"
 
   def self.migrate_contained_udt_ids
     CkbTransaction.select(%i[id contained_udt_ids]).find_each do |a|
       a.contained_udt_ids = a["contained_udt_ids"] if a["contained_udt_ids"].present?
+    end
+  end
+
+  def self.migrate_dao_address_ids
+    select(%i[id dao_address_ids]).find_in_batches do |txs|
+      res =
+        txs.reduce([]) do |memo, t|
+          memo += t[:dao_address_ids].map { |a| { address_id: a, ckb_transaction_id: t.id } }
+        end
+      AddressDaoTransaction.upsert_all(res, unique_by: [:address_id, :ckb_transaction_id]) if res.present?
     end
   end
 
