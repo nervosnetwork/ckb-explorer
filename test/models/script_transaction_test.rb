@@ -47,14 +47,14 @@ class ScriptTransactionTest < ActiveSupport::TestCase
     cell_output.update lock_script_id: lock_script.id, type_script_id: type_script.id, ckb_transaction_id: ckb_transaction.id
 
     # for the 1st time, it will create
-    ScriptTransaction.create_initial_data Script.last.id
+    ScriptTransaction.create_initial_data
     @script_transaction = ScriptTransaction.first
     assert_equal 1, ScriptTransaction.all.count
     assert_equal ckb_transaction.id, @script_transaction.ckb_transaction_id
     assert_equal script.id, @script_transaction.script_id
 
     # for the 2nd time, it should NOT create new record
-    ScriptTransaction.create_initial_data Script.last.id
+    ScriptTransaction.create_initial_data
     assert_equal 1, ScriptTransaction.all.count
 
   end
