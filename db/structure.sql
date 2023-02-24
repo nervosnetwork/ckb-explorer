@@ -10,6 +10,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
 -- Name: btree_gin; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -86,13 +93,6 @@ begin
     close c;
 end
 $$;
-
-
---
--- Name: PROCEDURE sync_full_account_book(); Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON PROCEDURE public.sync_full_account_book() IS 'sync contained_address_ids in ckb_transactions to account_books';
 
 
 --
@@ -197,9 +197,9 @@ CREATE TABLE public.addresses (
     dao_deposit numeric(30,0) DEFAULT 0.0,
     interest numeric(30,0) DEFAULT 0.0,
     block_timestamp numeric(30,0),
-    visible boolean DEFAULT true,
     live_cells_count numeric(30,0) DEFAULT 0.0,
     mined_blocks_count integer DEFAULT 0,
+    visible boolean DEFAULT true,
     average_deposit_time numeric,
     unclaimed_compensation numeric(30,0),
     is_depositor boolean DEFAULT false,
@@ -253,6 +253,7 @@ CREATE TABLE public.blocks (
     "timestamp" numeric(30,0),
     transactions_root bytea,
     proposals_hash bytea,
+    uncles_count integer,
     extra_hash bytea,
     uncle_block_hashes bytea,
     version integer,
@@ -279,7 +280,6 @@ CREATE TABLE public.blocks (
     nonce numeric(50,0) DEFAULT 0.0,
     start_number numeric(30,0) DEFAULT 0.0,
     length numeric(30,0) DEFAULT 0.0,
-    uncles_count integer,
     compact_target numeric(20,0),
     live_cell_changes integer,
     block_time numeric(13,0),
@@ -289,8 +289,8 @@ CREATE TABLE public.blocks (
     miner_message character varying,
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
-    cycles bigint,
-    ckb_node_version character varying
+    ckb_node_version character varying,
+    cycles bigint
 );
 
 
@@ -373,7 +373,7 @@ CREATE TABLE public.block_statistics (
 -- Name: COLUMN block_statistics.accumulated_total_deposits; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.block_statistics.accumulated_total_deposits IS 'C_i in DAO header';
+COMMENT ON COLUMN public.block_statistics.accumulated_total_deposits IS 'C_i in DAO header (accumulated deposits)';
 
 
 --
@@ -478,7 +478,8 @@ CREATE TABLE public.cell_dependencies (
     dep_type integer,
     contract_cell_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    script_id bigint
 );
 
 
@@ -603,9 +604,9 @@ CREATE TABLE public.ckb_transactions (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     is_cellbase boolean DEFAULT false,
-    witnesses jsonb,
     header_deps bytea,
     cell_deps jsonb,
+    witnesses jsonb,
     live_cell_changes integer,
     capacity_involved numeric(30,0),
     contained_address_ids bigint[] DEFAULT '{}'::bigint[],
@@ -689,9 +690,9 @@ ALTER SEQUENCE public.contracts_id_seq OWNED BY public.contracts.id;
 
 CREATE TABLE public.daily_statistics (
     id bigint NOT NULL,
-    transactions_count character varying DEFAULT '0'::character varying,
-    addresses_count character varying DEFAULT '0'::character varying,
-    total_dao_deposit character varying DEFAULT '0.0'::character varying,
+    transactions_count character varying DEFAULT 0,
+    addresses_count character varying DEFAULT 0,
+    total_dao_deposit character varying DEFAULT 0.0,
     block_timestamp numeric(30,0),
     created_at_unixtimestamp integer,
     created_at timestamp(6) without time zone NOT NULL,
@@ -710,8 +711,8 @@ CREATE TABLE public.daily_statistics (
     avg_difficulty character varying DEFAULT '0'::character varying,
     uncle_rate character varying DEFAULT '0'::character varying,
     total_depositors_count character varying DEFAULT '0'::character varying,
-    address_balance_distribution jsonb,
     total_tx_fee numeric(30,0),
+    address_balance_distribution jsonb,
     occupied_capacity numeric(30,0),
     daily_dao_deposit numeric(30,0),
     daily_dao_depositors_count integer,
@@ -746,6 +747,38 @@ CREATE SEQUENCE public.daily_statistics_id_seq
 --
 
 ALTER SEQUENCE public.daily_statistics_id_seq OWNED BY public.daily_statistics.id;
+
+
+--
+-- Name: dao_address_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dao_address_transactions (
+    id bigint NOT NULL,
+    dao_address_id bigint,
+    ckb_transaction_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: dao_address_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.dao_address_transactions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: dao_address_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.dao_address_transactions_id_seq OWNED BY public.dao_address_transactions.id;
 
 
 --
@@ -910,6 +943,7 @@ CREATE TABLE public.forked_blocks (
     "timestamp" numeric(30,0),
     transactions_root bytea,
     proposals_hash bytea,
+    uncles_count integer,
     extra_hash bytea,
     uncle_block_hashes bytea,
     version integer,
@@ -936,7 +970,6 @@ CREATE TABLE public.forked_blocks (
     nonce numeric(50,0) DEFAULT 0.0,
     start_number numeric(30,0) DEFAULT 0.0,
     length numeric(30,0) DEFAULT 0.0,
-    uncles_count integer,
     compact_target numeric(20,0),
     live_cell_changes integer,
     block_time numeric(13,0),
@@ -946,8 +979,8 @@ CREATE TABLE public.forked_blocks (
     miner_message character varying,
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
-    cycles integer,
-    ckb_node_version character varying
+    ckb_node_version character varying,
+    cycles integer
 );
 
 
@@ -1217,6 +1250,39 @@ ALTER SEQUENCE public.pool_transaction_entries_id_seq OWNED BY public.pool_trans
 
 
 --
+-- Name: referring_cells; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.referring_cells (
+    id bigint NOT NULL,
+    cell_output_id bigint,
+    contract_id bigint,
+    ckb_transaction_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: referring_cells_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.referring_cells_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: referring_cells_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.referring_cells_id_seq OWNED BY public.referring_cells.id;
+
+
+--
 -- Name: rolling_avg_block_time; Type: MATERIALIZED VIEW; Schema: public; Owner: -
 --
 
@@ -1235,6 +1301,38 @@ CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
 CREATE TABLE public.schema_migrations (
     version character varying NOT NULL
 );
+
+
+--
+-- Name: script_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.script_transactions (
+    id bigint NOT NULL,
+    script_id bigint,
+    ckb_transaction_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: script_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.script_transactions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: script_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.script_transactions_id_seq OWNED BY public.script_transactions.id;
 
 
 --
@@ -1343,40 +1441,6 @@ CREATE SEQUENCE public.token_collections_id_seq
 --
 
 ALTER SEQUENCE public.token_collections_id_seq OWNED BY public.token_collections.id;
-
-
---
--- Name: token_issuers; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.token_issuers (
-    id bigint NOT NULL,
-    name character varying,
-    avatar character varying,
-    description character varying,
-    address_id integer,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: token_issuers_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.token_issuers_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: token_issuers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.token_issuers_id_seq OWNED BY public.token_issuers.id;
 
 
 --
@@ -1578,6 +1642,38 @@ ALTER SEQUENCE public.udt_accounts_id_seq OWNED BY public.udt_accounts.id;
 
 
 --
+-- Name: udt_address_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.udt_address_transactions (
+    id bigint NOT NULL,
+    udt_address_id bigint,
+    ckb_transaction_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: udt_address_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.udt_address_transactions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: udt_address_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.udt_address_transactions_id_seq OWNED BY public.udt_address_transactions.id;
+
+
+--
 -- Name: udt_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1767,6 +1863,13 @@ ALTER TABLE ONLY public.daily_statistics ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: dao_address_transactions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dao_address_transactions ALTER COLUMN id SET DEFAULT nextval('public.dao_address_transactions_id_seq'::regclass);
+
+
+--
 -- Name: dao_contracts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1844,6 +1947,20 @@ ALTER TABLE ONLY public.pool_transaction_entries ALTER COLUMN id SET DEFAULT nex
 
 
 --
+-- Name: referring_cells id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.referring_cells ALTER COLUMN id SET DEFAULT nextval('public.referring_cells_id_seq'::regclass);
+
+
+--
+-- Name: script_transactions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.script_transactions ALTER COLUMN id SET DEFAULT nextval('public.script_transactions_id_seq'::regclass);
+
+
+--
 -- Name: scripts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1862,13 +1979,6 @@ ALTER TABLE ONLY public.table_record_counts ALTER COLUMN id SET DEFAULT nextval(
 --
 
 ALTER TABLE ONLY public.token_collections ALTER COLUMN id SET DEFAULT nextval('public.token_collections_id_seq'::regclass);
-
-
---
--- Name: token_issuers id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.token_issuers ALTER COLUMN id SET DEFAULT nextval('public.token_issuers_id_seq'::regclass);
 
 
 --
@@ -1904,6 +2014,13 @@ ALTER TABLE ONLY public.type_scripts ALTER COLUMN id SET DEFAULT nextval('public
 --
 
 ALTER TABLE ONLY public.udt_accounts ALTER COLUMN id SET DEFAULT nextval('public.udt_accounts_id_seq'::regclass);
+
+
+--
+-- Name: udt_address_transactions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udt_address_transactions ALTER COLUMN id SET DEFAULT nextval('public.udt_address_transactions_id_seq'::regclass);
 
 
 --
@@ -2025,6 +2142,14 @@ ALTER TABLE ONLY public.daily_statistics
 
 
 --
+-- Name: dao_address_transactions dao_address_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dao_address_transactions
+    ADD CONSTRAINT dao_address_transactions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: dao_contracts dao_contracts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2113,11 +2238,27 @@ ALTER TABLE ONLY public.pool_transaction_entries
 
 
 --
+-- Name: referring_cells referring_cells_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.referring_cells
+    ADD CONSTRAINT referring_cells_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: script_transactions script_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.script_transactions
+    ADD CONSTRAINT script_transactions_pkey PRIMARY KEY (id);
 
 
 --
@@ -2142,14 +2283,6 @@ ALTER TABLE ONLY public.table_record_counts
 
 ALTER TABLE ONLY public.token_collections
     ADD CONSTRAINT token_collections_pkey PRIMARY KEY (id);
-
-
---
--- Name: token_issuers token_issuers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.token_issuers
-    ADD CONSTRAINT token_issuers_pkey PRIMARY KEY (id);
 
 
 --
@@ -2198,6 +2331,14 @@ ALTER TABLE ONLY public.type_scripts
 
 ALTER TABLE ONLY public.udt_accounts
     ADD CONSTRAINT udt_accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: udt_address_transactions udt_address_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udt_address_transactions
+    ADD CONSTRAINT udt_address_transactions_pkey PRIMARY KEY (id);
 
 
 --
@@ -2343,6 +2484,27 @@ CREATE INDEX index_blocks_on_timestamp ON public.blocks USING btree ("timestamp"
 
 
 --
+-- Name: index_cell_dependencies_on_contract_cell_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_contract_cell_id ON public.cell_dependencies USING btree (contract_cell_id);
+
+
+--
+-- Name: index_cell_dependencies_on_contract_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_contract_id ON public.cell_dependencies USING btree (contract_id);
+
+
+--
+-- Name: index_cell_dependencies_on_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_script_id ON public.cell_dependencies USING btree (script_id);
+
+
+--
 -- Name: index_cell_inputs_on_block_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2462,10 +2624,10 @@ CREATE INDEX index_ckb_transactions_on_block_timestamp_and_id ON public.ckb_tran
 
 
 --
--- Name: index_ckb_transactions_on_contained_address_ids; Type: INDEX; Schema: public; Owner: -
+-- Name: index_ckb_transactions_on_contained_address_ids_and_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_ckb_transactions_on_contained_address_ids ON public.ckb_transactions USING gin (contained_address_ids);
+CREATE INDEX index_ckb_transactions_on_contained_address_ids_and_id ON public.ckb_transactions USING gin (contained_address_ids, id);
 
 
 --
@@ -2581,6 +2743,20 @@ CREATE INDEX index_dao_events_on_status_and_event_type ON public.dao_events USIN
 
 
 --
+-- Name: index_deployed_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
+
+
+--
+-- Name: index_deployed_cells_on_contract_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_deployed_cells_on_contract_id ON public.deployed_cells USING btree (contract_id);
+
+
+--
 -- Name: index_epoch_statistics_on_epoch_number; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2672,6 +2848,27 @@ CREATE UNIQUE INDEX index_rolling_avg_block_time_on_timestamp ON public.rolling_
 
 
 --
+-- Name: index_script_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_script_transactions_on_ckb_transaction_id ON public.script_transactions USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_script_transactions_on_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_script_transactions_on_script_id ON public.script_transactions USING btree (script_id);
+
+
+--
+-- Name: index_scripts_on_contract_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_scripts_on_contract_id ON public.scripts USING btree (contract_id);
+
+
+--
 -- Name: index_table_record_counts_on_table_name_and_count; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2697,13 +2894,6 @@ CREATE UNIQUE INDEX index_token_collections_on_sn ON public.token_collections US
 --
 
 CREATE INDEX index_token_collections_on_type_script_id ON public.token_collections USING btree (type_script_id);
-
-
---
--- Name: index_token_issuers_on_address_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_token_issuers_on_address_id ON public.token_issuers USING btree (address_id);
 
 
 --
@@ -3071,8 +3261,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220727000610'),
 ('20220801080617'),
 ('20220803030716'),
-('20220805174502'),
-('20220816171251'),
 ('20220822155712'),
 ('20220830023203'),
 ('20220830163001'),
@@ -3102,6 +3290,10 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230208081700'),
 ('20230210124237'),
 ('20230211062045'),
-('20230217064540');
-
-
+('20230216015150'),
+('20230216015231'),
+('20230216084358'),
+('20230217064540'),
+('20230218154437'),
+('20230220013604'),
+('20230220060922');

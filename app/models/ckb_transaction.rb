@@ -14,6 +14,10 @@ class CkbTransaction < ApplicationRecord
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
   has_many :dao_events
+  has_many :script_transactions
+  has_many :scripts, through: :script_transactions
+
+  has_many :referring_cells
   has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all
   has_many :cell_dependencies, dependent: :delete_all
   has_and_belongs_to_many :contained_addresses, class_name: "Address", join_table: "account_books"
@@ -284,9 +288,9 @@ end
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
 #  is_cellbase           :boolean          default(FALSE)
-#  witnesses             :jsonb
 #  header_deps           :binary
 #  cell_deps             :jsonb
+#  witnesses             :jsonb
 #  live_cell_changes     :integer
 #  capacity_involved     :decimal(30, )
 #  contained_address_ids :bigint           default([]), is an Array
@@ -300,10 +304,9 @@ end
 #
 # Indexes
 #
-#  alter_pk                                                (id,contained_address_ids) USING gin
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
 #  index_ckb_transactions_on_block_timestamp_and_id        (block_timestamp DESC NULLS LAST,id DESC)
-#  index_ckb_transactions_on_contained_address_ids         (contained_address_ids) USING gin
+#  index_ckb_transactions_on_contained_address_ids_and_id  (contained_address_ids,id) USING gin
 #  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
 #  index_ckb_transactions_on_dao_address_ids               (dao_address_ids) USING gin
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)
