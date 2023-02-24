@@ -6,8 +6,6 @@ class CellDependency < ActiveRecord::Base
   belongs_to :script
   belongs_to :cell_output, foreign_key: "contract_cell_id", class_name: "CellOutput"
 
-  # the_scripts:  type_scripts or lock_scripts
-  # notice :
   # please run these methods:
   #    CellDependency.create_from_scripts TypeScript.all
   #    CellDependency.create_from_scripts LockScript.all

@@ -2,15 +2,10 @@ class ScriptTransaction < ApplicationRecord
   belongs_to :script
   belongs_to :ckb_transaction
 
-  # the_scripts:  type_scripts or lock_scripts
-  # notice :
-  # 1. stop the syncer process
-  # 2. record the last Script id ( e.g. 888)
-  # 3. start the latest syncer process : bundle exec ruby lib/ckb_block_node_processor.rb
-  # 3. run these methods:
-  #    ScriptTransaction.create_initial_data Script.last.id
-  def self.create_initial_data to_script_id
-    Script.where('id <= ?', to_script_id).find_each do |script|
+  # run these methods:
+  #    ScriptTransaction.create_initial_data
+  def self.create_initial_data
+    Script.all.find_each do |script|
       self.create_from_scripts script.type_scripts
       self.create_from_scripts script.lock_scripts
     end
