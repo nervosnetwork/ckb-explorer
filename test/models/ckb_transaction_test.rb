@@ -1,6 +1,7 @@
 require "test_helper"
 
 class CkbTransactionTest < ActiveSupport::TestCase
+
   setup do
     create(:table_record_count, :block_counter)
     create(:table_record_count, :ckb_transactions_counter)
@@ -15,12 +16,14 @@ class CkbTransactionTest < ActiveSupport::TestCase
   context "associations" do
     should belong_to(:block)
     should have_many(:account_books)
+    should have_many(:referring_cells)
     should have_many(:addresses).
       through(:account_books)
     should have_many(:cell_inputs)
     should have_many(:cell_outputs)
     should have_many(:dao_address_transactions)
     should have_many(:udt_address_transactions)
+    should have_many(:script_transactions)
     should have_many(:cell_dependencies)
   end
 

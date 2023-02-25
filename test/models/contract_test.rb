@@ -3,12 +3,14 @@ require "test_helper"
 class ContractTest < ActiveSupport::TestCase
   setup do
     @contract = create :contract
-    @block = create(:block, :with_block_hash)
-    @script = create :script, contract_id: @contract.id
-    @ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: @block)
-    @cell_output = create :cell_output, :with_full_transaction, block: @block
-    @deployed_cell = create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output.id
-    @cell_dependency = create :cell_dependency, contract_id: @contract.id, ckb_transaction_id: @ckb_transaction.id, contract_cell_id: @cell_output.id
+  end
+
+  context "associations" do
+    should have_many(:referring_cells)
+    should have_many(:deployed_cells)
+    should have_many(:scripts)
+    should have_many(:ckb_transactions)
+    should have_many(:cell_dependencies)
   end
 
   test "it should create contract" do
@@ -31,12 +33,6 @@ class ContractTest < ActiveSupport::TestCase
     assert_equal 'Source Code is a script which allows a group of users to sign a single transaction.', @contract.description
     assert_equal 'CKB COIN TEST1', @contract.name
     assert_equal 'TTF1', @contract.symbol
-  end
-
-  test "it should has_many cell_dependencies scripts, and deployed_cells" do
-    assert_equal @cell_dependency, @contract.cell_dependencies.first
-    assert_equal @deployed_cell, @contract.deployed_cells.first
-    assert_equal @script, @contract.scripts.first
   end
 
 end

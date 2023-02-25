@@ -15,7 +15,7 @@ module Api::V2
 
       render json: {
         data: {
-          ckb_transactions: @script.ckb_transactions.page(@page).per(@page_size).map {|tx|
+          ckb_transactions: @script.script.ckb_transactions.page(@page).per(@page_size).map {|tx|
             {
               id: tx.id,
               tx_hash: tx.tx_hash,
@@ -42,7 +42,7 @@ module Api::V2
           }
         },
         meta: {
-          total: @script.ckb_transactions.count.to_i,
+          total: @script.script.ckb_transactions.count.to_i,
           page_size: @page_size.to_i
         }
       }
@@ -51,12 +51,15 @@ module Api::V2
     def deployed_cells
       head :not_found and return if @script.blank?
 
+      contract = @script.contract
+      head :not_found and return if @script.contract.blank?
+
       render json: {
         data: {
-          deployed_cells: @script.cell_outputs.where(status: :live).page(@page).per(@page_size)
+          deployed_cells: contract.deployed_cells.page(@page).per(@page_size)
         },
         meta: {
-          total: @script.cell_outputs.where(status: :live).count.to_i,
+          total: contract.deployed_cells.count.to_i,
           page_size: @page_size.to_i
         }
       }

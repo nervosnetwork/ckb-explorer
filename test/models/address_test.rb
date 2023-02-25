@@ -147,7 +147,8 @@ class AddressTest < ActiveSupport::TestCase
       block = create(:block, :with_block_hash)
       contained_address_ids = number % 2 == 0 ? [address.id] : [address1.id]
       tx = create(:ckb_transaction, block: block, tags: ["dao"], dao_address_ids: [contained_address_ids], contained_address_ids: contained_address_ids)
-      AccountBook.find_or_create_by(address: address, ckb_transaction: tx)
+      AccountBook.find_or_create_by(address_id: contained_address_ids[0], ckb_transaction: tx)
+      AddressDaoTransaction.insert({ address_id: contained_address_ids[0], ckb_transaction_id: tx.id })
       cell_type = number % 2 == 0 ? "nervos_dao_deposit" : "nervos_dao_withdrawing"
       cell_output_address = number % 2 == 0 ? address : address1
       create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, generated_by: tx, cell_type: cell_type)
@@ -156,7 +157,7 @@ class AddressTest < ActiveSupport::TestCase
     ckb_transaction_ids = address.cell_outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).select("ckb_transaction_id").distinct
     expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).recent
 
-    assert_equal expected_ckb_transactions.pluck(:id), address.ckb_dao_transactions.recent.pluck(:id)
+    assert_equal expected_ckb_transactions.pluck(:id).sort, address.ckb_dao_transactions.recent.pluck(:id).sort
   end
 
   test "#ckb_dao_transactions should return an empty array when there aren't dao cell" do

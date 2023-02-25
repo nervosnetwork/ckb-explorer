@@ -1,4 +1,4 @@
 FactoryBot.define do
-  factory :deployed_cell do
+  factory :referring_cell do
   end
 end
