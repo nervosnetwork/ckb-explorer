@@ -14,7 +14,6 @@ class CkbTransaction < ApplicationRecord
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
   has_many :dao_events
-  has_many :dao_address_transactions
   has_many :udt_address_transactions
   has_many :script_transactions
   has_many :scripts, through: :script_transactions

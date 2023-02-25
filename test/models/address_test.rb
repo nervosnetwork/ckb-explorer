@@ -17,7 +17,6 @@ class AddressTest < ActiveSupport::TestCase
     should have_many(:account_books)
     should have_many(:ckb_transactions).
       through(:account_books)
-    should have_many :dao_address_transactions
     should have_many :udt_address_transactions
   end
 
