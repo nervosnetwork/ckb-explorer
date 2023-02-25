@@ -89,7 +89,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;
+    END LOOP;    
     close c;
 end
 $$;
@@ -111,21 +111,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null
+	if old is null 
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-
+	
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP
+	   LOOP 
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id)
+			insert into account_books (ckb_transaction_id, address_id) 
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -747,38 +747,6 @@ CREATE SEQUENCE public.daily_statistics_id_seq
 --
 
 ALTER SEQUENCE public.daily_statistics_id_seq OWNED BY public.daily_statistics.id;
-
-
---
--- Name: dao_address_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.dao_address_transactions (
-    id bigint NOT NULL,
-    dao_address_id bigint,
-    ckb_transaction_id bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: dao_address_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.dao_address_transactions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: dao_address_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.dao_address_transactions_id_seq OWNED BY public.dao_address_transactions.id;
 
 
 --
@@ -1863,13 +1831,6 @@ ALTER TABLE ONLY public.daily_statistics ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
--- Name: dao_address_transactions id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dao_address_transactions ALTER COLUMN id SET DEFAULT nextval('public.dao_address_transactions_id_seq'::regclass);
-
-
---
 -- Name: dao_contracts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2142,14 +2103,6 @@ ALTER TABLE ONLY public.daily_statistics
 
 
 --
--- Name: dao_address_transactions dao_address_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dao_address_transactions
-    ADD CONSTRAINT dao_address_transactions_pkey PRIMARY KEY (id);
-
-
---
 -- Name: dao_contracts dao_contracts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2362,13 +2315,6 @@ ALTER TABLE ONLY public.uncle_blocks
 --
 
 CREATE UNIQUE INDEX address_dao_tx_alt_pk ON public.address_dao_transactions USING btree (address_id, ckb_transaction_id);
-
-
---
--- Name: alter_pk; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX alter_pk ON public.ckb_transactions USING gin (id, contained_address_ids);
 
 
 --
@@ -2719,20 +2665,6 @@ CREATE INDEX index_contracts_on_verified ON public.contracts USING btree (verifi
 --
 
 CREATE INDEX index_daily_statistics_on_created_at_unixtimestamp ON public.daily_statistics USING btree (created_at_unixtimestamp DESC NULLS LAST);
-
-
---
--- Name: index_dao_address_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_dao_address_transactions_on_ckb_transaction_id ON public.dao_address_transactions USING btree (ckb_transaction_id);
-
-
---
--- Name: index_dao_address_transactions_on_dao_address_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_dao_address_transactions_on_dao_address_id ON public.dao_address_transactions USING btree (dao_address_id);
 
 
 --
@@ -3307,6 +3239,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230101045136'),
 ('20230104093413'),
 ('20230106111415'),
+('20230114022147'),
 ('20230114022237'),
 ('20230117035205'),
 ('20230128015428'),
@@ -3325,4 +3258,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230218154437'),
 ('20230220013604'),
 ('20230220060922'),
-('20230221025839');
+('20230221025839'),
+('20230225101328');
+
+

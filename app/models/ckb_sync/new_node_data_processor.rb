@@ -640,7 +640,6 @@ module CkbSync
       if ckb_transactions_attributes.present?
         ckb_transaction_ids = CkbTransaction.upsert_all(ckb_transactions_attributes)
         UdtAddressTransaction.create_initial_data CkbTransaction.where(id: ckb_transaction_ids.map{|e| e['id']})
-        DaoAddressTransaction.create_initial_data CkbTransaction.where(id: ckb_transaction_ids.map{|e| e['id']})
       end
       AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present? # , unique_by: [:ckb_transaction_id, :address_id]
       UdtTransaction.upsert_all full_tx_udt_ids, unique_by: [:udt_id, :ckb_transaction_id] if full_tx_udt_ids.present?
