@@ -2955,10 +2955,10 @@ CREATE INDEX index_udt_address_transactions_on_ckb_transaction_id ON public.udt_
 
 
 --
--- Name: index_udt_address_transactions_on_udt_address_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_udt_address_transactions_on_tx_id_and_udt_address_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_udt_address_transactions_on_udt_address_id ON public.udt_address_transactions USING btree (udt_address_id);
+CREATE INDEX index_udt_address_transactions_on_tx_id_and_udt_address_id ON public.udt_address_transactions USING btree (udt_address_id, ckb_transaction_id);
 
 
 --

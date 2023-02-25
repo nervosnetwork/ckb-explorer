@@ -29,6 +29,6 @@ end
 #
 # Indexes
 #
-#  index_udt_address_transactions_on_ckb_transaction_id  (ckb_transaction_id)
-#  index_udt_address_transactions_on_udt_address_id      (udt_address_id)
+#  index_udt_address_transactions_on_ckb_transaction_id        (ckb_transaction_id)
+#  index_udt_address_transactions_on_tx_id_and_udt_address_id  (udt_address_id,ckb_transaction_id)
 #
