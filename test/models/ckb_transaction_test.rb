@@ -23,6 +23,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
     should have_many(:cell_outputs)
     should have_many(:script_transactions)
     should have_many(:cell_dependencies)
+
+    should have_and_belong_to_many(:contained_udt_addresses)
   end
 
   test "#tx_hash should decodes packed string" do
