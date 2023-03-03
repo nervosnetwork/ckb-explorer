@@ -628,7 +628,7 @@ module CkbSync
         attr = {
           id: tx_id,
           # dao_address_ids: dao_address_ids[tx_index].to_a,
-          udt_address_ids: udt_address_ids[tx_index].to_a,
+          # udt_address_ids: udt_address_ids[tx_index].to_a,
           # contained_udt_ids: contained_udt_ids[tx_index].to_a,
           # contained_address_ids: contained_addr_ids[tx_index].to_a,
           tags: tags[tx_index].to_a,
@@ -639,6 +639,9 @@ module CkbSync
         }
         ckb_transactions_attributes << attr
         tx_index += 1
+      end
+      if ckb_transactions_attributes.present?
+        CkbTransaction.upsert_all(ckb_transactions_attributes)
       end
 
       AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present? # , unique_by: [:ckb_transaction_id, :address_id]
@@ -1062,6 +1065,7 @@ module CkbSync
         outputs_data.concat << tx.outputs_data
         tx_index += 1
       end
+
       txs = CkbTransaction.insert_all!(ckb_transactions_attributes, returning: %w(id tx_hash created_at))
     end
 
