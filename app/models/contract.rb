@@ -1,6 +1,9 @@
 class Contract < ApplicationRecord
   has_many :scripts
-
+  has_many :deployed_cells
+  has_many :referring_cells
+  has_many :cell_dependencies
+  has_many :ckb_transactions, through: :cell_dependencies
 end
 
 # == Schema Information
