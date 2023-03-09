@@ -65,6 +65,19 @@ module Api::V2
       }
     end
 
+    def referring_cells
+      head :not_found and return if @script.blank?
+      render json: {
+        data: {
+          referring_cells: @script.script.cell_dependencies.page(@page).per(@page_size)
+        },
+        meta: {
+          total: @script.script.cell_dependencies.count,
+          page_size: @page_size.to_i
+        }
+      }
+    end
+
     private
     def get_script_content script
       column_name = script.class == TypeScript ? "type_script_id" : "lock_script_id"
