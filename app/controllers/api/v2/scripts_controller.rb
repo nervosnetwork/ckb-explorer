@@ -54,9 +54,12 @@ module Api::V2
       contract = @script.contract
       head :not_found and return if @script.contract.blank?
 
+      deployed_cells = contract.deployed_cells.page(@page).per(@page_size)
       render json: {
         data: {
-          deployed_cells: contract.deployed_cells.page(@page).per(@page_size)
+          deployed_cells: deployed_cells.map{|deployed_cell|
+            deployed_cell.cell_output
+          }
         },
         meta: {
           total: contract.deployed_cells.count.to_i,
@@ -67,9 +70,12 @@ module Api::V2
 
     def referring_cells
       head :not_found and return if @script.blank?
+      cell_dependencies = @script.script.cell_dependencies.page(@page).per(@page_size)
       render json: {
         data: {
-          referring_cells: @script.script.cell_dependencies.page(@page).per(@page_size)
+          referring_cells: cell_dependencies.map {|cell_dependency|
+            cell_dependency.cell_output
+          }
         },
         meta: {
           total: @script.script.cell_dependencies.count,
