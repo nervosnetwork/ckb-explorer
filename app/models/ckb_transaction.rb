@@ -1,16 +1,18 @@
 class CkbTransaction < ApplicationRecord
+  default_scope { where(tx_status: 'committed') }
   MAX_PAGINATES_PER = 100
   DEFAULT_PAGINATES_PER = 10
   paginates_per DEFAULT_PAGINATES_PER
   max_paginates_per MAX_PAGINATES_PER
-
-  enum tx_status: { pending: 0, proposed: 1, committed: 2 }, _prefix: :ckb_transaction
+  attr_accessor :raw_hash
+  enum tx_status: { pending: 0, proposed: 1, committed: 2, rejected: 3 }, _prefix: :tx
 
   belongs_to :block
   has_many :account_books, dependent: :delete_all
   has_many :addresses, through: :account_books
   has_many :cell_inputs, dependent: :delete_all
   has_many :cell_outputs, dependent: :delete_all
+  accepts_nested_attributes_for :cell_outputs
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
   has_many :dao_events
@@ -81,13 +83,31 @@ class CkbTransaction < ApplicationRecord
       end
     end
   end
+  attr_accessor :original_transaction
+  def original_transaction
+    @original_transaction ||= CkbSync::Api.instance.get_transaction(tx_hash)
+  end
 
   def reset_cycles
     block.get_block_cycles
   end
 
-  def address_ids
-    attributes["address_ids"]
+  def process
+    tx = original_transaction.transaction
+    cells_attributes = []
+    tx.outputs.each_with_index do |cell, index|
+      output_data = tx.outputs_data[index]
+      cells_attributes << {
+        raw_address: cell.lock,
+        cell_index: index,
+        block_timestamp: block_timestamp,
+        data: output_data,
+        capacity: cell.capacity,
+        occupied_capacity: CkbUtils.calculate_cell_min_capacity(cell, output_data)
+      }
+    end
+    self.cells_attributes = cells_attributes
+    save
   end
 
   def flush_cache
@@ -116,10 +136,6 @@ class CkbTransaction < ApplicationRecord
 
   def dao_transaction?
     inputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).exists? || outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).exists?
-  end
-
-  def tx_status
-    "committed"
   end
 
   def cell_info

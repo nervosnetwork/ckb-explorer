@@ -375,7 +375,10 @@ module CkbSync
     end
 
     def update_pool_tx_status(local_block)
-      PoolTransactionEntry.pool_transaction_pending.where(tx_hash: local_block.ckb_transactions.pluck(:tx_hash)).update_all(tx_status: "committed")
+      hashes = local_block.ckb_transactions.pluck(:tx_hash)
+
+      PoolTransactionEntry.pool_transaction_pending.where(tx_hash: hashes).update_all(tx_status: "committed")
+      CkbTransaction.tx_pending.where(tx_hash: hashes ).update_all(tx_status: "committed")
     end
 
     def update_udt_info(local_block)

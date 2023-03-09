@@ -170,17 +170,9 @@ ALTER SEQUENCE public.account_books_id_seq OWNED BY public.account_books.id;
 
 CREATE TABLE public.address_dao_transactions (
     ckb_transaction_id bigint,
-    address_id bigint
-);
-
-
---
--- Name: address_udt_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.address_udt_transactions (
-    ckb_transaction_id bigint,
-    address_id bigint
+    address_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -452,6 +444,17 @@ ALTER SEQUENCE public.block_time_statistics_id_seq OWNED BY public.block_time_st
 
 
 --
+-- Name: block_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.block_transactions (
+    block_id bigint,
+    ckb_transaction_id bigint,
+    tx_index integer
+);
+
+
+--
 -- Name: blocks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -477,9 +480,11 @@ ALTER SEQUENCE public.blocks_id_seq OWNED BY public.blocks.id;
 CREATE TABLE public.cell_dependencies (
     id bigint NOT NULL,
     contract_id bigint,
-    ckb_transaction_id bigint NOT NULL,
+    ckb_transaction_id bigint,
     dep_type integer,
-    contract_cell_id bigint NOT NULL,
+    contract_cell_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
     script_id bigint
 );
 
@@ -567,8 +572,7 @@ CREATE TABLE public.cell_outputs (
     udt_amount numeric(40,0),
     dao character varying,
     lock_script_id bigint,
-    type_script_id bigint,
-    data_hash bytea
+    type_script_id bigint
 );
 
 
@@ -834,8 +838,8 @@ ALTER SEQUENCE public.dao_events_id_seq OWNED BY public.dao_events.id;
 
 CREATE TABLE public.deployed_cells (
     id bigint NOT NULL,
-    cell_output_id bigint NOT NULL,
-    contract_id bigint NOT NULL,
+    cell_output_id bigint,
+    contract_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -1280,8 +1284,10 @@ CREATE TABLE public.schema_migrations (
 
 CREATE TABLE public.script_transactions (
     id bigint NOT NULL,
-    script_id bigint NOT NULL,
-    ckb_transaction_id bigint NOT NULL
+    script_id bigint,
+    ckb_transaction_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -2265,24 +2271,24 @@ ALTER TABLE ONLY public.uncle_blocks
 
 
 --
--- Name: address_dao_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
+-- Name: altpk; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX address_dao_tx_alt_pk ON public.address_dao_transactions USING btree (address_id, ckb_transaction_id);
-
-
---
--- Name: address_udt_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX address_udt_tx_alt_pk ON public.address_udt_transactions USING btree (address_id, ckb_transaction_id);
+CREATE UNIQUE INDEX altpk ON public.address_dao_transactions USING btree (address_id, ckb_transaction_id);
 
 
 --
--- Name: cell_deps_tx_cell_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: block_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX cell_deps_tx_cell_idx ON public.cell_dependencies USING btree (ckb_transaction_id, contract_cell_id);
+CREATE UNIQUE INDEX block_tx_alt_pk ON public.block_transactions USING btree (block_id, ckb_transaction_id);
+
+
+--
+-- Name: block_tx_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX block_tx_index ON public.block_transactions USING btree (block_id, tx_index);
 
 
 --
@@ -2304,13 +2310,6 @@ CREATE INDEX index_account_books_on_ckb_transaction_id ON public.account_books U
 --
 
 CREATE INDEX index_address_dao_transactions_on_ckb_transaction_id ON public.address_dao_transactions USING btree (ckb_transaction_id);
-
-
---
--- Name: index_address_udt_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_address_udt_transactions_on_ckb_transaction_id ON public.address_udt_transactions USING btree (ckb_transaction_id);
 
 
 --
@@ -2360,6 +2359,20 @@ CREATE UNIQUE INDEX index_block_statistics_on_block_number ON public.block_stati
 --
 
 CREATE UNIQUE INDEX index_block_time_statistics_on_stat_timestamp ON public.block_time_statistics USING btree (stat_timestamp);
+
+
+--
+-- Name: index_block_transactions_on_block_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_block_transactions_on_block_id ON public.block_transactions USING btree (block_id);
+
+
+--
+-- Name: index_block_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_block_transactions_on_ckb_transaction_id ON public.block_transactions USING btree (ckb_transaction_id);
 
 
 --
@@ -2486,13 +2499,6 @@ CREATE INDEX index_cell_outputs_on_consumed_block_timestamp ON public.cell_outpu
 --
 
 CREATE INDEX index_cell_outputs_on_consumed_by_id ON public.cell_outputs USING btree (consumed_by_id);
-
-
---
--- Name: index_cell_outputs_on_data_hash; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_on_data_hash ON public.cell_outputs USING hash (data_hash);
 
 
 --
@@ -2681,14 +2687,14 @@ CREATE INDEX index_dao_events_on_status_and_event_type ON public.dao_events USIN
 -- Name: index_deployed_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
+CREATE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
 
 
 --
--- Name: index_deployed_cells_on_contract_id_and_cell_output_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_deployed_cells_on_contract_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_deployed_cells_on_contract_id_and_cell_output_id ON public.deployed_cells USING btree (contract_id, cell_output_id);
+CREATE INDEX index_deployed_cells_on_contract_id ON public.deployed_cells USING btree (contract_id);
 
 
 --
@@ -2731,13 +2737,6 @@ CREATE INDEX index_lock_scripts_on_code_hash_and_hash_type_and_args ON public.lo
 --
 
 CREATE INDEX index_lock_scripts_on_script_hash ON public.lock_scripts USING btree (script_hash);
-
-
---
--- Name: index_lock_scripts_on_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_lock_scripts_on_script_id ON public.lock_scripts USING btree (script_id);
 
 
 --
@@ -2794,13 +2793,6 @@ CREATE UNIQUE INDEX index_rolling_avg_block_time_on_timestamp ON public.rolling_
 --
 
 CREATE INDEX index_script_transactions_on_ckb_transaction_id ON public.script_transactions USING btree (ckb_transaction_id);
-
-
---
--- Name: index_script_transactions_on_ckb_transaction_id_and_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_script_transactions_on_ckb_transaction_id_and_script_id ON public.script_transactions USING btree (ckb_transaction_id, script_id);
 
 
 --
@@ -2930,13 +2922,6 @@ CREATE INDEX index_type_scripts_on_script_hash ON public.type_scripts USING btre
 
 
 --
--- Name: index_type_scripts_on_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_type_scripts_on_script_id ON public.type_scripts USING btree (script_id);
-
-
---
 -- Name: index_udt_accounts_on_address_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3014,18 +2999,27 @@ CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public
 
 
 --
--- Name: ckb_transactions sync_to_account_book; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER sync_to_account_book AFTER INSERT OR UPDATE ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.synx_tx_to_account_book();
-
-
---
 -- Name: udt_transactions fk_rails_6a09774940; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.udt_transactions
     ADD CONSTRAINT fk_rails_6a09774940 FOREIGN KEY (ckb_transaction_id) REFERENCES public.ckb_transactions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: block_transactions fk_rails_9d133bda04; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.block_transactions
+    ADD CONSTRAINT fk_rails_9d133bda04 FOREIGN KEY (ckb_transaction_id) REFERENCES public.ckb_transactions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: block_transactions fk_rails_a0eeb26f19; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.block_transactions
+    ADD CONSTRAINT fk_rails_a0eeb26f19 FOREIGN KEY (block_id) REFERENCES public.blocks(id) ON DELETE CASCADE;
 
 
 --

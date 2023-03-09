@@ -80,6 +80,17 @@ class Address < ApplicationRecord
     ).find_or_create_by lock_hash: lock_hash
   end
 
+  def self.find_or_create_by_lock(lock_script)
+    lock_hash = lock_script.compute_hash
+    address_hash = CkbUtils.generate_address(lock_script)
+    address = Address.find_or_initialize_by(lock_hash: lock_hash)
+    # force use new version address
+    address.address_hash = address_hash_2021
+    address.lock_script = LockScript
+    address.save!
+    address    
+  end
+
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     lock_hash = lock_script.compute_hash
     address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)

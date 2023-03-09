@@ -6,14 +6,14 @@ module Api
 
       def index
         if from_home_page?
-          ckb_transactions = CkbTransaction.recent.normal.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
+          ckb_transactions = CkbTransaction.tx_committed.recent.normal.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
           json =
             Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
               CkbTransactionListSerializer.new(ckb_transactions).serialized_json
             end
           render json: json
         else
-          ckb_transactions = CkbTransaction.recent.normal.page(@page).per(@page_size).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
+          ckb_transactions = CkbTransaction.tx_committed.recent.normal.page(@page).per(@page_size).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
           json =
             Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
               records_counter = RecordCounters::Transactions.new
@@ -48,10 +48,10 @@ module Api
               ).select(
                 "ckb_transaction_id"
               ).page(@page).per(@page_size)
-            CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
+            CkbTransaction.tx_committed.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
           else
             records_counter = RecordCounters::Transactions.new
-            CkbTransaction.recent.normal.page(@page).per(@page_size)
+            CkbTransaction.tx_committed.recent.normal.page(@page).per(@page_size)
           end
         ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
         json =
@@ -69,7 +69,7 @@ module Api
       end
 
       def show
-        ckb_transaction = CkbTransaction.cached_find(params[:id]) || PoolTransactionEntry.find_by(tx_hash: params[:id])
+        ckb_transaction = CkbTransaction.tx_committed.cached_find(params[:id]) || PoolTransactionEntry.find_by(tx_hash: params[:id])
 
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if ckb_transaction.blank?
 

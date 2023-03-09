@@ -2,7 +2,7 @@ class CellOutput < ApplicationRecord
   SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   MIN_SUDT_AMOUNT_BYTESIZE = 16
-  enum status: { live: 0, dead: 1 }
+  enum status: { live: 0, dead: 1, pending: 2, rejected: 3, }
   enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9, cota_regular: 10 }
 
   belongs_to :ckb_transaction
@@ -20,6 +20,7 @@ class CellOutput < ApplicationRecord
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   attribute :tx_hash, :ckb_hash
+  attr_accessor :raw_address
 
   scope :consumed_after, ->(block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
   scope :consumed_before, ->(block_timestamp) { where("consumed_block_timestamp <= ?", block_timestamp) }
@@ -29,8 +30,16 @@ class CellOutput < ApplicationRecord
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
   scope :free, -> { where(type_hash: nil, data: "0x") }
   scope :occupied, -> { where.not(type_hash: nil, data: "0x") }
+  before_validation do
+    self.data_size ||= data ? CKB::Utils.hex_to_bin(data).bytesize : 0
+  end
+  before_create :setup_address
 
-  after_commit :flush_cache
+  def setup_address
+    self.address = Address.find_or_create_by_address_hash(raw_address, block_timestamp) if raw_address
+  end
+
+  # after_commit :flush_cache
 
   def occupied?
     !free?
