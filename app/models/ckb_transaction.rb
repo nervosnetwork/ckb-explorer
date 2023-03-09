@@ -94,19 +94,22 @@ class CkbTransaction < ApplicationRecord
 
   def process
     tx = original_transaction.transaction
-    cells_attributes = []
+    cells = []
     tx.outputs.each_with_index do |cell, index|
       output_data = tx.outputs_data[index]
-      cells_attributes << {
-        raw_address: cell.lock,
-        cell_index: index,
+      lock = LockScript.process(cell.lock)
+      cells << CellOutput.create_with(
+        lock_script_id: lock.id
         block_timestamp: block_timestamp,
         data: output_data,
         capacity: cell.capacity,
         occupied_capacity: CkbUtils.calculate_cell_min_capacity(cell, output_data)
-      }
+      ).find_or_create_by(
+        ckb_transaction_id: id,
+        cell_index: index,
+      )
     end
-    self.cells_attributes = cells_attributes
+    
     save
   end
 
@@ -297,7 +300,14 @@ class CkbTransaction < ApplicationRecord
 
   def cellbase_display_inputs
     cellbase = Cellbase.new(block)
-    [CkbUtils.hash_value_to_s(id: nil, from_cellbase: true, capacity: nil, address_hash: nil, target_block_number: cellbase.target_block_number, generated_tx_hash: tx_hash)]
+    [CkbUtils.hash_value_to_s(
+      id: nil, 
+      from_cellbase: true, 
+      capacity: nil, 
+      address_hash: nil, 
+      target_block_number: cellbase.target_block_number, 
+      generated_tx_hash: tx_hash
+    )]
   end
 
   def recover_dead_cell
