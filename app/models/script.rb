@@ -23,7 +23,7 @@ class Script < ActiveRecord::Base
         temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
       end
 
-      script = Script.find_or_create_by temp_hash
+      script = Script.create_or_find_by temp_hash
       type_script.update script_id: script.id
     end
 
@@ -40,7 +40,7 @@ class Script < ActiveRecord::Base
       if contract_id != 0
         temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
       end
-      script = Script.find_or_create_by temp_hash
+      script = Script.create_or_find_by temp_hash
       lock_script.update script_id: script.id
     end
 

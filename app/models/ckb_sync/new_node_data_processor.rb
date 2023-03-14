@@ -680,7 +680,7 @@ module CkbSync
           if contract_id != 0
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
           end
-          script = Script.find_or_create_by temp_hash
+          script = Script.create_or_find_by temp_hash
           lock_script.update script_id: script.id
         end
       end
@@ -702,7 +702,7 @@ module CkbSync
           if contract_id != 0
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
           end
-          script = Script.find_or_create_by temp_hash
+          script = Script.create_or_find_by temp_hash
           type_script.update script_id: script.id
         end
       end
@@ -1200,7 +1200,7 @@ module CkbSync
       return if cellbase.witnesses.blank?
 
       lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-      lock = LockScript.find_or_create_by(
+      lock = LockScript.create_or_find_by(
         code_hash: lock_script.code_hash,
         hash_type: lock_script.hash_type,
         args: lock_script.args

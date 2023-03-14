@@ -15,7 +15,7 @@ class ScriptTransaction < ApplicationRecord
 
     type_scripts_or_lock_scripts.each do |temp_script|
       temp_script.cell_outputs.each do |cell_output|
-        ScriptTransaction.find_or_create_by ckb_transaction_id: cell_output.ckb_transaction_id, script_id: temp_script.script_id
+        ScriptTransaction.create_or_find_by ckb_transaction_id: cell_output.ckb_transaction_id, script_id: temp_script.script_id
       end
     end
   end

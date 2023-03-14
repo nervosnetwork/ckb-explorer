@@ -21,7 +21,7 @@ class CellDependency < ActiveRecord::Base
           if contract_id.present?
             the_hash.store("contract_id", contract_id)
           end
-          CellDependency.find_or_create_by(the_hash)
+          CellDependency.create_or_find_by(the_hash)
         end
       end
     end
