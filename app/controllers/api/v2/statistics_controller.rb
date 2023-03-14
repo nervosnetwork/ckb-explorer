@@ -8,8 +8,7 @@ module Api::V2
         CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes, :confirmation_time).where('bytes > 0').order('id desc').limit(10000)
       end
 
-      pending_transaction_fee_rates = PoolTransactionEntry.select(:id, :transaction_fee, :bytes).pool_transaction_pending
-        .where('bytes > 0')
+      pending_transaction_fee_rates = PoolTransactionEntry.select(:id, :transaction_fee, :bytes, :tx_hash).pool_transaction_pending
         .order('id desc').page(@pending_page).per(@pending_page_size)
 
       dates = (0..@last_n_day).map { |i| i.days.ago.strftime("%Y-%m-%d") }
@@ -27,9 +26,14 @@ module Api::V2
           }
         },
         pending_transaction_fee_rates: pending_transaction_fee_rates.map { |tx|
+          tx_bytes = tx.bytes
+          if tx.bytes.blank? || tx.bytes == 0
+            tx_bytes = CkbSync::Api.instance.get_transaction(tx.tx_hash).transaction.serialized_size_in_block
+            tx.update bytes: tx_bytes
+          end
           {
             id: tx.id,
-            fee_rate: (tx.transaction_fee / tx.bytes),
+            fee_rate: (tx.transaction_fee / tx_bytes),
           }
         },
         last_n_days_transaction_fee_rates: last_n_days_transaction_fee_rates.map { |day_fee_rate|
