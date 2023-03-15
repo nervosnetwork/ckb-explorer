@@ -31,7 +31,7 @@ module Api::V2
             Rails.logger.info "== tx: #{tx.tx_hash, tx.id}"
             begin
               tx_bytes = CkbSync::Api.instance.get_transaction(tx.tx_hash).transaction.serialized_size_in_block
-            rescue
+            rescue Exception => e
               Rails.logger.error "== tx not found"
               tx_bytes = 1
             end
