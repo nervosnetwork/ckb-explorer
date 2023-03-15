@@ -28,7 +28,7 @@ module Api::V2
         pending_transaction_fee_rates: pending_transaction_fee_rates.map { |tx|
           tx_bytes = tx.bytes
           if tx.bytes.blank? || tx.bytes == 0
-            Rails.logger.info "== tx: #{tx.tx_hash, tx.id}"
+            Rails.logger.info "== tx: #{tx.tx_hash}, #{tx.id}"
             begin
               tx_bytes = CkbSync::Api.instance.get_transaction(tx.tx_hash).transaction.serialized_size_in_block
             rescue Exception => e
