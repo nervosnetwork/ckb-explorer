@@ -5,7 +5,8 @@ module Api::V2
     def transaction_fees
 
       transaction_fee_rates = Rails.cache.fetch("transaction_fees", expires_in: 10.seconds) do
-        CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes, :confirmation_time).where('bytes > 0').order('id desc').limit(10000)
+        CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes, :confirmation_time)
+          .where('bytes > 0 and transaction_fee > 0').order('id desc').limit(10000)
       end
 
       pending_transaction_fee_rates = PoolTransactionEntry.select(:id, :transaction_fee, :bytes, :tx_hash).pool_transaction_pending
