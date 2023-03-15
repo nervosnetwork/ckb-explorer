@@ -22,7 +22,7 @@ module Api::V2
           {
             id: tx.id,
             timestamp: tx.created_at.to_i,
-            fee_rate: (tx.transaction_fee / tx.bytes),
+            fee_rate: (tx.transaction_fee.to_f / tx.bytes),
             confirmation_time: tx.confirmation_time
           }
         },
@@ -40,7 +40,7 @@ module Api::V2
           end
           {
             id: tx.id,
-            fee_rate: (tx.transaction_fee / tx_bytes),
+            fee_rate: (tx.transaction_fee.to_f / tx_bytes),
           }
         },
         last_n_days_transaction_fee_rates: last_n_days_transaction_fee_rates.map { |day_fee_rate|
