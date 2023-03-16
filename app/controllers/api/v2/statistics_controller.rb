@@ -9,8 +9,25 @@ module Api::V2
           .where('bytes > 0 and transaction_fee > 0').order('id desc').limit(10000)
       end
 
-      pending_transaction_fee_rates = PoolTransactionEntry.select(:id, :transaction_fee, :bytes, :tx_hash).pool_transaction_pending
+      pending_transaction_fee_rates = PoolTransactionEntry.pool_transaction_pending
+        .where('transaction_fee > 0')
         .order('id desc').page(@pending_page).per(@pending_page_size)
+
+      pending_transaction_fee_rates = pending_transaction_fee_rates.map { |tx|
+        tx_bytes = 0
+        if tx.bytes.blank? || tx.bytes == 0
+          Rails.logger.info "== checking tx bytes: #{tx.tx_hash}, #{tx.id}"
+          begin
+            tx_bytes = CkbSync::Api.instance.get_transaction(tx.tx_hash).transaction.serialized_size_in_block
+          rescue Exception => e
+            Rails.logger.error "== tx not found"
+            tx_bytes = 0
+          end
+          tx.update bytes: tx_bytes
+        end
+
+        tx
+      }.select {|e| e.bytes > 0}
 
       dates = (0..@last_n_day).map { |i| i.days.ago.strftime("%Y-%m-%d") }
       last_n_days_transaction_fee_rates = dates.map { |date|
@@ -27,17 +44,6 @@ module Api::V2
           }
         },
         pending_transaction_fee_rates: pending_transaction_fee_rates.map { |tx|
-          tx_bytes = tx.bytes
-          if tx.bytes.blank? || tx.bytes == 0
-            Rails.logger.info "== tx: #{tx.tx_hash}, #{tx.id}"
-            begin
-              tx_bytes = CkbSync::Api.instance.get_transaction(tx.tx_hash).transaction.serialized_size_in_block
-            rescue Exception => e
-              Rails.logger.error "== tx not found"
-              tx_bytes = 1
-            end
-            tx.update bytes: tx_bytes
-          end
           {
             id: tx.id,
             fee_rate: (tx.transaction_fee.to_f / tx_bytes),
