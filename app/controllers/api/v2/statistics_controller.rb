@@ -46,7 +46,7 @@ module Api::V2
         pending_transaction_fee_rates: pending_transaction_fee_rates.map { |tx|
           {
             id: tx.id,
-            fee_rate: (tx.transaction_fee.to_f / tx_bytes),
+            fee_rate: (tx.transaction_fee.to_f / tx.bytes),
           }
         },
         last_n_days_transaction_fee_rates: last_n_days_transaction_fee_rates.map { |day_fee_rate|
