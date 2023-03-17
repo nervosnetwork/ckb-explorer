@@ -9,17 +9,15 @@ class Script < ActiveRecord::Base
   belongs_to :contract, optional: true
 
   def self.create_initial_data
+    contracts = {}
+    Contract.all.each do |contract|
+      contracts[contract.code_hash] = contract
+    end
     TypeScript.find_each do |type_script|
-      contract_id = 0
-      Contract.all.each {|contract|
-        if contract.code_hash == type_script.code_hash
-          contract_id = contract.id
-          break
-        end
-      }
+      contract_id = contracts[type_script.code_hash]&.id
 
-      temp_hash = {args: type_script.args, script_hash: type_script.script_hash, is_contract: false}
-      if contract_id != 0
+      temp_hash = { args: type_script.args, script_hash: type_script.script_hash, is_contract: false }
+      if contract_id
         temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
       end
 
@@ -28,16 +26,10 @@ class Script < ActiveRecord::Base
     end
 
     LockScript.find_each do |lock_script|
-      contract_id = 0
-      Contract.all.each {|contract|
-        if contract.code_hash == lock_script.code_hash
-          contract_id = contract.id
-          break
-        end
-      }
+      contract_id = contracts[lock_script.code_hash]&.id
 
-      temp_hash = {args: lock_script.args, script_hash: lock_script.script_hash, is_contract: false}
-      if contract_id != 0
+      temp_hash = { args: lock_script.args, script_hash: lock_script.script_hash, is_contract: false }
+      if contract_id
         temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
       end
       script = Script.create_or_find_by temp_hash
@@ -46,8 +38,6 @@ class Script < ActiveRecord::Base
 
     Rails.logger.info "== Script.create_initial_data done"
   end
-
-
 end
 
 # == Schema Information
