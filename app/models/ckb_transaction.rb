@@ -1,10 +1,11 @@
 class CkbTransaction < ApplicationRecord
-  default_scope { where(tx_status: 'committed') }
+  default_scope { where(tx_status: "committed") }
   MAX_PAGINATES_PER = 100
   DEFAULT_PAGINATES_PER = 10
   paginates_per DEFAULT_PAGINATES_PER
   max_paginates_per MAX_PAGINATES_PER
-  attr_accessor :raw_hash
+  attr_accessor :raw_hash, :original_transaction
+
   enum tx_status: { pending: 0, proposed: 1, committed: 2, rejected: 3 }, _prefix: :tx
 
   belongs_to :block
@@ -83,7 +84,7 @@ class CkbTransaction < ApplicationRecord
       end
     end
   end
-  attr_accessor :original_transaction
+
   def original_transaction
     @original_transaction ||= CkbSync::Api.instance.get_transaction(tx_hash)
   end
@@ -99,17 +100,17 @@ class CkbTransaction < ApplicationRecord
       output_data = tx.outputs_data[index]
       lock = LockScript.process(cell.lock)
       cells << CellOutput.create_with(
-        lock_script_id: lock.id
+        lock_script_id: lock.id,
         block_timestamp: block_timestamp,
         data: output_data,
         capacity: cell.capacity,
         occupied_capacity: CkbUtils.calculate_cell_min_capacity(cell, output_data)
-      ).find_or_create_by(
+      ).create_or_find_by(
         ckb_transaction_id: id,
-        cell_index: index,
+        cell_index: index
       )
     end
-    
+
     save
   end
 
@@ -300,14 +301,16 @@ class CkbTransaction < ApplicationRecord
 
   def cellbase_display_inputs
     cellbase = Cellbase.new(block)
-    [CkbUtils.hash_value_to_s(
-      id: nil, 
-      from_cellbase: true, 
-      capacity: nil, 
-      address_hash: nil, 
-      target_block_number: cellbase.target_block_number, 
-      generated_tx_hash: tx_hash
-    )]
+    [
+      CkbUtils.hash_value_to_s(
+        id: nil,
+        from_cellbase: true,
+        capacity: nil,
+        address_hash: nil,
+        target_block_number: cellbase.target_block_number,
+        generated_tx_hash: tx_hash
+      )
+    ]
   end
 
   def recover_dead_cell

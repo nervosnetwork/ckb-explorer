@@ -13,6 +13,15 @@ class LockScript < ActiveRecord::Base
   validates_presence_of :code_hash
   attribute :code_hash, :ckb_hash
 
+  def self.process(lock)
+    lock_hash = lock.compute_hash
+    address_hash = CkbUtils.generate_address(lock_script)
+    address = Address.create_with(address_hash: address_hash).create_or_find_by(lock_hash: lock_hash)
+    contract = Contract.create_or_find_by(code_hash: lock.code_hash)
+    script = Script
+    create_with(script_hash: lock_hash, address_id: address.id).create_or_find_by(code_hash: lock.code_hash, hash_type: lock.hash_type, args: lock.args)
+  end
+
   def to_node
     {
       args: args,
@@ -21,7 +30,7 @@ class LockScript < ActiveRecord::Base
     }
   end
 
-  def as_json(options={})
+  def as_json(options = {})
     {
       args: args,
       code_hash: code_hash,
@@ -31,7 +40,7 @@ class LockScript < ActiveRecord::Base
   end
 
   def ckb_transactions
-    CkbTransaction.where(:id => CellOutput.where(lock_script_id: self.id).pluck('generated_by_id', 'consumed_by_id').flatten)
+    CkbTransaction.where(id: CellOutput.where(lock_script_id: self.id).pluck("generated_by_id", "consumed_by_id").flatten)
   end
 
   def cell_output
