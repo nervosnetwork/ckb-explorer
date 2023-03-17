@@ -679,6 +679,9 @@ module CkbSync
           temp_hash = { script_hash: (lock_script.script_hash rescue ""), is_contract: false }
           if contract_id != 0
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
+          else
+            contract = Contract.create code_hash: lock_script.script_hash
+            temp_hash = temp_hash.merge contract_id: contract.id
           end
           script = Script.find_or_create_by temp_hash
           lock_script.update script_id: script.id
@@ -701,6 +704,9 @@ module CkbSync
           temp_hash = { script_hash: (type_script.script_hash rescue ""), is_contract: false }
           if contract_id != 0
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
+          else
+            contract = Contract.create code_hash: type_script.script_hash
+            temp_hash = temp_hash.merge contract_id: contract.id
           end
           script = Script.find_or_create_by temp_hash
           type_script.update script_id: script.id
