@@ -62,7 +62,7 @@ class CellDependencyTest < ActiveSupport::TestCase
     assert_equal 4, CellDependency.count
     assert_equal contract.id, cell_dependency.contract_id
     assert_equal lock_script.ckb_transactions.first.id, cell_dependency.ckb_transaction_id
-    assert_equal cell_output_ids_of_lock_script_or_type_script, cell_output_ids_of_cell_dependency
+    assert_equal cell_output_ids_of_lock_script_or_type_script.sort, cell_output_ids_of_cell_dependency.sort
 
     # for the 2nd time, it should NOT create new record
     CellDependency.create_from_scripts TypeScript.all
