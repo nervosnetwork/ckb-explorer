@@ -24,8 +24,8 @@ end
 # Table name: script_transactions
 #
 #  id                 :bigint           not null, primary key
-#  script_id          :bigint
-#  ckb_transaction_id :bigint
+#  script_id          :bigint           not null
+#  ckb_transaction_id :bigint           not null
 #
 # Indexes
 #
