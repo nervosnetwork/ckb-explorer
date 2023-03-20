@@ -31,18 +31,21 @@ class CellDependency < ActiveRecord::Base
       Rails.logger.info "== processing the_script: #{the_script.id}"
       next if the_script.ckb_transactions.blank?
 
+      hashes = []
       the_script.ckb_transactions.each do |ckb_transaction|
         next if ckb_transaction.cell_outputs.blank?
 
         ckb_transaction.cell_outputs.each do |cell_output|
-          the_hash = { ckb_transaction_id: ckb_transaction.id, contract_cell_id: cell_output.id, script_id: the_script.script_id }
-          contract_id = the_script.script.contract_id
-          if contract_id.present?
-            the_hash.store("contract_id", contract_id)
-          end
-          CellDependency.create_or_find_by(the_hash)
+          the_hash = {
+            ckb_transaction_id: ckb_transaction.id,
+            contract_cell_id: cell_output.id,
+            script_id: the_script.script_id,
+            contract_id: the_script.script.contract_id
+          }
+          hashes << the_hash
         end
       end
+      CellDependency.upsert_all hashes, unique_by: [:ckb_transaction_id, :contract_cell_id]
     end
   end
 end
