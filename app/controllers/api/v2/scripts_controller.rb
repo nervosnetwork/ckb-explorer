@@ -16,7 +16,7 @@ module Api::V2
 
       render json: {
         data: {
-          ckb_transactions: @script.script.ckb_transactions.page(@page).per(@page_size).map do |tx|
+          ckb_transactions: @contract.ckb_transactions.page(@page).per(@page_size).map do |tx|
             {
               id: tx.id,
               tx_hash: tx.tx_hash,
@@ -43,7 +43,7 @@ module Api::V2
           end
         },
         meta: {
-          total: @script.script.ckb_transactions.count.to_i,
+          total: @contract.ckb_transactions.count.to_i,
           page_size: @page_size.to_i
         }
       }
@@ -52,34 +52,16 @@ module Api::V2
     def deployed_cells
       head :not_found and return if @script.blank?
 
-      contract = @script.contract
+      # contract = @script.contract
       head :not_found and return if @script.contract.blank?
 
-      deployed_cells = contract.deployed_cells.page(@page).per(@page_size)
+      deployed_cells = @contract.deployed_cells.live
       render json: {
         data: {
-          deployed_cells: deployed_cells.map{|deployed_cell|
-            deployed_cell.cell_output
-          }
+          deployed_cells: deployed_cells.page(@page).per(@page_size)
         },
         meta: {
-          total: contract.deployed_cells.count.to_i,
-          page_size: @page_size.to_i
-        }
-      }
-    end
-
-    def referring_cells
-      head :not_found and return if @script.blank?
-      cell_dependencies = @script.script.cell_dependencies.page(@page).per(@page_size)
-      render json: {
-        data: {
-          referring_cells: cell_dependencies.map {|cell_dependency|
-            cell_dependency.cell_output
-          }
-        },
-        meta: {
-          total: @script.script.cell_dependencies.count,
+          total: deployed_cells.count.to_i,
           page_size: @page_size.to_i
         }
       }
