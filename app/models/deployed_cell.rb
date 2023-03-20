@@ -1,5 +1,4 @@
 class DeployedCell < ApplicationRecord
-
   belongs_to :contract
   belongs_to :cell_output
 
@@ -7,7 +6,7 @@ class DeployedCell < ApplicationRecord
   # before running this method,
   # 1. run Script.create_initial_data
   # 2. run this method: DeployedCell.create_initial_data
-  def self.create_initial_data ckb_transaction_id = nil
+  def self.create_initial_data(ckb_transaction_id = nil)
     Rails.logger.info "=== ckb_transaction_id: #{ckb_transaction_id.inspect}"
 
     if ckb_transaction_id.blank?
@@ -21,30 +20,24 @@ class DeployedCell < ApplicationRecord
     Rails.logger.info "== done"
   end
 
-  def self.create_initial_data_for_ckb_transaction ckb_transaction
-    begin
-      if ckb_transaction.cell_outputs.present?
-        ckb_transaction.cell_outputs.each do |cell_output|
-          self.create_initial_data_by_cell_output cell_output, ckb_transaction
-        end
+  def self.create_initial_data_for_ckb_transaction(ckb_transaction)
+    if ckb_transaction.cell_outputs.present?
+      ckb_transaction.cell_outputs.each do |cell_output|
+        self.create_initial_data_by_cell_output cell_output, ckb_transaction
       end
+    end
 
-      if ckb_transaction.cell_inputs.present?
-        ckb_transaction.cell_inputs.each do |cell_input|
-          cell_output = cell_input.previous_cell_output
-          next if cell_output.blank?
+    if ckb_transaction.cell_inputs.present?
+      ckb_transaction.cell_inputs.each do |cell_input|
+        cell_output = cell_input.previous_cell_output
+        next if cell_output.blank?
 
-          self.create_initial_data_by_cell_output cell_output, ckb_transaction
-        end
+        self.create_initial_data_by_cell_output cell_output, ckb_transaction
       end
-    rescue Exception => e
-      Rails.logger.warn "If you have not finished creating Script table, just ignore this error message, #{e}"
-      #Rails.logger.error e
-      #Rails.logger.error e.backtrace.join("\n")
     end
   end
 
-  def self.create_initial_data_by_cell_output cell_output, ckb_transaction
+  def self.create_initial_data_by_cell_output(cell_output, ckb_transaction)
     lock_script = cell_output.lock_script
     if lock_script.present?
       self.create_deployed_cells lock_script_or_type_script: lock_script, ckb_transaction: ckb_transaction, contract_id: lock_script.script.contract_id
@@ -56,19 +49,14 @@ class DeployedCell < ApplicationRecord
     end
   end
 
-  def self.create_deployed_cells options
+  def self.create_deployed_cells(options)
     lock_script_or_type_script = options[:lock_script_or_type_script]
     ckb_transaction = options[:ckb_transaction]
     contract_id = options[:contract_id]
 
-    if lock_script_or_type_script.present? && lock_script_or_type_script.hash_type == 'type'
+    if lock_script_or_type_script.present? && lock_script_or_type_script.hash_type == "type"
       ckb_transaction.cell_deps.each do |cell_dep|
-        tx_hash = cell_dep['out_point']['tx_hash']
-        point_index = cell_dep['out_point']['index']
-
-        temp_ckb_transaction = CkbTransaction.find_by(tx_hash: tx_hash)
-        cell_output = temp_ckb_transaction.cell_outputs[point_index]
-
+        cell_output = CellOutput.find_by_pointer cell_dep["out_point"]["tx_hash"], cell_dep["out_point"]["index"].hex
 
         if lock_script_or_type_script.code_hash == cell_output.lock_script.code_hash
           DeployedCell.create_or_find_by(cell_output_id: cell_output.id, contract_id: contract_id)
@@ -76,11 +64,10 @@ class DeployedCell < ApplicationRecord
       end
     end
 
-    if lock_script_or_type_script.present? && lock_script_or_type_script.hash_type == 'data'
+    if lock_script_or_type_script.present? && lock_script_or_type_script.hash_type == "data"
       ckb_transaction.cell_deps.each do |cell_dep|
-
-        tx_hash = cell_dep['out_point']['tx_hash']
-        point_index = cell_dep['out_point']['index']
+        tx_hash = cell_dep["out_point"]["tx_hash"]
+        point_index = cell_dep["out_point"]["index"]
 
         temp_ckb_transaction = CkbTransaction.find_by(tx_hash: tx_hash)
         cell_output = temp_ckb_transaction.cell_outputs[point_index]
@@ -91,9 +78,7 @@ class DeployedCell < ApplicationRecord
       end
     end
   end
-
 end
-
 
 # == Schema Information
 #

@@ -7,13 +7,13 @@ class ScriptTransaction < ApplicationRecord
   def self.create_initial_data
     connection.execute <<-SQL
     insert into script_transactions (ckb_transaction_id, script_id)
-      select distinct co.ckb_transaction_id, ls.script_id from cell_outputs co inner join lock_scripts ls on co.lock_script_id = ls.id where ls.script_id is not null
+      select co.ckb_transaction_id, ls.script_id from cell_outputs co inner join lock_scripts ls on co.lock_script_id = ls.id where ls.script_id is not null
       on conflict do nothing
     SQL
 
     connection.execute <<-SQL
     insert into script_transactions (ckb_transaction_id, script_id)
-      select distinct co.ckb_transaction_id, ts.script_id from cell_outputs co inner join type_scripts ts on co.type_script_id = ts.id where ts.script_id is not null
+      select co.ckb_transaction_id, ts.script_id from cell_outputs co inner join type_scripts ts on co.type_script_id = ts.id where ts.script_id is not null
       on conflict do nothing
     SQL
   end
