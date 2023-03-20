@@ -66,6 +66,7 @@ gem "activerecord-import"
 gem "fast_jsonapi"
 
 gem "kaminari"
+gem "fast_page"
 
 gem "ruby-progressbar", require: false
 

@@ -13,7 +13,8 @@ module Api
             end
           render json: json
         else
-          ckb_transactions = CkbTransaction.recent.normal.page(@page).per(@page_size).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
+          temp_offset_id = (@page.to_i - 1) * @page_size.to_i
+          ckb_transactions = CkbTransaction.recent.normal.limit(@page_size.to_i).offset(temp_offset_id).fast_page.select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
           json =
             Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
               records_counter = RecordCounters::Transactions.new

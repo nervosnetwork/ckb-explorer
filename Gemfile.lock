@@ -195,6 +195,9 @@ GEM
       railties (>= 5.0.0)
     fast_jsonapi (1.5)
       activesupport (>= 4.2)
+    fast_page (0.1.5)
+      activerecord
+      activesupport
     ffi (1.15.5)
     ffi-compiler (1.0.1)
       ffi (>= 1.0.0)
@@ -465,6 +468,7 @@ DEPENDENCIES
   factory_bot_rails
   faker!
   fast_jsonapi
+  fast_page
   hiredis
   http
   kaminari
