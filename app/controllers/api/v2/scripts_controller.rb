@@ -55,10 +55,10 @@ module Api::V2
       # contract = @script.contract
       head :not_found and return if @script.contract.blank?
 
-      deployed_cells = @contract.deployed_cells.live
+      deployed_cells = @contract.deployed_cell_outputs.live
       render json: {
         data: {
-          deployed_cells: deployed_cells.page(@page).per(@page_size)
+          deployed_cells: deployed_cells.page(@page).per(@page_size).to_a
         },
         meta: {
           total: deployed_cells.count.to_i,
@@ -72,7 +72,7 @@ module Api::V2
     def get_script_content(script)
       column_name = script.instance_of?(TypeScript) ? "type_script_id" : "lock_script_id"
       @my_referring_cells = CellOutput.live.where(column_name => script.id)
-      @deployed_cells = @contract&.deployed_cells&.live
+      @deployed_cells = @contract&.deployed_cell_outputs&.live
       {
         id: script.id,
         code_hash: script.code_hash,

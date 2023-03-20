@@ -46,7 +46,7 @@ class CellOutput < ApplicationRecord
 
   def self.find_by_pointer(tx_hash, index)
     tx = CkbTransaction.find_by_tx_hash(tx_hash)
-    find_by(generated_by_id: tx.id, cell_index: index) if tx
+    find_by(generated_by_id: tx.id, cell_index: index.is_a?(String) ? index.hex : index) if tx
   end
 
   def node_output
