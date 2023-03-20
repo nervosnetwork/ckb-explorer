@@ -28,25 +28,26 @@ class ScriptTransaction < ApplicationRecord
         ls_ids << s.id
       end
     end
-
-    connection.execute <<-SQL if ls_ids.present?
-    insert into script_transactions (ckb_transaction_id, script_id)
-      select co.ckb_transaction_id, ls.script_id from cell_outputs co
-       inner join lock_scripts ls on co.lock_script_id = ls.id
-        where ls.script_id is not null
-          and ls.id in (#{ls_ids.join(',')})
-      on conflict do nothing    
-    SQL
-
-    connection.execute <<-SQL if ts_ids.present?
-    insert into script_transactions (ckb_transaction_id, script_id)
-      select co.ckb_transaction_id, ts.script_id from cell_outputs co
-       inner join type_scripts ts on co.type_script_id = ts.id
-        where ts.script_id is not null
-          and ts.id in (#{ts_ids.join(',')})
-      on conflict do nothing    
-    SQL    
-
+    if ls_ids.present?
+      connection.execute <<-SQL
+      insert into script_transactions (ckb_transaction_id, script_id)
+        select co.ckb_transaction_id, ls.script_id from cell_outputs co
+        inner join lock_scripts ls on co.lock_script_id = ls.id
+          where ls.script_id is not null
+            and ls.id in (#{ls_ids.join(',')})
+        on conflict do nothing
+      SQL
+    end
+    if ts_ids.present?
+      connection.execute <<-SQL
+      insert into script_transactions (ckb_transaction_id, script_id)
+        select co.ckb_transaction_id, ts.script_id from cell_outputs co
+        inner join type_scripts ts on co.type_script_id = ts.id
+          where ts.script_id is not null
+            and ts.id in (#{ts_ids.join(',')})
+        on conflict do nothing
+      SQL
+    end
   end
 end
 
