@@ -10,13 +10,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
 -- Name: btree_gin; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -176,6 +169,16 @@ ALTER SEQUENCE public.account_books_id_seq OWNED BY public.account_books.id;
 --
 
 CREATE TABLE public.address_dao_transactions (
+    ckb_transaction_id bigint,
+    address_id bigint
+);
+
+
+--
+-- Name: address_udt_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.address_udt_transactions (
     ckb_transaction_id bigint,
     address_id bigint
 );
@@ -468,6 +471,38 @@ ALTER SEQUENCE public.blocks_id_seq OWNED BY public.blocks.id;
 
 
 --
+-- Name: books; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.books (
+    id bigint NOT NULL,
+    author_name character varying,
+    title character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: books_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.books_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: books_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.books_id_seq OWNED BY public.books.id;
+
+
+--
 -- Name: cell_dependencies; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -747,38 +782,6 @@ CREATE SEQUENCE public.daily_statistics_id_seq
 --
 
 ALTER SEQUENCE public.daily_statistics_id_seq OWNED BY public.daily_statistics.id;
-
-
---
--- Name: dao_address_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.dao_address_transactions (
-    id bigint NOT NULL,
-    dao_address_id bigint,
-    ckb_transaction_id bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: dao_address_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.dao_address_transactions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: dao_address_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.dao_address_transactions_id_seq OWNED BY public.dao_address_transactions.id;
 
 
 --
@@ -1642,38 +1645,6 @@ ALTER SEQUENCE public.udt_accounts_id_seq OWNED BY public.udt_accounts.id;
 
 
 --
--- Name: udt_address_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.udt_address_transactions (
-    id bigint NOT NULL,
-    udt_address_id bigint,
-    ckb_transaction_id bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: udt_address_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.udt_address_transactions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: udt_address_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.udt_address_transactions_id_seq OWNED BY public.udt_address_transactions.id;
-
-
---
 -- Name: udt_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1821,6 +1792,13 @@ ALTER TABLE ONLY public.blocks ALTER COLUMN id SET DEFAULT nextval('public.block
 
 
 --
+-- Name: books id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.books ALTER COLUMN id SET DEFAULT nextval('public.books_id_seq'::regclass);
+
+
+--
 -- Name: cell_dependencies id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1860,13 +1838,6 @@ ALTER TABLE ONLY public.contracts ALTER COLUMN id SET DEFAULT nextval('public.co
 --
 
 ALTER TABLE ONLY public.daily_statistics ALTER COLUMN id SET DEFAULT nextval('public.daily_statistics_id_seq'::regclass);
-
-
---
--- Name: dao_address_transactions id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dao_address_transactions ALTER COLUMN id SET DEFAULT nextval('public.dao_address_transactions_id_seq'::regclass);
 
 
 --
@@ -2017,13 +1988,6 @@ ALTER TABLE ONLY public.udt_accounts ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
--- Name: udt_address_transactions id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.udt_address_transactions ALTER COLUMN id SET DEFAULT nextval('public.udt_address_transactions_id_seq'::regclass);
-
-
---
 -- Name: udts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2094,6 +2058,14 @@ ALTER TABLE ONLY public.blocks
 
 
 --
+-- Name: books books_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.books
+    ADD CONSTRAINT books_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: cell_dependencies cell_dependencies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2139,14 +2111,6 @@ ALTER TABLE ONLY public.contracts
 
 ALTER TABLE ONLY public.daily_statistics
     ADD CONSTRAINT daily_statistics_pkey PRIMARY KEY (id);
-
-
---
--- Name: dao_address_transactions dao_address_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.dao_address_transactions
-    ADD CONSTRAINT dao_address_transactions_pkey PRIMARY KEY (id);
 
 
 --
@@ -2334,14 +2298,6 @@ ALTER TABLE ONLY public.udt_accounts
 
 
 --
--- Name: udt_address_transactions udt_address_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.udt_address_transactions
-    ADD CONSTRAINT udt_address_transactions_pkey PRIMARY KEY (id);
-
-
---
 -- Name: udts udts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2365,10 +2321,10 @@ CREATE UNIQUE INDEX address_dao_tx_alt_pk ON public.address_dao_transactions USI
 
 
 --
--- Name: alter_pk; Type: INDEX; Schema: public; Owner: -
+-- Name: address_udt_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX alter_pk ON public.ckb_transactions USING gin (id, contained_address_ids);
+CREATE UNIQUE INDEX address_udt_tx_alt_pk ON public.address_udt_transactions USING btree (address_id, ckb_transaction_id);
 
 
 --
@@ -2390,6 +2346,13 @@ CREATE INDEX index_account_books_on_ckb_transaction_id ON public.account_books U
 --
 
 CREATE INDEX index_address_dao_transactions_on_ckb_transaction_id ON public.address_dao_transactions USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_address_udt_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_address_udt_transactions_on_ckb_transaction_id ON public.address_udt_transactions USING btree (ckb_transaction_id);
 
 
 --
@@ -3285,15 +3248,17 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230128015956'),
 ('20230128031939'),
 ('20230129165127'),
+('20230130005447'),
 ('20230206073806'),
 ('20230207112513'),
 ('20230208081700'),
 ('20230210124237'),
 ('20230211062045'),
-('20230216015150'),
-('20230216015231'),
 ('20230216084358'),
 ('20230217064540'),
 ('20230218154437'),
 ('20230220013604'),
-('20230220060922');
+('20230220060922'),
+('20230228114330');
+
+

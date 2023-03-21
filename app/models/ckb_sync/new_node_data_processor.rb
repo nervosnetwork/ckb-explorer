@@ -617,15 +617,18 @@ module CkbSync
       full_tx_address_ids = []
       full_tx_udt_ids = []
       full_dao_address_ids = []
+      full_udt_address_ids = []
       ckb_txs.each do |tx|
         tx_id = tx["id"]
         full_tx_address_ids += contained_addr_ids[tx_index].to_a.map { |a| { address_id: a, ckb_transaction_id: tx_id } }
         full_dao_address_ids += dao_address_ids[tx_index].to_a.map { |a| { address_id: a, ckb_transaction_id: tx_id } }
         full_tx_udt_ids += contained_udt_ids[tx_index].to_a.map { |u| { udt_id: u, ckb_transaction_id: tx_id } }
+        full_udt_address_ids += udt_address_ids[tx_index].to_a.map { |a| { address_id: a, ckb_transaction_id: tx_id } }
+
         attr = {
           id: tx_id,
           # dao_address_ids: dao_address_ids[tx_index].to_a,
-          udt_address_ids: udt_address_ids[tx_index].to_a,
+          # udt_address_ids: udt_address_ids[tx_index].to_a,
           # contained_udt_ids: contained_udt_ids[tx_index].to_a,
           # contained_address_ids: contained_addr_ids[tx_index].to_a,
           tags: tags[tx_index].to_a,
@@ -640,9 +643,11 @@ module CkbSync
       if ckb_transactions_attributes.present?
         CkbTransaction.upsert_all(ckb_transactions_attributes)
       end
+
       AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present? # , unique_by: [:ckb_transaction_id, :address_id]
       UdtTransaction.upsert_all full_tx_udt_ids, unique_by: [:udt_id, :ckb_transaction_id] if full_tx_udt_ids.present?
       AddressDaoTransaction.upsert_all full_dao_address_ids, unique_by: [:address_id, :ckb_transaction_id] if full_dao_address_ids.present?
+      AddressUdtTransaction.upsert_all full_udt_address_ids, unique_by: [:address_id, :ckb_transaction_id] if full_udt_address_ids.present?
     end
 
     def build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
@@ -1060,6 +1065,7 @@ module CkbSync
         outputs_data.concat << tx.outputs_data
         tx_index += 1
       end
+
       txs = CkbTransaction.insert_all!(ckb_transactions_attributes, returning: %w(id tx_hash created_at))
     end
 
