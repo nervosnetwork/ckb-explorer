@@ -6,23 +6,6 @@ class CellDependency < ActiveRecord::Base
   belongs_to :cell_output, foreign_key: "contract_cell_id", class_name: "CellOutput"
   enum :dep_type, [:code, :dep_group]
 
-  def self.create_initial_data
-    CkbTransaction.find_in_batches do |txs|
-      recs = []
-      txs.each do |t|
-        recs +=
-          t.cell_deps.map do |d|
-            cell = CellOutput.find_by_pointer d["out_point"]["tx_hash"], d["out_point"]["index"].hex
-            {
-              contract_id: cell,
-              contract_cell_id: cell.id,
-              dep_type: d["dep_type"]
-            }
-          end
-      end
-    end
-  end
-
   # please run these methods:
   #    CellDependency.create_from_scripts TypeScript.all
   #    CellDependency.create_from_scripts LockScript.all

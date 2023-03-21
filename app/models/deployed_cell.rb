@@ -3,6 +3,17 @@ class DeployedCell < ApplicationRecord
   belongs_to :cell_output
   # one contract can has multiple deployed cells
   validates :cell_output, uniqueness: true
+
+  def self.cell_output_id_to_contract_id(cell_output_id)
+    Rails.cache.fetch(["cell_output_id_to_contract_id", cell_output_id], expires_in: 1.day) do
+      DeployedCell.where(cell_output_id: cell_output_id).pick(:contract_id)
+    end
+  end
+
+  def self.write_cell_output_id_to_contract_id(cell_output_id, contract_id)
+    Rails.cache.write(["cell_output_id_to_contract_id", cell_output_id], contract_id, expires_in: 1.day)
+  end
+
   # create initial data for this table
   # before running this method,
   # 1. run Script.create_initial_data
@@ -34,22 +45,24 @@ class DeployedCell < ApplicationRecord
         # this cell output is the contract cell, i.e. one of deployed cells of the contract
         cell_output = CellOutput.find_by_pointer cell_dep["out_point"]["tx_hash"], cell_dep["out_point"]["index"]
 
-        # check if we already known the relationship between the contract cell and contract
-        deployed = DeployedCell.find_by(cell_output_id: cell_output.id)
-
         attr = {
           contract_cell_id: cell_output.id,
           dep_type: cell_dep["dep_type"],
           ckb_transaction_id: ckb_transaction.id,
-          contract_id: deployed&.contract_id
+          contract_id: DeployedCell.cell_output_id_to_contract_id(cell_output.id) # check if we already known the relationship between the contract cell and contract
         }
 
         # we don't know how the cells in transaction may refer to the contract cell
         # so we make index for both `data` and `type` of `hash_type`
-        cell_output.data_hash ||= CKB::Blake2b.hexdigest([cell_output.data[2..-1]].pack("H*"))
-        cell_output.save if cell_output.changed? # save data_hash to cell_output
+        cell_output.data_hash ||= CKB::Blake2b.hexdigest(cell_output.binary_data)
+
         by_data_hash[cell_output.data_hash] = attr # data type refer by the hash value of data field of cell
-        by_type_hash[cell_output.type_script.script_hash] = attr if cell_output.type_script # `type` type refer by the hash value of type field of cell
+        # `type` type refer by the hash value of type field of cell
+        if cell_output.type_script_id
+          cell_output.type_hash ||= cell_output.type_script.script_hash
+          by_type_hash[cell_output.type_hash] = attr
+        end
+        cell_output.save if cell_output.changed? # save data_hash type_hash to cell_output
         cell_dependencies_attrs << attr
         cell_output
       end
@@ -118,9 +131,12 @@ class DeployedCell < ApplicationRecord
         }
       end
     end
-
+    deployed_cells_attrs = deployed_cells_attrs.uniq { |a| a[:cell_output_id] }
     CellDependency.upsert_all cell_dependencies_attrs.uniq { |a| a[:contract_cell_id] }, unique_by: [:ckb_transaction_id, :contract_cell_id], returning: [:id] if cell_dependencies_attrs.present?
-    DeployedCell.upsert_all deployed_cells_attrs.uniq { |a| a[:cell_output_id] }, unique_by: [:cell_output_id], returning: [:id] if deployed_cells_attrs.present?
+    DeployedCell.upsert_all deployed_cells_attrs, unique_by: [:cell_output_id], returning: [:id] if deployed_cells_attrs.present?
+    deployed_cells_attrs.each do |deployed_cell_attr|
+      DeployedCell.write_cell_output_id_to_contract_id(deployed_cell_attr[:cell_output_id], deployed_cell_attr[:contract_id])
+    end
   end
 end
 

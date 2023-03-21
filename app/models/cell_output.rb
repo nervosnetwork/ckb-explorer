@@ -44,9 +44,18 @@ class CellOutput < ApplicationRecord
     address.address_hash
   end
 
+  def binary_data
+    [data[2..-1]].pack("H*")
+  end
+
   def self.find_by_pointer(tx_hash, index)
-    tx = CkbTransaction.find_by_tx_hash(tx_hash)
-    find_by(generated_by_id: tx.id, cell_index: index.is_a?(String) ? index.hex : index) if tx
+    Rails.cache.fetch(["cell_output", tx_hash, index], race_condition_ttl: 3.seconds, expires_in: 1.day) do
+      tx_id =
+        Rails.cache.fetch(["tx_id", tx_hash], expires_in: 1.day) do
+          CkbTransaction.find_by_tx_hash(tx_hash)&.id
+        end
+      find_by(generated_by_id: tx_id, cell_index: index.is_a?(String) ? index.hex : index) if tx_id
+    end
   end
 
   def node_output
@@ -132,6 +141,7 @@ class CellOutput < ApplicationRecord
   end
 
   def flush_cache
+    Rails.cache.delete(["cell_output", tx_hash, index])
     $redis.pipelined do
       $redis.del(*cache_keys)
     end
