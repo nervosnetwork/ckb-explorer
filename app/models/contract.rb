@@ -9,12 +9,10 @@ class Contract < ApplicationRecord
     Contract.transaction do
       Script.find_each do |script|
         contract = Contract.find_by code_hash: script.script_hash
-        if contract.present?
-          script.update contract_id: contract.id
-        else
+        if contract.blank?
           contract = Contract.create code_hash: script.script_hash
-          script.update contract_id: contract.id
         end
+        script.update contract_id: contract.id
       end
     end
   end
