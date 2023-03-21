@@ -6,15 +6,14 @@ module Api
 
       def index
         if from_home_page?
-          ckb_transactions = CkbTransaction.recent.normal.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
+          ckb_transactions = CkbTransaction.recent.normal.select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at).limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i)
           json =
             Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
               CkbTransactionListSerializer.new(ckb_transactions).serialized_json
             end
           render json: json
         else
-          temp_offset_id = (@page.to_i - 1) * @page_size.to_i
-          ckb_transactions = CkbTransaction.recent.normal.limit(@page_size.to_i).offset(temp_offset_id).fast_page.select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
+          ckb_transactions = CkbTransaction.recent.normal.select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at).page(@page).per(@page_size).fast_page
           json =
             Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
               records_counter = RecordCounters::Transactions.new
