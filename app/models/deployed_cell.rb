@@ -7,13 +7,10 @@ class DeployedCell < ApplicationRecord
   # before running this method,
   # 1. run Script.create_initial_data
   # 2. run this method: DeployedCell.create_initial_data
-  def self.create_initial_data(ckb_transaction_id = nil)
+  def self.create_initial_data(ckb_transaction_id = 0)
     Rails.logger.info "=== ckb_transaction_id: #{ckb_transaction_id.inspect}"
 
-    if ckb_transaction_id.blank?
-      ckb_transaction_id = CkbTransaction.last.id
-    end
-    CkbTransaction.where("id <= ?", ckb_transaction_id).find_each do |ckb_transaction|
+    CkbTransaction.where("id >= ?", ckb_transaction_id).find_each do |ckb_transaction|
       self.create_initial_data_for_ckb_transaction ckb_transaction
     end
     Rails.logger.info "== done"
@@ -122,8 +119,8 @@ class DeployedCell < ApplicationRecord
       end
     end
 
-    CellDependency.upsert_all cell_dependencies_attrs, unique_by: [:ckb_transaction_id, :contract_cell_id], returning: [:id] if cell_dependencies_attrs.present?
-    DeployedCell.upsert_all deployed_cells_attrs, unique_by: [:cell_output_id], returning: [:id] if deployed_cells_attrs.present?
+    CellDependency.upsert_all cell_dependencies_attrs.uniq { |a| a[:contract_cell_id] }, unique_by: [:ckb_transaction_id, :contract_cell_id], returning: [:id] if cell_dependencies_attrs.present?
+    DeployedCell.upsert_all deployed_cells_attrs.uniq { |a| a[:cell_output_id] }, unique_by: [:cell_output_id], returning: [:id] if deployed_cells_attrs.present?
   end
 end
 
