@@ -1,7 +1,8 @@
 class DeployedCell < ApplicationRecord
   belongs_to :contract
   belongs_to :cell_output
-
+  # one contract can has multiple deployed cells
+  validates :cell_output, uniqueness: true
   # create initial data for this table
   # before running this method,
   # 1. run Script.create_initial_data
@@ -13,66 +14,116 @@ class DeployedCell < ApplicationRecord
       ckb_transaction_id = CkbTransaction.last.id
     end
     CkbTransaction.where("id <= ?", ckb_transaction_id).find_each do |ckb_transaction|
-      DeployedCell.transaction do
-        self.create_initial_data_for_ckb_transaction ckb_transaction
-      end
+      self.create_initial_data_for_ckb_transaction ckb_transaction
     end
     Rails.logger.info "== done"
   end
 
   def self.create_initial_data_for_ckb_transaction(ckb_transaction)
-    if ckb_transaction.cell_outputs.present?
-      ckb_transaction.cell_outputs.each do |cell_output|
-        self.create_initial_data_by_cell_output cell_output, ckb_transaction
-      end
-    end
+    deployed_cells = []
+    cell_dependencies_attrs = []
+    by_type_hash = {}
+    by_data_hash = {}
+    return if ckb_transaction.cell_deps.blank?
 
-    if ckb_transaction.cell_inputs.present?
-      ckb_transaction.cell_inputs.each do |cell_input|
-        cell_output = cell_input.previous_cell_output
-        next if cell_output.blank?
+    # intialize cell dependencies records
+    # the `cell_deps` field in ckb transactions stores the contract cell (referred by out point,
+    # which contains the compiled byte code of contract) the transaction should refer.
+    # the submitter of the transaction is responsible for including all the contract cells
+    # specified by all the `type_script` and `lock_script` of the cell inputs and cell outputs
 
-        self.create_initial_data_by_cell_output cell_output, ckb_transaction
-      end
-    end
-  end
-
-  def self.create_initial_data_by_cell_output(cell_output, ckb_transaction)
-    lock_script = cell_output.lock_script
-    if lock_script.present? && lock_script&.script&.contract_id
-      self.create_deployed_cells lock_script_or_type_script: lock_script, ckb_transaction: ckb_transaction, contract_id: lock_script.script.contract_id
-    end
-
-    type_script = cell_output.type_script
-    if type_script.present? && type_script&.script&.contract_id
-      self.create_deployed_cells lock_script_or_type_script: type_script, ckb_transaction: ckb_transaction, contract_id: type_script.script.contract_id
-    end
-  end
-
-  def self.create_deployed_cells(options)
-    lock_script_or_type_script = options[:lock_script_or_type_script]
-    ckb_transaction = options[:ckb_transaction]
-    contract_id = options[:contract_id]
-
-    if lock_script_or_type_script.present? && lock_script_or_type_script.hash_type == "type"
-      ckb_transaction.cell_deps.each do |cell_dep|
+    parse_code_dep =
+      ->(cell_dep) do
+        # this cell output is the contract cell, i.e. one of deployed cells of the contract
         cell_output = CellOutput.find_by_pointer cell_dep["out_point"]["tx_hash"], cell_dep["out_point"]["index"]
 
-        if lock_script_or_type_script.code_hash == cell_output.lock_script.code_hash
-          DeployedCell.create_or_find_by(cell_output_id: cell_output.id, contract_id: contract_id)
+        # check if we already known the relationship between the contract cell and contract
+        deployed = DeployedCell.find_by(cell_output_id: cell_output.id)
+
+        attr = {
+          contract_cell_id: cell_output.id,
+          dep_type: cell_dep["dep_type"],
+          ckb_transaction_id: ckb_transaction.id,
+          contract_id: deployed&.contract_id
+        }
+
+        # we don't know how the cells in transaction may refer to the contract cell
+        # so we make index for both `data` and `type` of `hash_type`
+        cell_output.data_hash ||= CKB::Blake2b.hexdigest([cell_output.data[2..-1]].pack("H*"))
+        cell_output.save if cell_output.changed? # save data_hash to cell_output
+        by_data_hash[cell_output.data_hash] = attr # data type refer by the hash value of data field of cell
+        by_type_hash[cell_output.type_script.script_hash] = attr if cell_output.type_script # `type` type refer by the hash value of type field of cell
+        cell_dependencies_attrs << attr
+        cell_output
+      end
+    ckb_transaction.cell_deps.each do |cell_dep|
+      case cell_dep["dep_type"]
+      when "code"
+        parse_code_dep[cell_dep]
+      when "dep_group"
+        # when the type of cell_dep is "dep_group", it means the cell specified by the `out_point` is a list of out points to the actual referred contract cells
+        mid_cell = CellOutput.find_by_pointer cell_dep["out_point"]["tx_hash"], cell_dep["out_point"]["index"]
+        cell_dependencies_attrs << {
+          contract_cell_id: mid_cell.id,
+          dep_type: cell_dep["dep_type"],
+          ckb_transaction_id: ckb_transaction.id,
+          contract_id: nil
+        }
+        binary_data = [mid_cell.data[2..-1]].pack("H*")
+        # binary_data = [hex_data[2..-1]].pack("H*")
+        # parse the actual list of out points from the data field of the cell
+        out_points_count = binary_data[0, 4].unpack("L<")
+        out_points = []
+        # iterate over the out point list and append actual referred contract cells to cell dependencies_attrs
+        0.upto(out_points_count[0] - 1) do |i|
+          tx_hash, cell_index = binary_data[4 + i * 36, 36].unpack("H64L<")
+          # contract_cell = CellOutput.find_by_pointer "0x#{tx_hash}", cell_index
+
+          co = parse_code_dep[{
+            "out_point" => {
+              "tx_hash" => "0x#{tx_hash}",
+              "index" => cell_index
+            },
+            "dep_type" => "code"
+          }]
         end
       end
     end
 
-    if lock_script_or_type_script.present? && lock_script_or_type_script.hash_type == "data"
-      ckb_transaction.cell_deps.each do |cell_dep|
-        cell_output = CellOutput.find_by_pointer cell_dep["out_point"]["tx_hash"], cell_dep["out_point"]["index"]
+    cells = ckb_transaction.cell_outputs.includes(:lock_script, :type_script).to_a +
+      ckb_transaction.cell_inputs.map(&:previous_cell_output)
+    scripts = cells.compact.inject([]) { |a, cell| a + [cell.lock_script, cell.type_script] }.compact.uniq
+    deployed_cells_attrs = []
 
-        if lock_script_or_type_script.code_hash == CKB::Blake2b.hexdigest(cell_output.data)
-          DeployedCell.create_or_find_by(cell_output_id: cell_output.id, contract_id: contract_id)
+    scripts.each do |lock_script_or_type_script|
+      dep =
+        case lock_script_or_type_script.hash_type
+             when "data"
+               by_data_hash[lock_script_or_type_script.code_hash]
+             when "type"
+               by_type_hash[lock_script_or_type_script.code_hash]
         end
+      next unless dep
+
+      unless dep[:contract_id] # we don't know the corresponding contract
+        contract = Contract.find_or_initialize_by code_hash: lock_script_or_type_script.code_hash, hash_type: lock_script_or_type_script.hash_type
+
+        if contract.id.blank? # newly created contract record
+          contract.deployed_args = lock_script_or_type_script.args
+          contract.role = lock_script_or_type_script.class.name
+          contract.save!
+        end
+        dep[:contract_id] = contract.id
+
+        deployed_cells_attrs << {
+          contract_id: contract.id,
+          cell_output_id: dep[:contract_cell_id]
+        }
       end
     end
+
+    CellDependency.upsert_all cell_dependencies_attrs, unique_by: [:ckb_transaction_id, :contract_cell_id], returning: [:id] if cell_dependencies_attrs.present?
+    DeployedCell.upsert_all deployed_cells_attrs, unique_by: [:cell_output_id], returning: [:id] if deployed_cells_attrs.present?
   end
 end
 
@@ -81,13 +132,13 @@ end
 # Table name: deployed_cells
 #
 #  id             :bigint           not null, primary key
-#  cell_output_id :bigint
-#  contract_id    :bigint
+#  cell_output_id :bigint           not null
+#  contract_id    :bigint           not null
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #
 # Indexes
 #
-#  index_deployed_cells_on_cell_output_id  (cell_output_id)
-#  index_deployed_cells_on_contract_id     (contract_id)
+#  index_deployed_cells_on_cell_output_id                  (cell_output_id) UNIQUE
+#  index_deployed_cells_on_contract_id_and_cell_output_id  (contract_id,cell_output_id) UNIQUE
 #

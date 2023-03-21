@@ -56,15 +56,14 @@ end
 #
 #  id                 :bigint           not null, primary key
 #  contract_id        :bigint
-#  ckb_transaction_id :bigint
+#  ckb_transaction_id :bigint           not null
 #  dep_type           :integer
-#  contract_cell_id   :bigint
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
+#  contract_cell_id   :bigint           not null
 #  script_id          :bigint
 #
 # Indexes
 #
+#  cell_deps_tx_cell_idx                        (ckb_transaction_id,contract_cell_id) UNIQUE
 #  index_cell_dependencies_on_contract_cell_id  (contract_cell_id)
 #  index_cell_dependencies_on_contract_id       (contract_id)
 #  index_cell_dependencies_on_script_id         (script_id)

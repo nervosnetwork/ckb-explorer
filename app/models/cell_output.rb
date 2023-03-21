@@ -259,6 +259,7 @@ end
 #  dao                      :string
 #  lock_script_id           :bigint
 #  type_script_id           :bigint
+#  data_hash                :binary
 #
 # Indexes
 #
@@ -268,6 +269,7 @@ end
 #  index_cell_outputs_on_ckb_transaction_id        (ckb_transaction_id)
 #  index_cell_outputs_on_consumed_block_timestamp  (consumed_block_timestamp)
 #  index_cell_outputs_on_consumed_by_id            (consumed_by_id)
+#  index_cell_outputs_on_data_hash                 (data_hash) USING hash
 #  index_cell_outputs_on_generated_by_id           (generated_by_id)
 #  index_cell_outputs_on_lock_script_id            (lock_script_id)
 #  index_cell_outputs_on_status                    (status)
