@@ -471,38 +471,6 @@ ALTER SEQUENCE public.blocks_id_seq OWNED BY public.blocks.id;
 
 
 --
--- Name: books; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.books (
-    id bigint NOT NULL,
-    author_name character varying,
-    title character varying,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: books_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.books_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: books_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.books_id_seq OWNED BY public.books.id;
-
-
---
 -- Name: cell_dependencies; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -696,7 +664,8 @@ CREATE TABLE public.contracts (
     description character varying,
     verified boolean DEFAULT false,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    deprecated boolean
 );
 
 
@@ -1792,13 +1761,6 @@ ALTER TABLE ONLY public.blocks ALTER COLUMN id SET DEFAULT nextval('public.block
 
 
 --
--- Name: books id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.books ALTER COLUMN id SET DEFAULT nextval('public.books_id_seq'::regclass);
-
-
---
 -- Name: cell_dependencies id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2055,14 +2017,6 @@ ALTER TABLE ONLY public.block_time_statistics
 
 ALTER TABLE ONLY public.blocks
     ADD CONSTRAINT blocks_pkey PRIMARY KEY (id);
-
-
---
--- Name: books books_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.books
-    ADD CONSTRAINT books_pkey PRIMARY KEY (id);
 
 
 --
@@ -2640,6 +2594,13 @@ CREATE INDEX index_ckb_transactions_on_udt_address_ids ON public.ckb_transaction
 --
 
 CREATE INDEX index_contracts_on_code_hash ON public.contracts USING btree (code_hash);
+
+
+--
+-- Name: index_contracts_on_deprecated; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_deprecated ON public.contracts USING btree (deprecated);
 
 
 --
@@ -3248,7 +3209,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230128015956'),
 ('20230128031939'),
 ('20230129165127'),
-('20230130005447'),
 ('20230206073806'),
 ('20230207112513'),
 ('20230208081700'),
@@ -3259,6 +3219,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230218154437'),
 ('20230220013604'),
 ('20230220060922'),
-('20230228114330');
+('20230228114330'),
+('20230320062211');
 
 
