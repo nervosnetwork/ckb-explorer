@@ -119,7 +119,7 @@ module CkbSync
     def generate_deployed_cells_and_referring_cells(local_block)
       local_block.ckb_transactions.each do |ckb_transaction|
         DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction
-        #ReferringCell.create_initial_data_for_ckb_transaction ckb_transaction
+        # ReferringCell.create_initial_data_for_ckb_transaction ckb_transaction
       end
     end
 
@@ -664,18 +664,18 @@ module CkbSync
 
       if lock_scripts_attributes.present?
         lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
-        lock_script_ids = LockScript.insert_all!(lock_scripts_attributes).map{|e| e['id']}
+        lock_script_ids = LockScript.insert_all!(lock_scripts_attributes).map { |e| e["id"] }
 
-        lock_script_ids.each do | lock_script_id|
+        lock_script_ids.each do |lock_script_id|
           lock_script = LockScript.find lock_script_id
 
           contract_id = 0
-          contracts.each {|contract|
+          contracts.each do |contract|
             if contract.code_hash == lock_script.code_hash
               contract_id = contract.id
               break
             end
-          }
+          end
           temp_hash = { script_hash: (lock_script.script_hash rescue ""), is_contract: false }
           if contract_id != 0
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
@@ -687,17 +687,17 @@ module CkbSync
 
       if type_scripts_attributes.present?
         type_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
-        type_script_ids = TypeScript.insert_all!(type_scripts_attributes).map{|e| e['id']}
+        type_script_ids = TypeScript.insert_all!(type_scripts_attributes).map { |e| e["id"] }
         type_script_ids.each do |type_script_id|
           type_script = TypeScript.find(type_script_id)
 
           contract_id = 0
-          contracts.each {|contract|
+          contracts.each do |contract|
             if contract.code_hash == type_script.code_hash
               contract_id = contract.id
               break
             end
-          }
+          end
           temp_hash = { script_hash: (type_script.script_hash rescue ""), is_contract: false }
           if contract_id != 0
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
@@ -717,9 +717,6 @@ module CkbSync
 
       CellInput.insert_all!(cell_inputs_attributes)
       CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
-
-      CellDependency.create_from_scripts TypeScript.where(id: type_script_ids)
-      CellDependency.create_from_scripts LockScript.where(id: lock_script_ids)
 
       ScriptTransaction.create_from_scripts TypeScript.where(id: type_script_ids)
       ScriptTransaction.create_from_scripts LockScript.where(id: lock_script_ids)

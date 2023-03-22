@@ -22,7 +22,9 @@ class DeployedCell < ApplicationRecord
     Rails.logger.info "=== ckb_transaction_id: #{ckb_transaction_id.inspect}"
 
     CkbTransaction.where("id >= ?", ckb_transaction_id).find_each do |ckb_transaction|
-      self.create_initial_data_for_ckb_transaction ckb_transaction
+      cache do
+        self.create_initial_data_for_ckb_transaction ckb_transaction
+      end
     end
     Rails.logger.info "== done"
   end
@@ -79,7 +81,7 @@ class DeployedCell < ApplicationRecord
           ckb_transaction_id: ckb_transaction.id,
           contract_id: nil
         }
-        binary_data = [mid_cell.data[2..-1]].pack("H*")
+        binary_data = mid_cell.binary_data
         # binary_data = [hex_data[2..-1]].pack("H*")
         # parse the actual list of out points from the data field of the cell
         out_points_count = binary_data[0, 4].unpack("L<")
@@ -132,8 +134,8 @@ class DeployedCell < ApplicationRecord
       end
     end
     deployed_cells_attrs = deployed_cells_attrs.uniq { |a| a[:cell_output_id] }
-    CellDependency.upsert_all cell_dependencies_attrs.uniq { |a| a[:contract_cell_id] }, unique_by: [:ckb_transaction_id, :contract_cell_id], returning: [:id] if cell_dependencies_attrs.present?
-    DeployedCell.upsert_all deployed_cells_attrs, unique_by: [:cell_output_id], returning: [:id] if deployed_cells_attrs.present?
+    CellDependency.upsert_all cell_dependencies_attrs.uniq { |a| a[:contract_cell_id] }, unique_by: [:ckb_transaction_id, :contract_cell_id] if cell_dependencies_attrs.present?
+    DeployedCell.upsert_all deployed_cells_attrs, unique_by: [:cell_output_id] if deployed_cells_attrs.present?
     deployed_cells_attrs.each do |deployed_cell_attr|
       DeployedCell.write_cell_output_id_to_contract_id(deployed_cell_attr[:cell_output_id], deployed_cell_attr[:contract_id])
     end

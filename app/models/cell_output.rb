@@ -141,7 +141,7 @@ class CellOutput < ApplicationRecord
   end
 
   def flush_cache
-    Rails.cache.delete(["cell_output", tx_hash, index])
+    Rails.cache.delete(["cell_output", tx_hash, cell_index])
     $redis.pipelined do
       $redis.del(*cache_keys)
     end
