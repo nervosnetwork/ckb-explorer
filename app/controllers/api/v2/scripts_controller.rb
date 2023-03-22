@@ -58,7 +58,7 @@ module Api::V2
       render json: {
         data: {
           deployed_cells: deployed_cells.map{|deployed_cell|
-            deployed_cell.cell_output
+            CellOutputWithoutDataSerializer.new(deployed_cell.cell_output).to_json(deployed_cell.cell_output)
           }
         },
         meta: {
