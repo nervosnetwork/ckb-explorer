@@ -20,12 +20,21 @@ class DeployedCell < ApplicationRecord
   # 2. run this method: DeployedCell.create_initial_data
   def self.create_initial_data(ckb_transaction_id = 0)
     Rails.logger.info "=== ckb_transaction_id: #{ckb_transaction_id.inspect}"
-
+    pool = Concurrent::FixedThreadPool.new(5, max_queue: 1000,
+                                              fallback_policy: :caller_runs)
     CkbTransaction.where("id >= ?", ckb_transaction_id).find_each do |ckb_transaction|
-      cache do
-        self.create_initial_data_for_ckb_transaction ckb_transaction
+      pool.post do
+        Rails.application.executor.wrap do
+          ActiveRecord::Base.connection_pool.with_connection do
+            ActiveRecord::Base.cache do
+              self.create_initial_data_for_ckb_transaction ckb_transaction
+            end
+          end
+        end
       end
     end
+    pool.shutdown
+    pool.wait_for_termination
     Rails.logger.info "== done"
   end
 
