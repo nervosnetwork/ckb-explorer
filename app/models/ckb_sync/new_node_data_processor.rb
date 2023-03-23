@@ -1070,6 +1070,7 @@ module CkbSync
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)
+
       {
         block_id: local_block.id,
         tx_hash: tx.hash,
