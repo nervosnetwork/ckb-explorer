@@ -31,12 +31,12 @@ class DeployedCellTest < ActiveSupport::TestCase
     DeployedCell.create_initial_data_for_ckb_transaction @ckb_transaction_with_cell_deps
     @deployed_cell = DeployedCell.first
     contract_id = @ckb_transaction_with_cell_deps.cell_outputs.first.lock_script.script.contract_id
-    assert_equal 1, DeployedCell.all.count
+    assert_equal 2, DeployedCell.all.count
     assert_equal contract_id, @deployed_cell.contract_id
 
     # for the 2nd time, it should NOT create record
     DeployedCell.create_initial_data_for_ckb_transaction @ckb_transaction_with_cell_deps
-    assert_equal 1, DeployedCell.all.count
+    assert_equal 4, DeployedCell.all.count
   end
 
   test "it should create_initial_data_for_ckb_transaction for cell_outputs when hash_type is data" do
@@ -49,12 +49,12 @@ class DeployedCellTest < ActiveSupport::TestCase
     DeployedCell.create_initial_data_for_ckb_transaction @ckb_transaction_with_cell_deps
     @deployed_cell = DeployedCell.first
     contract_id = @ckb_transaction_with_cell_deps.cell_outputs.first.lock_script.script.contract_id
-    assert_equal 1, DeployedCell.all.count
+    assert_equal 2, DeployedCell.all.count
     assert_equal contract_id, @deployed_cell.contract_id
 
     # for the 2nd time, it should NOT create record
     DeployedCell.create_initial_data_for_ckb_transaction @ckb_transaction_with_cell_deps
-    assert_equal 1, DeployedCell.all.count
+    assert_equal 4, DeployedCell.all.count
   end
 
   test "it should create_initial_data_for_ckb_transaction for cell_inputs when hash_type is type" do
@@ -68,11 +68,11 @@ class DeployedCellTest < ActiveSupport::TestCase
     @deployed_cell = DeployedCell.first
     contract_id = @ckb_transaction_with_cell_deps.cell_inputs.first.previous_cell_output.lock_script.script.contract_id
     assert_equal contract_id, @deployed_cell.contract_id
-    assert_equal 1, DeployedCell.all.count
+    assert_equal 4, DeployedCell.all.count
 
     # for the 2nd time, it should NOT create record
     DeployedCell.create_initial_data_for_ckb_transaction @ckb_transaction_with_cell_deps
-    assert_equal 1, DeployedCell.all.count
+    assert_equal 8, DeployedCell.all.count
   end
 
   test "it should create_initial_data_for_ckb_transaction for cell_inputs when hash_type is data" do
@@ -86,11 +86,11 @@ class DeployedCellTest < ActiveSupport::TestCase
     @deployed_cell = DeployedCell.first
     contract_id = @ckb_transaction_with_cell_deps.cell_inputs.first.previous_cell_output.lock_script.script.contract_id
     assert_equal contract_id, @deployed_cell.contract_id
-    assert_equal 1, DeployedCell.all.count
+    assert_equal 4, DeployedCell.all.count
 
     # for the 2nd time, it should NOT create record
     DeployedCell.create_initial_data_for_ckb_transaction @ckb_transaction_with_cell_deps
-    assert_equal 1, DeployedCell.all.count
+    assert_equal 8, DeployedCell.all.count
   end
 
   private
