@@ -23,6 +23,7 @@ class DeployedCell < ApplicationRecord
     pool = Concurrent::FixedThreadPool.new(5, max_queue: 1000,
                                               fallback_policy: :caller_runs)
     CkbTransaction.where("id >= ?", ckb_transaction_id).find_each do |ckb_transaction|
+      Rails.logger.info "=== ckb_transaction: #{ckb_transaction.id}"
       pool.post do
         Rails.application.executor.wrap do
           ActiveRecord::Base.connection_pool.with_connection do
