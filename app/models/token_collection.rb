@@ -169,6 +169,7 @@ end
 # Indexes
 #
 #  index_token_collections_on_cell_id         (cell_id)
-#  index_token_collections_on_sn              (sn) UNIQUE
+#  index_token_collections_on_sn              (sn) USING hash
 #  index_token_collections_on_type_script_id  (type_script_id)
+#  unique_sn                                  (sn) UNIQUE
 #

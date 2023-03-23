@@ -389,7 +389,7 @@ module CkbSync
 
       lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
       address = Address.find_or_create_address(lock_script, block_timestamp)
-      LockScript.find_or_create_by(
+      LockScript.create_or_find_by(
         args: lock_script.args,
         code_hash: lock_script.code_hash,
         hash_type: lock_script.hash_type,
