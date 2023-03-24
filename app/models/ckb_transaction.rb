@@ -312,7 +312,6 @@ end
 #  bytes                 :integer          default(0)
 #  cycles                :integer
 #  confirmation_time     :integer
-#  tx_status             :integer          default("committed"), not null
 #
 # Indexes
 #

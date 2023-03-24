@@ -87,7 +87,6 @@ end
 # Indexes
 #
 #  index_pool_transaction_entries_on_id_and_tx_status  (id,tx_status)
-#  index_pool_transaction_entries_on_tx_hash           (tx_hash) USING hash
+#  index_pool_transaction_entries_on_tx_hash           (tx_hash) UNIQUE
 #  index_pool_transaction_entries_on_tx_status         (tx_status)
-#  unique_tx_hash                                      (tx_hash) UNIQUE
 #
