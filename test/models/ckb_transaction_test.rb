@@ -158,7 +158,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       interest: interest, cell_type: nervos_dao_withdrawing_cell.cell_type, cell_index: nervos_dao_withdrawing_cell.cell_index,
       since: { raw: "0x0000000000000000", median_timestamp: "0" }
     ).sort
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash compensation_started_block_number compensation_ended_block_number compensation_started_timestamp compensation_ended_timestamp interest cell_type locked_until_block_number locked_until_block_timestamp cell_index since).sort
+    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash compensation_started_block_number compensation_ended_block_number compensation_started_timestamp compensation_ended_timestamp interest cell_type cell_index since).sort
     display_inputs = ckb_transaction.display_inputs
     assert_equal expected_attributes, display_inputs.first.keys.sort
     assert_equal expected_display_input, display_inputs.first.sort
