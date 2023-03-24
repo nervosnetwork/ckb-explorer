@@ -256,11 +256,11 @@ end
 #  dao_transactions_count :decimal(30, )    default(0)
 #  lock_script_id         :bigint
 #  balance_occupied       :decimal(30, )    default(0)
+#  address_hash_crc       :bigint
 #
 # Indexes
 #
-#  index_addresses_on_address_hash  (address_hash) USING hash
-#  index_addresses_on_is_depositor  (is_depositor) WHERE (is_depositor = true)
-#  index_addresses_on_lock_hash     (lock_hash) USING hash
-#  unique_lock_hash                 (lock_hash) UNIQUE
+#  index_addresses_on_address_hash_crc  (address_hash_crc)
+#  index_addresses_on_is_depositor      (is_depositor) WHERE (is_depositor = true)
+#  index_addresses_on_lock_hash         (lock_hash) UNIQUE
 #
