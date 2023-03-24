@@ -78,6 +78,7 @@ class DeployedCell < ApplicationRecord
         cell_dependencies_attrs << attr
         cell_output
       end
+
     ckb_transaction.cell_deps.each do |cell_dep|
       case cell_dep["dep_type"]
       when "code"
@@ -143,6 +144,7 @@ class DeployedCell < ApplicationRecord
         }
       end
     end
+
     deployed_cells_attrs = deployed_cells_attrs.uniq { |a| a[:cell_output_id] }
     CellDependency.upsert_all cell_dependencies_attrs.uniq { |a| a[:contract_cell_id] }, unique_by: [:ckb_transaction_id, :contract_cell_id] if cell_dependencies_attrs.present?
     DeployedCell.upsert_all deployed_cells_attrs, unique_by: [:cell_output_id] if deployed_cells_attrs.present?
