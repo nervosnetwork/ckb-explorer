@@ -308,7 +308,7 @@ end
 #
 # Indexes
 #
-#  index_blocks_on_block_hash  (block_hash) USING hash
+#  index_blocks_on_block_hash  (block_hash) UNIQUE
 #  index_blocks_on_block_size  (block_size)
 #  index_blocks_on_block_time  (block_time)
 #  index_blocks_on_epoch       (epoch)
