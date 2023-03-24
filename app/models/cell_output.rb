@@ -3,7 +3,7 @@ class CellOutput < ApplicationRecord
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   MIN_SUDT_AMOUNT_BYTESIZE = 16
   enum status: { live: 0, dead: 1 }
-  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9, cota_regular: 10}
+  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9, cota_regular: 10 }
 
   belongs_to :ckb_transaction
   belongs_to :generated_by, class_name: "CkbTransaction"
@@ -40,23 +40,22 @@ class CellOutput < ApplicationRecord
     type_hash.blank? && (data.present? && data == "0x")
   end
 
-  # will remove this method after the migration task processed
-  def lock_script
-    LockScript.find_by(cell_output_id: id) || LockScript.find_by(id: lock_script_id)
-  end
-
-  # will remove this method after the migration task processed
-  def type_script
-    TypeScript.find_by(cell_output_id: id) || TypeScript.find_by(id: type_script_id)
-  end
-
   def address_hash
     address.address_hash
   end
 
+  def binary_data
+    [data[2..-1]].pack("H*")
+  end
+
   def self.find_by_pointer(tx_hash, index)
-    tx = CkbTransaction.find_by_tx_hash(tx_hash)
-    find_by(generated_by_id: tx.id, cell_index: index) if tx
+    Rails.cache.fetch(["cell_output", tx_hash, index], race_condition_ttl: 3.seconds, expires_in: 1.day) do
+      tx_id =
+        Rails.cache.fetch(["tx_id", tx_hash], expires_in: 1.day) do
+          CkbTransaction.find_by_tx_hash(tx_hash)&.id
+        end
+      find_by(generated_by_id: tx_id, cell_index: index.is_a?(String) ? index.hex : index) if tx_id
+    end
   end
 
   def node_output
@@ -142,6 +141,7 @@ class CellOutput < ApplicationRecord
   end
 
   def flush_cache
+    Rails.cache.delete(["cell_output", tx_hash, cell_index])
     $redis.pipelined do
       $redis.del(*cache_keys)
     end
@@ -228,19 +228,18 @@ class CellOutput < ApplicationRecord
   def self.update_cell_types_for_cota
     TypeScript.where(code_hash: CkbSync::Api.instance.cota_registry_code_hash).each do |type_script|
       CellOutput.where(type_script_id: type_script.id).each do |cell_output|
-        cell_output.cell_type = 'cota_registry'
+        cell_output.cell_type = "cota_registry"
         cell_output.save!
       end
     end
 
     TypeScript.where(code_hash: CkbSync::Api.instance.cota_regular_code_hash).each do |type_script|
       CellOutput.where(type_script_id: type_script.id).each do |cell_output|
-        cell_output.cell_type = 'cota_regular'
+        cell_output.cell_type = "cota_regular"
         cell_output.save!
       end
     end
   end
-
 end
 
 # == Schema Information
@@ -270,6 +269,7 @@ end
 #  dao                      :string
 #  lock_script_id           :bigint
 #  type_script_id           :bigint
+#  data_hash                :binary
 #
 # Indexes
 #
@@ -279,6 +279,7 @@ end
 #  index_cell_outputs_on_ckb_transaction_id        (ckb_transaction_id)
 #  index_cell_outputs_on_consumed_block_timestamp  (consumed_block_timestamp)
 #  index_cell_outputs_on_consumed_by_id            (consumed_by_id)
+#  index_cell_outputs_on_data_hash                 (data_hash) USING hash
 #  index_cell_outputs_on_generated_by_id           (generated_by_id)
 #  index_cell_outputs_on_lock_script_id            (lock_script_id)
 #  index_cell_outputs_on_status                    (status)

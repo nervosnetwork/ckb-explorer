@@ -10,10 +10,12 @@ module Api
         @contract = create :contract, code_hash: @code_hash, hash_type: @hash_type
         @script = create :script, contract_id: @contract.id
         @type_script = create :type_script, code_hash: @code_hash, hash_type: @hash_type, script_id: @script.id
-        @cell_output = create :cell_output, :with_full_transaction, block: @block
-        create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output.id
-        create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output.id
-        create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output.id
+        @cell_output1 = create :cell_output, :with_full_transaction, block: @block
+        @cell_output2 = create :cell_output, :with_full_transaction, block: @block
+        @cell_output3 = create :cell_output, :with_full_transaction, block: @block
+        create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output1.id
+        create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output2.id
+        create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output3.id
       end
 
       test "should get ckb_transactions" do

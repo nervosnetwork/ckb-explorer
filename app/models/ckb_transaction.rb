@@ -23,6 +23,7 @@ class CkbTransaction < ApplicationRecord
   has_and_belongs_to_many :contained_addresses, class_name: "Address", join_table: "account_books"
   has_and_belongs_to_many :contained_udts, class_name: "Udt", join_table: :udt_transactions
   has_and_belongs_to_many :contained_dao_addresses, class_name: "Address", join_table: "address_dao_transactions"
+  has_and_belongs_to_many :contained_udt_addresses, class_name: "Address", join_table: "address_udt_transactions"
 
   def self.migrate_contained_udt_ids
     CkbTransaction.select(%i[id contained_udt_ids]).find_each do |a|
@@ -37,6 +38,16 @@ class CkbTransaction < ApplicationRecord
           memo += t[:dao_address_ids].map { |a| { address_id: a, ckb_transaction_id: t.id } }
         end
       AddressDaoTransaction.upsert_all(res, unique_by: [:address_id, :ckb_transaction_id]) if res.present?
+    end
+  end
+
+  def self.migrate_udt_address_ids
+    select(%i[id udt_address_ids]).find_in_batches do |txs|
+      res =
+        txs.reduce([]) do |memo, t|
+          memo += t[:udt_address_ids].map { |a| { address_id: a, ckb_transaction_id: t.id } }
+        end
+      AddressUdtTransaction.upsert_all(res, unique_by: [:address_id, :ckb_transaction_id]) if res.present?
     end
   end
 
@@ -160,6 +171,24 @@ class CkbTransaction < ApplicationRecord
     else
       tx_display_info.outputs
     end
+  end
+
+  def self.last_n_days_transaction_fee_rates last_n_day
+    dates = (0..last_n_day).map { |i| i.days.ago.strftime("%Y-%m-%d") }
+    return dates.map { |date|
+      current_date = DateTime.strptime(date, '%Y-%m-%d')
+      fee_rate = Rails.cache.fetch("transaction_fee_rates_on_#{current_date}", expires_in: 10.minutes) do
+        ckb_transactions = CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes)
+          .where('bytes > 0 and transaction_fee > 0 and created_at > ? and created_at < ?', current_date.beginning_of_day, current_date.end_of_day)
+        total_fee_rates = ckb_transactions.map{ |tx| tx.transaction_fee.to_f / tx.bytes }
+        total_fee_rates.sum(0.0) / ckb_transactions.size
+      end
+
+      {
+        date: date,
+        fee_rate: fee_rate
+      }
+    }
   end
 
   private
@@ -288,9 +317,9 @@ end
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
 #  is_cellbase           :boolean          default(FALSE)
-#  witnesses             :jsonb
 #  header_deps           :binary
 #  cell_deps             :jsonb
+#  witnesses             :jsonb
 #  live_cell_changes     :integer
 #  capacity_involved     :decimal(30, )
 #  contained_address_ids :bigint           default([]), is an Array
@@ -304,10 +333,9 @@ end
 #
 # Indexes
 #
-#  alter_pk                                                (id,contained_address_ids) USING gin
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
 #  index_ckb_transactions_on_block_timestamp_and_id        (block_timestamp DESC NULLS LAST,id DESC)
-#  index_ckb_transactions_on_contained_address_ids         (contained_address_ids) USING gin
+#  index_ckb_transactions_on_contained_address_ids_and_id  (contained_address_ids,id) USING gin
 #  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
 #  index_ckb_transactions_on_dao_address_ids               (dao_address_ids) USING gin
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)
