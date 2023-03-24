@@ -4,15 +4,17 @@ module Api::V2
 
     def transaction_fees
 
-      transaction_fee_rates = Rails.cache.fetch("transaction_fees", expires_in: 10.seconds) do
+      transaction_fee_rates = Rails.cache.fetch("last_10000_transaction_fees", expires_in: 10.seconds) do
         CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes, :confirmation_time)
           .where('bytes > 0 and transaction_fee > 0').order('id desc').limit(10000)
       end
 
+      # select from database
       pending_transaction_fee_rates = PoolTransactionEntry.pool_transaction_pending
         .where('transaction_fee > 0')
         .order('id desc').page(@pending_page).per(@pending_page_size)
 
+      # This is a patch for those pending tx which has no `bytes`
       pending_transaction_fee_rates = pending_transaction_fee_rates.map { |tx|
         tx_bytes = 0
         if tx.bytes.blank? || tx.bytes == 0
@@ -29,11 +31,6 @@ module Api::V2
         tx
       }.select {|e| e.bytes > 0}
 
-      dates = (0..@last_n_day).map { |i| i.days.ago.strftime("%Y-%m-%d") }
-      last_n_days_transaction_fee_rates = dates.map { |date|
-        Block.fetch_transaction_fee_rate_from_cache date
-      }
-
       render json: {
         transaction_fee_rates: transaction_fee_rates.map {|tx|
           {
@@ -49,12 +46,7 @@ module Api::V2
             fee_rate: (tx.transaction_fee.to_f / tx.bytes),
           }
         },
-        last_n_days_transaction_fee_rates: last_n_days_transaction_fee_rates.map { |day_fee_rate|
-          {
-            date: (day_fee_rate[0] rescue '-'),
-            fee_rate: (day_fee_rate[1].to_f rescue 0)
-          }
-        }
+        last_n_days_transaction_fee_rates: CkbTransaction.last_n_days_transaction_fee_rates(@last_n_day)
       }
     end
 

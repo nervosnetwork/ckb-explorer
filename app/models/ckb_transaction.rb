@@ -173,6 +173,24 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
+  def self.last_n_days_transaction_fee_rates last_n_day
+    dates = (0..last_n_day).map { |i| i.days.ago.strftime("%Y-%m-%d") }
+    return dates.map { |date|
+      current_date = DateTime.strptime(date, '%Y-%m-%d')
+      fee_rate = Rails.cache.fetch("transaction_fee_rates_on_#{current_date}", expires_in: 10.minutes) do
+        ckb_transactions = CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes)
+          .where('bytes > 0 and transaction_fee > 0 and created_at > ? and created_at < ?', current_date.beginning_of_day, current_date.end_of_day)
+        total_fee_rates = ckb_transactions.map{ |tx| tx.transaction_fee.to_f / tx.bytes }
+        total_fee_rates.sum(0.0) / ckb_transactions.size
+      end
+
+      {
+        date: date,
+        fee_rate: fee_rate
+      }
+    }
+  end
+
   private
 
   def normal_tx_display_outputs(previews)
@@ -312,7 +330,6 @@ end
 #  bytes                 :integer          default(0)
 #  cycles                :integer
 #  confirmation_time     :integer
-#  tx_status             :integer          default("committed"), not null
 #
 # Indexes
 #
