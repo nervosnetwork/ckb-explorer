@@ -3,16 +3,15 @@ module Api::V2
     before_action :set_page_and_page_size
 
     def transaction_fees
-
-      transaction_fee_rates = Rails.cache.fetch("last_10000_transaction_fees", expires_in: 10.seconds) do
-        CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes, :confirmation_time)
-          .where('bytes > 0 and transaction_fee > 0').order('id desc').limit(10000)
-      end
+      expires_in 15.seconds, public: true
+      transaction_fee_rates =
+        CkbTransaction.
+          where("bytes > 0 and transaction_fee > 0").order("id desc").limit(10000).pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time)
 
       # select from database
-      pending_transaction_fee_rates = PoolTransactionEntry.pool_transaction_pending
-        .where('transaction_fee > 0')
-        .order('id desc').page(@pending_page).per(@pending_page_size)
+      pending_transaction_fee_rates = PoolTransactionEntry.pool_transaction_pending.
+        where("transaction_fee > 0").
+        order("id desc").page(@pending_page).per(@pending_page_size)
 
       # This is a patch for those pending tx which has no `bytes`
       pending_transaction_fee_rates = pending_transaction_fee_rates.map { |tx|
@@ -29,30 +28,31 @@ module Api::V2
         end
 
         tx
-      }.select {|e| e.bytes > 0}
+      }.select { |e| e.bytes > 0 }
 
       render json: {
-        transaction_fee_rates: transaction_fee_rates.map {|tx|
+        transaction_fee_rates: transaction_fee_rates.map do |tx|
+          {
+            id: tx[0],
+            timestamp: tx[1].to_i,
+            fee_rate: (tx[2].to_f / tx[3]),
+            confirmation_time: tx[4]
+          }
+        end,
+        pending_transaction_fee_rates: pending_transaction_fee_rates.map do |tx|
           {
             id: tx.id,
-            timestamp: tx.created_at.to_i,
-            fee_rate: (tx.transaction_fee.to_f / tx.bytes),
-            confirmation_time: tx.confirmation_time
+            fee_rate: (tx.transaction_fee.to_f / tx.bytes)
           }
-        },
-        pending_transaction_fee_rates: pending_transaction_fee_rates.map { |tx|
-          {
-            id: tx.id,
-            fee_rate: (tx.transaction_fee.to_f / tx.bytes),
-          }
-        },
+        end,
         last_n_days_transaction_fee_rates: CkbTransaction.last_n_days_transaction_fee_rates(@last_n_day)
       }
     end
 
     private
+
     def set_page_and_page_size
-      @last_n_day = (params[:last_n_day] || 6 ).to_i
+      @last_n_day = (params[:last_n_day] || 6).to_i
       @last_n_day = 20 if @last_n_day > 20
       @pending_tx_page = params[:pending_tx_page] || 1
       @pending_tx_page_size = params[:pending_tx_page_size] || 100
