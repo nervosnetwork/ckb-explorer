@@ -8,7 +8,7 @@ Sidekiq.strict_args!(false)
 
 Sidekiq.configure_server do |config|
   config.redis = { url: redis_url, driver: :ruby, password: redis_password }
-  #config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
+  # config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
 
   config.death_handlers << ->(job, _ex) do
     SidekiqUniqueJobs::Digests.del(digest: job["unique_digest"]) if job["unique_digest"]
@@ -21,7 +21,7 @@ Sidekiq.configure_server do |config|
   end
 end
 Sidekiq.configure_client do |config|
-  #config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
+  # config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
   config.redis = { url: redis_url, driver: :ruby, password: redis_password }
 end
 
@@ -36,18 +36,4 @@ if Rails.env.production?
     ActiveSupport::SecurityUtils.secure_compare(::Digest::SHA256.hexdigest(username), ::Digest::SHA256.hexdigest(ENV["SIDEKIQ_USERNAME"])) &
       ActiveSupport::SecurityUtils.secure_compare(::Digest::SHA256.hexdigest(password), ::Digest::SHA256.hexdigest(ENV["SIDEKIQ_PASSWORD"]))
   end
-end
-
-# sidekiq-cron
-schedule_file = "config/schedule.yml"
-
-if Rails.env.development?
-  dev_schedule_file = "config/schedule.dev.yml"
-  if File.exist?(dev_schedule_file)
-    schedule_file = dev_schedule_file
-  end
-end
-
-if File.exist?(schedule_file) && Sidekiq.server?
-  Sidekiq::Cron::Job.load_from_hash YAML.load_file(schedule_file)
 end
