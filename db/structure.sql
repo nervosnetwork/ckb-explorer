@@ -71,12 +71,12 @@ CREATE FUNCTION public.insert_into_ckb_transactions() RETURNS trigger
     AS $$
 BEGIN
   INSERT INTO ckb_transactions
-  (tx_status, tx_hash, cell_deps,
+  (tx_status, tx_hash, cell_deps, header_deps,
   witnesses, bytes, cycles, version,
   transaction_fee
   )
   VALUES
-  (NEW.tx_status, NEW.tx_hash, NEW.cell_deps,
+  (NEW.tx_status, NEW.tx_hash, NEW.cell_deps, NEW.header_deps,
   NEW.witnesses, NEW.tx_size, NEW.cycles, NEW.version,
   NEW.transaction_fee
   );
@@ -661,7 +661,6 @@ CREATE TABLE public.ckb_transactions (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     is_cellbase boolean DEFAULT false,
-    header_deps bytea,
     cell_deps jsonb,
     witnesses jsonb,
     live_cell_changes integer,
@@ -674,7 +673,8 @@ CREATE TABLE public.ckb_transactions (
     bytes integer DEFAULT 0,
     cycles integer,
     confirmation_time integer,
-    tx_status integer DEFAULT 2 NOT NULL
+    tx_status integer DEFAULT 2 NOT NULL,
+    header_deps jsonb
 );
 
 
@@ -3427,4 +3427,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230320151216'),
 ('20230320153418'),
 ('20230321122734'),
-('20230328134010');
+('20230328134010'),
+('20230328154957');
