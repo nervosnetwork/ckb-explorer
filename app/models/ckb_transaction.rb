@@ -173,22 +173,14 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
-  def self.last_n_days_transaction_fee_rates last_n_day
-    dates = (0..last_n_day).map { |i| i.days.ago.strftime("%Y-%m-%d") }
-    return dates.map { |date|
-      current_date = DateTime.strptime(date, '%Y-%m-%d')
-      fee_rate = Rails.cache.fetch("transaction_fee_rates_on_#{current_date}", expires_in: 10.minutes) do
-        ckb_transactions = CkbTransaction.select(:id, :created_at, :transaction_fee, :bytes)
-          .where('bytes > 0 and transaction_fee > 0 and created_at > ? and created_at < ?', current_date.beginning_of_day, current_date.end_of_day)
-        total_fee_rates = ckb_transactions.map{ |tx| tx.transaction_fee.to_f / tx.bytes }
-        total_fee_rates.sum(0.0) / ckb_transactions.size
-      end
-
-      {
-        date: date,
-        fee_rate: fee_rate
-      }
-    }
+  def self.last_n_days_transaction_fee_rates(last_n_day)
+    CkbTransaction.
+      where("bytes > 0 and transaction_fee > 0").
+      where("block_timestamp >= ?", last_n_day.days.ago.to_i * 1000).
+      group("(block_timestamp / 86400000)::integer").
+      pluck(Arel.sql("(block_timestamp / 86400000)::integer as date"),
+            Arel.sql("sum(transaction_fee / bytes) / count(*) as fee_rate")).
+      map { |date, fee_rate| { date: Time.at(date * 86400).utc.strftime("%Y-%m-%d"), fee_rate: fee_rate } }
   end
 
   private
