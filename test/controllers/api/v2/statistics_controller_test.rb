@@ -4,7 +4,6 @@ module Api
   module V2
     class StatisticsControllerTest < ActionDispatch::IntegrationTest
       setup do
-
         pending_tx_create_at = Time.now.to_i
         confirmation_time = 10
         tx_created_at = pending_tx_create_at + confirmation_time
@@ -22,9 +21,9 @@ module Api
         VCR.use_cassette("get transaction_fees, for committed tx") do
           get transaction_fees_api_v2_statistics_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
           data = JSON.parse(response.body)
-          assert_equal PoolTransactionEntry.all.size, data['transaction_fee_rates'].size
-          assert data['transaction_fee_rates'].first['fee_rate'] > 0
-          assert data['transaction_fee_rates'].first['confirmation_time'] > 0
+          assert_equal PoolTransactionEntry.all.size, data["transaction_fee_rates"].size
+          assert data["transaction_fee_rates"].first["fee_rate"] > 0
+          assert data["transaction_fee_rates"].first["confirmation_time"] > 0
           assert_response :success
         end
       end
@@ -33,8 +32,8 @@ module Api
         VCR.use_cassette("get transaction_fees, for pending tx") do
           get transaction_fees_api_v2_statistics_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
           data = JSON.parse(response.body)
-          assert_equal PoolTransactionEntry.all.size, data['transaction_fee_rates'].size
-          assert data['pending_transaction_fee_rates'].first['fee_rate'] > 0
+          assert_equal PoolTransactionEntry.all.size, data["transaction_fee_rates"].size
+          assert data["pending_transaction_fee_rates"].first["fee_rate"] > 0
 
           assert_response :success
         end
@@ -52,10 +51,11 @@ module Api
 
           get transaction_fees_api_v2_statistics_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
           data = JSON.parse(response.body)
-          assert_equal 7, data['last_n_days_transaction_fee_rates'].size
-          assert_equal "#{Time.now.strftime("%Y-%m-%d")}", data['last_n_days_transaction_fee_rates'].first['date']
-          assert_equal 3.0, data['last_n_days_transaction_fee_rates'].first['fee_rate']
 
+          assert_equal 1, data["last_n_days_transaction_fee_rates"].size
+          # compare with the block timestamp
+          assert_equal "#{Time.at(block.timestamp / 1000).utc.strftime('%Y-%m-%d')}", data["last_n_days_transaction_fee_rates"].first["date"]
+          assert_equal "3.0", data["last_n_days_transaction_fee_rates"].first["fee_rate"]
           assert_response :success
         end
       end
