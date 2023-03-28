@@ -5,7 +5,8 @@ FactoryBot.define do
     number { 10 }
     parent_hash { "0xcba2d1a70602a1def80efbd59629c37a9d6c36f9de7a8ed6d1ca4f76389365e1" }
     nonce { 1757392074788233522 }
-    timestamp { Faker::Time.between(from: 2.days.ago, to: Date.today).to_i * 1000 }
+    # FIXME: the timestamp in blocks table is in milliseconds but here is in seconds
+    timestamp { Faker::Time.between(from: 2.days.ago, to: Date.today).to_i }
     transactions_root { "0xe08894ef0ed80481448f7a584438a76b6bdbea178c02b4c3b40863d75c5aed3c" }
     proposals_hash { "0x0000000000000000000000000000000000000000000000000000000000000000" }
     uncles_count { 1 }

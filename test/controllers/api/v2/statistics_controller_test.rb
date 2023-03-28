@@ -8,7 +8,7 @@ module Api
         confirmation_time = 10
         tx_created_at = pending_tx_create_at + confirmation_time
 
-        block = create(:block)
+        block = create(:block, timestamp: Faker::Time.between(from: 2.days.ago, to: Date.today).to_i * 1000)
         tx_hash1 = "0x497277029e6335c6d5f916574dc4475ee229f3c1cce3658e7dad017a8ed580d4"
         tx_hash2 = "0xe9772bae467924e0feee85e9b7087993d38713bd8c19c954c4b68da69b4f4644"
         create :ckb_transaction, created_at: Time.at(tx_created_at), transaction_fee: 30000, bytes: 20, confirmation_time: confirmation_time, block: block, tx_hash: tx_hash1
