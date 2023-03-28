@@ -41,6 +41,7 @@ class PoolTransactionCheckWorker
       end
       if is_rejected
         PoolTransactionUpdateRejectReasonWorker.perform_async tx.tx_hash, rejected_transaction
+        CkbTransaction.where(tx_hash: tx.tx_hash).update_all tx_status: :rejected # , detailed_message: reason
       end
     end
   end

@@ -377,7 +377,7 @@ module CkbSync
       hashes = local_block.ckb_transactions.pluck(:tx_hash)
 
       PoolTransactionEntry.pool_transaction_pending.where(tx_hash: hashes).update_all(tx_status: "committed")
-      CkbTransaction.tx_pending.where(tx_hash: hashes ).update_all(tx_status: "committed")
+      CkbTransaction.tx_pending.where(tx_hash: hashes).update_all(tx_status: "committed")
     end
 
     def update_udt_info(local_block)
@@ -634,6 +634,7 @@ module CkbSync
           # contained_udt_ids: contained_udt_ids[tx_index].to_a,
           # contained_address_ids: contained_addr_ids[tx_index].to_a,
           tags: tags[tx_index].to_a,
+          tx_status: "committed",
           capacity_involved: input_capacities[tx_index],
           transaction_fee: tx_index == 0 ? 0 : CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index], output_capacities[tx_index]),
           created_at: tx["created_at"],
@@ -1069,7 +1070,6 @@ module CkbSync
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)
-
       {
         block_id: local_block.id,
         tx_hash: tx.hash,

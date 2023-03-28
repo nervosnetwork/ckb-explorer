@@ -1,4 +1,4 @@
-require 'date'
+require "date"
 class Block < ApplicationRecord
   MAX_PAGINATES_PER = 100
   paginates_per 10
@@ -34,9 +34,9 @@ class Block < ApplicationRecord
 
   after_commit :flush_cache
 
-  def self.query_transaction_fee_rate date_string
+  def self.query_transaction_fee_rate(date_string)
     date = DateTime.strptime date_string, "%Y-%m-%d"
-    sql = %Q{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
+    sql = %{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
       from blocks
       where timestamp >= #{date.beginning_of_day.to_i * 1000} and timestamp <= #{date.end_of_day.to_i * 1000}
         and ckb_transactions_count != 0
@@ -46,7 +46,7 @@ class Block < ApplicationRecord
     result = ActiveRecord::Base.connection.execute(sql).values[0]
   end
 
-  def self.fetch_transaction_fee_rate_from_cache date_string
+  def self.fetch_transaction_fee_rate_from_cache(date_string)
     Rails.cache.fetch("transaction_fee_rate_#{date_string}", expires_in: 10.minutes) do
       self.query_transaction_fee_rate date_string
     end
@@ -195,7 +195,7 @@ class Block < ApplicationRecord
     witness = self.ckb_transactions.first.witnesses[0]
     return if witness.blank?
 
-    matched = [witness.gsub('0x', '')].pack("H*").match(/\d\.\d+\.\d/)
+    matched = [witness.gsub("0x", "")].pack("H*").match(/\d\.\d+\.\d/)
     if matched.blank?
       Rails.logger.warn "== this block does not have version information from 1st tx's 1st witness: #{witness}"
       return

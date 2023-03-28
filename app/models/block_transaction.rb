@@ -7,9 +7,10 @@ end
 #
 # Table name: block_transactions
 #
+#  id                 :bigint           not null, primary key
 #  block_id           :bigint
 #  ckb_transaction_id :bigint
-#  tx_index           :integer
+#  tx_index           :integer          default(0), not null
 #
 # Indexes
 #
