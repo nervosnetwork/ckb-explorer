@@ -643,8 +643,9 @@ module CkbSync
         ckb_transactions_attributes << attr
         tx_index += 1
       end
+
       if ckb_transactions_attributes.present?
-        CkbTransaction.upsert_all(ckb_transactions_attributes)
+        CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:id])
       end
 
       AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present? # , unique_by: [:ckb_transaction_id, :address_id]
@@ -1066,11 +1067,12 @@ module CkbSync
         tx_index += 1
       end
 
-      txs = CkbTransaction.insert_all!(ckb_transactions_attributes, returning: %w(id tx_hash created_at))
+      txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:tx_hash], returning: %w(id tx_hash created_at))
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)
       {
+        tx_status: "committed",
         block_id: local_block.id,
         tx_hash: tx.hash,
         cell_deps: tx.cell_deps,

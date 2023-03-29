@@ -2120,6 +2120,14 @@ ALTER TABLE ONLY public.ckb_transactions
 
 
 --
+-- Name: ckb_transactions ckb_tx_unique_tx_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions
+    ADD CONSTRAINT ckb_tx_unique_tx_hash UNIQUE (tx_hash);
+
+
+--
 -- Name: contracts contracts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2718,10 +2726,10 @@ CREATE INDEX index_ckb_transactions_on_tags ON public.ckb_transactions USING gin
 
 
 --
--- Name: index_ckb_transactions_on_tx_hash_and_block_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_ckb_transactions_on_tx_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_ckb_transactions_on_tx_hash_and_block_id ON public.ckb_transactions USING btree (tx_hash, block_id);
+CREATE INDEX index_ckb_transactions_on_tx_hash ON public.ckb_transactions USING hash (tx_hash);
 
 
 --
@@ -3429,4 +3437,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230321122734'),
 ('20230328134010'),
 ('20230328154957'),
-('20230328155502');
+('20230328155502'),
+('20230329123239');
