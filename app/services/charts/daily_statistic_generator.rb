@@ -11,40 +11,38 @@ module Charts
     end
 
     def call
-      puts "Generating daily statistics on #{datetime.strftime('%Y-%m-%d')} from #{started_at} to #{ended_at}"
       daily_ckb_transactions_count = CkbTransaction.created_after(started_at).created_before(ended_at).recent.count
       return if daily_ckb_transactions_count.zero?
 
       daily_statistic = ::DailyStatistic.find_or_create_by!(created_at_unixtimestamp: to_be_counted_date.to_i)
       %w{
-        block_timestamp transactions_count addresses_count daily_dao_withdraw unclaimed_compensation claimed_compensation average_deposit_time mining_reward
+        block_timestamp transactions_count addresses_count daily_dao_withdraw total_dao_deposit circulating_supply unclaimed_compensation claimed_compensation average_deposit_time mining_reward
         deposit_compensation treasury_amount estimated_apc live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate total_depositors_count address_balance_distribution
-        total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count dao_depositors_count total_supply circulating_supply circulation_ratio block_time_distribution
-        epoch_time_distribution epoch_length_distribution locked_capacity total_dao_deposit
+        total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count dao_depositors_count total_supply circulation_ratio block_time_distribution
+        epoch_time_distribution epoch_length_distribution locked_capacity
       }.each do |method|
-        puts "Updating #{method}"
         if daily_statistic[method].blank? or daily_statistic[method].to_s.to_i == 0
           ApplicationRecord.benchmark(method) do
-            daily_statistic.update method => send(method, daily_statistic)
+            daily_statistic.update method => send(method)
           end
         end
       end
       daily_statistic
     end
 
-    def block_timestamp(daily_statistic)
+    def block_timestamp
       Block.created_after(started_at).created_before(ended_at).recent.pick(:timestamp)
     end
 
-    def transactions_count(daily_statistic)
+    def transactions_count
       transactions_count = CkbTransaction.created_after(started_at).created_before(ended_at).recent.count
     end
 
-    def addresses_count(daily_statistic)
+    def addresses_count
       addresses_count = processed_addresses_count
     end
 
-    def total_dao_deposit(daily_statistic)
+    def total_dao_deposit
       total_dao_deposit = ""
       if from_scratch
         deposit_amount = DaoEvent.processed.deposit_to_dao.created_before(ended_at).sum(:value)
@@ -58,23 +56,23 @@ module Charts
       total_dao_deposit
     end
 
-    def dao_depositors_count(daily_statistic)
+    def dao_depositors_count
       dao_depositors_count = ""
       if from_scratch
         dao_depositors_count = total_depositors_count - DaoEvent.processed.take_away_all_deposit.created_before(ended_at).count
       else
         withdrawals_today = DaoEvent.processed.take_away_all_deposit.created_after(started_at).created_before(ended_at).count
-        dao_depositors_count = daily_statistic.daily_dao_depositors_count - withdrawals_today + yesterday_daily_statistic.dao_depositors_count.to_i
+        dao_depositors_count = daily_dao_depositors_count - withdrawals_today + yesterday_daily_statistic.dao_depositors_count.to_i
       end
       dao_depositors_count
     end
 
-    def unclaimed_compensation(daily_statistic)
+    def unclaimed_compensation
       @unclaimed_compensation ||=
         phase1_dao_interests + unmade_dao_interests
     end
 
-    def claimed_compensation(daily_statistic)
+    def claimed_compensation
       claimed_compensation = @claimed_compensation ||=
         if from_scratch
           CellOutput.nervos_dao_withdrawing.consumed_before(ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
@@ -90,7 +88,7 @@ module Charts
         end
     end
 
-    def average_deposit_time(daily_statistic)
+    def average_deposit_time
       interest_bearing_deposits = 0
       uninterest_bearing_deposits = 0
       sum_interest_bearing =
@@ -118,15 +116,15 @@ module Charts
       average_deposit_time
     end
 
-    def mining_reward(daily_statistic)
+    def mining_reward
       Block.where("timestamp <= ?", ended_at).sum(:secondary_reward)
     end
 
-    def deposit_compensation(daily_statistic)
-      daily_statistic.unclaimed_compensation.to_i + daily_statistic.claimed_compensation.to_i
+    def deposit_compensation
+      unclaimed_compensation.to_i + claimed_compensation.to_i
     end
 
-    def treasury_amount(daily_statistic)
+    def treasury_amount
       @treasury_amount ||=
         begin
           parse_dao = CkbUtils.parse_dao(current_tip_block.dao)
@@ -134,11 +132,11 @@ module Charts
         end
     end
 
-    def estimated_apc(daily_statistic)
+    def estimated_apc
       DaoContract.default_contract.estimated_apc(current_tip_block.fraction_epoch)
     end
 
-    def live_cells_count(daily_statistic)
+    def live_cells_count
       live_cells_count = ""
       if from_scratch
         live_cells_count = CellOutput.generated_before(ended_at).unconsumed_at(ended_at).count
@@ -148,7 +146,7 @@ module Charts
       live_cells_count
     end
 
-    def dead_cells_count(daily_statistic)
+    def dead_cells_count
       dead_cells_count = ""
       if from_scratch
         dead_cells_count = CellOutput.generated_before(ended_at).consumed_before(ended_at).count
@@ -158,7 +156,7 @@ module Charts
       dead_cells_count
     end
 
-    def avg_hash_rate(daily_statistic)
+    def avg_hash_rate
       first_block_for_the_day = Block.created_after(started_at).created_before(ended_at).order("timestamp asc").first
       last_block_for_the_day = Block.created_after(started_at).created_before(ended_at).recent.first
       total_block_time = last_block_for_the_day.timestamp - first_block_for_the_day.timestamp
@@ -166,16 +164,16 @@ module Charts
       BigDecimal(total_difficulties_for_the_day) / total_block_time
     end
 
-    def avg_difficulty(daily_statistic)
+    def avg_difficulty
       BigDecimal(total_difficulties_for_the_day) / total_blocks_count
     end
 
-    def uncle_rate(daily_statistic)
+    def uncle_rate
       uncles_count = Block.created_after(started_at).created_before(ended_at).sum(:uncles_count)
       BigDecimal(uncles_count) / total_blocks_count
     end
 
-    def total_depositors_count(daily_statistic)
+    def total_depositors_count
       @total_depositors_count ||=
         if from_scratch
           DaoEvent.processed.new_dao_depositor.created_before(ended_at).count
@@ -185,7 +183,7 @@ module Charts
         end
     end
 
-    def address_balance_distribution(daily_statistic)
+    def address_balance_distribution
       max_n = 9
       ranges =
         (1..max_n).map do |n|
@@ -211,27 +209,27 @@ module Charts
       end
     end
 
-    def total_tx_fee(daily_statistic)
+    def total_tx_fee
       Block.created_after(started_at).created_before(ended_at).sum(:total_transaction_fee)
     end
 
-    def occupied_capacity(daily_statistic)
+    def occupied_capacity
       CellOutput.generated_before(ended_at).unconsumed_at(ended_at).sum(:occupied_capacity)
     end
 
-    def daily_dao_deposit(daily_statistic)
+    def daily_dao_deposit
       @daily_dao_deposit ||= DaoEvent.processed.deposit_to_dao.created_after(started_at).created_before(ended_at).sum(:value)
     end
 
-    def daily_dao_depositors_count(daily_statistic)
+    def daily_dao_depositors_count
       @daily_dao_depositors_count ||= DaoEvent.processed.new_dao_depositor.created_after(started_at).created_before(ended_at).count
     end
 
-    def daily_dao_withdraw(daily_statistic)
+    def daily_dao_withdraw
       @daily_dao_withdraw ||= DaoEvent.processed.withdraw_from_dao.created_after(started_at).created_before(ended_at).sum(:value)
     end
 
-    def total_supply(daily_statistic)
+    def total_supply
       tip_dao = current_tip_block.dao
       tip_parse_dao = CkbUtils.parse_dao(tip_dao)
       treasury_amount = @treasury_amount ||=
@@ -242,17 +240,15 @@ module Charts
       tip_parse_dao.c_i - MarketData::BURN_QUOTA - treasury_amount
     end
 
-    def circulating_supply(daily_statistic)
+    def circulating_supply
       MarketData.new(indicator: "circulating_supply", tip_block_number: current_tip_block.number, unit: "shannon").call
     end
 
-    def circulation_ratio(daily_statistic)
-      total_dao_deposit daily_statistic
-      circulating_supply daily_statistic
-      daily_statistic.total_dao_deposit.to_i / daily_statistic.circulating_supply
+    def circulation_ratio
+      total_dao_deposit.to_i / circulating_supply
     end
 
-    def block_time_distribution(daily_statistic)
+    def block_time_distribution
       step = 0.1
       max_n = 50 - step
       ranges = (0..max_n).step(0.1).map { |n| [n.round(2), (n + step).round(2)] }
@@ -269,7 +265,7 @@ module Charts
     end
 
     # [0, 180] 0-180 minutes
-    def epoch_time_distribution(daily_statistic)
+    def epoch_time_distribution
       max_n = 119
       ranges = [[0, 180]] + (180..(180 + max_n)).map { |n| [n, n + 1] }
       ranges.each_with_index.map { |range, index|
@@ -287,7 +283,7 @@ module Charts
       }.compact
     end
 
-    def epoch_length_distribution(daily_statistic)
+    def epoch_length_distribution
       max_n = 1700
       ranges = (700..max_n).step(100).map { |n| [n, n + 100] }
       tip_epoch_number = current_tip_block.epoch
@@ -301,7 +297,7 @@ module Charts
       }.compact
     end
 
-    def locked_capacity(daily_statistic)
+    def locked_capacity
       market_data = MarketData.new(tip_block_number: current_tip_block.number)
       market_data.ecosystem_locked + market_data.team_locked + market_data.private_sale_locked + market_data.founding_partners_locked + market_data.foundation_reserve_locked + market_data.bug_bounty_locked
     end
