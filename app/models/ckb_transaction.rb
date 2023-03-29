@@ -173,6 +173,16 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
+  def self.last_n_days_transaction_fee_rates(last_n_day)
+    CkbTransaction.
+      where("bytes > 0 and transaction_fee > 0").
+      where("block_timestamp >= ?", last_n_day.days.ago.to_i * 1000).
+      group("(block_timestamp / 86400000)::integer").
+      pluck(Arel.sql("(block_timestamp / 86400000)::integer as date"),
+            Arel.sql("sum(transaction_fee / bytes) / count(*) as fee_rate")).
+      map { |date, fee_rate| { date: Time.at(date * 86400).utc.strftime("%Y-%m-%d"), fee_rate: fee_rate } }
+  end
+
   private
 
   def normal_tx_display_outputs(previews)

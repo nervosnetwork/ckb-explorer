@@ -59,7 +59,7 @@ module Api
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number transaction_hash block_timestamp display_inputs display_outputs is_cellbase income).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number block_timestamp display_inputs display_inputs_count display_outputs display_outputs_count income is_cellbase transaction_hash).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return error object when no records found by give contract name" do

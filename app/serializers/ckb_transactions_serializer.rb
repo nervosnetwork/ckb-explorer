@@ -15,6 +15,14 @@ class CkbTransactionsSerializer
     object.block_timestamp.to_s
   end
 
+  attribute :display_inputs_count do |object|
+    object.display_inputs.count
+  end
+
+  attribute :display_outputs_count do |object|
+    object.display_outputs.count
+  end
+
   attribute :display_inputs do |object, params|
     if params && params[:previews]
       if object.display_inputs_info.present?
