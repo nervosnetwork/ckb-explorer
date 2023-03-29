@@ -61,7 +61,7 @@ class CellDependencyTest < ActiveSupport::TestCase
     cell_output_ids_of_lock_script_or_type_script = lock_script.ckb_transactions.first.cell_outputs.map {|e| e.id}
     cell_output_ids_of_cell_dependency = CellDependency.all.map {|e| e.contract_cell_id}
     Rails.logger.info "=== CellDependency.count #{CellDependency.count}"
-    assert_equal 7, CellDependency.count
+    assert_equal 4, CellDependency.count
     assert_equal contract.id, cell_dependency.contract_id
     assert_equal lock_script.ckb_transactions.first.id, cell_dependency.ckb_transaction_id
     assert_equal cell_output_ids_of_lock_script_or_type_script.sort, cell_output_ids_of_cell_dependency.sort
@@ -70,6 +70,6 @@ class CellDependencyTest < ActiveSupport::TestCase
     CellDependency.create_from_scripts TypeScript.all
     CellDependency.create_from_scripts LockScript.all
     Rails.logger.info "=== 2nd CellDependency.count #{CellDependency.count}"
-    assert_equal 7, CellDependency.count
+    assert_equal 4, CellDependency.count
   end
 end
