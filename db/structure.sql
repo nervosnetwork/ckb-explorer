@@ -471,49 +471,15 @@ ALTER SEQUENCE public.blocks_id_seq OWNED BY public.blocks.id;
 
 
 --
--- Name: books; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.books (
-    id bigint NOT NULL,
-    author_name character varying,
-    title character varying,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: books_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.books_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: books_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.books_id_seq OWNED BY public.books.id;
-
-
---
 -- Name: cell_dependencies; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.cell_dependencies (
     id bigint NOT NULL,
     contract_id bigint,
-    ckb_transaction_id bigint,
+    ckb_transaction_id bigint NOT NULL,
     dep_type integer,
-    contract_cell_id bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
+    contract_cell_id bigint NOT NULL,
     script_id bigint
 );
 
@@ -601,7 +567,8 @@ CREATE TABLE public.cell_outputs (
     udt_amount numeric(40,0),
     dao character varying,
     lock_script_id bigint,
-    type_script_id bigint
+    type_script_id bigint,
+    data_hash bytea
 );
 
 
@@ -866,8 +833,8 @@ ALTER SEQUENCE public.dao_events_id_seq OWNED BY public.dao_events.id;
 
 CREATE TABLE public.deployed_cells (
     id bigint NOT NULL,
-    cell_output_id bigint,
-    contract_id bigint,
+    cell_output_id bigint NOT NULL,
+    contract_id bigint NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -1312,10 +1279,8 @@ CREATE TABLE public.schema_migrations (
 
 CREATE TABLE public.script_transactions (
     id bigint NOT NULL,
-    script_id bigint,
-    ckb_transaction_id bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    script_id bigint NOT NULL,
+    ckb_transaction_id bigint NOT NULL
 );
 
 
@@ -1792,13 +1757,6 @@ ALTER TABLE ONLY public.blocks ALTER COLUMN id SET DEFAULT nextval('public.block
 
 
 --
--- Name: books id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.books ALTER COLUMN id SET DEFAULT nextval('public.books_id_seq'::regclass);
-
-
---
 -- Name: cell_dependencies id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2055,14 +2013,6 @@ ALTER TABLE ONLY public.block_time_statistics
 
 ALTER TABLE ONLY public.blocks
     ADD CONSTRAINT blocks_pkey PRIMARY KEY (id);
-
-
---
--- Name: books books_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.books
-    ADD CONSTRAINT books_pkey PRIMARY KEY (id);
 
 
 --
@@ -2328,6 +2278,13 @@ CREATE UNIQUE INDEX address_udt_tx_alt_pk ON public.address_udt_transactions USI
 
 
 --
+-- Name: cell_deps_tx_cell_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX cell_deps_tx_cell_idx ON public.cell_dependencies USING btree (ckb_transaction_id, contract_cell_id);
+
+
+--
 -- Name: index_account_books_on_address_id_and_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2531,6 +2488,13 @@ CREATE INDEX index_cell_outputs_on_consumed_by_id ON public.cell_outputs USING b
 
 
 --
+-- Name: index_cell_outputs_on_data_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_outputs_on_data_hash ON public.cell_outputs USING hash (data_hash);
+
+
+--
 -- Name: index_cell_outputs_on_generated_by_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2709,14 +2673,14 @@ CREATE INDEX index_dao_events_on_status_and_event_type ON public.dao_events USIN
 -- Name: index_deployed_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
+CREATE UNIQUE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
 
 
 --
--- Name: index_deployed_cells_on_contract_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_deployed_cells_on_contract_id_and_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_deployed_cells_on_contract_id ON public.deployed_cells USING btree (contract_id);
+CREATE UNIQUE INDEX index_deployed_cells_on_contract_id_and_cell_output_id ON public.deployed_cells USING btree (contract_id, cell_output_id);
 
 
 --
@@ -2759,6 +2723,13 @@ CREATE INDEX index_lock_scripts_on_code_hash_and_hash_type_and_args ON public.lo
 --
 
 CREATE INDEX index_lock_scripts_on_script_hash ON public.lock_scripts USING btree (script_hash);
+
+
+--
+-- Name: index_lock_scripts_on_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_lock_scripts_on_script_id ON public.lock_scripts USING btree (script_id);
 
 
 --
@@ -2815,6 +2786,13 @@ CREATE UNIQUE INDEX index_rolling_avg_block_time_on_timestamp ON public.rolling_
 --
 
 CREATE INDEX index_script_transactions_on_ckb_transaction_id ON public.script_transactions USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_script_transactions_on_ckb_transaction_id_and_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_script_transactions_on_ckb_transaction_id_and_script_id ON public.script_transactions USING btree (ckb_transaction_id, script_id);
 
 
 --
@@ -2941,6 +2919,13 @@ CREATE INDEX index_type_scripts_on_code_hash_and_hash_type_and_args ON public.ty
 --
 
 CREATE INDEX index_type_scripts_on_script_hash ON public.type_scripts USING btree (script_hash);
+
+
+--
+-- Name: index_type_scripts_on_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_type_scripts_on_script_id ON public.type_scripts USING btree (script_id);
 
 
 --
@@ -3248,7 +3233,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230128015956'),
 ('20230128031939'),
 ('20230129165127'),
-('20230130005447'),
 ('20230206073806'),
 ('20230207112513'),
 ('20230208081700'),
@@ -3259,6 +3243,13 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230218154437'),
 ('20230220013604'),
 ('20230220060922'),
-('20230228114330');
+('20230228114330'),
+('20230319152819'),
+('20230319160108'),
+('20230319164714'),
+('20230320075334'),
+('20230320151216'),
+('20230320153418'),
+('20230321122734');
 
 

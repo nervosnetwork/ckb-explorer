@@ -19,14 +19,14 @@ class CellDependencyTest < ActiveSupport::TestCase
 
   test "it should create contract" do
     assert_equal @contract.id, @cell_dependency.contract_id
-    assert_equal 1, @cell_dependency.dep_type
+    assert_equal "dep_group", @cell_dependency.dep_type
     assert_equal @cell_output.id, @cell_dependency.contract_cell_id
     assert_equal @ckb_transaction.id, @cell_dependency.ckb_transaction_id
   end
 
   test "it should update contract" do
-    @cell_dependency.update dep_type: 2
-    assert_equal 2, @cell_dependency.dep_type
+    @cell_dependency.update dep_type: :dep_group
+    assert_equal "dep_group", @cell_dependency.dep_type
   end
 
   test "it should belongs_to contract" do
