@@ -658,8 +658,8 @@ CREATE TABLE public.ckb_transactions (
     block_timestamp numeric(30,0),
     transaction_fee numeric(30,0),
     version integer,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
     is_cellbase boolean DEFAULT false,
     cell_deps jsonb,
     witnesses jsonb,
@@ -674,7 +674,7 @@ CREATE TABLE public.ckb_transactions (
     cycles integer,
     confirmation_time integer,
     tx_status integer DEFAULT 2 NOT NULL,
-    header_deps jsonb
+    header_deps text
 );
 
 
@@ -3428,4 +3428,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230320153418'),
 ('20230321122734'),
 ('20230328134010'),
-('20230328154957');
+('20230328154957'),
+('20230328155502');

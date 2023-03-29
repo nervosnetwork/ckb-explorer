@@ -7,12 +7,12 @@ class CreateTiggerForSyncingPendingTx < ActiveRecord::Migration[7.0]
         INSERT INTO ckb_transactions
         (tx_status, tx_hash, cell_deps, header_deps,
         witnesses, bytes, cycles, version,
-        transaction_fee
+        transaction_fee, created_at, updated_at
         )
         VALUES
         (NEW.tx_status, NEW.tx_hash, NEW.cell_deps, NEW.header_deps,
         NEW.witnesses, NEW.tx_size, NEW.cycles, NEW.version,
-        NEW.transaction_fee
+        NEW.transaction_fee, NOW(), NOW()
         );
         RETURN NEW;
       END;
