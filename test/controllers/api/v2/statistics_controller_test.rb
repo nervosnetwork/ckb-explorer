@@ -51,11 +51,9 @@ module Api
 
           get transaction_fees_api_v2_statistics_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
           data = JSON.parse(response.body)
-
-          assert_equal 1, data["last_n_days_transaction_fee_rates"].size
-          # compare with the block timestamp
-          assert_equal "#{Time.at(block.timestamp / 1000).utc.strftime('%Y-%m-%d')}", data["last_n_days_transaction_fee_rates"].first["date"]
-          assert_equal "3.0", data["last_n_days_transaction_fee_rates"].first["fee_rate"]
+          assert_equal 7, data['last_n_days_transaction_fee_rates'].size
+          assert_equal "#{Time.now.strftime("%Y-%m-%d")}T00:00:00.000+00:00", data['last_n_days_transaction_fee_rates'].first['date']
+          assert_equal 35, data['last_n_days_transaction_fee_rates'].first['fee_rate']
           assert_response :success
         end
       end
