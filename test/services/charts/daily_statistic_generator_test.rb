@@ -132,7 +132,7 @@ module Charts
       average_deposit_time_update = Charts::DailyStatisticGenerator.new(@datetime).average_deposit_time
       average_deposit_time = Charts::DailyStatisticGenerator.new(@datetime).average_deposit_time
       @daily_statistic.update average_deposit_time: average_deposit_time_update
-      assert_equal average_deposit_time, @daily_statistic.average_deposit_time
+      assert_equal average_deposit_time, @daily_statistic.average_deposit_time.to_i
     end
 
     test "it should get mining_reward" do
