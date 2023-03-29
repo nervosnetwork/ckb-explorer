@@ -35,7 +35,7 @@ module Api
         @page_size = params[:page_size] || 10
 
         if params[:address]
-          @address = Address.direct_find(params[:address])
+          @address = Address.cached_find(params[:address])
         end
 
         ckb_transactions =

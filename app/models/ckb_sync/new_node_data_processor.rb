@@ -14,7 +14,8 @@ module CkbSync
     #           :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
     #           :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
     #           :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
-    attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes
+    attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
+                  :outputs, :inputs, :outputs_data
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -54,12 +55,12 @@ module CkbSync
         local_block = build_block!(node_block)
         local_cache.write("BlockNumber", local_block.number)
         build_uncle_blocks!(node_block, local_block.id)
-        inputs = []
-        outputs = []
-        outputs_data = []
+        inputs = @inputs = {}
+        outputs = @outputs = {}
+        outputs_data = @outputs_data = {}
 
         @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
-        build_udts!(local_block, outputs, outputs_data.flatten)
+        build_udts!(local_block, outputs, outputs_data)
 
         tags = []
         udt_address_ids = []
@@ -84,6 +85,7 @@ module CkbSync
         update_addresses_info(addrs_changes)
       end
 
+      cache_address_txs(local_block)
       generate_tx_display_info(local_block)
       remove_tx_display_infos(local_block)
       flush_inputs_outputs_caches(local_block)
@@ -350,7 +352,8 @@ module CkbSync
             contract_id: dao_contract.id,
             block_timestamp: local_block.timestamp,
             created_at: Time.current,
-            updated_at: Time.current }
+            updated_at: Time.current
+          }
         end
         DaoEvent.insert_all!(deposit_dao_events_attributes) if deposit_dao_events_attributes.present?
       end
@@ -550,6 +553,7 @@ module CkbSync
     end
 
     def update_block_info!(local_block)
+      # binding.pry
       local_block.update!(total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
                           ckb_transactions_count: local_block.ckb_transactions.count,
                           live_cell_changes: local_block.ckb_transactions.sum(&:live_cell_changes),
@@ -558,56 +562,56 @@ module CkbSync
 
     def build_udts!(local_block, outputs, outputs_data)
       udts_attributes = Set.new
-      outputs.each_with_index do |output, index|
-        next if output.is_a?(Integer)
+      outputs.each do |tx_index, items|
+        items.each_with_index do |output, index|
+          cell_type = cell_type(output.type, outputs_data[tx_index][index])
+          next unless cell_type.in?(%w(udt m_nft_token nrc_721_token))
 
-        cell_type = cell_type(output.type, outputs_data[index])
-        next unless cell_type.in?(%w(udt m_nft_token nrc_721_token))
+          type_hash = output.type.compute_hash
+          unless Udt.where(type_hash: type_hash).exists?
+            nft_token_attr = { full_name: nil, icon_file: nil, published: false, symbol: nil }
+            if cell_type == "m_nft_token"
+              m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: output.type.args[0..49]).first
+              if m_nft_class_type.present?
+                m_nft_class_cell = m_nft_class_type.cell_outputs.last
+                parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+                coll = TokenCollection.find_or_create_by(
+                  standard: "m_nft",
+                  name: parsed_class_data.name,
+                  cell_id: m_nft_class_cell.id,
+                  icon_url: parsed_class_data.renderer,
+                  creator_id: m_nft_class_cell.address_id
+                )
 
-        type_hash = output.type.compute_hash
-        unless Udt.where(type_hash: type_hash).exists?
-          nft_token_attr = { full_name: nil, icon_file: nil, published: false, symbol: nil }
-          if cell_type == "m_nft_token"
-            m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: output.type.args[0..49]).first
-            if m_nft_class_type.present?
-              m_nft_class_cell = m_nft_class_type.cell_outputs.last
-              parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
-              coll = TokenCollection.find_or_create_by(
-                standard: "m_nft",
-                name: parsed_class_data.name,
-                cell_id: m_nft_class_cell.id,
-                icon_url: parsed_class_data.renderer,
-                creator_id: m_nft_class_cell.address_id
-              )
-
-              nft_token_attr[:full_name] = parsed_class_data.name
-              nft_token_attr[:icon_file] = parsed_class_data.renderer
+                nft_token_attr[:full_name] = parsed_class_data.name
+                nft_token_attr[:icon_file] = parsed_class_data.renderer
+                nft_token_attr[:published] = true
+              end
+            end
+            if cell_type == "nrc_721_token"
+              factory_cell = CkbUtils.parse_nrc_721_args(output.type.args)
+              nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args)
+              if nrc_721_factory_cell.verified
+                nft_token_attr[:full_name] = nrc_721_factory_cell.name
+                nft_token_attr[:symbol] = nrc_721_factory_cell.symbol.to_s[0, 16]
+                nft_token_attr[:icon_file] = "#{nrc_721_factory_cell.base_token_uri}/#{factory_cell.token_id}"
+                nft_token_attr[:nrc_factory_cell_id] = nrc_721_factory_cell.id
+              end
               nft_token_attr[:published] = true
             end
+            # fill issuer_address after publish the token
+            # udts_attributes << {
+            #   type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
+            #   code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
+            Udt.find_or_create_by!({
+              type_hash: type_hash,
+              udt_type: udt_type(cell_type),
+              block_timestamp: local_block.timestamp,
+              args: output.type.args,
+              code_hash: output.type.code_hash,
+              hash_type: output.type.hash_type
+            }.merge(nft_token_attr))
           end
-          if cell_type == "nrc_721_token"
-            factory_cell = CkbUtils.parse_nrc_721_args(output.type.args)
-            nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args)
-            if nrc_721_factory_cell.verified
-              nft_token_attr[:full_name] = nrc_721_factory_cell.name
-              nft_token_attr[:symbol] = nrc_721_factory_cell.symbol.to_s[0, 16]
-              nft_token_attr[:icon_file] = "#{nrc_721_factory_cell.base_token_uri}/#{factory_cell.token_id}"
-              nft_token_attr[:nrc_factory_cell_id] = nrc_721_factory_cell.id
-            end
-            nft_token_attr[:published] = true
-          end
-          # fill issuer_address after publish the token
-          # udts_attributes << {
-          #   type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
-          #   code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
-          Udt.find_or_create_by!({
-            type_hash: type_hash,
-            udt_type: udt_type(cell_type),
-            block_timestamp: local_block.timestamp,
-            args: output.type.args,
-            code_hash: output.type.code_hash,
-            hash_type: output.type.hash_type
-          }.merge(nft_token_attr))
         end
       end
       # Udt.insert_all!(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if udts_attributes.present?
@@ -718,7 +722,7 @@ module CkbSync
       CellOutput.insert_all!(cell_outputs_attributes) if cell_outputs_attributes.present?
       prev_outputs = prepare_previous_outputs(inputs)
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes)
-
+      # binding.pry
       CellInput.insert_all!(cell_inputs_attributes)
       CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
 
@@ -732,14 +736,16 @@ module CkbSync
       previous_outputs = {}
       outpoints = []
       sql = "select id, tx_hash, cell_index, cell_type, capacity, address_id, type_hash, created_at, data from cell_outputs where "
-      inputs.each do |item|
-        if !item.is_a?(Integer) && !from_cell_base?(item)
-          outpoints << "(tx_hash = '\\#{item.previous_output.tx_hash.delete_prefix('0')}' and cell_index = #{item.previous_output.index}) or "
+      inputs.each_value do |items|
+        items.each do |item|
+          if !from_cell_base?(item)
+            outpoints << "(tx_hash = '\\#{item.previous_output.tx_hash.delete_prefix('0')}' and cell_index = #{item.previous_output.index}) or "
+          end
         end
       end
       block_number = local_cache.read("BlockNumber")
       # not just cellbase in inputs
-      if inputs.size > 2
+      if inputs.size > 1
         outpoints.each_slice(100) do |ops|
           inner_sql = sql.dup
           ops.each do |op|
@@ -757,8 +763,8 @@ module CkbSync
 
     def build_addresses!(outputs, local_block)
       block_number = local_cache.read("BlockNumber")
-      outputs.each do |item|
-        unless item.is_a?(Integer)
+      outputs.each_value do |items|
+        items.each do |item|
           address =
             local_cache.fetch("NodeData/Address/#{item.lock.code_hash}-#{item.lock.hash_type}-#{item.lock.args}") do
               # TODO use LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
@@ -771,8 +777,8 @@ module CkbSync
     end
 
     def prepare_script_ids(outputs)
-      outputs.each do |output|
-        unless output.is_a?(Integer)
+      outputs.each_value do |items|
+        items.each do |output|
           local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}") do
             # TODO use LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
             LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).select(:id).take!
@@ -791,8 +797,8 @@ module CkbSync
       locks_attributes = Set.new
       types_attributes = Set.new
       block_number = local_cache.read("BlockNumber")
-      outputs.each do |output|
-        unless output.is_a?(Integer)
+      outputs.each_value do |items|
+        items.each do |output|
           unless local_cache.read("NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
             script_hash = output.lock.compute_hash
             # TODO use LockScript.where(script_hash: script_hash).exists? replace search by code_hash, hash_type and args query after script_hash has been filled
@@ -826,11 +832,10 @@ module CkbSync
 
     def build_cell_inputs(inputs, ckb_txs, local_block_id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes)
       tx_index = 0
-      inputs.each do |item|
-        if item.is_a?(Integer)
-          tx_index = item
-          input_capacities[tx_index] = 0 if item != 0
-        else
+
+      inputs.each do |tx_index, items|
+        items.each do |item|
+          input_capacities[tx_index] = 0 if tx_index != 0
           # attributes[0] is cell_inputs_attributes
           # attributes[1] is prev_cell_outputs_attributes
           # attributes[2] is previous_cell_output capacity
@@ -838,106 +843,88 @@ module CkbSync
           # attributes[4] is previous_cell address_id
           # attributes[5] is previous_cell data
           attributes = cell_input_attributes(item, ckb_txs[tx_index]["id"], local_block_id, prev_outputs)
-          cell_inputs_attributes << attributes[0]
-          if attributes[1].present?
-            if addrs_changes[attributes[4]][:balance_diff].present?
-              addrs_changes[attributes[4]][:balance_diff] -= attributes[2]
-            else
-              addrs_changes[attributes[4]][:balance_diff] = -attributes[2]
-            end
-            if addrs_changes[attributes[4]][:balance_occupied_diff].present?
-              addrs_changes[attributes[4]][:balance_occupied_diff] -= attributes[2] if occupied?(attributes[3], attributes[5])
-            elsif occupied?(attributes[3], attributes[5])
-              addrs_changes[attributes[4]][:balance_occupied_diff] = -attributes[2]
-            end
-            if addrs_changes[attributes[4]][:cells_diff].present?
-              addrs_changes[attributes[4]][:cells_diff] -= 1
-            else
-              addrs_changes[attributes[4]][:cells_diff] = -1
-            end
-            if addrs_changes[attributes[4]][:ckb_txs].present?
-              addrs_changes[attributes[4]][:ckb_txs] << ckb_txs[tx_index]["tx_hash"]
-            else
-              addrs_changes[attributes[4]][:ckb_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
-            end
+          cell_inputs_attributes << attributes[:cell_input]
 
-            prev_cell_outputs_attributes << attributes[1]
-            contained_addr_ids[tx_index] << attributes[4]
-            cell_type = attributes[1][:cell_type].to_s
+          if attributes[:previous_output].present?
+            address_id = attributes[:address_id]
+            previous_output = attributes[:previous_output]
+            capacity = attributes[:capacity]
+            type_hash = attributes[:type_hash]
+            data = attributes[:data]
+            change_rec = addrs_changes[address_id]
+            # change_rec.with_defaults!
+            change_rec[:balance_diff] ||= 0
+            change_rec[:balance_diff]  -= capacity
+            change_rec[:balance_occupied_diff] ||= 0
+            change_rec[:balance_occupied_diff] -= capacity if occupied?(type_hash, data)
+            change_rec[:cells_diff] ||= 0
+            change_rec[:cells_diff] -= 1
+            change_rec[:ckb_txs] ||= Set.new
+            change_rec[:ckb_txs] << ckb_txs[tx_index]["tx_hash"]
+
+            prev_cell_outputs_attributes << previous_output
+            contained_addr_ids[tx_index] << address_id
+            cell_type = previous_output[:cell_type].to_s
             if cell_type.in?(%w(nervos_dao_withdrawing))
               tags[tx_index] << "dao"
               dao_address_ids[tx_index] << attributes[4]
-              if addrs_changes[attributes[4]][:dao_txs].present?
-                addrs_changes[attributes[4]][:dao_txs] << ckb_txs[tx_index]["tx_hash"]
-              else
-                addrs_changes[attributes[4]][:dao_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
-              end
+              change_rec[:dao_txs] ||= Set.new
+              change_rec[:dao_txs] << ckb_txs[tx_index]["tx_hash"]
             elsif cell_type.in?(%w(m_nft_token nrc_721_token))
               TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
             end
 
-            case attributes[1][:cell_type]
+            case previous_output[:cell_type]
             when "udt"
               tags[tx_index] << "udt"
-              udt_address_ids[tx_index] << attributes[4]
-              contained_udt_ids[tx_index] << Udt.where(type_hash: attributes[3], udt_type: "sudt").pick(:id)
+              udt_address_ids[tx_index] << address_id
+              contained_udt_ids[tx_index] << Udt.where(type_hash: type_hash, udt_type: "sudt").pick(:id)
             when "nrc_721_token"
               tags[tx_index] << "nrc_721_token"
-              udt_address_ids[tx_index] << attributes[4]
-              contained_udt_ids[tx_index] << Udt.where(type_hash: attributes[3], udt_type: "nrc_721_token").pick(:id)
+              udt_address_ids[tx_index] << address_id
+              contained_udt_ids[tx_index] << Udt.where(type_hash: type_hash, udt_type: "nrc_721_token").pick(:id)
             end
           end
-          input_capacities[tx_index] += attributes[2] if tx_index != 0 && attributes[2].present?
+          input_capacities[tx_index] += capacity if tx_index != 0 && capacity.present?
         end
       end
     end
 
     def build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
-      cell_index = 0
-      tx_index = 0
-      outputs.each do |item|
-        if item.is_a?(Integer)
-          tx_index = item
-          cell_index = 0
+      outputs.each do |tx_index, items|
+        cell_index = 0
+        items.each do |item|
           # tx_index == 0 is cellbase, no need to calculate fee
           if tx_index != 0
             output_capacities[tx_index] = 0
           end
-        else
-          address = local_cache.read("NodeData/Address/#{item.lock.code_hash}-#{item.lock.hash_type}-#{item.lock.args}")
-          cell_data = node_block.transactions[tx_index].outputs_data[cell_index]
-          if addrs_changes[address.id][:balance_diff].present?
-            addrs_changes[address.id][:balance_diff] += item.capacity
-          else
-            addrs_changes[address.id][:balance_diff] = item.capacity
-          end
-          if addrs_changes[address.id][:balance_occupied_diff].present?
-            addrs_changes[address.id][:balance_occupied_diff] += item.capacity if occupied?(item.type&.compute_hash, cell_data)
-          elsif occupied?(item.type&.compute_hash, cell_data)
-            addrs_changes[address.id][:balance_occupied_diff] = item.capacity
-          end
 
-          if addrs_changes[address.id][:cells_diff].present?
-            addrs_changes[address.id][:cells_diff] += 1
-          else
-            addrs_changes[address.id][:cells_diff] = 1
-          end
-          if addrs_changes[address.id][:ckb_txs].present?
-            addrs_changes[address.id][:ckb_txs] << ckb_txs[tx_index]["tx_hash"]
-          else
-            addrs_changes[address.id][:ckb_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
-          end
+          address = local_cache.read("NodeData/Address/#{item.lock.code_hash}-#{item.lock.hash_type}-#{item.lock.args}")
+          address_id = address.id
+          cell_data = node_block.transactions[tx_index].outputs_data[cell_index]
+          change_rec = addrs_changes[address_id]
+
+          change_rec[:balance_diff] ||= 0
+          change_rec[:balance_diff] += item.capacity
+
+          change_rec[:balance_occupied_diff] ||= 0
+          change_rec[:balance_occupied_diff] += item.capacity if occupied?(item.type&.compute_hash, cell_data)
+
+          change_rec[:cells_diff] ||= 0
+          change_rec[:cells_diff] += 1
+
+          change_rec[:ckb_txs] ||= Set.new
+          change_rec[:ckb_txs] << ckb_txs[tx_index]["tx_hash"]
+
           contained_addr_ids[tx_index] << address.id
           attr = cell_output_attributes(item, address, ckb_txs[tx_index], local_block, cell_index, node_block.transactions[tx_index].outputs_data[cell_index])
           cell_outputs_attributes << attr
+
           if attr[:cell_type].in?(%w(nervos_dao_deposit nervos_dao_withdrawing))
             tags[tx_index] << "dao"
             dao_address_ids[tx_index] << address.id
-            if addrs_changes[address.id][:dao_txs].present?
-              addrs_changes[address.id][:dao_txs] << ckb_txs[tx_index]["tx_hash"]
-            else
-              addrs_changes[address.id][:dao_txs] = Set.new([ckb_txs[tx_index]["tx_hash"]])
-            end
+            change_rec[:dao_txs] ||= Set.new
+            change_rec[:dao_txs] << ckb_txs[tx_index]["tx_hash"]
           end
 
           if attr[:cell_type] == "udt"
@@ -1002,8 +989,8 @@ module CkbSync
 
     def cell_input_attributes(input, ckb_transaction_id, local_block_id, prev_outputs)
       if from_cell_base?(input)
-        [
-          {
+        {
+          cell_input: {
             ckb_transaction_id: ckb_transaction_id,
             previous_output: input.previous_output,
             since: input.since,
@@ -1014,11 +1001,11 @@ module CkbSync
             created_at: Time.current,
             updated_at: Time.current
           }
-        ]
+        }
       else
         previous_output = prev_outputs["#{input.previous_output.tx_hash}-#{input.previous_output.index}"]
-        [
-          {
+        {
+          cell_input: {
             ckb_transaction_id: ckb_transaction_id,
             previous_output: input.previous_output,
             since: input.since,
@@ -1029,7 +1016,7 @@ module CkbSync
             created_at: Time.current,
             updated_at: Time.current
           },
-          {
+          previous_output: {
             id: previous_output.id,
             consumed_by_id: ckb_transaction_id,
             cell_type: previous_output.cell_type,
@@ -1038,11 +1025,11 @@ module CkbSync
             updated_at: Time.current,
             consumed_block_timestamp: CkbTransaction.find(ckb_transaction_id).block_timestamp
           },
-          previous_output.capacity,
-          previous_output.type_hash,
-          previous_output.address_id,
-          previous_output.data
-        ]
+          capacity: previous_output.capacity,
+          type_hash: previous_output.type_hash,
+          address_id: previous_output.address_id,
+          data: previous_output.data
+        }
       end
     end
 
@@ -1051,6 +1038,7 @@ module CkbSync
       txs = nil
       ckb_transactions_attributes = []
       tx_index = 0
+
       node_block.transactions.each do |tx|
         attrs = ckb_transaction_attributes(local_block, tx, tx_index)
         if cycles
@@ -1058,12 +1046,11 @@ module CkbSync
         end
 
         ckb_transactions_attributes << attrs
-        inputs << tx_index
-        inputs.concat tx.inputs
-        outputs << tx_index
-        outputs.concat tx.outputs
-        outputs_data << tx_index
-        outputs_data.concat << tx.outputs_data
+
+        inputs[tx_index] = tx.inputs
+        outputs[tx_index] = tx.outputs
+        outputs_data[tx_index] = tx.outputs_data
+
         tx_index += 1
       end
 
@@ -1085,7 +1072,7 @@ module CkbSync
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
         bytes: tx.serialized_size_in_block,
-        confirmation_time: (Time.now.to_i - PoolTransactionEntry.find_by(tx_hash: tx.hash).created_at.to_i rescue 0),
+        confirmation_time: (Time.now.to_i - PoolTransactionEntry.find_by(tx_hash: tx.hash)&.created_at.to_i),
         created_at: Time.current,
         updated_at: Time.current
       }
