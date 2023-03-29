@@ -57,6 +57,7 @@ module Api
           assert_response :success
         end
       end
+
     end
   end
 end
