@@ -172,10 +172,29 @@ module Charts
     end
 
     test "it should get dead_cells_count" do
-      dead_cells_count_update = Charts::DailyStatisticGenerator.new(@datetime).dead_cells_count
-      dead_cells_count = Charts::DailyStatisticGenerator.new(@datetime).dead_cells_count
-      @daily_statistic.update dead_cells_count: dead_cells_count_update
-      assert_equal dead_cells_count, @daily_statistic.dead_cells_count.to_i
+
+      # 1. from scratch
+      # CellOutput.generated_before(ended_at).consumed_before(ended_at).count
+      datetime = 1.day.ago
+      block = create :block, :with_block_hash, timestamp: datetime.to_i * 1000
+      create :cell_output,:with_full_transaction, block_timestamp: datetime.to_i * 1000, consumed_block_timestamp: (datetime.to_i + 10) * 1000, block: block
+      create :cell_output,:with_full_transaction, block_timestamp: datetime.to_i * 1000, consumed_block_timestamp: (datetime.to_i + 10) * 1000, block: block
+      create :cell_output,:with_full_transaction, block_timestamp: datetime.to_i * 1000, consumed_block_timestamp: (datetime.to_i + 10) * 1000, block: block
+
+      is_from_scratch = true
+      assert_equal 3, Charts::DailyStatisticGenerator.new(datetime, is_from_scratch).dead_cells_count
+
+      # 2. not from scratch
+      # dead_cells_count = dead_cells_count_today + yesterday_daily_statistic.dead_cells_count.to_i
+      # dead_cells_count_today = CellOutput.consumed_after(started_at).consumed_before(ended_at).count
+      #
+      assert_equal 3, Charts::DailyStatisticGenerator.new(datetime).send(:dead_cells_count_today)
+
+      daily_statistic = DailyStatistic.new
+      Charts::DailyStatisticGenerator.any_instance.stubs(:yesterday_daily_statistic).returns(daily_statistic)
+      DailyStatistic.any_instance.stubs(:dead_cells_count).returns(888)
+
+      assert_equal (3 + 888), Charts::DailyStatisticGenerator.new(datetime).dead_cells_count
     end
 
     test "it should get avg_hash_rate" do
