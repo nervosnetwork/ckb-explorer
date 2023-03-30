@@ -15,7 +15,8 @@ module CkbSync
     #           :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
     #           :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
-                  :outputs, :inputs, :outputs_data
+                  :outputs, :inputs, :outputs_data,
+                  :udt_address_ids, :contained_address_ids, :dao_address_ids, :contained_udt_ids
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -32,7 +33,10 @@ module CkbSync
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
       if !forked?(target_block, local_tip_block)
         Rails.logger.error "process_block: #{target_block_number}"
-        res = process_block(target_block)
+        res =
+          ApplicationRecord.cache do
+            process_block(target_block)
+          end
         self.reorg_started_at.delete
         res
       else
@@ -63,10 +67,10 @@ module CkbSync
         build_udts!(local_block, outputs, outputs_data)
 
         tags = []
-        udt_address_ids = []
-        dao_address_ids = []
-        contained_udt_ids = []
-        contained_address_ids = []
+        @udt_address_ids = udt_address_ids = []
+        @dao_address_ids = dao_address_ids = []
+        @contained_udt_ids = contained_udt_ids = []
+        @contained_address_ids = contained_address_ids = []
         process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
         addrs_changes = Hash.new { |hash, key| hash[key] = {} }
         input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
@@ -402,7 +406,7 @@ module CkbSync
         udt = Udt.where(type_hash: type_hash).select(:id).take!
         ckb_transactions_count =
           Rails.cache.fetch("udt_txs_count_#{udt.id}", expires_in: 3600) do
-            udt.ckb_transactions.count
+            UdtTransaction.where(udt_id: udt.id).count
           end
         udts_attributes << {
           type_hash: type_hash,
@@ -633,10 +637,6 @@ module CkbSync
 
         attr = {
           id: tx_id,
-          # dao_address_ids: dao_address_ids[tx_index].to_a,
-          # udt_address_ids: udt_address_ids[tx_index].to_a,
-          # contained_udt_ids: contained_udt_ids[tx_index].to_a,
-          # contained_address_ids: contained_addr_ids[tx_index].to_a,
           tags: tags[tx_index].to_a,
           tx_status: "committed",
           capacity_involved: input_capacities[tx_index],
@@ -644,6 +644,7 @@ module CkbSync
           created_at: tx["created_at"],
           updated_at: Time.current
         }
+        binding.pry if attr[:transaction_fee] < 0
         ckb_transactions_attributes << attr
         tx_index += 1
       end
@@ -668,8 +669,6 @@ module CkbSync
       lock_script_ids = []
       type_script_ids = []
 
-      contracts = Contract.all
-
       if lock_scripts_attributes.present?
         lock_scripts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }
         lock_script_ids = LockScript.insert_all!(lock_scripts_attributes).map { |e| e["id"] }
@@ -677,16 +676,11 @@ module CkbSync
         lock_script_ids.each do |lock_script_id|
           lock_script = LockScript.find lock_script_id
 
-          contract_id = 0
-          contracts.each do |contract|
-            if contract.code_hash == lock_script.code_hash
-              contract_id = contract.id
-              break
-            end
-          end
-          temp_hash = { script_hash: (lock_script.script_hash rescue ""), is_contract: false }
-          if contract_id != 0
-            temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
+          contract = Contract.find_by code_hash: lock_script.code_hash
+
+          temp_hash = { script_hash: lock_script&.script_hash, is_contract: false }
+          if contract
+            temp_hash = temp_hash.merge is_contract: true, contract_id: contract.id
           end
           script = Script.create_or_find_by temp_hash
           lock_script.update script_id: script.id
@@ -698,17 +692,11 @@ module CkbSync
         type_script_ids = TypeScript.insert_all!(type_scripts_attributes).map { |e| e["id"] }
         type_script_ids.each do |type_script_id|
           type_script = TypeScript.find(type_script_id)
+          temp_hash = { script_hash: type_script&.script_hash, is_contract: false }
+          contract = Contract.find_by code_hash: type_script.code_hash
 
-          contract_id = 0
-          contracts.each do |contract|
-            if contract.code_hash == type_script.code_hash
-              contract_id = contract.id
-              break
-            end
-          end
-          temp_hash = { script_hash: (type_script.script_hash rescue ""), is_contract: false }
-          if contract_id != 0
-            temp_hash = temp_hash.merge is_contract: true, contract_id: contract_id
+          if contract
+            temp_hash = temp_hash.merge is_contract: true, contract_id: contract.id
           end
           script = Script.create_or_find_by temp_hash
           type_script.update script_id: script.id
@@ -720,7 +708,8 @@ module CkbSync
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
 
       CellOutput.insert_all!(cell_outputs_attributes) if cell_outputs_attributes.present?
-      prev_outputs = prepare_previous_outputs(inputs)
+      # prev_outputs = prepare_previous_outputs(inputs)
+      prev_outputs = nil
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes, input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes)
       # binding.pry
       CellInput.insert_all!(cell_inputs_attributes)
@@ -732,34 +721,34 @@ module CkbSync
       return input_capacities, output_capacities
     end
 
-    def prepare_previous_outputs(inputs)
-      previous_outputs = {}
-      outpoints = []
-      sql = "select id, tx_hash, cell_index, cell_type, capacity, address_id, type_hash, created_at, data from cell_outputs where "
-      inputs.each_value do |items|
-        items.each do |item|
-          if !from_cell_base?(item)
-            outpoints << "(tx_hash = '\\#{item.previous_output.tx_hash.delete_prefix('0')}' and cell_index = #{item.previous_output.index}) or "
-          end
-        end
-      end
-      block_number = local_cache.read("BlockNumber")
-      # not just cellbase in inputs
-      if inputs.size > 1
-        outpoints.each_slice(100) do |ops|
-          inner_sql = sql.dup
-          ops.each do |op|
-            inner_sql << op
-          end
-          inner_sql.delete_suffix!("or ")
-          CellOutput.find_by_sql(inner_sql).each do |item|
-            previous_outputs["#{item.tx_hash}-#{item.cell_index}"] = item
-            local_cache.push("NodeData/#{block_number}/ContainedAddresses", Address.where(id: item.address_id).select(:id, :created_at).first!)
-          end
-        end
-      end
-      previous_outputs
-    end
+    # def prepare_previous_outputs(inputs)
+    #   previous_outputs = {}
+    #   outpoints = []
+    #   sql = "select id, tx_hash, cell_index, cell_type, capacity, address_id, type_hash, created_at, data from cell_outputs where "
+    #   inputs.each_value do |items|
+    #     items.each do |item|
+    #       if !from_cell_base?(item)
+    #         outpoints << "(tx_hash = '\\#{item.previous_output.tx_hash.delete_prefix('0')}' and cell_index = #{item.previous_output.index}) or "
+    #       end
+    #     end
+    #   end
+    #   block_number = local_cache.read("BlockNumber")
+    #   # not just cellbase in inputs
+    #   if inputs.size > 1
+    #     outpoints.each_slice(100) do |ops|
+    #       inner_sql = sql.dup
+    #       ops.each do |op|
+    #         inner_sql << op
+    #       end
+    #       inner_sql.delete_suffix!("or ")
+    #       CellOutput.find_by_sql(inner_sql).each do |item|
+    #         previous_outputs["#{item.tx_hash}-#{item.cell_index}"] = item
+    #         local_cache.push("NodeData/#{block_number}/ContainedAddresses", Address.where(id: item.address_id).select(:id, :created_at).first!)
+    #       end
+    #     end
+    #   end
+    #   previous_outputs
+    # end
 
     def build_addresses!(outputs, local_block)
       block_number = local_cache.read("BlockNumber")
@@ -834,8 +823,8 @@ module CkbSync
       tx_index = 0
 
       inputs.each do |tx_index, items|
+        input_capacities[tx_index] = 0 if tx_index != 0
         items.each do |item|
-          input_capacities[tx_index] = 0 if tx_index != 0
           # attributes[0] is cell_inputs_attributes
           # attributes[1] is prev_cell_outputs_attributes
           # attributes[2] is previous_cell_output capacity
@@ -844,10 +833,9 @@ module CkbSync
           # attributes[5] is previous_cell data
           attributes = cell_input_attributes(item, ckb_txs[tx_index]["id"], local_block_id, prev_outputs)
           cell_inputs_attributes << attributes[:cell_input]
-
-          if attributes[:previous_output].present?
+          previous_output = attributes[:previous_output]
+          if previous_output.present?
             address_id = attributes[:address_id]
-            previous_output = attributes[:previous_output]
             capacity = attributes[:capacity]
             type_hash = attributes[:type_hash]
             data = attributes[:data]
@@ -867,7 +855,7 @@ module CkbSync
             cell_type = previous_output[:cell_type].to_s
             if cell_type.in?(%w(nervos_dao_withdrawing))
               tags[tx_index] << "dao"
-              dao_address_ids[tx_index] << attributes[4]
+              dao_address_ids[tx_index] << address_id
               change_rec[:dao_txs] ||= Set.new
               change_rec[:dao_txs] << ckb_txs[tx_index]["tx_hash"]
             elsif cell_type.in?(%w(m_nft_token nrc_721_token))
@@ -884,8 +872,9 @@ module CkbSync
               udt_address_ids[tx_index] << address_id
               contained_udt_ids[tx_index] << Udt.where(type_hash: type_hash, udt_type: "nrc_721_token").pick(:id)
             end
+            input_capacities[tx_index] += capacity.to_i if tx_index != 0
+            # binding.pry
           end
-          input_capacities[tx_index] += capacity if tx_index != 0 && capacity.present?
         end
       end
     end
@@ -1003,7 +992,9 @@ module CkbSync
           }
         }
       else
-        previous_output = prev_outputs["#{input.previous_output.tx_hash}-#{input.previous_output.index}"]
+        # previous_output = prev_outputs["#{input.previous_output.tx_hash}-#{input.previous_output.index}"]
+        previous_output = CellOutput.find_by tx_hash: input.previous_output.tx_hash, cell_index: input.previous_output.index
+        binding.pry unless previous_output
         {
           cell_input: {
             ckb_transaction_id: ckb_transaction_id,
@@ -1281,7 +1272,7 @@ module CkbSync
         address.live_cells_count = address.cell_outputs.live.count
         # address.ckb_transactions_count = address.custom_ckb_transactions.count
         address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
-        address.dao_transactions_count = address.ckb_dao_transactions.count
+        address.dao_transactions_count = AddressDaoTransaction.where(address_id: address.id).count
         address.cal_balance!
         address.save!
       end

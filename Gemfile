@@ -82,6 +82,7 @@ group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem "pry"
   gem "pry-rails"
+  gem "pry-byebug"
   # gem "pry-nav"
 end
 
