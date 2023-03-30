@@ -11,5 +11,15 @@ module Charts
       end
       assert_equal "critical", Charts::DailyStatistic.queue
     end
+
+    test "it should create daily statistic before today" do
+      ::DailyStatistic.where('created_at_unixtimestamp > ?', 3.days.ago.to_i).delete_all
+      puts "DailyStatistic.last.created_at_unixtimestamp"
+      puts Time.at(::DailyStatistic.last.created_at_unixtimestamp)
+      count = ::DailyStatistic.count
+      Charts::DailyStatistic.new(datetime).perform
+      assert_equal count + 2, ::DailyStatistic.count
+    end
+
   end
 end
