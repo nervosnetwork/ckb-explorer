@@ -3,13 +3,15 @@ require "test_helper"
 module Charts
   class DailyStatisticGeneratorTest < ActiveSupport::TestCase
 
+    MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
+    GENESIS_TIMESTAMP = 1573852190812
     setup do
-      @MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
-      @GENESIS_TIMESTAMP = 1573852190812
-      datetime = nil
-      to_be_counted_date = datetime.presence || Time.current.yesterday.beginning_of_day
+
+      to_be_counted_date = Time.current.yesterday.beginning_of_day
+
       @started_at = CkbUtils.time_in_milliseconds(to_be_counted_date.beginning_of_day)
       @ended_at = CkbUtils.time_in_milliseconds(to_be_counted_date.end_of_day) - 1
+
       @block = create(:block, :with_block_hash, number: 0, epoch: 69, timestamp: 1575090866093, dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
       @daily_statistic = create(:daily_statistic, created_at_unixtimestamp: Time.current.yesterday.yesterday.beginning_of_day.to_i)
       @daily_dao_withdraw = DaoEvent.processed.withdraw_from_dao.created_after(@started_at).created_before(@ended_at).sum(:value)
@@ -22,7 +24,7 @@ module Charts
       @yesterday_daily_statistic ||=
         begin
           yesterday_statistic = ::DailyStatistic.where("created_at_unixtimestamp < ?", to_be_counted_date.beginning_of_day.to_i).recent.first
-          if to_be_counted_date.beginning_of_day.to_i == Time.at(@GENESIS_TIMESTAMP / 1000).in_time_zone.beginning_of_day.to_i || aggron_first_day.present? || yesterday_statistic.blank?
+          if to_be_counted_date.beginning_of_day.to_i == Time.at(GENESIS_TIMESTAMP / 1000).in_time_zone.beginning_of_day.to_i || aggron_first_day.present? || yesterday_statistic.blank?
             OpenStruct.new(addresses_count: 0, total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0, total_depositors_count: 0, live_cells_count: 0, dead_cells_count: 0, occupied_capacity: 0)
           else
             yesterday_statistic
@@ -176,12 +178,13 @@ module Charts
       assert_equal dead_cells_count, @daily_statistic.dead_cells_count.to_i
     end
 
-    #test "it should get avg_hash_rate" do
-    #  avg_hash_rate_update = Charts::DailyStatisticGenerator.new(@datetime).avg_hash_rate
-    #  avg_hash_rate = Charts::DailyStatisticGenerator.new(@datetime).avg_hash_rate
-    #  @daily_statistic.update avg_hash_rate: avg_hash_rate_update
-    #  assert_equal avg_hash_rate, @daily_statistic.avg_hash_rate
-    #end
+    test "it should get avg_hash_rate" do
+      datetime = 1.day.ago
+      create :block, :with_block_hash, timestamp: datetime.to_i * 1000
+      create :block, :with_block_hash, timestamp: (datetime.to_i + 0.1) * 1000
+      Charts::DailyStatisticGenerator.any_instance.stubs(:total_difficulties_for_the_day).returns(20000)
+      assert_equal 200, Charts::DailyStatisticGenerator.new(datetime).avg_hash_rate
+    end
 
     test "it should get avg_difficulty" do
       avg_difficulty_update = Charts::DailyStatisticGenerator.new(@datetime).avg_difficulty
