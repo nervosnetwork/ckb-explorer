@@ -153,6 +153,47 @@ DECLARE
 $$;
 
 
+--
+-- Name: update_cell_dependencies_implicit(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_cell_dependencies_implicit() RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    cur CURSOR FOR SELECT id, cell_deps FROM ckb_transactions;
+    transaction_id bigint;
+    cell_deps jsonb;
+    out_point jsonb;
+    cell_output_record record;
+BEGIN
+    OPEN cur;
+    LOOP
+        FETCH cur INTO transaction_id, cell_deps;
+        EXIT WHEN NOT FOUND;
+
+        FOR out_point IN
+            SELECT jsonb_array_elements(cell_deps)
+        LOOP
+            SELECT tx_hash, cell_index
+            INTO cell_output_record
+            FROM cell_outputs
+            WHERE tx_hash = (out_point->'out_point'->>'tx_hash')::bytea
+            AND cell_index = (out_point->'out_point'->>'index')::integer;
+
+            IF FOUND THEN
+                UPDATE cell_dependencies
+                SET implicit = false
+                WHERE ckb_transaction_id = transaction_id
+                AND contract_cell_id = cell_output_record.id;
+            END IF;
+        END LOOP;
+    END LOOP;
+    CLOSE cur;
+END;
+$$;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -535,7 +576,8 @@ CREATE TABLE public.cell_dependencies (
     ckb_transaction_id bigint NOT NULL,
     dep_type integer,
     contract_cell_id bigint NOT NULL,
-    script_id bigint
+    script_id bigint,
+    implicit boolean DEFAULT true
 );
 
 
@@ -3438,4 +3480,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230328134010'),
 ('20230328154957'),
 ('20230328155502'),
-('20230329123239');
+('20230329123239'),
+('20230330134854'),
+('20230330135137');

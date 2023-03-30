@@ -61,7 +61,8 @@ class DeployedCell < ApplicationRecord
           contract_cell_id: cell_output.id,
           dep_type: cell_dep["dep_type"],
           ckb_transaction_id: ckb_transaction.id,
-          contract_id: DeployedCell.cell_output_id_to_contract_id(cell_output.id) # check if we already known the relationship between the contract cell and contract
+          contract_id: DeployedCell.cell_output_id_to_contract_id(cell_output.id), # check if we already known the relationship between the contract cell and contract
+          implicit: cell_dep["implicit"]
         }
 
         # we don't know how the cells in transaction may refer to the contract cell
@@ -107,7 +108,8 @@ class DeployedCell < ApplicationRecord
               "tx_hash" => "0x#{tx_hash}",
               "index" => cell_index
             },
-            "dep_type" => "code"
+            "dep_type" => "code",
+            "implicit" => true # this is an implicit dependency
           }]
         end
       end

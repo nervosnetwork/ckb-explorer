@@ -85,8 +85,23 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
+  # return the original json data fetched from ckb node
+  # @return [Hash]
+  def original_raw_hash
+    @raw_hash ||=
+      Rails.cache.fetch([self.class.name, tx_hash, "raw_hash"], expires_in: 1.day) do
+        res = CkbSync::Api.instance.directly_single_call_rpc method: "get_transaction", params: [tx_hash]
+        res["result"].with_indifferent_access
+      end
+  end
+
+  # return the structured transaction object of current CkbTransaction for use with CKB SDK
+  # @return [CKB::Types::TransactionWithStatus]
   def original_transaction
-    @original_transaction ||= CkbSync::Api.instance.get_transaction(tx_hash)
+    @original_transaction ||=
+      Rails.cache.fetch([self.class.name, tx_hash, "tx_object"], expires_in: 1.day) do
+        CKB::Types::TransactionWithStatus.from_h original_raw_hash
+      end
   end
 
   def reset_cycles
