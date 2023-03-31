@@ -47,7 +47,7 @@ class CkbUtils
     message_bytes = cellbase_witness_serialization[message_offset..-1]
     message_serialization = message_bytes[4..-1]
     if message_serialization.size > 28
-      message = "#{message_serialization[0..28]}#{message_serialization[29..-1]&.unpack1("H*")}".to_json.unpack1("H*")
+      message = "#{message_serialization[0..28]}#{message_serialization[29..-1]&.unpack1('H*')}".to_json.unpack1("H*")
     else
       message = message_serialization.unpack1("H*")
     end
@@ -315,6 +315,13 @@ class CkbUtils
     (time.to_f * 1000).floor
   end
 
+  def self.decode_header_deps(raw_header_deps)
+    array_size = raw_header_deps.unpack1("S!")
+    template = Array.new(array_size || 0).reduce("") { |memo, _item| "#{memo}H#{64}" }
+    template = "S!#{template}"
+    raw_header_deps.unpack(template.to_s).drop(1).compact.map { |hash| "#{Settings.default_hash_prefix}#{hash}" }
+  end
+
   def self.cell_type(type_script, output_data)
     return "normal" unless ([
       Settings.dao_code_hash, Settings.dao_type_hash, Settings.sudt_cell_type_hash, Settings.sudt1_cell_type_hash,
@@ -428,14 +435,14 @@ class CkbUtils
 
     arg_base_token_uri_length = 4
     base_token_uri_length = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length), arg_base_token_uri_length].to_i(16)
-    factory_base_token_uri_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length), base_token_uri_length *2]
-    extra_data_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length + base_token_uri_length *2)..-1]
+    factory_base_token_uri_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length), base_token_uri_length * 2]
+    extra_data_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length + base_token_uri_length * 2)..-1]
     OpenStruct.new(name: [factory_name_hex].pack("H*"), symbol: [factory_symbol_hex].pack("H*"), base_token_uri: [factory_base_token_uri_hex].pack("H*"), extra_data: extra_data_hex)
   end
 
   # comes from api/v2/base_controller.rb
   def self.address_to_lock_hash(address)
-    if address =~ /\A0x/
+    if /\A0x/.match?(address)
       address
     else
       parsed = CkbUtils.parse_address(address)

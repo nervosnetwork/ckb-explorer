@@ -1,5 +1,4 @@
 class CkbTransaction < ApplicationRecord
-  default_scope { where(tx_status: "committed") }
   MAX_PAGINATES_PER = 100
   DEFAULT_PAGINATES_PER = 10
   paginates_per DEFAULT_PAGINATES_PER
@@ -7,7 +6,7 @@ class CkbTransaction < ApplicationRecord
   attr_accessor :raw_hash, :original_transaction
 
   enum tx_status: { pending: 0, proposed: 1, committed: 2, rejected: 3 }, _prefix: :tx
-
+  default_scope { where(tx_status: "committed") }
   belongs_to :block
   has_many :account_books, dependent: :delete_all
   has_many :addresses, through: :account_books
@@ -23,6 +22,9 @@ class CkbTransaction < ApplicationRecord
   has_many :referring_cells
   has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all
   has_many :cell_dependencies, dependent: :delete_all
+  has_many :header_dependencies, dependent: :delete_all
+  has_many :witnesses, dependent: :delete_all
+
   has_and_belongs_to_many :contained_addresses, class_name: "Address", join_table: "account_books"
   has_and_belongs_to_many :contained_udts, class_name: "Udt", join_table: :udt_transactions
   has_and_belongs_to_many :contained_dao_addresses, class_name: "Address", join_table: "address_dao_transactions"
@@ -55,7 +57,6 @@ class CkbTransaction < ApplicationRecord
   end
 
   attribute :tx_hash, :ckb_hash
-  attribute :header_deps, :ckb_array_hash, hash_length: Settings.default_hash_length
 
   scope :recent, -> { order("block_timestamp desc nulls last, id desc") }
   scope :cellbase, -> { where(is_cellbase: true) }
@@ -163,18 +164,17 @@ class CkbTransaction < ApplicationRecord
 
   def to_raw
     _outputs = cell_outputs.order(cell_index: :asc).to_a
+    cell_deps = cell_dependencies.explicit.includes(:cell_output).to_a
+
     {
       hash: tx_hash,
-      header_deps: Array.wrap(header_deps),
-      cell_deps: Array.wrap(cell_deps).map do |d|
-        d["out_point"]["index"] = "0x#{d['out_point']['index'].to_s(16)}"
-        d
-      end,
+      header_deps: header_dependencies.map(&:header_hash),
+      cell_deps: cell_deps.map(&:to_raw),
       inputs: cell_inputs.map(&:to_raw),
       outputs: _outputs.map(&:to_raw),
       outputs_data: _outputs.map(&:data),
       version: "0x#{version.to_s(16)}",
-      witnesses: witnesses
+      witnesses: witnesses.map(&:data)
     }
   end
 
@@ -363,9 +363,9 @@ end
 #
 # Indexes
 #
-#  ckb_tx_uni_tx_hash                 (tx_status,tx_hash) UNIQUE
+#  ckb_tx_unique_tx_hash                                   (tx_hash) UNIQUE
 #  idx_ckb_txs_for_blocks             (block_id,block_timestamp)
 #  idx_ckb_txs_timestamp              (block_timestamp DESC NULLS LAST,id)
 #  index_ckb_transactions_on_tags     (tags) USING gin
-#  index_ckb_transactions_on_tx_hash  (tx_hash) USING hash
+#  index_ckb_transactions_on_tx_hash_and_block_id          (tx_hash,block_id) UNIQUE
 #

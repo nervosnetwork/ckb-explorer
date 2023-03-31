@@ -1045,7 +1045,7 @@ module CkbSync
         tx_index += 1
       end
 
-      txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:tx_hash], returning: %w(id tx_hash created_at))
+      txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:tx_hash, :tx_status], returning: %w(id tx_hash created_at))
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)
@@ -1053,13 +1053,13 @@ module CkbSync
         tx_status: "committed",
         block_id: local_block.id,
         tx_hash: tx.hash,
-        cell_deps: tx.cell_deps,
-        header_deps: tx.header_deps,
+        # cell_deps: tx.cell_deps,
+        # header_deps: tx.header_deps,
         version: tx.version,
         block_number: local_block.number,
         block_timestamp: local_block.timestamp,
         transaction_fee: 0,
-        witnesses: tx.witnesses,
+        # witnesses: tx.witnesses,
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
         bytes: tx.serialized_size_in_block,

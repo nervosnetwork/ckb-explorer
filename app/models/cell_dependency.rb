@@ -5,9 +5,21 @@ class CellDependency < ActiveRecord::Base
   belongs_to :script
   belongs_to :cell_output, foreign_key: "contract_cell_id", class_name: "CellOutput"
   enum :dep_type, [:code, :dep_group]
+  scope :implicit, -> { where(implicit: true) }
+  scope :explicit, -> { where(implicit: false) }
 
   def self.refresh_implicit
     connection.execute "SELECT update_cell_dependencies_implicit();"
+  end
+
+  def to_raw
+    {
+      out_point: {
+        tx_hash: cell_output.tx_hash,
+        index: cell_output.cell_index
+      },
+      dep_type: dep_type
+    }
   end
 end
 
