@@ -3,6 +3,15 @@ module Charts
     MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
     GENESIS_TIMESTAMP = 1573852190812
 
+    def methods_to_call
+      %w{
+        block_timestamp transactions_count addresses_count daily_dao_withdraw total_dao_deposit circulating_supply unclaimed_compensation claimed_compensation average_deposit_time mining_reward
+        deposit_compensation treasury_amount estimated_apc live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate total_depositors_count address_balance_distribution
+        total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count dao_depositors_count total_supply circulation_ratio block_time_distribution
+        epoch_time_distribution epoch_length_distribution locked_capacity
+      }
+    end
+
     def initialize(datetime = nil, from_scratch = false)
       raise "datetime must be a Time" if datetime.present? && !datetime.is_a?(Time)
 
@@ -15,12 +24,7 @@ module Charts
       return if daily_ckb_transactions_count.zero?
 
       daily_statistic = ::DailyStatistic.find_or_create_by!(created_at_unixtimestamp: to_be_counted_date.to_i)
-      %w{
-        block_timestamp transactions_count addresses_count daily_dao_withdraw total_dao_deposit circulating_supply unclaimed_compensation claimed_compensation average_deposit_time mining_reward
-        deposit_compensation treasury_amount estimated_apc live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate total_depositors_count address_balance_distribution
-        total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count dao_depositors_count total_supply circulation_ratio block_time_distribution
-        epoch_time_distribution epoch_length_distribution locked_capacity
-      }.each do |method|
+      methods_to_call.each do |method|
         if daily_statistic[method].blank? or daily_statistic[method].to_s.to_i == 0
           ApplicationRecord.benchmark(method) do
             daily_statistic.update method => send(method)

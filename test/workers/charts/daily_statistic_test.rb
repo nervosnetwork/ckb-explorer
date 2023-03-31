@@ -12,13 +12,39 @@ module Charts
       assert_equal "critical", Charts::DailyStatistic.queue
     end
 
-    test "it should create daily statistic before today" do
-      ::DailyStatistic.where('created_at_unixtimestamp > ?', 3.days.ago.to_i).delete_all
-      puts "DailyStatistic.last.created_at_unixtimestamp"
-      puts Time.at(::DailyStatistic.last.created_at_unixtimestamp)
-      count = ::DailyStatistic.count
-      Charts::DailyStatistic.new(datetime).perform
-      assert_equal count + 2, ::DailyStatistic.count
+    test "it should create daily_statistics , last record: 3-29 , today: 3-31, should create: 3-30 " do
+      # create test data, last daily_statistic
+      create :daily_statistic, created_at_unixtimestamp: 2.days.ago.to_i
+
+      # create blocks and 3 tx
+      block = create :block, :with_block_hash, timestamp: 1.days.ago.to_i * 1000
+      create :ckb_transaction, block: block
+      create :ckb_transaction, block: block
+      create :ckb_transaction, block: block
+
+      Charts::DailyStatisticGenerator.any_instance.stubs(:methods_to_call).returns(["block_timestamp"])
+      Charts::DailyStatistic.new.perform
+      assert_equal 2, ::DailyStatistic.count
+      assert_equal Time.at(::DailyStatistic.last.created_at_unixtimestamp).strftime("%Y-%m-%d"), 1.day.ago.strftime("%Y-%m-%d")
+      assert_equal block.timestamp, ::DailyStatistic.last.block_timestamp
+    end
+
+
+    test "it should create daily_statistics , if passed date" do
+      # create test data, last daily_statistic
+      create :daily_statistic, created_at_unixtimestamp: 2.days.ago.to_i
+
+      # create blocks and 3 tx
+      block = create :block, :with_block_hash, timestamp: 1.days.ago.to_i * 1000
+      create :ckb_transaction, block: block
+      create :ckb_transaction, block: block
+      create :ckb_transaction, block: block
+
+      Charts::DailyStatisticGenerator.any_instance.stubs(:methods_to_call).returns(["block_timestamp"])
+      Charts::DailyStatistic.new.perform(1.day.ago)
+      assert_equal 2, ::DailyStatistic.count
+      assert_equal Time.at(::DailyStatistic.last.created_at_unixtimestamp).strftime("%Y-%m-%d"), 1.day.ago.strftime("%Y-%m-%d")
+      assert_equal block.timestamp, ::DailyStatistic.last.block_timestamp
     end
 
   end
