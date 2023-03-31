@@ -44,7 +44,9 @@ module Charts
       create :ckb_transaction, block: block
 
       Charts::DailyStatisticGenerator.any_instance.stubs(:methods_to_call).returns(["block_timestamp"])
+      puts "== before perform, daily_statistics: #{::DailyStatistic.last.inspect}"
       Charts::DailyStatistic.new.perform(1.day.ago)
+      puts "== after perform, daily_statistics: #{::DailyStatistic.last.inspect}"
       assert_equal 2, ::DailyStatistic.count
       assert_equal Time.at(::DailyStatistic.last.created_at_unixtimestamp).strftime("%Y-%m-%d"), 1.day.ago.strftime("%Y-%m-%d")
       assert_equal block.timestamp, ::DailyStatistic.last.block_timestamp
