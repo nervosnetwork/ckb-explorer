@@ -31,6 +31,9 @@ module Charts
 
 
     test "it should create daily_statistics , if passed date" do
+
+      ::DailyStatistic.delete_all
+
       # create test data, last daily_statistic
       create :daily_statistic, created_at_unixtimestamp: 2.days.ago.to_i
 
