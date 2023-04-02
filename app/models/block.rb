@@ -262,7 +262,7 @@ end
 #
 #  id                         :bigint           not null, primary key
 #  block_hash                 :binary
-#  number                     :decimal(30, )
+#  number                     :bigint
 #  parent_hash                :binary
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
@@ -273,13 +273,13 @@ end
 #  version                    :integer
 #  proposals                  :binary
 #  proposals_count            :integer
-#  cell_consumed              :decimal(30, )
+#  cell_consumed              :bigint
 #  miner_hash                 :binary
 #  reward                     :decimal(30, )
 #  total_transaction_fee      :decimal(30, )
-#  ckb_transactions_count     :decimal(30, )    default(0)
+#  ckb_transactions_count     :bigint           default(0)
 #  total_cell_capacity        :decimal(30, )
-#  epoch                      :decimal(30, )
+#  epoch                      :bigint
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
 #  address_ids                :string           is an Array
@@ -297,12 +297,12 @@ end
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
-#  block_size                 :integer
+#  block_size                 :bigint
 #  proposal_reward            :decimal(30, )
 #  commit_reward              :decimal(30, )
 #  miner_message              :string
 #  extension                  :jsonb
-#  median_timestamp           :decimal(, )      default(0.0)
+#  median_timestamp           :bigint           default(0)
 #  ckb_node_version           :string
 #  cycles                     :bigint
 #

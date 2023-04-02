@@ -66,10 +66,10 @@ end
 #  hash_rate                   :string
 #  live_cells_count            :string           default("0")
 #  dead_cells_count            :string           default("0")
-#  block_number                :decimal(30, )
+#  block_number                :bigint
 #  created_at                  :datetime         not null
 #  updated_at                  :datetime         not null
-#  epoch_number                :decimal(30, )
+#  epoch_number                :bigint
 #  primary_issuance            :decimal(36, 8)
 #  secondary_issuance          :decimal(36, 8)
 #  accumulated_total_deposits  :decimal(36, 8)

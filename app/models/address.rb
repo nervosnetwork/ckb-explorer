@@ -239,21 +239,21 @@ end
 #  id                     :bigint           not null, primary key
 #  balance                :decimal(30, )    default(0)
 #  address_hash           :binary
-#  cell_consumed          :decimal(30, )
-#  ckb_transactions_count :decimal(30, )    default(0)
+#  cell_consumed          :bigint
+#  ckb_transactions_count :bigint           default(0)
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #  lock_hash              :binary
 #  dao_deposit            :decimal(30, )    default(0)
 #  interest               :decimal(30, )    default(0)
-#  block_timestamp        :decimal(30, )
-#  live_cells_count       :decimal(30, )    default(0)
+#  block_timestamp        :bigint
+#  live_cells_count       :bigint           default(0)
 #  mined_blocks_count     :integer          default(0)
 #  visible                :boolean          default(TRUE)
-#  average_deposit_time   :decimal(, )
+#  average_deposit_time   :bigint
 #  unclaimed_compensation :decimal(30, )
 #  is_depositor           :boolean          default(FALSE)
-#  dao_transactions_count :decimal(30, )    default(0)
+#  dao_transactions_count :bigint           default(0)
 #  lock_script_id         :bigint
 #  balance_occupied       :decimal(30, )    default(0)
 #  address_hash_crc       :bigint
