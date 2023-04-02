@@ -12,7 +12,7 @@ class CellOutput < ApplicationRecord
   has_many :cell_inputs, foreign_key: :previous_output_id
   belongs_to :address
   belongs_to :deployed_cell, optional: true
-  belongs_to :block
+  belongs_to :block, optional: true
   belongs_to :lock_script, optional: true
   belongs_to :type_script, optional: true
 
@@ -20,6 +20,8 @@ class CellOutput < ApplicationRecord
   has_many :referring_cells
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
+  validates :block, presence: true, if: -> { live? or dead? }
+  validates :consumed_by, presence: true, if: :dead?
 
   attribute :tx_hash, :ckb_hash
   attr_accessor :raw_address
@@ -32,9 +34,11 @@ class CellOutput < ApplicationRecord
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
   scope :free, -> { where(type_hash: nil, data: "0x") }
   scope :occupied, -> { where.not(type_hash: nil, data: "0x") }
+
   before_validation do
     self.data_size ||= data ? CKB::Utils.hex_to_bin(data).bytesize : 0
   end
+
   before_create :setup_address
 
   def setup_address

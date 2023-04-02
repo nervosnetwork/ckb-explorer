@@ -1,4 +1,4 @@
-module BlockProcessor
+module Syncer
   class Reorg
   end
 end
