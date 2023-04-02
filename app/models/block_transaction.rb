@@ -1,3 +1,6 @@
+# tell us which transaction is in which block
+# because a transaction can be in multiple blocks
+# but only one block can be included in chain
 class BlockTransaction < ApplicationRecord
   belongs_to :ckb_transaction
   belongs_to :block

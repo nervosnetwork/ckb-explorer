@@ -457,6 +457,7 @@ DEPENDENCIES
   config
   dalli
   database_cleaner
+  database_cleaner-active_record
   digest-crc
   dotenv-rails
   factory_bot_rails

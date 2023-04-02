@@ -39,12 +39,13 @@ class DeployedCell < ApplicationRecord
     Rails.logger.info "== done"
   end
 
-  def self.create_initial_data_for_ckb_transaction(ckb_transaction)
+  def self.create_initial_data_for_ckb_transaction(ckb_transaction, cell_deps)
+    return if cell_deps.blank?
+
     deployed_cells = []
     cell_dependencies_attrs = []
     by_type_hash = {}
     by_data_hash = {}
-    return if ckb_transaction.cell_deps.blank?
 
     # intialize cell dependencies records
     # the `cell_deps` field in ckb transactions stores the contract cell (referred by out point,
@@ -62,7 +63,7 @@ class DeployedCell < ApplicationRecord
           dep_type: cell_dep["dep_type"],
           ckb_transaction_id: ckb_transaction.id,
           contract_id: DeployedCell.cell_output_id_to_contract_id(cell_output.id), # check if we already known the relationship between the contract cell and contract
-          implicit: cell_dep["implicit"]
+          implicit: cell_dep["implicit"] || false
         }
 
         # we don't know how the cells in transaction may refer to the contract cell
@@ -80,7 +81,8 @@ class DeployedCell < ApplicationRecord
         cell_output
       end
 
-    ckb_transaction.cell_deps.each do |cell_dep|
+    cell_deps.each do |cell_dep|
+      cell_dep = cell_dep.to_h if cell_dep.is_a?(CKB::Types::CellDep)
       case cell_dep["dep_type"]
       when "code"
         parse_code_dep[cell_dep]
@@ -91,7 +93,8 @@ class DeployedCell < ApplicationRecord
           contract_cell_id: mid_cell.id,
           dep_type: cell_dep["dep_type"],
           ckb_transaction_id: ckb_transaction.id,
-          contract_id: nil
+          contract_id: nil,
+          implicit: false
         }
         binary_data = mid_cell.binary_data
         # binary_data = [hex_data[2..-1]].pack("H*")
@@ -116,7 +119,7 @@ class DeployedCell < ApplicationRecord
     end
 
     cells = ckb_transaction.cell_outputs.includes(:lock_script, :type_script).to_a +
-      ckb_transaction.cell_inputs.map(&:previous_cell_output)
+      ckb_transaction.cell_inputs.includes(:previous_cell_output).map(&:previous_cell_output)
     scripts = cells.compact.inject([]) { |a, cell| a + [cell.lock_script, cell.type_script] }.compact.uniq
     deployed_cells_attrs = []
 

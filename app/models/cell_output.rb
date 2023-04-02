@@ -2,12 +2,14 @@ class CellOutput < ApplicationRecord
   SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   MIN_SUDT_AMOUNT_BYTESIZE = 16
-  enum status: { live: 0, dead: 1, pending: 2, rejected: 3, }
+  enum status: { live: 0, dead: 1, pending: 2, rejected: 3 }
   enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9, cota_regular: 10 }
 
   belongs_to :ckb_transaction
+  # FIXME: the generated_by_id is actually the same as ckb_transaction_id
   belongs_to :generated_by, class_name: "CkbTransaction"
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
+  has_many :cell_inputs, foreign_key: :previous_output_id
   belongs_to :address
   belongs_to :deployed_cell, optional: true
   belongs_to :block
@@ -75,10 +77,14 @@ class CellOutput < ApplicationRecord
 
   def cache_keys
     %W(
-      previous_cell_output/#{tx_hash}/#{cell_index} normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
-      normal_tx_display_inputs_previews_false_#{ckb_transaction_id} normal_tx_display_inputs_previews_true_#{consumed_by_id}
-      normal_tx_display_inputs_previews_false_#{consumed_by_id} normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
-      normal_tx_display_outputs_previews_false_#{ckb_transaction_id} normal_tx_display_outputs_previews_true_#{consumed_by_id}
+      previous_cell_output/#{tx_hash}/#{cell_index}
+      normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
+      normal_tx_display_inputs_previews_false_#{ckb_transaction_id}
+      normal_tx_display_inputs_previews_true_#{consumed_by_id}
+      normal_tx_display_inputs_previews_false_#{consumed_by_id}
+      normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
+      normal_tx_display_outputs_previews_false_#{ckb_transaction_id}
+      normal_tx_display_outputs_previews_true_#{consumed_by_id}
       normal_tx_display_outputs_previews_false_#{consumed_by_id}
     )
   end

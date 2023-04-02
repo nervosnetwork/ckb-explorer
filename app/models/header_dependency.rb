@@ -5,8 +5,8 @@ class HeaderDependency < ApplicationRecord
   attribute :header_hash, :ckb_hash
 
   # migrate old witness and header deps to separate model
-  def self.migrate_old
-    CkbTransaction.select(:id, :header_deps, :witnesses).find_in_batches do |txs|
+  def self.migrate_old(id=0)
+    CkbTransaction.where(id: id..).select(:id, :header_deps, :witnesses).find_in_batches do |txs|
       puts txs[0].id
       header_deps_attrs = []
       witnesses_attrs = []
@@ -23,17 +23,20 @@ class HeaderDependency < ApplicationRecord
               }
             end
         end
-        i = -1
-        witnesses_attrs +=
-          tx[:witnesses].map do |w|
-            i += 1
-            {
-              ckb_transaction_id: tx.id,
-              index: i,
-              data: w
-            }
-          end
+        if tx[:witnesses].present?
+          i = -1
+          witnesses_attrs +=
+            tx[:witnesses].map do |w|
+              i += 1
+              {
+                ckb_transaction_id: tx.id,
+                index: i,
+                data: w
+              }
+            end
+        end
       end
+
       Witness.upsert_all witnesses_attrs, unique_by: [:ckb_transaction_id, :index] if witnesses_attrs.size > 0
       HeaderDependency.upsert_all header_deps_attrs, unique_by: [:ckb_transaction_id, :index] if header_deps_attrs.size > 0
     end

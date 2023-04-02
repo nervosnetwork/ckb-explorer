@@ -71,7 +71,7 @@ class StatisticInfo
   end
 
   def address_balance_ranking
-    Rails.cache.realize("address_balance_ranking", expires_in: 4.hours) do
+    Rails.cache.fetch("address_balance_ranking", expires_in: 4.hours) do
       addresses = Address.visible.where("balance > 0").order(balance: :desc).limit(50)
       addresses.each.with_index(1).map do |address, index|
         { ranking: index.to_s, address: address.address_hash, balance: address.balance.to_s }
@@ -81,22 +81,23 @@ class StatisticInfo
 
   def blockchain_info
     message_need_to_be_fitlered_out = "CKB v0.105.* have bugs. Please upgrade to the latest version."
-    Rails.cache.realize("blockchain_info", expires_in: 6.hours) do
+    Rails.cache.fetch("blockchain_info", expires_in: 6.hours) do
       result = CkbSync::Api.instance.get_blockchain_info
-      result.alerts.delete_if{ |alert| alert.message == message_need_to_be_fitlered_out }
+      result.alerts.delete_if { |alert| alert.message == message_need_to_be_fitlered_out }
       result
     end
   end
 
-  def self.last_n_days_transaction_fee_rates timestamp
-    sql = %Q{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
+  def self.last_n_days_transaction_fee_rates(timestamp)
+    sql = %{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
       from blocks
       where timestamp > #{timestamp}
         and ckb_transactions_count != 0
       group by 1 order by 1 desc}
-    last_n_days_transaction_fee_rates = Rails.cache.fetch("last_n_days_transaction_fee_rates", expires_in: 10.seconds) do
-      ActiveRecord::Base.connection.execute(sql).values
-    end
+    last_n_days_transaction_fee_rates =
+      Rails.cache.fetch("last_n_days_transaction_fee_rates", expires_in: 10.seconds) do
+        ActiveRecord::Base.connection.execute(sql).values
+      end
     return last_n_days_transaction_fee_rates
   end
 

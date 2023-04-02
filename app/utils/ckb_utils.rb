@@ -240,8 +240,6 @@ class CkbUtils
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
     withdrawing_dao_cell_block_dao = nervos_dao_withdrawing_cell.dao
     DaoCompensationCalculator.new(nervos_dao_deposit_cell, withdrawing_dao_cell_block_dao, nervos_dao_withdrawing_cell).call
-  rescue CKB::RPCError
-    0
   end
 
   def self.compact_to_difficulty(compact)
@@ -316,9 +314,11 @@ class CkbUtils
   end
 
   def self.decode_header_deps(raw_header_deps)
+    if /\A(0|\\)x/.match?(raw_header_deps)
+      raw_header_deps = [raw_header_deps[2..-1]].pack("H*")
+    end
     array_size = raw_header_deps.unpack1("S!")
-    template = Array.new(array_size || 0).reduce("") { |memo, _item| "#{memo}H#{64}" }
-    template = "S!#{template}"
+    template = "S!#{'H64' * array_size}"
     raw_header_deps.unpack(template.to_s).drop(1).compact.map { |hash| "#{Settings.default_hash_prefix}#{hash}" }
   end
 

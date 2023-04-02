@@ -9,6 +9,7 @@ SimpleCov.start "rails" do
   add_filter "/lib/ckb_statistic_info_chart_data_updater.rb"
 end
 require "database_cleaner"
+require "database_cleaner/active_record"
 require "minitest/reporters"
 require "mocha/minitest"
 require "sidekiq/testing"
@@ -27,6 +28,7 @@ VCR.configure do |config|
   config.hook_into :webmock
   config.default_cassette_options[:match_requests_on] = [:method, :path, :body]
 end
+DatabaseCleaner.clean_with :truncation
 DatabaseCleaner.strategy = :transaction
 
 Shoulda::Matchers.configure do |config|
@@ -120,7 +122,10 @@ def format_node_block(node_block)
 end
 
 def format_node_block_commit_transaction(commit_transaction)
-  tx = commit_transaction.instance_values.reject { |key, _value| key.in?(%w(inputs outputs outputs_data)) }
+  tx =
+    commit_transaction.instance_values.reject do |key, _value|
+      key.in?(%w(inputs outputs outputs_data))
+    end
   tx["witnesses"] = JSON.parse(tx["witnesses"].to_json)
 
   tx
@@ -381,7 +386,6 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
                                 tx_hash: "0x#{SecureRandom.hex(32)}",
                                 block: block,
                                 address: address,
-                                dao_address_ids: [address.id],
                                 contained_dao_address_ids: [address.id],
                                 contained_address_ids: [address.id],
                                 tags: ["dao"])
@@ -390,7 +394,6 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
       ckb_transaction2 = create(:ckb_transaction,
                                 tx_hash: "0x#{SecureRandom.hex(32)}",
                                 block: block, address: address,
-                                dao_address_ids: [address.id],
                                 contained_dao_address_ids: [address.id],
                                 contained_address_ids: [address.id],
                                 tags: ["dao"])
@@ -434,9 +437,8 @@ module ActiveSupport
 
     # Add more helper methods to be used by all tests here...
     def before_setup
-      super
       DatabaseCleaner.start
-
+      super
       CkbSync::NewNodeDataProcessor.any_instance.stubs(:get_median_timestamp).returns(1573852190812)
     end
 

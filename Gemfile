@@ -94,6 +94,7 @@ group :test do
   gem "vcr"
   gem "webmock"
   gem "database_cleaner"
+  gem "database_cleaner-active_record"
   gem "mocha"
   gem "factory_bot_rails"
   #  gem "faker", git: "https://github.com/faker-ruby/faker.git", branch: "master"

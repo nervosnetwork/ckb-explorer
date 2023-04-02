@@ -319,18 +319,25 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block_transactions = node_block.transactions
-        formatted_node_block_transactions = node_block_transactions.map { |commit_transaction| format_node_block_commit_transaction(commit_transaction).sort }
+        formatted_node_block_transactions =
+          node_block_transactions.map do |commit_transaction|
+            format_node_block_commit_transaction(commit_transaction).sort
+          end
 
         local_block = node_data_processor.process_block(node_block)
         local_ckb_transactions =
           local_block.ckb_transactions.map do |ckb_transaction|
-            ckb_transaction = ckb_transaction.attributes.select { |attribute| attribute.in?(%w(tx_hash cell_deps header_deps version witnesses)) }
-            ckb_transaction["hash"] = ckb_transaction.delete("tx_hash")
-            ckb_transaction["version"] = ckb_transaction["version"]
-            ckb_transaction["header_deps"] = [] if ckb_transaction["header_deps"].blank?
-            ckb_transaction.sort
+            attrs =
+              ckb_transaction.attributes.select do |attribute|
+                attribute.in?(%w(tx_hash cell_deps header_deps version witnesses))
+              end
+            attrs["hash"] = attrs.delete("tx_hash")
+            attrs["version"] = attrs["version"].to_i
+            attrs["header_deps"] = ckb_transaction.header_deps
+            attrs["cell_deps"] = ckb_transaction.cell_deps
+            attrs["witnesses"] = ckb_transaction.witnesses.map(&:data)
+            attrs.sort
           end
-
         assert_equal formatted_node_block_transactions, local_ckb_transactions
       end
     end
@@ -1402,7 +1409,7 @@ module CkbSync
     test "should update abandoned block's contained address transactions count" do
       prepare_node_data(19)
       local_block = Block.find_by(number: 19)
-      ApplicationRecord.connection.execute "CALL sync_full_account_book()"
+      # ApplicationRecord.connection.execute "CALL sync_full_account_book()"
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
@@ -2402,7 +2409,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         block = node_data_processor.process_block(node_block)
-        contained_udt_ids = block.ckb_transactions.pluck(:contained_udt_ids).flatten
+        contained_udt_ids = UdtTransaction.where(ckb_transaction_id: block.ckb_transactions.pluck(:id)).pluck(:udt_id)
 
         assert_empty contained_udt_ids
       end
@@ -2784,10 +2791,8 @@ module CkbSync
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
         node_data_processor.call
-        block.ckb_transactions.pluck(:contained_address_ids).uniq.each do |ids|
-          ids.each do |id|
-            assert_equal 0, $redis.zcard("Address/txs/#{id}")
-          end
+        AccountBook.where(ckb_transaction_id: block.ckb_transactions.pluck(:id)).pluck(:address_id).uniq.each do |id|
+          assert_equal 0, $redis.zcard("Address/txs/#{id}")
         end
       end
     end

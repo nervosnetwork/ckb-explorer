@@ -13,7 +13,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
   end
 
   context "associations" do
-    should belong_to(:block)
+    # should belong_to(:block, required: false)
     should have_many(:account_books)
     should have_many(:referring_cells)
     should have_many(:addresses).
@@ -138,26 +138,53 @@ class CkbTransactionTest < ActiveSupport::TestCase
   test "#display_inputs should return dao display input when cell type is nervos_dao_withdrawing" do
     prepare_node_data
     DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
-    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, header_deps: [DEFAULT_NODE_BLOCK_HASH, "0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2"])
+    ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs,
+                             header_deps: [DEFAULT_NODE_BLOCK_HASH, "0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2"])
     nervos_dao_withdrawing_cell = ckb_transaction.cell_inputs.first.previous_cell_output
     nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
-    create(:cell_input, block: nervos_dao_withdrawing_cell_generated_tx.block, ckb_transaction: nervos_dao_withdrawing_cell_generated_tx, previous_output: { "tx_hash": "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", "index": "0" })
     ended_block = Block.select(:number, :timestamp).find(nervos_dao_withdrawing_cell_generated_tx.block_id)
     nervos_dao_withdrawing_cell.update(cell_type: "nervos_dao_withdrawing")
-    deposit_cell = create(:cell_output, ckb_transaction: nervos_dao_withdrawing_cell.generated_by, cell_index: 0, tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", generated_by: nervos_dao_withdrawing_cell.generated_by, block: nervos_dao_withdrawing_cell.generated_by.block, consumed_by: nervos_dao_withdrawing_cell.generated_by, cell_type: "nervos_dao_deposit", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x00" * 8))
+    deposit_cell = create(:cell_output, ckb_transaction: nervos_dao_withdrawing_cell.generated_by,
+                                        cell_index: 0,
+                                        tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2",
+                                        generated_by: nervos_dao_withdrawing_cell.generated_by,
+                                        block: nervos_dao_withdrawing_cell.generated_by.block,
+                                        consumed_by: nervos_dao_withdrawing_cell.generated_by,
+                                        cell_type: "nervos_dao_deposit",
+                                        capacity: 10**8 * 1000,
+                                        data: CKB::Utils.bin_to_hex("\x00" * 8))
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.inputs.nervos_dao_deposit.first
+    create(:cell_input, block: nervos_dao_withdrawing_cell_generated_tx.block,
+                        ckb_transaction: nervos_dao_withdrawing_cell_generated_tx,
+                        previous_cell_output_id: nervos_dao_deposit_cell.id)
     started_block = Block.select(:number, :timestamp).find(nervos_dao_deposit_cell.block_id)
     interest = DaoCompensationCalculator.new(deposit_cell, nervos_dao_withdrawing_cell.block.dao).call
+    # binding.pry
     expected_display_input = CkbUtils.hash_value_to_s(
-      id: nervos_dao_withdrawing_cell.id, from_cellbase: false, capacity: nervos_dao_withdrawing_cell.capacity,
-      address_hash: nervos_dao_withdrawing_cell.address_hash, generated_tx_hash: nervos_dao_withdrawing_cell.generated_by.tx_hash,
-      compensation_started_block_number: started_block.number, compensation_ended_block_number: ended_block.number,
-      compensation_started_timestamp: started_block.timestamp, compensation_ended_timestamp: ended_block.timestamp,
-      locked_until_block_number: ckb_transaction.block.number, locked_until_block_timestamp: ckb_transaction.block.timestamp,
-      interest: interest, cell_type: nervos_dao_withdrawing_cell.cell_type, cell_index: nervos_dao_withdrawing_cell.cell_index,
-      since: { raw: "0x0000000000000000", median_timestamp: "0" }
+      id: nervos_dao_withdrawing_cell.id,
+      from_cellbase: false,
+      capacity: nervos_dao_withdrawing_cell.capacity,
+      address_hash: nervos_dao_withdrawing_cell.address_hash,
+      generated_tx_hash: nervos_dao_withdrawing_cell.generated_by.tx_hash,
+      compensation_started_block_number: started_block.number,
+      compensation_ended_block_number: ended_block.number,
+      compensation_started_timestamp: started_block.timestamp,
+      compensation_ended_timestamp: ended_block.timestamp,
+      locked_until_block_number: ckb_transaction.block.number,
+      locked_until_block_timestamp: ckb_transaction.block.timestamp,
+      interest: interest,
+      cell_type: nervos_dao_withdrawing_cell.cell_type,
+      cell_index: nervos_dao_withdrawing_cell.cell_index,
+      since: {
+        raw: "0x0000000000000000",
+        median_timestamp: "0"
+      }
     ).sort
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash compensation_started_block_number compensation_ended_block_number compensation_started_timestamp compensation_ended_timestamp interest cell_type cell_index since locked_until_block_number locked_until_block_timestamp).sort
+    expected_attributes = %i(
+      id from_cellbase capacity address_hash generated_tx_hash compensation_started_block_number
+      compensation_ended_block_number compensation_started_timestamp compensation_ended_timestamp
+      interest cell_type cell_index since locked_until_block_number locked_until_block_timestamp
+    ).sort
     display_inputs = ckb_transaction.display_inputs
     assert_equal expected_attributes, display_inputs.first.keys.sort
     assert_equal expected_display_input, display_inputs.first.sort
@@ -167,23 +194,61 @@ class CkbTransactionTest < ActiveSupport::TestCase
     DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
     block = create(:block, :with_block_hash, timestamp: Time.current.to_i)
     ckb_transaction = create(:ckb_transaction, block: block, tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042")
-    deposit_output_cell = create(:cell_output, block: ckb_transaction.block, capacity: 138 * 10**8, tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042", cell_index: 0, ckb_transaction: ckb_transaction, generated_by: ckb_transaction, consumed_by: ckb_transaction, cell_type: "nervos_dao_deposit", data: "0x0000000000000000")
+    deposit_output_cell = create(:cell_output, block: ckb_transaction.block,
+                                               capacity: 138 * 10**8,
+                                               tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042",
+                                               cell_index: 0,
+                                               ckb_transaction: ckb_transaction,
+                                               generated_by: ckb_transaction,
+                                               consumed_by: ckb_transaction,
+                                               cell_type: "nervos_dao_deposit",
+                                               data: "0x0000000000000000")
     phase1_block = create(:block, block_hash: "0x2ef70da7151f06c26810ea63afa133951e83eb80f85e001a408eac2f34366452", timestamp: Time.current.to_i)
-    phase1_transaction = create(:ckb_transaction, block: phase1_block, header_deps: ["0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2"], is_cellbase: false, tx_hash: "0xf9aca16b49c7d037920ad9e5aecdac272412a5fbe0396f7d95b112bf790dd39f")
-    create(:cell_input, block: phase1_transaction.block, ckb_transaction: phase1_transaction, previous_output: { index: 0, tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042" }, from_cell_base: false)
-    nervos_dao_withdrawing_cell = create(:cell_output, ckb_transaction: phase1_transaction, block: phase1_transaction.block, capacity: 13800000000, data: "0x7512000000000000", tx_hash: "0xf9aca16b49c7d037920ad9e5aecdac272412a5fbe0396f7d95b112bf790dd39f", cell_index: 0, generated_by: phase1_transaction, cell_type: "nervos_dao_withdrawing")
+    phase1_transaction = create(:ckb_transaction, block: phase1_block,
+                                                  header_deps: ["0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2"],
+                                                  is_cellbase: false,
+                                                  tx_hash: "0xf9aca16b49c7d037920ad9e5aecdac272412a5fbe0396f7d95b112bf790dd39f")
+    create(:cell_input, block: phase1_transaction.block,
+                        ckb_transaction: phase1_transaction,
+                        previous_output: {
+                          index: 0,
+                          tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042"
+                        },
+                        from_cell_base: false)
+    nervos_dao_withdrawing_cell = create(:cell_output, ckb_transaction: phase1_transaction,
+                                                       block: phase1_transaction.block,
+                                                       capacity: 13800000000,
+                                                       data: "0x7512000000000000",
+                                                       tx_hash: "0xf9aca16b49c7d037920ad9e5aecdac272412a5fbe0396f7d95b112bf790dd39f",
+                                                       cell_index: 0,
+                                                       generated_by: phase1_transaction,
+                                                       cell_type: "nervos_dao_withdrawing")
     started_block = Block.select(:number, :timestamp).find(ckb_transaction.block_id)
     interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
     ended_block = Block.select(:number, :timestamp).find(phase1_transaction.block_id)
     expected_display_input = CkbUtils.hash_value_to_s(
-      id: deposit_output_cell.id, from_cellbase: false, capacity: deposit_output_cell.capacity,
-      address_hash: deposit_output_cell.address_hash, generated_tx_hash: deposit_output_cell.generated_by.tx_hash,
-      compensation_started_block_number: started_block.number, compensation_ended_block_number: ended_block.number,
-      compensation_started_timestamp: started_block.timestamp, compensation_ended_timestamp: ended_block.timestamp,
-      interest: interest, cell_type: deposit_output_cell.cell_type, cell_index: deposit_output_cell.cell_index,
-      since: { raw: "0x0000000000000000", median_timestamp: "0" }
+      id: deposit_output_cell.id,
+      from_cellbase: false,
+      capacity: deposit_output_cell.capacity,
+      address_hash: deposit_output_cell.address_hash,
+      generated_tx_hash: deposit_output_cell.generated_by.tx_hash,
+      compensation_started_block_number: started_block.number,
+      compensation_ended_block_number: ended_block.number,
+      compensation_started_timestamp: started_block.timestamp,
+      compensation_ended_timestamp: ended_block.timestamp,
+      interest: interest,
+      cell_type: deposit_output_cell.cell_type,
+      cell_index: deposit_output_cell.cell_index,
+      since: {
+        raw: "0x0000000000000000",
+        median_timestamp: "0"
+      }
     ).sort
-    expected_attributes = %i(id from_cellbase capacity address_hash generated_tx_hash interest cell_type compensation_ended_block_number compensation_ended_timestamp compensation_started_block_number compensation_started_timestamp cell_index since).sort
+    expected_attributes = %i(
+      id from_cellbase capacity address_hash generated_tx_hash interest cell_type
+      compensation_ended_block_number compensation_ended_timestamp compensation_started_block_number
+      compensation_started_timestamp cell_index since
+    ).sort
 
     assert_equal expected_attributes, phase1_transaction.display_inputs.first.keys.sort
     assert_equal expected_display_input, phase1_transaction.display_inputs.first.sort

@@ -265,6 +265,7 @@ module Api
       end
 
       test "should return corresponding block with given block hash" do
+        Block.delete_all
         block = create(:block)
 
         valid_get api_v1_block_url(block.block_hash)
@@ -273,6 +274,7 @@ module Api
       end
 
       test "should return corresponding block with given height" do
+        Block.delete_all
         block = create(:block)
 
         valid_get api_v1_block_url(block.number)

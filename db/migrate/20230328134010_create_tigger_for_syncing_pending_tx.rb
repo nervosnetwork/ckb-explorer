@@ -20,7 +20,7 @@ class CreateTiggerForSyncingPendingTx < ActiveRecord::Migration[7.0]
         )
         VALUES
         (NEW.tx_status, NEW.tx_hash,
-        NEW.tx_size, NEW.cycles, NEW.version,
+        NEW.tx_size, NEW.cycles, COALESCE(NEW.version, 0),
         NEW.transaction_fee, NOW(), NOW()
         )
         RETURNING id into transaction_id;

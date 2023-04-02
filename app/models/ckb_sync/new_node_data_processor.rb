@@ -16,7 +16,8 @@ module CkbSync
     #           :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
                   :outputs, :inputs, :outputs_data,
-                  :udt_address_ids, :contained_address_ids, :dao_address_ids, :contained_udt_ids
+                  :udt_address_ids, :contained_address_ids, :dao_address_ids, :contained_udt_ids,
+                  :tx_cell_deps
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -62,7 +63,7 @@ module CkbSync
         inputs = @inputs = {}
         outputs = @outputs = {}
         outputs_data = @outputs_data = {}
-
+        @tx_cell_deps = {}
         @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
         build_udts!(local_block, outputs, outputs_data)
 
@@ -71,6 +72,7 @@ module CkbSync
         @dao_address_ids = dao_address_ids = []
         @contained_udt_ids = contained_udt_ids = []
         @contained_address_ids = contained_address_ids = []
+
         process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
         addrs_changes = Hash.new { |hash, key| hash[key] = {} }
         input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
@@ -89,7 +91,6 @@ module CkbSync
         update_addresses_info(addrs_changes)
       end
 
-      cache_address_txs(local_block)
       generate_tx_display_info(local_block)
       remove_tx_display_infos(local_block)
       flush_inputs_outputs_caches(local_block)
@@ -123,7 +124,7 @@ module CkbSync
 
     def generate_deployed_cells_and_referring_cells(local_block)
       local_block.ckb_transactions.each do |ckb_transaction|
-        DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction
+        DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction, tx_cell_deps[ckb_transaction.tx_hash]
         # ReferringCell.create_initial_data_for_ckb_transaction ckb_transaction
       end
     end
@@ -154,10 +155,6 @@ module CkbSync
 
     def remove_tx_display_infos(local_block)
       RemoveTxDisplayInfoWorker.perform_async(local_block.id)
-    end
-
-    def cache_address_txs(local_block)
-      AddressTxsCacheUpdateWorker.perform_async(local_block.id)
     end
 
     def generate_tx_display_info(local_block)
@@ -644,13 +641,13 @@ module CkbSync
           created_at: tx["created_at"],
           updated_at: Time.current
         }
-        binding.pry if attr[:transaction_fee] < 0
+        # binding.pry if attr[:transaction_fee] < 0
         ckb_transactions_attributes << attr
         tx_index += 1
       end
 
       if ckb_transactions_attributes.present?
-        CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:id])
+        CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:id, :tx_status])
       end
 
       AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present? # , unique_by: [:ckb_transaction_id, :address_id]
@@ -873,7 +870,6 @@ module CkbSync
               contained_udt_ids[tx_index] << Udt.where(type_hash: type_hash, udt_type: "nrc_721_token").pick(:id)
             end
             input_capacities[tx_index] += capacity.to_i if tx_index != 0
-            # binding.pry
           end
         end
       end
@@ -994,7 +990,7 @@ module CkbSync
       else
         # previous_output = prev_outputs["#{input.previous_output.tx_hash}-#{input.previous_output.index}"]
         previous_output = CellOutput.find_by tx_hash: input.previous_output.tx_hash, cell_index: input.previous_output.index
-        binding.pry unless previous_output
+
         {
           cell_input: {
             ckb_transaction_id: ckb_transaction_id,
@@ -1029,14 +1025,19 @@ module CkbSync
       txs = nil
       ckb_transactions_attributes = []
       tx_index = 0
-
+      hashes = []
+      header_deps = {}
+      witnesses = {}
       node_block.transactions.each do |tx|
         attrs = ckb_transaction_attributes(local_block, tx, tx_index)
         if cycles
           attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
         end
-
+        header_deps[tx.hash] = tx.header_deps
+        witnesses[tx.hash] = tx.witnesses
+        tx_cell_deps[tx.hash] = tx.cell_deps
         ckb_transactions_attributes << attrs
+        hashes << tx.hash
 
         inputs[tx_index] = tx.inputs
         outputs[tx_index] = tx.outputs
@@ -1044,8 +1045,51 @@ module CkbSync
 
         tx_index += 1
       end
+      # First update status thus we can use upsert later. otherwise, we may not be able to locate correct record according to tx_hash
+      CkbTransaction.where(tx_hash: hashes).update_all tx_status: "committed"
 
-      txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:tx_hash, :tx_status], returning: %w(id tx_hash created_at))
+      txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:tx_status, :tx_hash], returning: %w(id tx_hash created_at))
+      hash2id = {}
+      txs.each do |t|
+        hash2id["0#{t['tx_hash'][1..-1]}"] = t["id"]
+      end
+
+      # process header_deps
+      header_deps_attrs = []
+      header_deps.each do |tx_hash, deps|
+        i = -1
+        txid = hash2id[tx_hash]
+        deps.each do |dep|
+          i += 1
+          header_deps_attrs << {
+            ckb_transaction_id: txid,
+            index: i,
+            header_hash: dep
+          }
+        end
+      end
+      HeaderDependency.upsert_all(header_deps_attrs, unique_by: %i[ckb_transaction_id index]) if header_deps_attrs.present?
+
+      # process witnesses
+      witnesses_attrs = []
+      witnesses.each do |tx_hash, w|
+        i = -1
+        txid = hash2id[tx_hash]
+        w.each do |witness|
+          i += 1
+          if witness
+            witnesses_attrs << {
+              ckb_transaction_id: txid,
+              index: i,
+              data: witness
+            }
+          end
+        end
+      end
+
+      Witness.upsert_all(witnesses_attrs, unique_by: %i[ckb_transaction_id index]) if witnesses_attrs.present?
+
+      txs
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)

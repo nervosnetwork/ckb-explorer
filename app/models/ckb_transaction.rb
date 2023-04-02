@@ -1,4 +1,7 @@
+# A transaction in CKB is composed by several inputs and several outputs
+# the inputs are the previous generated outputs
 class CkbTransaction < ApplicationRecord
+  self.primary_key = :id
   MAX_PAGINATES_PER = 100
   DEFAULT_PAGINATES_PER = 10
   paginates_per DEFAULT_PAGINATES_PER
@@ -7,10 +10,11 @@ class CkbTransaction < ApplicationRecord
 
   enum tx_status: { pending: 0, proposed: 1, committed: 2, rejected: 3 }, _prefix: :tx
   default_scope { where(tx_status: "committed") }
-  belongs_to :block
+  belongs_to :block, optional: true # when a transaction is pending, it does not belongs to any block
   has_many :account_books, dependent: :delete_all
   has_many :addresses, through: :account_books
   has_many :cell_inputs, dependent: :delete_all
+  has_many :input_cells, through: :cell_inputs, source: :previous_cell_output
   has_many :cell_outputs, dependent: :delete_all
   accepts_nested_attributes_for :cell_outputs
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
@@ -86,21 +90,28 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
+  def self.write_hash_cache(tx_hash, raw_hash)
+    Rails.cache.write([self.class.name, tx_hash, "raw_hash"], raw_hash, expires_in: 1.day)
+  end
+
+  def self.fetch_raw_hash(tx_hash)
+    Rails.cache.fetch([name, tx_hash, "raw_hash"], expires_in: 1.day) do
+      res = CkbSync::Api.instance.directly_single_call_rpc method: "get_transaction", params: [tx_hash]
+      h = res["result"].with_indifferent_access
+    end
+  end
+
   # return the original json data fetched from ckb node
   # @return [Hash]
   def original_raw_hash
-    @raw_hash ||=
-      Rails.cache.fetch([self.class.name, tx_hash, "raw_hash"], expires_in: 1.day) do
-        res = CkbSync::Api.instance.directly_single_call_rpc method: "get_transaction", params: [tx_hash]
-        res["result"].with_indifferent_access
-      end
+    @raw_hash ||= self.class.fetch_raw_hash(tx_hash)
   end
 
   # return the structured transaction object of current CkbTransaction for use with CKB SDK
   # @return [CKB::Types::TransactionWithStatus]
   def original_transaction
     @original_transaction ||=
-      Rails.cache.fetch([self.class.name, tx_hash, "tx_object"], expires_in: 1.day) do
+      Rails.cache.fetch([self.class.name, tx_hash, "object"], expires_in: 1.day) do
         CKB::Types::TransactionWithStatus.from_h original_raw_hash
       end
   end
@@ -134,6 +145,15 @@ class CkbTransaction < ApplicationRecord
     Rails.cache.delete([self.class.name, tx_hash])
   end
 
+  def header_deps
+    header_dependencies.map(&:header_hash)
+  end
+
+  def cell_deps
+    _outputs = cell_outputs.order(cell_index: :asc).to_a
+    cell_deps = cell_dependencies.explicit.includes(:cell_output).to_a.map(&:to_raw)
+  end
+
   def display_inputs(previews: false)
     if is_cellbase
       cellbase_display_inputs
@@ -163,19 +183,21 @@ class CkbTransaction < ApplicationRecord
   end
 
   def to_raw
-    _outputs = cell_outputs.order(cell_index: :asc).to_a
-    cell_deps = cell_dependencies.explicit.includes(:cell_output).to_a
+    Rails.cache.fetch([self.class.name, tx_hash, "raw_hash"], expires_in: 1.day) do
+      _outputs = cell_outputs.order(cell_index: :asc).to_a
+      cell_deps = cell_dependencies.explicit.includes(:cell_output).to_a
 
-    {
-      hash: tx_hash,
-      header_deps: header_dependencies.map(&:header_hash),
-      cell_deps: cell_deps.map(&:to_raw),
-      inputs: cell_inputs.map(&:to_raw),
-      outputs: _outputs.map(&:to_raw),
-      outputs_data: _outputs.map(&:data),
-      version: "0x#{version.to_s(16)}",
-      witnesses: witnesses.map(&:data)
-    }
+      {
+        hash: tx_hash,
+        header_deps: header_dependencies.map(&:header_hash),
+        cell_deps: cell_deps.map(&:to_raw),
+        inputs: cell_inputs.map(&:to_raw),
+        outputs: _outputs.map(&:to_raw),
+        outputs_data: _outputs.map(&:data),
+        version: "0x#{version.to_s(16)}",
+        witnesses: witnesses.map(&:data)
+      }
+    end
   end
 
   def tx_display_info
@@ -301,14 +323,24 @@ class CkbTransaction < ApplicationRecord
   def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
     nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
+    # start block: the block contains the trasaction which generated the deposit cell output
     compensation_started_block = Block.select(:number, :timestamp).find(nervos_dao_deposit_cell.block.id)
+    # end block: the block contains the transaction which generated the withdrawing cell
     compensation_ended_block = Block.select(:number, :timestamp).find(nervos_dao_withdrawing_cell_generated_tx.block_id)
     interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
-    attributes = { compensation_started_block_number: compensation_started_block.number, compensation_ended_block_number: compensation_ended_block.number, compensation_started_timestamp: compensation_started_block.timestamp, compensation_ended_timestamp: compensation_ended_block.timestamp, interest: interest }
+
+    attributes = {
+      compensation_started_block_number: compensation_started_block.number,
+      compensation_started_timestamp: compensation_started_block.timestamp,
+      compensation_ended_block_number: compensation_ended_block.number,
+      compensation_ended_timestamp: compensation_ended_block.timestamp,
+      interest: interest
+    }
+
     if is_phase2
-      locked_until_block = Block.select(:number, :timestamp).find(block_id)
-      attributes[:locked_until_block_number] = locked_until_block.number
-      attributes[:locked_until_block_timestamp] = locked_until_block.timestamp
+      number, timestamp = Block.where(id: block_id).pick(:number, :timestamp) # locked_until_block
+      attributes[:locked_until_block_number] = number
+      attributes[:locked_until_block_timestamp] = timestamp
     end
 
     CkbUtils.hash_value_to_s(attributes)
