@@ -302,8 +302,8 @@ end
 #  id                    :bigint           not null, primary key
 #  tx_hash               :binary
 #  block_id              :bigint
-#  block_number          :bigint
-#  block_timestamp       :bigint
+#  block_number          :decimal(30, )
+#  block_timestamp       :decimal(30, )
 #  transaction_fee       :decimal(30, )
 #  version               :integer
 #  created_at            :datetime         not null

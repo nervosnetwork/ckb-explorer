@@ -7,9 +7,6 @@ class ChangeColumnTypesFromDecimalToBigint < ActiveRecord::Migration[7.0]
     change_column :addresses, :average_deposit_time, :bigint
     change_column :addresses, :dao_transactions_count, :bigint
 
-    change_column :ckb_transactions, :block_timestamp, :bigint
-    change_column :ckb_transactions, :block_number, :bigint
-
     change_column :cell_outputs, :address_id, :bigint
     change_column :cell_outputs, :capacity, :bigint
     change_column :cell_outputs, :generated_by_id, :bigint
@@ -54,9 +51,6 @@ class ChangeColumnTypesFromDecimalToBigint < ActiveRecord::Migration[7.0]
     change_column :addresses, :live_cells_count, :decimal, precision: 30, scale: 0
     change_column :addresses, :average_deposit_time, :decimal, precision: 30, scale: 0
     change_column :addresses, :dao_transactions_count, :decimal, precision: 30, scale: 0
-
-    change_column :ckb_transactions, :block_timestamp, :decimal, precision: 30, scale: 0
-    change_column :ckb_transactions, :block_number, :decimal, precision: 30, scale: 0
 
     change_column :cell_outputs, :address_id, :decimal, precision: 30, scale: 0
     change_column :cell_outputs, :capacity, :decimal, precision: 30, scale: 0
