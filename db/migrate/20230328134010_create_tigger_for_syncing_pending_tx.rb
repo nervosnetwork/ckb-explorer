@@ -61,7 +61,11 @@ class CreateTiggerForSyncingPendingTx < ActiveRecord::Migration[7.0]
             insert into cell_dependencies
             (ckb_transaction_id, contract_cell_id, dep_type, implicit)
             values(
-              transaction_id, cell_output_record.id, out_point->>'dep_type', false
+              transaction_id, cell_output_record.id,
+              CASE WHEN out_point->>'dep_type' = 'code' THEN 0
+                   WHEN out_point->>'dep_type' = 'dep_group' THEN 1
+                   ELSE NULL
+              END, false
             );
           END IF;
         end loop;
