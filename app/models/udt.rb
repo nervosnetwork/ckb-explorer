@@ -61,5 +61,6 @@ end
 #
 # Indexes
 #
-#  index_udts_on_type_hash  (type_hash) UNIQUE
+#  index_udts_on_type_hash  (type_hash) USING hash
+#  unique_type_hash         (type_hash) UNIQUE
 #
