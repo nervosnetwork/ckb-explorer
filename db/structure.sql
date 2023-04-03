@@ -616,8 +616,8 @@ CREATE TABLE public.ckb_transactions (
     contained_udt_ids bigint[] DEFAULT '{}'::bigint[],
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
     udt_address_ids bigint[] DEFAULT '{}'::bigint[],
-    bytes integer DEFAULT 0,
-    cycles integer,
+    bytes bigint DEFAULT 0,
+    cycles bigint,
     confirmation_time integer
 );
 
@@ -3250,6 +3250,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230320075334'),
 ('20230320151216'),
 ('20230320153418'),
-('20230321122734');
+('20230321122734'),
+('20230403154742');
 
 
