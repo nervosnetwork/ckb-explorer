@@ -14,13 +14,40 @@ class CkbTransaction < ApplicationRecord
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
   has_many :dao_events
+  has_many :script_transactions
+  has_many :scripts, through: :script_transactions
+
+  has_many :referring_cells
   has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all
+  has_many :cell_dependencies, dependent: :delete_all
   has_and_belongs_to_many :contained_addresses, class_name: "Address", join_table: "account_books"
   has_and_belongs_to_many :contained_udts, class_name: "Udt", join_table: :udt_transactions
+  has_and_belongs_to_many :contained_dao_addresses, class_name: "Address", join_table: "address_dao_transactions"
+  has_and_belongs_to_many :contained_udt_addresses, class_name: "Address", join_table: "address_udt_transactions"
 
   def self.migrate_contained_udt_ids
     CkbTransaction.select(%i[id contained_udt_ids]).find_each do |a|
       a.contained_udt_ids = a["contained_udt_ids"] if a["contained_udt_ids"].present?
+    end
+  end
+
+  def self.migrate_dao_address_ids
+    select(%i[id dao_address_ids]).find_in_batches do |txs|
+      res =
+        txs.reduce([]) do |memo, t|
+          memo += t[:dao_address_ids].map { |a| { address_id: a, ckb_transaction_id: t.id } }
+        end
+      AddressDaoTransaction.upsert_all(res, unique_by: [:address_id, :ckb_transaction_id]) if res.present?
+    end
+  end
+
+  def self.migrate_udt_address_ids
+    select(%i[id udt_address_ids]).find_in_batches do |txs|
+      res =
+        txs.reduce([]) do |memo, t|
+          memo += t[:udt_address_ids].map { |a| { address_id: a, ckb_transaction_id: t.id } }
+        end
+      AddressUdtTransaction.upsert_all(res, unique_by: [:address_id, :ckb_transaction_id]) if res.present?
     end
   end
 
@@ -144,6 +171,16 @@ class CkbTransaction < ApplicationRecord
     else
       tx_display_info.outputs
     end
+  end
+
+  def self.last_n_days_transaction_fee_rates(last_n_day)
+    CkbTransaction.
+      where("bytes > 0 and transaction_fee > 0").
+      where("block_timestamp >= ?", last_n_day.days.ago.to_i * 1000).
+      group("(block_timestamp / 86400000)::integer").
+      pluck(Arel.sql("(block_timestamp / 86400000)::integer as date"),
+            Arel.sql("sum(transaction_fee / bytes) / count(*) as fee_rate")).
+      map { |date, fee_rate| { date: Time.at(date * 86400).utc.strftime("%Y-%m-%d"), fee_rate: fee_rate } }
   end
 
   private
@@ -272,9 +309,9 @@ end
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
 #  is_cellbase           :boolean          default(FALSE)
-#  witnesses             :jsonb
 #  header_deps           :binary
 #  cell_deps             :jsonb
+#  witnesses             :jsonb
 #  live_cell_changes     :integer
 #  capacity_involved     :decimal(30, )
 #  contained_address_ids :bigint           default([]), is an Array
@@ -284,13 +321,13 @@ end
 #  udt_address_ids       :bigint           default([]), is an Array
 #  bytes                 :integer          default(0)
 #  cycles                :integer
+#  confirmation_time     :integer
 #
 # Indexes
 #
-#  alter_pk                                                (id,contained_address_ids) USING gin
 #  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
 #  index_ckb_transactions_on_block_timestamp_and_id        (block_timestamp DESC NULLS LAST,id DESC)
-#  index_ckb_transactions_on_contained_address_ids         (contained_address_ids) USING gin
+#  index_ckb_transactions_on_contained_address_ids_and_id  (contained_address_ids,id) USING gin
 #  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
 #  index_ckb_transactions_on_dao_address_ids               (dao_address_ids) USING gin
 #  index_ckb_transactions_on_is_cellbase                   (is_cellbase)

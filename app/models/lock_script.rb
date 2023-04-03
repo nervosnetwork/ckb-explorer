@@ -7,7 +7,7 @@ class LockScript < ActiveRecord::Base
 
   belongs_to :address, optional: true # will remove this later
 
-  belongs_to :scripts, optional: true
+  belongs_to :script, optional: true
   belongs_to :contract, optional: true, primary_key: "code_hash", foreign_key: "code_hash"
 
   validates_presence_of :code_hash
@@ -122,4 +122,5 @@ end
 #  index_lock_scripts_on_cell_output_id                    (cell_output_id)
 #  index_lock_scripts_on_code_hash_and_hash_type_and_args  (code_hash,hash_type,args)
 #  index_lock_scripts_on_script_hash                       (script_hash)
+#  index_lock_scripts_on_script_id                         (script_id)
 #
