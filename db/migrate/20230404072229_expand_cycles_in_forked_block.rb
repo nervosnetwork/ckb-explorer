@@ -4,7 +4,7 @@ class ExpandCyclesInForkedBlock < ActiveRecord::Migration[7.0]
     # Ex:- change_column("admin_users", "email", :string, :limit =>25)
   end
 
-  def up
+  def down
     change_column :forked_blocks, :cycles, :integer
     # Ex:- change_column("admin_users", "email", :string, :limit =>25)
   end
