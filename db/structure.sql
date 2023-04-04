@@ -950,7 +950,7 @@ CREATE TABLE public.forked_blocks (
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
     ckb_node_version character varying,
-    cycles integer
+    cycles bigint
 );
 
 
@@ -3252,6 +3252,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230320153418'),
 ('20230321122734'),
 ('20230331090020'),
-('20230403154742');
+('20230403154742'),
+('20230403172457'),
+('20230404072229');
 
 
