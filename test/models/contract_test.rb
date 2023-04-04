@@ -35,4 +35,15 @@ class ContractTest < ActiveSupport::TestCase
     assert_equal 'TTF1', @contract.symbol
   end
 
+  test "it should create initial data" do
+    Script.delete_all
+    LockScript.delete_all
+    TypeScript.delete_all
+    create :lock_script
+    create :type_script
+    Script.create_initial_data
+    Contract.create_initial_data
+    assert_equal 3, Contract.count
+  end
+
 end
