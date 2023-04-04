@@ -1,5 +1,8 @@
 class ChangeColumnTypesFromDecimalToBigint < ActiveRecord::Migration[7.0]
   def self.up
+    # if we don't drop this view, we cannot modify the type of timestamp column in blocks table
+    execute "DROP MATERIALIZED VIEW if exists average_block_time_by_hour CASCADE"
+
     change_table(:addresses, bulk: true) do |t|
       t.change :cell_consumed, :bigint
       t.change :ckb_transactions_count, :bigint
@@ -10,12 +13,14 @@ class ChangeColumnTypesFromDecimalToBigint < ActiveRecord::Migration[7.0]
     end
     change_table(:blocks, bulk: true) do |t|
       t.change :number, :bigint
+      t.change :timestamp, :bigint
       t.change :cell_consumed, :bigint
       t.change :ckb_transactions_count, :bigint
       t.change :epoch, :bigint
 
       t.change :block_size, :bigint
       t.change :median_timestamp, :bigint
+      t.change :block_time, :bigint
     end
     change_table(:block_statistics, bulk: true) do |t|
       t.change :block_number, :bigint

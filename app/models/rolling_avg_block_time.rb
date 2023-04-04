@@ -11,7 +11,7 @@ end
 #
 # Table name: rolling_avg_block_time
 #
-#  timestamp             :integer
+#  timestamp             :bigint
 #  avg_block_time_daily  :decimal(, )
 #  avg_block_time_weekly :decimal(, )
 #

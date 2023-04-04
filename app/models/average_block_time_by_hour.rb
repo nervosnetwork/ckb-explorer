@@ -11,7 +11,7 @@ end
 #
 # Table name: average_block_time_by_hour
 #
-#  hour                    :timestamptz
+#  hour                    :bigint
 #  avg_block_time_per_hour :decimal(, )
 #
 # Indexes

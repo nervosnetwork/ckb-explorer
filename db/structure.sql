@@ -491,10 +491,10 @@ COMMENT ON COLUMN public.blocks.ckb_node_version IS 'ckb node version, e.g. 0.10
 --
 
 CREATE MATERIALIZED VIEW public.average_block_time_by_hour AS
- SELECT date_trunc('hour'::text, to_timestamp(((blocks."timestamp" / 1000.0))::double precision)) AS hour,
+ SELECT ((blocks."timestamp" / (3600000)::numeric))::bigint AS hour,
     avg(blocks.block_time) AS avg_block_time_per_hour
    FROM public.blocks
-  GROUP BY (date_trunc('hour'::text, to_timestamp(((blocks."timestamp" / 1000.0))::double precision)))
+  GROUP BY (((blocks."timestamp" / (3600000)::numeric))::bigint)
   WITH NO DATA;
 
 
@@ -1649,7 +1649,7 @@ ALTER SEQUENCE public.referring_cells_id_seq OWNED BY public.referring_cells.id;
 --
 
 CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
- SELECT (EXTRACT(epoch FROM average_block_time_by_hour.hour))::integer AS "timestamp",
+ SELECT (average_block_time_by_hour.hour * 3600) AS "timestamp",
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
    FROM public.average_block_time_by_hour
@@ -4306,4 +4306,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230402125000'),
 ('20230403052005'),
 ('20230403154742'),
-('20230404072229');
+('20230404072229'),
+('20230404151647');
