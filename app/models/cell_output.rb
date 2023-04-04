@@ -247,23 +247,23 @@ end
 # Table name: cell_outputs
 #
 #  id                       :bigint           not null, primary key
-#  capacity                 :bigint
+#  capacity                 :decimal(30, )
 #  data                     :binary
 #  ckb_transaction_id       :bigint
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  status                   :integer          default("live")
-#  address_id               :bigint
+#  address_id               :decimal(30, )
 #  block_id                 :decimal(30, )
 #  tx_hash                  :binary
 #  cell_index               :integer
-#  generated_by_id          :bigint
-#  consumed_by_id           :bigint
+#  generated_by_id          :decimal(30, )
+#  consumed_by_id           :decimal(30, )
 #  cell_type                :integer          default("normal")
 #  data_size                :integer
-#  occupied_capacity        :bigint
-#  block_timestamp          :bigint
-#  consumed_block_timestamp :bigint           default(0)
+#  occupied_capacity        :decimal(30, )
+#  block_timestamp          :decimal(30, )
+#  consumed_block_timestamp :decimal(30, )    default(0)
 #  type_hash                :string
 #  udt_amount               :decimal(40, )
 #  dao                      :string
