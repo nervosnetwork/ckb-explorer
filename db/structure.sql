@@ -616,8 +616,8 @@ CREATE TABLE public.ckb_transactions (
     contained_udt_ids bigint[] DEFAULT '{}'::bigint[],
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
     udt_address_ids bigint[] DEFAULT '{}'::bigint[],
-    bytes integer DEFAULT 0,
-    cycles integer,
+    bytes bigint DEFAULT 0,
+    cycles bigint,
     confirmation_time integer
 );
 
@@ -950,7 +950,7 @@ CREATE TABLE public.forked_blocks (
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
     ckb_node_version character varying,
-    cycles integer
+    cycles bigint
 );
 
 
@@ -3251,6 +3251,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230320151216'),
 ('20230320153418'),
 ('20230321122734'),
-('20230331090020');
+('20230331090020'),
+('20230403154742'),
+('20230403172457'),
+('20230404072229');
 
 

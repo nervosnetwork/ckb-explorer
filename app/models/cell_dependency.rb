@@ -43,6 +43,7 @@ end
 #  dep_type           :integer
 #  contract_cell_id   :bigint           not null
 #  script_id          :bigint
+#  implicit           :boolean          default(TRUE), not null
 #
 # Indexes
 #
