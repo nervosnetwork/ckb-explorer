@@ -375,7 +375,7 @@ end
 #
 # Table name: ckb_transactions
 #
-#  id                :bigint           not null
+#  id                :bigint           not null, primary key
 #  tx_hash           :binary
 #  block_id          :bigint
 #  block_number      :bigint
@@ -395,9 +395,9 @@ end
 #
 # Indexes
 #
-#  ckb_tx_unique_tx_hash                                   (tx_hash) UNIQUE
+#  ckb_tx_uni_tx_hash                 (tx_status,tx_hash) UNIQUE
 #  idx_ckb_txs_for_blocks             (block_id,block_timestamp)
 #  idx_ckb_txs_timestamp              (block_timestamp DESC NULLS LAST,id)
 #  index_ckb_transactions_on_tags     (tags) USING gin
-#  index_ckb_transactions_on_tx_hash_and_block_id          (tx_hash,block_id) UNIQUE
+#  index_ckb_transactions_on_tx_hash  (tx_hash) USING hash
 #

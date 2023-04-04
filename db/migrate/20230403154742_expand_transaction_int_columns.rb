@@ -1,12 +1,15 @@
 class ExpandTransactionIntColumns < ActiveRecord::Migration[7.0]
   def up
-    change_column :ckb_transactions, :bytes, :bigint
-    change_column :ckb_transactions, :cycles, :bigint
-    # Ex:- change_column("admin_users", "email", :string, :limit =>25)
+    change_table :ckb_transactions, bulk: true do |t|
+      t.change :bytes, :bigint
+      t.change :cycles, :bigint
+    end
   end
 
   def down
-    change_column :ckb_transactions, :bytes, :integer
-    change_column :ckb_transactions, :cycles, :integer
+    change_table :ckb_transactions, bulk: true do |t|
+      t.change :bytes, :integer
+      t.change :cycles, :integer
+    end
   end
 end
