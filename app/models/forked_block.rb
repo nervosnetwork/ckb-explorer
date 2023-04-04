@@ -18,9 +18,9 @@ end
 #
 #  id                         :bigint           not null, primary key
 #  block_hash                 :binary
-#  number                     :decimal(30, )
+#  number                     :bigint
 #  parent_hash                :binary
-#  timestamp                  :decimal(30, )
+#  timestamp                  :bigint
 #  transactions_root          :binary
 #  proposals_hash             :binary
 #  uncles_count               :integer
@@ -35,7 +35,7 @@ end
 #  total_transaction_fee      :decimal(30, )
 #  ckb_transactions_count     :decimal(30, )    default(0)
 #  total_cell_capacity        :decimal(30, )
-#  epoch                      :decimal(30, )
+#  epoch                      :bigint
 #  address_ids                :string           is an Array
 #  reward_status              :integer          default("pending")
 #  received_tx_fee_status     :integer          default("pending")

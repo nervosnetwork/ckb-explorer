@@ -7,11 +7,16 @@ class DeployedCellTest < ActiveSupport::TestCase
   end
 
   setup do
-    @block = create(:block, :with_block_hash)
-    @ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block_id: @block.id)
-    @cell_output = create(:cell_output, :with_full_transaction, ckb_transaction_id: @ckb_transaction.id, block: @block)
+    @block = create :block, :with_block_hash
+    @ckb_transaction = create :ckb_transaction, :with_multiple_inputs_and_outputs, block_id: @block.id
+
+    code_hash = "0x671ddda336db68ce0daebde885f44e2f46406d6c838484b4bd8934173e518876"
+    @cell_output = create :cell_output, :with_full_transaction, ckb_transaction_id: @ckb_transaction.id, block: @block, data: '0x', data_hash: code_hash
     @contract = create :contract
     @deployed_cell = create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output.id
+    CellOutput.stubs(:find_by_pointer).returns(@cell_output)
+    CellOutput.any_instance.stubs(:data_hash).returns(code_hash)
+    CellOutput.any_instance.stubs(:type_hash).returns(code_hash)
   end
 
   test "it should create deployed_cell" do
@@ -60,8 +65,10 @@ class DeployedCellTest < ActiveSupport::TestCase
   test "it should create_initial_data_for_ckb_transaction for cell_inputs when hash_type is type" do
     # step 1 delete redundant data
     delete_redundant_data
+
     # step 2 prepare test data
     prepare_test_data_for_hash_type_is_type_for_cell_inputs
+
     # step 3 start unit test
     # for the 1st time, it will create
     DeployedCell.create_initial_data_for_ckb_transaction @ckb_transaction_with_cell_deps

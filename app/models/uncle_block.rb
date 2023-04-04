@@ -21,9 +21,9 @@ end
 #
 #  id                :bigint           not null, primary key
 #  block_hash        :binary
-#  number            :decimal(30, )
+#  number            :bigint
 #  parent_hash       :binary
-#  timestamp         :decimal(30, )
+#  timestamp         :bigint
 #  transactions_root :binary
 #  proposals_hash    :binary
 #  extra_hash        :binary
@@ -31,7 +31,7 @@ end
 #  proposals         :binary
 #  proposals_count   :integer
 #  block_id          :bigint
-#  epoch             :decimal(30, )
+#  epoch             :bigint
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #  dao               :string
