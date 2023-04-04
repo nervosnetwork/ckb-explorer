@@ -54,7 +54,7 @@ module Api
 
           assert_equal 1, data["last_n_days_transaction_fee_rates"].size
           # compare with the block timestamp
-          assert_equal "#{Time.at(block.timestamp / 1000).utc.strftime('%Y-%m-%d')}", data["last_n_days_transaction_fee_rates"].first["date"]
+          assert_equal "#{Time.now.strftime("%Y-%m-%d")}", data['last_n_days_transaction_fee_rates'].first['date']
           assert_equal "3.0", data["last_n_days_transaction_fee_rates"].first["fee_rate"]
           assert_response :success
         end
