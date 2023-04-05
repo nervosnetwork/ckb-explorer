@@ -30,15 +30,15 @@ s.cron "5 0 * * *" do
   call_worker Charts::DailyStatistic
 end
 
-s.every "10m" do
+s.every "10m", overlap: false do
   call_worker Charts::BlockStatistic
 end
 
-s.every "30m" do
+s.every "30m", overlap: false do
   call_worker Charts::EpochStatistic
 end
 
-s.every "1h" do
+s.every "1h", overlap: false do
   call_worker DaoContractUnclaimedCompensationGenerator
 end
 
@@ -46,19 +46,19 @@ s.cron "0 */6 * * *" do
   call_worker AddressAverageDepositTimeGenerator
 end
 
-s.every "1h" do
+s.every "1h", overlap: false do
   call_worker AverageBlockTimeGenerator
 end
 
-s.every "1h" do
+s.every "1h", overlap: false do
   call_worker AddressUnclaimedCompensationGenerator
 end
 
-s.every "5m" do
+s.every "5m", overlap: false do
   call_worker PoolTransactionCheckWorker
 end
 
-s.every "1h" do
+s.every "1h", overlap: false do
   call_worker CleanUpWorker
 end
 
