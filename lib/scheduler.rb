@@ -26,6 +26,11 @@ def call_worker(clz)
   puts "fininsh #{clz.name}"
 end
 
+# Vacuum database periodically for better performance
+s.cron "0 2 * * 1" do
+  ApplicationRecord.connection.execute "vacuum (verbose, analyze)"
+end
+
 s.cron "5 0 * * *" do
   call_worker Charts::DailyStatistic
 end
