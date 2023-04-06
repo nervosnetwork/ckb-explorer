@@ -34,7 +34,7 @@ class CellOutput < ApplicationRecord
   belongs_to :type_script, optional: true
 
   has_many :cell_dependencies, foreign_key: :contract_cell_id, dependent: :delete_all
-  has_one :cell_data, class_name: "CellDatum", dependent: :delete_all
+  has_one :cell_data, class_name: "CellDatum", dependent: :destroy_async
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :block, presence: true, if: -> { live? or dead? }
