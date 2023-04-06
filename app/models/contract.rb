@@ -5,6 +5,19 @@ class Contract < ApplicationRecord
   has_many :referring_cells
   has_many :cell_dependencies
   has_many :ckb_transactions, through: :cell_dependencies
+
+  def self.create_initial_data
+    Contract.transaction do
+      Script.find_each do |script|
+        contract = Contract.find_by code_hash: script.script_hash
+        if contract.blank?
+          contract = Contract.create code_hash: script.script_hash
+        end
+        script.update contract_id: contract.id
+      end
+    end
+  end
+
 end
 
 # == Schema Information
