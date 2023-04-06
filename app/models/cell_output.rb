@@ -3,21 +3,38 @@ class CellOutput < ApplicationRecord
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   MIN_SUDT_AMOUNT_BYTESIZE = 16
   enum status: { live: 0, dead: 1, pending: 2, rejected: 3 }
-  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9, cota_regular: 10 }
+  enum cell_type: {
+    normal: 0,
+    nervos_dao_deposit: 1,
+    nervos_dao_withdrawing: 2,
+    udt: 3,
+    m_nft_issuer: 4,
+    m_nft_class: 5,
+    m_nft_token: 6,
+    nrc_721_token: 7,
+    nrc_721_factory: 8,
+    cota_registry: 9,
+    cota_regular: 10
+  }
 
   belongs_to :ckb_transaction
   # FIXME: the generated_by_id is actually the same as ckb_transaction_id
   belongs_to :generated_by, class_name: "CkbTransaction"
+  # the consumed_by_id will be set only when transaction is committed on chain
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
-  has_many :cell_inputs, foreign_key: :previous_output_id
-  belongs_to :address
+  # the inputs which consumes this cell output
+  # but one cell may be included by many pending transactions, the cell_inputs won't always be the same as `consumed_by`.`cell_inputs`
+  has_many :cell_inputs, class_name: "CellInput", foreign_key: :previous_output_id
   belongs_to :deployed_cell, optional: true
+  # the block_id is actually the same as ckb_transaction.block_id, must be on chain
+  # but one cell may be included by pending transactions, so block_id may be null
   belongs_to :block, optional: true
-  belongs_to :lock_script, optional: true
+  belongs_to :address
+  belongs_to :lock_script
   belongs_to :type_script, optional: true
 
   has_many :cell_dependencies, foreign_key: :contract_cell_id, dependent: :delete_all
-  has_many :referring_cells
+  has_one :cell_data, class_name: "CellDatum", dependent: :delete_all
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :block, presence: true, if: -> { live? or dead? }

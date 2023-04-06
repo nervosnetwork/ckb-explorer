@@ -435,7 +435,7 @@ CREATE TABLE public.blocks (
     block_hash bytea,
     number bigint,
     parent_hash bytea,
-    "timestamp" numeric(30,0),
+    "timestamp" bigint,
     transactions_root bytea,
     proposals_hash bytea,
     uncles_count integer,
@@ -467,7 +467,7 @@ CREATE TABLE public.blocks (
     length numeric(30,0) DEFAULT 0.0,
     compact_target numeric(20,0),
     live_cell_changes integer,
-    block_time numeric(13,0),
+    block_time bigint,
     block_size bigint,
     proposal_reward numeric(30,0),
     commit_reward numeric(30,0),
@@ -491,10 +491,10 @@ COMMENT ON COLUMN public.blocks.ckb_node_version IS 'ckb node version, e.g. 0.10
 --
 
 CREATE MATERIALIZED VIEW public.average_block_time_by_hour AS
- SELECT ((blocks."timestamp" / (3600000)::numeric))::bigint AS hour,
+ SELECT (blocks."timestamp" / 3600000) AS hour,
     avg(blocks.block_time) AS avg_block_time_per_hour
    FROM public.blocks
-  GROUP BY (((blocks."timestamp" / (3600000)::numeric))::bigint)
+  GROUP BY (blocks."timestamp" / 3600000)
   WITH NO DATA;
 
 

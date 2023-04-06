@@ -36,7 +36,7 @@ module Server
     config.api_only = true
     config.active_record.schema_format = :sql
     config.generators do |g|
-      g.factory_bot
+      g.fixture_replacement :factory_bot, dir: "test/factories"
     end
   end
 end

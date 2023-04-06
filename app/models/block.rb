@@ -309,7 +309,7 @@ end
 #  block_hash                 :binary
 #  number                     :bigint
 #  parent_hash                :binary
-#  timestamp                  :decimal(30, )
+#  timestamp                  :bigint
 #  transactions_root          :binary
 #  proposals_hash             :binary
 #  uncles_count               :integer
@@ -341,7 +341,7 @@ end
 #  length                     :decimal(30, )    default(0)
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
-#  block_time                 :decimal(13, )
+#  block_time                 :bigint
 #  block_size                 :bigint
 #  proposal_reward            :decimal(30, )
 #  commit_reward              :decimal(30, )
