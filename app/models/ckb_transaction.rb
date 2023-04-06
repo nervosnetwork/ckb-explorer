@@ -299,39 +299,29 @@ end
 #
 # Table name: ckb_transactions
 #
-#  id                    :bigint           not null, primary key
-#  tx_hash               :binary
-#  block_id              :bigint
-#  block_number          :decimal(30, )
-#  block_timestamp       :decimal(30, )
-#  transaction_fee       :decimal(30, )
-#  version               :integer
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  is_cellbase           :boolean          default(FALSE)
-#  header_deps           :binary
-#  cell_deps             :jsonb
-#  witnesses             :jsonb
-#  live_cell_changes     :integer
-#  capacity_involved     :decimal(30, )
-#  contained_address_ids :bigint           default([]), is an Array
-#  tags                  :string           default([]), is an Array
-#  contained_udt_ids     :bigint           default([]), is an Array
-#  dao_address_ids       :bigint           default([]), is an Array
-#  udt_address_ids       :bigint           default([]), is an Array
-#  bytes                 :integer          default(0)
-#  cycles                :integer
-#  confirmation_time     :integer
+#  id                :bigint           not null
+#  tx_hash           :binary
+#  block_id          :bigint
+#  block_number      :bigint
+#  block_timestamp   :bigint
+#  tx_status         :integer          default("committed"), not null
+#  version           :integer          default(0), not null
+#  is_cellbase       :boolean          default(FALSE)
+#  transaction_fee   :bigint
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  live_cell_changes :integer
+#  capacity_involved :decimal(30, )
+#  tags              :string           default([]), is an Array
+#  bytes             :bigint           default(0)
+#  cycles            :bigint
+#  confirmation_time :integer
 #
 # Indexes
 #
-#  index_ckb_transactions_on_block_id_and_block_timestamp  (block_id,block_timestamp)
-#  index_ckb_transactions_on_block_timestamp_and_id        (block_timestamp DESC NULLS LAST,id DESC)
-#  index_ckb_transactions_on_contained_address_ids_and_id  (contained_address_ids,id) USING gin
-#  index_ckb_transactions_on_contained_udt_ids             (contained_udt_ids) USING gin
-#  index_ckb_transactions_on_dao_address_ids               (dao_address_ids) USING gin
-#  index_ckb_transactions_on_is_cellbase                   (is_cellbase)
-#  index_ckb_transactions_on_tags                          (tags) USING gin
-#  index_ckb_transactions_on_tx_hash_and_block_id          (tx_hash,block_id) UNIQUE
-#  index_ckb_transactions_on_udt_address_ids               (udt_address_ids) USING gin
+#  ckb_tx_uni_tx_hash                 (tx_status,tx_hash) UNIQUE
+#  idx_ckb_txs_for_blocks             (block_id,block_timestamp)
+#  idx_ckb_txs_timestamp              (block_timestamp DESC NULLS LAST,id)
+#  index_ckb_transactions_on_tags     (tags) USING gin
+#  index_ckb_transactions_on_tx_hash  (tx_hash) USING hash
 #
