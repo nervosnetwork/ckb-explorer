@@ -6,7 +6,7 @@ class CreateTransactionAddressChanges < ActiveRecord::Migration[7.0]
       t.string :name, null: false
       t.decimal :delta, null: false, default: 0
       t.index :ckb_transaction_id
-      t.index [:address_id, :ckb_transaction_id, :name], unique: true
+      t.index [:address_id, :ckb_transaction_id, :name], unique: true, name: "tx_address_changes_alt_pk"
     end
   end
 end
