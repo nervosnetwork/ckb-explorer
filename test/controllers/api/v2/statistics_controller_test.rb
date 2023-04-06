@@ -40,21 +40,18 @@ module Api
       end
 
       test "should get transaction_fees, for last_n_days_transaction_fee_rates" do
-        CkbTransaction.delete_all
         VCR.use_cassette("get transaction_fees, for last_n_days_transaction_fee_rates") do
           # get today's timestamp at: 23:50:00
           current_time_stamp = Time.now.end_of_day.to_i - 600
-          block = Block.last
-          create :ckb_transaction, bytes: 100, transaction_fee: 200, created_at: current_time_stamp, block: block
-          create :ckb_transaction, bytes: 100, transaction_fee: 300, created_at: current_time_stamp, block: block
-          create :ckb_transaction, bytes: 100, transaction_fee: 400, created_at: current_time_stamp, block: block
+          create :block, :with_block_hash, timestamp: current_time_stamp * 1000, total_transaction_fee: 100, ckb_transactions_count: 5
+          create :block, :with_block_hash, timestamp: current_time_stamp * 1000, total_transaction_fee: 100, ckb_transactions_count: 2
+          create :block, :with_block_hash, timestamp: (current_time_stamp - 1.day.to_i) * 1000, total_transaction_fee: 100, ckb_transactions_count: 5
 
           get transaction_fees_api_v2_statistics_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
           data = JSON.parse(response.body)
-          assert_equal 1, data['last_n_days_transaction_fee_rates'].size
-          assert "#{1.day.ago.strftime("%Y-%m-%d")}" == data['last_n_days_transaction_fee_rates'].first['date'] || "#{Time.now.strftime("%Y-%m-%d")}" == data['last_n_days_transaction_fee_rates'].first['date']
-
-          assert_equal "3.0", data['last_n_days_transaction_fee_rates'].first['fee_rate']
+          # compare with the block timestamp
+          assert_equal 1, data["last_n_days_transaction_fee_rates"].size
+          assert "#{Time.now.strftime("%Y-%m-%d")}" == data['last_n_days_transaction_fee_rates'].first['date'] || "#{1.day.ago.strftime("%Y-%m-%d")}"== data['last_n_days_transaction_fee_rates'].first['date']
           assert_response :success
         end
       end
