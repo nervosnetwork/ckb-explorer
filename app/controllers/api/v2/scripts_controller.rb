@@ -55,43 +55,7 @@ module Api::V2
       contract = @script.contract
       head :not_found and return if @script.contract.blank?
 
-      deployed_cells = contract.deployed_cells.page(@page).per(@page_size)
-      json = Jbuilder.new do |json|
-        json.array! deployed_cells.each do |deployed_cell|
-          cell_output = deployed_cell.cell_output
-          json.id deployed_cell.cell_output.id
-          json.capacity deployed_cell.cell_output.capacity
-          json.ckb_transaction_id deployed_cell.cell_output.ckb_transaction_id
-          json.created_at deployed_cell.cell_output.created_at
-          json.updated_at deployed_cell.cell_output.updated_at
-          json.status cell_output.status
-          json.address_id cell_output.address_id
-          json.block_id cell_output.block_id
-          json.tx_hash cell_output.tx_hash
-          json.cell_index cell_output.cell_index
-          json.generated_by_id cell_output.generated_by_id
-          json.consumed_by_id cell_output.consumed_by_id
-          json.cell_type cell_output.cell_type
-          json.data_size cell_output.data_size
-          json.occupied_capacity cell_output.occupied_capacity
-          json.block_timestamp cell_output.block_timestamp
-          json.consumed_block_timestamp cell_output.consumed_block_timestamp
-          json.type_hash cell_output.type_hash
-          json.udt_amount cell_output.udt_amount
-          json.dao cell_output.dao
-          json.lock_script_id cell_output.lock_script_id
-          json.type_script_id cell_output.type_script_id
-        end
-      end.target!
-      render json: {
-        data: {
-          deployed_cells: JSON.parse(json)
-        },
-        meta: {
-          total: contract.deployed_cells.count.to_i,
-          page_size: @page_size.to_i
-        }
-      }
+      @deployed_cells = contract.deployed_cells.page(@page).per(@page_size)
     end
 
     def referring_cells
