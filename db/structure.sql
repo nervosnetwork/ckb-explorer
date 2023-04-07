@@ -192,21 +192,21 @@ CREATE TABLE public.addresses (
     id bigint NOT NULL,
     balance numeric(30,0) DEFAULT 0,
     address_hash bytea,
-    cell_consumed numeric(30,0),
-    ckb_transactions_count numeric(30,0) DEFAULT 0.0,
+    cell_consumed bigint,
+    ckb_transactions_count bigint DEFAULT 0.0,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     lock_hash bytea,
     dao_deposit numeric(30,0) DEFAULT 0.0,
     interest numeric(30,0) DEFAULT 0.0,
-    block_timestamp numeric(30,0),
-    live_cells_count numeric(30,0) DEFAULT 0.0,
+    block_timestamp bigint,
+    live_cells_count bigint DEFAULT 0.0,
     mined_blocks_count integer DEFAULT 0,
     visible boolean DEFAULT true,
-    average_deposit_time numeric,
+    average_deposit_time bigint,
     unclaimed_compensation numeric(30,0),
     is_depositor boolean DEFAULT false,
-    dao_transactions_count numeric(30,0) DEFAULT 0.0,
+    dao_transactions_count bigint DEFAULT 0.0,
     lock_script_id bigint,
     balance_occupied numeric(30,0) DEFAULT 0.0,
     address_hash_crc bigint
@@ -251,7 +251,7 @@ CREATE TABLE public.ar_internal_metadata (
 CREATE TABLE public.blocks (
     id bigint NOT NULL,
     block_hash bytea,
-    number numeric(30,0),
+    number bigint,
     parent_hash bytea,
     "timestamp" numeric(30,0),
     transactions_root bytea,
@@ -262,13 +262,13 @@ CREATE TABLE public.blocks (
     version integer,
     proposals bytea,
     proposals_count integer,
-    cell_consumed numeric(30,0),
+    cell_consumed bigint,
     miner_hash bytea,
     reward numeric(30,0),
     total_transaction_fee numeric(30,0),
-    ckb_transactions_count numeric(30,0) DEFAULT 0.0,
+    ckb_transactions_count bigint DEFAULT 0.0,
     total_cell_capacity numeric(30,0),
-    epoch numeric(30,0),
+    epoch bigint,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     address_ids character varying[],
@@ -286,12 +286,12 @@ CREATE TABLE public.blocks (
     compact_target numeric(20,0),
     live_cell_changes integer,
     block_time numeric(13,0),
-    block_size integer,
+    block_size bigint,
     proposal_reward numeric(30,0),
     commit_reward numeric(30,0),
     miner_message character varying,
     extension jsonb,
-    median_timestamp numeric DEFAULT 0.0,
+    median_timestamp bigint DEFAULT 0.0,
     ckb_node_version character varying,
     cycles bigint
 );
@@ -359,10 +359,10 @@ CREATE TABLE public.block_statistics (
     hash_rate character varying,
     live_cells_count character varying DEFAULT '0'::character varying,
     dead_cells_count character varying DEFAULT '0'::character varying,
-    block_number numeric(30,0),
+    block_number bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    epoch_number numeric(30,0),
+    epoch_number bigint,
     primary_issuance numeric(36,8),
     secondary_issuance numeric(36,8),
     accumulated_total_deposits numeric(36,8),
@@ -471,49 +471,15 @@ ALTER SEQUENCE public.blocks_id_seq OWNED BY public.blocks.id;
 
 
 --
--- Name: books; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.books (
-    id bigint NOT NULL,
-    author_name character varying,
-    title character varying,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: books_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.books_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: books_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.books_id_seq OWNED BY public.books.id;
-
-
---
 -- Name: cell_dependencies; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.cell_dependencies (
     id bigint NOT NULL,
     contract_id bigint,
-    ckb_transaction_id bigint,
+    ckb_transaction_id bigint NOT NULL,
     dep_type integer,
-    contract_cell_id bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
+    contract_cell_id bigint NOT NULL,
     script_id bigint
 );
 
@@ -601,7 +567,8 @@ CREATE TABLE public.cell_outputs (
     udt_amount numeric(40,0),
     dao character varying,
     lock_script_id bigint,
-    type_script_id bigint
+    type_script_id bigint,
+    data_hash bytea
 );
 
 
@@ -649,8 +616,8 @@ CREATE TABLE public.ckb_transactions (
     contained_udt_ids bigint[] DEFAULT '{}'::bigint[],
     dao_address_ids bigint[] DEFAULT '{}'::bigint[],
     udt_address_ids bigint[] DEFAULT '{}'::bigint[],
-    bytes integer DEFAULT 0,
-    cycles integer,
+    bytes bigint DEFAULT 0,
+    cycles bigint,
     confirmation_time integer
 );
 
@@ -866,8 +833,8 @@ ALTER SEQUENCE public.dao_events_id_seq OWNED BY public.dao_events.id;
 
 CREATE TABLE public.deployed_cells (
     id bigint NOT NULL,
-    cell_output_id bigint,
-    contract_id bigint,
+    cell_output_id bigint NOT NULL,
+    contract_id bigint NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -900,11 +867,11 @@ CREATE TABLE public.epoch_statistics (
     id bigint NOT NULL,
     difficulty character varying,
     uncle_rate character varying,
-    epoch_number numeric(30,0),
+    epoch_number bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     hash_rate character varying,
-    epoch_time numeric(13,0),
+    epoch_time bigint,
     epoch_length integer,
     largest_block_number integer,
     largest_block_size integer,
@@ -941,9 +908,9 @@ ALTER SEQUENCE public.epoch_statistics_id_seq OWNED BY public.epoch_statistics.i
 CREATE TABLE public.forked_blocks (
     id bigint NOT NULL,
     block_hash bytea,
-    number numeric(30,0),
+    number bigint,
     parent_hash bytea,
-    "timestamp" numeric(30,0),
+    "timestamp" bigint,
     transactions_root bytea,
     proposals_hash bytea,
     uncles_count integer,
@@ -958,7 +925,7 @@ CREATE TABLE public.forked_blocks (
     total_transaction_fee numeric(30,0),
     ckb_transactions_count numeric(30,0) DEFAULT 0.0,
     total_cell_capacity numeric(30,0),
-    epoch numeric(30,0),
+    epoch bigint,
     address_ids character varying[],
     reward_status integer DEFAULT 0,
     received_tx_fee_status integer DEFAULT 0,
@@ -983,7 +950,7 @@ CREATE TABLE public.forked_blocks (
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
     ckb_node_version character varying,
-    cycles integer
+    cycles bigint
 );
 
 
@@ -1312,10 +1279,8 @@ CREATE TABLE public.schema_migrations (
 
 CREATE TABLE public.script_transactions (
     id bigint NOT NULL,
-    script_id bigint,
-    ckb_transaction_id bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    script_id bigint NOT NULL,
+    ckb_transaction_id bigint NOT NULL
 );
 
 
@@ -1670,15 +1635,15 @@ CREATE TABLE public.udts (
     description character varying,
     icon_file character varying,
     operator_website character varying,
-    addresses_count numeric(30,0) DEFAULT 0.0,
+    addresses_count bigint DEFAULT 0.0,
     total_amount numeric(40,0) DEFAULT 0.0,
     udt_type integer,
     published boolean DEFAULT false,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    block_timestamp numeric(30,0),
+    block_timestamp bigint,
     issuer_address bytea,
-    ckb_transactions_count numeric(30,0) DEFAULT 0.0,
+    ckb_transactions_count bigint DEFAULT 0.0,
     nrc_factory_cell_id bigint,
     display_name character varying,
     uan character varying
@@ -1711,9 +1676,9 @@ ALTER SEQUENCE public.udts_id_seq OWNED BY public.udts.id;
 CREATE TABLE public.uncle_blocks (
     id bigint NOT NULL,
     block_hash bytea,
-    number numeric(30,0),
+    number bigint,
     parent_hash bytea,
-    "timestamp" numeric(30,0),
+    "timestamp" bigint,
     transactions_root bytea,
     proposals_hash bytea,
     extra_hash bytea,
@@ -1721,7 +1686,7 @@ CREATE TABLE public.uncle_blocks (
     proposals bytea,
     proposals_count integer,
     block_id bigint,
-    epoch numeric(30,0),
+    epoch bigint,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     dao character varying,
@@ -1789,13 +1754,6 @@ ALTER TABLE ONLY public.block_time_statistics ALTER COLUMN id SET DEFAULT nextva
 --
 
 ALTER TABLE ONLY public.blocks ALTER COLUMN id SET DEFAULT nextval('public.blocks_id_seq'::regclass);
-
-
---
--- Name: books id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.books ALTER COLUMN id SET DEFAULT nextval('public.books_id_seq'::regclass);
 
 
 --
@@ -2055,14 +2013,6 @@ ALTER TABLE ONLY public.block_time_statistics
 
 ALTER TABLE ONLY public.blocks
     ADD CONSTRAINT blocks_pkey PRIMARY KEY (id);
-
-
---
--- Name: books books_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.books
-    ADD CONSTRAINT books_pkey PRIMARY KEY (id);
 
 
 --
@@ -2328,6 +2278,13 @@ CREATE UNIQUE INDEX address_udt_tx_alt_pk ON public.address_udt_transactions USI
 
 
 --
+-- Name: cell_deps_tx_cell_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX cell_deps_tx_cell_idx ON public.cell_dependencies USING btree (ckb_transaction_id, contract_cell_id);
+
+
+--
 -- Name: index_account_books_on_address_id_and_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2531,6 +2488,13 @@ CREATE INDEX index_cell_outputs_on_consumed_by_id ON public.cell_outputs USING b
 
 
 --
+-- Name: index_cell_outputs_on_data_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_outputs_on_data_hash ON public.cell_outputs USING hash (data_hash);
+
+
+--
 -- Name: index_cell_outputs_on_generated_by_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2709,14 +2673,14 @@ CREATE INDEX index_dao_events_on_status_and_event_type ON public.dao_events USIN
 -- Name: index_deployed_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
+CREATE UNIQUE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
 
 
 --
--- Name: index_deployed_cells_on_contract_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_deployed_cells_on_contract_id_and_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_deployed_cells_on_contract_id ON public.deployed_cells USING btree (contract_id);
+CREATE UNIQUE INDEX index_deployed_cells_on_contract_id_and_cell_output_id ON public.deployed_cells USING btree (contract_id, cell_output_id);
 
 
 --
@@ -2759,6 +2723,13 @@ CREATE INDEX index_lock_scripts_on_code_hash_and_hash_type_and_args ON public.lo
 --
 
 CREATE INDEX index_lock_scripts_on_script_hash ON public.lock_scripts USING btree (script_hash);
+
+
+--
+-- Name: index_lock_scripts_on_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_lock_scripts_on_script_id ON public.lock_scripts USING btree (script_id);
 
 
 --
@@ -2815,6 +2786,13 @@ CREATE UNIQUE INDEX index_rolling_avg_block_time_on_timestamp ON public.rolling_
 --
 
 CREATE INDEX index_script_transactions_on_ckb_transaction_id ON public.script_transactions USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_script_transactions_on_ckb_transaction_id_and_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_script_transactions_on_ckb_transaction_id_and_script_id ON public.script_transactions USING btree (ckb_transaction_id, script_id);
 
 
 --
@@ -2941,6 +2919,13 @@ CREATE INDEX index_type_scripts_on_code_hash_and_hash_type_and_args ON public.ty
 --
 
 CREATE INDEX index_type_scripts_on_script_hash ON public.type_scripts USING btree (script_hash);
+
+
+--
+-- Name: index_type_scripts_on_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_type_scripts_on_script_id ON public.type_scripts USING btree (script_id);
 
 
 --
@@ -3248,7 +3233,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230128015956'),
 ('20230128031939'),
 ('20230129165127'),
-('20230130005447'),
 ('20230206073806'),
 ('20230207112513'),
 ('20230208081700'),
@@ -3259,6 +3243,17 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230218154437'),
 ('20230220013604'),
 ('20230220060922'),
-('20230228114330');
+('20230228114330'),
+('20230319152819'),
+('20230319160108'),
+('20230319164714'),
+('20230320075334'),
+('20230320151216'),
+('20230320153418'),
+('20230321122734'),
+('20230331090020'),
+('20230403154742'),
+('20230403172457'),
+('20230404072229');
 
 

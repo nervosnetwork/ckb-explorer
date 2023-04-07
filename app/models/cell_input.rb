@@ -2,7 +2,7 @@ class CellInput < ApplicationRecord
   belongs_to :ckb_transaction
   belongs_to :block
 
-  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8 , cota_registry: 9, cota_regular: 10}
+  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9, cota_regular: 10 }
 
   after_commit :flush_cache
 
@@ -25,7 +25,10 @@ class CellInput < ApplicationRecord
   def previous_cell_output
     return if previous_output["tx_hash"] == CellOutput::SYSTEM_TX_HASH
 
-    CellOutput.find_by(tx_hash: previous_output["tx_hash"], cell_index: previous_output["index"])
+    tx_hash = previous_output["tx_hash"]
+    cell_index = previous_output["index"].to_i
+    # CellOutput.find_by_pointer(previous_output["tx_hash"], previous_output["index"])
+    CellOutput.find_by(tx_hash: tx_hash, cell_index: cell_index)
   end
 
   def self.cached_find(id)

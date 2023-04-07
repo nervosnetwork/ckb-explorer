@@ -21,7 +21,7 @@ class ReferringCell < ApplicationRecord
       elsif cell_output.type_script_id.present?
         contract_id = cell_output.type_script.contract.id rescue nil
       end
-      ReferringCell.find_or_create_by(cell_output_id: cell_output.id, ckb_transaction_id: ckb_transaction.id, contract_id: contract_id) if contract_id.present?
+      ReferringCell.create_or_find_by(cell_output_id: cell_output.id, ckb_transaction_id: ckb_transaction.id, contract_id: contract_id) if contract_id.present?
     end
   end
 end

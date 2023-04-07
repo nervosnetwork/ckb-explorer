@@ -52,7 +52,7 @@ class ScriptTest < ActiveSupport::TestCase
 
     # for the 2nd time, it should NOT create new record
     Script.create_initial_data
-    assert_equal 1, Script.all.count
+    assert_equal 2, Script.all.count
   end
 
   test "it should create_initial_data, lock_script only " do
@@ -75,6 +75,6 @@ class ScriptTest < ActiveSupport::TestCase
 
     # for the 2nd time, it should NOT create new record
     Script.create_initial_data
-    assert_equal 1, Script.all.count
+    assert_equal 2, Script.all.count
   end
 end

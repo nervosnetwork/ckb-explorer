@@ -262,23 +262,24 @@ end
 #
 #  id                         :bigint           not null, primary key
 #  block_hash                 :binary
-#  number                     :decimal(30, )
+#  number                     :bigint
 #  parent_hash                :binary
 #  timestamp                  :decimal(30, )
 #  transactions_root          :binary
 #  proposals_hash             :binary
+#  uncles_count               :integer
 #  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
 #  proposals                  :binary
 #  proposals_count            :integer
-#  cell_consumed              :decimal(30, )
+#  cell_consumed              :bigint
 #  miner_hash                 :binary
 #  reward                     :decimal(30, )
 #  total_transaction_fee      :decimal(30, )
-#  ckb_transactions_count     :decimal(30, )    default(0)
+#  ckb_transactions_count     :bigint           default(0)
 #  total_cell_capacity        :decimal(30, )
-#  epoch                      :decimal(30, )
+#  epoch                      :bigint
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
 #  address_ids                :string           is an Array
@@ -293,22 +294,21 @@ end
 #  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
-#  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
 #  block_time                 :decimal(13, )
-#  block_size                 :integer
+#  block_size                 :bigint
 #  proposal_reward            :decimal(30, )
 #  commit_reward              :decimal(30, )
 #  miner_message              :string
 #  extension                  :jsonb
-#  median_timestamp           :decimal(, )      default(0.0)
-#  cycles                     :bigint
+#  median_timestamp           :bigint           default(0)
 #  ckb_node_version           :string
+#  cycles                     :bigint
 #
 # Indexes
 #
-#  index_blocks_on_block_hash  (block_hash) UNIQUE
+#  index_blocks_on_block_hash  (block_hash) USING hash
 #  index_blocks_on_block_size  (block_size)
 #  index_blocks_on_block_time  (block_time)
 #  index_blocks_on_epoch       (epoch)
