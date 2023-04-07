@@ -5,6 +5,14 @@ class GlobalStatistic < ApplicationRecord
     global_statistic = GlobalStatistic.find_or_create_by(name: "ckb_transactions")
     global_statistic.update value: ckb_transactions_count
   end
+
+  def self.increment(name)
+    connection.execute <<~SQL
+      INSERT INTO global_statistics (name, value, created_at, updated_at)
+      VALUES (#{connection.quote name}, 1, now(), now())
+      ON CONFLICT (name) DO UPDATE SET value = global_statistics.value + 1
+    SQL
+  end
 end
 
 # == Schema Information

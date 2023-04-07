@@ -268,8 +268,7 @@ class Block < ApplicationRecord
 
     # setup global ckb_node_version
     name = "ckb_node_version_#{matched[0]}"
-    global_statistic = GlobalStatistic.create_or_find_by(name: name)
-    global_statistic.increment!(:value)
+    GlobalStatistic.increment(name)
 
     # update the current block's ckb_node_version
     self.ckb_node_version = matched[0]

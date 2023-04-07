@@ -7,7 +7,7 @@ module Api
         raise Api::V1::Exceptions::ContractNotFoundError if params[:id] != DaoContract::CONTRACT_NAME
 
         dao_contract = DaoContract.default_contract
-        ckb_transactions = dao_contract.ckb_transactions.tx_committed.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(@page).per(@page_size)
+        ckb_transactions = dao_contract.ckb_transactions.includes(:cell_inputs, :cell_outputs).tx_committed.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(@page).per(@page_size)
         json =
           Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
             records_counter = RecordCounters::DaoTransactions.new(dao_contract)
