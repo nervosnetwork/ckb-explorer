@@ -4,7 +4,7 @@ json.result do
       json.id tx.id
       json.tx_hash tx.tx_hash
       json.block_id tx.block_id
-      json. block_number tx.block_number
+      json.block_number tx.block_number
       json.block_timestamp tx.block_timestamp
       json.transaction_fee tx.transaction_fee
       json.is_cellbase tx.is_cellbase
