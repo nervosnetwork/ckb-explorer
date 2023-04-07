@@ -53,10 +53,9 @@ module Api::V2
     def deployed_cells
       head :not_found and return if @script.blank?
 
-      # contract = @script.contract
       head :not_found and return if @script.contract.blank?
+      @deployed_cells = @contract.deployed_cells.page(@page).per(@page_size)
 
-      @deployed_cells = contract.deployed_cells.page(@page).per(@page_size)
     end
 
     def referring_cells
