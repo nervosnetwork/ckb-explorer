@@ -1,5 +1,5 @@
 class StatisticInfo
-  def initialize(hash_rate_statistical_interval: ENV["HASH_RATE_STATISTICAL_INTERVAL"], average_block_time_interval: ENV["AVERAGE_BLOCK_TIME_INTERVAL"])
+  def initialize(hash_rate_statistical_interval: (Settings.hash_rate_statistical_interval || 900).to_i, average_block_time_interval: (Settings.average_block_time_interval || 100))
     @hash_rate_statistical_interval = hash_rate_statistical_interval.to_i
     @average_block_time_interval = average_block_time_interval.to_i
   end
@@ -57,10 +57,11 @@ class StatisticInfo
   end
 
   def hash_rate(block_number = tip_block_number)
-    blocks = Block.where("number <= ?", block_number).recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval)
+    blocks = Block.select(:id, :timestamp, :compact_target).where("number <= ?", block_number).recent.limit(hash_rate_statistical_interval)
     return if blocks.blank?
 
-    total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty }
+    total_difficulties = blocks.sum(&:difficulty)
+    total_difficulties += UncleBlock.where(block_id: blocks.map(&:id)).select(:compact_target).to_a.sum(&:difficulty)
     total_time = blocks.first.timestamp - blocks.last.timestamp
 
     (total_difficulties.to_d / total_time).truncate(6)
