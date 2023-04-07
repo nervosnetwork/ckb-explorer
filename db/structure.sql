@@ -663,7 +663,8 @@ CREATE TABLE public.contracts (
     description character varying,
     verified boolean DEFAULT false,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    deprecated boolean
 );
 
 
@@ -2607,6 +2608,13 @@ CREATE INDEX index_contracts_on_code_hash ON public.contracts USING btree (code_
 
 
 --
+-- Name: index_contracts_on_deprecated; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_contracts_on_deprecated ON public.contracts USING btree (deprecated);
+
+
+--
 -- Name: index_contracts_on_hash_type; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3248,6 +3256,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230319152819'),
 ('20230319160108'),
 ('20230319164714'),
+('20230320062211'),
 ('20230320075334'),
 ('20230320151216'),
 ('20230320153418'),
