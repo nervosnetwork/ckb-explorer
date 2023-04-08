@@ -174,7 +174,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;
+    END LOOP;    
     close c;
 end
 $$;
@@ -196,21 +196,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null
+	if old is null 
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-
+	
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP
+	   LOOP 
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id)
+			insert into account_books (ckb_transaction_id, address_id) 
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -681,6 +681,35 @@ CREATE SEQUENCE public.blocks_id_seq
 --
 
 ALTER SEQUENCE public.blocks_id_seq OWNED BY public.blocks.id;
+
+
+--
+-- Name: cell_data; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cell_data (
+    cell_output_id bigint NOT NULL,
+    data bytea NOT NULL
+);
+
+
+--
+-- Name: cell_data_cell_output_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.cell_data_cell_output_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: cell_data_cell_output_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.cell_data_cell_output_id_seq OWNED BY public.cell_data.cell_output_id;
 
 
 --
@@ -1878,6 +1907,38 @@ ALTER SEQUENCE public.token_transfers_id_seq OWNED BY public.token_transfers.id;
 
 
 --
+-- Name: transaction_address_changes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transaction_address_changes (
+    id bigint NOT NULL,
+    ckb_transaction_id bigint NOT NULL,
+    address_id bigint NOT NULL,
+    name character varying NOT NULL,
+    delta numeric DEFAULT 0.0 NOT NULL
+);
+
+
+--
+-- Name: transaction_address_changes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.transaction_address_changes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: transaction_address_changes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.transaction_address_changes_id_seq OWNED BY public.transaction_address_changes.id;
+
+
+--
 -- Name: transaction_propagation_delays; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2215,6 +2276,13 @@ ALTER TABLE ONLY public.blocks ALTER COLUMN id SET DEFAULT nextval('public.block
 
 
 --
+-- Name: cell_data cell_output_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cell_data ALTER COLUMN cell_output_id SET DEFAULT nextval('public.cell_data_cell_output_id_seq'::regclass);
+
+
+--
 -- Name: cell_dependencies id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2397,6 +2465,13 @@ ALTER TABLE ONLY public.token_transfers ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
+-- Name: transaction_address_changes id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction_address_changes ALTER COLUMN id SET DEFAULT nextval('public.transaction_address_changes_id_seq'::regclass);
+
+
+--
 -- Name: transaction_propagation_delays id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2500,6 +2575,14 @@ ALTER TABLE ONLY public.block_transactions
 
 ALTER TABLE ONLY public.blocks
     ADD CONSTRAINT blocks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: cell_data cell_data_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cell_data
+    ADD CONSTRAINT cell_data_pkey PRIMARY KEY (cell_output_id);
 
 
 --
@@ -2788,6 +2871,14 @@ ALTER TABLE ONLY public.token_items
 
 ALTER TABLE ONLY public.token_transfers
     ADD CONSTRAINT token_transfers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: transaction_address_changes transaction_address_changes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction_address_changes
+    ADD CONSTRAINT transaction_address_changes_pkey PRIMARY KEY (id);
 
 
 --
@@ -3705,6 +3796,13 @@ CREATE INDEX index_token_transfers_on_transaction_id ON public.token_transfers U
 
 
 --
+-- Name: index_transaction_address_changes_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_transaction_address_changes_on_ckb_transaction_id ON public.transaction_address_changes USING btree (ckb_transaction_id);
+
+
+--
 -- Name: index_tx_propagation_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3814,6 +3912,13 @@ CREATE UNIQUE INDEX index_witnesses_on_ckb_transaction_id_and_index ON public.wi
 --
 
 CREATE UNIQUE INDEX pk ON public.udt_transactions USING btree (udt_id, ckb_transaction_id);
+
+
+--
+-- Name: tx_address_changes_alt_pk; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX tx_address_changes_alt_pk ON public.transaction_address_changes USING btree (address_id, ckb_transaction_id, name);
 
 
 --
@@ -4273,18 +4378,11 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230220060922'),
 ('20230228114330'),
 ('20230306142312'),
-('20230319152819'),
-('20230319160108'),
-('20230319164714'),
-('20230320062211'),
-('20230320075334'),
-('20230320151216'),
-('20230320153418'),
-('20230404072229'),
 ('20230307073134'),
 ('20230319152819'),
 ('20230319160108'),
 ('20230319164714'),
+('20230320062211'),
 ('20230320075334'),
 ('20230320151216'),
 ('20230320153418'),
@@ -4307,4 +4405,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230403052005'),
 ('20230403154742'),
 ('20230404072229'),
-('20230404151647');
+('20230404151647'),
+('20230406003722'),
+('20230406011556');
+
+
