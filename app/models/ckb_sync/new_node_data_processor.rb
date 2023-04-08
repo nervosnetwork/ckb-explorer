@@ -19,6 +19,7 @@ module CkbSync
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
       @local_cache = LocalCache.new
+      @offset = ENV["BLOCK_OFFSET"].to_i
     end
 
     # returns the remaining block numbers to process
@@ -26,7 +27,8 @@ module CkbSync
       @local_tip_block = Block.recent.first
       tip_block_number = @tip_block_number = CkbSync::Api.instance.get_tip_block_number
       target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
-      return if target_block_number > tip_block_number
+      puts "Offset #{@offset}" if @offset > 0
+      return if target_block_number > tip_block_number - @offset.to_i
 
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
       if !forked?(target_block, local_tip_block)
@@ -1067,7 +1069,6 @@ module CkbSync
     end
 
     def ckb_transaction_attributes(local_block, tx, tx_index)
-
       {
         block_id: local_block.id,
         tx_hash: tx.hash,
