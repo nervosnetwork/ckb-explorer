@@ -12,8 +12,8 @@ class TokenTransferDetectWorker
 
       tx.cell_inputs.each do |input|
         if input.cell_type.in?(%w(m_nft_token nrc_721_token))
-          cell = input.find_cell_output!
-          type_script = input.find_type_script!
+          cell = input.cell_output
+          type_script = input.type_script
           source_tokens[type_script.id] = cell
         end
       end
