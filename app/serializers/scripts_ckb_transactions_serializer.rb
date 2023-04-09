@@ -1,7 +1,7 @@
 class ScriptsCkbTransactionsSerializer
   include FastJsonapi::ObjectSerializer
 
-  def to_json tx
+  def to_json(tx)
     {
       id: tx.id,
       tx_hash: tx.tx_hash,
@@ -18,13 +18,12 @@ class ScriptsCkbTransactionsSerializer
       contained_address_ids: tx.contained_address_ids,
       tags: tx.tags,
       contained_udt_ids: tx.contained_udt_ids,
-      dao_address_ids: tx.dao_address_ids,
-      udt_address_ids: tx.udt_address_ids,
+      dao_address_ids: tx.contained_dao_address_ids,
+      udt_address_ids: tx.contained_udt_address_ids,
       bytes: tx.bytes,
       tx_status: tx.tx_status,
       display_inputs: tx.display_inputs,
       display_outputs: tx.display_outputs
     }
   end
-
 end
