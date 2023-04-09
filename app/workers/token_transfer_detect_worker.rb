@@ -2,7 +2,7 @@ class TokenTransferDetectWorker
   include Sidekiq::Worker
 
   def perform(tx_id)
-    tx = CkbTransaction.find tx_id
+    tx = CkbTransaction.includes(:cell_outputs, cell_inputs: :previous_cell_output).find tx_id
     return unless tx
 
     @lock = Redis::Lock.new("token_transfer_#{tx_id}", expiration: 180, timeout: 30)
@@ -12,9 +12,10 @@ class TokenTransferDetectWorker
 
       tx.cell_inputs.each do |input|
         if input.cell_type.in?(%w(m_nft_token nrc_721_token))
-          cell = input.cell_output
+          cell = input.previous_cell_output
           type_script = input.type_script
-          source_tokens[type_script.id] = cell
+
+          source_tokens[type_script.id] = cell if cell && type_script
         end
       end
 
