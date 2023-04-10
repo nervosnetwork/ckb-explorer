@@ -13,9 +13,13 @@ end
 #
 #  id                                                              :bigint           not null, primary key
 #  name                                                            :string
-#  value                                                           :integer
+#  value                                                           :bigint
 #  created_at                                                      :datetime         not null
 #  updated_at                                                      :datetime         not null
 #  comment                                                         :string
 #  #<ActiveRecord::ConnectionAdapters::PostgreSQL::TableDefinition :string
+#
+# Indexes
+#
+#  index_global_statistics_on_name  (name) UNIQUE
 #
