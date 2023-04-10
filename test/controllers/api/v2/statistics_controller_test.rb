@@ -51,6 +51,7 @@ module Api
           data = JSON.parse(response.body)
           assert_equal 1, data['last_n_days_transaction_fee_rates'].size
           assert 1.day.ago.strftime("%Y-%m-%d") == data['last_n_days_transaction_fee_rates'].first['date'] || Time.now.strftime("%Y-%m-%d") == data['last_n_days_transaction_fee_rates'].first['date']
+
           assert_response :success
         end
       end
