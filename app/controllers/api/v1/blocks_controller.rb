@@ -1,3 +1,4 @@
+require 'csv'
 module Api
   module V1
     class BlocksController < ApplicationController
@@ -30,6 +31,23 @@ module Api
         render json: json_block
       end
 
+      def download_csv
+        @blocks = Block.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes, :updated_at)
+        @blocks = @blocks.where('created_at >= ?', params[:start_date]) if params[:start_date].present?
+        @blocks = @blocks.where('created_at <= ?', params[:end_date]) if params[:end_date].present?
+        @blocks = @blocks.where('number >= ?', params[:number]) if params[:number].present?
+        @blocks = @blocks.where('number <= ?', params[:number]) if params[:number].present?
+        @blocks = @blocks.limit(5000)
+
+        file = CSV.generate do |csv|
+          csv << ["Blockno", "Transactions", "UnixTimestamp", "Reward(CKB)", "Miner", "date(UTC)"]
+          @blocks.each_with_index do |block, index|
+            row = [block.number, block.ckb_transactions_count, block.timestamp, block.reward, block.miner_hash, block.updated_at]
+            csv << row
+          end
+        end
+        send_data file, :type => 'text/csv; charset=utf-8; header=present', :disposition => "attachment;filename=blocks.csv"
+      end
       private
 
       def from_home_page?
