@@ -1,5 +1,5 @@
 json.data do
-  json.deployed_cells @deployed_cells.each do |deployed_cell|
+  json.deployed_cells @deployed_cells do |deployed_cell|
     cell_output = deployed_cell.cell_output
     json.id deployed_cell.cell_output.id
     json.capacity deployed_cell.cell_output.capacity
@@ -25,7 +25,7 @@ json.data do
     json.type_script_id cell_output.type_script_id
   end
   json.meta do
-    json.total @deployed_cells.count.to_i
+    json.total @deployed_cells.count
     json.page_size @page_size.to_i
   end
 end

@@ -1,5 +1,5 @@
 json.data do
-  json.ckb_transactions @script.script.ckb_transactions do |tx|
+  json.ckb_transactions @ckb_transactions do |tx|
     json.id tx.id
     json.tx_hash tx.tx_hash
     json.block_id tx.block_id
@@ -23,7 +23,7 @@ json.data do
     json.display_outputs tx.display_outputs
   end
   json.meta do
-    json.total @contract.ckb_transactions.count.to_i
+    json.total @contract.ckb_transactions.count
     json.page_size @page_size.to_i
   end
 end
