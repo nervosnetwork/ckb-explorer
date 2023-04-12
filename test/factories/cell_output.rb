@@ -1,6 +1,7 @@
 FactoryBot.define do
   factory :cell_output do
     address
+    status { "live" }
     capacity { 10**8 * 8 }
     data {}
     cell_type { "normal" }

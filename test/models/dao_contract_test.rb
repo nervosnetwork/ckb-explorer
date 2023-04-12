@@ -175,7 +175,7 @@ class DaoContractTest < ActiveSupport::TestCase
         tx = create(:ckb_transaction, block: block, tags: ["dao"])
         tx1 = create(:ckb_transaction, block: block, tags: ["dao"])
         create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx1, generated_by: tx1, cell_type: cell_type)
-        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, generated_by: tx, consumed_by: tx1, cell_type: cell_type)
+        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, generated_by: tx, consumed_by: tx1, status: "dead", cell_type: cell_type)
       end
     end
 

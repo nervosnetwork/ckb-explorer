@@ -336,14 +336,14 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   cellbases_part2 = cellbases[2..8]
   cellbases_part3 = cellbases[9..-1]
   address1 = create(:address, :with_lock_script)
-  cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1, generated_by: cellbase) }
+  cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1, generated_by: cellbase, lock_script: address1.lock_script) }
   # address1.ckb_transactions << cellbases_part1
   AccountBook.insert_all(cellbases_part1.map { |c| { address_id: address1.id, ckb_transaction_id: c.id } })
   address2 = create(:address, :with_lock_script)
-  cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2, generated_by: cellbase) }
+  cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2, generated_by: cellbase, lock_script: address2.lock_script) }
   AccountBook.insert_all(cellbases_part2.map { |c| { address_id: address2.id, ckb_transaction_id: c.id } }) # address2.ckb_transactions << cellbases_part2
   address3 = create(:address, :with_lock_script)
-  cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3, generated_by: cellbase) }
+  cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3, generated_by: cellbase, lock_script: address3.lock_script) }
   AccountBook.insert_all(cellbases_part3.map { |c| { address_id: address3.id, ckb_transaction_id: c.id } }) # address3.ckb_transactions << cellbases_part3
 
   return address1, address2, address3
