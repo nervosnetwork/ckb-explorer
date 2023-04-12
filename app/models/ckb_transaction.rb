@@ -17,7 +17,7 @@ class CkbTransaction < ApplicationRecord
   has_many :input_cells, through: :cell_inputs, source: :previous_cell_output
   has_many :cell_outputs, dependent: :delete_all
   accepts_nested_attributes_for :cell_outputs
-  has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
+  has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id", dependent: :nullify
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
   has_many :dao_events
   has_many :script_transactions
@@ -367,7 +367,7 @@ class CkbTransaction < ApplicationRecord
       TxDisplayInfo.where(ckb_transaction_id: tx_ids).delete_all
     end
 
-    inputs.update_all(status: "live")
+    inputs.update_all(status: "live", consumed_by_id: nil, consumed_block_timestamp: nil)
   end
 end
 

@@ -49,6 +49,10 @@ class Block < ApplicationRecord
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
   scope :h24, -> { where("timestamp > ?", 24.hours.ago.to_datetime.strftime("%Q")) }
 
+  def self.tip_block
+    recent.first
+  end
+
   after_commit :flush_cache
 
   def self.query_transaction_fee_rate(date_string)

@@ -16,9 +16,9 @@ module Api::V2
 
       render json: {
         data: {
-          ckb_transactions: @script.script.ckb_transactions.map {|tx|
+          ckb_transactions: @contract.ckb_transactions.page(params[:page]).fast_page.map do |tx|
             ScriptsCkbTransactionsSerializer.new(tx).to_json(tx)
-          }
+          end
         },
         meta: {
           total: @contract.ckb_transactions.count.to_i,
