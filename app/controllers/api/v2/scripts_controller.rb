@@ -1,3 +1,4 @@
+require 'jbuilder'
 module Api::V2
   class ScriptsController < BaseController
     before_action :set_page_and_page_size
@@ -12,37 +13,15 @@ module Api::V2
     end
 
     def ckb_transactions
-      head :not_found and return if @script.blank?
+      head :not_found and return if @script.blank? || @contract.blank?
 
-      render json: {
-        data: {
-          ckb_transactions: @script.script.ckb_transactions.map {|tx|
-            ScriptsCkbTransactionsSerializer.new(tx).to_json(tx)
-          }
-        },
-        meta: {
-          total: @contract.ckb_transactions.count.to_i,
-          page_size: @page_size.to_i
-        }
-      }
+      @ckb_transactions = @contract.ckb_transactions.page(@page).per(@page_size)
     end
 
     def deployed_cells
-      head :not_found and return if @script.blank?
+      head :not_found and return if @script.blank? || @script.contract.blank?
 
-      # contract = @script.contract
-      head :not_found and return if @script.contract.blank?
-
-      deployed_cells = @contract.deployed_cell_outputs.live
-      render json: {
-        data: {
-          deployed_cells: deployed_cells.page(@page).per(@page_size).to_a
-        },
-        meta: {
-          total: deployed_cells.count.to_i,
-          page_size: @page_size.to_i
-        }
-      }
+      @deployed_cells = @contract.deployed_cells.page(@page).per(@page_size)
     end
 
     private
