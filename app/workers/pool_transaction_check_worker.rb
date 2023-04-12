@@ -11,11 +11,14 @@ class PoolTransactionCheckWorker
     # If any of the input or dependency cells is used, the transaction will never be valid.
     # Thus we can directly mark this transaction rejected without requesting to CKB Node.
     # Only request the CKB Node for reject reason after we find the transaction is rejeceted.
-    PoolTransactionEntry.pool_transaction_pending.where(block_timestamp: ..latest_block.timestamp).select(:id, :tx_hash, :inputs, :created_at, :cell_deps).find_each do |tx|
+    PoolTransactionEntry.pool_transaction_pending.where(block_timestamp: ..latest_block.timestamp).select(
+      :id, :tx_hash, :inputs, :created_at, :cell_deps
+    ).find_each do |tx|
       is_rejected = false
       rejected_transaction = nil
       tx.inputs.each do |input|
-        if CellOutput.where(tx_hash: input["previous_output"]["tx_hash"], cell_index: input["previous_output"]["index"], status: "dead").exists?
+        if CellOutput.where(tx_hash: input["previous_output"]["tx_hash"],
+                            cell_index: input["previous_output"]["index"], status: "dead").exists?
           rejected_transaction = {
             id: tx.id,
             tx_status: "rejected",
@@ -28,7 +31,8 @@ class PoolTransactionCheckWorker
       end
       unless is_rejected
         tx.cell_deps.each do |input|
-          if CellOutput.where(tx_hash: input["out_point"]["tx_hash"], cell_index: input["out_point"]["index"], status: "dead").exists?
+          if CellOutput.where(tx_hash: input["out_point"]["tx_hash"],
+                              cell_index: input["out_point"]["index"], status: "dead").exists?
             rejected_transaction = {
               id: tx.id,
               tx_status: "rejected",
@@ -41,7 +45,7 @@ class PoolTransactionCheckWorker
         end
       end
       if is_rejected
-        PoolTransactionUpdateRejectReasonWorker.perform_async tx.tx_hash, rejected_transaction
+        PoolTransactionUpdateRejectReasonWorker.perform_async tx.tx_hash
         CkbTransaction.where(tx_hash: tx.tx_hash).update_all tx_status: :rejected # , detailed_message: reason
       end
     end
