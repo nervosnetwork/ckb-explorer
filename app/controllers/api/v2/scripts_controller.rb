@@ -14,14 +14,17 @@ module Api::V2
     def ckb_transactions
       head :not_found and return if @script.blank?
 
+      scope = CellDependency.where(contract_id: @contract.id)
+      tx_ids = scope.page(params[:page]).pluck(:ckb_transaction_id)
+      total = scope.count
       render json: {
         data: {
-          ckb_transactions: @contract.ckb_transactions.page(params[:page]).fast_page.map do |tx|
+          ckb_transactions: CkbTransaction.find(tx_ids).map do |tx|
             ScriptsCkbTransactionsSerializer.new(tx).to_json(tx)
           end
         },
         meta: {
-          total: @contract.ckb_transactions.count.to_i,
+          total: total.to_i,
           page_size: @page_size.to_i
         }
       }
