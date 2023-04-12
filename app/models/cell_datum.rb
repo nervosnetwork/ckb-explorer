@@ -1,6 +1,6 @@
 class CellDatum < ApplicationRecord
   belongs_to :cell_output
-  validates :data, presence: true
+  validates :data, presence: true, length: { minimum: 1 }
 end
 
 # == Schema Information

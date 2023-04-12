@@ -190,6 +190,16 @@ class Address < ApplicationRecord
     "Address/txs/#{id}"
   end
 
+  def recalc_revalidate_balance!
+    cell_outputs.find_each do |c|
+      if c.status == "dead" and !c.consumed_by
+        c.update  status: "live", consumed_by_id: nil, consumed_block_timestamp: nil
+      end
+    end
+    cal_balance!
+    save!
+  end
+
   def cal_balance
     total = cell_outputs.live.sum(:capacity)
     occupied = cell_outputs.live.occupied.sum(:capacity)

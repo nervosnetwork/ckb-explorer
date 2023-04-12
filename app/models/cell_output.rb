@@ -37,8 +37,10 @@ class CellOutput < ApplicationRecord
   has_one :cell_data, class_name: "CellDatum", dependent: :destroy_async
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :block, presence: true, if: -> { live? or dead? }
-  validates :consumed_by, presence: true, if: :dead?
+  validates :block, presence: true, if: -> { live? or dead? } # on-chain cell outputs must be included in certain block
+  validates :block_id, must_be_nil: true, if: -> { pending? or rejected? } # cell output must not have this field set when they are not on-chain
+  validates :consumed_by, presence: true, if: :dead? # cell output must have corresponding consuming transaction if it is dead
+  validates :consumed_by_id, :consumed_block_timestamp, must_be_nil: true, if: :live? # cell output must not have consumed_by_id set when it's live
 
   attribute :tx_hash, :ckb_hash
   attr_accessor :raw_address
