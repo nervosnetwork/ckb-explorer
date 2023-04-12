@@ -60,6 +60,7 @@ gem "rufus-scheduler"
 gem "activerecord-import"
 
 gem "fast_jsonapi"
+gem "jbuilder"
 
 gem "kaminari"
 
