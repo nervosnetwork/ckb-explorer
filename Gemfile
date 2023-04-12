@@ -60,8 +60,10 @@ gem "rufus-scheduler"
 gem "activerecord-import"
 
 gem "fast_jsonapi"
+gem "jbuilder"
 
 gem "kaminari"
+gem "fast_page"
 
 gem "ruby-progressbar", require: false
 
