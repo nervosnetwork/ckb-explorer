@@ -186,6 +186,9 @@ GEM
       railties (>= 5.0.0)
     fast_jsonapi (1.5)
       activesupport (>= 4.2)
+    fast_page (0.1.5)
+      activerecord
+      activesupport
     ffi (1.15.5)
     ffi-compiler (1.0.1)
       ffi (>= 1.0.0)
@@ -264,9 +267,9 @@ GEM
       net-protocol
     newrelic_rpm (8.12.0)
     nio4r (2.5.8)
-    nokogiri (1.13.10-arm64-darwin)
+    nokogiri (1.14.3-arm64-darwin)
       racc (~> 1.4)
-    nokogiri (1.13.10-x86_64-linux)
+    nokogiri (1.14.3-x86_64-linux)
       racc (~> 1.4)
     numerizer (0.1.1)
     pagy (5.10.1)
@@ -285,8 +288,8 @@ GEM
     puma (6.0.0)
       nio4r (~> 2.0)
     raabro (1.4.0)
-    racc (1.6.1)
-    rack (2.2.6.2)
+    racc (1.6.2)
+    rack (2.2.6.4)
     rack-attack (6.6.1)
       rack (>= 1.0, < 3)
     rack-cache (1.13.0)
@@ -461,6 +464,7 @@ DEPENDENCIES
   factory_bot_rails
   faker!
   fast_jsonapi
+  fast_page
   hiredis
   http
   jbuilder

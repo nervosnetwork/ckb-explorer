@@ -1,4 +1,4 @@
-require "jbuilder"
+require 'jbuilder'
 module Api::V2
   class ScriptsController < BaseController
     before_action :set_page_and_page_size
@@ -13,47 +13,14 @@ module Api::V2
     end
 
     def ckb_transactions
-      head :not_found and return if @script.blank?
+      head :not_found and return if @script.blank? || @contract.blank?
 
-      render json: {
-        data: {
-          ckb_transactions: @contract.ckb_transactions.page(@page).per(@page_size).map do |tx|
-            {
-              id: tx.id,
-              tx_hash: tx.tx_hash,
-              block_id: tx.block_id,
-              block_number: tx.block_number,
-              block_timestamp: tx.block_timestamp,
-              transaction_fee: tx.transaction_fee,
-              is_cellbase: tx.is_cellbase,
-              header_deps: tx.header_deps,
-              cell_deps: tx.cell_deps,
-              witnesses: tx.witnesses,
-              live_cell_changes: tx.live_cell_changes,
-              capacity_involved: tx.capacity_involved,
-              contained_address_ids: tx.contained_address_ids,
-              tags: tx.tags,
-              contained_udt_ids: tx.contained_udt_ids,
-              dao_address_ids: tx.dao_address_ids,
-              udt_address_ids: tx.udt_address_ids,
-              bytes: tx.bytes,
-              tx_status: tx.tx_status,
-              display_inputs: tx.display_inputs,
-              display_outputs: tx.display_outputs
-            }
-          end
-        },
-        meta: {
-          total: @contract.ckb_transactions.count.to_i,
-          page_size: @page_size.to_i
-        }
-      }
+      @ckb_transactions = @contract.ckb_transactions.page(@page).per(@page_size)
     end
 
     def deployed_cells
-      head :not_found and return if @script.blank?
+      head :not_found and return if @script.blank? || @script.contract.blank?
 
-      head :not_found and return if @script.contract.blank?
       @deployed_cells = @contract.deployed_cells.page(@page).per(@page_size)
 
     end

@@ -8,5 +8,6 @@ FactoryBot.define do
     symbol { 'TTF' }
     description { 'SECP256K1/multisig (Source Code) is a script which allows a group of users to sign a single transaction.' }
     verified { false }
+    deprecated { false }
   end
 end
