@@ -301,7 +301,7 @@ end
 #  data_size                :integer
 #  occupied_capacity        :decimal(30, )
 #  block_timestamp          :decimal(30, )
-#  consumed_block_timestamp :decimal(30, )    default(0)
+#  consumed_block_timestamp :decimal(30, )
 #  type_hash                :string
 #  udt_amount               :decimal(40, )
 #  dao                      :string

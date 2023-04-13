@@ -805,7 +805,7 @@ CREATE TABLE public.cell_outputs (
     data_size integer,
     occupied_capacity numeric(30,0),
     block_timestamp numeric(30,0),
-    consumed_block_timestamp numeric(30,0) DEFAULT 0,
+    consumed_block_timestamp numeric(30,0),
     type_hash character varying,
     udt_amount numeric(40,0),
     dao character varying,
@@ -4408,6 +4408,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230404072229'),
 ('20230404151647'),
 ('20230406003722'),
-('20230406011556');
+('20230406011556'),
+('20230412070853');
 
 

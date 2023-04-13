@@ -45,7 +45,9 @@ class PoolTransactionCheckWorker
         end
       end
       if is_rejected
-        PoolTransactionUpdateRejectReasonWorker.perform_async tx.tx_hash
+        AfterCommitEverywhere.after_commit do
+          PoolTransactionUpdateRejectReasonWorker.perform_async tx.tx_hash
+        end
         CkbTransaction.where(tx_hash: tx.tx_hash).update_all tx_status: :rejected # , detailed_message: reason
       end
     end

@@ -1,5 +1,6 @@
 FactoryBot.define do
   factory :cell_output do
+    # block
     address
     status { "live" }
     capacity { 10**8 * 8 }

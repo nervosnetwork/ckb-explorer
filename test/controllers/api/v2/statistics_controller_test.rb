@@ -54,6 +54,7 @@ module Api
       end
 
       test "should get transaction_fees, for last_n_days_transaction_fee_rates" do
+        Block.delete_all
         VCR.use_cassette("get transaction_fees, for last_n_days_transaction_fee_rates") do
           # get today's timestamp at: 23:50:00
           current_time_stamp = Time.now.utc.end_of_day.to_i - 600
