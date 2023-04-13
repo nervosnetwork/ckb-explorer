@@ -1,5 +1,8 @@
 class StatisticInfo
-  def initialize(hash_rate_statistical_interval: (Settings.hash_rate_statistical_interval || 900).to_i, average_block_time_interval: (Settings.average_block_time_interval || 100))
+  def initialize(
+    hash_rate_statistical_interval: (Settings.hash_rate_statistical_interval || 900).to_i,
+average_block_time_interval: (Settings.average_block_time_interval || 100)
+  )
     @hash_rate_statistical_interval = hash_rate_statistical_interval.to_i
     @average_block_time_interval = average_block_time_interval.to_i
   end
@@ -21,7 +24,9 @@ class StatisticInfo
   end
 
   def epoch_info
-    { epoch_number: tip_block.epoch.to_s, epoch_length: tip_block.length.to_s, index: (tip_block_number - tip_block.start_number).to_s }
+    {
+      epoch_number: tip_block.epoch.to_s, epoch_length: tip_block.length.to_s,
+      index: (tip_block_number - tip_block.start_number).to_s }
   end
 
   def estimated_epoch_time
@@ -57,14 +62,17 @@ class StatisticInfo
   end
 
   def hash_rate(block_number = tip_block_number)
-    blocks = Block.select(:id, :timestamp, :compact_target).where("number <= ?", block_number).recent.limit(hash_rate_statistical_interval)
-    return if blocks.blank?
+    Rails.cache.fetch("hash_rate_#{block_number}", expires_in: 4.hours, race_condition_ttl: 15.seconds) do
+      blocks = Block.select(:id, :timestamp, :compact_target).
+        where("number <= ?", block_number).recent.limit(hash_rate_statistical_interval)
+      return if blocks.blank?
 
-    total_difficulties = blocks.sum(&:difficulty)
-    total_difficulties += UncleBlock.where(block_id: blocks.map(&:id)).select(:compact_target).to_a.sum(&:difficulty)
-    total_time = blocks.first.timestamp - blocks.last.timestamp
+      total_difficulties = blocks.sum(&:difficulty)
+      total_difficulties += UncleBlock.where(block_id: blocks.map(&:id)).select(:compact_target).to_a.sum(&:difficulty)
+      total_time = blocks.first.timestamp - blocks.last.timestamp
 
-    (total_difficulties.to_d / total_time).truncate(6)
+      (total_difficulties.to_d / total_time).truncate(6)
+    end
   end
 
   def miner_ranking

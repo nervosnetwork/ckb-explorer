@@ -27,14 +27,18 @@ class Block < ApplicationRecord
   has_many :cell_inputs
   has_many :dao_events
   has_many :mining_infos
-  belongs_to :parent_block, class_name: "Block", foreign_key: "parent_hash", primary_key: "block_hash", optional: true, inverse_of: :subsequent_blocks
+  belongs_to :parent_block, class_name: "Block", foreign_key: "parent_hash", primary_key: "block_hash", optional: true,
+                            inverse_of: :subsequent_blocks
 
   # one block can have serveral different subsequent blocks, and only one can be included on chain
-  has_many :subsequent_blocks, class_name: "Block", foreign_key: "parent_hash", primary_key: "block_hash", inverse_of: :parent_block
+  has_many :subsequent_blocks, class_name: "Block", foreign_key: "parent_hash", primary_key: "block_hash",
+                               inverse_of: :parent_block
   belongs_to :epoch_statistic, primary_key: :epoch_number, foreign_key: :epoch, optional: true
 
-  validates_presence_of :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash, :uncles_count, :extra_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
-  validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed, numericality: { greater_than_or_equal_to: 0 }
+  validates_presence_of :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash,
+                        :uncles_count, :extra_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
+  validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed,
+            numericality: { greater_than_or_equal_to: 0 }
 
   attribute :block_hash, :ckb_hash
   attribute :parent_hash, :ckb_hash
@@ -64,7 +68,7 @@ class Block < ApplicationRecord
       group by date order by date desc}
 
     # [[2022-02-10 00:00:00 +0000, 0.585996275650410425301290958e7]]
-    result = ActiveRecord::Base.connection.execute(sql).values[0]
+    result = ActiveRecord::Base.connection.select_value(sql)
   end
 
   def self.fetch_transaction_fee_rate_from_cache(date_string)
