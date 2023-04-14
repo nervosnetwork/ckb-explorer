@@ -966,12 +966,11 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
     )
       outputs.each do |tx_index, items|
         cell_index = 0
+        # tx_index == 0 is cellbase, no need to calculate fee
+        if tx_index != 0
+          output_capacities[tx_index] = 0
+        end
         items.each do |item|
-          # tx_index == 0 is cellbase, no need to calculate fee
-          if tx_index != 0
-            output_capacities[tx_index] = 0
-          end
-
           address = local_cache.read("NodeData/Address/#{item.lock.code_hash}-#{item.lock.hash_type}-#{item.lock.args}")
           address_id = address.id
           cell_data = node_block.transactions[tx_index].outputs_data[cell_index]
