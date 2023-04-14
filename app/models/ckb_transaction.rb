@@ -17,7 +17,7 @@ class CkbTransaction < ApplicationRecord
   has_many :input_cells, through: :cell_inputs, source: :previous_cell_output
   has_many :cell_outputs, dependent: :delete_all
   accepts_nested_attributes_for :cell_outputs
-  has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id", dependent: :nullify
+  has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
   has_many :dao_events
   has_many :script_transactions
@@ -175,7 +175,13 @@ class CkbTransaction < ApplicationRecord
   end
 
   def dao_transaction?
-    inputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).exists? || outputs.where(cell_type: %w(nervos_dao_deposit nervos_dao_withdrawing)).exists?
+    inputs.where(cell_type: %w(
+                   nervos_dao_deposit
+                   nervos_dao_withdrawing
+                 )).exists? || outputs.where(cell_type: %w(
+                                               nervos_dao_deposit
+                                               nervos_dao_withdrawing
+                                             )).exists?
   end
 
   def cell_info
@@ -249,10 +255,18 @@ class CkbTransaction < ApplicationRecord
     end
     cell_outputs_for_display.map do |output|
       consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-      display_output = { id: output.id, capacity: output.capacity, address_hash: output.address_hash, status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
+      display_output = {
+        id: output.id, capacity: output.capacity, address_hash: output.address_hash,
+        status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
       display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
-      display_output.merge!(attributes_for_m_nft_cell(output)) if output.cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
-      display_output.merge!(attributes_for_nrc_721_cell(output)) if output.cell_type.in?(%w(nrc_721_token nrc_721_factory))
+      display_output.merge!(attributes_for_m_nft_cell(output)) if output.cell_type.in?(%w(
+                                                                                         m_nft_issuer m_nft_class
+                                                                                         m_nft_token
+                                                                                       ))
+      display_output.merge!(attributes_for_nrc_721_cell(output)) if output.cell_type.in?(%w(
+                                                                                           nrc_721_token
+                                                                                           nrc_721_factory
+                                                                                         ))
 
       CkbUtils.hash_value_to_s(display_output)
     end
@@ -263,7 +277,8 @@ class CkbTransaction < ApplicationRecord
     cellbase = Cellbase.new(block)
     cell_outputs_for_display.map do |output|
       consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-      CkbUtils.hash_value_to_s(id: output.id, capacity: output.capacity, address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash)
+      CkbUtils.hash_value_to_s(id: output.id, capacity: output.capacity, address_hash: output.address_hash,
+                               target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash)
     end
   end
 
@@ -289,10 +304,17 @@ class CkbTransaction < ApplicationRecord
         }
       }
       display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
-      display_input.merge!(attributes_for_dao_input(cell_outputs[index], false)) if previous_cell_output.nervos_dao_deposit?
+      if previous_cell_output.nervos_dao_deposit?
+        display_input.merge!(attributes_for_dao_input(cell_outputs[index],
+                                                      false))
+      end
       display_input.merge!(attributes_for_udt_cell(previous_cell_output)) if previous_cell_output.udt?
-      display_input.merge!(attributes_for_m_nft_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
-      display_input.merge!(attributes_for_nrc_721_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(nrc_721_token nrc_721_factory))
+      display_input.merge!(attributes_for_m_nft_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(
+                                                                                                                    m_nft_issuer m_nft_class m_nft_token
+                                                                                                                  ))
+      display_input.merge!(attributes_for_nrc_721_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(
+                                                                                                                      nrc_721_token nrc_721_factory
+                                                                                                                    ))
 
       CkbUtils.hash_value_to_s(display_input)
     end
