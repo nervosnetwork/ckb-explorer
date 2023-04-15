@@ -1141,7 +1141,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
                                                                    returning: %w(id tx_hash created_at))
       hash2id = {}
       txs.each do |t|
-        hash2id["0#{t['tx_hash'][1..-1]}"] = t["id"]
+        hash2id["0#{t['tx_hash'][1..]}"] = t["id"]
       end
 
       # process header_deps

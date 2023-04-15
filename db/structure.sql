@@ -760,7 +760,8 @@ CREATE TABLE public.cell_inputs (
     from_cell_base boolean DEFAULT false,
     block_id numeric(30,0),
     since numeric(30,0) DEFAULT 0.0,
-    cell_type integer DEFAULT 0
+    cell_type integer DEFAULT 0,
+    index integer
 );
 
 
@@ -1914,8 +1915,7 @@ CREATE TABLE public.transaction_address_changes (
     id bigint NOT NULL,
     ckb_transaction_id bigint NOT NULL,
     address_id bigint NOT NULL,
-    name character varying NOT NULL,
-    delta numeric DEFAULT 0.0 NOT NULL
+    changes jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 
@@ -3918,7 +3918,7 @@ CREATE UNIQUE INDEX pk ON public.udt_transactions USING btree (udt_id, ckb_trans
 -- Name: tx_address_changes_alt_pk; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX tx_address_changes_alt_pk ON public.transaction_address_changes USING btree (address_id, ckb_transaction_id, name);
+CREATE UNIQUE INDEX tx_address_changes_alt_pk ON public.transaction_address_changes USING btree (address_id, ckb_transaction_id);
 
 
 --
@@ -4409,6 +4409,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230404151647'),
 ('20230406003722'),
 ('20230406011556'),
-('20230412070853');
+('20230412070853'),
+('20230415042814'),
+('20230415150143');
 
 

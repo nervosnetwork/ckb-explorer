@@ -66,6 +66,7 @@ end
 #  block_id                :decimal(30, )
 #  since                   :decimal(30, )    default(0)
 #  cell_type               :integer          default("normal")
+#  index                   :integer
 #
 # Indexes
 #

@@ -36,7 +36,8 @@ class Block < ApplicationRecord
   belongs_to :epoch_statistic, primary_key: :epoch_number, foreign_key: :epoch, optional: true
 
   validates_presence_of :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash,
-                        :uncles_count, :extra_hash, :version, :cell_consumed, :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, on: :create
+                        :uncles_count, :extra_hash, :version, :cell_consumed, :reward, :total_transaction_fee,
+                        :ckb_transactions_count, :total_cell_capacity, on: :create
   validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed,
             numericality: { greater_than_or_equal_to: 0 }
 
@@ -61,14 +62,18 @@ class Block < ApplicationRecord
 
   def self.query_transaction_fee_rate(date_string)
     date = DateTime.strptime date_string, "%Y-%m-%d"
-    sql = %{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
+    sql = <<-SQL
+      select date_trunc('day', to_timestamp(timestamp/1000.0)) date,
+        avg(total_transaction_fee / ckb_transactions_count ) fee_rate
       from blocks
-      where timestamp >= #{date.beginning_of_day.to_i * 1000} and timestamp <= #{date.end_of_day.to_i * 1000}
+      where timestamp >= #{date.beginning_of_day.to_i * 1000}
+        and timestamp <= #{date.end_of_day.to_i * 1000}
         and ckb_transactions_count != 0
-      group by date order by date desc}
+      group by date order by date desc
+    SQL
 
     # [[2022-02-10 00:00:00 +0000, 0.585996275650410425301290958e7]]
-    result = ActiveRecord::Base.connection.select_value(sql)
+    connection.select_value(sql)
   end
 
   def self.fetch_transaction_fee_rate_from_cache(date_string)
@@ -80,12 +85,14 @@ class Block < ApplicationRecord
   def self.last_7_days_ckb_node_version
     from = 7.days.ago.to_i * 1000
     sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version order by 1 asc;"
-    return ActiveRecord::Base.connection.execute(sql).values
+    connection.execute(sql).values
   end
 
   # fetch block hash from cache
   # because the chain may reorg sometimes
   # so we can only store cache against block hash
+  # @param block_hash [String] block hash
+  # @return [Hash] raw hash of the block
   def self.fetch_raw_hash_with_cycles(block_hash)
     Rails.cache.fetch(["Block", block_hash, "raw_hash_with_cycles"], expires_in: 1.day) do
       res = CkbSync::Api.instance.directly_single_call_rpc method: "get_block", params: [block_hash, "0x2", true]
@@ -94,45 +101,68 @@ class Block < ApplicationRecord
 
       # store transaction hash directly to cache ahead
       r["block"]["transactions"].each do |tx|
-        CkbTransaction.write_hash_cache tx["hash"], tx
+        CkbTransaction.write_raw_hash_cache tx["hash"], tx
       end
       r
     end
   end
 
+  # fetch block hash from cache without cycles information
+  # @param block_hash [String] block hash
+  # @return [Hash] raw hash of the block
   def self.fetch_raw_hash(block_hash)
     fetch_raw_hash_with_cycles(block_hash)[:block]
   end
 
-  # fetch raw hash from chain
+  # fetch raw hash from chain with cycles information
   # because the chain may reorg sometimes
   # so we cannot store cache against block number
-  def self.fetch_raw_hash_by_number(number)
-    res = CkbSync::Api.instance.directly_single_call_rpc method: "get_block_by_number", params: [number, "0x2", true]
+  # @param number [Integer] block number
+  # @return [Hash] raw hash with cycles of the block
+  def self.fetch_raw_hash_with_cycles_by_number(number)
+    res = CkbSync::Api.instance.directly_single_call_rpc method: "get_block_by_number",
+                                                         params: [
+                                                           "0x#{number.to_s(16)}", "0x2", true
+                                                         ]
+    if res["error"]
+      raise res["error"]["message"]
+    end
+
     r = res["result"].with_indifferent_access
     # because the chain may reorg sometimes
     # so we can only store cache against block hash
     Rails.cache.write(["Block", r["block"]["header"]["hash"], "raw_hash"], r["block"], expires_in: 1.day)
     # store transaction hash directly to cache ahead
     r["block"]["transactions"].each do |tx|
-      CkbTransaction.write_hash_cache tx["hash"], tx
+      CkbTransaction.write_raw_hash_cache tx["hash"], tx
     end
 
     r
   end
 
-  def original_raw_hash_with_cycles
-    @original_raw_hash_with_cycles ||= self.class.fetch_raw_hash_with_cycles block_hash
+  # fetch block information by block number without cycles information
+  # @param number [Integer] block number
+  # @return [Hash] raw hash of the block
+  def self.fetch_raw_hash_by_number(number)
+    fetch_raw_hash_with_cycles_by_number(number)[:block]
   end
 
-  def original_raw_hash
-    original_raw_hash_with_cycles[:block]
+  # fetch block information by block number with cycles information of current block object
+  # @return [Hash] raw hash of the block
+  def raw_hash_with_cycles
+    @raw_hash_with_cycles ||= self.class.fetch_raw_hash_with_cycles block_hash
+  end
+
+  # fetch block information by block number without cycles information of current block object
+  # @return [Hash] raw hash of the block
+  def raw_hash
+    @raw_hash ||= raw_hash_with_cycles[:block]
   end
 
   # the block object generated by ruby sdk
   # @return [CKB::Types::Block]
-  def original_block
-    @original_block ||=
+  def sdk_block
+    @sdk_block ||=
       Rails.cache.fetch(["Block", block_hash, "object"], expires_in: 1.hour) do
         CKB::Types::Block.from_h(original_raw_hash)
       end
