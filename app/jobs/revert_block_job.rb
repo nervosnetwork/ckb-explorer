@@ -11,68 +11,33 @@ class RevertBlockJob < ApplicationJob
       end
 
     ApplicationRecord.transaction do
-      PoolTransactionEntry.pool_transaction_pending.where(tx_hash: local_tip_block.ckb_transactions.pluck(:tx_hash)).delete_all
-      result =
-        Benchmark.realtime do
-          revert_dao_contract_related_operations(local_tip_block)
+      PoolTransactionEntry.pool_transaction_pending.
+        where(tx_hash: local_tip_block.ckb_transactions.pluck(:tx_hash)).delete_all
+      benchmark :revert_dao_contract_related_operations, local_tip_block
+      benchmark :revert_mining_info, local_tip_block
+
+      udt_type_hashes =
+        ApplicationRecord.benchmark "pluck type_hash" do
+          local_tip_block.cell_outputs.
+            udt.pluck(:type_hash).
+            uniq.concat(local_tip_block.cell_outputs.m_nft_token.pluck(:type_hash).uniq)
         end
-      Rails.logger.error "revert_dao_contract_related_operations!: %5.3f" % result
-      result =
-        Benchmark.realtime do
-          revert_mining_info(local_tip_block)
-        end
-      Rails.logger.error "revert_mining_info!: %5.3f" % result
-      udt_type_hashes = nil
-      result =
-        Benchmark.realtime do
-          udt_type_hashes = local_tip_block.cell_outputs.udt.pluck(:type_hash).uniq.concat(local_tip_block.cell_outputs.m_nft_token.pluck(:type_hash).uniq)
-        end
-      Rails.logger.error "pluck type_hash!: %5.3f" % result
-      result =
-        Benchmark.realtime do
-          recalculate_udt_transactions_count(local_tip_block)
-        end
-      Rails.logger.error "recalculate_udt_transactions_count: %5.3f" % result
-      result =
-        Benchmark.realtime do
-          recalculate_dao_contract_transactions_count(local_tip_block)
-        end
-      Rails.logger.error "recalculate_dao_contract_transactions_count: %5.3f" % result
-      result =
-        Benchmark.realtime do
-          decrease_records_count(local_tip_block)
-        end
-      Rails.logger.error "decrease_records_count: %5.3f" % result
-      result =
-        Benchmark.realtime do
-          local_tip_block.invalid!
-        end
-      Rails.logger.error "invalid! block: %5.3f" % result
-      result =
-        Benchmark.realtime do
-          recalculate_udt_accounts(udt_type_hashes, local_tip_block)
-        end
-      Rails.logger.error "recalculate_udt_accounts: %5.3f" % result
-      result =
-        Benchmark.realtime do
-          update_address_balance_and_ckb_transactions_count(local_tip_block)
-        end
-      Rails.logger.error "update_address_balance_and_ckb_transactions_count: %5.3f" % result
-      result =
-        Benchmark.realtime do
-          revert_block_rewards(local_tip_block)
-        end
-      Rails.logger.error "revert_block_rewards: %5.3f" % result
-      result =
-        Benchmark.realtime do
-          ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch, block_timestamp: local_tip_block.timestamp)
-        end
-      Rails.logger.error "ForkedEvent: %5.3f" % result
-      result =
-        Benchmark.realtime do
-          Charts::BlockStatisticGenerator.new(local_tip_block.number).call
-        end
-      Rails.logger.error "BlockStatisticGenerator: %5.3f" % result
+      benchmark :recalculate_udt_transactions_count, local_tip_block
+      benchmark :recalculate_dao_contract_transactions_count, local_tip_block
+      benchmark :decrease_records_count, local_tip_block
+
+      ApplicationRecord.benchmark "invalid! block" do
+        local_tip_block.invalid!
+      end
+
+      benchmark :recalculate_udt_accounts, udt_type_hashes, local_tip_block
+      benchmark :update_address_balance_and_ckb_transactions_count, local_tip_block
+      benchmark :revert_block_rewards, local_tip_block
+      ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch,
+                          block_timestamp: local_tip_block.timestamp)
+      ApplicationRecord.benchmark "BlockStatisticGenerator" do
+        Charts::BlockStatisticGenerator.new(local_tip_block.number).call
+      end
       local_tip_block
     end
   end
@@ -90,7 +55,10 @@ class RevertBlockJob < ApplicationJob
 
   def recalculate_dao_contract_transactions_count(local_tip_block)
     dao_transactions_count = local_tip_block.ckb_transactions.where("tags @> array[?]::varchar[]", ["dao"]).count
-    DaoContract.default_contract.decrement!(:ckb_transactions_count, dao_transactions_count) if dao_transactions_count > 0
+    if dao_transactions_count > 0
+      DaoContract.default_contract.decrement!(:ckb_transactions_count,
+                                              dao_transactions_count)
+    end
   end
 
   def recalculate_udt_transactions_count(local_tip_block)

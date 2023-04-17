@@ -23,7 +23,8 @@ class CellOutput < ApplicationRecord
   # the consumed_by_id will be set only when transaction is committed on chain
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
   # the inputs which consumes this cell output
-  # but one cell may be included by many pending transactions, the cell_inputs won't always be the same as `consumed_by`.`cell_inputs`
+  # but one cell may be included by many pending transactions,
+  # the cell_inputs won't always be the same as `consumed_by`.`cell_inputs`
   has_many :cell_inputs, foreign_key: :previous_output_id
   belongs_to :deployed_cell, optional: true
   # the block_id is actually the same as ckb_transaction.block_id, must be on chain
@@ -93,7 +94,7 @@ class CellOutput < ApplicationRecord
   end
 
   def self.find_by_pointer(tx_hash, index)
-    Rails.cache.fetch(["cell_output", tx_hash, index], race_condition_ttl: 3.seconds, expires_in: 1.day) do
+    Rails.cache.fetch(["cell_output", tx_hash, index], race_condition_ttl: 10.seconds, expires_in: 1.day) do
       tx_id =
         Rails.cache.fetch(["tx_id", tx_hash], expires_in: 1.day) do
           CkbTransaction.find_by_tx_hash(tx_hash)&.id
