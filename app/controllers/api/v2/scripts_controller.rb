@@ -15,13 +15,13 @@ module Api::V2
     def ckb_transactions
       head :not_found and return if @script.blank? || @contract.blank?
 
-      @ckb_transactions = @contract.ckb_transactions.page(@page).per(@page_size)
+      @ckb_transactions = @contract.ckb_transactions.page(@page).per(@page_size).fast_page
     end
 
     def deployed_cells
       head :not_found and return if @script.blank? || @script.contract.blank?
 
-      @deployed_cells = @contract.deployed_cells.page(@page).per(@page_size)
+      @deployed_cells = @contract.deployed_cells.page(@page).per(@page_size).fast_page
     end
 
     private
