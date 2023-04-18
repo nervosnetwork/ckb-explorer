@@ -51,16 +51,26 @@ class CellOutput < ApplicationRecord
   # cell output must not have consumed_by_id set when it's live
   validates :consumed_by_id, :consumed_block_timestamp, must_be_nil: true, if: :live?
 
+  # consumed timestamp must be always greater than committed timestamp
+  validates :consumed_block_timestamp, numericality: { greater_than_or_equal_to: :block_timestamp },
+                                       if: :consumed_block_timestamp?
+
   attribute :tx_hash, :ckb_hash
   attr_accessor :raw_address
 
   scope :consumed_after, ->(block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
   scope :consumed_before, ->(block_timestamp) { where("consumed_block_timestamp <= ?", block_timestamp) }
+  scope :consumed_between, ->(start_timestamp, end_timestamp) {
+                             consumed_after(start_timestamp).consumed_before(end_timestamp)
+                           }
   scope :unconsumed_at, ->(block_timestamp) {
                           where("consumed_block_timestamp > ? or consumed_block_timestamp = 0", block_timestamp)
                         }
   scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+  scope :generated_between, ->(start_timestamp, end_timestamp) {
+                              generated_after(start_timestamp).generated_before(end_timestamp)
+                            }
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
   scope :free, -> { where(type_hash: nil, data: "0x") }
   scope :occupied, -> { where.not(type_hash: nil, data: "0x") }

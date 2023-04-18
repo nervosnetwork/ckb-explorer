@@ -52,6 +52,7 @@ class Block < ApplicationRecord
   scope :recent, -> { order("timestamp desc nulls last") }
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
+  scope :created_between, ->(from, to) { where(timestamp: from..to) }
   scope :h24, -> { where("timestamp > ?", 24.hours.ago.to_datetime.strftime("%Q")) }
 
   def self.tip_block
@@ -324,9 +325,9 @@ class Block < ApplicationRecord
   # 2. do a fresh calculate from block number 1 to the latest block at the moment
   #
   # USAGE:
-  #
-  # $ bundle exec rails c
-  # rails> Block.set_ckb_node_versions_from_miner_message
+  # ```bash
+  # $ bundle exec rails runner Block.set_ckb_node_versions_from_miner_message
+  # ```
   #
   # @param options [Hash]
   def self.set_ckb_node_versions_from_miner_message(options = {})
