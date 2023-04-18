@@ -91,6 +91,7 @@ class Block < ApplicationRecord
   # fetch block hash from cache
   # because the chain may reorg sometimes
   # so we can only store cache against block hash
+  # See https://github.com/nervosnetwork/ckb/blob/master/rpc/README.md#method-get_block
   # @param block_hash [String] block hash
   # @return [Hash] raw hash of the block
   def self.fetch_raw_hash_with_cycles(block_hash)
@@ -108,6 +109,7 @@ class Block < ApplicationRecord
   end
 
   # fetch block hash from cache without cycles information
+  # See https://github.com/nervosnetwork/ckb/blob/master/rpc/README.md#method-get_block
   # @param block_hash [String] block hash
   # @return [Hash] raw hash of the block
   def self.fetch_raw_hash(block_hash)
@@ -240,6 +242,9 @@ class Block < ApplicationRecord
     end
   end
 
+  #
+  # @param epoch_number [Integer]
+  # @return [Hash] {number: block_number, bytes: block_size}
   def self.largest_in_epoch(epoch_number)
     Rails.cache.fetch([:epoch, epoch_number, :largest_block]) do
       b = Block.where(epoch: epoch_number).order(block_size: :desc).first
@@ -280,6 +285,7 @@ class Block < ApplicationRecord
   # usage:
   # 1. bundle exec rails console
   # 2. Block.update_block_median_timestamp <block_number>
+  # @param block_number [Integer] the block number to start update
   def self.update_block_median_timestamp(block_number)
     Block.where("id < ?", block_number).find_in_batches(batch_size: 2000) do |blocks|
       single_payload = []
@@ -322,6 +328,7 @@ class Block < ApplicationRecord
   # $ bundle exec rails c
   # rails> Block.set_ckb_node_versions_from_miner_message
   #
+  # @param options [Hash]
   def self.set_ckb_node_versions_from_miner_message(options = {})
     GlobalStatistic.where("name like ?", "ckb_node_version_%").delete_all
     to_block_number = options[:to_block_number] || Block.last.number

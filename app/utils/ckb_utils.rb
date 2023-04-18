@@ -35,6 +35,9 @@ class CkbUtils
     parse_cellbase_witness(cellbase).lock
   end
 
+  # TODO: find the RPC document url
+  # @param [CKB::Types::CellbaseWitness] cellbase
+  # @return [OpenStruct(lock, message)]
   def self.parse_cellbase_witness(cellbase)
     cellbase_witness = cellbase.witnesses.first.delete_prefix("0x")
     cellbase_witness_serialization = [cellbase_witness].pack("H*")
@@ -44,17 +47,17 @@ class CkbUtils
     code_hash_offset = [script_serialization[4..7].unpack1("H*")].pack("H*").unpack1("V")
     hash_type_offset = [script_serialization[8..11].unpack1("H*")].pack("H*").unpack1("V")
     args_offset = [script_serialization[12..15].unpack1("H*")].pack("H*").unpack1("V")
-    message_bytes = cellbase_witness_serialization[message_offset..-1]
-    message_serialization = message_bytes[4..-1]
+    message_bytes = cellbase_witness_serialization[message_offset..]
+    message_serialization = message_bytes[4..]
     if message_serialization.size > 28
-      message = "#{message_serialization[0..28]}#{message_serialization[29..-1]&.unpack1('H*')}".to_json.unpack1("H*")
+      message = "#{message_serialization[0..28]}#{message_serialization[29..]&.unpack1('H*')}".to_json.unpack1("H*")
     else
       message = message_serialization.unpack1("H*")
     end
     code_hash_serialization = script_serialization[code_hash_offset...hash_type_offset]
     hash_type_serialization = script_serialization[hash_type_offset...args_offset]
-    args_serialization = script_serialization[hash_type_offset + 1..-1]
-    args_serialization = args_serialization[4..-1]
+    args_serialization = script_serialization[hash_type_offset + 1..]
+    args_serialization = args_serialization[4..]
 
     code_hash = "0x#{code_hash_serialization.unpack1('H*')}"
     hash_type_hex = "0x#{hash_type_serialization.unpack1('H*')}"
@@ -120,6 +123,9 @@ class CkbUtils
   # The highest 16 bits represent the epoch length
   # The next 16 bits represent the current block index in the epoch
   # The lowest 24 bits represent the current epoch number
+  # See https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0027-block-structure/0027-block-structure.md#epoch-uint64
+  # @param header [CKB::Types::Header] The block header
+  # @return [OpenStruct] The parsed epoch info
   def self.parse_epoch_info(header)
     epoch = header.epoch
     return get_epoch_info(epoch) if epoch.zero?
@@ -130,6 +136,14 @@ class CkbUtils
     OpenStruct.new(number: parsed_epoch.number, length: parsed_epoch.length, start_number: start_number)
   end
 
+  # This field encodes the epoch number and the fraction position of this block in the epoch.
+  # The lower 56 bits of the epoch number field are split into 3 parts(listed in the order from higher bits to lower bits):
+  # The highest 16 bits represent the epoch length
+  # The next 16 bits represent the current block index in the epoch
+  # The lowest 24 bits represent the current epoch number
+  # https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0027-block-structure/0027-block-structure.md#epoch-uint64
+  # @param epoch [Integer] The lower 56 bits of the epoch number field
+  # @return [OpenStruct] The parsed epoch info
   def self.parse_epoch(epoch)
     OpenStruct.new(
       length: (epoch >> 40) & 0xFFFF,
@@ -138,6 +152,11 @@ class CkbUtils
     )
   end
 
+  # calculate the transaction fee, the fee is the difference between the input and output capacities
+  # @param ckb_transaction [CkbTransaction, Hash] The ckb transaction
+  # @param input_capacities [Integer] The total input capacities
+  # @param output_capacities [Integer] The total output capacities
+  # @return [Integer] The transaction fee(in shannon)
   def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
     if ckb_transaction.is_a?(CkbTransaction)
       return 0 if ckb_transaction.is_cellbase
@@ -195,7 +214,8 @@ class CkbUtils
     secondary_reward = CkbUtils.secondary_reward(target_block.number, block_economic_state)
     proposal_reward = CkbUtils.proposal_reward(target_block.number, block_economic_state)
     commit_reward = CkbUtils.commit_reward(target_block.number, block_economic_state)
-    target_block.update!(reward_status: "issued", reward: reward, primary_reward: primary_reward, secondary_reward: secondary_reward, commit_reward: commit_reward, proposal_reward: proposal_reward)
+    target_block.update!(reward_status: "issued", reward: reward, primary_reward: primary_reward,
+                         secondary_reward: secondary_reward, commit_reward: commit_reward, proposal_reward: proposal_reward)
     current_block.update!(target_block_reward_status: "issued")
   end
 
@@ -226,11 +246,17 @@ class CkbUtils
   def self.dao_withdraw_tx_fee(ckb_transaction)
     if ckb_transaction.is_a?(CkbTransaction)
       nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
-      interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
+      interests =
+        nervos_dao_withdrawing_cells.reduce(0) do |memo, nervos_dao_withdrawing_cell|
+          memo + dao_interest(nervos_dao_withdrawing_cell)
+        end
       ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
     else
       nervos_dao_withdrawing_cells = CellOutput.where(consumed_by_id: ckb_transaction["id"]).nervos_dao_withdrawing
-      interests = nervos_dao_withdrawing_cells.reduce(0) { |memo, nervos_dao_withdrawing_cell| memo + dao_interest(nervos_dao_withdrawing_cell) }
+      interests =
+        nervos_dao_withdrawing_cells.reduce(0) do |memo, nervos_dao_withdrawing_cell|
+          memo + dao_interest(nervos_dao_withdrawing_cell)
+        end
       CellOutput.where(consumed_by_id: ckb_transaction["id"]).sum(:capacity) + interests - CellOutput.where(generated_by: ckb_transaction["id"]).sum(:capacity)
     end
   end
@@ -239,9 +265,13 @@ class CkbUtils
     nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
     withdrawing_dao_cell_block_dao = nervos_dao_withdrawing_cell.dao
-    DaoCompensationCalculator.new(nervos_dao_deposit_cell, withdrawing_dao_cell_block_dao, nervos_dao_withdrawing_cell).call
+    DaoCompensationCalculator.new(nervos_dao_deposit_cell, withdrawing_dao_cell_block_dao,
+                                  nervos_dao_withdrawing_cell).call
   end
 
+  # see https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0027-block-structure/0027-block-structure.md#compact_target-uint32
+  # @param  [Integer] 64-bit compact
+  # @return [Integer] difficulty
   def self.compact_to_difficulty(compact)
     target, overflow = compact_to_target(compact)
     if target.zero? || overflow
@@ -251,6 +281,10 @@ class CkbUtils
     target_to_difficulty(target)
   end
 
+  # parse compact_targe in block header
+  # see https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0027-block-structure/0027-block-structure.md#compact_target-uint32
+  # @param  [Integer] 64-bit compact
+  # @return [Integer] target
   def self.compact_to_target(compact)
     exponent = compact >> 24
     mantissa = compact & 0x00ff_ffff
@@ -277,6 +311,9 @@ class CkbUtils
     end
   end
 
+  # recursively convert value in hash to string value
+  # @param [Hash] hash
+  # @return [Hash] new hash with all value with string type
   def self.hash_value_to_s(hash)
     hash.each do |key, value|
       next if !!value == value
@@ -289,6 +326,10 @@ class CkbUtils
     end
   end
 
+  # parse dao header in block header to dao related statistics information
+  # See https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0027-block-structure/0027-block-structure.md#toc13
+  # @param [String] 64-bit dao header
+  # @return [OpenStruct] dao related statistics information
   def self.parse_dao(dao)
     return if dao.blank?
 
@@ -296,7 +337,7 @@ class CkbUtils
     c_i = bin_dao[0..7].unpack("Q<").pack("Q>").unpack1("H*").hex
     ar_i = bin_dao[8..15].unpack("Q<").pack("Q>").unpack1("H*").hex
     s_i = bin_dao[16..23].unpack("Q<").pack("Q>").unpack1("H*").hex
-    u_i = bin_dao[24..-1].unpack("Q<").pack("Q>").unpack1("H*").hex
+    u_i = bin_dao[24..].unpack("Q<").pack("Q>").unpack1("H*").hex
 
     OpenStruct.new(c_i: c_i, ar_i: ar_i, s_i: s_i, u_i: u_i)
   end
@@ -322,6 +363,10 @@ class CkbUtils
     raw_header_deps.unpack(template.to_s).drop(1).compact.map { |hash| "#{Settings.default_hash_prefix}#{hash}" }
   end
 
+  # detect cell type from type script and cell data
+  # @param [TypeScript, CKB::Types::Script] type_script
+  # @param [String] output_data
+  # @return [String] cell type
   def self.cell_type(type_script, output_data)
     return "normal" unless ([
       Settings.dao_code_hash, Settings.dao_type_hash, Settings.sudt_cell_type_hash, Settings.sudt1_cell_type_hash,
@@ -363,18 +408,27 @@ class CkbUtils
     end
   end
 
+  # Parse mNFT issuer data information from cell data
+  # @param [String] cell data
+  # @return [OpenStruct] mNFT issuer data information
   def self.parse_issuer_data(data)
     data = data.delete_prefix("0x")
     version = data[0..1].to_i(16)
     class_count = data[2..9].to_i(16)
     set_count = data[10..17].to_i(16)
     info_size = data[18..21].to_i(16)
-    info = JSON.parse([data[22..-1]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace).delete("\u0000"))
+    info = JSON.parse(
+      [data[22..]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace,
+                                                                      undef: :replace).delete("\u0000")
+    )
     OpenStruct.new(version: version, class_count: class_count, set_count: set_count, info_size: info_size, info: info)
   rescue
     OpenStruct.new(version: 0, class_count: 0, set_count: 0, info_size: 0, info: "")
   end
 
+  # Parse mNFT token class data information from cell data
+  # @param [String] cell data
+  # @return [OpenStruct] mNFT token class data information
   def self.parse_token_class_data(data)
     data = data.delete_prefix("0x")
     version = data[0..1].to_i(16)
@@ -383,20 +437,25 @@ class CkbUtils
     configure = data[18..19].to_i(16)
     name_size = data[20..23].to_i(16)
     name_end_index = (24 + name_size * 2 - 1)
-    name = [data[24..name_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace).delete("\u0000")
+    name = [data[24..name_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace,
+                                                                                         undef: :replace).delete("\u0000")
     description_size_start_index = name_end_index + 1
     description_size_end_index = description_size_start_index + 4 - 1
     description_size = data[description_size_start_index..description_size_end_index].to_i(16)
     description_start_index = description_size_end_index + 1
     description_end_index = description_start_index + description_size * 2 - 1
-    description = [data[description_start_index..description_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace).delete("\u0000")
+    description = [data[description_start_index..description_end_index]].pack("H*").force_encoding("UTF-8").encode(
+      "UTF-8", invalid: :replace, undef: :replace
+    ).delete("\u0000")
     renderer_size_start_index = description_end_index + 1
     renderer_size_end_index = renderer_size_start_index + 4 - 1
     renderer_size = data[renderer_size_start_index..renderer_size_end_index].to_i(16)
     renderer_start_index = renderer_size_end_index + 1
     renderer_end_index = renderer_start_index + renderer_size * 2 - 1
-    renderer = [data[renderer_start_index, renderer_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace).delete("\u0000")
-    OpenStruct.new(version: version, total: total, issued: issued, configure: configure, name: name, description: description, renderer: renderer)
+    renderer = [data[renderer_start_index, renderer_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8",
+                                                                                                          invalid: :replace, undef: :replace).delete("\u0000")
+    OpenStruct.new(version: version, total: total, issued: issued, configure: configure, name: name,
+                   description: description, renderer: renderer)
   rescue
     OpenStruct.new(version: 0, total: 0, issued: 0, configure: 0, name: "", description: "", renderer: "")
   end
@@ -409,7 +468,6 @@ class CkbUtils
   def self.is_nrc_721_token_cell?(output_data)
     output_data.start_with?(Settings.nrc_721_token_output_data_header)
   end
-
   def self.is_nrc_721_factory_cell?(output_data)
     output_data.start_with?(Settings.nrc_721_factory_output_data_header)
   end
@@ -420,7 +478,8 @@ class CkbUtils
     factory_type = args[64..65] == "01" ? "type" : "data"
     factory_args = "0x#{args[66..129]}"
     factory_token_id = args[130..-1]
-    OpenStruct.new(code_hash: factory_code_hash, hash_type: factory_type, args: factory_args, token_id: factory_token_id)
+    OpenStruct.new(code_hash: factory_code_hash, hash_type: factory_type, args: factory_args,
+                   token_id: factory_token_id)
   end
 
   def self.parse_nrc_721_factory_data(data)
@@ -434,15 +493,22 @@ class CkbUtils
     factory_symbol_hex = data[arg_name_length + factory_name_hex.length + arg_symbol_length, symbol_byte_size * 2]
 
     arg_base_token_uri_length = 4
-    base_token_uri_length = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length), arg_base_token_uri_length].to_i(16)
-    factory_base_token_uri_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length), base_token_uri_length * 2]
+    base_token_uri_length = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length),
+                                 arg_base_token_uri_length].to_i(16)
+    factory_base_token_uri_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length),
+                                      base_token_uri_length * 2]
     extra_data_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length + base_token_uri_length * 2)..-1]
-    OpenStruct.new(name: [factory_name_hex].pack("H*"), symbol: [factory_symbol_hex].pack("H*"), base_token_uri: [factory_base_token_uri_hex].pack("H*"), extra_data: extra_data_hex)
+    OpenStruct.new(name: [factory_name_hex].pack("H*"), symbol: [factory_symbol_hex].pack("H*"),
+                   base_token_uri: [factory_base_token_uri_hex].pack("H*"), extra_data: extra_data_hex)
   end
 
   # comes from api/v2/base_controller.rb
+  # convert a address hash to lock hash
+  # if the address is started with 0x, then this is a lock hash and directly return it
+  # @param [String] address
+  # @return [String] lock hash
   def self.address_to_lock_hash(address)
-    if /\A0x/.match?(address)
+    if address.start_with?("0x")
       address
     else
       parsed = CkbUtils.parse_address(address)

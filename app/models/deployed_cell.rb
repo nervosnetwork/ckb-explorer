@@ -4,12 +4,17 @@ class DeployedCell < ApplicationRecord
   # one contract can has multiple deployed cells
   validates :cell_output, uniqueness: true
 
+  # find the corresponding contract defined in the specified cell output via cache
+  # @param cell_output_id [Integer] deployed cell output id
   def self.cell_output_id_to_contract_id(cell_output_id)
     Rails.cache.fetch(["cell_output_id_to_contract_id", cell_output_id], expires_in: 1.day) do
       DeployedCell.where(cell_output_id: cell_output_id).pick(:contract_id)
     end
   end
 
+  # save the contract <-> deployed cell mapping to cache
+  # @param cell_output_id [Integer] deployed cell output id
+  # @param contract_id [Integer] contract id
   def self.write_cell_output_id_to_contract_id(cell_output_id, contract_id)
     Rails.cache.write(["cell_output_id_to_contract_id", cell_output_id], contract_id, expires_in: 1.day)
   end
@@ -134,7 +139,8 @@ class DeployedCell < ApplicationRecord
       next unless dep
 
       unless dep[:contract_id] # we don't know the corresponding contract
-        contract = Contract.find_or_initialize_by code_hash: lock_script_or_type_script.code_hash, hash_type: lock_script_or_type_script.hash_type
+        contract = Contract.find_or_initialize_by code_hash: lock_script_or_type_script.code_hash,
+                                                  hash_type: lock_script_or_type_script.hash_type
 
         if contract.id.blank? # newly created contract record
           contract.deployed_args = lock_script_or_type_script.args
@@ -151,10 +157,15 @@ class DeployedCell < ApplicationRecord
     end
 
     deployed_cells_attrs = deployed_cells_attrs.uniq { |a| a[:cell_output_id] }
-    CellDependency.upsert_all cell_dependencies_attrs.uniq { |a| a[:contract_cell_id] }, unique_by: [:ckb_transaction_id, :contract_cell_id] if cell_dependencies_attrs.present?
+    if cell_dependencies_attrs.present?
+      CellDependency.upsert_all cell_dependencies_attrs.uniq { |a|
+                                  a[:contract_cell_id]
+                                }, unique_by: [:ckb_transaction_id, :contract_cell_id]
+    end
     DeployedCell.upsert_all deployed_cells_attrs, unique_by: [:cell_output_id] if deployed_cells_attrs.present?
     deployed_cells_attrs.each do |deployed_cell_attr|
-      DeployedCell.write_cell_output_id_to_contract_id(deployed_cell_attr[:cell_output_id], deployed_cell_attr[:contract_id])
+      DeployedCell.write_cell_output_id_to_contract_id(deployed_cell_attr[:cell_output_id],
+                                                       deployed_cell_attr[:contract_id])
     end
   end
 end

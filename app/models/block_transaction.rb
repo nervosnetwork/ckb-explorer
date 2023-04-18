@@ -1,5 +1,6 @@
+# save the relationship between transaction and block
 # tell us which transaction is in which block
-# because a transaction can be in multiple blocks
+# because a transaction can be included in different blocks
 # but only one block can be included in chain
 class BlockTransaction < ApplicationRecord
   belongs_to :ckb_transaction

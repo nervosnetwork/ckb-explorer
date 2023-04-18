@@ -77,10 +77,12 @@ class CellOutput < ApplicationRecord
 
   # after_commit :flush_cache
 
+  # @return [Boolean]
   def occupied?
     !free?
   end
 
+  # @return [Boolean]
   def free?
     type_hash.blank? && (data.present? && data == "0x")
   end
@@ -93,6 +95,10 @@ class CellOutput < ApplicationRecord
     [data[2..]].pack("H*")
   end
 
+  # find cell output according to the out point( tx_hash and output index )
+  # @param [String] tx_hash
+  # @param [Integer] index
+  # @return [CellOutput]
   def self.find_by_pointer(tx_hash, index)
     Rails.cache.fetch(["cell_output", tx_hash, index], race_condition_ttl: 10.seconds, expires_in: 1.day) do
       tx_id =

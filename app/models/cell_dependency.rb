@@ -1,5 +1,5 @@
-# this is the ReferringCell model
-class CellDependency < ActiveRecord::Base
+# this is the ReferringCell model, parse from `cell_deps` of transaction raw hash
+class CellDependency < ApplicationRecord
   belongs_to :contract, optional: true
   belongs_to :ckb_transaction
   belongs_to :script

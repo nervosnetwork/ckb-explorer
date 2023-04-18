@@ -5,9 +5,15 @@ class CellInput < ApplicationRecord
 
   delegate :lock_script, :type_script, to: :previous_cell_output, allow_nil: true
 
-  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9, cota_regular: 10 }
+  enum cell_type: {
+    normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4,
+    m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9, cota_regular: 10 }
   def output
     previous_cell_output
+  end
+
+  def hex_since
+    "0x#{since.to_s(16)}"
   end
 
   def to_raw
@@ -17,7 +23,7 @@ class CellInput < ApplicationRecord
           index: "0x#{previous_cell_output.cell_index.to_s(16)}",
           tx_hash: previous_cell_output.tx_hash
         },
-        since: "0x#{since.to_s(16)}"
+        since: hex_since
       }
     else
       {
@@ -44,7 +50,8 @@ class CellInput < ApplicationRecord
 
   def match_cell_output
     if previous_output.present? && previous_output["tx_hash"] != CellOutput::SYSTEM_TX_HASH
-      self.previous_cell_output = CellOutput.find_by(tx_hash: previous_output["tx_hash"], cell_index: previous_output["index"])
+      self.previous_cell_output = CellOutput.find_by(tx_hash: previous_output["tx_hash"],
+                                                     cell_index: previous_output["index"])
     end
   end
 

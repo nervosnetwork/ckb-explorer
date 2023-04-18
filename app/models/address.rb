@@ -8,7 +8,8 @@ class Address < ApplicationRecord
   has_many :mining_infos
   has_many :udt_accounts
   has_many :dao_events
-  validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit,
+            numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :lock_hash, presence: true, uniqueness: true
 
   scope :visible, -> { where(visible: true) }
@@ -91,6 +92,10 @@ class Address < ApplicationRecord
     address
   end
 
+  # @param lock_script [CKB::Types::Script]
+  # @param block_timestamp [Integer]
+  # @param lock_script_id [Integer]
+  # @return [Address]
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     lock_hash = lock_script.compute_hash
     address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)

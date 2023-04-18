@@ -1,3 +1,4 @@
+# save the header_deps field (a list of hashes) in transaction raw hash
 class HeaderDependency < ApplicationRecord
   belongs_to :ckb_transaction
   belongs_to :header_block, class_name: "Block", foreign_key: :header_hash, primary_key: :block_hash
@@ -5,7 +6,7 @@ class HeaderDependency < ApplicationRecord
   attribute :header_hash, :ckb_hash
 
   # migrate old witness and header deps to separate model
-  def self.migrate_old(id=0)
+  def self.migrate_old(id = 0)
     CkbTransaction.where(id: id..).select(:id, :header_deps, :witnesses).find_in_batches do |txs|
       puts txs[0].id
       header_deps_attrs = []
@@ -38,7 +39,10 @@ class HeaderDependency < ApplicationRecord
       end
 
       Witness.upsert_all witnesses_attrs, unique_by: [:ckb_transaction_id, :index] if witnesses_attrs.size > 0
-      HeaderDependency.upsert_all header_deps_attrs, unique_by: [:ckb_transaction_id, :index] if header_deps_attrs.size > 0
+      if header_deps_attrs.size > 0
+        HeaderDependency.upsert_all header_deps_attrs,
+                                    unique_by: [:ckb_transaction_id, :index]
+      end
     end
   end
 end
