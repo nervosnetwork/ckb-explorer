@@ -64,7 +64,7 @@ class CellOutput < ApplicationRecord
                              consumed_after(start_timestamp).consumed_before(end_timestamp)
                            }
   scope :unconsumed_at, ->(block_timestamp) {
-                          where("consumed_block_timestamp > ? or consumed_block_timestamp = 0", block_timestamp)
+                          where("consumed_block_timestamp > ? or consumed_block_timestamp = 0 or consumed_block_timestamp is null", block_timestamp)
                         }
   scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
