@@ -28,7 +28,7 @@ module Api
         scope = scope.where(to: @to) if @to
         scope = scope.order(transaction_id: :desc)
         # scope = scope.order(cell_id: :desc)
-        @pagy, @token_transfers = pagy(scope)
+        @pagy, @token_transfers = pagy(scope).fast_page
 
         render json: {
           data: @token_transfers,
