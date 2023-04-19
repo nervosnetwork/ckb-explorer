@@ -12,7 +12,7 @@ module Api
                 .where(block_timestamp: block.timestamp)
                 .order(:id),
           items: params[:page_size] || 10,
-          overflow: :empty_page).fast_page
+          overflow: :empty_page)
 
         json =
           Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do
