@@ -25,8 +25,9 @@ module Charts
       Charts::DailyStatisticGenerator.any_instance.stubs(:methods_to_call).returns(["block_timestamp"])
       Charts::DailyStatistic.new.perform
       assert_equal 2, ::DailyStatistic.count
-      assert_equal Time.at(::DailyStatistic.last.created_at_unixtimestamp).utc.strftime("%Y-%m-%d"),
-                   1.day.ago.utc.strftime("%Y-%m-%d")
+      # But in daily statistic, we are using local timezone (+8)
+      assert_equal Time.at(::DailyStatistic.last.created_at_unixtimestamp).in_time_zone.strftime("%Y-%m-%d"),
+                   1.day.ago.strftime("%Y-%m-%d")
       assert_equal block.timestamp, ::DailyStatistic.last.block_timestamp
     end
 
