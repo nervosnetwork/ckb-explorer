@@ -63,6 +63,8 @@ gem "fast_jsonapi"
 gem "jbuilder"
 
 gem "kaminari"
+
+# to optimize the huge pages query. e.g. query records from 10000th page.
 gem "fast_page"
 
 gem "ruby-progressbar", require: false
