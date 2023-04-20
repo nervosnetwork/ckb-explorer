@@ -55,11 +55,11 @@ module Api
                 "ckb_transaction_id" => :desc
               ).select(
                 "ckb_transaction_id"
-              ).page(@page).per(@page_size)
+              ).page(@page).per(@page_size).fast_page
             CkbTransaction.tx_committed.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
           else
             records_counter = RecordCounters::Transactions.new
-            CkbTransaction.tx_committed.recent.normal.page(@page).per(@page_size)
+            CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
           end
         ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id,
                                                    :block_number, :block_timestamp, :is_cellbase, :updated_at)

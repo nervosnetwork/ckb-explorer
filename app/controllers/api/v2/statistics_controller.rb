@@ -11,7 +11,7 @@ module Api::V2
       # select from database
       pending_transaction_fee_rates = PoolTransactionEntry.pool_transaction_pending.
         where("transaction_fee > 0").
-        order("id desc").page(@pending_page).per(@pending_page_size)
+        order("id desc").page(@pending_page).per(@pending_page_size).fast_page
 
       # This is a patch for those pending tx which has no `bytes`
       pending_transaction_fee_rates = pending_transaction_fee_rates.map { |tx|
