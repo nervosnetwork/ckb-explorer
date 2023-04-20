@@ -86,6 +86,9 @@ group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem "pry"
   gem "pry-rails"
+  gem "pry-byebug"
+  gem "factory_bot_rails"
+  gem "faker"
   # gem "pry-nav"
 end
 
@@ -97,10 +100,8 @@ group :test do
   gem "vcr"
   gem "webmock"
   gem "database_cleaner"
+  gem "database_cleaner-active_record"
   gem "mocha"
-  gem "factory_bot_rails"
-  #  gem "faker", git: "https://github.com/faker-ruby/faker.git", branch: "master"
-  gem "faker", git: "https://github.com/faker-ruby/faker.git", branch: "main"
   gem "codecov", require: false
 end
 
@@ -124,3 +125,5 @@ gem "pagy"
 gem "http"
 gem "rack-cache"
 gem "dalli"
+gem "after_commit_everywhere"
+gem "kredis"

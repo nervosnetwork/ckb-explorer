@@ -8,7 +8,8 @@ class Address < ApplicationRecord
   has_many :mining_infos
   has_many :udt_accounts
   has_many :dao_events
-  validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit,
+            numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :lock_hash, presence: true, uniqueness: true
 
   scope :visible, -> { where(visible: true) }
@@ -80,36 +81,40 @@ class Address < ApplicationRecord
     ).find_or_create_by lock_hash: lock_hash
   end
 
+  def self.find_or_create_by_lock(lock_script)
+    lock_hash = lock_script.compute_hash
+    address_hash = CkbUtils.generate_address(lock_script)
+    address = Address.find_or_initialize_by(lock_hash: lock_hash)
+    # force use new version address
+    address.address_hash = address_hash
+    address.lock_script = LockScript
+    address.save!
+    address
+  end
+
+  # @param lock_script [CKB::Types::Script]
+  # @param block_timestamp [Integer]
+  # @param lock_script_id [Integer]
+  # @return [Address]
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     lock_hash = lock_script.compute_hash
     address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
-    address_hash_crc = CkbUtils.generate_crc32(address_hash)
     address_hash_2021 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
-    address_hash_crc_2021 = CkbUtils.generate_crc32(address_hash_2021)
 
-    unless address = Address.find_by(lock_hash: lock_hash)
-      # first try 2019 version style address hash
-      address = Address.find_by(address_hash_crc: address_hash_crc, address_hash: address_hash)
-
-      # then try 2021 version style address hash
-      address ||= Address.find_by(address_hash_crc: address_hash_crc_2021, address_hash: address_hash_2021)
-
-      # either exists, then create new address
-      address ||= Address.new
-
-      # fill missing lock_hash field
-      address.lock_hash ||= lock_hash
+    address = Address.find_by(lock_hash: lock_hash)
+    if address.blank?
+      address = Address.new lock_hash: lock_hash
     end
+
     # force use new version address
     address.address_hash = address_hash_2021
-    address.address_hash_crc = address_hash_crc_2021
     address.block_timestamp ||= block_timestamp
     address.lock_script_id ||= lock_script_id
     if address.balance < 0 || address.balance_occupied < 0 # wrong balance, recalculate balance
-      puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied} < 0, resetting"
+      Rails.logger.info "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied} < 0, resetting"
       wrong_balance = address.balance
       address.cal_balance!
-      puts "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}"
+      Rails.logger.info "#{address.address_hash} balance #{address.balance}, #{address.balance_occupied}"
       Sentry.capture_message(
         "Reset balance",
         extra: {
@@ -188,6 +193,16 @@ class Address < ApplicationRecord
 
   def tx_list_cache_key
     "Address/txs/#{id}"
+  end
+
+  def recalc_revalidate_balance!
+    cell_outputs.find_each do |c|
+      if c.status == "dead" and !c.consumed_by
+        c.update  status: "live", consumed_by_id: nil, consumed_block_timestamp: nil
+      end
+    end
+    cal_balance!
+    save!
   end
 
   def cal_balance

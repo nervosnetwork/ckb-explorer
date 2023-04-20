@@ -1,4 +1,4 @@
-require 'jbuilder'
+require "jbuilder"
 module Api::V2
   class ScriptsController < BaseController
     before_action :set_page_and_page_size
@@ -13,9 +13,12 @@ module Api::V2
     end
 
     def ckb_transactions
-      head :not_found and return if @script.blank? || @contract.blank?
+      head :not_found and return if @script.blank?
 
-      @ckb_transactions = @contract.ckb_transactions.page(@page).per(@page_size).fast_page
+      scope = CellDependency.where(contract_id: @contract.id)
+      tx_ids = scope.page(params[:page]).pluck(:ckb_transaction_id)
+      @ckb_transactions = CkbTransaction.find(tx_ids)
+      @total = scope.count
     end
 
     def deployed_cells
@@ -49,9 +52,14 @@ module Api::V2
     end
 
     def find_script
-      @script = TypeScript.find_by(code_hash: params[:code_hash], hash_type: params[:hash_type])
-      @script = LockScript.find_by(code_hash: params[:code_hash], hash_type: params[:hash_type]) if @script.blank?
-      @contract = Contract.find_by(code_hash: params[:code_hash], hash_type: params[:hash_type])
+      @script = TypeScript.find_by(code_hash: params[:code_hash],
+                                   hash_type: params[:hash_type])
+      if @script.blank?
+        @script = LockScript.find_by(code_hash: params[:code_hash],
+                                     hash_type: params[:hash_type])
+      end
+      @contract = Contract.find_by(code_hash: params[:code_hash],
+                                   hash_type: params[:hash_type])
     end
   end
 end

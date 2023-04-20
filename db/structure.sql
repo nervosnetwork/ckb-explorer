@@ -46,6 +46,12 @@ CREATE FUNCTION public.decrease_ckb_transactions_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$begin
     UPDATE global_statistics SET value = value - 1 WHERE name = 'ckb_transactions';
+    if new.tx_status = 0 then
+      update global_statistics SET value = value - 1 where name = 'pending_transactions';
+    end if;
+    if new.tx_status = 2 then
+      update global_statistics SET value = value - 1 where name = 'committed_transactions';
+    end if;
     RETURN NEW;
 end;$$;
 
@@ -57,9 +63,95 @@ end;$$;
 CREATE FUNCTION public.increase_ckb_transactions_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$begin
-    UPDATE global_statistics SET value = value + 1 WHERE name = 'ckb_transactions';
-    RETURN NEW;
+
+  UPDATE global_statistics SET value = value + 1 WHERE name = 'ckb_transactions';
+  if new.tx_status = 0 then
+    update global_statistics SET value = value + 1 where name = 'pending_transactions';
+  end if;
+  if new.tx_status = 2 then
+    update global_statistics SET value = value + 1 where name = 'committed_transactions';
+  end if;
+  RETURN NEW;
 end;$$;
+
+
+--
+-- Name: insert_into_ckb_transactions(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.insert_into_ckb_transactions() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    header_deps_size integer;
+    i integer;
+    header_hash bytea;
+    transaction_id bigint;
+    w text;
+    out_point jsonb;
+    cell_output_record record;
+BEGIN
+  INSERT INTO ckb_transactions
+  (
+    tx_status, tx_hash,
+    bytes, cycles, version,
+    transaction_fee, created_at, updated_at
+  )
+  VALUES
+  (NEW.tx_status, NEW.tx_hash,
+  NEW.tx_size, NEW.cycles, COALESCE(NEW.version, 0),
+  NEW.transaction_fee, NOW(), NOW()
+  )
+  RETURNING id into transaction_id;
+
+  -- insert witnesses
+  i := 0;
+  for w in
+    select jsonb_array_elements_text(NEW.witnesses)
+  loop
+    INSERT INTO witnesses (ckb_transaction_id, index, data)
+    values
+    (transaction_id, i, (E'\x' || substring(w from 3))::bytea);
+    i := i+1;
+  end loop;
+
+  -- insert header_deps
+  i := 0;
+  for w in
+    select jsonb_array_elements_text(NEW.header_deps)
+  loop
+    INSERT INTO header_dependencies
+    (ckb_transaction_id, header_hash, index)
+    values
+    (transaction_id, (E'\x' || substring(w from 3))::bytea, i);
+  end loop;
+
+  -- insert cell_deps
+  for out_point in
+    select jsonb_array_elements(NEW.cell_deps)
+  loop
+    SELECT id, tx_hash, cell_index
+    INTO cell_output_record
+    FROM cell_outputs
+    WHERE tx_hash = (E'\x' || substring((out_point->'out_point'->>'tx_hash') from 3))::bytea
+    AND cell_index = (out_point->'out_point'->>'index')::integer;
+
+    IF FOUND THEN
+      insert into cell_dependencies
+      (ckb_transaction_id, contract_cell_id, dep_type, implicit)
+      values(
+        transaction_id, cell_output_record.id,
+        CASE WHEN out_point->>'dep_type' = 'code' THEN 0
+             WHEN out_point->>'dep_type' = 'dep_group' THEN 1
+             ELSE NULL
+        END, false
+      );
+    END IF;
+  end loop;
+
+  RETURN NEW;
+END;
+$$;
 
 
 --
@@ -82,7 +174,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;
+    END LOOP;    
     close c;
 end
 $$;
@@ -104,21 +196,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null
+	if old is null 
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-
+	
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP
+	   LOOP 
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id)
+			insert into account_books (ckb_transaction_id, address_id) 
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -128,6 +220,97 @@ DECLARE
       RETURN NEW;
    END;
 $$;
+
+
+--
+-- Name: update_cell_dependencies_implicit(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_cell_dependencies_implicit() RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    cur CURSOR FOR SELECT id, cell_deps FROM ckb_transactions;
+    transaction_id bigint;
+    cell_deps jsonb;
+    out_point jsonb;
+    cell_output_record record;
+BEGIN
+    OPEN cur;
+    LOOP
+        FETCH cur INTO transaction_id, cell_deps;
+        EXIT WHEN NOT FOUND;
+
+        FOR out_point IN
+            SELECT jsonb_array_elements(cell_deps)
+        LOOP
+            SELECT id, tx_hash, cell_index
+            INTO cell_output_record
+            FROM cell_outputs
+            WHERE tx_hash = (E'\x' || substring((out_point->'out_point'->>'tx_hash') from 3))::bytea
+            AND cell_index = (out_point->'out_point'->>'index')::integer;
+
+            IF FOUND THEN
+                UPDATE cell_dependencies
+                SET implicit = false
+                WHERE ckb_transaction_id = transaction_id
+                AND contract_cell_id = cell_output_record.id;
+            END IF;
+        END LOOP;
+    END LOOP;
+    CLOSE cur;
+END;
+$$;
+
+
+--
+-- Name: update_cell_inputs(); Type: PROCEDURE; Schema: public; Owner: -
+--
+
+CREATE PROCEDURE public.update_cell_inputs()
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  input_id BIGINT;
+  input_output_id BIGINT;
+  input_previous_output JSONB;
+  input_tx_hash BYTEA;
+  input_cell_index BIGINT;
+  output_id BIGINT;
+BEGIN
+  FOR input_id, input_previous_output, input_output_id IN
+    SELECT ci.id, ci.previous_output, ci.previous_cell_output_id
+    FROM cell_inputs ci
+    WHERE ci.previous_cell_output_id IS NULL AND ci.previous_output->>'tx_hash' <> '0x0000000000000000000000000000000000000000000000000000000000000000'
+  LOOP
+    input_tx_hash := decode(input_previous_output->>'tx_hash', 'hex');
+    input_cell_index := input_previous_output->>'index';
+
+    SELECT id INTO output_id FROM cell_outputs WHERE tx_hash = input_tx_hash AND cell_index = input_cell_index;
+
+    IF output_id IS NOT NULL THEN
+      UPDATE cell_inputs SET previous_cell_output_id = output_id WHERE id = input_id;
+    END IF;
+  END LOOP;
+END;
+$$;
+
+
+--
+-- Name: update_ckb_transactions_count(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_ckb_transactions_count() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$begin
+    if new.tx_status = 0 then
+      update global_statistics SET value = value + 1 where name = 'pending_transactions';
+    end if;
+    if new.tx_status = 2 then
+      update global_statistics SET value = value + 1 where name = 'committed_transactions';
+    end if;
+    RETURN NEW;
+  end;$$;
 
 
 SET default_tablespace = '';
@@ -208,8 +391,7 @@ CREATE TABLE public.addresses (
     is_depositor boolean DEFAULT false,
     dao_transactions_count bigint DEFAULT 0.0,
     lock_script_id bigint,
-    balance_occupied numeric(30,0) DEFAULT 0.0,
-    address_hash_crc bigint
+    balance_occupied numeric(30,0) DEFAULT 0.0
 );
 
 
@@ -253,7 +435,7 @@ CREATE TABLE public.blocks (
     block_hash bytea,
     number bigint,
     parent_hash bytea,
-    "timestamp" numeric(30,0),
+    "timestamp" bigint,
     transactions_root bytea,
     proposals_hash bytea,
     uncles_count integer,
@@ -285,7 +467,7 @@ CREATE TABLE public.blocks (
     length numeric(30,0) DEFAULT 0.0,
     compact_target numeric(20,0),
     live_cell_changes integer,
-    block_time numeric(13,0),
+    block_time bigint,
     block_size bigint,
     proposal_reward numeric(30,0),
     commit_reward numeric(30,0),
@@ -309,10 +491,10 @@ COMMENT ON COLUMN public.blocks.ckb_node_version IS 'ckb node version, e.g. 0.10
 --
 
 CREATE MATERIALIZED VIEW public.average_block_time_by_hour AS
- SELECT date_trunc('hour'::text, to_timestamp(((blocks."timestamp" / 1000.0))::double precision)) AS hour,
+ SELECT (blocks."timestamp" / 3600000) AS hour,
     avg(blocks.block_time) AS avg_block_time_per_hour
    FROM public.blocks
-  GROUP BY (date_trunc('hour'::text, to_timestamp(((blocks."timestamp" / 1000.0))::double precision)))
+  GROUP BY (blocks."timestamp" / 3600000)
   WITH NO DATA;
 
 
@@ -452,6 +634,37 @@ ALTER SEQUENCE public.block_time_statistics_id_seq OWNED BY public.block_time_st
 
 
 --
+-- Name: block_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.block_transactions (
+    id bigint NOT NULL,
+    block_id bigint,
+    ckb_transaction_id bigint,
+    tx_index integer DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: block_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.block_transactions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: block_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.block_transactions_id_seq OWNED BY public.block_transactions.id;
+
+
+--
 -- Name: blocks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -471,6 +684,35 @@ ALTER SEQUENCE public.blocks_id_seq OWNED BY public.blocks.id;
 
 
 --
+-- Name: cell_data; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cell_data (
+    cell_output_id bigint NOT NULL,
+    data bytea NOT NULL
+);
+
+
+--
+-- Name: cell_data_cell_output_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.cell_data_cell_output_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: cell_data_cell_output_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.cell_data_cell_output_id_seq OWNED BY public.cell_data.cell_output_id;
+
+
+--
 -- Name: cell_dependencies; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -480,7 +722,8 @@ CREATE TABLE public.cell_dependencies (
     ckb_transaction_id bigint NOT NULL,
     dep_type integer,
     contract_cell_id bigint NOT NULL,
-    script_id bigint
+    script_id bigint,
+    implicit boolean DEFAULT true NOT NULL
 );
 
 
@@ -517,7 +760,8 @@ CREATE TABLE public.cell_inputs (
     from_cell_base boolean DEFAULT false,
     block_id numeric(30,0),
     since numeric(30,0) DEFAULT 0.0,
-    cell_type integer DEFAULT 0
+    cell_type integer DEFAULT 0,
+    index integer
 );
 
 
@@ -562,7 +806,7 @@ CREATE TABLE public.cell_outputs (
     data_size integer,
     occupied_capacity numeric(30,0),
     block_timestamp numeric(30,0),
-    consumed_block_timestamp numeric(30,0) DEFAULT 0,
+    consumed_block_timestamp numeric(30,0),
     type_hash character varying,
     udt_amount numeric(40,0),
     dao character varying,
@@ -599,34 +843,22 @@ CREATE TABLE public.ckb_transactions (
     id bigint NOT NULL,
     tx_hash bytea,
     block_id bigint,
-    block_number numeric(30,0),
-    block_timestamp numeric(30,0),
-    transaction_fee numeric(30,0),
-    version integer,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL,
+    block_number bigint,
+    block_timestamp bigint,
+    tx_status integer DEFAULT 2 NOT NULL,
+    version integer DEFAULT 0 NOT NULL,
     is_cellbase boolean DEFAULT false,
-    header_deps bytea,
-    cell_deps jsonb,
-    witnesses jsonb,
+    transaction_fee bigint,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
     live_cell_changes integer,
     capacity_involved numeric(30,0),
-    contained_address_ids bigint[] DEFAULT '{}'::bigint[],
     tags character varying[] DEFAULT '{}'::character varying[],
-    contained_udt_ids bigint[] DEFAULT '{}'::bigint[],
-    dao_address_ids bigint[] DEFAULT '{}'::bigint[],
-    udt_address_ids bigint[] DEFAULT '{}'::bigint[],
     bytes bigint DEFAULT 0,
     cycles bigint,
     confirmation_time integer
-);
-
-
---
--- Name: COLUMN ckb_transactions.confirmation_time; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.ckb_transactions.confirmation_time IS 'it cost how many seconds to confirm this transaction';
+)
+PARTITION BY LIST (tx_status);
 
 
 --
@@ -646,6 +878,106 @@ CREATE SEQUENCE public.ckb_transactions_id_seq
 --
 
 ALTER SEQUENCE public.ckb_transactions_id_seq OWNED BY public.ckb_transactions.id;
+
+
+--
+-- Name: ckb_transactions_committed; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ckb_transactions_committed (
+    id bigint DEFAULT nextval('public.ckb_transactions_id_seq'::regclass) NOT NULL,
+    tx_hash bytea,
+    block_id bigint,
+    block_number bigint,
+    block_timestamp bigint,
+    tx_status integer DEFAULT 2 NOT NULL,
+    version integer DEFAULT 0 NOT NULL,
+    is_cellbase boolean DEFAULT false,
+    transaction_fee bigint,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    live_cell_changes integer,
+    capacity_involved numeric(30,0),
+    tags character varying[] DEFAULT '{}'::character varying[],
+    bytes bigint DEFAULT 0,
+    cycles bigint,
+    confirmation_time integer
+);
+
+
+--
+-- Name: ckb_transactions_pending; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ckb_transactions_pending (
+    id bigint DEFAULT nextval('public.ckb_transactions_id_seq'::regclass) NOT NULL,
+    tx_hash bytea,
+    block_id bigint,
+    block_number bigint,
+    block_timestamp bigint,
+    tx_status integer DEFAULT 2 NOT NULL,
+    version integer DEFAULT 0 NOT NULL,
+    is_cellbase boolean DEFAULT false,
+    transaction_fee bigint,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    live_cell_changes integer,
+    capacity_involved numeric(30,0),
+    tags character varying[] DEFAULT '{}'::character varying[],
+    bytes bigint DEFAULT 0,
+    cycles bigint,
+    confirmation_time integer
+);
+
+
+--
+-- Name: ckb_transactions_proposed; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ckb_transactions_proposed (
+    id bigint DEFAULT nextval('public.ckb_transactions_id_seq'::regclass) NOT NULL,
+    tx_hash bytea,
+    block_id bigint,
+    block_number bigint,
+    block_timestamp bigint,
+    tx_status integer DEFAULT 2 NOT NULL,
+    version integer DEFAULT 0 NOT NULL,
+    is_cellbase boolean DEFAULT false,
+    transaction_fee bigint,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    live_cell_changes integer,
+    capacity_involved numeric(30,0),
+    tags character varying[] DEFAULT '{}'::character varying[],
+    bytes bigint DEFAULT 0,
+    cycles bigint,
+    confirmation_time integer
+);
+
+
+--
+-- Name: ckb_transactions_rejected; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ckb_transactions_rejected (
+    id bigint DEFAULT nextval('public.ckb_transactions_id_seq'::regclass) NOT NULL,
+    tx_hash bytea,
+    block_id bigint,
+    block_number bigint,
+    block_timestamp bigint,
+    tx_status integer DEFAULT 2 NOT NULL,
+    version integer DEFAULT 0 NOT NULL,
+    is_cellbase boolean DEFAULT false,
+    transaction_fee bigint,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    live_cell_changes integer,
+    capacity_involved numeric(30,0),
+    tags character varying[] DEFAULT '{}'::character varying[],
+    bytes bigint DEFAULT 0,
+    cycles bigint,
+    confirmation_time integer
+);
 
 
 --
@@ -1022,7 +1354,7 @@ ALTER SEQUENCE public.forked_events_id_seq OWNED BY public.forked_events.id;
 CREATE TABLE public.global_statistics (
     id bigint NOT NULL,
     name character varying,
-    value integer,
+    value bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     comment character varying,
@@ -1061,6 +1393,37 @@ CREATE SEQUENCE public.global_statistics_id_seq
 --
 
 ALTER SEQUENCE public.global_statistics_id_seq OWNED BY public.global_statistics.id;
+
+
+--
+-- Name: header_dependencies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.header_dependencies (
+    id bigint NOT NULL,
+    header_hash bytea NOT NULL,
+    ckb_transaction_id bigint NOT NULL,
+    index integer NOT NULL
+);
+
+
+--
+-- Name: header_dependencies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.header_dependencies_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: header_dependencies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.header_dependencies_id_seq OWNED BY public.header_dependencies.id;
 
 
 --
@@ -1173,6 +1536,64 @@ ALTER SEQUENCE public.nrc_factory_cells_id_seq OWNED BY public.nrc_factory_cells
 
 
 --
+-- Name: old_ckb_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.old_ckb_transactions (
+    id bigint NOT NULL,
+    tx_hash bytea,
+    block_id bigint,
+    block_number numeric(30,0),
+    block_timestamp numeric(30,0),
+    transaction_fee numeric(30,0),
+    version integer,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
+    is_cellbase boolean DEFAULT false,
+    header_deps bytea,
+    cell_deps jsonb,
+    witnesses jsonb,
+    live_cell_changes integer,
+    capacity_involved numeric(30,0),
+    contained_address_ids bigint[] DEFAULT '{}'::bigint[],
+    tags character varying[] DEFAULT '{}'::character varying[],
+    contained_udt_ids bigint[] DEFAULT '{}'::bigint[],
+    dao_address_ids bigint[] DEFAULT '{}'::bigint[],
+    udt_address_ids bigint[] DEFAULT '{}'::bigint[],
+    bytes integer DEFAULT 0,
+    cycles integer,
+    confirmation_time integer,
+    tx_status integer DEFAULT 2 NOT NULL
+);
+
+
+--
+-- Name: COLUMN old_ckb_transactions.confirmation_time; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.old_ckb_transactions.confirmation_time IS 'it cost how many seconds to confirm this transaction';
+
+
+--
+-- Name: old_ckb_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.old_ckb_transactions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: old_ckb_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.old_ckb_transactions_id_seq OWNED BY public.old_ckb_transactions.id;
+
+
+--
 -- Name: pool_transaction_entries; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1258,7 +1679,7 @@ ALTER SEQUENCE public.referring_cells_id_seq OWNED BY public.referring_cells.id;
 --
 
 CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
- SELECT (EXTRACT(epoch FROM average_block_time_by_hour.hour))::integer AS "timestamp",
+ SELECT (average_block_time_by_hour.hour * 3600) AS "timestamp",
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
     avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
    FROM public.average_block_time_by_hour
@@ -1484,6 +1905,37 @@ CREATE SEQUENCE public.token_transfers_id_seq
 --
 
 ALTER SEQUENCE public.token_transfers_id_seq OWNED BY public.token_transfers.id;
+
+
+--
+-- Name: transaction_address_changes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transaction_address_changes (
+    id bigint NOT NULL,
+    ckb_transaction_id bigint NOT NULL,
+    address_id bigint NOT NULL,
+    changes jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+
+--
+-- Name: transaction_address_changes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.transaction_address_changes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: transaction_address_changes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.transaction_address_changes_id_seq OWNED BY public.transaction_address_changes.id;
 
 
 --
@@ -1716,6 +2168,65 @@ ALTER SEQUENCE public.uncle_blocks_id_seq OWNED BY public.uncle_blocks.id;
 
 
 --
+-- Name: witnesses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.witnesses (
+    id bigint NOT NULL,
+    data bytea NOT NULL,
+    ckb_transaction_id bigint NOT NULL,
+    index integer NOT NULL
+);
+
+
+--
+-- Name: witnesses_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.witnesses_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: witnesses_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.witnesses_id_seq OWNED BY public.witnesses.id;
+
+
+--
+-- Name: ckb_transactions_committed; Type: TABLE ATTACH; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions ATTACH PARTITION public.ckb_transactions_committed FOR VALUES IN (2);
+
+
+--
+-- Name: ckb_transactions_pending; Type: TABLE ATTACH; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions ATTACH PARTITION public.ckb_transactions_pending FOR VALUES IN (0);
+
+
+--
+-- Name: ckb_transactions_proposed; Type: TABLE ATTACH; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions ATTACH PARTITION public.ckb_transactions_proposed FOR VALUES IN (1);
+
+
+--
+-- Name: ckb_transactions_rejected; Type: TABLE ATTACH; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions ATTACH PARTITION public.ckb_transactions_rejected FOR VALUES IN (3);
+
+
+--
 -- Name: account_books id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1751,10 +2262,24 @@ ALTER TABLE ONLY public.block_time_statistics ALTER COLUMN id SET DEFAULT nextva
 
 
 --
+-- Name: block_transactions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.block_transactions ALTER COLUMN id SET DEFAULT nextval('public.block_transactions_id_seq'::regclass);
+
+
+--
 -- Name: blocks id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.blocks ALTER COLUMN id SET DEFAULT nextval('public.blocks_id_seq'::regclass);
+
+
+--
+-- Name: cell_data cell_output_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cell_data ALTER COLUMN cell_output_id SET DEFAULT nextval('public.cell_data_cell_output_id_seq'::regclass);
 
 
 --
@@ -1849,6 +2374,13 @@ ALTER TABLE ONLY public.global_statistics ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
+-- Name: header_dependencies id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.header_dependencies ALTER COLUMN id SET DEFAULT nextval('public.header_dependencies_id_seq'::regclass);
+
+
+--
 -- Name: lock_scripts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1867,6 +2399,13 @@ ALTER TABLE ONLY public.mining_infos ALTER COLUMN id SET DEFAULT nextval('public
 --
 
 ALTER TABLE ONLY public.nrc_factory_cells ALTER COLUMN id SET DEFAULT nextval('public.nrc_factory_cells_id_seq'::regclass);
+
+
+--
+-- Name: old_ckb_transactions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.old_ckb_transactions ALTER COLUMN id SET DEFAULT nextval('public.old_ckb_transactions_id_seq'::regclass);
 
 
 --
@@ -1926,6 +2465,13 @@ ALTER TABLE ONLY public.token_transfers ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
+-- Name: transaction_address_changes id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction_address_changes ALTER COLUMN id SET DEFAULT nextval('public.transaction_address_changes_id_seq'::regclass);
+
+
+--
 -- Name: transaction_propagation_delays id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1958,6 +2504,13 @@ ALTER TABLE ONLY public.udts ALTER COLUMN id SET DEFAULT nextval('public.udts_id
 --
 
 ALTER TABLE ONLY public.uncle_blocks ALTER COLUMN id SET DEFAULT nextval('public.uncle_blocks_id_seq'::regclass);
+
+
+--
+-- Name: witnesses id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.witnesses ALTER COLUMN id SET DEFAULT nextval('public.witnesses_id_seq'::regclass);
 
 
 --
@@ -2009,11 +2562,27 @@ ALTER TABLE ONLY public.block_time_statistics
 
 
 --
+-- Name: block_transactions block_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.block_transactions
+    ADD CONSTRAINT block_transactions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: blocks blocks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.blocks
     ADD CONSTRAINT blocks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: cell_data cell_data_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cell_data
+    ADD CONSTRAINT cell_data_pkey PRIMARY KEY (cell_output_id);
 
 
 --
@@ -2045,7 +2614,79 @@ ALTER TABLE ONLY public.cell_outputs
 --
 
 ALTER TABLE ONLY public.ckb_transactions
-    ADD CONSTRAINT ckb_transactions_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT ckb_transactions_pkey PRIMARY KEY (id, tx_status);
+
+
+--
+-- Name: ckb_transactions_committed ckb_transactions_committed_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions_committed
+    ADD CONSTRAINT ckb_transactions_committed_pkey PRIMARY KEY (id, tx_status);
+
+
+--
+-- Name: ckb_transactions ckb_tx_uni_tx_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions
+    ADD CONSTRAINT ckb_tx_uni_tx_hash UNIQUE (tx_status, tx_hash);
+
+
+--
+-- Name: ckb_transactions_committed ckb_transactions_committed_tx_status_tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions_committed
+    ADD CONSTRAINT ckb_transactions_committed_tx_status_tx_hash_key UNIQUE (tx_status, tx_hash);
+
+
+--
+-- Name: ckb_transactions_pending ckb_transactions_pending_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions_pending
+    ADD CONSTRAINT ckb_transactions_pending_pkey PRIMARY KEY (id, tx_status);
+
+
+--
+-- Name: ckb_transactions_pending ckb_transactions_pending_tx_status_tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions_pending
+    ADD CONSTRAINT ckb_transactions_pending_tx_status_tx_hash_key UNIQUE (tx_status, tx_hash);
+
+
+--
+-- Name: ckb_transactions_proposed ckb_transactions_proposed_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions_proposed
+    ADD CONSTRAINT ckb_transactions_proposed_pkey PRIMARY KEY (id, tx_status);
+
+
+--
+-- Name: ckb_transactions_proposed ckb_transactions_proposed_tx_status_tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions_proposed
+    ADD CONSTRAINT ckb_transactions_proposed_tx_status_tx_hash_key UNIQUE (tx_status, tx_hash);
+
+
+--
+-- Name: ckb_transactions_rejected ckb_transactions_rejected_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions_rejected
+    ADD CONSTRAINT ckb_transactions_rejected_pkey PRIMARY KEY (id, tx_status);
+
+
+--
+-- Name: ckb_transactions_rejected ckb_transactions_rejected_tx_status_tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ckb_transactions_rejected
+    ADD CONSTRAINT ckb_transactions_rejected_tx_status_tx_hash_key UNIQUE (tx_status, tx_hash);
 
 
 --
@@ -2121,6 +2762,14 @@ ALTER TABLE ONLY public.global_statistics
 
 
 --
+-- Name: header_dependencies header_dependencies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.header_dependencies
+    ADD CONSTRAINT header_dependencies_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: lock_scripts lock_scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2142,6 +2791,14 @@ ALTER TABLE ONLY public.mining_infos
 
 ALTER TABLE ONLY public.nrc_factory_cells
     ADD CONSTRAINT nrc_factory_cells_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: old_ckb_transactions old_ckb_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.old_ckb_transactions
+    ADD CONSTRAINT old_ckb_transactions_pkey PRIMARY KEY (id);
 
 
 --
@@ -2217,6 +2874,14 @@ ALTER TABLE ONLY public.token_transfers
 
 
 --
+-- Name: transaction_address_changes transaction_address_changes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction_address_changes
+    ADD CONSTRAINT transaction_address_changes_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: transaction_propagation_delays transaction_propagation_delays_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2265,6 +2930,46 @@ ALTER TABLE ONLY public.uncle_blocks
 
 
 --
+-- Name: addresses unique_lock_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.addresses
+    ADD CONSTRAINT unique_lock_hash UNIQUE (lock_hash);
+
+
+--
+-- Name: token_collections unique_sn; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.token_collections
+    ADD CONSTRAINT unique_sn UNIQUE (sn);
+
+
+--
+-- Name: pool_transaction_entries unique_tx_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.pool_transaction_entries
+    ADD CONSTRAINT unique_tx_hash UNIQUE (tx_hash);
+
+
+--
+-- Name: udts unique_type_hash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udts
+    ADD CONSTRAINT unique_type_hash UNIQUE (type_hash);
+
+
+--
+-- Name: witnesses witnesses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.witnesses
+    ADD CONSTRAINT witnesses_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: address_dao_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2279,10 +2984,164 @@ CREATE UNIQUE INDEX address_udt_tx_alt_pk ON public.address_udt_transactions USI
 
 
 --
+-- Name: block_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX block_tx_alt_pk ON public.block_transactions USING btree (block_id, ckb_transaction_id);
+
+
+--
+-- Name: block_tx_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX block_tx_index ON public.block_transactions USING btree (block_id, tx_index);
+
+
+--
 -- Name: cell_deps_tx_cell_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX cell_deps_tx_cell_idx ON public.cell_dependencies USING btree (ckb_transaction_id, contract_cell_id);
+
+
+--
+-- Name: idx_ckb_txs_for_blocks; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ckb_txs_for_blocks ON ONLY public.ckb_transactions USING btree (block_id, block_timestamp);
+
+
+--
+-- Name: ckb_transactions_committed_block_id_block_timestamp_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_committed_block_id_block_timestamp_idx ON public.ckb_transactions_committed USING btree (block_id, block_timestamp);
+
+
+--
+-- Name: idx_ckb_txs_timestamp; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ckb_txs_timestamp ON ONLY public.ckb_transactions USING btree (block_timestamp DESC NULLS LAST, id);
+
+
+--
+-- Name: ckb_transactions_committed_block_timestamp_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_committed_block_timestamp_id_idx ON public.ckb_transactions_committed USING btree (block_timestamp DESC NULLS LAST, id);
+
+
+--
+-- Name: index_ckb_transactions_on_tags; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_ckb_transactions_on_tags ON ONLY public.ckb_transactions USING gin (tags);
+
+
+--
+-- Name: ckb_transactions_committed_tags_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_committed_tags_idx ON public.ckb_transactions_committed USING gin (tags);
+
+
+--
+-- Name: index_ckb_transactions_on_tx_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_ckb_transactions_on_tx_hash ON ONLY public.ckb_transactions USING hash (tx_hash);
+
+
+--
+-- Name: ckb_transactions_committed_tx_hash_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_committed_tx_hash_idx ON public.ckb_transactions_committed USING hash (tx_hash);
+
+
+--
+-- Name: ckb_transactions_pending_block_id_block_timestamp_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_pending_block_id_block_timestamp_idx ON public.ckb_transactions_pending USING btree (block_id, block_timestamp);
+
+
+--
+-- Name: ckb_transactions_pending_block_timestamp_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_pending_block_timestamp_id_idx ON public.ckb_transactions_pending USING btree (block_timestamp DESC NULLS LAST, id);
+
+
+--
+-- Name: ckb_transactions_pending_tags_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_pending_tags_idx ON public.ckb_transactions_pending USING gin (tags);
+
+
+--
+-- Name: ckb_transactions_pending_tx_hash_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_pending_tx_hash_idx ON public.ckb_transactions_pending USING hash (tx_hash);
+
+
+--
+-- Name: ckb_transactions_proposed_block_id_block_timestamp_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_proposed_block_id_block_timestamp_idx ON public.ckb_transactions_proposed USING btree (block_id, block_timestamp);
+
+
+--
+-- Name: ckb_transactions_proposed_block_timestamp_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_proposed_block_timestamp_id_idx ON public.ckb_transactions_proposed USING btree (block_timestamp DESC NULLS LAST, id);
+
+
+--
+-- Name: ckb_transactions_proposed_tags_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_proposed_tags_idx ON public.ckb_transactions_proposed USING gin (tags);
+
+
+--
+-- Name: ckb_transactions_proposed_tx_hash_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_proposed_tx_hash_idx ON public.ckb_transactions_proposed USING hash (tx_hash);
+
+
+--
+-- Name: ckb_transactions_rejected_block_id_block_timestamp_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_rejected_block_id_block_timestamp_idx ON public.ckb_transactions_rejected USING btree (block_id, block_timestamp);
+
+
+--
+-- Name: ckb_transactions_rejected_block_timestamp_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_rejected_block_timestamp_id_idx ON public.ckb_transactions_rejected USING btree (block_timestamp DESC NULLS LAST, id);
+
+
+--
+-- Name: ckb_transactions_rejected_tags_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_rejected_tags_idx ON public.ckb_transactions_rejected USING gin (tags);
+
+
+--
+-- Name: ckb_transactions_rejected_tx_hash_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_rejected_tx_hash_idx ON public.ckb_transactions_rejected USING hash (tx_hash);
 
 
 --
@@ -2314,10 +3173,10 @@ CREATE INDEX index_address_udt_transactions_on_ckb_transaction_id ON public.addr
 
 
 --
--- Name: index_addresses_on_address_hash_crc; Type: INDEX; Schema: public; Owner: -
+-- Name: index_addresses_on_address_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_addresses_on_address_hash_crc ON public.addresses USING btree (address_hash_crc);
+CREATE INDEX index_addresses_on_address_hash ON public.addresses USING hash (address_hash);
 
 
 --
@@ -2331,7 +3190,7 @@ CREATE INDEX index_addresses_on_is_depositor ON public.addresses USING btree (is
 -- Name: index_addresses_on_lock_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_addresses_on_lock_hash ON public.addresses USING btree (lock_hash);
+CREATE INDEX index_addresses_on_lock_hash ON public.addresses USING hash (lock_hash);
 
 
 --
@@ -2363,10 +3222,24 @@ CREATE UNIQUE INDEX index_block_time_statistics_on_stat_timestamp ON public.bloc
 
 
 --
+-- Name: index_block_transactions_on_block_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_block_transactions_on_block_id ON public.block_transactions USING btree (block_id);
+
+
+--
+-- Name: index_block_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_block_transactions_on_ckb_transaction_id ON public.block_transactions USING btree (ckb_transaction_id);
+
+
+--
 -- Name: index_blocks_on_block_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_blocks_on_block_hash ON public.blocks USING btree (block_hash);
+CREATE INDEX index_blocks_on_block_hash ON public.blocks USING hash (block_hash);
 
 
 --
@@ -2538,69 +3411,6 @@ CREATE INDEX index_cell_outputs_on_type_script_id_and_id ON public.cell_outputs 
 
 
 --
--- Name: index_ckb_transactions_on_block_id_and_block_timestamp; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_ckb_transactions_on_block_id_and_block_timestamp ON public.ckb_transactions USING btree (block_id, block_timestamp);
-
-
---
--- Name: index_ckb_transactions_on_block_timestamp_and_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_ckb_transactions_on_block_timestamp_and_id ON public.ckb_transactions USING btree (block_timestamp DESC NULLS LAST, id DESC);
-
-
---
--- Name: index_ckb_transactions_on_contained_address_ids_and_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_ckb_transactions_on_contained_address_ids_and_id ON public.ckb_transactions USING gin (contained_address_ids, id);
-
-
---
--- Name: index_ckb_transactions_on_contained_udt_ids; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_ckb_transactions_on_contained_udt_ids ON public.ckb_transactions USING gin (contained_udt_ids);
-
-
---
--- Name: index_ckb_transactions_on_dao_address_ids; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_ckb_transactions_on_dao_address_ids ON public.ckb_transactions USING gin (dao_address_ids);
-
-
---
--- Name: index_ckb_transactions_on_is_cellbase; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_ckb_transactions_on_is_cellbase ON public.ckb_transactions USING btree (is_cellbase);
-
-
---
--- Name: index_ckb_transactions_on_tags; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_ckb_transactions_on_tags ON public.ckb_transactions USING gin (tags);
-
-
---
--- Name: index_ckb_transactions_on_tx_hash_and_block_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_ckb_transactions_on_tx_hash_and_block_id ON public.ckb_transactions USING btree (tx_hash, block_id);
-
-
---
--- Name: index_ckb_transactions_on_udt_address_ids; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_ckb_transactions_on_udt_address_ids ON public.ckb_transactions USING gin (udt_address_ids);
-
-
---
 -- Name: index_contracts_on_code_hash; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2706,6 +3516,27 @@ CREATE INDEX index_forked_events_on_status ON public.forked_events USING btree (
 
 
 --
+-- Name: index_global_statistics_on_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_global_statistics_on_name ON public.global_statistics USING btree (name);
+
+
+--
+-- Name: index_header_dependencies_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_header_dependencies_on_ckb_transaction_id ON public.header_dependencies USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_header_dependencies_on_ckb_transaction_id_and_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_header_dependencies_on_ckb_transaction_id_and_index ON public.header_dependencies USING btree (ckb_transaction_id, index);
+
+
+--
 -- Name: index_lock_scripts_on_address_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2730,7 +3561,7 @@ CREATE INDEX index_lock_scripts_on_code_hash_and_hash_type_and_args ON public.lo
 -- Name: index_lock_scripts_on_script_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_lock_scripts_on_script_hash ON public.lock_scripts USING btree (script_hash);
+CREATE INDEX index_lock_scripts_on_script_hash ON public.lock_scripts USING hash (script_hash);
 
 
 --
@@ -2762,6 +3593,69 @@ CREATE UNIQUE INDEX index_nrc_factory_cells_on_code_hash_and_hash_type_and_args 
 
 
 --
+-- Name: index_old_ckb_transactions_on_block_id_and_block_timestamp; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_old_ckb_transactions_on_block_id_and_block_timestamp ON public.old_ckb_transactions USING btree (block_id, block_timestamp);
+
+
+--
+-- Name: index_old_ckb_transactions_on_block_timestamp_and_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_old_ckb_transactions_on_block_timestamp_and_id ON public.old_ckb_transactions USING btree (block_timestamp DESC NULLS LAST, id DESC);
+
+
+--
+-- Name: index_old_ckb_transactions_on_contained_address_ids_and_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_old_ckb_transactions_on_contained_address_ids_and_id ON public.old_ckb_transactions USING gin (contained_address_ids, id);
+
+
+--
+-- Name: index_old_ckb_transactions_on_contained_udt_ids; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_old_ckb_transactions_on_contained_udt_ids ON public.old_ckb_transactions USING gin (contained_udt_ids);
+
+
+--
+-- Name: index_old_ckb_transactions_on_dao_address_ids; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_old_ckb_transactions_on_dao_address_ids ON public.old_ckb_transactions USING gin (dao_address_ids);
+
+
+--
+-- Name: index_old_ckb_transactions_on_is_cellbase; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_old_ckb_transactions_on_is_cellbase ON public.old_ckb_transactions USING btree (is_cellbase);
+
+
+--
+-- Name: index_old_ckb_transactions_on_tags; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_old_ckb_transactions_on_tags ON public.old_ckb_transactions USING gin (tags);
+
+
+--
+-- Name: index_old_ckb_transactions_on_tx_hash_and_block_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_old_ckb_transactions_on_tx_hash_and_block_id ON public.old_ckb_transactions USING btree (tx_hash, block_id);
+
+
+--
+-- Name: index_old_ckb_transactions_on_udt_address_ids; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_old_ckb_transactions_on_udt_address_ids ON public.old_ckb_transactions USING gin (udt_address_ids);
+
+
+--
 -- Name: index_pool_transaction_entries_on_id_and_tx_status; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2772,7 +3666,7 @@ CREATE INDEX index_pool_transaction_entries_on_id_and_tx_status ON public.pool_t
 -- Name: index_pool_transaction_entries_on_tx_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_pool_transaction_entries_on_tx_hash ON public.pool_transaction_entries USING btree (tx_hash);
+CREATE INDEX index_pool_transaction_entries_on_tx_hash ON public.pool_transaction_entries USING hash (tx_hash);
 
 
 --
@@ -2835,7 +3729,7 @@ CREATE INDEX index_token_collections_on_cell_id ON public.token_collections USIN
 -- Name: index_token_collections_on_sn; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_token_collections_on_sn ON public.token_collections USING btree (sn);
+CREATE INDEX index_token_collections_on_sn ON public.token_collections USING hash (sn);
 
 
 --
@@ -2902,6 +3796,13 @@ CREATE INDEX index_token_transfers_on_transaction_id ON public.token_transfers U
 
 
 --
+-- Name: index_transaction_address_changes_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_transaction_address_changes_on_ckb_transaction_id ON public.transaction_address_changes USING btree (ckb_transaction_id);
+
+
+--
 -- Name: index_tx_propagation_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2926,7 +3827,7 @@ CREATE INDEX index_type_scripts_on_code_hash_and_hash_type_and_args ON public.ty
 -- Name: index_type_scripts_on_script_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_type_scripts_on_script_hash ON public.type_scripts USING btree (script_hash);
+CREATE INDEX index_type_scripts_on_script_hash ON public.type_scripts USING hash (script_hash);
 
 
 --
@@ -2975,7 +3876,7 @@ CREATE INDEX index_udt_transactions_on_udt_id ON public.udt_transactions USING b
 -- Name: index_udts_on_type_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_udts_on_type_hash ON public.udts USING btree (type_hash);
+CREATE INDEX index_udts_on_type_hash ON public.udts USING hash (type_hash);
 
 
 --
@@ -2993,10 +3894,199 @@ CREATE INDEX index_uncle_blocks_on_block_id ON public.uncle_blocks USING btree (
 
 
 --
+-- Name: index_witnesses_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_witnesses_on_ckb_transaction_id ON public.witnesses USING btree (ckb_transaction_id);
+
+
+--
+-- Name: index_witnesses_on_ckb_transaction_id_and_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_witnesses_on_ckb_transaction_id_and_index ON public.witnesses USING btree (ckb_transaction_id, index);
+
+
+--
 -- Name: pk; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX pk ON public.udt_transactions USING btree (udt_id, ckb_transaction_id);
+
+
+--
+-- Name: tx_address_changes_alt_pk; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX tx_address_changes_alt_pk ON public.transaction_address_changes USING btree (address_id, ckb_transaction_id);
+
+
+--
+-- Name: ckb_transactions_committed_block_id_block_timestamp_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_ckb_txs_for_blocks ATTACH PARTITION public.ckb_transactions_committed_block_id_block_timestamp_idx;
+
+
+--
+-- Name: ckb_transactions_committed_block_timestamp_id_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_ckb_txs_timestamp ATTACH PARTITION public.ckb_transactions_committed_block_timestamp_id_idx;
+
+
+--
+-- Name: ckb_transactions_committed_pkey; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.ckb_transactions_pkey ATTACH PARTITION public.ckb_transactions_committed_pkey;
+
+
+--
+-- Name: ckb_transactions_committed_tags_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_tags ATTACH PARTITION public.ckb_transactions_committed_tags_idx;
+
+
+--
+-- Name: ckb_transactions_committed_tx_hash_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_tx_hash ATTACH PARTITION public.ckb_transactions_committed_tx_hash_idx;
+
+
+--
+-- Name: ckb_transactions_committed_tx_status_tx_hash_key; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.ckb_tx_uni_tx_hash ATTACH PARTITION public.ckb_transactions_committed_tx_status_tx_hash_key;
+
+
+--
+-- Name: ckb_transactions_pending_block_id_block_timestamp_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_ckb_txs_for_blocks ATTACH PARTITION public.ckb_transactions_pending_block_id_block_timestamp_idx;
+
+
+--
+-- Name: ckb_transactions_pending_block_timestamp_id_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_ckb_txs_timestamp ATTACH PARTITION public.ckb_transactions_pending_block_timestamp_id_idx;
+
+
+--
+-- Name: ckb_transactions_pending_pkey; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.ckb_transactions_pkey ATTACH PARTITION public.ckb_transactions_pending_pkey;
+
+
+--
+-- Name: ckb_transactions_pending_tags_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_tags ATTACH PARTITION public.ckb_transactions_pending_tags_idx;
+
+
+--
+-- Name: ckb_transactions_pending_tx_hash_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_tx_hash ATTACH PARTITION public.ckb_transactions_pending_tx_hash_idx;
+
+
+--
+-- Name: ckb_transactions_pending_tx_status_tx_hash_key; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.ckb_tx_uni_tx_hash ATTACH PARTITION public.ckb_transactions_pending_tx_status_tx_hash_key;
+
+
+--
+-- Name: ckb_transactions_proposed_block_id_block_timestamp_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_ckb_txs_for_blocks ATTACH PARTITION public.ckb_transactions_proposed_block_id_block_timestamp_idx;
+
+
+--
+-- Name: ckb_transactions_proposed_block_timestamp_id_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_ckb_txs_timestamp ATTACH PARTITION public.ckb_transactions_proposed_block_timestamp_id_idx;
+
+
+--
+-- Name: ckb_transactions_proposed_pkey; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.ckb_transactions_pkey ATTACH PARTITION public.ckb_transactions_proposed_pkey;
+
+
+--
+-- Name: ckb_transactions_proposed_tags_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_tags ATTACH PARTITION public.ckb_transactions_proposed_tags_idx;
+
+
+--
+-- Name: ckb_transactions_proposed_tx_hash_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_tx_hash ATTACH PARTITION public.ckb_transactions_proposed_tx_hash_idx;
+
+
+--
+-- Name: ckb_transactions_proposed_tx_status_tx_hash_key; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.ckb_tx_uni_tx_hash ATTACH PARTITION public.ckb_transactions_proposed_tx_status_tx_hash_key;
+
+
+--
+-- Name: ckb_transactions_rejected_block_id_block_timestamp_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_ckb_txs_for_blocks ATTACH PARTITION public.ckb_transactions_rejected_block_id_block_timestamp_idx;
+
+
+--
+-- Name: ckb_transactions_rejected_block_timestamp_id_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.idx_ckb_txs_timestamp ATTACH PARTITION public.ckb_transactions_rejected_block_timestamp_id_idx;
+
+
+--
+-- Name: ckb_transactions_rejected_pkey; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.ckb_transactions_pkey ATTACH PARTITION public.ckb_transactions_rejected_pkey;
+
+
+--
+-- Name: ckb_transactions_rejected_tags_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_tags ATTACH PARTITION public.ckb_transactions_rejected_tags_idx;
+
+
+--
+-- Name: ckb_transactions_rejected_tx_hash_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_tx_hash ATTACH PARTITION public.ckb_transactions_rejected_tx_hash_idx;
+
+
+--
+-- Name: ckb_transactions_rejected_tx_status_tx_hash_key; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.ckb_tx_uni_tx_hash ATTACH PARTITION public.ckb_transactions_rejected_tx_status_tx_hash_key;
 
 
 --
@@ -3007,6 +4097,13 @@ CREATE TRIGGER after_delete_update_ckb_transactions_count AFTER DELETE ON public
 
 
 --
+-- Name: old_ckb_transactions after_delete_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER after_delete_update_ckb_transactions_count AFTER DELETE ON public.old_ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.decrease_ckb_transactions_count();
+
+
+--
 -- Name: ckb_transactions after_insert_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -3014,18 +4111,39 @@ CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public
 
 
 --
--- Name: ckb_transactions sync_to_account_book; Type: TRIGGER; Schema: public; Owner: -
+-- Name: old_ckb_transactions after_insert_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER sync_to_account_book AFTER INSERT OR UPDATE ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.synx_tx_to_account_book();
+CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public.old_ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.increase_ckb_transactions_count();
 
 
 --
--- Name: udt_transactions fk_rails_6a09774940; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: ckb_transactions after_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.udt_transactions
-    ADD CONSTRAINT fk_rails_6a09774940 FOREIGN KEY (ckb_transaction_id) REFERENCES public.ckb_transactions(id) ON DELETE CASCADE;
+CREATE TRIGGER after_update_ckb_transactions_count AFTER UPDATE ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.update_ckb_transactions_count();
+
+
+--
+-- Name: pool_transaction_entries insert_ckb_transactions; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER insert_ckb_transactions AFTER INSERT ON public.pool_transaction_entries FOR EACH ROW EXECUTE FUNCTION public.insert_into_ckb_transactions();
+
+
+--
+-- Name: old_ckb_transactions sync_to_account_book; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER sync_to_account_book AFTER INSERT OR UPDATE ON public.old_ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.synx_tx_to_account_book();
+
+
+--
+-- Name: block_transactions fk_rails_a0eeb26f19; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.block_transactions
+    ADD CONSTRAINT fk_rails_a0eeb26f19 FOREIGN KEY (block_id) REFERENCES public.blocks(id) ON DELETE CASCADE;
 
 
 --
@@ -3222,6 +4340,13 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220830163001'),
 ('20220904005610'),
 ('20220912154933'),
+('20221009072146'),
+('20221009073948'),
+('20221009075753'),
+('20221009080035'),
+('20221009080306'),
+('20221009080708'),
+('20221009081118'),
 ('20221024021923'),
 ('20221030235723'),
 ('20221031085901'),
@@ -3252,6 +4377,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230220013604'),
 ('20230220060922'),
 ('20230228114330'),
+('20230306142312'),
+('20230307073134'),
 ('20230317081407'),
 ('20230319152819'),
 ('20230319160108'),
@@ -3261,7 +4388,29 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230320151216'),
 ('20230320153418'),
 ('20230321122734'),
+('20230328134010'),
+('20230330112855'),
+('20230330134854'),
+('20230330135137'),
+('20230330155253'),
+('20230330165609'),
+('20230331052851'),
+('20230331060239'),
 ('20230331090020'),
+('20230331151334'),
+('20230331151335'),
+('20230331151336'),
+('20230401012010'),
+('20230401033240'),
+('20230402125000'),
+('20230403052005'),
 ('20230403154742'),
-('20230403172457'),
-('20230404072229');
+('20230404072229'),
+('20230404151647'),
+('20230406003722'),
+('20230406011556'),
+('20230412070853'),
+('20230415042814'),
+('20230415150143');
+
+

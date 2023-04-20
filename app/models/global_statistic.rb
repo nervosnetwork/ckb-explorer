@@ -5,6 +5,17 @@ class GlobalStatistic < ApplicationRecord
     global_statistic = GlobalStatistic.find_or_create_by(name: "ckb_transactions")
     global_statistic.update value: ckb_transactions_count
   end
+
+  # direct increment value using upsert
+  # @param name [String] the name of statistic field
+  # @param delta [Integer] the value to increment
+  def self.increment(name, delta = 1)
+    connection.execute <<~SQL
+      INSERT INTO global_statistics (name, value, created_at, updated_at)
+      VALUES (#{connection.quote name}, 1, now(), now())
+      ON CONFLICT (name) DO UPDATE SET value = global_statistics.value + #{delta}
+    SQL
+  end
 end
 
 # == Schema Information

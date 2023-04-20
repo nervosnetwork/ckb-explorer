@@ -5,8 +5,8 @@ module Api
 
       def index
         statistic_info = StatisticInfo.new
-        if stale?(etag: statistic_info.tip_block_hash, public: true)
-          expires_in 5.seconds, public: true, must_revalidate: true, stale_while_revalidate: 3.seconds
+        if stale?(public: true)
+          expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
           render json: IndexStatisticSerializer.new(statistic_info)
         end
       end

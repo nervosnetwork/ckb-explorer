@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  witness: 
+  ckb_transaction: one
+  index: 1
+
+two:
+  witness: 
+  ckb_transaction: two
+  index: 1

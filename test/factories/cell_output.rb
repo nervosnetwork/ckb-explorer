@@ -1,9 +1,12 @@
 FactoryBot.define do
   factory :cell_output do
+    # block
     address
+    status { "live" }
     capacity { 10**8 * 8 }
     data {}
     cell_type { "normal" }
+    lock_script
 
     trait :with_full_transaction do
       before(:create) do |cell_output, _evaluator|

@@ -66,7 +66,7 @@ module Api
 
       test "should return corresponding data with given cell input id" do
         cell_input = create(:cell_input, :with_full_transaction)
-        cell_output = cell_input.find_cell_output!
+        cell_output = cell_input.previous_cell_output
 
         valid_get api_v1_cell_input_datum_url(cell_input.id)
 
@@ -103,7 +103,7 @@ module Api
 
       test "should return null when data is nil" do
         cell_input = create(:cell_input, :with_full_transaction)
-        cell_output = cell_input.find_cell_output!
+        cell_output = cell_input.previous_cell_output
 
         valid_get api_v1_cell_input_datum_url(cell_input.id)
 

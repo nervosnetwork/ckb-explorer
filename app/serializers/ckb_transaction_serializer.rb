@@ -7,7 +7,31 @@ class CkbTransactionSerializer
   # for the tx_status,
   # CkbTransaction will always be "commited"
   # PoolTransactionEntry will give: 0, 1, 2, 3
-  attributes :is_cellbase, :witnesses, :cell_deps, :header_deps, :tx_status
+  attributes :is_cellbase, :tx_status
+
+  attribute :witnesses do |o|
+    if o.is_a?(PoolTransactionEntry)
+      o.witnesses
+    else
+      o.witnesses&.map(&:data) || []
+    end
+  end
+
+  attribute :cell_deps do |o|
+    if o.is_a?(PoolTransactionEntry)
+      o.cell_deps
+    else
+      o.cell_dependencies.explicit.includes(:cell_output).to_a.map(&:to_raw)
+    end
+  end
+
+  attribute :header_deps do |o|
+    if o.is_a?(PoolTransactionEntry)
+      o.header_deps
+    else
+      o.header_dependencies.map(&:header_hash)
+    end
+  end
 
   attribute :detailed_message do |object|
     if object.tx_status.to_s == "rejected"

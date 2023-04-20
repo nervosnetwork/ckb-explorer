@@ -2,18 +2,17 @@ require "test_helper"
 
 module Charts
   class DailyStatisticGeneratorTest < ActiveSupport::TestCase
-
     MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
     GENESIS_TIMESTAMP = 1573852190812
     setup do
-
       to_be_counted_date = Time.current.yesterday.beginning_of_day
 
       @datetime = 1.day.ago
       @started_at = CkbUtils.time_in_milliseconds(to_be_counted_date.beginning_of_day)
       @ended_at = CkbUtils.time_in_milliseconds(to_be_counted_date.end_of_day) - 1
 
-      @block = create(:block, :with_block_hash, number: 0, epoch: 69, timestamp: 1575090866093, dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
+      @block = create(:block, :with_block_hash, number: 0, epoch: 69,
+                                                timestamp: 1575090866093, dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
       @daily_dao_withdraw = DaoEvent.processed.withdraw_from_dao.created_after(@started_at).created_before(@ended_at).sum(:value)
       @current_tip_block = Block.created_after(@started_at).created_before(@ended_at).recent.first || Block.recent.first
       aggron_first_day =
@@ -23,9 +22,12 @@ module Charts
         end
       @yesterday_daily_statistic ||=
         begin
-          yesterday_statistic = ::DailyStatistic.where("created_at_unixtimestamp < ?", to_be_counted_date.beginning_of_day.to_i).recent.first
+          yesterday_statistic = ::DailyStatistic.where(
+            "created_at_unixtimestamp < ?", to_be_counted_date.beginning_of_day.to_i
+          ).recent.first
           if to_be_counted_date.beginning_of_day.to_i == Time.at(GENESIS_TIMESTAMP / 1000).in_time_zone.beginning_of_day.to_i || aggron_first_day.present? || yesterday_statistic.blank?
-            OpenStruct.new(addresses_count: 0, total_dao_deposit: 0, dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0, total_depositors_count: 0, live_cells_count: 0, dead_cells_count: 0, occupied_capacity: 0)
+            OpenStruct.new(addresses_count: 0, total_dao_deposit: 0,
+                           dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0, total_depositors_count: 0, live_cells_count: 0, dead_cells_count: 0, occupied_capacity: 0)
           else
             yesterday_statistic
           end
@@ -40,16 +42,25 @@ module Charts
     end
 
     test "should create only 1 daily statistic record" do
-      block = create(:block, dao: "0xaff1568bbe49672f8a02516252ab2300df8c9e15dad428000035a1d671700007", timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, number: 0)
-      first_released_timestamp_other = create(:address, address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32s3y29vjv73cfm8qax220dwwmpdccl4upy4s9qzzqxzq8yqyd09am")
-      first_released_timestamp_addr = create(:address, address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323t90gna20lusyshreg32qee4fhkt9jj2t6qrqzzqxzq8yqt8kmd9")
-      create(:lock_script, address: first_released_timestamp_addr, args: "0xacaf44faa7ff90242e3ca22a067354decb2ca4a5e803008403080720", code_hash: "0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876c876320fc9634e2a8")
-      create(:lock_script, address: first_released_timestamp_other, args: "0x448a2b24cf4709d9c1d3294f6b9db0b718fd78125605008403080720", code_hash: "0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876c876320fc9634e2a8")
+      block = create(:block,
+                     dao: "0xaff1568bbe49672f8a02516252ab2300df8c9e15dad428000035a1d671700007", timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, number: 0)
+      first_released_timestamp_other = create(:address,
+                                              address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32s3y29vjv73cfm8qax220dwwmpdccl4upy4s9qzzqxzq8yqyd09am")
+      first_released_timestamp_addr = create(:address,
+                                             address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323t90gna20lusyshreg32qee4fhkt9jj2t6qrqzzqxzq8yqt8kmd9")
+      create(:lock_script, address: first_released_timestamp_addr,
+                           args: "0xacaf44faa7ff90242e3ca22a067354decb2ca4a5e803008403080720", code_hash: "0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876c876320fc9634e2a8")
+      create(:lock_script, address: first_released_timestamp_other,
+                           args: "0x448a2b24cf4709d9c1d3294f6b9db0b718fd78125605008403080720", code_hash: "0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876c876320fc9634e2a8")
       MarketData.any_instance.stubs(:current_timestamp).returns(CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-03-03")))
-      create(:block, :with_block_hash, epoch: 69, timestamp: 1575090866093, dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
-      create(:address, address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
-      tx = create(:ckb_transaction, block: block, block_timestamp: block.timestamp)
-      create(:cell_output, cell_type: "nervos_dao_deposit", generated_by: tx, ckb_transaction: tx, block: block, capacity: 10**8 * 1000, block_timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, occupied_capacity: 6100000000, dao: block.dao)
+      create(:block, :with_block_hash, epoch: 69, timestamp: 1575090866093,
+                                       dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
+      create(:address,
+             address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
+      tx = create(:ckb_transaction, block: block,
+                                    block_timestamp: block.timestamp)
+      create(:cell_output, cell_type: "nervos_dao_deposit", generated_by: tx,
+                           ckb_transaction: tx, block: block, capacity: 10**8 * 1000, block_timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, occupied_capacity: 6100000000, dao: block.dao)
       CkbSync::Api.any_instance.stubs(:get_tip_header).returns(
         CKB::Types::BlockHeader.new(
           compact_target: "0x1a33cadd",
@@ -114,7 +125,8 @@ module Charts
     end
 
     test "it should get circulating_supply" do
-      circulating_supply_temp = MarketData.new(indicator: "circulating_supply", tip_block_number: @current_tip_block.number, unit: "shannon").call
+      circulating_supply_temp = MarketData.new(indicator: "circulating_supply",
+                                               tip_block_number: @current_tip_block.number, unit: "shannon").call
       circulating_supply = Charts::DailyStatisticGenerator.new(@datetime).circulating_supply
       assert_equal circulating_supply_temp, circulating_supply
     end
@@ -168,7 +180,8 @@ module Charts
     end
 
     test "it should get mining_reward" do
-      mining_reward_temp = Block.where("timestamp <= ?", @ended_at).sum(:secondary_reward)
+      mining_reward_temp = Block.where("timestamp <= ?",
+                                       @ended_at).sum(:secondary_reward)
       mining_reward = Charts::DailyStatisticGenerator.new(@datetime).mining_reward
       assert_equal mining_reward_temp, mining_reward
     end
@@ -211,29 +224,37 @@ module Charts
     end
 
     test "it should get dead_cells_count" do
-
       # 1. from scratch
       # CellOutput.generated_before(ended_at).consumed_before(ended_at).count
       datetime = 1.day.ago
       block = create :block, :with_block_hash, timestamp: datetime.to_i * 1000
-      create :cell_output,:with_full_transaction, block_timestamp: datetime.to_i * 1000, consumed_block_timestamp: (datetime.to_i + 10) * 1000, block: block
-      create :cell_output,:with_full_transaction, block_timestamp: datetime.to_i * 1000, consumed_block_timestamp: (datetime.to_i + 10) * 1000, block: block
-      create :cell_output,:with_full_transaction, block_timestamp: datetime.to_i * 1000, consumed_block_timestamp: (datetime.to_i + 10) * 1000, block: block
-
+      cells = [
+        create(:cell_output, :with_full_transaction,
+               block_timestamp: datetime.to_i * 1000, block: block),
+        create(:cell_output, :with_full_transaction,
+               block_timestamp: datetime.to_i * 1000, block: block),
+        create(:cell_output, :with_full_transaction,
+               block_timestamp: datetime.to_i * 1000, block: block)
+      ]
+      CellOutput.where(id: cells.map(&:id)).update_all(consumed_block_timestamp: (datetime.to_i + 10) * 1000)
       is_from_scratch = true
-      assert_equal 3, Charts::DailyStatisticGenerator.new(datetime, is_from_scratch).dead_cells_count
+      assert_equal 3,
+                   Charts::DailyStatisticGenerator.new(datetime,
+                                                       is_from_scratch).dead_cells_count
 
       # 2. not from scratch
       # dead_cells_count = dead_cells_count_today + yesterday_daily_statistic.dead_cells_count.to_i
       # dead_cells_count_today = CellOutput.consumed_after(started_at).consumed_before(ended_at).count
       #
-      assert_equal 3, Charts::DailyStatisticGenerator.new(datetime).send(:dead_cells_count_today)
+      assert_equal 3,
+                   Charts::DailyStatisticGenerator.new(datetime).send(:dead_cells_count_today)
 
       daily_statistic = DailyStatistic.new
       Charts::DailyStatisticGenerator.any_instance.stubs(:yesterday_daily_statistic).returns(daily_statistic)
       DailyStatistic.any_instance.stubs(:dead_cells_count).returns(888)
 
-      assert_equal (3 + 888), Charts::DailyStatisticGenerator.new(datetime).dead_cells_count
+      assert_equal (3 + 888),
+                   Charts::DailyStatisticGenerator.new(datetime).dead_cells_count
     end
 
     test "it should get avg_hash_rate" do
@@ -241,7 +262,8 @@ module Charts
       create :block, :with_block_hash, timestamp: datetime.to_i * 1000
       create :block, :with_block_hash, timestamp: (datetime.to_i + 0.1) * 1000
       Charts::DailyStatisticGenerator.any_instance.stubs(:total_difficulties_for_the_day).returns(20000)
-      assert_equal 200, Charts::DailyStatisticGenerator.new(datetime).avg_hash_rate
+      assert_equal 200,
+                   Charts::DailyStatisticGenerator.new(datetime).avg_hash_rate
     end
 
     test "it should get avg_difficulty" do
@@ -293,21 +315,28 @@ module Charts
           end
         end
 
-      temp_address_balance_distribution = ranges.each_with_index.map do |range, index|
-        begin_value = range[0] * 10**8
-        end_value = range[1] * 10**8
-        if index == max_n - 1
-          addresses_count = Address.visible.where("balance > ?", begin_value).count
-          total_addresses_count = Address.visible.where("balance > 0").count
-        else
-          addresses_count = Address.visible.where("balance > ? and balance <= ?", begin_value, end_value).count
-          total_addresses_count = Address.visible.where("balance > 0 and balance <= ?", end_value).count
-        end
+      temp_address_balance_distribution =
+        ranges.each_with_index.map do |range, index|
+          begin_value = range[0] * 10**8
+          end_value = range[1] * 10**8
+          if index == max_n - 1
+            addresses_count = Address.visible.where("balance > ?",
+                                                    begin_value).count
+            total_addresses_count = Address.visible.where("balance > 0").count
+          else
+            addresses_count = Address.visible.where(
+              "balance > ? and balance <= ?", begin_value, end_value
+            ).count
+            total_addresses_count = Address.visible.where(
+              "balance > 0 and balance <= ?", end_value
+            ).count
+          end
 
-        [range[1], addresses_count, total_addresses_count]
-      end
+          [range[1], addresses_count, total_addresses_count]
+        end
       address_balance_distribution = Charts::DailyStatisticGenerator.new(@datetime).address_balance_distribution
-      assert_equal temp_address_balance_distribution, address_balance_distribution
+      assert_equal temp_address_balance_distribution,
+                   address_balance_distribution
     end
 
     test "it should get total_tx_fee" do
@@ -360,7 +389,10 @@ module Charts
       block_time_distribution = Charts::DailyStatisticGenerator.new(@datetime).block_time_distribution
       step = 0.1
       max_n = 50 - step
-      ranges = (0..max_n).step(0.1).map { |n| [n.round(2), (n + step).round(2)] }
+      ranges =
+        (0..max_n).step(0.1).map do |n|
+          [n.round(2), (n + step).round(2)]
+        end
       tip_block_number = @current_tip_block.number
       interval = 49999
       start_block_number = [0, tip_block_number - interval].max
@@ -369,7 +401,9 @@ module Charts
         ranges.map do |range|
           millisecond_start = range[0] * 1000
           millisecond_end = range[1] * 1000
-          block_count = Block.where("number >= ? and number <= ?", start_block_number, tip_block_number).where("block_time > ? and block_time <= ?", millisecond_start, millisecond_end).count
+          block_count = Block.where("number >= ? and number <= ?", start_block_number, tip_block_number).where(
+            "block_time > ? and block_time <= ?", millisecond_start, millisecond_end
+          ).count
           [range[1], block_count]
         end
       assert_equal temp_block_time_distribution, block_time_distribution
@@ -383,11 +417,16 @@ module Charts
           milliseconds_start = range[0] * 60 * 1000
           milliseconds_end = range[1] * 60 * 1000
           if index.zero?
-            epoch_count = ::EpochStatistic.where("epoch_time > 0 and epoch_time <= ?", milliseconds_end).count
+            epoch_count = ::EpochStatistic.where(
+              "epoch_time > 0 and epoch_time <= ?", milliseconds_end
+            ).count
           elsif index == max_n + 1
-            epoch_count = ::EpochStatistic.where("epoch_time > ?", milliseconds_start).count
+            epoch_count = ::EpochStatistic.where("epoch_time > ?",
+                                                 milliseconds_start).count
           else
-            epoch_count = ::EpochStatistic.where("epoch_time > ? and epoch_time <= ?", milliseconds_start, milliseconds_end).count
+            epoch_count = ::EpochStatistic.where(
+              "epoch_time > ? and epoch_time <= ?", milliseconds_start, milliseconds_end
+            ).count
           end
 
           [range[1], epoch_count]
@@ -417,7 +456,9 @@ module Charts
       start_epoch_number = [0, tip_epoch_number - interval].max
 
       temp_epoch_length_distribution = ranges.each_with_index.map { |range, _index|
-        epoch_count = ::EpochStatistic.where("epoch_number >= ? and epoch_number <= ?", start_epoch_number, tip_epoch_number).where("epoch_length > ? and epoch_length <= ?", range[0], range[1]).count
+        epoch_count = ::EpochStatistic.where("epoch_number >= ? and epoch_number <= ?", start_epoch_number, tip_epoch_number).where(
+          "epoch_length > ? and epoch_length <= ?", range[0], range[1]
+        ).count
 
         [range[1], epoch_count]
       }.compact
@@ -431,7 +472,5 @@ module Charts
       locked_capacity = Charts::DailyStatisticGenerator.new(@datetime).locked_capacity
       assert_equal locked_capacity_temp, locked_capacity
     end
-
-
   end
 end
