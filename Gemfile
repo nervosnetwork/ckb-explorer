@@ -79,6 +79,8 @@ gem "sentry-rails"
 gem "sentry-sidekiq"
 gem "newrelic_rpm"
 
+gem 'bigdecimal'
+
 # Deployment
 gem "rack-attack"
 
