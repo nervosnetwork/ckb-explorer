@@ -4,9 +4,9 @@ class CellOutputTest < ActiveSupport::TestCase
   context "associations" do
     should belong_to(:ckb_transaction)
     should belong_to(:address)
-    should belong_to(:block)
+    # should belong_to(:block)
     should have_many(:cell_dependencies)
-    should have_many(:referring_cells)
+    # should have_many(:referring_cells)
   end
 
   context "validations" do

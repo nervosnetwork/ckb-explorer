@@ -4,12 +4,17 @@ class DeployedCell < ApplicationRecord
   # one contract can has multiple deployed cells
   validates :cell_output, uniqueness: true
 
+  # find the corresponding contract defined in the specified cell output via cache
+  # @param cell_output_id [Integer] deployed cell output id
   def self.cell_output_id_to_contract_id(cell_output_id)
     Rails.cache.fetch(["cell_output_id_to_contract_id", cell_output_id], expires_in: 1.day) do
       DeployedCell.where(cell_output_id: cell_output_id).pick(:contract_id)
     end
   end
 
+  # save the contract <-> deployed cell mapping to cache
+  # @param cell_output_id [Integer] deployed cell output id
+  # @param contract_id [Integer] contract id
   def self.write_cell_output_id_to_contract_id(cell_output_id, contract_id)
     Rails.cache.write(["cell_output_id_to_contract_id", cell_output_id], contract_id, expires_in: 1.day)
   end
@@ -39,12 +44,13 @@ class DeployedCell < ApplicationRecord
     Rails.logger.info "== done"
   end
 
-  def self.create_initial_data_for_ckb_transaction(ckb_transaction)
+  def self.create_initial_data_for_ckb_transaction(ckb_transaction, cell_deps)
+    return if cell_deps.blank?
+
     deployed_cells = []
     cell_dependencies_attrs = []
     by_type_hash = {}
     by_data_hash = {}
-    return if ckb_transaction.cell_deps.blank?
 
     # intialize cell dependencies records
     # the `cell_deps` field in ckb transactions stores the contract cell (referred by out point,
@@ -61,7 +67,8 @@ class DeployedCell < ApplicationRecord
           contract_cell_id: cell_output.id,
           dep_type: cell_dep["dep_type"],
           ckb_transaction_id: ckb_transaction.id,
-          contract_id: DeployedCell.cell_output_id_to_contract_id(cell_output.id) # check if we already known the relationship between the contract cell and contract
+          contract_id: DeployedCell.cell_output_id_to_contract_id(cell_output.id), # check if we already known the relationship between the contract cell and contract
+          implicit: cell_dep["implicit"] || false
         }
 
         # we don't know how the cells in transaction may refer to the contract cell
@@ -79,7 +86,8 @@ class DeployedCell < ApplicationRecord
         cell_output
       end
 
-    ckb_transaction.cell_deps.each do |cell_dep|
+    cell_deps.each do |cell_dep|
+      cell_dep = cell_dep.to_h if cell_dep.is_a?(CKB::Types::CellDep)
       case cell_dep["dep_type"]
       when "code"
         parse_code_dep[cell_dep]
@@ -90,7 +98,8 @@ class DeployedCell < ApplicationRecord
           contract_cell_id: mid_cell.id,
           dep_type: cell_dep["dep_type"],
           ckb_transaction_id: ckb_transaction.id,
-          contract_id: nil
+          contract_id: nil,
+          implicit: false
         }
         binary_data = mid_cell.binary_data
         # binary_data = [hex_data[2..-1]].pack("H*")
@@ -107,14 +116,15 @@ class DeployedCell < ApplicationRecord
               "tx_hash" => "0x#{tx_hash}",
               "index" => cell_index
             },
-            "dep_type" => "code"
+            "dep_type" => "code",
+            "implicit" => true # this is an implicit dependency
           }]
         end
       end
     end
 
     cells = ckb_transaction.cell_outputs.includes(:lock_script, :type_script).to_a +
-      ckb_transaction.cell_inputs.map(&:previous_cell_output)
+      ckb_transaction.cell_inputs.includes(:previous_cell_output).map(&:previous_cell_output)
     scripts = cells.compact.inject([]) { |a, cell| a + [cell.lock_script, cell.type_script] }.compact.uniq
     deployed_cells_attrs = []
 
@@ -129,7 +139,8 @@ class DeployedCell < ApplicationRecord
       next unless dep
 
       unless dep[:contract_id] # we don't know the corresponding contract
-        contract = Contract.find_or_initialize_by code_hash: lock_script_or_type_script.code_hash, hash_type: lock_script_or_type_script.hash_type
+        contract = Contract.find_or_initialize_by code_hash: lock_script_or_type_script.code_hash,
+                                                  hash_type: lock_script_or_type_script.hash_type
 
         if contract.id.blank? # newly created contract record
           contract.deployed_args = lock_script_or_type_script.args
@@ -146,10 +157,15 @@ class DeployedCell < ApplicationRecord
     end
 
     deployed_cells_attrs = deployed_cells_attrs.uniq { |a| a[:cell_output_id] }
-    CellDependency.upsert_all cell_dependencies_attrs.uniq { |a| a[:contract_cell_id] }, unique_by: [:ckb_transaction_id, :contract_cell_id] if cell_dependencies_attrs.present?
+    if cell_dependencies_attrs.present?
+      CellDependency.upsert_all cell_dependencies_attrs.uniq { |a|
+                                  a[:contract_cell_id]
+                                }, unique_by: [:ckb_transaction_id, :contract_cell_id]
+    end
     DeployedCell.upsert_all deployed_cells_attrs, unique_by: [:cell_output_id] if deployed_cells_attrs.present?
     deployed_cells_attrs.each do |deployed_cell_attr|
-      DeployedCell.write_cell_output_id_to_contract_id(deployed_cell_attr[:cell_output_id], deployed_cell_attr[:contract_id])
+      DeployedCell.write_cell_output_id_to_contract_id(deployed_cell_attr[:cell_output_id],
+                                                       deployed_cell_attr[:contract_id])
     end
   end
 end

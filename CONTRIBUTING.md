@@ -1,22 +1,26 @@
 # Contributing
 
-When contributing to this repository, please first discuss the change you wish to make via issue, email, or any other method with the owners of this repository before making a change.
+When contributing to this repository, please first discuss the change you wish to make via issue, email, or any other
+method with the owners of this repository before making a change.
 
 Please note we have a code of conduct, please follow it in all your interactions with the project.
 
 ### Report Issue
 
-* Read [known issues](https://github.com/nervosnetwork/ckb-explorer/issues) to see whether the issue is already addressed there.
+* Read [known issues](https://github.com/nervosnetwork/ckb-explorer/issues) to see whether the issue is already
+addressed there.
 
 * Search existing issues to see whether others had already posted a similar issue.
 
-* When creating a new issue, be sure to include a title and clear description. It is appreciated that if you can also attach as much relevant information as possible, such as version, environment, reproducing steps, samples.
+* When creating a new issue, be sure to include a title and clear description. It is appreciated that if you can also
+attach as much relevant information as possible, such as version, environment, reproducing steps, samples.
 
 ### Pull Request Process
 
 * See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-* Update the README.md with details of changes to the interface, this includes new environment variables, exposed ports, useful file locations and container parameters.
+* Update the README.md with details of changes to the interface, this includes new environment variables, exposed ports,
+useful file locations and container parameters.
 
 * Open a new GitHub pull request with the patch.
 

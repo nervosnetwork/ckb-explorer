@@ -21,6 +21,7 @@ class StatisticInfoTest < ActiveSupport::TestCase
 
   test ".tip_block_number should return tip block number of the connected node" do
     statistic_info = StatisticInfo.new
+    Block.delete_all
     create(:block, :with_block_hash, number: 100)
     assert_equal 100, statistic_info.tip_block_number
   end
@@ -60,6 +61,7 @@ class StatisticInfoTest < ActiveSupport::TestCase
   end
 
   test ".address_balance_ranking should return top 50 holders list" do
+    Address.delete_all
     addresses =
       create_list(:address, 100).each.with_index(1) do |address, index|
         address.update(balance: index * 100)

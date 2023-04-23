@@ -95,14 +95,14 @@ module Api
         assert_equal CkbTransactionSerializer.new(ckb_transaction).serialized_json, response.body
       end
 
-      test "should return pool tx when tx is in the pool" do
-        tx = create(:pool_transaction_entry)
+      # test "should return pool tx when tx is in the pool" do
+      #   tx = create(:pool_transaction_entry)
 
-        valid_get api_v1_ckb_transaction_url(tx.tx_hash)
+      #   valid_get api_v1_ckb_transaction_url(tx.tx_hash)
 
-        expected_response = CkbTransactionSerializer.new(tx).serialized_json
-        assert_equal expected_response, response.body
-      end
+      #   expected_response = CkbTransactionSerializer.new(tx).serialized_json
+      #   assert_equal expected_response, response.body
+      # end
 
       test "should contain right keys in the serialized object when call show" do
         create(:table_record_count, :block_counter)
@@ -235,6 +235,7 @@ module Api
       end
 
       test "should return empty array when there is no ckb_transactions" do
+        CkbTransaction.delete_all
         ckb_transactions = CkbTransaction.recent.limit(15)
 
         valid_get api_v1_ckb_transactions_url

@@ -11,7 +11,7 @@ module Api::V2
       # select from database
       pending_transaction_fee_rates = PoolTransactionEntry.pool_transaction_pending.
         where("transaction_fee > 0").
-        order("id desc").page(@pending_page).per(@pending_page_size)
+        order("id desc").page(@pending_page).per(@pending_page_size).fast_page
 
       # This is a patch for those pending tx which has no `bytes`
       pending_transaction_fee_rates = pending_transaction_fee_rates.map { |tx|
@@ -45,7 +45,11 @@ module Api::V2
             fee_rate: (tx.transaction_fee.to_f / tx.bytes)
           }
         end,
-        last_n_days_transaction_fee_rates: CkbTransaction.last_n_days_transaction_fee_rates(@last_n_day)
+        last_n_days_transaction_fee_rates: Rails.cache.fetch(
+          "last_n_days_transaction_fee_rates", expires_in: 3.hours, race_condition_ttl: 1.minute
+        ) do
+                                             CkbTransaction.last_n_days_transaction_fee_rates(@last_n_day)
+                                           end
       }
     end
 

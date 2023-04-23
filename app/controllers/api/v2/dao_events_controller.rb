@@ -13,7 +13,7 @@ module Api::V2
       page_size = params[:page_size] || 10
 
       total = ckb_transactions.count
-      ckb_transactions = ckb_transactions.page(page).per(page_size)
+      ckb_transactions = ckb_transactions.page(page).per(page_size).fast_page
 
       activities = CkbTransactionsSerializer.new(ckb_transactions).serializable_hash
 

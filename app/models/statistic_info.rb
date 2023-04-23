@@ -1,5 +1,8 @@
 class StatisticInfo
-  def initialize(hash_rate_statistical_interval: ENV["HASH_RATE_STATISTICAL_INTERVAL"], average_block_time_interval: ENV["AVERAGE_BLOCK_TIME_INTERVAL"])
+  def initialize(
+    hash_rate_statistical_interval: (Settings.hash_rate_statistical_interval || 900).to_i,
+average_block_time_interval: (Settings.average_block_time_interval || 100)
+  )
     @hash_rate_statistical_interval = hash_rate_statistical_interval.to_i
     @average_block_time_interval = average_block_time_interval.to_i
   end
@@ -21,7 +24,9 @@ class StatisticInfo
   end
 
   def epoch_info
-    { epoch_number: tip_block.epoch.to_s, epoch_length: tip_block.length.to_s, index: (tip_block_number - tip_block.start_number).to_s }
+    {
+      epoch_number: tip_block.epoch.to_s, epoch_length: tip_block.length.to_s,
+      index: (tip_block_number - tip_block.start_number).to_s }
   end
 
   def estimated_epoch_time
@@ -57,13 +62,17 @@ class StatisticInfo
   end
 
   def hash_rate(block_number = tip_block_number)
-    blocks = Block.where("number <= ?", block_number).recent.includes(:uncle_blocks).limit(hash_rate_statistical_interval)
-    return if blocks.blank?
+    Rails.cache.fetch("hash_rate_#{block_number}", expires_in: 4.hours, race_condition_ttl: 15.seconds) do
+      blocks = Block.select(:id, :timestamp, :compact_target).
+        where("number <= ?", block_number).recent.limit(hash_rate_statistical_interval)
+      return if blocks.blank?
 
-    total_difficulties = blocks.flat_map { |block| [block, *block.uncle_blocks] }.reduce(0) { |sum, block| sum + block.difficulty }
-    total_time = blocks.first.timestamp - blocks.last.timestamp
+      total_difficulties = blocks.sum(&:difficulty)
+      total_difficulties += UncleBlock.where(block_id: blocks.map(&:id)).select(:compact_target).to_a.sum(&:difficulty)
+      total_time = blocks.first.timestamp - blocks.last.timestamp
 
-    (total_difficulties.to_d / total_time).truncate(6)
+      (total_difficulties.to_d / total_time).truncate(6)
+    end
   end
 
   def miner_ranking
@@ -71,7 +80,7 @@ class StatisticInfo
   end
 
   def address_balance_ranking
-    Rails.cache.realize("address_balance_ranking", expires_in: 4.hours) do
+    Rails.cache.fetch("address_balance_ranking", expires_in: 4.hours) do
       addresses = Address.visible.where("balance > 0").order(balance: :desc).limit(50)
       addresses.each.with_index(1).map do |address, index|
         { ranking: index.to_s, address: address.address_hash, balance: address.balance.to_s }
@@ -81,22 +90,23 @@ class StatisticInfo
 
   def blockchain_info
     message_need_to_be_fitlered_out = "CKB v0.105.* have bugs. Please upgrade to the latest version."
-    Rails.cache.realize("blockchain_info", expires_in: 6.hours) do
+    Rails.cache.fetch("blockchain_info", expires_in: 6.hours) do
       result = CkbSync::Api.instance.get_blockchain_info
-      result.alerts.delete_if{ |alert| alert.message == message_need_to_be_fitlered_out }
+      result.alerts.delete_if { |alert| alert.message == message_need_to_be_fitlered_out }
       result
     end
   end
 
-  def self.last_n_days_transaction_fee_rates timestamp
-    sql = %Q{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
+  def self.last_n_days_transaction_fee_rates(timestamp)
+    sql = %{select date_trunc('day', to_timestamp(timestamp/1000.0)) date, avg(total_transaction_fee / ckb_transactions_count ) fee_rate
       from blocks
       where timestamp > #{timestamp}
         and ckb_transactions_count != 0
       group by 1 order by 1 desc}
-    last_n_days_transaction_fee_rates = Rails.cache.fetch("last_n_days_transaction_fee_rates", expires_in: 10.seconds) do
-      ActiveRecord::Base.connection.execute(sql).values
-    end
+    last_n_days_transaction_fee_rates =
+      Rails.cache.fetch("last_n_days_transaction_fee_rates", expires_in: 10.seconds) do
+        ActiveRecord::Base.connection.execute(sql).values
+      end
     return last_n_days_transaction_fee_rates
   end
 

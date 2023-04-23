@@ -8,7 +8,7 @@ module Api
         address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
 
-        ckb_dao_transactions = address.ckb_dao_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(@page).per(@page_size)
+        ckb_dao_transactions = address.ckb_dao_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(@page).per(@page_size).fast_page
         json =
           Rails.cache.realize(ckb_dao_transactions.cache_key, version: ckb_dao_transactions.cache_version) do
             records_counter = RecordCounters::AddressDaoTransactions.new(address)

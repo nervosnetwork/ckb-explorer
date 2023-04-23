@@ -144,7 +144,7 @@ class AddressTest < ActiveSupport::TestCase
     30.times do |number|
       block = create(:block, :with_block_hash)
       contained_address_ids = number % 2 == 0 ? [address.id] : [address1.id]
-      tx = create(:ckb_transaction, block: block, tags: ["dao"], dao_address_ids: [contained_address_ids], contained_address_ids: contained_address_ids)
+      tx = create(:ckb_transaction, block: block, tags: ["dao"], contained_dao_address_ids: contained_address_ids, contained_address_ids: contained_address_ids)
       AccountBook.find_or_create_by(address_id: contained_address_ids[0], ckb_transaction: tx)
       AddressDaoTransaction.insert({ address_id: contained_address_ids[0], ckb_transaction_id: tx.id })
       cell_type = number % 2 == 0 ? "nervos_dao_deposit" : "nervos_dao_withdrawing"

@@ -149,6 +149,7 @@ module Api
       end
 
       test "should return tip block number when param is tip_block_number" do
+        Block.delete_all
         tip_block_number = 101
         create(:block, number: tip_block_number)
         valid_get api_v1_statistic_url("tip_block_number")

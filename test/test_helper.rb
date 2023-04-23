@@ -9,6 +9,7 @@ SimpleCov.start "rails" do
   add_filter "/lib/ckb_statistic_info_chart_data_updater.rb"
 end
 require "database_cleaner"
+require "database_cleaner/active_record"
 require "minitest/reporters"
 require "mocha/minitest"
 require "sidekiq/testing"
@@ -27,6 +28,7 @@ VCR.configure do |config|
   config.hook_into :webmock
   config.default_cassette_options[:match_requests_on] = [:method, :path, :body]
 end
+DatabaseCleaner.clean_with :truncation
 DatabaseCleaner.strategy = :transaction
 
 Shoulda::Matchers.configure do |config|
@@ -120,7 +122,10 @@ def format_node_block(node_block)
 end
 
 def format_node_block_commit_transaction(commit_transaction)
-  tx = commit_transaction.instance_values.reject { |key, _value| key.in?(%w(inputs outputs outputs_data)) }
+  tx =
+    commit_transaction.instance_values.reject do |key, _value|
+      key.in?(%w(inputs outputs outputs_data))
+    end
   tx["witnesses"] = JSON.parse(tx["witnesses"].to_json)
 
   tx
@@ -331,14 +336,14 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   cellbases_part2 = cellbases[2..8]
   cellbases_part3 = cellbases[9..-1]
   address1 = create(:address, :with_lock_script)
-  cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1, generated_by: cellbase) }
+  cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1, generated_by: cellbase, lock_script: address1.lock_script) }
   # address1.ckb_transactions << cellbases_part1
   AccountBook.insert_all(cellbases_part1.map { |c| { address_id: address1.id, ckb_transaction_id: c.id } })
   address2 = create(:address, :with_lock_script)
-  cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2, generated_by: cellbase) }
+  cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2, generated_by: cellbase, lock_script: address2.lock_script) }
   AccountBook.insert_all(cellbases_part2.map { |c| { address_id: address2.id, ckb_transaction_id: c.id } }) # address2.ckb_transactions << cellbases_part2
   address3 = create(:address, :with_lock_script)
-  cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3, generated_by: cellbase) }
+  cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3, generated_by: cellbase, lock_script: address3.lock_script) }
   AccountBook.insert_all(cellbases_part3.map { |c| { address_id: address3.id, ckb_transaction_id: c.id } }) # address3.ckb_transactions << cellbases_part3
 
   return address1, address2, address3
@@ -381,7 +386,6 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
                                 tx_hash: "0x#{SecureRandom.hex(32)}",
                                 block: block,
                                 address: address,
-                                dao_address_ids: [address.id],
                                 contained_dao_address_ids: [address.id],
                                 contained_address_ids: [address.id],
                                 tags: ["dao"])
@@ -390,7 +394,6 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
       ckb_transaction2 = create(:ckb_transaction,
                                 tx_hash: "0x#{SecureRandom.hex(32)}",
                                 block: block, address: address,
-                                dao_address_ids: [address.id],
                                 contained_dao_address_ids: [address.id],
                                 contained_address_ids: [address.id],
                                 tags: ["dao"])
@@ -434,9 +437,8 @@ module ActiveSupport
 
     # Add more helper methods to be used by all tests here...
     def before_setup
-      super
       DatabaseCleaner.start
-
+      super
       CkbSync::NewNodeDataProcessor.any_instance.stubs(:get_median_timestamp).returns(1573852190812)
     end
 

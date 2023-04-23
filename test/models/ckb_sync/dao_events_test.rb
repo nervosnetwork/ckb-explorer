@@ -911,16 +911,46 @@ module CkbSync
       ckb_transaction1 = create(:ckb_transaction, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
       ckb_transaction2 = create(:ckb_transaction, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
       lock = create(:lock_script)
-      cell_output1 = create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, cell_type: "nervos_dao_withdrawing", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x02" * 8), lock_script_id: lock.id)
-      cell_output2 = create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 1, tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", generated_by: ckb_transaction1, block: block, consumed_by: ckb_transaction2, cell_type: "nervos_dao_deposit", capacity: 10**8 * 1000, data: CKB::Utils.bin_to_hex("\x00" * 8), lock_script_id: lock.id)
-      cell_output3 = create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2, tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, lock_script_id: lock.id)
+      cell_output1 = create(:cell_output, ckb_transaction: ckb_transaction1,
+                                          cell_index: 1,
+                                          tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
+                                          generated_by: ckb_transaction1,
+                                          block: block,
+                                          cell_type: "nervos_dao_withdrawing",
+                                          capacity: 10**8 * 1000,
+                                          data: CKB::Utils.bin_to_hex("\x02" * 8),
+                                          lock_script_id: lock.id)
+      cell_output2 = create(:cell_output, ckb_transaction: ckb_transaction2,
+                                          cell_index: 1, tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2",
+                                          generated_by: ckb_transaction1,
+                                          block: block,
+                                          consumed_by: ckb_transaction2,
+                                          status: "dead",
+                                          cell_type: "nervos_dao_deposit",
+                                          capacity: 10**8 * 1000,
+                                          data: CKB::Utils.bin_to_hex("\x00" * 8),
+                                          lock_script_id: lock.id)
+      cell_output3 = create(:cell_output, ckb_transaction: ckb_transaction2,
+                                          cell_index: 2,
+                                          tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
+                                          generated_by: ckb_transaction1,
+                                          block: block,
+                                          lock_script_id: lock.id)
       cell_output1.address.update(balance: 10**8 * 1000)
       cell_output2.address.update(balance: 10**8 * 1000)
       cell_output3.address.update(balance: 10**8 * 1000)
-      create(:cell_input, block: ckb_transaction2.block, ckb_transaction: ckb_transaction2, previous_output: { "tx_hash": "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", "index": "1" })
-      create(:cell_input, block: ckb_transaction2.block, ckb_transaction: ckb_transaction2, previous_output: { "tx_hash": "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "2" })
-      create(:cell_input, block: ckb_transaction1.block, ckb_transaction: ckb_transaction1, previous_output: { "tx_hash": "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "1" })
-      create(:cell_input, block: ckb_transaction1.block, ckb_transaction: ckb_transaction1, previous_output: { "tx_hash": "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "1" })
+      create(:cell_input, block: ckb_transaction2.block,
+                          ckb_transaction: ckb_transaction2,
+                          previous_output: { "tx_hash": "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2", "index": "1" })
+      create(:cell_input, block: ckb_transaction2.block,
+                          ckb_transaction: ckb_transaction2,
+                          previous_output: { "tx_hash": "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "2" })
+      create(:cell_input, block: ckb_transaction1.block,
+                          ckb_transaction: ckb_transaction1,
+                          previous_output: { "tx_hash": "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "1" })
+      create(:cell_input, block: ckb_transaction1.block,
+                          ckb_transaction: ckb_transaction1,
+                          previous_output: { "tx_hash": "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", "index": "1" })
 
       tx = node_block.transactions.last
       tx.header_deps = ["0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"]

@@ -2,12 +2,12 @@ module Api
   module V2
     class NFT::CollectionsController < BaseController
       def index
-        @pagy, @collections = pagy(TokenCollection.order(id: :desc))
-        render json: { 
+        @pagy, @collections = pagy(TokenCollection.order(id: :desc)).fast_page
+        render json: {
               data: @collections,
-               pagination: pagy_metadata(@pagy) 
+               pagination: pagy_metadata(@pagy)
               }
-      end      
+      end
 
       def show
         if params[:id] =~ /\A\d+\z/
@@ -15,7 +15,7 @@ module Api
         else
           @collection = TokenCollection.find_by_sn params[:id]
         end
-        
+
         if @collection
           render json: @collection
         else

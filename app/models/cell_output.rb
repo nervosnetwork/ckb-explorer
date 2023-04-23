@@ -2,40 +2,97 @@ class CellOutput < ApplicationRecord
   SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   MIN_SUDT_AMOUNT_BYTESIZE = 16
-  enum status: { live: 0, dead: 1 }
-  enum cell_type: { normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4, m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9, cota_regular: 10 }
+  enum status: { live: 0, dead: 1, pending: 2, rejected: 3 }
+  enum cell_type: {
+    normal: 0,
+    nervos_dao_deposit: 1,
+    nervos_dao_withdrawing: 2,
+    udt: 3,
+    m_nft_issuer: 4,
+    m_nft_class: 5,
+    m_nft_token: 6,
+    nrc_721_token: 7,
+    nrc_721_factory: 8,
+    cota_registry: 9,
+    cota_regular: 10
+  }
 
   belongs_to :ckb_transaction
+  # FIXME: the generated_by_id is actually the same as ckb_transaction_id
   belongs_to :generated_by, class_name: "CkbTransaction"
+  # the consumed_by_id will be set only when transaction is committed on chain
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
-  belongs_to :address
+  # the inputs which consumes this cell output
+  # but one cell may be included by many pending transactions,
+  # the cell_inputs won't always be the same as `consumed_by`.`cell_inputs`
+  has_many :cell_inputs, foreign_key: :previous_output_id
   belongs_to :deployed_cell, optional: true
-  belongs_to :block
-  belongs_to :lock_script, optional: true
+  # the block_id is actually the same as ckb_transaction.block_id, must be on chain
+  # but one cell may be included by pending transactions, so block_id may be null
+  belongs_to :block, optional: true
+  belongs_to :address
+  belongs_to :lock_script
   belongs_to :type_script, optional: true
 
   has_many :cell_dependencies, foreign_key: :contract_cell_id, dependent: :delete_all
-  has_many :referring_cells
+  has_one :cell_data, class_name: "CellDatum", dependent: :destroy_async
 
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
+  # on-chain cell outputs must be included in certain block
+  validates :block, presence: true, if: -> { live? or dead? }
+
+  # cell output must not have this field set when they are not on-chain
+  validates :block_id, must_be_nil: true, if: -> { pending? or rejected? }
+
+  # cell output must have corresponding consuming transaction if it is dead
+  validates :consumed_by, presence: true, if: :dead?
+
+  # cell output must not have consumed_by_id set when it's live
+  validates :consumed_by_id, :consumed_block_timestamp, must_be_nil: true, if: :live?
+
+  # consumed timestamp must be always greater than committed timestamp
+  validates :consumed_block_timestamp, numericality: { greater_than_or_equal_to: :block_timestamp },
+                                       if: :consumed_block_timestamp?
+
   attribute :tx_hash, :ckb_hash
+  attr_accessor :raw_address
 
   scope :consumed_after, ->(block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
   scope :consumed_before, ->(block_timestamp) { where("consumed_block_timestamp <= ?", block_timestamp) }
-  scope :unconsumed_at, ->(block_timestamp) { where("consumed_block_timestamp > ? or consumed_block_timestamp = 0", block_timestamp) }
+  scope :consumed_between, ->(start_timestamp, end_timestamp) {
+                             consumed_after(start_timestamp).consumed_before(end_timestamp)
+                           }
+  scope :unconsumed_at, ->(block_timestamp) {
+                          where("consumed_block_timestamp > ? or consumed_block_timestamp = 0 or consumed_block_timestamp is null", block_timestamp)
+                        }
   scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+  scope :generated_between, ->(start_timestamp, end_timestamp) {
+                              generated_after(start_timestamp).generated_before(end_timestamp)
+                            }
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
   scope :free, -> { where(type_hash: nil, data: "0x") }
   scope :occupied, -> { where.not(type_hash: nil, data: "0x") }
 
-  after_commit :flush_cache
+  before_validation do
+    self.data_size ||= data ? CKB::Utils.hex_to_bin(data).bytesize : 0
+  end
 
+  before_create :setup_address
+
+  def setup_address
+    self.address = Address.find_or_create_by_address_hash(raw_address, block_timestamp) if raw_address
+  end
+
+  # after_commit :flush_cache
+
+  # @return [Boolean]
   def occupied?
     !free?
   end
 
+  # @return [Boolean]
   def free?
     type_hash.blank? && (data.present? && data == "0x")
   end
@@ -45,11 +102,15 @@ class CellOutput < ApplicationRecord
   end
 
   def binary_data
-    [data[2..-1]].pack("H*")
+    [data[2..]].pack("H*")
   end
 
+  # find cell output according to the out point( tx_hash and output index )
+  # @param [String] tx_hash
+  # @param [Integer] index
+  # @return [CellOutput]
   def self.find_by_pointer(tx_hash, index)
-    Rails.cache.fetch(["cell_output", tx_hash, index], race_condition_ttl: 3.seconds, expires_in: 1.day) do
+    Rails.cache.fetch(["cell_output", tx_hash, index], race_condition_ttl: 10.seconds, expires_in: 1.day) do
       tx_id =
         Rails.cache.fetch(["tx_id", tx_hash], expires_in: 1.day) do
           CkbTransaction.find_by_tx_hash(tx_hash)&.id
@@ -66,10 +127,14 @@ class CellOutput < ApplicationRecord
 
   def cache_keys
     %W(
-      previous_cell_output/#{tx_hash}/#{cell_index} normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
-      normal_tx_display_inputs_previews_false_#{ckb_transaction_id} normal_tx_display_inputs_previews_true_#{consumed_by_id}
-      normal_tx_display_inputs_previews_false_#{consumed_by_id} normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
-      normal_tx_display_outputs_previews_false_#{ckb_transaction_id} normal_tx_display_outputs_previews_true_#{consumed_by_id}
+      previous_cell_output/#{tx_hash}/#{cell_index}
+      normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
+      normal_tx_display_inputs_previews_false_#{ckb_transaction_id}
+      normal_tx_display_inputs_previews_true_#{consumed_by_id}
+      normal_tx_display_inputs_previews_false_#{consumed_by_id}
+      normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
+      normal_tx_display_outputs_previews_false_#{ckb_transaction_id}
+      normal_tx_display_outputs_previews_true_#{consumed_by_id}
       normal_tx_display_outputs_previews_false_#{consumed_by_id}
     )
   end
@@ -108,11 +173,14 @@ class CellOutput < ApplicationRecord
       value = { class_name: parsed_data.name, total: parsed_data.total }
     when "m_nft_token"
       # issuer_id size is 20 bytes, class_id size is 4 bytes
-      m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash, args: type_script.args[0..49]).first
+      m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash,
+                                          args: type_script.args[0..49]).first
       if m_nft_class_type.present?
         m_nft_class_cell = m_nft_class_type.cell_outputs.last
         parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
-        value = { class_name: parsed_class_data.name, token_id: type_script.args[50..-1], total: parsed_class_data.total }
+        value = {
+          class_name: parsed_class_data.name, token_id: type_script.args[50..-1],
+          total: parsed_class_data.total }
       else
         value = { class_name: "", token_id: nil, total: "" }
       end
@@ -128,7 +196,8 @@ class CellOutput < ApplicationRecord
     case cell_type
     when "nrc_721_factory"
       factory_cell_type_script = self.type_script
-      factory_cell = NrcFactoryCell.find_by(code_hash: factory_cell_type_script.code_hash, hash_type: factory_cell_type_script.hash_type, args: factory_cell_type_script.args, verified: true)
+      factory_cell = NrcFactoryCell.find_by(code_hash: factory_cell_type_script.code_hash,
+                                            hash_type: factory_cell_type_script.hash_type, args: factory_cell_type_script.args, verified: true)
       value = { symbol: factory_cell&.symbol }
     when "nrc_721_token"
       udt = Udt.find_by(type_hash: type_hash)
@@ -263,7 +332,7 @@ end
 #  data_size                :integer
 #  occupied_capacity        :decimal(30, )
 #  block_timestamp          :decimal(30, )
-#  consumed_block_timestamp :decimal(30, )    default(0)
+#  consumed_block_timestamp :decimal(30, )
 #  type_hash                :string
 #  udt_amount               :decimal(40, )
 #  dao                      :string

@@ -20,7 +20,7 @@ AllCops:
     - node_modules/**/*
     - bin/*
   ExtraDetails: true
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 3.0
 
 
 # ThoughtBot Overwrite
@@ -38,7 +38,9 @@ Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: no_comma
 
 Metrics/LineLength:
-  Enabled: false
+  Description: 'Limit lines to 80 characters.'
+  StyleGuide: 'https://github.com/bbatsov/ruby-style-guide#80-character-limits'
+  Max: 120
 
 Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent

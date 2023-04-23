@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   require "sidekiq/web"
   require "sidekiq_unique_jobs/web"
-  require "sidekiq/cron/web"
+
   mount Sidekiq::Web => "/sidekiq"
 
   root "application#homepage"
@@ -47,7 +47,7 @@ Rails.application.routes.draw do
     end
 
     namespace :v2 do
-      post '/das_accounts' => 'das_accounts#query', as: :das_accounts
+      post "/das_accounts" => "das_accounts#query", as: :das_accounts
     end
   end
   draw "v2"

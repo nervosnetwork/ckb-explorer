@@ -15,12 +15,12 @@ class BlockStatistic < ApplicationRecord
   end
 
   def get_block_economic_state
-    @res ||= CkbSync::Api.instance.get_block_economic_state(block_hash)
+    @get_block_economic_state ||= CkbSync::Api.instance.get_block_economic_state(block_hash)
   end
 
   # has '0x' prefix
   def dao_infos
-    @values ||= [block.dao[2..-1]].pack("H*").unpack("Q<4").map { |i| i.to_d / CkbToShannon }
+    @dao_infos ||= [block.dao[2..]].pack("H*").unpack("Q<4").map { |i| i.to_d / CkbToShannon }
   end
 
   def reset_accumulated_total_deposits
@@ -66,10 +66,10 @@ end
 #  hash_rate                   :string
 #  live_cells_count            :string           default("0")
 #  dead_cells_count            :string           default("0")
-#  block_number                :decimal(30, )
+#  block_number                :bigint
 #  created_at                  :datetime         not null
 #  updated_at                  :datetime         not null
-#  epoch_number                :decimal(30, )
+#  epoch_number                :bigint
 #  primary_issuance            :decimal(36, 8)
 #  secondary_issuance          :decimal(36, 8)
 #  accumulated_total_deposits  :decimal(36, 8)
