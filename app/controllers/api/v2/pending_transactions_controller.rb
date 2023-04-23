@@ -8,8 +8,8 @@ module Api::V2
       order_by = params[:order_by] || 'id'
       head :not_found and return unless order_by.in? %w[id, created_at, transaction_fee ]
 
-      pending_transactions.order(order_by: asc_or_desc)
-      pending_transactions = pending_transactions.page(@page).per(@page_size).fast_page
+      pending_transactions = pending_transactions.order(order_by: asc_or_desc)
+        .page(@page).per(@page_size).fast_page
       head :not_found and return if pending_transactions.blank?
 
       render json: {
