@@ -22,7 +22,7 @@ module Api
           )
 
           asc_or_desc = params[:asc_or_desc] || 'desc'
-          order_by = params[:order_by] || 'number'
+          order_by = params[:order_by] || 'block_number'
 
           ckb_transactions = ckb_transactions.order_by(block_number: asc_or_desc) if params[:order_by] == 'block_number'
           ckb_transactions = ckb_transactions.order_by(block_timestamp: asc_or_desc) if params[:order_by] == 'block_timestamp'

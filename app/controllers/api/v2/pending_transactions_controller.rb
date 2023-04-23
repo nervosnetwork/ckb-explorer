@@ -2,7 +2,14 @@ module Api::V2
   class PendingTransactionsController < BaseController
     before_action :set_page_and_page_size
     def index
-      pending_transactions = PoolTransactionEntry.pool_transaction_pending.order('id desc').page(@page).per(@page_size).fast_page
+      pending_transactions = PoolTransactionEntry.pool_transaction_pending.
+
+      asc_or_desc = params[:asc_or_desc] || 'desc'
+      order_by = params[:order_by] || 'id'
+      head :not_found and return unless order_by.in? %w[id, created_at, transaction_fee ]
+
+      pending_transactions.order(order_by: asc_or_desc)
+      pending_transactions = pending_transactions.page(@page).per(@page_size).fast_page
       head :not_found and return if pending_transactions.blank?
 
       render json: {
