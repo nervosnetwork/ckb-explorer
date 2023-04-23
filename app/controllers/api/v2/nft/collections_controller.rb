@@ -2,11 +2,22 @@ module Api
   module V2
     class NFT::CollectionsController < BaseController
       def index
-        @pagy, @collections = pagy(TokenCollection.order(id: :desc)).fast_page
+
+        asc_or_desc = params[:asc_or_desc] || 'desc'
+        order_by = params[:order_by] || 'id'
+        head :not_found and return unless order_by.in? %w[id holders_count items_count]
+
+        collections = TokenCollection
+        collections = collections.where(standard: params[:type]) if params[:type].present?
+        collections = collections
+          .order(params[:order_by]: order_by)
+          .page(@page).per(@page_size).fast_page
+
+        @pagy, @collections = pagy(collections).fast_page
         render json: {
-              data: @collections,
-               pagination: pagy_metadata(@pagy)
-              }
+          data: @collections,
+          pagination: pagy_metadata(@pagy)
+        }
       end
 
       def show
