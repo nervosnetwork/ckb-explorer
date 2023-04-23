@@ -19,7 +19,16 @@ module Api
         else
           ckb_transactions = CkbTransaction.recent.normal.select(
             :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at
-          ).page(@page).per(@page_size).fast_page
+          )
+
+          asc_or_desc = params[:asc_or_desc] || 'desc'
+          order_by = params[:order_by] || 'number'
+
+          ckb_transactions = ckb_transactions.order_by(block_number: asc_or_desc) if params[:order_by] == 'block_number'
+          ckb_transactions = ckb_transactions.order_by(block_timestamp: asc_or_desc) if params[:order_by] == 'block_timestamp'
+          ckb_transactions = ckb_transactions.order_by(transaction_fee: asc_or_desc) if params[:order_by] == 'transaction_fee'
+          ckb_transactions = ckb_transactions.page(@page).per(@page_size).fast_page
+
           json =
             Rails.cache.realize(ckb_transactions.cache_key,
                                 version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
