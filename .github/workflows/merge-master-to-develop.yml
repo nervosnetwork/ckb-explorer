@@ -1,0 +1,23 @@
+name: Merge master to develop
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  merge-master-to-develop:
+    name: Merge master to develop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Merge master to develop
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: master
+          destination_branch: develop
+          pr_title: 'Merge released ${{ github.ref }} into develop'
+          pr_reviewer: keith-cy
+          pr_label: auto-pr
+          pr_body: ':crown: *Anautomated PR*'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
