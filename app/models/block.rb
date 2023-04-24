@@ -302,7 +302,7 @@ class Block < ApplicationRecord
   end
 
   def update_counter_for_ckb_node_version
-    witness = self.ckb_transactions.first.witnesses[0]&.data
+    witness = self.cellbase.witnesses[0].data
     return if witness.blank?
 
     matched = [witness.gsub("0x", "")].pack("H*").match(/\d\.\d+\.\d/)
