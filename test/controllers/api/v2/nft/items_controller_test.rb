@@ -2,7 +2,7 @@ require "test_helper"
 
 module Api
   module V2
-    class ItemsControllerTest < ActionDispatch::IntegrationTest
+    class NFT::ItemsControllerTest < ActionDispatch::IntegrationTest
       def setup
         super
       end
