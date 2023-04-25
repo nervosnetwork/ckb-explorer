@@ -11,13 +11,13 @@ module Api
 
       def show
         if params[:id] =~ /\A\d+\z/
-          @collection = TokenCollection.find params[:id]
+          collection = TokenCollection.find params[:id]
         else
-          @collection = TokenCollection.find_by_sn params[:id]
+          collection = TokenCollection.find_by_sn params[:id]
         end
 
-        if @collection
-          render json: @collection
+        if collection
+          render json: collection
         else
           head :not_found
         end
