@@ -10,7 +10,12 @@ module Api
         else
           parsed = CkbUtils.parse_address(address)
           parsed.script.compute_hash
-        end        
+        end
+      end
+
+      # this method is a monkey patch for fast_page using with pagy.
+      def pagy_get_items(collection, pagy)
+        collection.offset(pagy.offset).limit(pagy.items).fast_page
       end
     end
   end
