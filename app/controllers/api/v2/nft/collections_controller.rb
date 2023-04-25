@@ -2,11 +2,11 @@ module Api
   module V2
     class NFT::CollectionsController < BaseController
       def index
-        @pagy, @collections = pagy(TokenCollection.order(id: :desc)).fast_page
+        pagy, collections = pagy(TokenCollection.order(id: :desc))
         render json: {
-              data: @collections,
-               pagination: pagy_metadata(@pagy)
-              }
+          data: collections,
+          pagination: pagy_metadata(pagy)
+        }
       end
 
       def show
@@ -21,6 +21,12 @@ module Api
         else
           head :not_found
         end
+      end
+
+      private
+      # this method is a monkey patch for fast_page using with pagy.
+      def pagy_get_items(collection, pagy)
+        collection.offset(pagy.offset).limit(pagy.items).fast_page
       end
     end
   end
