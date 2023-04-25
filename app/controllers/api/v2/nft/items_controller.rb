@@ -38,6 +38,7 @@ module Api
 
       protected
 
+
       def find_collection
         if params[:collection_id].present?
           if /\A\d+\z/.match?(params[:collection_id])

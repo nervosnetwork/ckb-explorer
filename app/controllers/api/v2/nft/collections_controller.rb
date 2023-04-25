@@ -23,11 +23,6 @@ module Api
         end
       end
 
-      private
-      # this method is a monkey patch for fast_page using with pagy.
-      def pagy_get_items(collection, pagy)
-        collection.offset(pagy.offset).limit(pagy.items).fast_page
-      end
     end
   end
 end
