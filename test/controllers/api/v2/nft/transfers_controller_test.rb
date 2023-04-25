@@ -23,7 +23,8 @@ module Api
                                      to: @to_address.address_hash)
         assert_response :success
         assert_equal 1, JSON.parse(response.body)['data'].size
-        assert_equal @token_transfer.id, JSON.parse(response.body)['data'][0]['item']['id']
+        puts response.body
+        assert_equal @token_transfer.id, JSON.parse(response.body)['data'][0]['id']
       end
 
       test "should get show" do
