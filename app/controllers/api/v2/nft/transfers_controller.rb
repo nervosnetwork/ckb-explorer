@@ -1,7 +1,7 @@
 module Api
   module V2
     class NFT::TransfersController < BaseController
-      # GET /token_transfers
+
       def index
         if params[:collection_id].present?
           if /\A\d+\z/.match?(params[:collection_id])
@@ -36,10 +36,9 @@ module Api
         }
       end
 
-      # GET /token_transfers/1
       def show
-        @token_transfer = TokenTransfer.find(params[:id])
-        render json: @token_transfer
+        token_transfer = TokenTransfer.find(params[:id])
+        render json: token_transfer
       end
     end
   end
