@@ -11,15 +11,15 @@ module Api
         scope = scope.where(collection_id: @collection.id) if @collection
         scope = scope.where(collection:{standard: params[:standard]}) if params[:standard]
         scope = scope.order(token_id: :asc)
-        @pagy, @items = pagy(scope).fast_page
-        @items = @items.map do |i|
+        pagy, items = pagy(scope)
+        items = items.map do |i|
           j = i.as_json
           j['collection'] = i.collection.as_json
           j
         end
         render json: {
-          data: @items,
-          pagination: pagy_metadata(@pagy)
+          data: items,
+          pagination: pagy_metadata(pagy)
         }
       end
 
