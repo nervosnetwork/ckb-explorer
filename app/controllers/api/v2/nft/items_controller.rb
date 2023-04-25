@@ -28,9 +28,9 @@ module Api
           return head(:not_found)
         end
 
-        @item = @collection.items.find_by token_id: params[:id]
-        if @item
-          render json: @item.as_json.merge(collection: @item.collection.as_json)
+        item = @collection.items.find_by token_id: params[:id]
+        if item
+          render json: item.as_json.merge(collection: item.collection.as_json)
         else
           head :not_found
         end
