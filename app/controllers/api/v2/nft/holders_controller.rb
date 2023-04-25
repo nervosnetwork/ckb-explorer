@@ -6,10 +6,10 @@ module Api
         if !@collection
           return head(:not_found)
         end
-        @counts = @collection.items.joins(:owner).group(:address_hash).count
+        counts = @collection.items.joins(:owner).group(:address_hash).count
         # @pagy, @addresses = pagy(scope)
         render json: {
-          data: @counts
+          data: counts
           # pagination: pagy_metadata(@pagy)
         }
       end
