@@ -9,7 +9,7 @@ class StatisticInfo < ApplicationRecord
   # end
 
   def self.default
-    first_or_create
+    first_or_create!
   end
 
   def cache_key
@@ -50,7 +50,7 @@ class StatisticInfo < ApplicationRecord
     interval = 100
     start_block_number = [tip_block_number.to_i - interval + 1, 0].max
     timestamps = Block.where(number: [start_block_number, tip_block_number]).recent.pluck(:timestamp)
-    return if timestamps.empty?
+    next if timestamps.empty?
 
     transactions_count = Block.where(number: start_block_number..tip_block_number).sum(:ckb_transactions_count)
 
@@ -61,24 +61,23 @@ class StatisticInfo < ApplicationRecord
     interval = (Settings.average_block_time_interval || 100)
     start_block_number = [tip_block_number.to_i - interval + 1, 0].max
     timestamps = Block.where(number: [start_block_number, tip_block_number]).recent.pluck(:timestamp)
-    return if timestamps.empty?
+    next if timestamps.empty?
 
     total_block_time(timestamps) / blocks_count(interval)
   end
 
   define_logic :hash_rate do
     block_number = tip_block_number
-    Rails.cache.fetch("hash_rate_#{block_number}", expires_in: 4.hours, race_condition_ttl: 15.seconds) do
-      blocks = Block.select(:id, :timestamp, :compact_target).
-        where("number <= ?", block_number).recent.limit(hash_rate_statistical_interval)
-      return if blocks.blank?
 
-      total_difficulties = blocks.sum(&:difficulty)
-      total_difficulties += UncleBlock.where(block_id: blocks.map(&:id)).select(:compact_target).to_a.sum(&:difficulty)
-      total_time = blocks.first.timestamp - blocks.last.timestamp
+    blocks = Block.select(:id, :timestamp, :compact_target).
+      where("number <= ?", block_number).recent.limit(hash_rate_statistical_interval || Settings.hash_rate_statistical_interval || 900)
+    next if blocks.blank?
 
-      (total_difficulties.to_d / total_time).truncate(6)
-    end
+    total_difficulties = blocks.sum(&:difficulty)
+    total_difficulties += UncleBlock.where(block_id: blocks.map(&:id)).select(:compact_target).to_a.sum(&:difficulty)
+    total_time = blocks.first.timestamp - blocks.last.timestamp
+
+    (total_difficulties.to_d / total_time).truncate(6)
   end
 
   define_logic :miner_ranking do
@@ -88,7 +87,7 @@ class StatisticInfo < ApplicationRecord
   define_logic :address_balance_ranking do
     addresses = Address.visible.where("balance > 0").order(balance: :desc).limit(50)
     addresses.each.with_index(1).map do |address, index|
-      { ranking: index.to_s, address: address.address_hash, balance: address.balance.to_s }
+      { address: address.address_hash, balance: address.balance.to_s, ranking: index.to_s }
     end
   end
 
