@@ -4,7 +4,7 @@ module Api
       before_action :validate_query_params, only: :show
 
       def index
-        statistic_info = StatisticInfo.new
+        statistic_info = StatisticInfo.default
         if stale?(public: true)
           expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
           render json: IndexStatisticSerializer.new(statistic_info)
@@ -12,7 +12,7 @@ module Api
       end
 
       def show
-        statistic_info = StatisticInfo.new
+        statistic_info = StatisticInfo.default
         render json: StatisticSerializer.new(statistic_info, params: { info_name: params[:id] })
       end
 

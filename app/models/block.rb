@@ -357,7 +357,6 @@ end
 #  timestamp                  :bigint
 #  transactions_root          :binary
 #  proposals_hash             :binary
-#  uncles_count               :integer
 #  extra_hash                 :binary
 #  uncle_block_hashes         :binary
 #  version                    :integer
@@ -384,17 +383,18 @@ end
 #  nonce                      :decimal(50, )    default(0)
 #  start_number               :decimal(30, )    default(0)
 #  length                     :decimal(30, )    default(0)
+#  uncles_count               :integer
 #  compact_target             :decimal(20, )
 #  live_cell_changes          :integer
-#  block_time                 :bigint
+#  block_time                 :decimal(13, )
 #  block_size                 :bigint
 #  proposal_reward            :decimal(30, )
 #  commit_reward              :decimal(30, )
 #  miner_message              :string
 #  extension                  :jsonb
 #  median_timestamp           :bigint           default(0)
-#  ckb_node_version           :string
 #  cycles                     :bigint
+#  ckb_node_version           :string
 #
 # Indexes
 #

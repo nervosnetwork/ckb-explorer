@@ -67,4 +67,20 @@ s.every "1h", overlap: false do
   call_worker CleanUpWorker
 end
 
+s.interval "10s", overlap: false do
+  StatisticInfo.default.reset! :transactions_count_per_minute, :average_block_time
+end
+
+s.interval "1m" do
+  StatisticInfo.default.reset! :transactions_last_24hrs
+end
+
+s.every "1h", overlap: false do
+  StatisticInfo.default.reset! :hash_rate, :blockchain_info
+end
+
+s.every "4h", overlap: false do
+  StatisticInfo.default.reset! :address_balance_ranking, :miner_ranking
+end
+
 s.join

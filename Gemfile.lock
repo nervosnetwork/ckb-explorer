@@ -345,8 +345,8 @@ GEM
       redis-client (>= 0.9.0)
     redis-client (0.14.1)
       connection_pool
-    redis-objects (1.7.0)
-      redis
+    redis-objects (2.0.0.beta)
+      redis (~> 5.0)
     regexp_parser (2.7.0)
     reverse_markdown (2.1.1)
       nokogiri
@@ -497,7 +497,7 @@ DEPENDENCIES
   rack-cors
   rails (~> 7.0.4)
   redis
-  redis-objects
+  redis-objects (>= 2.0.0.beta)
   rubocop
   rubocop-performance
   rubocop-rails

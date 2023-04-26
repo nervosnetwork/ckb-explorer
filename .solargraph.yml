@@ -1,0 +1,5 @@
+---
+include:
+- "./app/**/*.rb"
+- "./lib/**/*.rb"
+- "./tests/*.rb"
