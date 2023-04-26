@@ -1,6 +1,11 @@
 require "test_helper"
 
 class StatisticInfoTest < ActiveSupport::TestCase
+  setup do
+    Settings.stubs(:hash_rate_statistical_interval).returns(900)
+    Settings.stubs(:average_block_time_interval).returns(100)
+  end
+
   test "id should present" do
     statistic_info = StatisticInfo.default
 
@@ -29,7 +34,7 @@ class StatisticInfoTest < ActiveSupport::TestCase
       create(:block, :with_block_hash, number: num, timestamp: (ended_at - 23.hours).strftime("%Q").to_i + num)
     end
 
-    blocks = Block.order(timestamp: :desc).limit(Settings.average_block_time_interval.to_i)
+    blocks = Block.order(timestamp: :desc).limit(100)
     total_block_time = (blocks.first.timestamp - blocks.last.timestamp).to_d
 
     average_block_time = total_block_time.to_d / blocks.size
@@ -40,7 +45,7 @@ class StatisticInfoTest < ActiveSupport::TestCase
   test ".hash_rate should return average hash rate of the last 500 blocks" do
     statistic_info = StatisticInfo.default
     create_list(:block, 500, :with_block_hash)
-    block_count = Settings.hash_rate_statistical_interval
+    block_count = 900
     last_500_blocks = Block.recent.includes(:uncle_blocks).limit(block_count.to_i)
     total_difficulties = last_500_blocks.flat_map { |block|
                            [block, *block.uncle_blocks]
