@@ -25,6 +25,7 @@ module Api
 
       test "should get transaction_fees, for committed tx" do
         VCR.use_cassette("get transaction_fees, for committed tx") do
+          StatisticInfo.default.reset! :pending_transaction_fee_rates, :transaction_fee_rates
           get transaction_fees_api_v2_statistics_url,
               headers: {
                 "Content-Type": "application/vnd.api+json",
@@ -40,6 +41,7 @@ module Api
 
       test "should get transaction_fees, for pending tx" do
         VCR.use_cassette("get transaction_fees, for pending tx") do
+          StatisticInfo.default.reset! :pending_transaction_fee_rates, :transaction_fee_rates
           get transaction_fees_api_v2_statistics_url,
               headers: {
                 "Content-Type": "application/vnd.api+json",
@@ -54,10 +56,10 @@ module Api
       end
 
       test "should get transaction_fees, for last_n_days_transaction_fee_rates" do
-        Block.delete_all
         VCR.use_cassette("get transaction_fees, for last_n_days_transaction_fee_rates") do
           # get today's timestamp at: 23:50:00
           current_time_stamp = Time.now.utc.end_of_day.to_i - 600
+          Block.delete_all
           create :block, :with_block_hash, :with_ckb_transactions,
                  timestamp: (current_time_stamp - 3.days.to_i) * 1000,
                  total_transaction_fee: 100,
@@ -70,7 +72,7 @@ module Api
                  timestamp: (current_time_stamp - 1.day.to_i) * 1000,
                  total_transaction_fee: 100,
                  transactions_count: 5
-
+          StatisticInfo.default.reset! :last_n_days_transaction_fee_rates
           get transaction_fees_api_v2_statistics_url,
               headers: {
                 "Content-Type": "application/vnd.api+json",
