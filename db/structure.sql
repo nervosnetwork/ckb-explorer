@@ -3341,6 +3341,13 @@ CREATE INDEX index_cell_outputs_on_block_timestamp ON public.cell_outputs USING 
 
 
 --
+-- Name: index_cell_outputs_on_cell_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_outputs_on_cell_type ON public.cell_outputs USING btree (cell_type);
+
+
+--
 -- Name: index_cell_outputs_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4411,6 +4418,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230406011556'),
 ('20230412070853'),
 ('20230415042814'),
-('20230415150143');
+('20230415150143'),
+('20230425114436');
 
 
