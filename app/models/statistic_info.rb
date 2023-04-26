@@ -98,21 +98,70 @@ class StatisticInfo < ApplicationRecord
     result
   end
 
-  def self.last_n_days_transaction_fee_rates(timestamp)
-    sql = <<-SQL
-    select date_trunc('day', to_timestamp(timestamp/1000.0)) date,
-      avg(total_transaction_fee / ckb_transactions_count ) fee_rate
-      from blocks
-      where timestamp > #{timestamp}
-        and ckb_transactions_count != 0
-      group by 1 order by 1 desc
-    SQL
-    last_n_days_transaction_fee_rates =
-      Rails.cache.fetch("last_n_days_transaction_fee_rates", expires_in: 10.seconds) do
-        ActiveRecord::Base.connection.execute(sql).values
-      end
-    return last_n_days_transaction_fee_rates
+  define_logic :transaction_fee_rates do
+    CkbTransaction.
+      where("bytes > 0 and transaction_fee > 0").
+      order("id desc").limit(10000).
+      pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time).map do |tx|
+      {
+        id: tx[0],
+        timestamp: tx[1].to_i,
+        fee_rate: (tx[2].to_f / tx[3]),
+        confirmation_time: tx[4]
+      }
+    end
   end
+
+  define_logic :pending_transaction_fee_rates do
+    # select from database
+    fee_rates = PoolTransactionEntry.pool_transaction_pending.
+      where("transaction_fee > 0").
+      order("id desc").limit(100)
+
+    # This is a patch for those pending tx which has no `bytes`
+    fee_rates = fee_rates.map { |tx|
+      tx_bytes = 0
+      if tx.bytes.blank? || tx.bytes == 0
+        Rails.logger.info "== checking tx bytes: #{tx.tx_hash}, #{tx.id}"
+        begin
+          tx_bytes = CkbSync::Api.instance.get_transaction(tx.tx_hash).transaction.serialized_size_in_block
+        rescue Exception => e
+          Rails.logger.error "== tx not found"
+          tx_bytes = 0
+        end
+        tx.update bytes: tx_bytes
+      end
+
+      tx
+    }.select { |e| e.bytes > 0 }
+
+    fee_rates.map do |tx|
+      {
+        id: tx.id,
+        fee_rate: (tx.transaction_fee.to_f / tx.bytes)
+      }
+    end
+  end
+
+  define_logic :last_n_days_transaction_fee_rates do
+    CkbTransaction.last_n_days_transaction_fee_rates(20)
+  end
+
+  # def self.last_n_days_transaction_fee_rates(timestamp)
+  #   sql = <<-SQL
+  #   select date_trunc('day', to_timestamp(timestamp/1000.0)) date,
+  #     avg(total_transaction_fee / ckb_transactions_count ) fee_rate
+  #     from blocks
+  #     where timestamp > #{timestamp}
+  #       and ckb_transactions_count != 0
+  #     group by 1 order by 1 desc
+  #   SQL
+  #   last_n_days_transaction_fee_rates =
+  #     Rails.cache.fetch("last_n_days_transaction_fee_rates", expires_in: 10.seconds) do
+  #       ActiveRecord::Base.connection.execute(sql).values
+  #     end
+  #   return last_n_days_transaction_fee_rates
+  # end
 
   def maintenance_info
     Rails.cache.fetch("maintenance_info")
@@ -155,4 +204,6 @@ end
 #  last_n_days_transaction_fee_rates :jsonb
 #  created_at                        :datetime         not null
 #  updated_at                        :datetime         not null
+#  pending_transaction_fee_rates     :jsonb
+#  transaction_fee_rates             :jsonb
 #

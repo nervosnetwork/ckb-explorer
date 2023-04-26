@@ -68,7 +68,13 @@ s.every "1h", overlap: false do
 end
 
 s.interval "10s", overlap: false do
-  StatisticInfo.default.reset! :transactions_count_per_minute, :average_block_time
+  StatisticInfo.default.reset! :transactions_count_per_minute,
+                               :average_block_time,
+                               :transaction_fee_rates
+end
+
+s.interval "30s", overlap: false do
+  StatisticInfo.default.reset! :pending_transaction_fee_rates
 end
 
 s.interval "1m" do
@@ -80,7 +86,7 @@ s.every "1h", overlap: false do
 end
 
 s.every "4h", overlap: false do
-  StatisticInfo.default.reset! :address_balance_ranking, :miner_ranking
+  StatisticInfo.default.reset! :address_balance_ranking, :miner_ranking, :last_n_days_transaction_fee_rates
 end
 
 s.join
