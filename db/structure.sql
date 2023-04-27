@@ -1760,6 +1760,46 @@ ALTER SEQUENCE public.scripts_id_seq OWNED BY public.scripts.id;
 
 
 --
+-- Name: statistic_infos; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.statistic_infos (
+    id bigint NOT NULL,
+    transactions_last_24hrs bigint,
+    transactions_count_per_minute bigint,
+    average_block_time double precision,
+    hash_rate numeric,
+    address_balance_ranking jsonb,
+    miner_ranking jsonb,
+    blockchain_info character varying,
+    last_n_days_transaction_fee_rates jsonb,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    pending_transaction_fee_rates jsonb,
+    transaction_fee_rates jsonb
+);
+
+
+--
+-- Name: statistic_infos_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.statistic_infos_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: statistic_infos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.statistic_infos_id_seq OWNED BY public.statistic_infos.id;
+
+
+--
 -- Name: table_record_counts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2437,6 +2477,13 @@ ALTER TABLE ONLY public.scripts ALTER COLUMN id SET DEFAULT nextval('public.scri
 
 
 --
+-- Name: statistic_infos id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.statistic_infos ALTER COLUMN id SET DEFAULT nextval('public.statistic_infos_id_seq'::regclass);
+
+
+--
 -- Name: table_record_counts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2839,6 +2886,14 @@ ALTER TABLE ONLY public.script_transactions
 
 ALTER TABLE ONLY public.scripts
     ADD CONSTRAINT scripts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: statistic_infos statistic_infos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.statistic_infos
+    ADD CONSTRAINT statistic_infos_pkey PRIMARY KEY (id);
 
 
 --
@@ -4419,6 +4474,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230412070853'),
 ('20230415042814'),
 ('20230415150143'),
-('20230425114436');
+('20230425114436'),
+('20230425162318'),
+('20230426133543');
 
 
