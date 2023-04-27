@@ -340,14 +340,14 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   cellbases_part3 = cellbases[9..-1]
   address1 = create(:address, :with_lock_script)
   cellbases_part1.map do |cellbase|
-    cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1, generated_by: cellbase,
+    cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1,
                                   lock_script: address1.lock_script)
   end
   # address1.ckb_transactions << cellbases_part1
   AccountBook.insert_all(cellbases_part1.map { |c| { address_id: address1.id, ckb_transaction_id: c.id } })
   address2 = create(:address, :with_lock_script)
   cellbases_part2.map do |cellbase|
-    cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2, generated_by: cellbase,
+    cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2,
                                   lock_script: address2.lock_script)
   end
   # address2.ckb_transactions << cellbases_part2
@@ -358,7 +358,7 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   )
   address3 = create(:address, :with_lock_script)
   cellbases_part3.map do |cellbase|
-    cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3, generated_by: cellbase,
+    cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3,
                                   lock_script: address3.lock_script)
   end
   # address3.ckb_transactions << cellbases_part3
@@ -367,6 +367,7 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
       { address_id: address3.id, ckb_transaction_id: c.id }
     end
   )
+
   return address1, address2, address3
 end
 
@@ -411,7 +412,7 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
                                 contained_address_ids: [address.id],
                                 tags: ["dao"])
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: number,
-                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit", address: address)
+                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit", address: address)
     else
       ckb_transaction2 = create(:ckb_transaction,
                                 tx_hash: "0x#{SecureRandom.hex(32)}",
@@ -423,7 +424,6 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
              ckb_transaction: ckb_transaction2,
              cell_index: number,
              tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-             generated_by: ckb_transaction2,
              block: block,
              capacity: 10**8 * 1000,
              cell_type: "nervos_dao_deposit",

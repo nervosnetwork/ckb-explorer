@@ -11,7 +11,6 @@ json.data do
     json.block_id cell_output.block_id
     json.tx_hash cell_output.tx_hash
     json.cell_index cell_output.cell_index
-    json.generated_by_id cell_output.generated_by_id
     json.consumed_by_id cell_output.consumed_by_id
     json.cell_type cell_output.cell_type
     json.data_size cell_output.data_size

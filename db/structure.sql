@@ -800,7 +800,6 @@ CREATE TABLE public.cell_outputs (
     block_id numeric(30,0),
     tx_hash bytea,
     cell_index integer,
-    generated_by_id numeric(30,0),
     consumed_by_id numeric(30,0),
     cell_type integer DEFAULT 0,
     data_size integer,
@@ -3431,13 +3430,6 @@ CREATE INDEX index_cell_outputs_on_data_hash ON public.cell_outputs USING hash (
 
 
 --
--- Name: index_cell_outputs_on_generated_by_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_on_generated_by_id ON public.cell_outputs USING btree (generated_by_id);
-
-
---
 -- Name: index_cell_outputs_on_lock_script_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4476,6 +4468,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230415150143'),
 ('20230425114436'),
 ('20230425162318'),
-('20230426133543');
+('20230426133543'),
+('20230427025007');
 
 

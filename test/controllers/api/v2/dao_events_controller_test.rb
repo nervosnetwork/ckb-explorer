@@ -10,7 +10,7 @@ module Api
         @ckb_transaction = create(:ckb_transaction, block: @block)
         @dao_contract = create(:dao_contract)
 
-        @cell_output = create(:cell_output, ckb_transaction_id: @ckb_transaction.id, block_id: @block.id, generated_by: @ckb_transaction,
+        @cell_output = create(:cell_output, ckb_transaction_id: @ckb_transaction.id, block_id: @block.id, 
                               cell_index: 1, tx_hash: @ckb_transaction.tx_hash
                              )
         @cell_input = create(:cell_input, ckb_transaction_id: @ckb_transaction.id, block_id: @block.id,
