@@ -205,7 +205,7 @@ class Block < ApplicationRecord
   end
 
   def target_block_number
-    number - ENV["PROPOSAL_WINDOW"].to_i - 1
+    number - (Settings.proposal_window || 10).to_i - 1
   end
 
   def genesis_block?

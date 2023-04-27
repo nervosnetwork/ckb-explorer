@@ -214,8 +214,12 @@ class CkbUtils
     secondary_reward = CkbUtils.secondary_reward(target_block.number, block_economic_state)
     proposal_reward = CkbUtils.proposal_reward(target_block.number, block_economic_state)
     commit_reward = CkbUtils.commit_reward(target_block.number, block_economic_state)
-    target_block.update!(reward_status: "issued", reward: reward, primary_reward: primary_reward,
-                         secondary_reward: secondary_reward, commit_reward: commit_reward, proposal_reward: proposal_reward)
+    target_block.update!(reward_status: "issued",
+                         reward: reward,
+                         primary_reward: primary_reward,
+                         secondary_reward: secondary_reward,
+                         commit_reward: commit_reward,
+                         proposal_reward: proposal_reward)
     current_block.update!(target_block_reward_status: "issued")
   end
 
@@ -468,6 +472,7 @@ class CkbUtils
   def self.is_nrc_721_token_cell?(output_data)
     output_data.start_with?(Settings.nrc_721_token_output_data_header)
   end
+
   def self.is_nrc_721_factory_cell?(output_data)
     output_data.start_with?(Settings.nrc_721_factory_output_data_header)
   end
