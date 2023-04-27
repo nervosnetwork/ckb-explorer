@@ -68,24 +68,29 @@ s.every "1h", overlap: false do
 end
 
 s.interval "10s", overlap: false do
+  puts "reset transactions_count_per_minute, average_block_time, transaction_fee_rates"
   StatisticInfo.default.reset! :transactions_count_per_minute,
                                :average_block_time,
                                :transaction_fee_rates
 end
 
 s.interval "30s", overlap: false do
+  puts "reset pending_transaction_fee_rates"
   StatisticInfo.default.reset! :pending_transaction_fee_rates
 end
 
 s.interval "1m" do
+  puts "reset transactions_last_24hrs"
   StatisticInfo.default.reset! :transactions_last_24hrs
 end
 
 s.every "1h", overlap: false do
+  puts "reset hash_rate"
   StatisticInfo.default.reset! :hash_rate, :blockchain_info
 end
 
 s.every "4h", overlap: false do
+  puts "reset address_balance_ranking, miner_ranking, last_n_days_transaction_fee_rates"
   StatisticInfo.default.reset! :address_balance_ranking, :miner_ranking, :last_n_days_transaction_fee_rates
 end
 

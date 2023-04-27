@@ -54,7 +54,7 @@ class StatisticInfo < ApplicationRecord
 
     transactions_count = Block.where(number: start_block_number..tip_block_number).sum(:ckb_transactions_count)
 
-    (transactions_count / (total_block_time(timestamps) / 1000 / 60)).truncate(3)
+    (transactions_count.to_d / (total_block_time(timestamps) / 1000 / 60)).truncate(3)
   end
 
   define_logic :average_block_time do
@@ -67,8 +67,9 @@ class StatisticInfo < ApplicationRecord
   end
 
   def self.hash_rate(block_number)
+    hash_rate_statistical_interval = Settings.hash_rate_statistical_interval || 900
     blocks = Block.select(:id, :timestamp, :compact_target).
-      where("number <= ?", block_number).recent.limit(hash_rate_statistical_interval || Settings.hash_rate_statistical_interval || 900)
+      where("number <= ?", block_number).recent.limit(hash_rate_statistical_interval)
     return if blocks.blank?
 
     total_difficulties = blocks.sum(&:difficulty)
