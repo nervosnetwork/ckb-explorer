@@ -232,6 +232,10 @@ class CkbTransaction < ApplicationRecord
     nil
   end
 
+  def detailed_message
+    @detailed_message ||= PoolTransactionEntry.find_by(tx_hash: tx_hash)&.detailed_message
+  end
+
   # convert current record to raw hash with standard RPC json data structure
   def to_raw
     Rails.cache.fetch([self.class.name, tx_hash, "raw_hash"], expires_in: 1.day) do
