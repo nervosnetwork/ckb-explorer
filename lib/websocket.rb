@@ -29,49 +29,19 @@ def subscribe(connection, topic)
   connection.flush
 end
 
-class TransactionProcessor
-  attr_accessor :ckb_transaction
-
-  def process_outputs
-    data["outputs"].each_with_index do |output, i|
-      build_output(output, i, data["outputs_data"][i])
-    end
-  end
-
-  def process_inputs
-  end
-
-  def build_output(output, index, data)
-    c = CellOutput.find_or_create_by(ckb_transaction_id: ckb_transaction.id)
-    c.capacity = output["capacity"]
-    c.cell_index = index
-    c.address_id = Address
-    c.type_script_id = build_type_script(output["type"])
-    c.lock_script_id = build_lock_script(output["lock"])
-    c.data = data
-    c.save
-  end
-
-  def build_type_script(raw_script)
-  end
-
-  def build_lock_script(raw_script)
-  end
-end
-
 queue = Queue.new
 
 persister =
   Thread.new do
     Rails.application.executor.wrap do
       data = queue.pop
-      tx = data["transaction"]
-      entry = PoolTransactionEntry.new
-      entry.cell_deps = tx["cell_deps"]
-      entry.tx_hash = tx["tx_hash"]
-      entry.header_deps = tx["header_deps"]
-      entry.inputs = tx["inputs"]
-      entry
+
+      ProcessTransactionJob.new.perform(data["transaction"], {
+        cycles: data["cycles"].hex,
+        fee: data["fee"].hex,
+        size: data["size"].hex,
+        timestamp: data["timestamp"].hex
+      })
     end
   end
 
@@ -86,7 +56,9 @@ Async do |_task|
       res = message.to_h
       if res[:method] == "subscribe"
         data = JSON.parse res[:params][:result]
-        p data
+        # binding.pry
+        puts data["transaction"]["hash"]
+        queue.push(data)
       end
     end
   end

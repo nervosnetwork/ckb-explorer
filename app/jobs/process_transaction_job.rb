@@ -7,7 +7,7 @@ class ProcessTransactionJob < ApplicationJob
                 :address_changes
 
   # @param tx_hash [String]
-  def perform(tx_hash)
+  def perform(tx_hash, extra_data = {})
     self.address_changes = {}
     if tx_hash.is_a?(Hash)
       CkbTransaction.write_raw_hash_cache tx_hash["hash"], tx_hash
@@ -18,11 +18,22 @@ class ProcessTransactionJob < ApplicationJob
     @tx = CkbTransaction.unscoped.create_with(tx_status: :pending).find_or_create_by! tx_hash: tx_hash
     return unless tx.tx_pending?
 
+    @tx.cycles = extra_data[:cycles]
+    if extra_data[:timestamp]
+      @tx.created_at = Time.at(extra_data[:timestamp].to_d / 1000).utc
+    end
+    @tx.transaction_fee = extra_data[:fee]
+    @tx.bytes = extra_data[:size] || @sdk_tx.serialized_size_in_block
+    @tx.version = @sdk_tx.version
+    @tx.live_cell_changes = sdk_tx.outputs.count - sdk_tx.inputs.count
+    @tx.save
     @txid = tx.id
     @deployed_cells_attrs = []
     @cell_dependencies_attrs = []
     @by_type_hash = {}
     @by_data_hash = {}
+
+    capacity_involved = 0
 
     # process inputs
     sdk_tx.inputs.each_with_index do |input, index|
@@ -30,12 +41,14 @@ class ProcessTransactionJob < ApplicationJob
         tx.cell_inputs.create_with(index: index).create_or_find_by(previous_cell_output_id: nil, from_cell_base: true)
       else
         cell = CellOutput.find_by(tx_hash: input.previous_output.tx_hash, cell_index: input.previous_output.index)
+
         if cell
           process_input tx.cell_inputs.create_with(previous_cell_output_id: cell.id).create_or_find_by!(
             ckb_transaction_id: txid, index: index
           )
           process_deployed_cell(cell.lock_script)
           process_deployed_cell(cell.type_script) if cell.type_script
+          capacity_involved += cell.capacity
         else
           puts "Missing input #{input.previous_output.to_h} in #{tx_hash}"
           # cannot find corresponding cell output,
@@ -47,7 +60,7 @@ class ProcessTransactionJob < ApplicationJob
         end
       end
     end
-
+    @tx.update_column :capacity_involved, capacity_involved
     # process outputs
     sdk_tx.outputs.each_with_index do |output, index|
       output_data = sdk_tx.outputs_data[index]

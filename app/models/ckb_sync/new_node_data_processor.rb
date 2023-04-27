@@ -1044,7 +1044,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       when "udt"
         CkbUtils.parse_udt_cell_data(output_data)
       when "m_nft_token"
-        "0x#{type_script_args[-8..-1]}".hex
+        "0x#{type_script_args[-8..]}".hex
       end
     end
 
