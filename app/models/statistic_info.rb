@@ -66,18 +66,20 @@ class StatisticInfo < ApplicationRecord
     total_block_time(timestamps) / blocks_count(interval)
   end
 
-  define_logic :hash_rate do
-    block_number = tip_block_number
-
+  def self.hash_rate(block_number)
     blocks = Block.select(:id, :timestamp, :compact_target).
       where("number <= ?", block_number).recent.limit(hash_rate_statistical_interval || Settings.hash_rate_statistical_interval || 900)
-    next if blocks.blank?
+    return if blocks.blank?
 
     total_difficulties = blocks.sum(&:difficulty)
     total_difficulties += UncleBlock.where(block_id: blocks.map(&:id)).select(:compact_target).to_a.sum(&:difficulty)
     total_time = blocks.first.timestamp - blocks.last.timestamp
 
     (total_difficulties.to_d / total_time).truncate(6)
+  end
+
+  define_logic :hash_rate do
+    self.class.hash_rate(tip_block_number)
   end
 
   define_logic :miner_ranking do
