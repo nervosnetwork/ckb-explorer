@@ -82,7 +82,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;    
+    END LOOP;
     close c;
 end
 $$;
@@ -104,21 +104,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null 
+	if old is null
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-	
+
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP 
+	   LOOP
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id) 
+			insert into account_books (ckb_transaction_id, address_id)
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -2467,6 +2467,13 @@ CREATE INDEX index_cell_outputs_on_block_timestamp ON public.cell_outputs USING 
 
 
 --
+-- Name: index_cell_outputs_on_cell_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_outputs_on_cell_type ON public.cell_outputs USING btree (cell_type);
+
+
+--
 -- Name: index_cell_outputs_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3250,6 +3257,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230320075334'),
 ('20230320151216'),
 ('20230320153418'),
-('20230321122734');
-
-
+('20230321122734'),
+('20230425114436');
