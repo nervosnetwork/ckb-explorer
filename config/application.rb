@@ -35,5 +35,8 @@ module Server
     config.time_zone = "Beijing"
     config.api_only = true
     config.active_record.schema_format = :sql
+    config.generators do |g|
+      g.fixture_replacement :factory_bot, dir: "test/factories"
+    end
   end
 end

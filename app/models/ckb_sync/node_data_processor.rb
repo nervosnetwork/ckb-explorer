@@ -599,7 +599,6 @@ module CkbSync
         block: ckb_transaction.block,
         tx_hash: ckb_transaction.tx_hash,
         cell_index: cell_index,
-        generated_by: ckb_transaction,
         cell_type: CkbUtils.cell_type(output.type, output_data),
         block_timestamp: ckb_transaction.block_timestamp,
         type_hash: output.type&.compute_hash,
@@ -677,7 +676,7 @@ module CkbSync
         output_cache_keys = updated_outputs.map(&:cache_keys)
         enabled = Rails.cache.read("enable_generate_tx_display_info")
         if enabled
-          tx_ids = updated_outputs.map(&:generated_by_id).uniq
+          tx_ids = updated_outputs.map(&:ckb_transaction_id).uniq
           remove_tx_display_infos(tx_ids)
         end
 

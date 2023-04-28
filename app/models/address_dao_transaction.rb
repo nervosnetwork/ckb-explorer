@@ -1,3 +1,4 @@
+# save the relationship of dao transactions in address
 class AddressDaoTransaction < ApplicationRecord
 end
 

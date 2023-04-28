@@ -16,7 +16,7 @@ common: &default_settings
 
   # Your application name. Renaming here affects where data displays in New
   # Relic.  For more details, see https://docs.newrelic.com/docs/apm/new-relic-apm/maintenance/renaming-applications
-  app_name: ckb-explorer <%=ENV['CKB_NET_MODE']%> (<%= Rails.env %>)
+  app_name: <%= ENV.fetch('NEWRELIC_NAME', 'ckb-explorer')%> <%=ENV['CKB_NET_MODE']%> (<%= Rails.env %>)
 
   distributed_tracing:
     enabled: true

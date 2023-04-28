@@ -2,20 +2,27 @@ module Api
   module V1
     class CkbTransactionsController < ApplicationController
       before_action :validate_query_params, only: :show
-      before_action :validate_pagination_params, :pagination_params, only: :index
+      before_action :validate_pagination_params, :pagination_params,
+                    only: :index
 
       def index
         if from_home_page?
-          ckb_transactions = CkbTransaction.recent.normal.limit(ENV["HOMEPAGE_TRANSACTIONS_RECORDS_COUNT"].to_i).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
+          ckb_transactions = CkbTransaction.tx_committed.recent.normal.select(
+            :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at
+          ).limit((Settings.homepage_transactions_records_count || 15).to_i)
           json =
-            Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
+            Rails.cache.realize(ckb_transactions.cache_key,
+                                version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
               CkbTransactionListSerializer.new(ckb_transactions).serialized_json
             end
           render json: json
         else
-          ckb_transactions = CkbTransaction.recent.normal.page(@page).per(@page_size).select(:id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at)
+          ckb_transactions = CkbTransaction.tx_committed.recent.normal.select(
+            :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at
+          ).page(@page).per(@page_size).fast_page
           json =
-            Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
+            Rails.cache.realize(ckb_transactions.cache_key,
+                                version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
               records_counter = RecordCounters::Transactions.new
               options = FastJsonapi::PaginationMetaGenerator.new(
                 request: request,
@@ -24,7 +31,8 @@ module Api
                 page_size: @page_size,
                 records_counter: records_counter
               ).call
-              CkbTransactionListSerializer.new(ckb_transactions, options).serialized_json
+              CkbTransactionListSerializer.new(ckb_transactions,
+                                               options).serialized_json
             end
           render json: json
         end
@@ -47,15 +55,17 @@ module Api
                 "ckb_transaction_id" => :desc
               ).select(
                 "ckb_transaction_id"
-              ).page(@page).per(@page_size)
-            CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
+              ).page(@page).per(@page_size).fast_page
+            CkbTransaction.tx_committed.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
           else
             records_counter = RecordCounters::Transactions.new
-            CkbTransaction.recent.normal.page(@page).per(@page_size)
+            CkbTransaction.tx_committed.recent.normal.page(@page).per(@page_size).fast_page
           end
-        ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
+        ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id,
+                                                   :block_number, :block_timestamp, :is_cellbase, :updated_at)
         json =
-          Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
+          Rails.cache.realize(ckb_transactions.cache_key,
+                              version: ckb_transactions.cache_version, race_condition_ttl: 1.minute) do
             options = FastJsonapi::PaginationMetaGenerator.new(
               request: request,
               records: ckb_transactions,
@@ -63,13 +73,15 @@ module Api
               page_size: @page_size,
               records_counter: records_counter
             ).call
-            CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address: @address })).serialized_json
+            CkbTransactionsSerializer.new(ckb_transactions,
+                                          options.merge(params: {
+                                            previews: true, address: @address })).serialized_json
           end
         render json: json
       end
 
       def show
-        ckb_transaction = CkbTransaction.cached_find(params[:id]) || PoolTransactionEntry.find_by(tx_hash: params[:id])
+        ckb_transaction = CkbTransaction.tx_committed.cached_find(params[:id]) || PoolTransactionEntry.find_by(tx_hash: params[:id])
 
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if ckb_transaction.blank?
 

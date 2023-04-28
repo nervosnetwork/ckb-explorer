@@ -1,3 +1,4 @@
+# save the relationship of udt-related transactions in address
 class AddressUdtTransaction < ApplicationRecord
 end
 

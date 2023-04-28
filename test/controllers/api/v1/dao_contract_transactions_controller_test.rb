@@ -82,7 +82,14 @@ module Api
 
       test "should return corresponding ckb transaction with given transaction hash and the tx's input is dao cell" do
         ckb_transaction = create(:ckb_transaction)
-        create(:cell_output, ckb_transaction: ckb_transaction, cell_index: 0, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction, consumed_by: ckb_transaction, block: ckb_transaction.block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit")
+        create(:cell_output, ckb_transaction: ckb_transaction,
+                             cell_index: 0,
+                             tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
+                             consumed_by: ckb_transaction,
+                             status: "dead",
+                             block: ckb_transaction.block,
+                             capacity: 10**8 * 1000,
+                             cell_type: "nervos_dao_deposit")
 
         valid_get api_v1_dao_contract_transaction_url(ckb_transaction.tx_hash)
 
@@ -91,7 +98,14 @@ module Api
 
       test "should return corresponding ckb transaction with given transaction hash and the tx's output is dao cell" do
         ckb_transaction = create(:ckb_transaction)
-        create(:cell_output, ckb_transaction: ckb_transaction, cell_index: 0, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction, consumed_by: ckb_transaction, block: ckb_transaction.block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit")
+        create(:cell_output, ckb_transaction: ckb_transaction,
+                             cell_index: 0,
+                             tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
+                             consumed_by: ckb_transaction,
+                             status: "dead",
+                             block: ckb_transaction.block,
+                             capacity: 10**8 * 1000,
+                             cell_type: "nervos_dao_deposit")
         valid_get api_v1_dao_contract_transaction_url(ckb_transaction.tx_hash)
 
         assert_equal CkbTransactionSerializer.new(ckb_transaction).serialized_json, response.body
@@ -100,7 +114,14 @@ module Api
       test "should contain right keys in the serialized object when call show" do
         prepare_node_data(8)
         ckb_transaction = create(:ckb_transaction)
-        create(:cell_output, ckb_transaction: ckb_transaction, cell_index: 0, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction, consumed_by: ckb_transaction, block: ckb_transaction.block, capacity: 10**8 * 1000, cell_type: "nervos_dao_withdrawing")
+        create(:cell_output, ckb_transaction: ckb_transaction,
+                             cell_index: 0,
+                             tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
+                             consumed_by: ckb_transaction,
+                             status: "dead",
+                             block: ckb_transaction.block,
+                             capacity: 10**8 * 1000,
+                             cell_type: "nervos_dao_withdrawing")
 
         valid_get api_v1_dao_contract_transaction_url(ckb_transaction.tx_hash)
 

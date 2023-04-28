@@ -46,20 +46,21 @@ end
 #  description            :string
 #  icon_file              :string
 #  operator_website       :string
-#  addresses_count        :decimal(30, )    default(0)
+#  addresses_count        :bigint           default(0)
 #  total_amount           :decimal(40, )    default(0)
 #  udt_type               :integer
 #  published              :boolean          default(FALSE)
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
-#  block_timestamp        :decimal(30, )
+#  block_timestamp        :bigint
 #  issuer_address         :binary
-#  ckb_transactions_count :decimal(30, )    default(0)
+#  ckb_transactions_count :bigint           default(0)
 #  nrc_factory_cell_id    :bigint
 #  display_name           :string
 #  uan                    :string
 #
 # Indexes
 #
-#  index_udts_on_type_hash  (type_hash) UNIQUE
+#  index_udts_on_type_hash  (type_hash) USING hash
+#  unique_type_hash         (type_hash) UNIQUE
 #
