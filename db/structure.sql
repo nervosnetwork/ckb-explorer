@@ -3192,13 +3192,6 @@ CREATE INDEX ckb_transactions_rejected_tags_idx ON public.ckb_transactions_rejec
 
 
 --
--- Name: index_cell_outputs_on_cell_type; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_on_cell_type ON public.cell_outputs USING btree (cell_type);
-
-
---
 -- Name: ckb_transactions_rejected_tx_hash_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4449,7 +4442,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230320151216'),
 ('20230320153418'),
 ('20230321122734'),
-('20230425114436');
 ('20230328134010'),
 ('20230330112855'),
 ('20230330134854'),
