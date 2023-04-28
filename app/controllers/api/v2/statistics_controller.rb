@@ -4,9 +4,12 @@ module Api::V2
 
     def transaction_fees
       expires_in 15.seconds, public: true
-      transaction_fee_rates =
-        CkbTransaction.
-          where("bytes > 0 and transaction_fee > 0").order("id desc").limit(10000).pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time)
+      transaction_fee_rates = CkbTransaction
+        .tx_committed
+        .where("bytes > 0 and transaction_fee > 0")
+        .order("id desc")
+        .limit(10000)
+        .pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time)
 
       # select from database
       pending_transaction_fee_rates = PoolTransactionEntry.pool_transaction_pending.
