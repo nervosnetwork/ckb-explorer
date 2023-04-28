@@ -126,7 +126,7 @@ module Charts
       sum_uninterest_bearing = 0
 
       CellOutput.nervos_dao_withdrawing.generated_before(ended_at).unconsumed_at(ended_at).find_each do |nervos_dao_withdrawing_cell|
-        nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+        nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
         nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
         interest_bearing_deposits += nervos_dao_deposit_cell.capacity
         sum_interest_bearing += nervos_dao_deposit_cell.capacity * (nervos_dao_withdrawing_cell.block_timestamp - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY

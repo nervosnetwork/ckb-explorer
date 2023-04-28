@@ -230,7 +230,7 @@ module CkbSync
           previous_cell_output =
             CellOutput.
               where(id: dao_input.previous_cell_output_id).
-              select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).
+              select(:address_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity).
               take!
           address = previous_cell_output.address
           address.dao_deposit ||= 0
@@ -301,7 +301,7 @@ module CkbSync
         dao_inputs.each do |dao_input|
           previous_cell_output = CellOutput.
             where(id: dao_input.previous_cell_output_id).
-            select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).
+            select(:address_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity).
             take!
           address = previous_cell_output.address
           interest = CkbUtils.dao_interest(previous_cell_output)
@@ -1040,7 +1040,6 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         block_id: local_block.id,
         tx_hash: ckb_transaction["tx_hash"],
         cell_index: cell_index,
-        generated_by_id: ckb_transaction["id"],
         cell_type: cell_type,
         block_timestamp: local_block.timestamp,
         type_hash: output.type&.compute_hash,

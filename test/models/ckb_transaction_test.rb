@@ -129,7 +129,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
   test "#display_inputs should return correct generated_tx_hash" do
     ckb_transaction = create(:ckb_transaction,
                              :with_multiple_inputs_and_outputs)
-    expected_tx_hashes = ckb_transaction.cell_inputs.map(&:previous_cell_output).map(&:generated_by).map(&:tx_hash).sort
+    expected_tx_hashes = ckb_transaction.cell_inputs.map(&:previous_cell_output).map(&:ckb_transaction).map(&:tx_hash).sort
 
     assert_equal expected_tx_hashes,
                  ckb_transaction.display_inputs.pluck(:generated_tx_hash).sort
@@ -175,16 +175,15 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs,
                              header_deps: [DEFAULT_NODE_BLOCK_HASH, "0xf85f8fe0d85a73a93e0a289ef14b4fb94228e47098a8da38986d6229c5606ea2"])
     nervos_dao_withdrawing_cell = ckb_transaction.cell_inputs.first.previous_cell_output
-    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
     ended_block = Block.select(:number,
                                :timestamp).find(nervos_dao_withdrawing_cell_generated_tx.block_id)
     nervos_dao_withdrawing_cell.update(cell_type: "nervos_dao_withdrawing")
-    deposit_cell = create(:cell_output, ckb_transaction: nervos_dao_withdrawing_cell.generated_by,
+    deposit_cell = create(:cell_output, ckb_transaction: nervos_dao_withdrawing_cell.ckb_transaction,
                                         cell_index: 0,
                                         tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2",
-                                        generated_by: nervos_dao_withdrawing_cell.generated_by,
-                                        block: nervos_dao_withdrawing_cell.generated_by.block,
-                                        consumed_by: nervos_dao_withdrawing_cell.generated_by,
+                                        block: nervos_dao_withdrawing_cell.ckb_transaction.block,
+                                        consumed_by: nervos_dao_withdrawing_cell.ckb_transaction,
                                         status: "dead",
                                         cell_type: "nervos_dao_deposit",
                                         capacity: 10**8 * 1000,
@@ -203,7 +202,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       from_cellbase: false,
       capacity: nervos_dao_withdrawing_cell.capacity,
       address_hash: nervos_dao_withdrawing_cell.address_hash,
-      generated_tx_hash: nervos_dao_withdrawing_cell.generated_by.tx_hash,
+      generated_tx_hash: nervos_dao_withdrawing_cell.ckb_transaction.tx_hash,
       compensation_started_block_number: started_block.number,
       compensation_ended_block_number: ended_block.number,
       compensation_started_timestamp: started_block.timestamp,
@@ -238,7 +237,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                                tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042",
                                                cell_index: 0,
                                                ckb_transaction: ckb_transaction,
-                                               generated_by: ckb_transaction,
                                                consumed_by: ckb_transaction,
                                                status: "dead",
                                                cell_type: "nervos_dao_deposit",
@@ -262,7 +260,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                                        data: "0x7512000000000000",
                                                        tx_hash: "0xf9aca16b49c7d037920ad9e5aecdac272412a5fbe0396f7d95b112bf790dd39f",
                                                        cell_index: 0,
-                                                       generated_by: phase1_transaction,
                                                        cell_type: "nervos_dao_withdrawing")
     started_block = Block.select(:number,
                                  :timestamp).find(ckb_transaction.block_id)
@@ -274,7 +271,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       from_cellbase: false,
       capacity: deposit_output_cell.capacity,
       address_hash: deposit_output_cell.address_hash,
-      generated_tx_hash: deposit_output_cell.generated_by.tx_hash,
+      generated_tx_hash: deposit_output_cell.ckb_transaction.tx_hash,
       compensation_started_block_number: started_block.number,
       compensation_ended_block_number: ended_block.number,
       compensation_started_timestamp: started_block.timestamp,
@@ -325,7 +322,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                            ckb_transaction: udt_input_transaction,
                                            consumed_by: ckb_transaction,
                                            status: "dead",
-                                           generated_by: udt_input_transaction,
                                            cell_type: "udt",
                                            cell_index: 0,
                                            tx_hash: udt_input_transaction.tx_hash,
@@ -350,7 +346,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       from_cellbase: false,
       capacity: udt_cell_output.capacity,
       address_hash: udt_cell_output.address_hash,
-      generated_tx_hash: udt_cell_output.generated_by.tx_hash,
+      generated_tx_hash: udt_cell_output.ckb_transaction.tx_hash,
       cell_index: udt_cell_output.cell_index,
       cell_type: udt_cell_output.cell_type,
       udt_info: udt_cell_output.udt_info,
@@ -369,7 +365,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
     udt_output_transaction = create(:ckb_transaction, block: udt_output_block)
     udt_cell_output = create(:cell_output, block: udt_output_block,
                                            ckb_transaction: udt_output_transaction,
-                                           generated_by: udt_output_transaction,
                                            cell_type: "udt",
                                            cell_index: 0,
                                            tx_hash: udt_output_transaction.tx_hash,
@@ -414,7 +409,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                              ckb_transaction: m_nft_input_transaction,
                                              consumed_by: ckb_transaction,
                                              status: "dead",
-                                             generated_by: m_nft_input_transaction,
                                              cell_type: "m_nft_issuer",
                                              cell_index: 0,
                                              tx_hash: m_nft_input_transaction.tx_hash,
@@ -434,7 +428,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       from_cellbase: false,
       capacity: m_nft_cell_output.capacity,
       address_hash: m_nft_cell_output.address_hash,
-      generated_tx_hash: m_nft_cell_output.generated_by.tx_hash,
+      generated_tx_hash: m_nft_cell_output.ckb_transaction.tx_hash,
       cell_index: m_nft_cell_output.cell_index,
       cell_type: m_nft_cell_output.cell_type,
       m_nft_info: m_nft_cell_output.m_nft_info,
@@ -457,7 +451,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                              ckb_transaction: m_nft_input_transaction,
                                              consumed_by: ckb_transaction,
                                              status: "dead",
-                                             generated_by: m_nft_input_transaction,
                                              cell_type: "m_nft_class",
                                              cell_index: 0,
                                              tx_hash: m_nft_input_transaction.tx_hash,
@@ -477,7 +470,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       from_cellbase: false,
       capacity: m_nft_cell_output.capacity,
       address_hash: m_nft_cell_output.address_hash,
-      generated_tx_hash: m_nft_cell_output.generated_by.tx_hash,
+      generated_tx_hash: m_nft_cell_output.ckb_transaction.tx_hash,
       cell_index: m_nft_cell_output.cell_index,
       cell_type: m_nft_cell_output.cell_type,
       m_nft_info: m_nft_cell_output.m_nft_info,
@@ -504,7 +497,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                              ckb_transaction: m_nft_input_transaction,
                                              consumed_by: ckb_transaction,
                                              status: "dead",
-                                             generated_by: m_nft_input_transaction,
                                              cell_type: "m_nft_token",
                                              cell_index: 0,
                                              tx_hash: m_nft_input_transaction.tx_hash,
@@ -519,7 +511,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                                    ckb_transaction: m_nft_input_transaction,
                                                    consumed_by: ckb_transaction,
                                                    status: "dead",
-                                                   generated_by: m_nft_input_transaction,
                                                    cell_type: "m_nft_class",
                                                    cell_index: 0,
                                                    tx_hash: m_nft_input_transaction.tx_hash,
@@ -539,7 +530,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       from_cellbase: false,
       capacity: m_nft_cell_output.capacity,
       address_hash: m_nft_cell_output.address_hash,
-      generated_tx_hash: m_nft_cell_output.generated_by.tx_hash,
+      generated_tx_hash: m_nft_cell_output.ckb_transaction.tx_hash,
       cell_index: m_nft_cell_output.cell_index,
       cell_type: m_nft_cell_output.cell_type,
       m_nft_info: m_nft_cell_output.m_nft_info,
@@ -562,7 +553,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     m_nft_output_transaction = create(:ckb_transaction,
                                       block: m_nft_output_block)
     m_nft_cell_output = create(:cell_output, block: m_nft_output_block,
-                                             ckb_transaction: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_issuer", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x00000000000000000000107b226e616d65223a22616c696365227d", type_hash: "0x")
+                                             ckb_transaction: m_nft_output_transaction, cell_type: "m_nft_issuer", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x00000000000000000000107b226e616d65223a22616c696365227d", type_hash: "0x")
 
     expected_attributes = %i(
       id capacity address_hash status consumed_tx_hash
@@ -593,7 +584,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     m_nft_output_transaction = create(:ckb_transaction,
                                       block: m_nft_output_block)
     m_nft_cell_output = create(:cell_output, block: m_nft_output_block,
-                                             ckb_transaction: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_class", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x")
+                                             ckb_transaction: m_nft_output_transaction, cell_type: "m_nft_class", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979", type_hash: "0x")
 
     expected_attributes = %i(
       id capacity address_hash status consumed_tx_hash
@@ -626,14 +617,13 @@ class CkbTransactionTest < ActiveSupport::TestCase
     type_script = create(:type_script,
                          code_hash: CkbSync::Api.instance.token_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c111070000000500000004")
     m_nft_cell_output = create(:cell_output, block: m_nft_output_block,
-                                             ckb_transaction: m_nft_output_transaction, generated_by: m_nft_output_transaction, cell_type: "m_nft_token", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x000000000000000000c000", type_hash: "0x", type_script_id: type_script.id)
+                                             ckb_transaction: m_nft_output_transaction, cell_type: "m_nft_token", cell_index: 0, tx_hash: m_nft_output_transaction.tx_hash, data: "0x000000000000000000c000", type_hash: "0x", type_script_id: type_script.id)
     type_script1 = create(:type_script,
                           code_hash: CkbSync::Api.instance.token_class_script_code_hash, hash_type: "type", args: "0x407c7ab0480a3ade9351e2107341dc99a1c1110700000005")
     create(:cell_output, block: m_nft_output_block,
                          ckb_transaction: m_nft_output_transaction,
                          consumed_by: m_nft_output_transaction,
                          status: "dead",
-                         generated_by: m_nft_output_transaction,
                          cell_type: "m_nft_class",
                          cell_index: 0,
                          tx_hash: m_nft_output_transaction.tx_hash,
@@ -672,12 +662,12 @@ class CkbTransactionTest < ActiveSupport::TestCase
     nrc_721_factory_type_script = create(:type_script,
                                          code_hash: nrc_factory_cell.code_hash, hash_type: "type", args: nrc_factory_cell.args)
     nrc_721_factory_cell_output = create(:cell_output,
-                                         block: nrc_721_token_output_block, ckb_transaction: nrc_721_token_output_transaction, generated_by: nrc_721_token_output_transaction, cell_type: "nrc_721_factory", cell_index: 1, tx_hash: nrc_721_token_output_transaction.tx_hash, data: "0x24ff5a9ab8c38d195ce2b4ea75ca8987000a47616d62697420317374000000156465762e6b6f6c6c6563742e6d652f746f6b656e73000000000000003c000000000000000000", type_hash: "0x", type_script_id: nrc_721_factory_type_script.id)
+                                         block: nrc_721_token_output_block, ckb_transaction: nrc_721_token_output_transaction, cell_type: "nrc_721_factory", cell_index: 1, tx_hash: nrc_721_token_output_transaction.tx_hash, data: "0x24ff5a9ab8c38d195ce2b4ea75ca8987000a47616d62697420317374000000156465762e6b6f6c6c6563742e6d652f746f6b656e73000000000000003c000000000000000000", type_hash: "0x", type_script_id: nrc_721_factory_type_script.id)
 
     nrc_721_token_type_script = create(:type_script,
                                        code_hash: "0x#{SecureRandom.hex(32)}", hash_type: "type", args: "0x00000000000000000000000000000000000000000000000000545950455f4944013620e2ced53373c5b55c5cef79b7fd0a875c60a70382a9e9664fe28e0bb345ab22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8")
     nrc_721_token_cell_output = create(:cell_output,
-                                       block: nrc_721_token_output_block, ckb_transaction: nrc_721_token_output_transaction, generated_by: nrc_721_token_output_transaction, cell_type: "nrc_721_token", cell_index: 0, tx_hash: nrc_721_token_output_transaction.tx_hash, data: "0x0ddeff3e8ee03cbf6a2c6920d05c381e", type_hash: "0x", type_script_id: nrc_721_token_type_script.id)
+                                       block: nrc_721_token_output_block, ckb_transaction: nrc_721_token_output_transaction, cell_type: "nrc_721_token", cell_index: 0, tx_hash: nrc_721_token_output_transaction.tx_hash, data: "0x0ddeff3e8ee03cbf6a2c6920d05c381e", type_hash: "0x", type_script_id: nrc_721_token_type_script.id)
     udt = create(:udt, type_hash: nrc_721_token_cell_output.type_hash,
                        udt_type: "nrc_721_token", nrc_factory_cell_id: nrc_factory_cell.id)
     address = create(:address)

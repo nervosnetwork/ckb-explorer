@@ -64,7 +64,6 @@ FactoryBot.define do
           create(:cell_output, address: address,
                                block: block,
                                ckb_transaction: transaction,
-                               generated_by: transaction,
                                consumed_by: transaction1,
                                status: "dead",
                                type_hash: evaluator.udt.type_hash,

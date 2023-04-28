@@ -1,7 +1,6 @@
 FactoryBot.define do
   factory :cell_input do
     previous_output {}
-
     trait :from_cellbase do
       before(:create) do |cell_input, _evaluator|
         ckb_transaction = create(:ckb_transaction, :with_cell_output_and_lock_script)
