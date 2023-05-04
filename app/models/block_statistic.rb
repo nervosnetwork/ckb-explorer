@@ -1,18 +1,10 @@
 class BlockStatistic < ApplicationRecord
+  include AttrLogics
   VALID_INDICATORS = %w(difficulty hash_rate live_cells_count dead_cells_count).freeze
   belongs_to :block, foreign_key: :block_number, primary_key: :number, optional: true
   delegate :block_hash, to: :block
 
   CkbToShannon = 10**8
-  def reset_primary_issuance
-    val = get_block_economic_state&.issuance&.primary || 0
-    self.primary_issuance = val.to_d / CkbToShannon
-  end
-
-  def reset_secondary_issuance
-    val = get_block_economic_state&.issuance&.secondary || 0
-    self.secondary_issuance = val.to_d / CkbToShannon
-  end
 
   def get_block_economic_state
     @get_block_economic_state ||= CkbSync::Api.instance.get_block_economic_state(block_hash)
@@ -23,20 +15,30 @@ class BlockStatistic < ApplicationRecord
     @dao_infos ||= [block.dao[2..]].pack("H*").unpack("Q<4").map { |i| i.to_d / CkbToShannon }
   end
 
-  def reset_accumulated_total_deposits
-    self.accumulated_total_deposits = dao_infos[0]
+  define_logic :primary_issuance do
+    val = get_block_economic_state&.issuance&.primary || 0
+    val.to_d / CkbToShannon
   end
 
-  def reset_accumulated_rate
-    self.accumulated_rate = dao_infos[1]
+  define_logic :secondary_issuance do
+    val = get_block_economic_state&.issuance&.secondary || 0
+    val.to_d / CkbToShannon
   end
 
-  def reset_unissued_secondary_issuance
-    self.unissued_secondary_issuance = dao_infos[2]
+  define_logic :accumulated_total_deposits do
+    dao_infos[0]
   end
 
-  def reset_total_occupied_capacities
-    self.total_occupied_capacities = dao_infos[3]
+  define_logic :accumulated_rate do
+    dao_infos[1]
+  end
+
+  define_logic :unissued_secondary_issuance do
+    dao_infos[2]
+  end
+
+  define_logic :total_occupied_capacities do
+    dao_infos[3]
   end
 
   def reset_all

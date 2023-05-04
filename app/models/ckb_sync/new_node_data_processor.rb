@@ -230,7 +230,7 @@ module CkbSync
           previous_cell_output =
             CellOutput.
               where(id: dao_input.previous_cell_output_id).
-              select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).
+              select(:address_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity).
               take!
           address = previous_cell_output.address
           address.dao_deposit ||= 0
@@ -301,7 +301,7 @@ module CkbSync
         dao_inputs.each do |dao_input|
           previous_cell_output = CellOutput.
             where(id: dao_input.previous_cell_output_id).
-            select(:address_id, :generated_by_id, :address_id, :dao, :cell_index, :capacity, :occupied_capacity).
+            select(:address_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity).
             take!
           address = previous_cell_output.address
           interest = CkbUtils.dao_interest(previous_cell_output)
@@ -1040,7 +1040,6 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         block_id: local_block.id,
         tx_hash: ckb_transaction["tx_hash"],
         cell_index: cell_index,
-        generated_by_id: ckb_transaction["id"],
         cell_type: cell_type,
         block_timestamp: local_block.timestamp,
         type_hash: output.type&.compute_hash,
@@ -1136,11 +1135,13 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
 
         tx_index += 1
       end
-      # First update status thus we can use upsert later. otherwise, we may not be able to locate correct record according to tx_hash
+      # First update status thus we can use upsert later. otherwise, we may not be able to
+      # locate correct record according to tx_hash
       CkbTransaction.where(tx_hash: hashes).update_all tx_status: "committed"
 
       txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:tx_status, :tx_hash],
                                                                    returning: %w(id tx_hash created_at))
+
       hash2id = {}
       txs.each do |t|
         hash2id["0#{t['tx_hash'][1..]}"] = t["id"]
@@ -1201,10 +1202,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         # witnesses: tx.witnesses,
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
-        bytes: tx.serialized_size_in_block,
-        confirmation_time: (Time.now.to_i - PoolTransactionEntry.find_by(tx_hash: tx.hash)&.created_at.to_i),
-        created_at: Time.current,
-        updated_at: Time.current
+        bytes: tx.serialized_size_in_block
       }
     end
 

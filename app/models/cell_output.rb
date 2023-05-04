@@ -18,8 +18,6 @@ class CellOutput < ApplicationRecord
   }
 
   belongs_to :ckb_transaction
-  # FIXME: the generated_by_id is actually the same as ckb_transaction_id
-  belongs_to :generated_by, class_name: "CkbTransaction"
   # the consumed_by_id will be set only when transaction is committed on chain
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
   # the inputs which consumes this cell output
@@ -115,7 +113,7 @@ class CellOutput < ApplicationRecord
         Rails.cache.fetch(["tx_id", tx_hash], expires_in: 1.day) do
           CkbTransaction.find_by_tx_hash(tx_hash)&.id
         end
-      find_by(generated_by_id: tx_id, cell_index: index.is_a?(String) ? index.hex : index) if tx_id
+      find_by(ckb_transaction_id: tx_id, cell_index: index.is_a?(String) ? index.hex : index) if tx_id
     end
   end
 
@@ -326,7 +324,6 @@ end
 #  block_id                 :decimal(30, )
 #  tx_hash                  :binary
 #  cell_index               :integer
-#  generated_by_id          :decimal(30, )
 #  consumed_by_id           :decimal(30, )
 #  cell_type                :integer          default("normal")
 #  data_size                :integer
@@ -345,11 +342,11 @@ end
 #  index_cell_outputs_on_address_id_and_status     (address_id,status)
 #  index_cell_outputs_on_block_id                  (block_id)
 #  index_cell_outputs_on_block_timestamp           (block_timestamp)
+#  index_cell_outputs_on_cell_type                 (cell_type)
 #  index_cell_outputs_on_ckb_transaction_id        (ckb_transaction_id)
 #  index_cell_outputs_on_consumed_block_timestamp  (consumed_block_timestamp)
 #  index_cell_outputs_on_consumed_by_id            (consumed_by_id)
 #  index_cell_outputs_on_data_hash                 (data_hash) USING hash
-#  index_cell_outputs_on_generated_by_id           (generated_by_id)
 #  index_cell_outputs_on_lock_script_id            (lock_script_id)
 #  index_cell_outputs_on_status                    (status)
 #  index_cell_outputs_on_tx_hash_and_cell_index    (tx_hash,cell_index)

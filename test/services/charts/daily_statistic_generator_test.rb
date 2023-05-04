@@ -59,7 +59,7 @@ module Charts
              address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
       tx = create(:ckb_transaction, block: block,
                                     block_timestamp: block.timestamp)
-      create(:cell_output, cell_type: "nervos_dao_deposit", generated_by: tx,
+      create(:cell_output, cell_type: "nervos_dao_deposit",
                            ckb_transaction: tx, block: block, capacity: 10**8 * 1000, block_timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, occupied_capacity: 6100000000, dao: block.dao)
       CkbSync::Api.any_instance.stubs(:get_tip_header).returns(
         CKB::Types::BlockHeader.new(
@@ -163,7 +163,7 @@ module Charts
       uninterest_bearing_deposits = 0
       sum_interest_bearing =
         CellOutput.nervos_dao_withdrawing.generated_before(@ended_at).unconsumed_at(@ended_at).reduce(0) do |memo, nervos_dao_withdrawing_cell|
-          nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+          nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
           nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
           interest_bearing_deposits += nervos_dao_deposit_cell.capacity
           memo + nervos_dao_deposit_cell.capacity * (nervos_dao_withdrawing_cell.block_timestamp - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
