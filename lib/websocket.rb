@@ -36,7 +36,7 @@ persister =
     Rails.application.executor.wrap do
       data = queue.pop
 
-      ProcessTransactionJob.new.perform(data["transaction"], {
+      ImportTransactionJob.new.perform(data["transaction"], {
         cycles: data["cycles"].hex,
         fee: data["fee"].hex,
         size: data["size"].hex,

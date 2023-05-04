@@ -9,6 +9,10 @@ class CkbTransaction < ApplicationRecord
 
   enum tx_status: { pending: 0, proposed: 1, committed: 2, rejected: 3 }, _prefix: :tx
   belongs_to :block, optional: true # when a transaction is pending, it does not belongs to any block
+  has_many :block_transactions
+  has_many :included_blocks, class_name: "Block",
+                             through: :block_transactions,
+                             inverse_of: :contained_transactions
   has_many :account_books, dependent: :delete_all
   has_many :addresses, through: :account_books
   has_many :cell_inputs, dependent: :delete_all

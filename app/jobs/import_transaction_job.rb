@@ -1,5 +1,5 @@
 # process a raw transaction and save related records to database
-class ProcessTransactionJob < ApplicationJob
+class ImportTransactionJob < ApplicationJob
   queue_as :default
   attr_accessor :tx, :txid, :sdk_tx, :cell_dependencies_attrs,
                 :by_type_hash, :by_data_hash,
@@ -26,6 +26,10 @@ class ProcessTransactionJob < ApplicationJob
     @tx.bytes = extra_data[:size] || @sdk_tx.serialized_size_in_block
     @tx.version = @sdk_tx.version
     @tx.live_cell_changes = sdk_tx.outputs.count - sdk_tx.inputs.count
+    if extra_data[:block_hash]
+      block = Block.find_by block_hash: extra_data["block_hash"]
+      @tx.included_block_ids << block.id
+    end
     @tx.save
     @txid = tx.id
     @deployed_cells_attrs = []
@@ -95,7 +99,7 @@ class ProcessTransactionJob < ApplicationJob
     # notify pending transaction to reprocess again
     pending_list = Kredis.unique_list "pending_transactions_for_input:#{tx_hash}"
     pending_list.elements.each do |_tx|
-      ProcessTransactionJob.perform_later _tx
+      ImportTransactionJob.perform_later _tx
     end
     pending_list.clear
   end
