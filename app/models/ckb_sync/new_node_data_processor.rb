@@ -13,7 +13,7 @@ module CkbSync
     # benchmark :call, :process_block, :build_block!, :build_uncle_blocks!, :build_ckb_transactions!, :build_udts!, :process_ckb_txs, :build_cells_and_locks!,
     #           :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
     #           :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
-    #           :cache_address_txs, :generate_tx_display_info, :remove_tx_display_infos, :flush_inputs_outputs_caches, :generate_statistics_data
+    #           :cache_address_txs, :flush_inputs_outputs_caches, :generate_statistics_data
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
                   :outputs, :inputs, :outputs_data,
                   :udt_address_ids, :contained_address_ids, :dao_address_ids, :contained_udt_ids,
@@ -155,17 +155,6 @@ module CkbSync
 
     def flush_inputs_outputs_caches(local_block)
       FlushInputsOutputsCacheWorker.perform_async(local_block.id)
-    end
-
-    def remove_tx_display_infos(local_block)
-      RemoveTxDisplayInfoWorker.perform_async(local_block.id)
-    end
-
-    def generate_tx_display_info(local_block)
-      enabled = Rails.cache.read("enable_generate_tx_display_info")
-      if enabled
-        TxDisplayInfoGeneratorWorker.perform_async(local_block.ckb_transactions.pluck(:id))
-      end
     end
 
     def increase_records_count(local_block)

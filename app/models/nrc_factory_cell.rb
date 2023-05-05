@@ -73,8 +73,6 @@ class NrcFactoryCell < ApplicationRecord
         icon_file: "#{parsed_factory_data.base_token_uri}/#{udt_account.nft_token_id}"
       )
 
-      tx_ids = udt.ckb_transactions.pluck(:id)
-      TxDisplayInfoGeneratorWorker.new.perform(tx_ids)
       # update udt transaction page cache
       ckb_transactions = udt.ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(1).per(CkbTransaction.default_per_page)
       Rails.cache.delete(ckb_transactions.cache_key)

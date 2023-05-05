@@ -264,7 +264,6 @@ class CkbTransaction < ApplicationRecord
     return unless enabled
 
     if tx_display_info.blank?
-      TxDisplayInfoGeneratorWorker.perform_async([self.id])
       return
     end
 
