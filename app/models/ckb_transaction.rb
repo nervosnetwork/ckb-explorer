@@ -16,7 +16,7 @@ class CkbTransaction < ApplicationRecord
   has_many :cell_outputs, dependent: :delete_all
   accepts_nested_attributes_for :cell_outputs
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
-  has_many :outputs, class_name: "CellOutput", foreign_key: "ckb_transaction_id"
+  has_many :outputs, class_name: "CellOutput"
   has_many :dao_events
   has_many :script_transactions
   has_many :scripts, through: :script_transactions
@@ -202,7 +202,9 @@ class CkbTransaction < ApplicationRecord
     if is_cellbase
       cellbase_display_inputs
     else
-      normal_tx_display_inputs(previews)
+      Rails.cache.fetch("display_inputs_previews_#{previews}_#{id}", expires_in: 1.day) do
+        normal_tx_display_inputs(previews)
+      end
     end
   end
 
@@ -210,7 +212,9 @@ class CkbTransaction < ApplicationRecord
     if is_cellbase
       cellbase_display_outputs
     else
-      normal_tx_display_outputs(previews)
+      Rails.cache.fetch("display_outputs_previews_#{previews}_#{id}", expires_in: 1.day) do
+        normal_tx_display_outputs(previews)
+      end
     end
   end
 
@@ -252,35 +256,6 @@ class CkbTransaction < ApplicationRecord
         version: "0x#{version.to_s(16)}",
         witnesses: witnesses.map(&:data)
       }
-    end
-  end
-
-  def tx_display_info
-    TxDisplayInfo.find_by(ckb_transaction_id: self.id)
-  end
-
-  def display_inputs_info(previews: false)
-    enabled = Rails.cache.read("enable_generate_tx_display_info")
-    return unless enabled
-
-    if tx_display_info.blank?
-      return
-    end
-
-    if previews
-      tx_display_info.inputs[0..9]
-    else
-      tx_display_info.inputs
-    end
-  end
-
-  def display_outputs_info(previews: false)
-    return if tx_display_info.blank?
-
-    if previews
-      tx_display_info.outputs[0..9]
-    else
-      tx_display_info.outputs
     end
   end
 

@@ -95,8 +95,6 @@ module CkbSync
         update_addresses_info(addrs_changes)
       end
 
-      generate_tx_display_info(local_block)
-      remove_tx_display_infos(local_block)
       flush_inputs_outputs_caches(local_block)
       generate_statistics_data(local_block)
       generate_deployed_cells_and_referring_cells(local_block)
