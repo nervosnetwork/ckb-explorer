@@ -431,12 +431,6 @@ class CkbTransaction < ApplicationRecord
   end
 
   def recover_dead_cell
-    enabled = Rails.cache.read("enable_generate_tx_display_info")
-    if enabled
-      tx_ids = inputs.pluck(:ckb_transaction_id)
-      TxDisplayInfo.where(ckb_transaction_id: tx_ids).delete_all
-    end
-
     inputs.update_all(status: "live", consumed_by_id: nil, consumed_block_timestamp: nil)
   end
 end

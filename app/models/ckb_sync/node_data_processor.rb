@@ -666,18 +666,9 @@ module CkbSync
         end
         input_cache_keys = updated_inputs.map(&:cache_keys)
         output_cache_keys = updated_outputs.map(&:cache_keys)
-        enabled = Rails.cache.read("enable_generate_tx_display_info")
-        if enabled
-          tx_ids = updated_outputs.map(&:ckb_transaction_id).uniq
-          remove_tx_display_infos(tx_ids)
-        end
 
         flush_caches(input_cache_keys + output_cache_keys)
       end
-    end
-
-    def remove_tx_display_infos(tx_ids)
-      TxDisplayInfo.where(ckb_transaction_id: tx_ids).delete_all
     end
 
     def udt_counts_value(updated_ckb_transactions)
