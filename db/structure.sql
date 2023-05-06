@@ -2138,7 +2138,8 @@ CREATE TABLE public.udts (
     ckb_transactions_count bigint DEFAULT 0.0,
     nrc_factory_cell_id bigint,
     display_name character varying,
-    uan character varying
+    uan character varying,
+    h24_ckb_transactions_count bigint DEFAULT 0
 );
 
 
@@ -4469,6 +4470,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230425114436'),
 ('20230425162318'),
 ('20230426133543'),
-('20230427025007');
+('20230427025007'),
+('20230504023535');
 
 
