@@ -202,9 +202,7 @@ class CkbTransaction < ApplicationRecord
     if is_cellbase
       cellbase_display_inputs
     else
-      Rails.cache.fetch("display_inputs_previews_#{previews}_#{id}", expires_in: 1.day) do
-        normal_tx_display_inputs(previews)
-      end
+      normal_tx_display_inputs(previews)
     end
   end
 
@@ -212,9 +210,7 @@ class CkbTransaction < ApplicationRecord
     if is_cellbase
       cellbase_display_outputs
     else
-      Rails.cache.fetch("display_outputs_previews_#{previews}_#{id}", expires_in: 1.day) do
-        normal_tx_display_outputs(previews)
-      end
+      normal_tx_display_outputs(previews)
     end
   end
 

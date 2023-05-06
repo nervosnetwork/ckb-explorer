@@ -60,18 +60,22 @@ class CkbTransactionSerializer
   end
 
   attribute :display_inputs do |object, params|
-    if params && params[:previews]
-      object.display_inputs(previews: true)
-    else
-      object.display_inputs
+    Rails.cache.fetch("display_inputs_previews_#{params[:previews].present?}_#{object.id}", expires_in: 1.day) do
+      if params && params[:previews]
+        object.display_inputs(previews: true)
+      else
+        object.display_inputs
+      end
     end
   end
 
   attribute :display_outputs do |object, params|
-    if params && params[:previews]
-      object.display_outputs(previews: true)
-    else
-      object.display_outputs
+    Rails.cache.fetch("display_outputs_previews_#{params[:previews].present?}_#{object.id}", expires_in: 1.day) do
+      if params && params[:previews]
+        object.display_outputs(previews: true)
+      else
+        object.display_outputs
+      end
     end
   end
 
