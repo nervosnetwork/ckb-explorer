@@ -196,11 +196,28 @@ class CellOutput < ApplicationRecord
       factory_cell_type_script = self.type_script
       factory_cell = NrcFactoryCell.find_by(code_hash: factory_cell_type_script.code_hash,
                                             hash_type: factory_cell_type_script.hash_type, args: factory_cell_type_script.args, verified: true)
-      value = { symbol: factory_cell&.symbol }
+      value = {
+        symbol: factory_cell&.symbol,
+        amount: self.udt_amount,
+        decimal: '',
+        type_hash: self.type_hash,
+        published: factory_cell.verified,
+        display_name: factory_cell.name,
+        nan: ''
+      }
     when "nrc_721_token"
       udt = Udt.find_by(type_hash: type_hash)
       factory_cell = NrcFactoryCell.where(id: udt.nrc_factory_cell_id, verified: true).first
-      value = { symbol: factory_cell&.symbol, amount: UdtAccount.where(udt_id: udt.id).first.nft_token_id }
+      udt_account = UdtAccount.where(udt_id: udt.id).first
+      value = {
+        symbol: factory_cell&.symbol,
+        amount: udt_account.nft_token_id,
+        decimal: udt_account.decimal,
+        type_hash: type_hash,
+        published: true,
+        display_name: udt_account.full_name,
+        uan: ''
+      }
     else
       raise "invalid cell type"
     end
@@ -306,6 +323,22 @@ class CellOutput < ApplicationRecord
         cell_output.save!
       end
     end
+  end
+
+  def cota_registry_info
+    return unless cota_registry?
+
+    code_hash = CkbSync::Api.instance.cota_registry_code_hash
+    CkbUtils.hash_value_to_s( symbol: '', amount: self.udt_amount, decimal: '', type_hash: self.type_hash,
+                             published: 'true', display_name: '', uan: '', code_hash: self.code_hash)
+  end
+
+  def cota_regular_info
+    return unless cota_regular?
+
+    code_hash = CkbSync::Api.instance.cota_regular_code_hash
+    CkbUtils.hash_value_to_s( symbol: '', amount: self.udt_amount, decimal: '', type_hash: self.type_hash,
+                             published: 'true', display_name: '', uan: '', code_hash: self.code_hash)
   end
 end
 
