@@ -11,7 +11,8 @@ class DeployedCellTest < ActiveSupport::TestCase
     @ckb_transaction = create :ckb_transaction, :with_multiple_inputs_and_outputs, block_id: @block.id
 
     code_hash = "0x671ddda336db68ce0daebde885f44e2f46406d6c838484b4bd8934173e518876"
-    @cell_output = create :cell_output, :with_full_transaction, ckb_transaction_id: @ckb_transaction.id, block: @block, data: "0x", data_hash: code_hash
+    @cell_output = create :cell_output, :with_full_transaction, ckb_transaction_id: @ckb_transaction.id, block: @block,
+                                                                data: "0x", data_hash: code_hash
     @contract = create :contract
     @deployed_cell = create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output.id
     CellOutput.stubs(:find_by_pointer).returns(@cell_output)
@@ -117,7 +118,13 @@ class DeployedCellTest < ActiveSupport::TestCase
     @deployed_cell = @contract.deployed_cells.first
     code_hash = @contract.code_hash
     tx_hash = @deployed_cell.cell_output.ckb_transaction.tx_hash
-    cell_deps = @cell_deps = [{ "dep_type" => "code", "out_point" => { "index" => @deployed_cell.cell_output.cell_index, "tx_hash" => tx_hash } }]
+    cell_deps = @cell_deps = [
+      {
+        "dep_type" => "code",
+        "out_point" => {
+          "index" => @deployed_cell.cell_output.cell_index,
+          "tx_hash" => tx_hash } }
+    ]
 
     block = create :block, :with_block_hash
     @ckb_transaction_with_cell_deps = create :ckb_transaction, block: block, cell_deps: cell_deps
@@ -126,8 +133,8 @@ class DeployedCellTest < ActiveSupport::TestCase
     type_script = create :type_script, code_hash: code_hash, hash_type: hash_type, script: script
     lock_script = create :lock_script, code_hash: code_hash, hash_type: hash_type, script: script
     # create test data: cell_outputs
-    cell_output = create :cell_output, block: block, ckb_transaction: @ckb_transaction_with_cell_deps, lock_script: lock_script, type_script: type_script,
-                                       generated_by: @ckb_transaction_with_cell_deps
+    cell_output = create :cell_output, block: block, ckb_transaction: @ckb_transaction_with_cell_deps,
+                                       lock_script: lock_script, type_script: type_script
   end
 
   def prepare_test_data_for_hash_type_for_cell_inputs(hash_type: "type")
@@ -135,7 +142,13 @@ class DeployedCellTest < ActiveSupport::TestCase
     @deployed_cell = @contract.deployed_cells.first
     code_hash = @contract.code_hash
     tx_hash = @deployed_cell.cell_output.ckb_transaction.tx_hash
-    cell_deps = @cell_deps = [{ "dep_type" => "code", "out_point" => { "index" => @deployed_cell.cell_output.cell_index, "tx_hash" => tx_hash } }]
+    cell_deps = @cell_deps = [
+      {
+        "dep_type" => "code",
+        "out_point" => {
+          "index" => @deployed_cell.cell_output.cell_index,
+          "tx_hash" => tx_hash } }
+    ]
 
     block = create :block, :with_block_hash
     @ckb_transaction_with_cell_deps = create :ckb_transaction, block: block, cell_deps: cell_deps
@@ -144,14 +157,15 @@ class DeployedCellTest < ActiveSupport::TestCase
     type_script = create :type_script, code_hash: code_hash, hash_type: hash_type, script_id: script.id
     lock_script = create :lock_script, code_hash: code_hash, hash_type: hash_type, script_id: script.id
     # create test data: cell_outputs
-    cell_output = create :cell_output, block: block, ckb_transaction: @ckb_transaction_with_cell_deps, lock_script: lock_script, type_script: type_script,
-                                       generated_by: @ckb_transaction_with_cell_deps
+    cell_output = create :cell_output, block: block, ckb_transaction: @ckb_transaction_with_cell_deps,
+                                       lock_script: lock_script, type_script: type_script
     temp_ckb_transaction = CkbTransaction.first
     temp_ckb_transaction.update tx_hash: tx_hash
     temp_cell_output = create :cell_output, :with_full_transaction, block: block, ckb_transaction: temp_ckb_transaction
     temp_cell_output.lock_script.update script_id: script.id
 
-    cell_input = create :cell_input, :with_full_transaction, block: block, ckb_transaction: @ckb_transaction_with_cell_deps
+    cell_input = create :cell_input, :with_full_transaction, block: block,
+                                                             ckb_transaction: @ckb_transaction_with_cell_deps
     cell_input.update ckb_transaction_id: @ckb_transaction_with_cell_deps.id, previous_cell_output_id: cell_output.id
     cell_input.previous_cell_output.lock_script.update script_id: script.id
   end

@@ -7,7 +7,7 @@ module Api
 
       def index
         if from_home_page?
-          ckb_transactions = CkbTransaction.recent.normal.select(
+          ckb_transactions = CkbTransaction.tx_committed.recent.normal.select(
             :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at
           ).limit((Settings.homepage_transactions_records_count || 15).to_i)
           json =
@@ -17,7 +17,7 @@ module Api
             end
           render json: json
         else
-          ckb_transactions = CkbTransaction.normal.select(
+          ckb_transactions = CkbTransaction.tx_committed.normal.select(
             :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at
           )
 
@@ -79,7 +79,7 @@ module Api
             CkbTransaction.tx_committed.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
           else
             records_counter = RecordCounters::Transactions.new
-            CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
+            CkbTransaction.tx_committed.recent.normal.page(@page).per(@page_size).fast_page
           end
         ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id,
                                                    :block_number, :block_timestamp, :is_cellbase, :updated_at)
@@ -105,8 +105,8 @@ module Api
 
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if ckb_transaction.blank?
 
-        if ckb_transaction.is_a?(PoolTransactionEntry) && ckb_transaction.tx_status.to_s == "rejected" && ckb_transaction.detailed_message.blank?
-          ckb_transaction.update_detailed_message_for_rejected_transaction
+        if ckb_transaction.tx_status.to_s == "rejected" && ckb_transaction.detailed_message.blank?
+          PoolTransactionUpdateRejectReasonWorker.perform_async(ckb_transaction.tx_hash)
         end
 
         render json: CkbTransactionSerializer.new(ckb_transaction)

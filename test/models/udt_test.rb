@@ -32,20 +32,26 @@ class UdtTest < ActiveSupport::TestCase
     30.times do |number|
       block = create(:block, :with_block_hash)
       if number % 2 == 0
-        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], contained_address_ids: [address.id])
-        create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash, generated_by: tx, address: address)
+        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id],
+                                      contained_address_ids: [address.id])
+        create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash,
+                             address: address)
       else
-        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], contained_address_ids: [address.id])
-        tx1 = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id], contained_address_ids: [address.id])
-        create(:cell_output, block: block, ckb_transaction: tx1, cell_type: "udt", type_hash: udt.type_hash, generated_by: tx1, address: address)
-        create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash, generated_by: tx, consumed_by_id: tx1, address: address)
+        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id],
+                                      contained_address_ids: [address.id])
+        tx1 = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id],
+                                       contained_address_ids: [address.id])
+        create(:cell_output, block: block, ckb_transaction: tx1, cell_type: "udt", type_hash: udt.type_hash,
+                             address: address)
+        create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash,
+                             consumed_by_id: tx1, address: address)
       end
     end
 
     sql =
       <<-SQL
         SELECT
-          generated_by_id ckb_transaction_id
+          ckb_transaction_id
         FROM
           cell_outputs
         WHERE
