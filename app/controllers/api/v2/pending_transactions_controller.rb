@@ -4,8 +4,18 @@ module Api::V2
     def index
       pending_transactions = PoolTransactionEntry.pool_transaction_pending
 
-      asc_or_desc = params[:asc_or_desc] ||= 'desc'
-      order_by = params[:order_by] ||= 'id'
+      params[:sort] ||= "id.desc"
+      temp = params[:sort].split('.')
+      order_by = temp[0]
+      asc_or_desc = temp[1]
+      order_by = case order_by
+      when 'time' then 'created_at'
+      when 'fee' then 'transaction_fee'
+      # current we don't support this in DB
+      #when 'capacity' then 'capacity_involved'
+      else order_by
+      end
+
       head :not_found and return unless order_by.in? %w[id created_at transaction_fee]
 
       pending_transactions = pending_transactions.order(Arel.sql("#{order_by} #{asc_or_desc}"))
