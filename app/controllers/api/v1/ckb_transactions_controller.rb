@@ -17,17 +17,28 @@ module Api
             end
           render json: json
         else
-          ckb_transactions = CkbTransaction.tx_committed.recent.normal.select(
+          ckb_transactions = CkbTransaction.normal.select(
             :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at
           )
 
-          asc_or_desc = params[:asc_or_desc] || 'desc'
-          order_by = params[:order_by] || 'block_number'
+          params[:sort] ||= "block_number.desc"
+          temp = params[:sort].split('.')
+          order_by = temp[0]
+          asc_or_desc = temp[1]
+          order_by = case order_by
+          when 'height' then 'block_number'
+          when 'capacity' then 'capacity_involved'
+          else order_by
+          end
 
-          ckb_transactions = ckb_transactions.order_by(block_number: asc_or_desc) if params[:order_by] == 'block_number'
-          ckb_transactions = ckb_transactions.order_by(block_timestamp: asc_or_desc) if params[:order_by] == 'block_timestamp'
-          ckb_transactions = ckb_transactions.order_by(transaction_fee: asc_or_desc) if params[:order_by] == 'transaction_fee'
-          ckb_transactions = ckb_transactions.page(@page).per(@page_size).fast_page
+          if order_by == "capacity_involved"
+            asc_or_desc = "desc NULLS LAST" if asc_or_desc == "desc"
+            asc_or_desc = "asc NULLS FIRST" if asc_or_desc == "asc"
+          end
+          head :not_found and return unless order_by.in? %w[block_number block_timestamp transaction_fee capacity_involved]
+
+          ckb_transactions = ckb_transactions.order(Arel.sql("#{order_by} #{asc_or_desc}"))
+            .page(@page).per(@page_size).fast_page
 
           json =
             Rails.cache.realize(ckb_transactions.cache_key,
