@@ -9,7 +9,7 @@ module Api
         asc_or_desc = temp[1]
         order_by = case order_by
         # TODO need to merge PR:  https://github.com/nervosnetwork/ckb-explorer/pull/1266
-        #when 'transactions' then '24h'
+        when 'transactions' then 'h24_transactions_count'
         else order_by
         end
 
