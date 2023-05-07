@@ -10,13 +10,31 @@ module Api
         @address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if @address.is_a?(NullAddress)
 
-        @tx_ids = AccountBook.where(address_id: @address.id).order("ckb_transaction_id" => :desc).select("ckb_transaction_id").page(@page).per(@page_size).fast_page
+        @tx_ids = AccountBook
+          .joins(:ckb_transaction)
+          .where(address_id: @address.id)
+
+        params[:sort] ||= "ckb_transaction_id.desc"
+        temp = params[:sort].split('.')
+        order_by = temp[0]
+        asc_or_desc = temp[1]
+        order_by = case order_by
+          when 'time' then 'ckb_transactions.block_timestamp'
+          else order_by
+        end
+
+        head :not_found and return unless order_by.in? %w[ckb_transaction_id block_timestamp ckb_transactions.block_timestamp]
+
+        @tx_ids = @tx_ids
+          .order(Arel.sql("#{order_by} #{asc_or_desc}"))
+          .select("ckb_transaction_id")
+          .page(@page).per(@page_size).fast_page
+
+        order_by = 'id' if order_by == 'ckb_transaction_id'
         @ckb_transactions = CkbTransaction.tx_committed.where(id: @tx_ids.map(&:ckb_transaction_id))
           .select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :capacity_involved)
-        asc_or_desc = params[:asc_or_desc] || 'desc'
-        @ckb_transactions = @ckb_transactions.order(id: asc_or_desc) if params[:sort_by].blank? || params[:sort_by] == 'time'
-        @ckb_transactions = @ckb_transactions.order(capacity_involved: asc_or_desc) if params[:send_volume]
-        @ckb_transactions = @ckb_transactions.order(capacity_involved: asc_or_desc) if params[:received_volume]
+          .order(Arel.sql("#{order_by} #{asc_or_desc}"))
+
         json =
           Rails.cache.realize("#{@ckb_transactions.cache_key}/#{@address.query_address}", version: @ckb_transactions.cache_version) do
             @options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: @ckb_transactions, page: @page, page_size: @page_size, records_counter: @tx_ids).call
