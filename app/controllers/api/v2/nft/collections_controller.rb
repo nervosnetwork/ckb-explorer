@@ -2,8 +2,16 @@ module Api
   module V2
     class NFT::CollectionsController < BaseController
       def index
-        asc_or_desc = params[:asc_or_desc] || 'desc'
-        order_by = params[:order_by] || 'id'
+        params[:sort] ||= "id.desc"
+        temp = params[:sort].split('.')
+        order_by = temp[0]
+        asc_or_desc = temp[1]
+        order_by = case order_by
+        # TODO need to merge PR:  https://github.com/nervosnetwork/ckb-explorer/pull/1266
+        when 'transactions' then 'h24_transactions_count'
+        else order_by
+        end
+
         head :not_found and return unless order_by.in? %w[id holders_count items_count]
 
         collections = TokenCollection
