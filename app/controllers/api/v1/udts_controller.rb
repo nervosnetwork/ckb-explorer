@@ -9,7 +9,7 @@ class Api::V1::UdtsController < ApplicationController
     order_by = params[:order_by] || 'id'
     head :not_found and return unless order_by.in? %w[id addresses_count block_timestamp]
 
-    udts = udts.order(params[:order_by]: order_by)
+    udts = udts.order(Arel.sql("#{order_by} #{asc_or_desc}"))
       .page(@page).per(@page_size).fast_page
 
     options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: @page, page_size: @page_size).call

@@ -15,11 +15,9 @@ module Api
           blocks = Block.recent.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes, :updated_at)
           asc_or_desc = params[:asc_or_desc] || 'desc'
           order_by = params[:order_by] || 'number'
-          blocks = blocks.order(number: asc_or_desc) if params[:order_by] == 'number'
-          blocks = blocks.order(reward: asc_or_desc) if params[:order_by] == 'reward'
-          blocks = blocks.order(timestamp: asc_or_desc) if params[:order_by] == 'timestamp'
-          blocks = blocks.order(ckb_transactions_count: asc_or_desc) if params[:order_by] == 'ckb_transactions_count'
-            .page(@page).per(@page_size).fast_page
+
+          head :not_found and return unless order_by.in? %w[number reward timestamp ckb_transactions_count]
+          blocks = blocks.order(Arel.sql("#{order_by} #{asc_or_desc}")).page(@page).per(@page_size).fast_page
           json =
             Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do
               records_counter = RecordCounters::Blocks.new
