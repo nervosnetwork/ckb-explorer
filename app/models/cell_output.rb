@@ -83,8 +83,6 @@ class CellOutput < ApplicationRecord
     self.address = Address.find_or_create_by_address_hash(raw_address, block_timestamp) if raw_address
   end
 
-  # after_commit :flush_cache
-
   # @return [Boolean]
   def occupied?
     !free?
@@ -121,20 +119,6 @@ class CellOutput < ApplicationRecord
     lock = CKB::Types::Script.new(**lock_script.to_node)
     type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node) : nil
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
-  end
-
-  def cache_keys
-    %W(
-      previous_cell_output/#{tx_hash}/#{cell_index}
-      normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
-      normal_tx_display_inputs_previews_false_#{ckb_transaction_id}
-      normal_tx_display_inputs_previews_true_#{consumed_by_id}
-      normal_tx_display_inputs_previews_false_#{consumed_by_id}
-      normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
-      normal_tx_display_outputs_previews_false_#{ckb_transaction_id}
-      normal_tx_display_outputs_previews_true_#{consumed_by_id}
-      normal_tx_display_outputs_previews_false_#{consumed_by_id}
-    )
   end
 
   def to_raw
@@ -205,13 +189,6 @@ class CellOutput < ApplicationRecord
       raise "invalid cell type"
     end
     CkbUtils.hash_value_to_s(value)
-  end
-
-  def flush_cache
-    Rails.cache.delete(["cell_output", tx_hash, cell_index])
-    $redis.pipelined do
-      $redis.del(*cache_keys)
-    end
   end
 
   def create_token
