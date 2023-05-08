@@ -42,10 +42,12 @@ class StatisticInfo < ApplicationRecord
     tip_block.difficulty
   end
 
+  # @return [Integer] transactions count in the last 24 hours from now
   define_logic :transactions_last_24hrs do
     Block.h24.sum(:ckb_transactions_count).to_i
   end
 
+  # @return [Integer] transactions count per minute in the last 100 blocks from now
   define_logic :transactions_count_per_minute do
     interval = 100
     start_block_number = [tip_block_number.to_i - interval + 1, 0].max
@@ -57,6 +59,7 @@ class StatisticInfo < ApplicationRecord
     (transactions_count.to_d / (total_block_time(timestamps) / 1000 / 60)).truncate(3)
   end
 
+  # @return [Float] average block time in the last 100 blocks from now
   define_logic :average_block_time do
     interval = (Settings.average_block_time_interval || 100)
     start_block_number = [tip_block_number.to_i - interval + 1, 0].max
@@ -79,6 +82,7 @@ class StatisticInfo < ApplicationRecord
     (total_difficulties.to_d / total_time).truncate(6)
   end
 
+  # @return [BigDecimal] hash rate
   define_logic :hash_rate do
     self.class.hash_rate(tip_block_number)
   end
@@ -87,6 +91,7 @@ class StatisticInfo < ApplicationRecord
     MinerRanking.new.ranking
   end
 
+  # @return [Array<Hash>] address balance & ranking at this time
   define_logic :address_balance_ranking do
     addresses = Address.visible.where("balance > 0").order(balance: :desc).limit(50)
     addresses.each.with_index(1).map do |address, index|
@@ -94,6 +99,7 @@ class StatisticInfo < ApplicationRecord
     end
   end
 
+  # @return [Hash] blockchain info
   define_logic :blockchain_info do
     message_need_to_be_fitlered_out = "CKB v0.105.* have bugs. Please upgrade to the latest version."
     result = CkbSync::Api.instance.get_blockchain_info
@@ -101,6 +107,7 @@ class StatisticInfo < ApplicationRecord
     result
   end
 
+  # @return [Hash] transaction fee rate of the last 10000 transactions
   define_logic :transaction_fee_rates do
     txs = CkbTransaction.tx_committed.
       where("bytes > 0 and transaction_fee > 0").
@@ -139,6 +146,7 @@ class StatisticInfo < ApplicationRecord
     end
   end
 
+  # @return [Hash] fee rate of pending transaction
   define_logic :pending_transaction_fee_rates do
     # select from database
     fee_rates = PoolTransactionEntry.pool_transaction_pending.
