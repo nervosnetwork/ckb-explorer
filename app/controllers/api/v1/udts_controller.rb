@@ -13,8 +13,8 @@ class Api::V1::UdtsController < ApplicationController
     order_by = case order_by
     when 'created_time' then 'block_timestamp'
     # current we don't support this in DB
-    # need a new PR
-    # when 'transactions' then '24h_ckb_transactions'
+    # need a new PR https://github.com/nervosnetwork/ckb-explorer/pull/1266/
+    # when 'transactions' then 'h24_ckb_transactions_count'
     else order_by
     end
 

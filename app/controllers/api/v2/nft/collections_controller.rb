@@ -9,6 +9,8 @@ module Api
         order_by = case order_by
         # TODO need to merge PR:  https://github.com/nervosnetwork/ckb-explorer/pull/1266
         when 'transactions' then 'h24_transactions_count'
+        when 'holder' then 'holders_count'
+        when 'minted' then 'items_count'
         else order_by
         end
 
