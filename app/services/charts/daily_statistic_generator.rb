@@ -43,7 +43,7 @@ module Charts
     end
 
     def transactions_in_current_period
-      @transactions_in_current_period ||= CkbTransaction.created_between(started_at, ended_at)
+      @transactions_in_current_period ||= CkbTransaction.tx_committed.created_between(started_at, ended_at)
     end
 
     def cell_generated_in_current_period
