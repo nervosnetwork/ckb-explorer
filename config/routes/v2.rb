@@ -1,5 +1,6 @@
 namespace :api do
   namespace :v2 do
+    get 'ckb_transaction/:tx_hash/details', to: 'ckb_transactions#details'
     resources :transactions, only: [:index, :show] do
       member do
         get :raw
