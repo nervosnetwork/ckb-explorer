@@ -255,36 +255,6 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
-  def tx_display_info
-    TxDisplayInfo.find_by(ckb_transaction_id: self.id)
-  end
-
-  def display_inputs_info(previews: false)
-    enabled = Rails.cache.read("enable_generate_tx_display_info")
-    return unless enabled
-
-    if tx_display_info.blank?
-      TxDisplayInfoGeneratorWorker.perform_async([self.id])
-      return
-    end
-
-    if previews
-      tx_display_info.inputs[0..9]
-    else
-      tx_display_info.inputs
-    end
-  end
-
-  def display_outputs_info(previews: false)
-    return if tx_display_info.blank?
-
-    if previews
-      tx_display_info.outputs[0..9]
-    else
-      tx_display_info.outputs
-    end
-  end
-
   def self.last_n_days_transaction_fee_rates(last_n_day)
     CkbTransaction.
       where("bytes > 0 and transaction_fee > 0").
@@ -432,12 +402,6 @@ class CkbTransaction < ApplicationRecord
   end
 
   def recover_dead_cell
-    enabled = Rails.cache.read("enable_generate_tx_display_info")
-    if enabled
-      tx_ids = inputs.pluck(:ckb_transaction_id)
-      TxDisplayInfo.where(ckb_transaction_id: tx_ids).delete_all
-    end
-
     inputs.update_all(status: "live", consumed_by_id: nil, consumed_block_timestamp: nil)
   end
 end
