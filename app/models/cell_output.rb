@@ -249,7 +249,7 @@ class CellOutput < ApplicationRecord
       SELECT address_id, SUM(capacity) as balance
       FROM  cell_outputs
       WHERE status = 0
-            AND NOT ("cell_outputs"."type_hash" IS NULL AND "cell_outputs"."data" = '\x3078')
+            AND "cell_outputs"."type_hash" IS NOT NULL AND "cell_outputs"."data" != '\x3078'
       GROUP  BY address_id
       ) AS sq
     WHERE  addresses.id=sq.address_id;
