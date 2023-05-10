@@ -275,7 +275,6 @@ class Block < ApplicationRecord
   def invalid!
     uncle_blocks.delete_all
     # delete_address_txs_cache
-    delete_tx_display_infos
     ckb_transactions.destroy_all
     ForkedBlock.create(attributes)
     destroy
@@ -337,12 +336,6 @@ class Block < ApplicationRecord
     Block.last(100000).each do |block|
       block.update_counter_for_ckb_node_version
     end
-  end
-
-  private
-
-  def delete_tx_display_infos
-    TxDisplayInfo.where(ckb_transaction_id: ckb_transactions.ids).delete_all
   end
 end
 
