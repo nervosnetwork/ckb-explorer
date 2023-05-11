@@ -13,7 +13,7 @@ module Charts
         start_time = Time.zone.at(last_record ? last_record.created_at_unixtimestamp : (Block.find_by(number: 0).timestamp / 1000) - 86400)
       end
 
-      start_time = start_time.beginning_of_day
+      start_time = start_time.in_time_zone.beginning_of_day
 
       while start_time < datetime
         start_time += 1.day
