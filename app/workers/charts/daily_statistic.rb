@@ -5,10 +5,15 @@ module Charts
 
     # iterate from the creation timestamp of last daily statistic record to now day by day
     # and generate daily statistic record for each day
-    def perform(datetime = nil)
+    def perform(datetime = nil, start_time = nil)
       datetime ||= 1.day.ago.beginning_of_day
-      last_record = ::DailyStatistic.order(created_at_unixtimestamp: :desc).first
-      start_time = Time.zone.at(last_record ? last_record.created_at_unixtimestamp : (Block.find_by(number: 0).timestamp / 1000) - 86400)
+
+      unless start_time
+        last_record = ::DailyStatistic.order(created_at_unixtimestamp: :desc).first
+        start_time = Time.zone.at(last_record ? last_record.created_at_unixtimestamp : (Block.find_by(number: 0).timestamp / 1000) - 86400)
+      end
+
+      start_time = start_time.beginning_of_day
 
       while start_time < datetime
         start_time += 1.day
