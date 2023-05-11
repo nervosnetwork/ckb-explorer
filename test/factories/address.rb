@@ -5,8 +5,6 @@ FactoryBot.define do
       CKB::Address.new(script).generate
     end
 
-    address_hash_crc { CkbUtils.generate_crc32(address_hash) }
-
     balance { 0 }
     cell_consumed { 0 }
     ckb_transactions_count { 0 }
@@ -63,7 +61,14 @@ FactoryBot.define do
           transaction1 = create(:ckb_transaction, block: block, udt_address_ids: [address.id], tags: ["udt"])
           transaction1.contained_address_ids = [address.id]
           transaction1.contained_udt_ids = [evaluator.udt.id]
-          create(:cell_output, address: address, block: block, ckb_transaction: transaction, generated_by: transaction, consumed_by: transaction1, type_hash: evaluator.udt.type_hash, cell_type: "udt", data: "0x000050ad321ea12e0000000000000000")
+          create(:cell_output, address: address,
+                               block: block,
+                               ckb_transaction: transaction,
+                               consumed_by: transaction1,
+                               status: "dead",
+                               type_hash: evaluator.udt.type_hash,
+                               cell_type: "udt",
+                               data: "0x000050ad321ea12e0000000000000000")
         end
       end
     end

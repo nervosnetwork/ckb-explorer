@@ -5,6 +5,9 @@ module Api
     class StatisticsControllerTest < ActionDispatch::IntegrationTest
       setup do
         CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(100)
+        CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(
+          OpenStruct.new(alerts: OpenStruct.new(message: "test"))
+        )
         CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
           CKB::Types::Epoch.new(
             compact_target: "0x1000",
@@ -13,11 +16,12 @@ module Api
             start_number: "0x0"
           )
         )
-        StatisticInfo.any_instance.stubs(:id).returns(1)
+        # StatisticInfo.any_instance.stubs(:id).returns(1)
       end
 
       test "should get success code when call index" do
         create(:block)
+        StatisticInfo.default.reset_all!
         valid_get api_v1_statistics_url
 
         assert_response :success
@@ -25,6 +29,7 @@ module Api
 
       test "should set right content type when call index" do
         create(:block)
+        StatisticInfo.default.reset_all!
         valid_get api_v1_statistics_url
 
         assert_equal "application/vnd.api+json", response.media_type
@@ -62,16 +67,17 @@ module Api
 
       test "the returned statistic info should contain right keys" do
         create_list(:block, 15, :with_block_hash)
+        StatisticInfo.default.reset_all!
         valid_get api_v1_statistics_url
 
-        assert_equal %w(average_block_time current_epoch_difficulty hash_rate tip_block_number epoch_info estimated_epoch_time transactions_last_24hrs transactions_count_per_minute reorg_started_at).sort, json.dig("data", "attributes").keys.sort
+        assert_equal %w(average_block_time current_epoch_difficulty hash_rate tip_block_number epoch_info estimated_epoch_time transactions_last_24hrs transactions_count_per_minute reorg_started_at).sort,
+                     json.dig("data", "attributes").keys.sort
       end
 
       test "should return right index statistic info" do
         create_list(:block, 15, :with_block_hash)
-        StatisticInfo.any_instance.stubs(:id).returns(1)
-        statistic_info = StatisticInfo.new
-
+        statistic_info = StatisticInfo.default
+        statistic_info.reset_all!
         valid_get api_v1_statistics_url
 
         assert_equal IndexStatisticSerializer.new(statistic_info).serialized_json, response.body
@@ -79,6 +85,7 @@ module Api
 
       test "should get success code when call show" do
         ENV["MINER_RANKING_EVENT"] = "on"
+        StatisticInfo.default.reset_all!
         valid_get api_v1_statistic_url("miner_ranking")
 
         assert_response :success
@@ -86,6 +93,7 @@ module Api
 
       test "the returned miner ranking info should contain right keys" do
         ENV["MINER_RANKING_EVENT"] = "on"
+
         CkbSync::Api.any_instance.stubs(:get_epoch_by_number).with(0).returns(
           CKB::Types::Epoch.new(
             compact_target: "0x1000",
@@ -95,7 +103,7 @@ module Api
           )
         )
         generate_miner_ranking_related_data
-
+        StatisticInfo.default.reset_all!
         valid_get api_v1_statistic_url("miner_ranking")
 
         assert_equal %w(miner_ranking), json.dig("data", "attributes").keys.sort
@@ -112,11 +120,11 @@ module Api
           )
         )
         generate_miner_ranking_related_data
-        statistic_info = StatisticInfo.new
-
+        statistic_info = StatisticInfo.default
+        statistic_info.reset_all!
         valid_get api_v1_statistic_url("miner_ranking")
-
-        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "miner_ranking" } }).serialized_json, response.body
+        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "miner_ranking" } }).serialized_json,
+                     response.body
       end
 
       test "the returned empty array when event not start" do
@@ -130,7 +138,7 @@ module Api
           )
         )
         generate_miner_ranking_related_data(1550578400000)
-
+        StatisticInfo.default.reset! :miner_ranking
         valid_get api_v1_statistic_url("miner_ranking")
 
         assert_equal [], json.dig("data", "attributes", "miner_ranking")
@@ -141,16 +149,19 @@ module Api
         ENV["MINER_RANKING_EVENT"] = "on"
         tip_block_number = 101
         CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(tip_block_number)
-        statistic_info = StatisticInfo.new
-
+        statistic_info = StatisticInfo.default
+        statistic_info.reset_all!
         valid_get api_v1_statistic_url("tip_block_number")
 
-        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "tip_block_number" } }).serialized_json, response.body
+        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "tip_block_number" } }).serialized_json,
+                     response.body
       end
 
       test "should return tip block number when param is tip_block_number" do
+        Block.delete_all
         tip_block_number = 101
         create(:block, number: tip_block_number)
+
         valid_get api_v1_statistic_url("tip_block_number")
 
         assert_equal tip_block_number, json.dig("data", "attributes", "tip_block_number")
@@ -194,23 +205,25 @@ module Api
           alerts: []
         )
         StatisticInfo.any_instance.stubs(:blockchain_info).returns(blockchain_info)
-        statistic_info = StatisticInfo.new
-
+        statistic_info = StatisticInfo.default
+        statistic_info.reset! :blockchain_info
         valid_get api_v1_statistic_url("blockchain_info")
 
-        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "blockchain_info" } }).serialized_json, response.body
+        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "blockchain_info" } }).serialized_json,
+                     response.body
       end
 
       test "should return top 50 addresses balance list when param is address balance ranking" do
         create_list(:address, 100).each.with_index(1) do |address, index|
           address.update(balance: index * 100)
         end
-        statistic_info = StatisticInfo.new
-
+        statistic_info = StatisticInfo.default
+        statistic_info.reset! :address_balance_ranking
         valid_get api_v1_statistic_url("address_balance_ranking")
-
-        assert_equal %w(ranking address balance), json.dig("data", "attributes", "address_balance_ranking").map(&:keys).uniq.flatten
-        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "address_balance_ranking" } }).serialized_json, response.body
+        assert_equal %w(ranking address balance).sort,
+                     json.dig("data", "attributes", "address_balance_ranking").map(&:keys).uniq.flatten.sort
+        assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "address_balance_ranking" } }).serialized_json,
+                     response.body
       end
 
       test "should respond with error object when statistic info name is invalid" do

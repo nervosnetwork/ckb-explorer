@@ -49,23 +49,23 @@ gem "digest-crc"
 
 # Backgroud Jobs
 
-group :production, :staging, :development do
-  gem "sidekiq"
-  # fixed sidekiq7 bug.
-  gem "sidekiq-statistic", github: "dougmrqs/sidekiq-statistic", branch: "fix-problem-with-sidekiq-7"
-  gem "sidekiq-cron", github: "serprex/sidekiq-cron", branch: "master"
-
-  gem "sidekiq-unique-jobs"
-  gem "sidekiq-status"
-  gem "sidekiq-failures"
-end
-
+gem "sidekiq"
+# fixed sidekiq7 bug.
+gem "sidekiq-statistic", github: "dougmrqs/sidekiq-statistic", branch: "fix-problem-with-sidekiq-7"
+gem "sidekiq-unique-jobs"
+gem "sidekiq-status"
+gem "sidekiq-failures"
+gem "rufus-scheduler"
 # bulk insertion of data into database using ActiveRecord
 gem "activerecord-import"
 
 gem "fast_jsonapi"
+gem "jbuilder"
 
 gem "kaminari"
+
+# to optimize the huge pages query. e.g. query records from 10000th page.
+gem "fast_page"
 
 gem "ruby-progressbar", require: false
 
@@ -79,7 +79,7 @@ gem "sentry-rails"
 gem "sentry-sidekiq"
 gem "newrelic_rpm"
 
-gem 'bigdecimal'
+gem "bigdecimal"
 
 # Deployment
 gem "rack-attack"
@@ -88,6 +88,9 @@ group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem "pry"
   gem "pry-rails"
+  gem "pry-byebug"
+  gem "factory_bot_rails"
+  gem "faker"
   # gem "pry-nav"
 end
 
@@ -99,10 +102,8 @@ group :test do
   gem "vcr"
   gem "webmock"
   gem "database_cleaner"
+  gem "database_cleaner-active_record"
   gem "mocha"
-  gem "factory_bot_rails"
-  #  gem "faker", git: "https://github.com/faker-ruby/faker.git", branch: "master"
-  gem "faker", git: "https://github.com/faker-ruby/faker.git", branch: "main"
   gem "codecov", require: false
 end
 
@@ -121,8 +122,10 @@ end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: [:mingw, :mswin, :x64_mingw, :jruby]
-gem "redis-objects"
+gem "redis-objects", ">= 2.0.0.beta"
 gem "pagy"
 gem "http"
 gem "rack-cache"
 gem "dalli"
+gem "after_commit_everywhere"
+gem "kredis"

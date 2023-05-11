@@ -4,8 +4,10 @@ module Api
       before_action :validate_query_params
 
       def show
-        cell_input = CellInput.cached_find(params[:id])
-        type_script = cell_input.find_type_script!
+        cell_input = CellInput.find(params[:id])
+        raise Api::V1::Exceptions::CellInputNotFoundError unless cell_input.previous_cell_output
+
+        type_script = cell_input.type_script
 
         render json: TypeScriptSerializer.new(type_script)
       rescue ActiveRecord::RecordNotFound

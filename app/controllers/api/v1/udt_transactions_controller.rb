@@ -6,7 +6,7 @@ module Api
 
       def show
         udt = Udt.find_by!(type_hash: params[:id], published: true)
-        ckb_transactions = udt.ckb_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(@page).per(@page_size)
+        ckb_transactions = udt.ckb_transactions.tx_committed.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).recent.page(@page).per(@page_size).fast_page
         json =
           Rails.cache.realize("#{udt.symbol}/#{ckb_transactions.cache_key}", version: ckb_transactions.cache_version) do
             records_counter = RecordCounters::UdtTransactions.new(udt)

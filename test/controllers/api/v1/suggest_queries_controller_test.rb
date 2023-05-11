@@ -83,6 +83,7 @@ module Api
       end
 
       test "should return a block when query key is a exist block height" do
+        Block.delete_all
         block = create(:block)
         response_json = BlockSerializer.new(block).serialized_json
 
@@ -91,6 +92,7 @@ module Api
       end
 
       test "should return a block when query key is a exist block hash" do
+        Block.delete_all
         block = create(:block)
         response_json = BlockSerializer.new(block).serialized_json
 

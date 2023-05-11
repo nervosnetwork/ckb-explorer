@@ -66,7 +66,7 @@ module Api
 
       test "should return corresponding type script with given cell input id" do
         cell_input = create(:cell_input, :with_full_transaction)
-        type_script = cell_input.find_type_script!
+        type_script = cell_input.type_script
 
         valid_get api_v1_cell_input_type_script_url(cell_input.id)
 
@@ -103,7 +103,7 @@ module Api
 
       test "should return null when found record hasn't type script" do
         cell_input = create(:cell_input, :with_full_transaction)
-        type_script = cell_input.find_type_script!
+        type_script = cell_input.type_script
 
         valid_get api_v1_cell_input_type_script_url(cell_input.id)
 

@@ -24,7 +24,10 @@ class DaoContractTest < ActiveSupport::TestCase
 
   test "should have correct columns" do
     dao_contract = create(:dao_contract)
-    expected_attributes = %w(created_at deposit_transactions_count depositors_count id claimed_compensation total_deposit total_depositors_count updated_at withdraw_transactions_count unclaimed_compensation ckb_transactions_count)
+    expected_attributes = %w(
+      created_at deposit_transactions_count depositors_count id claimed_compensation
+      total_deposit total_depositors_count updated_at withdraw_transactions_count unclaimed_compensation ckb_transactions_count
+    )
     assert_equal expected_attributes.sort, dao_contract.attributes.keys.sort
   end
 
@@ -170,16 +173,17 @@ class DaoContractTest < ActiveSupport::TestCase
       cell_output_address = number % 2 == 0 ? address : address1
       if number % 2 == 0
         tx = create(:ckb_transaction, block: block, tags: ["dao"])
-        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, generated_by: tx, cell_type: cell_type)
+        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, cell_type: cell_type)
       else
         tx = create(:ckb_transaction, block: block, tags: ["dao"])
         tx1 = create(:ckb_transaction, block: block, tags: ["dao"])
-        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx1, generated_by: tx1, cell_type: cell_type)
-        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, generated_by: tx, consumed_by: tx1, cell_type: cell_type)
+        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx1, cell_type: cell_type)
+        create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, consumed_by: tx1,
+                             status: "dead", cell_type: cell_type)
       end
     end
 
-    ckb_transaction_ids = CellOutput.nervos_dao_deposit.pluck("generated_by_id") + CellOutput.nervos_dao_withdrawing.pluck("generated_by_id") + CellOutput.nervos_dao_withdrawing.pluck("consumed_by_id").compact
+    ckb_transaction_ids = CellOutput.nervos_dao_deposit.pluck("ckb_transaction_id") + CellOutput.nervos_dao_withdrawing.pluck("ckb_transaction_id") + CellOutput.nervos_dao_withdrawing.pluck("consumed_by_id").compact
     expected_txs = CkbTransaction.where(id: ckb_transaction_ids.uniq).recent
 
     assert_equal expected_txs.pluck(:id), contract.ckb_transactions.recent.pluck(:id)

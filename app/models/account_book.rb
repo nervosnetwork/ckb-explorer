@@ -1,3 +1,4 @@
+# save the relationship between address and transaction
 class AccountBook < ApplicationRecord
   belongs_to :address
   belongs_to :ckb_transaction

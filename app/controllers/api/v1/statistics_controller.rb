@@ -2,17 +2,17 @@ module Api
   module V1
     class StatisticsController < ApplicationController
       before_action :validate_query_params, only: :show
-
+      NOT_USED_COLUMNS = %w(last_n_days_transaction_fee_rates pending_transaction_fee_rates transaction_fee_rates)
       def index
-        statistic_info = StatisticInfo.new
-        if stale?(etag: statistic_info.tip_block_hash, public: true)
-          expires_in 5.seconds, public: true, must_revalidate: true, stale_while_revalidate: 3.seconds
+        statistic_info = StatisticInfo.select(StatisticInfo.column_names - NOT_USED_COLUMNS).default
+        if stale?(public: true)
+          expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
           render json: IndexStatisticSerializer.new(statistic_info)
         end
       end
 
       def show
-        statistic_info = StatisticInfo.new
+        statistic_info = StatisticInfo.select(StatisticInfo.column_names - NOT_USED_COLUMNS).default
         render json: StatisticSerializer.new(statistic_info, params: { info_name: params[:id] })
       end
 

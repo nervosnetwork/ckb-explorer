@@ -9,6 +9,7 @@ SimpleCov.start "rails" do
   add_filter "/lib/ckb_statistic_info_chart_data_updater.rb"
 end
 require "database_cleaner"
+require "database_cleaner/active_record"
 require "minitest/reporters"
 require "mocha/minitest"
 require "sidekiq/testing"
@@ -27,6 +28,8 @@ VCR.configure do |config|
   config.hook_into :webmock
   config.default_cassette_options[:match_requests_on] = [:method, :path, :body]
 end
+DatabaseCleaner.clean_with :truncation
+# DatabaseCleaner.strategy = :truncation
 DatabaseCleaner.strategy = :transaction
 
 Shoulda::Matchers.configure do |config|
@@ -120,7 +123,10 @@ def format_node_block(node_block)
 end
 
 def format_node_block_commit_transaction(commit_transaction)
-  tx = commit_transaction.instance_values.reject { |key, _value| key.in?(%w(inputs outputs outputs_data)) }
+  tx =
+    commit_transaction.instance_values.reject do |key, _value|
+      key.in?(%w(inputs outputs outputs_data))
+    end
   tx["witnesses"] = JSON.parse(tx["witnesses"].to_json)
 
   tx
@@ -182,7 +188,9 @@ def fake_node_block(block_hash = DEFAULT_NODE_BLOCK_HASH, number = "0xc")
           "hash": "0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3",
           "inputs": [
             {
-              "previous_output": { "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000000", "index": "0x0" },
+              "previous_output": {
+                "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "index": "0x0" },
               "since": "0x0"
             }
           ],
@@ -331,15 +339,34 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   cellbases_part2 = cellbases[2..8]
   cellbases_part3 = cellbases[9..-1]
   address1 = create(:address, :with_lock_script)
-  cellbases_part1.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1, generated_by: cellbase) }
+  cellbases_part1.map do |cellbase|
+    cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1,
+                                  lock_script: address1.lock_script)
+  end
   # address1.ckb_transactions << cellbases_part1
   AccountBook.insert_all(cellbases_part1.map { |c| { address_id: address1.id, ckb_transaction_id: c.id } })
   address2 = create(:address, :with_lock_script)
-  cellbases_part2.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2, generated_by: cellbase) }
-  AccountBook.insert_all(cellbases_part2.map { |c| { address_id: address2.id, ckb_transaction_id: c.id } }) # address2.ckb_transactions << cellbases_part2
+  cellbases_part2.map do |cellbase|
+    cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2,
+                                  lock_script: address2.lock_script)
+  end
+  # address2.ckb_transactions << cellbases_part2
+  AccountBook.insert_all(
+    cellbases_part2.map do |c|
+      { address_id: address2.id, ckb_transaction_id: c.id }
+    end
+  )
   address3 = create(:address, :with_lock_script)
-  cellbases_part3.map { |cellbase| cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3, generated_by: cellbase) }
-  AccountBook.insert_all(cellbases_part3.map { |c| { address_id: address3.id, ckb_transaction_id: c.id } }) # address3.ckb_transactions << cellbases_part3
+  cellbases_part3.map do |cellbase|
+    cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3,
+                                  lock_script: address3.lock_script)
+  end
+  # address3.ckb_transactions << cellbases_part3
+  AccountBook.insert_all(
+    cellbases_part3.map do |c|
+      { address_id: address3.id, ckb_transaction_id: c.id }
+    end
+  )
 
   return address1, address2, address3
 end
@@ -381,16 +408,15 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
                                 tx_hash: "0x#{SecureRandom.hex(32)}",
                                 block: block,
                                 address: address,
-                                dao_address_ids: [address.id],
                                 contained_dao_address_ids: [address.id],
                                 contained_address_ids: [address.id],
                                 tags: ["dao"])
-      create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: number, tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", generated_by: ckb_transaction1, block: block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit", address: address)
+      create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: number,
+                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit", address: address)
     else
       ckb_transaction2 = create(:ckb_transaction,
                                 tx_hash: "0x#{SecureRandom.hex(32)}",
                                 block: block, address: address,
-                                dao_address_ids: [address.id],
                                 contained_dao_address_ids: [address.id],
                                 contained_address_ids: [address.id],
                                 tags: ["dao"])
@@ -398,7 +424,6 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
              ckb_transaction: ckb_transaction2,
              cell_index: number,
              tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-             generated_by: ckb_transaction2,
              block: block,
              capacity: 10**8 * 1000,
              cell_type: "nervos_dao_deposit",
@@ -434,9 +459,8 @@ module ActiveSupport
 
     # Add more helper methods to be used by all tests here...
     def before_setup
-      super
       DatabaseCleaner.start
-
+      super
       CkbSync::NewNodeDataProcessor.any_instance.stubs(:get_median_timestamp).returns(1573852190812)
     end
 

@@ -1,8 +1,8 @@
-class LockScript < ActiveRecord::Base
+class LockScript < ApplicationRecord
   has_many :cell_outputs
 
   # TODO remove this
-  has_many :generated_by_txs, source: :generated_by, through: :cell_outputs
+  has_many :ckb_transactions, source: :ckb_transaction, through: :cell_outputs
   has_many :consumed_by_txs, source: :consumed_by, through: :cell_outputs
 
   belongs_to :address, optional: true # will remove this later
@@ -13,6 +13,23 @@ class LockScript < ActiveRecord::Base
   validates_presence_of :code_hash
   attribute :code_hash, :ckb_hash
 
+  def self.process(sdk_lock)
+    lock_hash = sdk_lock.compute_hash
+    address_hash = CkbUtils.generate_address(sdk_lock)
+
+    address = Address.create_with(address_hash: address_hash).find_or_create_by!(lock_hash: lock_hash)
+    # contract = Contract.create_or_find_by(code_hash: lock.code_hash)
+    # script = Script
+    create_with(
+      script_hash: lock_hash,
+      address: address
+    ).create_or_find_by!(
+      code_hash: sdk_lock.code_hash,
+      hash_type: sdk_lock.hash_type,
+      args: sdk_lock.args
+    )
+  end
+
   def to_node
     {
       args: args,
@@ -21,7 +38,7 @@ class LockScript < ActiveRecord::Base
     }
   end
 
-  def as_json(options={})
+  def as_json(options = {})
     {
       args: args,
       code_hash: code_hash,
@@ -31,7 +48,8 @@ class LockScript < ActiveRecord::Base
   end
 
   def ckb_transactions
-    CkbTransaction.where(:id => CellOutput.where(lock_script_id: self.id).pluck('generated_by_id', 'consumed_by_id').flatten)
+    CkbTransaction.where(id: CellOutput.where(lock_script_id: self.id).pluck("ckb_transaction_id",
+                                                                             "consumed_by_id").flatten)
   end
 
   def cell_output
@@ -63,7 +81,9 @@ class LockScript < ActiveRecord::Base
           estimated_unlock_time = tip_block_time + (block_interval * 8).seconds
         end
 
-        { status: lock_info_status(since_value, tip_epoch), epoch_number: epoch_number.to_s, epoch_index: since_value_index.to_s, estimated_unlock_time: estimated_unlock_time.strftime("%Q") }
+        {
+          status: lock_info_status(since_value, tip_epoch), epoch_number: epoch_number.to_s,
+          epoch_index: since_value_index.to_s, estimated_unlock_time: estimated_unlock_time.strftime("%Q") }
       rescue SinceParser::IncorrectSinceFlagsError
         nil
       end
@@ -121,6 +141,6 @@ end
 #  index_lock_scripts_on_address_id                        (address_id)
 #  index_lock_scripts_on_cell_output_id                    (cell_output_id)
 #  index_lock_scripts_on_code_hash_and_hash_type_and_args  (code_hash,hash_type,args)
-#  index_lock_scripts_on_script_hash                       (script_hash)
+#  index_lock_scripts_on_script_hash                       (script_hash) USING hash
 #  index_lock_scripts_on_script_id                         (script_id)
 #

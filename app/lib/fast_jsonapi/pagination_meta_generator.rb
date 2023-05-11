@@ -9,7 +9,7 @@ module FastJsonapi
       @page_size = limit_page_size(records, page_size.to_i)
       @records = records
       @records_counter = records_counter || records
-      @total_count = @records_counter.total_count
+      @total_count = @records_counter.total_count.to_i
       @total_pages = total_pages
       @hash = { links: {}, meta: { total: @total_count, page_size: @page_size } }
     end

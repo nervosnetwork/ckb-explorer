@@ -31,7 +31,7 @@ module Validations
     end
 
     def valid_statistic_info_names
-      ::StatisticInfo.instance_methods(false)
+      ::StatisticInfo.instance_methods(false) + ::StatisticInfo.column_names.map(&:to_sym)
     end
   end
 end
