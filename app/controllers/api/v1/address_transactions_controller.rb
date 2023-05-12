@@ -23,18 +23,25 @@ module Api
 
       def download_csv
         @tx_ids = AccountBook.where(address_id: @address.id).order("ckb_transaction_id" => :desc).select("ckb_transaction_id").limit(5000)
-        @ckb_transactions = CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).order(id: :desc)
+        @ckb_transactions = CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).select(:id, :tx_hash, :transaction_fee, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).order(id: :desc)
         @ckb_transactions = @ckb_transactions.where('updated_at >= ?', params[:start_date]) if params[:start_date].present?
         @ckb_transactions = @ckb_transactions.where('updated_at <= ?', params[:end_date]) if params[:end_date].present?
         @ckb_transactions = @ckb_transactions.where('block_number >= ?', params[:block_number]) if params[:block_number].present?
         @ckb_transactions = @ckb_transactions.where('block_number <= ?', params[:block_number]) if params[:block_number].present?
+
+
         file = CSV.generate do |csv|
-          csv << ["TXn hash", "Blockno", "UnixTimestamp", "Method", "CKB In", "CKB OUT", "Other Cells In", "Other Cells Out", "TxnFee(CKB)", "TxnFee(USD)",
-                  "date(UTC)", "current CKB balance"]
+          csv << ["TXn hash", "Blockno", "UnixTimestamp", "Method", "CKB In", "CKB OUT", "TxnFee(CKB)", "date(UTC)" ]
           @ckb_transactions.each_with_index do |ckb_transaction, index|
-            row = [ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp, "Transfer", "CKB In", "CKB OUT", "Other Cell In",
-                   "Other Cell OUT", "TxnFee(CKB)", "TxnFee(USD)", ckb_transaction.updated_at, "current CKB balance"]
-            csv << row
+
+            inputs = ckb_transaction.display_inputs  # 5
+            outputs = ckb_transaction.display_outputs # 3
+            max = inputs.size > outputs.size ? inputs.size : outputs.size
+            (1..max).each do |i|
+              row = [ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp, "Transfer", (inputs[i] rescue ''), (outputs[i] rescue ''),
+                     ckb_transaction.transaction_fee, ckb_transaction.updated_at]
+              csv << row
+            end
           end
         end
         send_data file, :type => 'text/csv; charset=utf-8; header=present', :disposition => "attachment;filename=ckb_transactions.csv"

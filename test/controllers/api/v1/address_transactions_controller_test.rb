@@ -351,6 +351,17 @@ module Api
                                 input.key?("from_cellbase")
                               }.uniq
       end
+
+      test "should get download_csv" do
+        address = create(:address)
+        block = create(:block, :with_block_hash)
+        ckb_transaction = create(:ckb_transaction,
+                                 :with_multiple_inputs_and_outputs,
+                                 block: block, contained_address_ids: [address.id], transaction_fee: 1000 )
+        valid_get download_csv_api_v1_address_transactions_url(id: address.address_hash, start_data: (Time.now - 10), end_date: Time.now)
+
+        assert_response :success
+      end
     end
   end
 end

@@ -35,8 +35,8 @@ module Api
         @blocks = Block.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes, :updated_at)
         @blocks = @blocks.where('created_at >= ?', params[:start_date]) if params[:start_date].present?
         @blocks = @blocks.where('created_at <= ?', params[:end_date]) if params[:end_date].present?
-        @blocks = @blocks.where('number >= ?', params[:number]) if params[:number].present?
-        @blocks = @blocks.where('number <= ?', params[:number]) if params[:number].present?
+        @blocks = @blocks.where('number >= ?', params[:start_number]) if params[:start_number].present?
+        @blocks = @blocks.where('number <= ?', params[:end_number]) if params[:end_number].present?
         @blocks = @blocks.limit(5000)
 
         file = CSV.generate do |csv|
