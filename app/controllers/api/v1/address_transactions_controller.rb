@@ -22,23 +22,29 @@ module Api
       end
 
       def download_csv
-        @tx_ids = AccountBook.where(address_id: @address.id).order("ckb_transaction_id" => :desc).select("ckb_transaction_id").limit(5000)
-        @ckb_transactions = CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).select(:id, :tx_hash, :transaction_fee, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).order(id: :desc)
-        @ckb_transactions = @ckb_transactions.where('updated_at >= ?', params[:start_date]) if params[:start_date].present?
-        @ckb_transactions = @ckb_transactions.where('updated_at <= ?', params[:end_date]) if params[:end_date].present?
-        @ckb_transactions = @ckb_transactions.where('block_number >= ?', params[:block_number]) if params[:block_number].present?
-        @ckb_transactions = @ckb_transactions.where('block_number <= ?', params[:block_number]) if params[:block_number].present?
+        tx_ids = AccountBook.where(address_id: @address.id).order("ckb_transaction_id" => :desc).select("ckb_transaction_id").limit(5000)
+        ckb_transactions = CkbTransaction.where(id: tx_ids.map(&:ckb_transaction_id))
+        ckb_transactions = ckb_transactions.where('updated_at >= ?', params[:start_date]) if params[:start_date].present?
+        ckb_transactions = ckb_transactions.where('updated_at <= ?', params[:end_date]) if params[:end_date].present?
+        ckb_transactions = ckb_transactions.where('block_number >= ?', params[:start_number]) if params[:start_number].present?
+        ckb_transactions = ckb_transactions.where('block_number <= ?', params[:end_number]) if params[:end_number].present?
 
+        ckb_transactions = ckb_transactions
+          .select(:id, :tx_hash, :transaction_fee, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
+          .order(id: :desc)
+          .limit(5000)
 
         file = CSV.generate do |csv|
           csv << ["TXn hash", "Blockno", "UnixTimestamp", "Method", "CKB In", "CKB OUT", "TxnFee(CKB)", "date(UTC)" ]
-          @ckb_transactions.each_with_index do |ckb_transaction, index|
+          ckb_transactions.each_with_index do |ckb_transaction, index|
 
             inputs = ckb_transaction.display_inputs  # 5
             outputs = ckb_transaction.display_outputs # 3
             max = inputs.size > outputs.size ? inputs.size : outputs.size
             (1..max).each do |i|
-              row = [ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp, "Transfer", (inputs[i] rescue ''), (outputs[i] rescue ''),
+              row = [ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp, "Transfer",
+                     (inputs[i][:capacity] / 1e8 rescue ''),
+                     (outputs[i][:capacity] / 1e8 rescue ''),
                      ckb_transaction.transaction_fee, ckb_transaction.updated_at]
               csv << row
             end
