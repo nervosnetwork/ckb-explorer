@@ -39,11 +39,28 @@ module Api
       end
 
       def download_csv
+
+        transfers = @collection.token_transfers
+        tra
+        token_transfers = TokenTransfer.joins(:item, :ckb_transaction).includes(:ckb_transaction, :from, :to)
+          .where('token_items.collection_id = ?', @collection.id )
+
+        token_transfers = token_transfers.where('ckb_transactions.block_timestamp >= ?', DateTime.strptime(params[:start_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:start_date].present?
+        token_transfers = token_transfers.where('ckb_transactions.block_timestamp <= ?', DateTime.strptime(params[:end_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:end_date].present?
+        token_transfers = token_transfers.where('ckb_transactions.block_number >= ?', params[:start_number]) if params[:start_number].present?
+        token_transfers = token_transfers.where('ckb_transactions.block_number <= ?', params[:end_number]) if params[:end_number].present?
+
+        token_transfers = token_transfers
+          .order('token_transfers.id desc')
+          .limit(5000)
+
         file = CSV.generate do |csv|
-          csv << ["Txn hash", "Blockno", "UnixTimestamp", "Method", "CKB In", "CKB OUT", "Other Cell In", "Other Cell Out", "TxnFee(CKB)", "TxnFee(USD)", "date(UTC)"]
-          @collection.transfers.each do |transfer|
+          csv << ['Txn hash', 'Blockno', 'UnixTimestamp', 'NFT ID', 'Method', 'NFT from', 'NFT to', 'TxnFee(CKB)', 'date(UTC)']
+          token_transfers.find_each do |transfer|
             ckb_transaction = transfer.ckb_transaction
-            row = [ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp, "Method", "ckb in", "ckb out", "TxnFee(CKB)", "TxnFee(USD)", ckb_transaction.updated_at]
+            row = [ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp,
+                   transfer.token_id, transfer.action, transfer.from.address_hash, transfer.to.address_hash,
+                   ckb_transaction.transaction_fee, ckb_transaction.block_timestamp]
             csv << row
           end
         end
