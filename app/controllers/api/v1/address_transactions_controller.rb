@@ -24,8 +24,8 @@ module Api
       def download_csv
         tx_ids = AccountBook.where(address_id: @address.id).order("ckb_transaction_id" => :desc).select("ckb_transaction_id").limit(5000)
         ckb_transactions = CkbTransaction.where(id: tx_ids.map(&:ckb_transaction_id))
-        ckb_transactions = ckb_transactions.where('updated_at >= ?', params[:start_date]) if params[:start_date].present?
-        ckb_transactions = ckb_transactions.where('updated_at <= ?', params[:end_date]) if params[:end_date].present?
+        ckb_transactions = ckb_transactions.where('ckb_transactions.block_timestamp >= ?', DateTime.strptime(params[:start_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:start_date].present?
+        ckb_transactions = ckb_transactions.where('ckb_transactions.block_timestamp <= ?', DateTime.strptime(params[:end_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:end_date].present?
         ckb_transactions = ckb_transactions.where('block_number >= ?', params[:start_number]) if params[:start_number].present?
         ckb_transactions = ckb_transactions.where('block_number <= ?', params[:end_number]) if params[:end_number].present?
 
@@ -38,13 +38,13 @@ module Api
           csv << ["TXn hash", "Blockno", "UnixTimestamp", "Method", "CKB In", "CKB OUT", "TxnFee(CKB)", "date(UTC)" ]
           ckb_transactions.each_with_index do |ckb_transaction, index|
 
-            inputs = ckb_transaction.display_inputs  # 5
-            outputs = ckb_transaction.display_outputs # 3
+            inputs = ckb_transaction.display_inputs
+            outputs = ckb_transaction.display_outputs
             max = inputs.size > outputs.size ? inputs.size : outputs.size
-            (1..max).each do |i|
+            (0 .. max-1).each do |i|
               row = [ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp, "Transfer",
-                     (inputs[i][:capacity] / 1e8 rescue ''),
-                     (outputs[i][:capacity] / 1e8 rescue ''),
+                     (inputs[i][:capacity].to_d / 1e8 rescue '/'),
+                     (outputs[i][:capacity].to_d / 1e8 rescue '/'),
                      ckb_transaction.transaction_fee, ckb_transaction.updated_at]
               csv << row
             end

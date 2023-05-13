@@ -28,23 +28,26 @@ class Api::V1::UdtsController < ApplicationController
     ckb_transactions = ckb_transactions.order('ckb_transactions.block_timestamp desc').limit(5000)
 
     file = CSV.generate do |csv|
-      csv << ["Txn hash", "Blockno", "UnixTimestamp", "Method", "Token In", "Token OUT", "Token From", "Token To", "TxnFee(CKB)", "date(UTC)" ]
+      csv << ["Txn hash", "Blockno", "UnixTimestamp", "Method", "Token In", "Token In Name", "Token OUT", "Token OUT Name", "Token From", "Token To", "TxnFee(CKB)", "date(UTC)" ]
 
-      ckb_transactions.find_each.with_index do |ckb_transaction, index|
+      ckb_transactions.find_each do |ckb_transaction|
 
         token_inputs = ckb_transaction.display_inputs.select { |e| e[:cell_type] == 'udt' }
         token_outputs = ckb_transaction.display_outputs.select { |e| e[:cell_type] == 'udt' }
 
         max = token_inputs.size > token_outputs.size ? token_inputs.size : token_outputs.size
-        (1..max).each do |i|
+        next if max == 0
+
+        (0 .. (max-1) ).each do |i|
           token_input = token_inputs[i]
           token_output = token_outputs[i]
           operation_type = "Transfer"
-
           row = [
             ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp, operation_type,
-            (token_input[:udt_info][:amount] / token_input[:udt_info][:decimal] rescue '/'),
-            (token_output[:udt_info][:amount] / token_input[:udt_info][:decimal] rescue '/'),
+            (token_input[:udt_info][:amount].to_d / token_input[:udt_info][:decimal] rescue '/'),
+            (token_input[:udt_info][:symbol] rescue '/'),
+            (token_output[:udt_info][:amount].to_d / token_input[:udt_info][:decimal] rescue '/'),
+            (token_output[:udt_info][:symbol] rescue '/'),
             (token_input[:addresses_hash] rescue '/'),
             (token_output[:addresses_hash] rescue '/'),
             ckb_transaction.transaction_fee, ckb_transaction.block_timestamp
