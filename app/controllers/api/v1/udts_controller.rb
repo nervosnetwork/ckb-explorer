@@ -20,12 +20,12 @@ class Api::V1::UdtsController < ApplicationController
   def download_csv
     udt = Udt.find_by!(type_hash: params[:id], published: true)
 
-    ckb_transactions = udt.ckb_transactions
-    ckb_transactions = ckb_transactions.where('updated_at >= ?', params[:start_date]) if params[:start_date].present?
-    ckb_transactions = ckb_transactions.where('updated_at <= ?', params[:end_date]) if params[:end_date].present?
-    ckb_transactions = ckb_transactions.where('block_number >= ?', params[:start_number]) if params[:start_number].present?
-    ckb_transactions = ckb_transactions.where('block_number <= ?', params[:end_number]) if params[:end_number].present?
-    ckb_transactions = ckb_transactions.last(5000)
+    ckb_transactions = CkbTransaction.joins(:contained_udts).where("udt_transactions.udt_id = ?",  udt.id)
+    ckb_transactions = ckb_transactions.where('ckb_transactions.block_timestamp >= ?', DateTime.strptime(params[:start_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:start_date].present?
+    ckb_transactions = ckb_transactions.where('ckb_transactions.block_timestamp <= ?', DateTime.strptime(params[:end_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:end_date].present?
+    ckb_transactions = ckb_transactions.where('ckb_transactions.block_number >= ?', params[:start_number]) if params[:start_number].present?
+    ckb_transactions = ckb_transactions.where('ckb_transactions.block_number <= ?', params[:end_number]) if params[:end_number].present?
+    ckb_transactions = ckb_transactions.order('ckb_transactions.block_timestamp desc').limit(5000)
 
     file = CSV.generate do |csv|
       csv << ["Txn hash", "Blockno", "UnixTimestamp", "Method", "Token In", "Token OUT", "Token From", "Token To", "TxnFee(CKB)", "date(UTC)" ]
@@ -43,8 +43,8 @@ class Api::V1::UdtsController < ApplicationController
 
           row = [
             ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp, operation_type,
-            (token_input[:udt_info][:amount] / token_input[:udt_info][:decimal] to rescue '/'),
-            (token_output[:udt_info][:amount] / token_input[:udt_info][:decimal] to rescue '/'),
+            (token_input[:udt_info][:amount] / token_input[:udt_info][:decimal] rescue '/'),
+            (token_output[:udt_info][:amount] / token_input[:udt_info][:decimal] rescue '/'),
             (token_input[:addresses_hash] rescue '/'),
             (token_output[:addresses_hash] rescue '/'),
             ckb_transaction.transaction_fee, ckb_transaction.block_timestamp
