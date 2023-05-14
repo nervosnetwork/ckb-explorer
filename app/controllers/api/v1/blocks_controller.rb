@@ -32,17 +32,20 @@ module Api
       end
 
       def download_csv
-        @blocks = Block.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes, :updated_at)
-        @blocks = @blocks.where('created_at >= ?', params[:start_date]) if params[:start_date].present?
-        @blocks = @blocks.where('created_at <= ?', params[:end_date]) if params[:end_date].present?
-        @blocks = @blocks.where('number >= ?', params[:start_number]) if params[:start_number].present?
-        @blocks = @blocks.where('number <= ?', params[:end_number]) if params[:end_number].present?
-        @blocks = @blocks.limit(5000)
+        blocks = Block.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes, :updated_at)
+
+        blocks = blocks.where('timestamp >= ?', DateTime.strptime(params[:start_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:start_date].present?
+        blocks = blocks.where('timestamp <= ?', DateTime.strptime(params[:end_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:end_date].present?
+        blocks = blocks.where('number >= ?', params[:start_number]) if params[:start_number].present?
+        blocks = blocks.where('number <= ?', params[:end_number]) if params[:end_number].present?
+
+        blocks = blocks.order('number desc').limit(5000)
 
         file = CSV.generate do |csv|
           csv << ["Blockno", "Transactions", "UnixTimestamp", "Reward(CKB)", "Miner", "date(UTC)"]
-          @blocks.each_with_index do |block, index|
-            row = [block.number, block.ckb_transactions_count, block.timestamp, block.reward, block.miner_hash, block.updated_at]
+          blocks.find_each.with_index do |block, index|
+            row = [block.number, block.ckb_transactions_count, (block.timestamp / 1000), block.reward, block.miner_hash,
+                   Time.at((block.timestamp / 1000).to_i).in_time_zone('UTC').strftime('%Y-%m-%d %H:%M:%S') ]
             csv << row
           end
         end

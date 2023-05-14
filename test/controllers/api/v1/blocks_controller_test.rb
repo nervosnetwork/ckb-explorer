@@ -299,6 +299,23 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should get download_csv, by date" do
+
+        block = create :block, timestamp: Time.now.to_i * 1000, miner_hash: 'ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwau7qpcpealv6xf3a37pdcq6ajhwuyaxgs5g955'
+
+        valid_get download_csv_api_v1_blocks_url(start_date: 1.day.ago.strftime("%Y-%m-%d"))
+        assert_response :success
+      end
+
+      test "should get download_csv, by block number" do
+
+        block = create :block, timestamp: Time.now.to_i * 1000, miner_hash: 'ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwau7qpcpealv6xf3a37pdcq6ajhwuyaxgs5g955'
+
+        valid_get download_csv_api_v1_blocks_url(start_number: block.number - 1)
+        puts response.body
+        assert_response :success
+      end
     end
   end
 end
