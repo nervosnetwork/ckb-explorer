@@ -11,15 +11,15 @@ module Api
         scope = scope.where(collection_id: @collection.id) if @collection
         scope = scope.where(collection:{standard: params[:standard]}) if params[:standard]
         scope = scope.order(token_id: :asc)
-        @pagy, @items = pagy(scope).fast_page
-        @items = @items.map do |i|
+        pagy, items = pagy(scope)
+        items = items.map do |i|
           j = i.as_json
           j['collection'] = i.collection.as_json
           j
         end
         render json: {
-          data: @items,
-          pagination: pagy_metadata(@pagy)
+          data: items,
+          pagination: pagy_metadata(pagy)
         }
       end
 
@@ -28,15 +28,16 @@ module Api
           return head(:not_found)
         end
 
-        @item = @collection.items.find_by token_id: params[:id]
-        if @item
-          render json: @item.as_json.merge(collection: @item.collection.as_json)
+        item = @collection.items.find_by token_id: params[:id]
+        if item
+          render json: item.as_json.merge(collection: item.collection.as_json)
         else
           head :not_found
         end
       end
 
       protected
+
 
       def find_collection
         if params[:collection_id].present?

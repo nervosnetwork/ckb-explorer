@@ -129,7 +129,6 @@ module Api
                              block: generated_ckb_transaction.block,
                              tx_hash: generated_ckb_transaction.tx_hash,
                              cell_index: 0,
-                             generated_by: generated_ckb_transaction,
                              address: address)
         consumed_ckb_transaction = create(:ckb_transaction, block: block,
                                                             block_timestamp: "1567131126595",
@@ -143,14 +142,12 @@ module Api
                              block: generated_ckb_transaction1.block,
                              tx_hash: generated_ckb_transaction1.tx_hash,
                              cell_index: 0,
-                             generated_by: generated_ckb_transaction1,
                              address: address)
         create(:cell_output, capacity: 10**8 * 6,
                              ckb_transaction: consumed_ckb_transaction,
                              block: consumed_ckb_transaction.block,
                              tx_hash: consumed_ckb_transaction.tx_hash,
                              cell_index: 0,
-                             generated_by: generated_ckb_transaction,
                              consumed_by: consumed_ckb_transaction,
                              status: "dead",
                              address: address)

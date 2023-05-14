@@ -56,3 +56,4 @@ secp_multisig_cell_code_hash: "0xc1fb0ae6915d3d4eded3498aedf5faddd8c5f6bd8921e0f
 
 homepage_transactions_records_count: 15
 homepage_block_records_count: 15
+proposal_window: 10

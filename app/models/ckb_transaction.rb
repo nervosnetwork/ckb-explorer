@@ -16,7 +16,7 @@ class CkbTransaction < ApplicationRecord
   has_many :cell_outputs, dependent: :delete_all
   accepts_nested_attributes_for :cell_outputs
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
-  has_many :outputs, class_name: "CellOutput", inverse_of: "generated_by", foreign_key: "generated_by_id"
+  has_many :outputs, class_name: "CellOutput"
   has_many :dao_events
   has_many :script_transactions
   has_many :scripts, through: :script_transactions
@@ -232,6 +232,10 @@ class CkbTransaction < ApplicationRecord
     nil
   end
 
+  def detailed_message
+    @detailed_message ||= PoolTransactionEntry.find_by(tx_hash: tx_hash)&.detailed_message
+  end
+
   # convert current record to raw hash with standard RPC json data structure
   def to_raw
     Rails.cache.fetch([self.class.name, tx_hash, "raw_hash"], expires_in: 1.day) do
@@ -248,36 +252,6 @@ class CkbTransaction < ApplicationRecord
         version: "0x#{version.to_s(16)}",
         witnesses: witnesses.map(&:data)
       }
-    end
-  end
-
-  def tx_display_info
-    TxDisplayInfo.find_by(ckb_transaction_id: self.id)
-  end
-
-  def display_inputs_info(previews: false)
-    enabled = Rails.cache.read("enable_generate_tx_display_info")
-    return unless enabled
-
-    if tx_display_info.blank?
-      TxDisplayInfoGeneratorWorker.perform_async([self.id])
-      return
-    end
-
-    if previews
-      tx_display_info.inputs[0..9]
-    else
-      tx_display_info.inputs
-    end
-  end
-
-  def display_outputs_info(previews: false)
-    return if tx_display_info.blank?
-
-    if previews
-      tx_display_info.outputs[0..9]
-    else
-      tx_display_info.outputs
     end
   end
 
@@ -340,7 +314,7 @@ class CkbTransaction < ApplicationRecord
         from_cellbase: false,
         capacity: previous_cell_output.capacity,
         address_hash: previous_cell_output.address_hash,
-        generated_tx_hash: previous_cell_output.generated_by.tx_hash,
+        generated_tx_hash: previous_cell_output.ckb_transaction.tx_hash,
         cell_index: previous_cell_output.cell_index,
         cell_type: previous_cell_output.cell_type,
         since: {
@@ -388,7 +362,7 @@ class CkbTransaction < ApplicationRecord
   end
 
   def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
-    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
     # start block: the block contains the trasaction which generated the deposit cell output
     compensation_started_block = Block.select(:number, :timestamp).find(nervos_dao_deposit_cell.block.id)
@@ -428,12 +402,6 @@ class CkbTransaction < ApplicationRecord
   end
 
   def recover_dead_cell
-    enabled = Rails.cache.read("enable_generate_tx_display_info")
-    if enabled
-      tx_ids = inputs.pluck(:generated_by_id)
-      TxDisplayInfo.where(ckb_transaction_id: tx_ids).delete_all
-    end
-
     inputs.update_all(status: "live", consumed_by_id: nil, consumed_block_timestamp: nil)
   end
 end

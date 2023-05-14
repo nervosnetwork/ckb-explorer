@@ -174,7 +174,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;    
+    END LOOP;
     close c;
 end
 $$;
@@ -196,21 +196,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null 
+	if old is null
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-	
+
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP 
+	   LOOP
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id) 
+			insert into account_books (ckb_transaction_id, address_id)
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -800,7 +800,6 @@ CREATE TABLE public.cell_outputs (
     block_id numeric(30,0),
     tx_hash bytea,
     cell_index integer,
-    generated_by_id numeric(30,0),
     consumed_by_id numeric(30,0),
     cell_type integer DEFAULT 0,
     data_size integer,
@@ -1760,6 +1759,46 @@ ALTER SEQUENCE public.scripts_id_seq OWNED BY public.scripts.id;
 
 
 --
+-- Name: statistic_infos; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.statistic_infos (
+    id bigint NOT NULL,
+    transactions_last_24hrs bigint,
+    transactions_count_per_minute bigint,
+    average_block_time double precision,
+    hash_rate numeric,
+    address_balance_ranking jsonb,
+    miner_ranking jsonb,
+    blockchain_info character varying,
+    last_n_days_transaction_fee_rates jsonb,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    pending_transaction_fee_rates jsonb,
+    transaction_fee_rates jsonb
+);
+
+
+--
+-- Name: statistic_infos_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.statistic_infos_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: statistic_infos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.statistic_infos_id_seq OWNED BY public.statistic_infos.id;
+
+
+--
 -- Name: table_record_counts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2437,6 +2476,13 @@ ALTER TABLE ONLY public.scripts ALTER COLUMN id SET DEFAULT nextval('public.scri
 
 
 --
+-- Name: statistic_infos id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.statistic_infos ALTER COLUMN id SET DEFAULT nextval('public.statistic_infos_id_seq'::regclass);
+
+
+--
 -- Name: table_record_counts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2839,6 +2885,14 @@ ALTER TABLE ONLY public.script_transactions
 
 ALTER TABLE ONLY public.scripts
     ADD CONSTRAINT scripts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: statistic_infos statistic_infos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.statistic_infos
+    ADD CONSTRAINT statistic_infos_pkey PRIMARY KEY (id);
 
 
 --
@@ -3341,6 +3395,13 @@ CREATE INDEX index_cell_outputs_on_block_timestamp ON public.cell_outputs USING 
 
 
 --
+-- Name: index_cell_outputs_on_cell_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_outputs_on_cell_type ON public.cell_outputs USING btree (cell_type);
+
+
+--
 -- Name: index_cell_outputs_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3366,13 +3427,6 @@ CREATE INDEX index_cell_outputs_on_consumed_by_id ON public.cell_outputs USING b
 --
 
 CREATE INDEX index_cell_outputs_on_data_hash ON public.cell_outputs USING hash (data_hash);
-
-
---
--- Name: index_cell_outputs_on_generated_by_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_on_generated_by_id ON public.cell_outputs USING btree (generated_by_id);
 
 
 --
@@ -4411,6 +4465,10 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230406011556'),
 ('20230412070853'),
 ('20230415042814'),
-('20230415150143');
+('20230415150143'),
+('20230425114436'),
+('20230425162318'),
+('20230426133543'),
+('20230427025007');
 
 

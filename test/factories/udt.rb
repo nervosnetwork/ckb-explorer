@@ -17,7 +17,6 @@ FactoryBot.define do
           transaction1 = create(:ckb_transaction, block: block, contained_udt_ids: [udt.id], tags: ["udt"])
           create(:cell_output, block: block,
                                ckb_transaction: transaction,
-                               generated_by: transaction,
                                consumed_by: transaction1,
                                status: "dead",
                                type_hash: udt.type_hash,

@@ -205,7 +205,7 @@ class Block < ApplicationRecord
   end
 
   def target_block_number
-    number - ENV["PROPOSAL_WINDOW"].to_i - 1
+    number - (Settings.proposal_window || 10).to_i - 1
   end
 
   def genesis_block?
@@ -275,7 +275,6 @@ class Block < ApplicationRecord
   def invalid!
     uncle_blocks.delete_all
     # delete_address_txs_cache
-    delete_tx_display_infos
     ckb_transactions.destroy_all
     ForkedBlock.create(attributes)
     destroy
@@ -302,7 +301,7 @@ class Block < ApplicationRecord
   end
 
   def update_counter_for_ckb_node_version
-    witness = self.ckb_transactions.first.witnesses[0]&.data
+    witness = self.cellbase.witnesses[0].data
     return if witness.blank?
 
     matched = [witness.gsub("0x", "")].pack("H*").match(/\d\.\d+\.\d/)
@@ -337,12 +336,6 @@ class Block < ApplicationRecord
     Block.last(100000).each do |block|
       block.update_counter_for_ckb_node_version
     end
-  end
-
-  private
-
-  def delete_tx_display_infos
-    TxDisplayInfo.where(ckb_transaction_id: ckb_transactions.ids).delete_all
   end
 end
 

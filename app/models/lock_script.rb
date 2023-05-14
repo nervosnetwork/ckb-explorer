@@ -2,7 +2,7 @@ class LockScript < ApplicationRecord
   has_many :cell_outputs
 
   # TODO remove this
-  has_many :generated_by_txs, source: :generated_by, through: :cell_outputs
+  has_many :ckb_transactions, source: :ckb_transaction, through: :cell_outputs
   has_many :consumed_by_txs, source: :consumed_by, through: :cell_outputs
 
   belongs_to :address, optional: true # will remove this later
@@ -48,7 +48,7 @@ class LockScript < ApplicationRecord
   end
 
   def ckb_transactions
-    CkbTransaction.where(id: CellOutput.where(lock_script_id: self.id).pluck("generated_by_id",
+    CkbTransaction.where(id: CellOutput.where(lock_script_id: self.id).pluck("ckb_transaction_id",
                                                                              "consumed_by_id").flatten)
   end
 

@@ -59,7 +59,6 @@ class ProcessTransactionJob < ApplicationJob
       cell.lock_script = lock
       cell.type_script = t
       cell.update!(
-        generated_by_id: txid,
         address_id: lock.address_id,
         capacity: output.capacity,
         occupied_capacity: CkbUtils.calculate_cell_min_capacity(output, output_data),

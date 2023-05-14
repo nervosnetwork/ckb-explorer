@@ -16,6 +16,6 @@ jobs:
           source_branch: 'develop'
           destination_branch: 'testnet'
           pr_title: 'Deploy to testnet'
-          pr_reviewer: 'ShiningRay,iamyates,keith-cy'
+          pr_reviewer: 'ShiningRay,iamyates,zmcNotafraid,keith-cy'
           pr_label: 'auto-pr'
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -58,3 +58,4 @@ average_block_time_interval: 100
 
 homepage_transactions_records_count: 15
 homepage_block_records_count: 15
+proposal_window: 10

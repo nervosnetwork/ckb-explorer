@@ -7,6 +7,9 @@ namespace :api do
     end
     resources :pending_transactions, only: [:index] do
     end
+    namespace :monitors do
+      resources :daily_statistics, only: :index
+    end
     namespace :nft do
       resources :collections do
         resources :holders, only: :index

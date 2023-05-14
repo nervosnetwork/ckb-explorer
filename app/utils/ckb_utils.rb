@@ -214,8 +214,12 @@ class CkbUtils
     secondary_reward = CkbUtils.secondary_reward(target_block.number, block_economic_state)
     proposal_reward = CkbUtils.proposal_reward(target_block.number, block_economic_state)
     commit_reward = CkbUtils.commit_reward(target_block.number, block_economic_state)
-    target_block.update!(reward_status: "issued", reward: reward, primary_reward: primary_reward,
-                         secondary_reward: secondary_reward, commit_reward: commit_reward, proposal_reward: proposal_reward)
+    target_block.update!(reward_status: "issued",
+                         reward: reward,
+                         primary_reward: primary_reward,
+                         secondary_reward: secondary_reward,
+                         commit_reward: commit_reward,
+                         proposal_reward: proposal_reward)
     current_block.update!(target_block_reward_status: "issued")
   end
 
@@ -257,12 +261,12 @@ class CkbUtils
         nervos_dao_withdrawing_cells.reduce(0) do |memo, nervos_dao_withdrawing_cell|
           memo + dao_interest(nervos_dao_withdrawing_cell)
         end
-      CellOutput.where(consumed_by_id: ckb_transaction["id"]).sum(:capacity) + interests - CellOutput.where(generated_by: ckb_transaction["id"]).sum(:capacity)
+      CellOutput.where(consumed_by_id: ckb_transaction["id"]).sum(:capacity) + interests - CellOutput.where(ckb_transaction: ckb_transaction["id"]).sum(:capacity)
     end
   end
 
   def self.dao_interest(nervos_dao_withdrawing_cell)
-    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.generated_by
+    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
     withdrawing_dao_cell_block_dao = nervos_dao_withdrawing_cell.dao
     DaoCompensationCalculator.new(nervos_dao_deposit_cell, withdrawing_dao_cell_block_dao,
@@ -468,6 +472,7 @@ class CkbUtils
   def self.is_nrc_721_token_cell?(output_data)
     output_data.start_with?(Settings.nrc_721_token_output_data_header)
   end
+
   def self.is_nrc_721_factory_cell?(output_data)
     output_data.start_with?(Settings.nrc_721_factory_output_data_header)
   end

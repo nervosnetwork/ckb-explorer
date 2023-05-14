@@ -18,8 +18,6 @@ class CellOutput < ApplicationRecord
   }
 
   belongs_to :ckb_transaction
-  # FIXME: the generated_by_id is actually the same as ckb_transaction_id
-  belongs_to :generated_by, class_name: "CkbTransaction"
   # the consumed_by_id will be set only when transaction is committed on chain
   belongs_to :consumed_by, class_name: "CkbTransaction", optional: true
   # the inputs which consumes this cell output
@@ -85,8 +83,6 @@ class CellOutput < ApplicationRecord
     self.address = Address.find_or_create_by_address_hash(raw_address, block_timestamp) if raw_address
   end
 
-  # after_commit :flush_cache
-
   # @return [Boolean]
   def occupied?
     !free?
@@ -115,7 +111,7 @@ class CellOutput < ApplicationRecord
         Rails.cache.fetch(["tx_id", tx_hash], expires_in: 1.day) do
           CkbTransaction.find_by_tx_hash(tx_hash)&.id
         end
-      find_by(generated_by_id: tx_id, cell_index: index.is_a?(String) ? index.hex : index) if tx_id
+      find_by(ckb_transaction_id: tx_id, cell_index: index.is_a?(String) ? index.hex : index) if tx_id
     end
   end
 
@@ -123,20 +119,6 @@ class CellOutput < ApplicationRecord
     lock = CKB::Types::Script.new(**lock_script.to_node)
     type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node) : nil
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
-  end
-
-  def cache_keys
-    %W(
-      previous_cell_output/#{tx_hash}/#{cell_index}
-      normal_tx_display_inputs_previews_true_#{ckb_transaction_id}
-      normal_tx_display_inputs_previews_false_#{ckb_transaction_id}
-      normal_tx_display_inputs_previews_true_#{consumed_by_id}
-      normal_tx_display_inputs_previews_false_#{consumed_by_id}
-      normal_tx_display_outputs_previews_true_#{ckb_transaction_id}
-      normal_tx_display_outputs_previews_false_#{ckb_transaction_id}
-      normal_tx_display_outputs_previews_true_#{consumed_by_id}
-      normal_tx_display_outputs_previews_false_#{consumed_by_id}
-    )
   end
 
   def to_raw
@@ -209,13 +191,6 @@ class CellOutput < ApplicationRecord
     CkbUtils.hash_value_to_s(value)
   end
 
-  def flush_cache
-    Rails.cache.delete(["cell_output", tx_hash, cell_index])
-    $redis.pipelined do
-      $redis.del(*cache_keys)
-    end
-  end
-
   def create_token
     case cell_type
     when "m_nft_class"
@@ -274,7 +249,7 @@ class CellOutput < ApplicationRecord
       SELECT address_id, SUM(capacity) as balance
       FROM  cell_outputs
       WHERE status = 0
-            AND NOT ("cell_outputs"."type_hash" IS NULL AND "cell_outputs"."data" = '\x3078')
+            AND "cell_outputs"."type_hash" IS NOT NULL AND "cell_outputs"."data" != '\x3078'
       GROUP  BY address_id
       ) AS sq
     WHERE  addresses.id=sq.address_id;
@@ -326,7 +301,6 @@ end
 #  block_id                 :decimal(30, )
 #  tx_hash                  :binary
 #  cell_index               :integer
-#  generated_by_id          :decimal(30, )
 #  consumed_by_id           :decimal(30, )
 #  cell_type                :integer          default("normal")
 #  data_size                :integer
@@ -345,11 +319,11 @@ end
 #  index_cell_outputs_on_address_id_and_status     (address_id,status)
 #  index_cell_outputs_on_block_id                  (block_id)
 #  index_cell_outputs_on_block_timestamp           (block_timestamp)
+#  index_cell_outputs_on_cell_type                 (cell_type)
 #  index_cell_outputs_on_ckb_transaction_id        (ckb_transaction_id)
 #  index_cell_outputs_on_consumed_block_timestamp  (consumed_block_timestamp)
 #  index_cell_outputs_on_consumed_by_id            (consumed_by_id)
 #  index_cell_outputs_on_data_hash                 (data_hash) USING hash
-#  index_cell_outputs_on_generated_by_id           (generated_by_id)
 #  index_cell_outputs_on_lock_script_id            (lock_script_id)
 #  index_cell_outputs_on_status                    (status)
 #  index_cell_outputs_on_tx_hash_and_cell_index    (tx_hash,cell_index)
