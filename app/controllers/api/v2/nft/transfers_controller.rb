@@ -40,9 +40,9 @@ module Api
 
       def download_csv
 
-        transfers = @collection.token_transfers
-        tra
-        token_transfers = TokenTransfer.joins(:item, :ckb_transaction).includes(:ckb_transaction, :from, :to)
+        token_transfers = TokenTransfer
+          .joins(:item, :ckb_transaction)
+          .includes(:ckb_transaction, :from, :to)
           .where('token_items.collection_id = ?', @collection.id )
 
         token_transfers = token_transfers.where('ckb_transactions.block_timestamp >= ?', DateTime.strptime(params[:start_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:start_date].present?
@@ -59,7 +59,7 @@ module Api
           token_transfers.find_each do |transfer|
             ckb_transaction = transfer.ckb_transaction
             row = [ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp,
-                   transfer.token_id, transfer.action, transfer.from.address_hash, transfer.to.address_hash,
+                   transfer.item.token_id, transfer.action, transfer.from.address_hash, transfer.to.address_hash,
                    ckb_transaction.transaction_fee, ckb_transaction.block_timestamp]
             csv << row
           end

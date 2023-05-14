@@ -358,7 +358,7 @@ module Api
         ckb_transaction = create(:ckb_transaction,
                                  :with_multiple_inputs_and_outputs,
                                  block: block, contained_address_ids: [address.id], transaction_fee: 1000 )
-        valid_get download_csv_api_v1_address_transactions_url(id: address.address_hash, start_data: (Time.now - 10), end_date: Time.now)
+        valid_get download_csv_api_v1_address_transactions_url(id: address.address_hash, start_date: Time.now.strftime("%Y-%m-%d"), end_date: Time.now.strftime("%Y-%m-%d"))
 
         assert_response :success
       end
