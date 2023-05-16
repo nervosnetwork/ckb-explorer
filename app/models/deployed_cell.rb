@@ -27,7 +27,7 @@ class DeployedCell < ApplicationRecord
     Rails.logger.info "=== ckb_transaction_id: #{ckb_transaction_id.inspect}"
     pool = Concurrent::FixedThreadPool.new(5, max_queue: 1000,
                                               fallback_policy: :caller_runs)
-    CkbTransaction.where(is_cellbase: false).where("id >= ?", ckb_transaction_id).find_each do |ckb_transaction|
+    CkbTransaction.tx_committed.where(is_cellbase: false).where("id >= ?", ckb_transaction_id).find_each do |ckb_transaction|
       Rails.logger.info "=== ckb_transaction: #{ckb_transaction.id}"
       # pool.post do
       Rails.application.executor.wrap do
@@ -35,7 +35,7 @@ class DeployedCell < ApplicationRecord
           ActiveRecord::Base.cache do
             if ckb_transaction.cell_dependencies.empty?
               puts ckb_transaction.raw_hash["cell_deps"]
-              self.create_initial_data_for_ckb_transaction ckb_transaction, ckb_transaction.raw_hash["cell_deps"]
+              DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction, ckb_transaction.raw_hash["cell_deps"]
             end
           end
         end
