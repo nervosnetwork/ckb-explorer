@@ -1,11 +1,15 @@
 namespace :api do
   namespace :v2 do
+    post "/das_accounts" => "das_accounts#query", as: :das_accounts
     resources :transactions, only: [:index, :show] do
       member do
         get :raw
       end
     end
     resources :pending_transactions, only: [:index] do
+      collection do
+        get :count
+      end
     end
     namespace :monitors do
       resources :daily_statistics, only: :index

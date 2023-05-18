@@ -768,7 +768,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       prev_outputs = nil
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
                         input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes)
-      # binding.pry
+
       CellInput.insert_all!(cell_inputs_attributes)
       CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
 
@@ -1053,7 +1053,8 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         {
           cell_input: {
             ckb_transaction_id: ckb_transaction_id,
-            previous_output: input.previous_output,
+            previous_tx_hash: nil,
+            index: 0,
             since: input.since,
             block_id: local_block_id,
             from_cell_base: from_cell_base?(input),
@@ -1071,7 +1072,8 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         {
           cell_input: {
             ckb_transaction_id: ckb_transaction_id,
-            previous_output: input.previous_output,
+            previous_tx_hash: input.previous_output.tx_hash,
+            index: input.previous_output.index,
             since: input.since,
             block_id: local_block_id,
             from_cell_base: from_cell_base?(input),

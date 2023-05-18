@@ -34,14 +34,16 @@ queue = Queue.new
 persister =
   Thread.new do
     Rails.application.executor.wrap do
-      data = queue.pop
+      loop do
+        data = queue.pop
 
-      ImportTransactionJob.new.perform(data["transaction"], {
-        cycles: data["cycles"].hex,
-        fee: data["fee"].hex,
-        size: data["size"].hex,
-        timestamp: data["timestamp"].hex
-      })
+        ImportTransactionJob.new.perform(data["transaction"], {
+          cycles: data["cycles"].hex,
+          fee: data["fee"].hex,
+          size: data["size"].hex,
+          timestamp: data["timestamp"].hex
+        })
+      end
     end
   end
 

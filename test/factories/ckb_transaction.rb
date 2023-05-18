@@ -49,6 +49,8 @@ FactoryBot.define do
 
     factory :pending_transaction do
       tx_status { "pending" }
+      block_number { nil }
+      block_timestamp { nil }
     end
 
     trait :with_cell_output_and_lock_script do

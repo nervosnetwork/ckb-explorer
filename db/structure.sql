@@ -174,7 +174,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;
+    END LOOP;    
     close c;
 end
 $$;
@@ -196,21 +196,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null
+	if old is null 
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-
+	
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP
+	   LOOP 
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id)
+			insert into account_books (ckb_transaction_id, address_id) 
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -761,7 +761,8 @@ CREATE TABLE public.cell_inputs (
     block_id numeric(30,0),
     since numeric(30,0) DEFAULT 0.0,
     cell_type integer DEFAULT 0,
-    index integer
+    index integer,
+    previous_tx_hash bytea
 );
 
 
@@ -3374,6 +3375,13 @@ CREATE INDEX index_cell_inputs_on_previous_cell_output_id ON public.cell_inputs 
 
 
 --
+-- Name: index_cell_inputs_on_previous_tx_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_inputs_on_previous_tx_hash ON public.cell_inputs USING btree (previous_tx_hash);
+
+
+--
 -- Name: index_cell_outputs_on_address_id_and_status; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4469,6 +4477,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230425114436'),
 ('20230425162318'),
 ('20230426133543'),
-('20230427025007');
+('20230427025007'),
+('20230518061651');
 
 

@@ -441,19 +441,20 @@ module CkbSync
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_transactions = node_block.transactions.map(&:to_h).map(&:deep_stringify_keys)
         node_block_cell_inputs = node_transactions.map { |commit_transaction|
-          commit_transaction["inputs"].each { |input|
-            input["previous_output"]["index"] = input["previous_output"]["index"].hex
-            input["since"] = input["since"].hex
-            input["previous_output"] = input["previous_output"].sort
-          }.map(&:sort)
+          commit_transaction["inputs"].map do |input|
+            {
+              "previous_tx_hash" => input["previous_output"]["tx_hash"] == CellOutput::SYSTEM_TX_HASH ? nil : input["previous_output"]["tx_hash"],
+              "index" => input["previous_output"]["tx_hash"] == CellOutput::SYSTEM_TX_HASH ? 0 : input["previous_output"]["index"].hex,
+              "since" => input["since"].hex
+            }
+          end
         }.flatten
 
         local_block = node_data_processor.process_block(node_block)
         local_block_transactions = local_block.ckb_transactions
         local_block_cell_inputs = local_block_transactions.map { |commit_transaction|
           commit_transaction.cell_inputs.map do |cell_input|
-            cell_input.previous_output = cell_input.previous_output.sort
-            cell_input.attributes.select { |attribute| attribute.in?(%(previous_output since)) }.sort
+            cell_input.attributes.select { |attribute| attribute.in?(%(previous_tx_hash index since)) }
           end
         }.flatten
 

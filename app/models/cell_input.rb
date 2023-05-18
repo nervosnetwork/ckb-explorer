@@ -20,7 +20,7 @@ class CellInput < ApplicationRecord
     if previous_cell_output
       {
         previous_output: {
-          index: "0x#{previous_cell_output.cell_index.to_s(16)}",
+          index: previous_tx_hash || "0x#{previous_cell_output.cell_index.to_s(16)}",
           tx_hash: previous_cell_output.tx_hash
         },
         since: hex_since
@@ -36,7 +36,7 @@ class CellInput < ApplicationRecord
     end
   end
 
-  after_validation :match_cell_output
+  before_validation :match_cell_output
 
   def cache_keys
     %W(CellInput/#{id}/lock_script CellInput/#{id}/type_script)
@@ -49,9 +49,9 @@ class CellInput < ApplicationRecord
   end
 
   def match_cell_output
-    if previous_output.present? && previous_output["tx_hash"] != CellOutput::SYSTEM_TX_HASH
-      self.previous_cell_output = CellOutput.find_by(tx_hash: previous_output["tx_hash"],
-                                                     cell_index: previous_output["index"])
+    if previous_tx_hash && previous_tx_hash != CellOutput::SYSTEM_TX_HASH
+      self.previous_cell_output = CellOutput.find_by(tx_hash: previous_tx_hash,
+                                                     cell_index: index)
     end
   end
 
@@ -74,10 +74,12 @@ end
 #  since                   :decimal(30, )    default(0)
 #  cell_type               :integer          default("normal")
 #  index                   :integer
+#  previous_tx_hash        :binary
 #
 # Indexes
 #
 #  index_cell_inputs_on_block_id                 (block_id)
 #  index_cell_inputs_on_ckb_transaction_id       (ckb_transaction_id)
 #  index_cell_inputs_on_previous_cell_output_id  (previous_cell_output_id)
+#  index_cell_inputs_on_previous_tx_hash         (previous_tx_hash)
 #
