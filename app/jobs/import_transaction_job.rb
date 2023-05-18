@@ -14,12 +14,15 @@ class ImportTransactionJob < ApplicationJob
       tx_hash = tx_hash["hash"]
     end
     # raw = CkbTransaction.fetch_raw_hash(tx_hash)
-    @sdk_tx = CkbTransaction.fetch_sdk_transaction(tx_hash)
     @tx = CkbTransaction.unscoped.create_with(tx_status: :pending).find_or_create_by! tx_hash: tx_hash
     return unless tx.tx_pending?
 
     Rails.logger.info "Importing #{tx.tx_hash}"
-
+    @sdk_tx = CkbTransaction.fetch_sdk_transaction(tx_hash)
+    unless @sdk_tx
+      Rails.logger.info "Cannot fetch transaction details for #{tx_hash}"
+      return
+    end
     @tx.cycles = extra_data[:cycles]
     if extra_data[:timestamp]
       @tx.created_at = Time.at(extra_data[:timestamp].to_d / 1000).utc
