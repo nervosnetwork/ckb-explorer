@@ -18,6 +18,8 @@ class ImportTransactionJob < ApplicationJob
     @tx = CkbTransaction.unscoped.create_with(tx_status: :pending).find_or_create_by! tx_hash: tx_hash
     return unless tx.tx_pending?
 
+    Rails.logger.info "Importing #{tx.tx_hash}"
+
     @tx.cycles = extra_data[:cycles]
     if extra_data[:timestamp]
       @tx.created_at = Time.at(extra_data[:timestamp].to_d / 1000).utc
@@ -54,13 +56,17 @@ class ImportTransactionJob < ApplicationJob
           process_deployed_cell(cell.type_script) if cell.type_script
           capacity_involved += cell.capacity
         else
+          tx.cell_inputs.create_or_find_by!(
+            previous_tx_hash: input.previous_output.tx_hash,
+            index: index
+          )
           puts "Missing input #{input.previous_output.to_h} in #{tx_hash}"
           # cannot find corresponding cell output,
           # maybe the transaction contains the cell output has not been processed,
           # so add current transaction to pending list, and wait for future processing
+
           list = Kredis.unique_list "pending_transactions_for_input:#{input.previous_output.tx_hash}"
           list << tx_hash
-          return
         end
       end
     end
