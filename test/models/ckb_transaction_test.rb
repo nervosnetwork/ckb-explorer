@@ -250,6 +250,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                         ckb_transaction: phase1_transaction,
                         index: 0,
                         previous_tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042",
+                        previous_index: 0,
                         from_cell_base: false)
     nervos_dao_withdrawing_cell = create(:cell_output, ckb_transaction: phase1_transaction,
                                                        block: phase1_transaction.block,
@@ -513,7 +514,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                                    type_hash: "0x",
                                                    type_script_id: type_script1.id)
     cell_input = ckb_transaction.cell_inputs.first
-    cell_input.update(previous_tx_hash: m_nft_input_transaction.tx_hash, index: 0)
+    cell_input.update(previous_tx_hash: m_nft_input_transaction.tx_hash, previous_index: 0)
     expected_attributes = %i(
       id from_cellbase capacity address_hash
       generated_tx_hash cell_index cell_type since extra_info

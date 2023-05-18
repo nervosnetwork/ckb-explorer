@@ -20,8 +20,8 @@ class CellInput < ApplicationRecord
     if previous_cell_output
       {
         previous_output: {
-          index: previous_tx_hash || "0x#{previous_cell_output.cell_index.to_s(16)}",
-          tx_hash: previous_cell_output.tx_hash
+          index: "0x#{(previous_index || previous_cell_output.cell_index).to_s(16)}",
+          tx_hash: previous_tx_hash || previous_cell_output.tx_hash
         },
         since: hex_since
       }
@@ -51,7 +51,7 @@ class CellInput < ApplicationRecord
   def match_cell_output
     if previous_tx_hash && previous_tx_hash != CellOutput::SYSTEM_TX_HASH
       self.previous_cell_output = CellOutput.find_by(tx_hash: previous_tx_hash,
-                                                     cell_index: index)
+                                                     cell_index: previous_index)
     end
   end
 

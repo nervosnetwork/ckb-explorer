@@ -294,6 +294,16 @@ class CkbTransaction < ApplicationRecord
     end
     cell_inputs_for_display.each_with_index.map do |cell_input, index|
       previous_cell_output = cell_input.previous_cell_output
+      unless previous_cell_output
+        next({
+          from_cellbase: false,
+          capacity: "",
+          address_hash: "",
+          generated_tx_hash: cell_input.previous_tx_hash,
+          cell_index: cell_input.previous_index,
+          since:
+        })
+      end
 
       display_input = {
         id: previous_cell_output.id,
