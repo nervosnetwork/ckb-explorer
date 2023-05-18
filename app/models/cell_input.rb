@@ -1,7 +1,7 @@
 class CellInput < ApplicationRecord
   belongs_to :ckb_transaction
   belongs_to :previous_cell_output, class_name: "CellOutput", optional: true
-  belongs_to :block
+  belongs_to :block, optional: true
 
   delegate :lock_script, :type_script, to: :previous_cell_output, allow_nil: true
 
