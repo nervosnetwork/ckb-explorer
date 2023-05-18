@@ -301,7 +301,10 @@ class CkbTransaction < ApplicationRecord
           address_hash: "",
           generated_tx_hash: cell_input.previous_tx_hash,
           cell_index: cell_input.previous_index,
-          since:
+          since: {
+            raw: hex_since(cell_input.since.to_i),
+            median_timestamp: cell_input.block&.median_timestamp.to_i
+          }
         })
       end
 
@@ -315,7 +318,7 @@ class CkbTransaction < ApplicationRecord
         cell_type: previous_cell_output.cell_type,
         since: {
           raw: hex_since(cell_input.since.to_i),
-          median_timestamp: cell_input.block.median_timestamp.to_i
+          median_timestamp: cell_input.block&.median_timestamp.to_i
         }
       }
       display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?

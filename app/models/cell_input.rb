@@ -31,7 +31,7 @@ class CellInput < ApplicationRecord
           index: "0xffffffff",
           tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000"
         },
-        since: "0x#{since.to_s(16)}"
+        since: hex_since
       }
     end
   end

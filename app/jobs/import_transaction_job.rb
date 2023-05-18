@@ -58,7 +58,8 @@ class ImportTransactionJob < ApplicationJob
         else
           tx.cell_inputs.create_or_find_by!(
             previous_tx_hash: input.previous_output.tx_hash,
-            previous_index: input.previous_output.index
+            previous_index: input.previous_output.index,
+            since: input.since
           )
           puts "Missing input #{input.previous_output.to_h} in #{tx_hash}"
           # cannot find corresponding cell output,
