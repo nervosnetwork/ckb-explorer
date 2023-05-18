@@ -11,7 +11,8 @@ module Api::V2
             transaction_hash: tx.tx_hash,
             capacity_involved: tx.capacity_involved,
             transaction_fee: tx.transaction_fee,
-            created_at: tx.created_at
+            created_at: tx.created_at,
+            create_timestamp: (tx.created_at.to_f * 1000).to_i
           }
         end,
         meta: {

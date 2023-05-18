@@ -94,4 +94,8 @@ s.every "4h", overlap: false do
   StatisticInfo.default.reset! :address_balance_ranking, :miner_ranking, :last_n_days_transaction_fee_rates
 end
 
+s.every "1h", overlap: false do
+  CkbTransaction.clean_pending
+end
+
 s.join
