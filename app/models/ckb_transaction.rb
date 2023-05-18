@@ -94,7 +94,7 @@ class CkbTransaction < ApplicationRecord
   # @param write_raw_hash_cache [Boolean] if we should write raw hash of transaction without status to cache
   # @return [Hash]
   def self.fetch_raw_hash_with_status(tx_hash, write_raw_hash_cache: true)
-    Rails.cache.fetch([name, tx_hash, "raw_hash_with_status"], expires_in: 1.day) do
+    Rails.cache.fetch([name, tx_hash, "raw_hash_with_status"], expires_in: 1.day, skip_nil: true) do
       res = CkbSync::Api.instance.directly_single_call_rpc method: "get_transaction", params: [tx_hash]
       h = res["result"].with_indifferent_access
       self.write_raw_hash_cache(tx_hash, h["transaction"]) if write_raw_hash_cache
@@ -107,7 +107,7 @@ class CkbTransaction < ApplicationRecord
   # @param tx_hash [String]
   # @return [Hash]
   def self.fetch_raw_hash(tx_hash)
-    Rails.cache.fetch([name, tx_hash, "raw_hash"], expires_in: 1.day) do
+    Rails.cache.fetch([name, tx_hash, "raw_hash"], expires_in: 1.day, skip_nil: true) do
       fetch_raw_hash_with_status(tx_hash, write_raw_hash_cache: false)["transaction"]
     end
   end
@@ -116,7 +116,7 @@ class CkbTransaction < ApplicationRecord
   # @param tx_hash [String]
   # @return [CKB::Types::TransactionWithStatus]
   def self.fetch_sdk_transaction_with_status(tx_hash, write_object_cache: true)
-    Rails.cache.fetch([name, tx_hash, "object_with_status"], expires_in: 1.day) do
+    Rails.cache.fetch([name, tx_hash, "object_with_status"], expires_in: 1.day, skip_nil: true) do
       tx = CKB::Types::TransactionWithStatus.from_h fetch_raw_hash_with_status(tx_hash)
       Rails.cache.write([name, tx_hash, "object"], tx.transaction) if write_object_cache
       tx
@@ -127,7 +127,7 @@ class CkbTransaction < ApplicationRecord
   # @param tx_hash [String]
   # @return [CKB::Types::Transaction]
   def self.fetch_sdk_transaction(tx_hash)
-    Rails.cache.fetch([name, tx_hash, "object"], expires_in: 1.day) do
+    Rails.cache.fetch([name, tx_hash, "object"], expires_in: 1.day, skip_nil: true) do
       fetch_sdk_transaction_with_status(tx_hash, write_object_cache: false).transaction
     end
   end
