@@ -1,6 +1,8 @@
 class FetchCotaWorker
   include Sidekiq::Worker
   def perform(block_number)
+    raise "COTA Sync Failed!!!" unless cota_syning?
+
     data = CotaAggregator.instance.get_transactions_by_block_number(block_number)
     if data["block_number"] < block_number
       return FetchCotaWorker.perform_in(5.minutes, block_number)
@@ -54,5 +56,12 @@ class FetchCotaWorker
     i = collection.items.find_or_create_by(token_id: t["token_index"].hex)
     i.update! owner: to
     i
+  end
+
+  private
+
+  def cota_syning?
+    res = CotaAggregator.instance.get_aggregator_info
+    [res["indexer_block_number"], res["node_block_number"], res["syncer_block_number"]].uniq.size == 1
   end
 end
