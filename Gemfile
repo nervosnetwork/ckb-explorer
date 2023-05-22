@@ -44,7 +44,7 @@ gem "ckb-sdk-ruby", github: "ShiningRay/ckb-sdk-ruby", require: "ckb", branch: "
 # Redis
 gem "hiredis" # , "~> 0.6.3"
 gem "redis" # , "~> 4.2.0"
-
+gem "hiredis-client"
 gem "digest-crc"
 
 # Backgroud Jobs
