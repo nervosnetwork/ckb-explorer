@@ -199,6 +199,8 @@ GEM
       activesupport (>= 5.0)
     hashdiff (1.0.1)
     hiredis (0.6.3)
+    hiredis-client (0.14.1)
+      redis-client (= 0.14.1)
     http (5.1.0)
       addressable (~> 2.8)
       http-cookie (~> 1.0)
@@ -344,7 +346,7 @@ GEM
       mini_portile2 (~> 2.8)
       pkg-config (~> 1.5)
       rubyzip (~> 2.3)
-    redis (5.0.5)
+    redis (5.0.6)
       redis-client (>= 0.9.0)
     redis-client (0.14.1)
       connection_pool
@@ -478,6 +480,7 @@ DEPENDENCIES
   fast_jsonapi
   fast_page
   hiredis
+  hiredis-client
   http
   jbuilder
   kaminari

@@ -3278,19 +3278,6 @@ module CkbSync
       output1.capacity = 10**8 * 1000
       tx1.outputs << output1
       tx1.outputs_data << CKB::Utils.bin_to_hex("\x00" * 8)
-      redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
-      Rails.stubs(:cache).returns(redis_cache_store)
-      Rails.cache.extend(CacheRealizer)
-      Rails.cache.write("enable_generate_tx_display_info", true)
-      assert_difference -> { TxDisplayInfo.count }, 3 do
-        block = node_data_processor.process_block(node_block)
-        block.reload.ckb_transactions.each do |tx|
-          assert_equal tx.display_inputs.map(&:deep_stringify_keys).map(&:to_a).map(&:sort),
-                       tx.display_inputs_info.map(&:to_a).map(&:sort)
-          assert_equal tx.display_outputs.map(&:deep_stringify_keys).map(&:to_a).map(&:sort),
-                       tx.display_outputs_info.map(&:to_a).map(&:sort)
-        end
-      end
     end
 
     test "#process_block should regenerate tx display input info" do
@@ -3305,9 +3292,6 @@ module CkbSync
                                 tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
       ckb_transaction2 = create(:ckb_transaction,
                                 tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
-      TxDisplayInfoGeneratorWorker.new.perform([ckb_transaction1.id, ckb_transaction2.id])
-      tx1_display_info = TxDisplayInfo.find_by(ckb_transaction_id: ckb_transaction1.id)
-      tx2_display_info = TxDisplayInfo.find_by(ckb_transaction_id: ckb_transaction2.id)
       lock = create(:lock_script)
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1,
                            tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block, capacity: 10**8 * 1000, address: address, lock_script_id: lock.id)
@@ -3320,52 +3304,6 @@ module CkbSync
       output1.capacity = 10**8 * 1000
       tx1.outputs << output1
       tx1.outputs_data << CKB::Utils.bin_to_hex("\x00" * 8)
-      redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
-      Rails.stubs(:cache).returns(redis_cache_store)
-      Rails.cache.extend(CacheRealizer)
-      Rails.cache.write("enable_generate_tx_display_info", true)
-      assert_difference -> { TxDisplayInfo.count }, 1 do
-        block = node_data_processor.process_block(node_block)
-        block.reload.ckb_transactions.each do |tx|
-          assert_equal tx.display_inputs.map(&:deep_stringify_keys).map(&:to_a).map(&:sort),
-                       tx.display_inputs_info.map(&:to_a).map(&:sort)
-          assert_equal tx.display_outputs.map(&:deep_stringify_keys).map(&:to_a).map(&:sort),
-                       tx.display_outputs_info.map(&:to_a).map(&:sort)
-        end
-      end
-      assert_raises ActiveRecord::RecordNotFound do
-        tx1_display_info.reload
-      end
-      assert_raises ActiveRecord::RecordNotFound do
-        tx2_display_info.reload
-      end
-    end
-
-    test "should remove tx display info when block is invalid" do
-      Sidekiq::Testing.inline!
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
-      node_block = fake_node_block
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-      create(:block, :with_block_hash, number: 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        tx = fake_dao_deposit_transaction(node_block)
-        output = tx.outputs.first
-        address = Address.find_or_create_address(output.lock, node_block.header.timestamp)
-        redis_cache_store = ActiveSupport::Cache.lookup_store(:redis_cache_store)
-        Rails.stubs(:cache).returns(redis_cache_store)
-        Rails.cache.write("enable_generate_tx_display_info", true)
-        assert_difference -> { address.reload.dao_deposit }, 10**8 * 1000 do
-          node_data_processor.process_block(node_block)
-        end
-      end
-
-      local_block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
-      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
-        assert_difference -> { TxDisplayInfo.count }, -local_block.reload.ckb_transactions.count do
-          node_data_processor.call
-        end
-      end
     end
 
     test "should update nrc factory cell info" do

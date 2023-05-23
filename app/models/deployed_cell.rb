@@ -27,17 +27,20 @@ class DeployedCell < ApplicationRecord
     Rails.logger.info "=== ckb_transaction_id: #{ckb_transaction_id.inspect}"
     pool = Concurrent::FixedThreadPool.new(5, max_queue: 1000,
                                               fallback_policy: :caller_runs)
-    CkbTransaction.where("id >= ?", ckb_transaction_id).find_each do |ckb_transaction|
+    CkbTransaction.tx_committed.where(is_cellbase: false).where("id >= ?", ckb_transaction_id).find_each do |ckb_transaction|
       Rails.logger.info "=== ckb_transaction: #{ckb_transaction.id}"
-      pool.post do
-        Rails.application.executor.wrap do
-          ActiveRecord::Base.connection_pool.with_connection do
-            ActiveRecord::Base.cache do
-              self.create_initial_data_for_ckb_transaction ckb_transaction
+      # pool.post do
+      Rails.application.executor.wrap do
+        ActiveRecord::Base.connection_pool.with_connection do
+          ActiveRecord::Base.cache do
+            if ckb_transaction.cell_dependencies.empty?
+              puts ckb_transaction.raw_hash["cell_deps"]
+              DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction, ckb_transaction.raw_hash["cell_deps"]
             end
           end
         end
       end
+      # end
     end
     pool.shutdown
     pool.wait_for_termination
@@ -87,7 +90,9 @@ class DeployedCell < ApplicationRecord
       end
 
     cell_deps.each do |cell_dep|
-      cell_dep = cell_dep.to_h if cell_dep.is_a?(CKB::Types::CellDep)
+      if cell_dep.is_a?(CKB::Types::CellDep)
+        cell_dep = cell_dep.to_h.with_indifferent_access
+      end
       case cell_dep["dep_type"]
       when "code"
         parse_code_dep[cell_dep]
@@ -157,6 +162,7 @@ class DeployedCell < ApplicationRecord
     end
 
     deployed_cells_attrs = deployed_cells_attrs.uniq { |a| a[:cell_output_id] }
+
     if cell_dependencies_attrs.present?
       CellDependency.upsert_all cell_dependencies_attrs.uniq { |a|
                                   a[:contract_cell_id]
