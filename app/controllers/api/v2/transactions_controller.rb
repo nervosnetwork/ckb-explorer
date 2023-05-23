@@ -10,8 +10,6 @@ module Api
       end
 
       def details
-        puts "== @transaction: "
-        puts @transaction.inspect
         capacities = {}
         @transaction.display_inputs.select{ |e| e[:cell_type] == 'normal' }.each {|input|
           capacities[input[:address_hash]] ||= 0
