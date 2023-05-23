@@ -14,8 +14,8 @@ class ApplicationController < ActionController::API
   end
 
   def check_header_info
-    raise Api::V1::Exceptions::InvalidContentTypeError if request.headers["Content-Type"] != "application/vnd.api+json"
-    raise Api::V1::Exceptions::InvalidAcceptError if request.headers["Accept"] != "application/vnd.api+json"
+    #raise Api::V1::Exceptions::InvalidContentTypeError if request.headers["Content-Type"] != "application/vnd.api+json"
+    #raise Api::V1::Exceptions::InvalidAcceptError if request.headers["Accept"] != "application/vnd.api+json"
   end
 
   def validate_pagination_params

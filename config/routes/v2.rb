@@ -2,6 +2,7 @@ namespace :api do
   namespace :v2 do
     resources :transactions, only: [:index, :show] do
       member do
+        get :details
         get :raw
       end
     end
