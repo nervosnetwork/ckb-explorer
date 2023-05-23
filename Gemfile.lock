@@ -269,6 +269,9 @@ GEM
       net-protocol
     newrelic_rpm (8.12.0)
     nio4r (2.5.8)
+    nokogiri (1.14.3)
+      mini_portile2 (~> 2.8.0)
+      racc (~> 1.4)
     nokogiri (1.14.3-arm64-darwin)
       racc (~> 1.4)
     nokogiri (1.14.3-x86_64-linux)
@@ -451,6 +454,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-21
+  ruby
   x86_64-linux
 
 DEPENDENCIES
