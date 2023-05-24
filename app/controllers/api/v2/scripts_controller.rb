@@ -15,7 +15,7 @@ module Api::V2
     def ckb_transactions
       head :not_found and return if @script.blank?
 
-      scope = CellDependency.where(contract_id: @contract.id)
+      scope = CellDependency.where(contract_id: @contract.id).order(ckb_transaction_id: :desc)
       tx_ids = scope.page(params[:page]).pluck(:ckb_transaction_id)
       @ckb_transactions = CkbTransaction.find(tx_ids)
       @total = scope.count
