@@ -15,8 +15,8 @@ json.data do
     json.contained_address_ids tx.contained_address_ids
     json.tags tx.tags
     json.contained_udt_ids tx.contained_udt_ids
-    json.dao_address_ids tx.dao_address_ids
-    json.udt_address_ids tx.udt_address_ids
+    json.dao_address_ids tx.contained_dao_address_ids
+    json.udt_address_ids tx.contained_udt_address_ids
     json.bytes tx.bytes
     json.tx_status tx.tx_status
     json.display_inputs tx.display_inputs

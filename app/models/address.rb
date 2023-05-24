@@ -21,15 +21,10 @@ class Address < ApplicationRecord
   attr_accessor :query_address
 
   def custom_ckb_transactions
-    # CkbTransaction.where("contained_address_ids @> array[?]::bigint[]", [id]) # .optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_contained_address_ids)")
     ckb_transactions
   end
 
   has_and_belongs_to_many :ckb_dao_transactions, class_name: "CkbTransaction", join_table: "address_dao_transactions"
-
-  # def ckb_dao_transactions
-  #   CkbTransaction.where("dao_address_ids @> array[?]::bigint[]", [id]) # .optimizer_hints("indexscan(ckb_transactions index_ckb_transactions_on_dao_address_ids)")
-  # end
 
   def ckb_udt_transactions(udt)
     udt = Udt.find_by_id(udt) unless udt.is_a?(Udt)
