@@ -744,8 +744,15 @@ udt_infos, address_ids, tags, udt_ids, dao_address_ids, udt_address_ids
         tx[:contained_udt_ids] = (tx[:contained_udt_ids] << consumed_tx.contained_udt_ids).flatten.uniq
       else
         updated_ckb_transactions << {
-          id: consumed_tx.id, dao_address_ids: consumed_tx.dao_address_ids.uniq,
-          udt_address_ids: consumed_tx.udt_address_ids.uniq, contained_udt_ids: consumed_tx.contained_udt_ids.uniq, contained_address_ids: consumed_tx.contained_address_ids.uniq, tags: consumed_tx.tags.uniq, created_at: consumed_tx.created_at, updated_at: Time.current }
+          id: consumed_tx.id,
+          contained_dao_address_ids: consumed_tx.dao_address_ids.uniq,
+          contained_udt_address_ids: consumed_tx.udt_address_ids.uniq,
+          contained_udt_ids: consumed_tx.contained_udt_ids.uniq,
+          contained_address_ids: consumed_tx.contained_address_ids.uniq,
+          tags: consumed_tx.tags.uniq,
+          created_at: consumed_tx.created_at,
+          updated_at: Time.current
+        }
       end
     end
 
