@@ -34,7 +34,8 @@ FactoryBot.define do
         cell.address.increment! :balance_occupied, cell.capacity if cell.occupied?
         cell.address.increment! :live_cells_count
       end
-      cell.ckb_transaction.account_books.create(address_id: cell.address_id)
+      AccountBook.upsert({ ckb_transaction_id: cell.ckb_transaction_id, address_id: cell.address_id },
+                         unique_by: [:address_id, :ckb_transaction_id])
     end
   end
 end

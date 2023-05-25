@@ -130,7 +130,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                              :with_multiple_inputs_and_outputs)
     expected_tx_hashes = ckb_transaction.cell_inputs.map(&:previous_cell_output).map(&:ckb_transaction).map(&:tx_hash).sort
 
-    assert_equal expected_tx_hashes,
+    assert_equal expected_tx_hashes.map { |t| t.nil? ? "" : t },
                  ckb_transaction.display_inputs.pluck(:generated_tx_hash).sort
   end
 

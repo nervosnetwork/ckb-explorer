@@ -101,6 +101,10 @@ class CellOutput < ApplicationRecord
     [data[2..]].pack("H*")
   end
 
+  def dao
+    self[:dao] || block.dao
+  end
+
   # find cell output according to the out point( tx_hash and output index )
   # @param [String] tx_hash
   # @param [Integer] index

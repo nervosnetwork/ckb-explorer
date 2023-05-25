@@ -1,4 +1,6 @@
 class CellInput < ApplicationRecord
+  attr_accessor :previous_output
+
   belongs_to :ckb_transaction
   belongs_to :previous_cell_output, class_name: "CellOutput", optional: true
   belongs_to :block, optional: true
@@ -49,6 +51,12 @@ class CellInput < ApplicationRecord
   end
 
   def match_cell_output
+    if previous_output
+      self.previous_output = previous_output.with_indifferent_access
+      self.previous_tx_hash = previous_output["tx_hash"]
+      index = previous_output["index"]
+      self.previous_index = index.is_a?(String) ? index.hex : index
+    end
     if previous_tx_hash && previous_tx_hash != CellOutput::SYSTEM_TX_HASH
       self.previous_cell_output = CellOutput.find_by(tx_hash: previous_tx_hash,
                                                      cell_index: previous_index)

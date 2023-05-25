@@ -282,13 +282,13 @@ module CkbSync
     def process_interest_dao_events!(local_block, dao_contract)
       addrs_withdraw_info = {}
       claimed_compensation = 0
-      local_block.cell_inputs.nervos_dao_withdrawing.select(:id, :ckb_transaction_id,
+      local_block.cell_inputs.nervos_dao_withdrawing.select(:id, :ckb_transaction_id, :block_id,
                                                             :previous_cell_output_id).find_in_batches do |dao_inputs|
         dao_events_attributes = []
         dao_inputs.each do |dao_input|
           previous_cell_output = CellOutput.
             where(id: dao_input.previous_cell_output_id).
-            select(:address_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity).
+            select(:address_id, :block_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity).
             take!
           address = previous_cell_output.address
           interest = CkbUtils.dao_interest(previous_cell_output)
