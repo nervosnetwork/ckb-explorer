@@ -710,9 +710,9 @@ udt_infos, address_ids, tags, udt_ids, dao_address_ids, udt_address_ids
     end
 
     def flush_caches(cache_keys)
-      cache_keys.each_slice(400) do |keys|
+      cache_keys.each_slice(400) do |_keys|
         $redis.pipelined do
-          $redis.del(*keys)
+          Rails.cache.delete_multi(cache_keys)
         end
       end
     end
