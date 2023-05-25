@@ -4,6 +4,7 @@ class ImportTransactionJob < ApplicationJob
   attr_accessor :tx, :txid, :sdk_tx, :cell_dependencies_attrs,
                 :by_type_hash, :by_data_hash,
                 :deployed_cells_attrs,
+                :addresses,
                 :address_changes
 
   # @param tx_hash [String]
@@ -85,10 +86,11 @@ class ImportTransactionJob < ApplicationJob
       )
       cell.lock_script = lock
       cell.type_script = t
+      cell.data = output_data
       cell.update!(
         address_id: lock.address_id,
         capacity: output.capacity,
-        occupied_capacity: CkbUtils.calculate_cell_min_capacity(output, output_data),
+        occupied_capacity: cell.calculate_min_capacity,
         status: "pending"
       )
 
@@ -271,6 +273,7 @@ class ImportTransactionJob < ApplicationJob
   # @param cell_input [CellInput]
   def process_input(cell_input)
     cell_output = cell_input.previous_cell_output
+
     address_id = cell_output.address_id
     changes = address_changes[address_id] ||=
       {
@@ -278,7 +281,7 @@ class ImportTransactionJob < ApplicationJob
         balance_occupied: 0
       }
     changes[:balance] -= cell_output.capacity
-    changes[:balance_occupied] -= cell_output.occupied_capacity
+    changes[:balance_occupied] -= cell_output.occupied_capacity if cell_output.occupied_capacity
   end
 
   # # calculate address and balance change for each cell output
@@ -311,6 +314,7 @@ class ImportTransactionJob < ApplicationJob
           "changes = transaction_address_changes.changes || excluded.changes"
         )
       )
+      AccountBook.upsert_all address_changes.keys.map{|address_id| {ckb_transaction_id: tx.id, address_id:}}
     end
   end
 end

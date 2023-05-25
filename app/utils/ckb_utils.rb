@@ -1,4 +1,8 @@
 class CkbUtils
+  def self.int_to_hex(i)
+    "0x#{i.to_s(16)}"
+  end
+
   def self.calculate_cell_min_capacity(output, data)
     output.calculate_min_capacity(data)
   end

@@ -752,7 +752,6 @@ ALTER SEQUENCE public.cell_dependencies_id_seq OWNED BY public.cell_dependencies
 
 CREATE TABLE public.cell_inputs (
     id bigint NOT NULL,
-    previous_output jsonb,
     ckb_transaction_id bigint,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
@@ -762,7 +761,8 @@ CREATE TABLE public.cell_inputs (
     since numeric(30,0) DEFAULT 0.0,
     cell_type integer DEFAULT 0,
     index integer,
-    previous_tx_hash bytea
+    previous_tx_hash bytea,
+    previous_index integer
 );
 
 
@@ -3375,10 +3375,10 @@ CREATE INDEX index_cell_inputs_on_previous_cell_output_id ON public.cell_inputs 
 
 
 --
--- Name: index_cell_inputs_on_previous_tx_hash; Type: INDEX; Schema: public; Owner: -
+-- Name: index_cell_inputs_on_previous_tx_hash_and_previous_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_inputs_on_previous_tx_hash ON public.cell_inputs USING btree (previous_tx_hash);
+CREATE INDEX index_cell_inputs_on_previous_tx_hash_and_previous_index ON public.cell_inputs USING btree (previous_tx_hash, previous_index);
 
 
 --

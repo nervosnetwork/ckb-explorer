@@ -85,7 +85,7 @@ class CkbTransaction < ApplicationRecord
       raw_hash = tx_hash
       tx_hash = raw_hash["hash"]
     end
-    Rails.cache.write([self.class.name, tx_hash, "raw_hash"], raw_hash, expires_in: 1.day)
+    Rails.cache.write([name, tx_hash, "raw_hash"], raw_hash, expires_in: 1.day)
   end
 
   # fetch using rpc method "get_transaction"
@@ -118,7 +118,7 @@ class CkbTransaction < ApplicationRecord
   def self.fetch_sdk_transaction_with_status(tx_hash, write_object_cache: true)
     Rails.cache.fetch([name, tx_hash, "object_with_status"], expires_in: 1.day, skip_nil: true) do
       tx = CKB::Types::TransactionWithStatus.from_h fetch_raw_hash_with_status(tx_hash)
-      Rails.cache.write([name, tx_hash, "object"], tx.transaction) if write_object_cache
+      Rails.cache.write([name, tx_hash, "object"], tx.transaction, expires_in: 1.day) if write_object_cache
       tx
     end
   end
@@ -128,7 +128,14 @@ class CkbTransaction < ApplicationRecord
   # @return [CKB::Types::Transaction]
   def self.fetch_sdk_transaction(tx_hash)
     Rails.cache.fetch([name, tx_hash, "object"], expires_in: 1.day, skip_nil: true) do
-      fetch_sdk_transaction_with_status(tx_hash, write_object_cache: false).transaction
+      sdk_tx_with_status = Rails.cache.read([name, tx_hash, "object_with_status"])
+      if sdk_tx_with_status
+        return sdk_transaction_with_status.transaction
+      else
+        tx = CKB::Types::Transaction.from_h fetch_raw_hash(tx_hash).with_indifferent_access
+        Rails.cache.write([name, tx_hash, "object"], tx, expires_in: 1.day)
+        tx
+      end
     end
   end
 

@@ -7,7 +7,7 @@ class ChangeCellInputPreviousOutput < ActiveRecord::Migration[7.0]
     execute <<~SQL
       UPDATE cell_inputs
       SET previous_tx_hash = decode(substring(previous_output ->> 'tx_hash',3), 'hex') ,
-      previous_index = previous_output ->> 'index'
+      previous_index = ('x' || lpad(substring(previous_output ->> 'index' from 3), 8, '0'))::bit(32)::int
       where previous_cell_output_id is null and previous_output is not null
     SQL
     add_index :cell_inputs, [:previous_tx_hash, :previous_index]
