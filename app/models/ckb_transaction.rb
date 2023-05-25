@@ -252,6 +252,9 @@ class CkbTransaction < ApplicationRecord
         id: output.id, capacity: output.capacity, address_hash: output.address_hash,
         status: output.status, consumed_tx_hash: consumed_tx_hash, cell_type: output.cell_type }
       display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
+      display_output.merge!(attributes_for_cota_registry_cell(output)) if output.cota_registry?
+      display_output.merge!(attributes_for_cota_regular_cell(output)) if output.cota_regular?
+
       display_output.merge!(attributes_for_m_nft_cell(output)) if output.cell_type.in?(%w(
                                                                                          m_nft_issuer m_nft_class
                                                                                          m_nft_token
@@ -328,6 +331,16 @@ class CkbTransaction < ApplicationRecord
   def attributes_for_m_nft_cell(m_nft_cell)
     info = m_nft_cell.m_nft_info
     { m_nft_info: info, extra_info: info }
+  end
+
+  def attributes_for_cota_registry_cell(cota_cell)
+    info = cota_cell.cota_registry_info
+    { cota_registry_info: info, extra_info: info }
+  end
+
+  def attributes_for_cota_regular_cell(cota_cell)
+    info = cota_cell.cota_regular_info
+    { cota_regular_info: info, extra_info: info }
   end
 
   def attributes_for_nrc_721_cell(nrc_721_cell)

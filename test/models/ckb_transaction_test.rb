@@ -674,8 +674,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
     udt_account = create(:udt_account, udt: udt, address: address,
                                        nft_token_id: "22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8")
 
-    factory_info = { symbol: "TTF" }
-    token_info = { symbol: "TTF", amount: udt_account.nft_token_id }
+    factory_info = { symbol: "TTF", amount: "", decimal: "", type_hash: "0x", published: true, display_name: "Test token factory", nan: "" }
+    token_info = { symbol: "TTF", amount: udt_account.nft_token_id, decimal: "6", type_hash: "0x", published: true, display_name: "kingdom fat coin", uan: ""}
     display_outputs = nrc_721_token_output_transaction.display_outputs
     assert_equal factory_info.to_a,
                  display_outputs.first[:nrc_721_token_info].to_a
