@@ -169,6 +169,15 @@ module Api
 
         assert_equal expected_udts, response.body
       end
+
+
+      test "should get download_csv" do
+        udt = create(:udt, :with_transactions, published: true)
+
+        valid_get download_csv_api_v1_udts_url(id: udt.type_hash, start_date: Time.now.strftime("%Y-%m-%d"), end_date: Time.now.strftime("%Y-%m-%d"))
+
+        assert_response :success
+      end
     end
   end
 end
