@@ -144,7 +144,7 @@ module CkbSync
         )
       )
       VCR.use_cassette("blocks/11") do
-        tx = create(:pool_transaction_entry)
+        tx = create(:pending_transaction)
         node_block = CkbSync::Api.instance.get_block_by_number(11)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block.transactions.first.hash = tx.tx_hash
@@ -164,7 +164,7 @@ module CkbSync
         )
       )
       VCR.use_cassette("blocks/11") do
-        tx = create(:pool_transaction_entry)
+        tx = create(:pending_transaction)
         node_block = CkbSync::Api.instance.get_block_by_number(11)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         assert_no_changes -> { tx.reload.tx_status } do

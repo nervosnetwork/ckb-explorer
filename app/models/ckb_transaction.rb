@@ -31,6 +31,8 @@ class CkbTransaction < ApplicationRecord
   has_many :header_dependencies, dependent: :delete_all
   has_many :witnesses, dependent: :delete_all
 
+  has_one :reject_reason
+
   has_and_belongs_to_many :contained_addresses, class_name: "Address", join_table: "account_books"
   has_and_belongs_to_many :contained_udts, class_name: "Udt", join_table: :udt_transactions
   has_and_belongs_to_many :contained_dao_addresses, class_name: "Address", join_table: "address_dao_transactions"
@@ -226,7 +228,7 @@ class CkbTransaction < ApplicationRecord
   end
 
   def detailed_message
-    @detailed_message ||= PoolTransactionEntry.find_by(tx_hash: tx_hash)&.detailed_message
+    reject_reason&.message
   end
 
   # convert current record to raw hash with standard RPC json data structure

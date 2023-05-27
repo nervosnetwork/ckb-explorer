@@ -752,6 +752,7 @@ ALTER SEQUENCE public.cell_dependencies_id_seq OWNED BY public.cell_dependencies
 
 CREATE TABLE public.cell_inputs (
     id bigint NOT NULL,
+    previous_output jsonb,
     ckb_transaction_id bigint,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
@@ -761,8 +762,7 @@ CREATE TABLE public.cell_inputs (
     since numeric(30,0) DEFAULT 0.0,
     cell_type integer DEFAULT 0,
     index integer,
-    previous_tx_hash bytea,
-    previous_index integer
+    previous_tx_hash bytea
 );
 
 
@@ -1675,6 +1675,36 @@ ALTER SEQUENCE public.referring_cells_id_seq OWNED BY public.referring_cells.id;
 
 
 --
+-- Name: reject_reasons; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reject_reasons (
+    id bigint NOT NULL,
+    ckb_transaction_id bigint NOT NULL,
+    message text
+);
+
+
+--
+-- Name: reject_reasons_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.reject_reasons_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: reject_reasons_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.reject_reasons_id_seq OWNED BY public.reject_reasons.id;
+
+
+--
 -- Name: rolling_avg_block_time; Type: MATERIALIZED VIEW; Schema: public; Owner: -
 --
 
@@ -2463,6 +2493,13 @@ ALTER TABLE ONLY public.referring_cells ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
+-- Name: reject_reasons id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reject_reasons ALTER COLUMN id SET DEFAULT nextval('public.reject_reasons_id_seq'::regclass);
+
+
+--
 -- Name: script_transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2862,6 +2899,14 @@ ALTER TABLE ONLY public.pool_transaction_entries
 
 ALTER TABLE ONLY public.referring_cells
     ADD CONSTRAINT referring_cells_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: reject_reasons reject_reasons_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reject_reasons
+    ADD CONSTRAINT reject_reasons_pkey PRIMARY KEY (id);
 
 
 --
@@ -3375,10 +3420,10 @@ CREATE INDEX index_cell_inputs_on_previous_cell_output_id ON public.cell_inputs 
 
 
 --
--- Name: index_cell_inputs_on_previous_tx_hash_and_previous_index; Type: INDEX; Schema: public; Owner: -
+-- Name: index_cell_inputs_on_previous_tx_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_inputs_on_previous_tx_hash_and_previous_index ON public.cell_inputs USING btree (previous_tx_hash, previous_index);
+CREATE INDEX index_cell_inputs_on_previous_tx_hash ON public.cell_inputs USING btree (previous_tx_hash);
 
 
 --
@@ -3736,6 +3781,13 @@ CREATE INDEX index_pool_transaction_entries_on_tx_hash ON public.pool_transactio
 --
 
 CREATE INDEX index_pool_transaction_entries_on_tx_status ON public.pool_transaction_entries USING btree (tx_status);
+
+
+--
+-- Name: index_reject_reasons_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_reject_reasons_on_ckb_transaction_id ON public.reject_reasons USING btree (ckb_transaction_id);
 
 
 --
@@ -4478,6 +4530,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230425162318'),
 ('20230426133543'),
 ('20230427025007'),
-('20230518061651');
+('20230518061651'),
+('20230526070328'),
+('20230526135653');
 
 

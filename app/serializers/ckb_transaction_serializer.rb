@@ -1,36 +1,21 @@
 # notice:
-# this class would serialize 2 models:  CkbTransaction and PoolTransactionEntry
 #
 class CkbTransactionSerializer
   include FastJsonapi::ObjectSerializer
 
   # for the tx_status,
-  # CkbTransaction will always be "commited"
-  # PoolTransactionEntry will give: 0, 1, 2, 3
   attributes :is_cellbase, :tx_status
 
   attribute :witnesses do |o|
-    if o.is_a?(PoolTransactionEntry)
-      o.witnesses
-    else
-      o.witnesses&.map(&:data) || []
-    end
+    o.witnesses&.map(&:data) || []
   end
 
   attribute :cell_deps do |o|
-    if o.is_a?(PoolTransactionEntry)
-      o.cell_deps
-    else
-      o.cell_dependencies.explicit.includes(:cell_output).to_a.map(&:to_raw)
-    end
+    o.cell_dependencies.explicit.includes(:cell_output).to_a.map(&:to_raw)
   end
 
   attribute :header_deps do |o|
-    if o.is_a?(PoolTransactionEntry)
-      o.header_deps
-    else
-      o.header_dependencies.map(&:header_hash)
-    end
+    o.header_dependencies.map(&:header_hash)
   end
 
   attribute :detailed_message do |object|

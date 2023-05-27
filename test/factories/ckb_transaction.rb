@@ -48,9 +48,13 @@ FactoryBot.define do
     end
 
     factory :pending_transaction do
+      tx_hash { "0x#{SecureRandom.hex(32)}" }
       tx_status { "pending" }
       block_number { nil }
       block_timestamp { nil }
+      transaction_fee { 100 }
+      version { 0 }
+      bytes { 2000 }
     end
 
     trait :with_cell_output_and_lock_script do
