@@ -72,7 +72,6 @@ end
 # Table name: cell_inputs
 #
 #  id                      :bigint           not null, primary key
-#  previous_output         :jsonb
 #  ckb_transaction_id      :bigint
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
@@ -83,11 +82,12 @@ end
 #  cell_type               :integer          default("normal")
 #  index                   :integer
 #  previous_tx_hash        :binary
+#  previous_index          :integer
 #
 # Indexes
 #
-#  index_cell_inputs_on_block_id                 (block_id)
-#  index_cell_inputs_on_ckb_transaction_id       (ckb_transaction_id)
-#  index_cell_inputs_on_previous_cell_output_id  (previous_cell_output_id)
-#  index_cell_inputs_on_previous_tx_hash         (previous_tx_hash)
+#  index_cell_inputs_on_block_id                             (block_id)
+#  index_cell_inputs_on_ckb_transaction_id                   (ckb_transaction_id)
+#  index_cell_inputs_on_previous_cell_output_id              (previous_cell_output_id)
+#  index_cell_inputs_on_previous_tx_hash_and_previous_index  (previous_tx_hash,previous_index)
 #
