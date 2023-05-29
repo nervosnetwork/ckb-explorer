@@ -7,9 +7,8 @@ class Api::V1::UdtsController < ApplicationController
     udts = Udt.sudt
 
     params[:sort] ||= "id.desc"
-    temp = params[:sort].split('.')
-    order_by = temp[0]
-    asc_or_desc = temp[1]
+
+    order_by, asc_or_desc = params[:sort].split('.', 2)
     order_by = case order_by
     when 'created_time' then 'block_timestamp'
     # current we don't support this in DB
