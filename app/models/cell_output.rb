@@ -101,6 +101,10 @@ class CellOutput < ApplicationRecord
     [data[2..]].pack("H*")
   end
 
+  def dao
+    self[:dao] || block.dao
+  end
+
   # find cell output according to the out point( tx_hash and output index )
   # @param [String] tx_hash
   # @param [Integer] index
@@ -119,6 +123,18 @@ class CellOutput < ApplicationRecord
     lock = CKB::Types::Script.new(**lock_script.to_node)
     type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node) : nil
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
+  end
+
+  # @param data [String] 0x...
+  def calculate_bytesize
+    data ||= self.data || "0x"
+    bytesize = 8 + CKB::Utils.hex_to_bin(data).bytesize + lock_script.calculate_bytesize
+    bytesize += type_script.calculate_bytesize if type_script
+    bytesize
+  end
+
+  def calculate_min_capacity
+    CKB::Utils.byte_to_shannon(calculate_bytesize)
   end
 
   def to_raw

@@ -17,10 +17,10 @@ module Api
                                  transaction_fee: 30000, bytes: 20, confirmation_time: confirmation_time, block: block, tx_hash: tx_hash1
         create :ckb_transaction, created_at: Time.at(tx_created_at),
                                  transaction_fee: 30000, bytes: 20, confirmation_time: confirmation_time, block: block, tx_hash: tx_hash2
-        create :pool_transaction_entry, transaction_fee: 30000, bytes: 20,
-                                        tx_hash: tx_hash1
-        create :pool_transaction_entry, transaction_fee: 13000, bytes: 15,
-                                        tx_hash: tx_hash2
+        create :pending_transaction, transaction_fee: 30000, bytes: 20,
+                                     tx_hash: tx_hash1
+        create :pending_transaction, transaction_fee: 13000, bytes: 15,
+                                     tx_hash: tx_hash2
       end
 
       test "should get transaction_fees, for committed tx" do
@@ -31,7 +31,7 @@ module Api
                 "Content-Type": "application/vnd.api+json",
                 "Accept": "application/json" }
           data = JSON.parse(response.body)
-          assert_equal PoolTransactionEntry.all.size,
+          assert_equal CkbTransaction.tx_pending.count,
                        data["transaction_fee_rates"].size
           assert data["transaction_fee_rates"].first["fee_rate"] > 0
           assert data["transaction_fee_rates"].first["confirmation_time"] > 0
@@ -47,7 +47,7 @@ module Api
                 "Content-Type": "application/vnd.api+json",
                 "Accept": "application/json" }
           data = JSON.parse(response.body)
-          assert_equal PoolTransactionEntry.all.size,
+          assert_equal CkbTransaction.tx_pending.count,
                        data["transaction_fee_rates"].size
           assert data["pending_transaction_fee_rates"].first["fee_rate"] > 0
 

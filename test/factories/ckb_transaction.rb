@@ -48,7 +48,13 @@ FactoryBot.define do
     end
 
     factory :pending_transaction do
+      tx_hash { "0x#{SecureRandom.hex(32)}" }
       tx_status { "pending" }
+      block_number { nil }
+      block_timestamp { nil }
+      transaction_fee { 100 }
+      version { 0 }
+      bytes { 2000 }
     end
 
     trait :with_cell_output_and_lock_script do
@@ -78,11 +84,20 @@ FactoryBot.define do
     trait :with_cell_output_and_lock_and_type_script do
       after(:create) do |ckb_transaction, _evaluator|
         output1 = create(:cell_output, capacity: 10**8 * 8,
-                                       ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 0)
+                                       ckb_transaction: ckb_transaction,
+                                       block: ckb_transaction.block,
+                                       tx_hash: ckb_transaction.tx_hash,
+                                       cell_index: 0)
         output2 = create(:cell_output, capacity: 10**8 * 8,
-                                       ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 1)
+                                       ckb_transaction: ckb_transaction,
+                                       block: ckb_transaction.block,
+                                       tx_hash: ckb_transaction.tx_hash,
+                                       cell_index: 1)
         output3 = create(:cell_output, capacity: 10**8 * 8,
-                                       ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 2)
+                                       ckb_transaction: ckb_transaction,
+                                       block: ckb_transaction.block,
+                                       tx_hash: ckb_transaction.tx_hash,
+                                       cell_index: 2)
         lock1 = create(:lock_script, cell_output_id: output1.id)
         type1 = create(:type_script, cell_output: output1)
         lock2 = create(:lock_script, cell_output_id: output2.id)
@@ -116,7 +131,10 @@ FactoryBot.define do
     trait :with_single_output do
       after(:create) do |ckb_transaction|
         create(:cell_output, capacity: 10**8 * 8,
-                             ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: 0)
+                             ckb_transaction: ckb_transaction,
+                             block: ckb_transaction.block,
+                             tx_hash: ckb_transaction.tx_hash,
+                             cell_index: 0)
       end
     end
 
@@ -124,12 +142,18 @@ FactoryBot.define do
       after(:create) do |ckb_transaction|
         15.times do |index|
           create(:cell_output, capacity: 10**8 * 8,
-                               ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index)
+                               ckb_transaction: ckb_transaction,
+                               block: ckb_transaction.block,
+                               tx_hash: ckb_transaction.tx_hash,
+                               cell_index: index)
           previous_output = { tx_hash: ckb_transaction.tx_hash, index: 1 }
           create(:cell_input, previous_output: previous_output,
-                              ckb_transaction: ckb_transaction, block: ckb_transaction.block)
+                              ckb_transaction: ckb_transaction,
+                              block: ckb_transaction.block)
         end
       end
+    end
+    factory :cell_base_transaction do
     end
   end
 end
