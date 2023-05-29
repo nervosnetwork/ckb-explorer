@@ -4,6 +4,7 @@ module Api::V2
     def index
       pending_transactions = PoolTransactionEntry.pool_transaction_pending
 
+      params[:sort] ||= "id.desc"
       order_by, asc_or_desc = params[:sort].split('.', 2)
       order_by = case order_by
       when 'time' then 'created_at'

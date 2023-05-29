@@ -30,10 +30,6 @@ module Api
           else order_by
           end
 
-          if order_by == "capacity_involved"
-            asc_or_desc = "desc NULLS LAST" if asc_or_desc == "desc"
-            asc_or_desc = "asc NULLS FIRST" if asc_or_desc == "asc"
-          end
           head :not_found and return unless order_by.in? %w[id block_number block_timestamp transaction_fee capacity_involved]
 
           ckb_transactions = ckb_transactions.order(order_by => asc_or_desc)

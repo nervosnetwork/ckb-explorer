@@ -18,10 +18,10 @@ module Api
         collections = TokenCollection
         collections = collections.where(standard: params[:type]) if params[:type].present?
         collections = collections
-          .order(params[:order_by]: order_by)
+          .order(order_by => asc_or_desc)
           .page(@page).per(@page_size).fast_page
 
-        @pagy, @collections = pagy(collections).fast_page
+        @pagy, @collections = pagy(collections)
         render json: {
           data: @collections,
           pagination: pagy_metadata(@pagy)
