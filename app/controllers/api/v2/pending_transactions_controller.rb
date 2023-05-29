@@ -18,7 +18,7 @@ module Api::V2
 
       head :not_found and return unless order_by.in? %w[id created_at transaction_fee]
 
-      pending_transactions = pending_transactions.order(Arel.sql("#{order_by} #{asc_or_desc}"))
+      pending_transactions = pending_transactions.order(order_by => asc_or_desc)
         .page(@page).per(@page_size).fast_page
 
       render json: {

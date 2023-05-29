@@ -26,14 +26,14 @@ module Api
         head :not_found and return unless order_by.in? %w[ckb_transaction_id block_timestamp ckb_transactions.block_timestamp]
 
         @tx_ids = @tx_ids
-          .order(Arel.sql("#{order_by} #{asc_or_desc}"))
+          .order(order_by => asc_or_desc)
           .select("ckb_transaction_id")
           .page(@page).per(@page_size).fast_page
 
         order_by = 'id' if order_by == 'ckb_transaction_id'
         @ckb_transactions = CkbTransaction.tx_committed.where(id: @tx_ids.map(&:ckb_transaction_id))
           .select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :capacity_involved)
-          .order(Arel.sql("#{order_by} #{asc_or_desc}"))
+          .order(order_by => asc_or_desc)
 
         json =
           Rails.cache.realize("#{@ckb_transactions.cache_key}/#{@address.query_address}", version: @ckb_transactions.cache_version) do

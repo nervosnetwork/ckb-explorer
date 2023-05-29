@@ -25,7 +25,7 @@ module Api
           end
 
           head :not_found and return unless order_by.in? %w[number reward timestamp ckb_transactions_count]
-          blocks = blocks.order(Arel.sql("#{order_by} #{asc_or_desc}")).page(@page).per(@page_size).fast_page
+          blocks = blocks.order(order_by => asc_or_desc).page(@page).per(@page_size).fast_page
 
           json =
             Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do

@@ -37,7 +37,7 @@ module Api
           end
           head :not_found and return unless order_by.in? %w[id block_number block_timestamp transaction_fee capacity_involved]
 
-          ckb_transactions = ckb_transactions.order(Arel.sql("#{order_by} #{asc_or_desc}"))
+          ckb_transactions = ckb_transactions.order(order_by => asc_or_desc)
             .page(@page).per(@page_size).fast_page
 
           json =
