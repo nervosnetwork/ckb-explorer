@@ -61,7 +61,7 @@ class CkbTransaction < ApplicationRecord
 
   def self.clean_pending
     tx_pending.find_each do |t|
-      if tx_committed.where(tx_hash: t.tx_hash).exists? || tx_rejected.where(tx_hash: t.tx_hash).exists?
+      if where(tx_hash: t.tx_hash).where.not(tx_status: :pending).exists?
         t.destroy
       end
     end
