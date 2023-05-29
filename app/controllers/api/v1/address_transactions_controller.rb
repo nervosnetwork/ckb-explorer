@@ -1,8 +1,10 @@
+require 'csv'
 module Api
   module V1
     class AddressTransactionsController < ApplicationController
       before_action :validate_query_params
       before_action :validate_pagination_params, :pagination_params
+      before_action :set_address_transactions, only: [:show, :download_csv]
 
       def show
         @address = Address.find_address!(params[:id])
@@ -17,6 +19,38 @@ module Api
           end
 
         render json: json
+      end
+
+      def download_csv
+        tx_ids = AccountBook.where(address_id: @address.id).order("ckb_transaction_id" => :desc).select("ckb_transaction_id").limit(5000)
+        ckb_transactions = CkbTransaction.where(id: tx_ids.map(&:ckb_transaction_id))
+        ckb_transactions = ckb_transactions.where('ckb_transactions.block_timestamp >= ?', DateTime.strptime(params[:start_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:start_date].present?
+        ckb_transactions = ckb_transactions.where('ckb_transactions.block_timestamp <= ?', DateTime.strptime(params[:end_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:end_date].present?
+        ckb_transactions = ckb_transactions.where('block_number >= ?', params[:start_number]) if params[:start_number].present?
+        ckb_transactions = ckb_transactions.where('block_number <= ?', params[:end_number]) if params[:end_number].present?
+
+        ckb_transactions = ckb_transactions
+          .select(:id, :tx_hash, :transaction_fee, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
+          .order(id: :desc)
+          .limit(5000)
+
+        file = CSV.generate do |csv|
+          csv << ["TXn hash", "Blockno", "UnixTimestamp", "Method", "CKB In", "CKB OUT", "TxnFee(CKB)", "date(UTC)" ]
+          ckb_transactions.each_with_index do |ckb_transaction, index|
+
+            inputs = ckb_transaction.display_inputs
+            outputs = ckb_transaction.display_outputs
+            max = inputs.size > outputs.size ? inputs.size : outputs.size
+            (0 .. max-1).each do |i|
+              row = [ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp, "Transfer",
+                     (inputs[i][:capacity].to_d / 1e8 rescue '/'),
+                     (outputs[i][:capacity].to_d / 1e8 rescue '/'),
+                     ckb_transaction.transaction_fee, ckb_transaction.updated_at]
+              csv << row
+            end
+          end
+        end
+        send_data file, :type => 'text/csv; charset=utf-8; header=present', :disposition => "attachment;filename=ckb_transactions.csv"
       end
 
       private
@@ -50,6 +84,13 @@ module Api
           ckb_transaction_serializer.serialized_json
         end
       end
+
+      def set_address_transactions
+        @address = Address.find_address!(params[:id])
+        raise Api::V1::Exceptions::AddressNotFoundError if @address.is_a?(NullAddress)
+
+      end
+
     end
   end
 end

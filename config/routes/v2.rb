@@ -39,7 +39,12 @@ namespace :api do
         end
       end
       resources :items, only: :index
-      resources :transfers, only: [:index, :show]
+      resources :transfers, only: [:index, :show] do
+        collection do
+          get :download_csv
+        end
+      end
+
     end
 
     resources :dao_events, only: [:index]

@@ -170,7 +170,7 @@ class Address < ApplicationRecord
 
   def flush_cache
     $redis.pipelined do
-      Rails.cache.delete(*cache_keys)
+      Rails.cache.delete_multi(cache_keys)
     end
   end
 
