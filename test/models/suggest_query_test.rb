@@ -31,7 +31,8 @@ class SuggestQueryTest < ActiveSupport::TestCase
     address = create(:address, :with_lock_script)
     address.query_address = address.address_hash
 
-    assert_equal AddressSerializer.new(address).serialized_json, SuggestQuery.new(address.address_hash).find!.serialized_json
+    assert_equal AddressSerializer.new(address).serialized_json,
+                 SuggestQuery.new(address.address_hash).find!.serialized_json
   end
 
   test "should raise BlockNotFoundError when query key is a block number that doesn't exist" do
@@ -46,7 +47,8 @@ class SuggestQueryTest < ActiveSupport::TestCase
     create(:address, :with_lock_script)
     address = NullAddress.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
 
-    assert_equal AddressSerializer.new(address).serialized_json, SuggestQuery.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83").find!.serialized_json
+    assert_equal AddressSerializer.new(address).serialized_json,
+                 SuggestQuery.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83").find!.serialized_json
     ENV["CKB_NET_MODE"] = "mainnet"
   end
 
@@ -60,11 +62,5 @@ class SuggestQueryTest < ActiveSupport::TestCase
     assert_raises ActiveRecord::RecordNotFound do
       SuggestQuery.new(udt.type_hash).find!
     end
-  end
-
-  test "should return pool tx when tx is in the pool" do
-    tx = create(:pool_transaction_entry)
-    expected_response = CkbTransactionSerializer.new(tx).serialized_json
-    assert_equal expected_response, SuggestQuery.new(tx.tx_hash).find!.serialized_json
   end
 end

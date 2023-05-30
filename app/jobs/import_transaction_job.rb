@@ -1,28 +1,49 @@
 # process a raw transaction and save related records to database
-class ProcessTransactionJob < ApplicationJob
+class ImportTransactionJob < ApplicationJob
   queue_as :default
   attr_accessor :tx, :txid, :sdk_tx, :cell_dependencies_attrs,
                 :by_type_hash, :by_data_hash,
                 :deployed_cells_attrs,
+                :addresses,
                 :address_changes
 
   # @param tx_hash [String]
-  def perform(tx_hash)
+  def perform(tx_hash, extra_data = {})
     self.address_changes = {}
     if tx_hash.is_a?(Hash)
       CkbTransaction.write_raw_hash_cache tx_hash["hash"], tx_hash
       tx_hash = tx_hash["hash"]
     end
     # raw = CkbTransaction.fetch_raw_hash(tx_hash)
-    @sdk_tx = CkbTransaction.fetch_sdk_transaction(tx_hash)
     @tx = CkbTransaction.unscoped.create_with(tx_status: :pending).find_or_create_by! tx_hash: tx_hash
     return unless tx.tx_pending?
 
+    Rails.logger.info "Importing #{tx.tx_hash}"
+    @sdk_tx = CkbTransaction.fetch_sdk_transaction(tx_hash)
+    unless @sdk_tx
+      Rails.logger.info "Cannot fetch transaction details for #{tx_hash}"
+      return
+    end
+    @tx.cycles = extra_data[:cycles]
+    if extra_data[:timestamp]
+      @tx.created_at = Time.at(extra_data[:timestamp].to_d / 1000).utc
+    end
+    @tx.transaction_fee = extra_data[:fee]
+    @tx.bytes = extra_data[:size] || @sdk_tx.serialized_size_in_block
+    @tx.version = @sdk_tx.version
+    @tx.live_cell_changes = sdk_tx.outputs.count - sdk_tx.inputs.count
+    if extra_data[:block_hash]
+      block = Block.find_by block_hash: extra_data["block_hash"]
+      @tx.included_block_ids << block.id
+    end
+    @tx.save
     @txid = tx.id
     @deployed_cells_attrs = []
     @cell_dependencies_attrs = []
     @by_type_hash = {}
     @by_data_hash = {}
+
+    capacity_involved = 0
 
     # process inputs
     sdk_tx.inputs.each_with_index do |input, index|
@@ -30,24 +51,31 @@ class ProcessTransactionJob < ApplicationJob
         tx.cell_inputs.create_with(index: index).create_or_find_by(previous_cell_output_id: nil, from_cell_base: true)
       else
         cell = CellOutput.find_by(tx_hash: input.previous_output.tx_hash, cell_index: input.previous_output.index)
+
         if cell
           process_input tx.cell_inputs.create_with(previous_cell_output_id: cell.id).create_or_find_by!(
             ckb_transaction_id: txid, index: index
           )
           process_deployed_cell(cell.lock_script)
           process_deployed_cell(cell.type_script) if cell.type_script
+          capacity_involved += cell.capacity
         else
+          tx.cell_inputs.create_or_find_by!(
+            previous_tx_hash: input.previous_output.tx_hash,
+            previous_index: input.previous_output.index,
+            since: input.since
+          )
           puts "Missing input #{input.previous_output.to_h} in #{tx_hash}"
           # cannot find corresponding cell output,
           # maybe the transaction contains the cell output has not been processed,
           # so add current transaction to pending list, and wait for future processing
+
           list = Kredis.unique_list "pending_transactions_for_input:#{input.previous_output.tx_hash}"
           list << tx_hash
-          return
         end
       end
     end
-
+    @tx.update_column :capacity_involved, capacity_involved
     # process outputs
     sdk_tx.outputs.each_with_index do |output, index|
       output_data = sdk_tx.outputs_data[index]
@@ -58,10 +86,11 @@ class ProcessTransactionJob < ApplicationJob
       )
       cell.lock_script = lock
       cell.type_script = t
+      cell.data = output_data
       cell.update!(
         address_id: lock.address_id,
         capacity: output.capacity,
-        occupied_capacity: CkbUtils.calculate_cell_min_capacity(output, output_data),
+        occupied_capacity: cell.calculate_min_capacity,
         status: "pending"
       )
 
@@ -82,7 +111,7 @@ class ProcessTransactionJob < ApplicationJob
     # notify pending transaction to reprocess again
     pending_list = Kredis.unique_list "pending_transactions_for_input:#{tx_hash}"
     pending_list.elements.each do |_tx|
-      ProcessTransactionJob.perform_later _tx
+      ImportTransactionJob.perform_later _tx
     end
     pending_list.clear
   end
@@ -244,6 +273,7 @@ class ProcessTransactionJob < ApplicationJob
   # @param cell_input [CellInput]
   def process_input(cell_input)
     cell_output = cell_input.previous_cell_output
+
     address_id = cell_output.address_id
     changes = address_changes[address_id] ||=
       {
@@ -251,7 +281,7 @@ class ProcessTransactionJob < ApplicationJob
         balance_occupied: 0
       }
     changes[:balance] -= cell_output.capacity
-    changes[:balance_occupied] -= cell_output.occupied_capacity
+    changes[:balance_occupied] -= cell_output.occupied_capacity if cell_output.occupied_capacity
   end
 
   # # calculate address and balance change for each cell output
@@ -284,6 +314,7 @@ class ProcessTransactionJob < ApplicationJob
           "changes = transaction_address_changes.changes || excluded.changes"
         )
       )
+      AccountBook.upsert_all address_changes.keys.map{|address_id| {ckb_transaction_id: tx.id, address_id:}}
     end
   end
 end

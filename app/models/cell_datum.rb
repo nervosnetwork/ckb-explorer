@@ -3,6 +3,7 @@ class CellDatum < ApplicationRecord
   validates :data, presence: true, length: { minimum: 1 }
 
   after_create :update_data_hash
+
   def update_data_hash
     cell_output.update(data_hash: CKB::Utils.bin_to_hex(CKB::Blake2b.digest(data)))
   end

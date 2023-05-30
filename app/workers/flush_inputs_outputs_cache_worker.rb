@@ -11,7 +11,7 @@ class FlushInputsOutputsCacheWorker
         cache_keys << cell_input.cache_keys
       end
       $redis.pipelined do
-        $redis.del(*cache_keys)
+        Rails.cache.delete_multi(cache_keys)
       end
     end
   end

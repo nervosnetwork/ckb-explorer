@@ -55,12 +55,7 @@ class SuggestQuery
     UdtSerializer.new(udt) if udt.present?
   end
 
-  def find_pool_tx_by_hash
-    tx = PoolTransactionEntry.find_by(tx_hash: query_key)
-    CkbTransactionSerializer.new(tx) if tx.present?
-  end
-
   def find_by_hex
-    Block.cached_find(query_key) || find_ckb_transaction_by_hash || find_pool_tx_by_hash || find_address_by_lock_hash || find_udt_by_type_hash
+    Block.cached_find(query_key) || find_ckb_transaction_by_hash || find_address_by_lock_hash || find_udt_by_type_hash
   end
 end

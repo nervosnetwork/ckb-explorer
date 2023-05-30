@@ -21,7 +21,9 @@ class Block < ApplicationRecord
   has_many :ckb_transactions
   has_many :block_transactions
   # the transactions included in the block no matter if the block is included in chain
-  has_many :contained_transactions, through: :block_transactions
+  has_many :contained_transactions, class_name: "CkbTransaction",
+                                    through: :block_transactions,
+                                    inverse_of: :included_blocks
   has_many :uncle_blocks
   has_many :cell_outputs
   has_many :cell_inputs
@@ -264,7 +266,7 @@ class Block < ApplicationRecord
 
   def flush_cache
     $redis.pipelined do
-      $redis.del(*cache_keys)
+      Rails.cache.delete_multi(cache_keys)
     end
   end
 
