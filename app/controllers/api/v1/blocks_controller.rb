@@ -13,7 +13,19 @@ module Api
               BlockListSerializer.new(blocks).serialized_json
             end
         else
-          blocks = Block.recent.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes, :updated_at).page(@page).per(@page_size).fast_page
+          blocks = Block.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes, :updated_at)
+          params[:sort] ||= "timestamp.desc"
+
+          order_by, asc_or_desc = params[:sort].split('.', 2)
+          order_by = case order_by
+          when 'height' then 'number'
+          when 'transactions' then 'ckb_transactions_count'
+          else order_by
+          end
+
+          head :not_found and return unless order_by.in? %w[number reward timestamp ckb_transactions_count]
+          blocks = blocks.order(order_by => asc_or_desc).page(@page).per(@page_size).fast_page
+
           json =
             Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do
               records_counter = RecordCounters::Blocks.new
