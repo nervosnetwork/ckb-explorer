@@ -4,7 +4,24 @@ class Api::V1::UdtsController < ApplicationController
   before_action :validate_pagination_params, :pagination_params, only: :index
 
   def index
-    udts = Udt.sudt.order(addresses_count: :desc, id: :asc).page(@page).per(@page_size).fast_page
+    udts = Udt.sudt
+
+    params[:sort] ||= "id.desc"
+
+    order_by, asc_or_desc = params[:sort].split('.', 2)
+    order_by = case order_by
+    when 'created_time' then 'block_timestamp'
+    # current we don't support this in DB
+    # need a new PR https://github.com/nervosnetwork/ckb-explorer/pull/1266/
+    # when 'transactions' then 'h24_ckb_transactions_count'
+    else order_by
+    end
+
+    head :not_found and return unless order_by.in? %w[id addresses_count block_timestamp]
+
+    udts = udts.order(order_by => asc_or_desc)
+      .page(@page).per(@page_size).fast_page
+
     options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: @page, page_size: @page_size).call
     render json: UdtSerializer.new(udts, options)
   end
