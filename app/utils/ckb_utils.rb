@@ -1,4 +1,8 @@
 class CkbUtils
+  def self.int_to_hex(i)
+    "0x#{i.to_s(16)}"
+  end
+
   def self.calculate_cell_min_capacity(output, data)
     output.calculate_min_capacity(data)
   end
@@ -519,5 +523,9 @@ class CkbUtils
       parsed = CkbUtils.parse_address(address)
       parsed.script.compute_hash
     end
+  end
+
+  def self.hex_since(int_since_value)
+    return "0x#{int_since_value.to_s(16).rjust(16, '0')}"
   end
 end
