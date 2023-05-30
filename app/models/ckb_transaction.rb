@@ -12,6 +12,7 @@ class CkbTransaction < ApplicationRecord
   has_many :block_transactions
   has_many :included_blocks, class_name: "Block",
                              through: :block_transactions,
+                             source: :block,
                              inverse_of: :contained_transactions
   has_many :account_books, dependent: :delete_all
   has_many :addresses, through: :account_books
@@ -174,6 +175,14 @@ class CkbTransaction < ApplicationRecord
   # @return [CKB::Types::Transaction]
   def sdk_transaction
     @sdk_transaction ||= sdk_transaction_with_status.transaction
+  end
+
+  def revert!
+    self.update(
+      block_number: nil,
+      block_timestamp: nil,
+      tx_status: "pending"
+    )
   end
 
   def reset_cycles

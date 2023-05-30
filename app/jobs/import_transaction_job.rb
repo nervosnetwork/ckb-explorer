@@ -1,7 +1,8 @@
 # process a raw transaction and save related records to database
 class ImportTransactionJob < ApplicationJob
   queue_as :default
-  attr_accessor :tx, :txid, :sdk_tx, :cell_dependencies_attrs,
+  attr_accessor :current_block,
+                :tx, :txid, :sdk_tx, :cell_dependencies_attrs,
                 :by_type_hash, :by_data_hash,
                 :deployed_cells_attrs,
                 :addresses,
@@ -28,15 +29,19 @@ class ImportTransactionJob < ApplicationJob
     if extra_data[:timestamp]
       @tx.created_at = Time.at(extra_data[:timestamp].to_d / 1000).utc
     end
+
     @tx.transaction_fee = extra_data[:fee]
     @tx.bytes = extra_data[:size] || @sdk_tx.serialized_size_in_block
     @tx.version = @sdk_tx.version
     @tx.live_cell_changes = sdk_tx.outputs.count - sdk_tx.inputs.count
-    if extra_data[:block_hash]
-      block = Block.find_by block_hash: extra_data["block_hash"]
-      @tx.included_block_ids << block.id
-    end
     @tx.save
+
+    # if extra_data[:block_hash]
+    #   self.current_block = Block.find_by block_hash: extra_data[:block_hash]
+    #   Rails.logger.info "In block #{extra_data[:block_hash]}"
+    #   BlockTransaction.upsert({ block_id: current_block.id, ckb_transaction_id: tx.id })
+    # end
+
     @txid = tx.id
     @deployed_cells_attrs = []
     @cell_dependencies_attrs = []
@@ -126,6 +131,7 @@ class ImportTransactionJob < ApplicationJob
       ImportTransactionJob.perform_later _tx
     end
     pending_list.clear
+    tx
   end
 
   def parse_code_dep(cell_dep)
@@ -326,7 +332,16 @@ class ImportTransactionJob < ApplicationJob
           "changes = transaction_address_changes.changes || excluded.changes"
         )
       )
-      AccountBook.upsert_all address_changes.keys.map{|address_id| {ckb_transaction_id: tx.id, address_id:}}
+      AccountBook.upsert_all(
+        address_changes.keys.map { |address_id|
+          {
+            ckb_transaction_id: tx.id,
+            address_id: address_id
+          }
+        }.uniq,
+        on_duplicate: :update,
+        unique_by: %i[address_id ckb_transaction_id]
+      )
     end
   end
 end

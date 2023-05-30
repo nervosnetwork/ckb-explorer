@@ -4,18 +4,22 @@
 # set related statistic info, address info to latest state
 class CommitBlockJob < ApplicationJob
   def perform(block)
-    case block
-    when Integer
-      block = Block.find_by id: block
-    when String
-      block = Block.find_by block_hash: block
-    when Block
-    else
-      raise ArgumentError
-    end
+    block =
+      case block
+         when Integer
+           Block.find_by id: block
+         when String
+           Block.find_by block_hash: block
+         when Block
+           block
+         else
+           raise ArgumentError
+      end
 
     # binding.pry
     block.contained_transactions.each do |tx|
+      # binding.pry
+      tx.commit!
     end
 
     # reject all the other cell output that is consumed by

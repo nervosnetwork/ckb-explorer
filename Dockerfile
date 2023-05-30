@@ -1,6 +1,7 @@
 ARG RUBY_VERSION=3.1.2
 FROM ruby:$RUBY_VERSION as builder
 LABEL MAINTAINER Nervos Network
+LABEL org.opencontainers.image.source https://github.com/nervosnetwork/ckb-explorer
 RUN apt-get update && apt-get install -y  build-essential \
   git libpq-dev libcurl4 libjemalloc2 \
   libsecp256k1-dev  libsodium-dev

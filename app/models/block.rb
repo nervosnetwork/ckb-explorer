@@ -12,7 +12,7 @@ class Block < ApplicationRecord
   MAX_PAGINATES_PER = 100
   paginates_per 10
   max_paginates_per MAX_PAGINATES_PER
-
+  enum status: { pending: 0, active: 1, forked: 2 }, _prefix: :on
   enum reward_status: { pending: 0, issued: 1 }
   enum target_block_reward_status: { pending: 0, issued: 1 }, _prefix: :target_block
   enum received_tx_fee_status: { pending: 0, calculated: 1 }, _prefix: :current_block
@@ -23,26 +23,34 @@ class Block < ApplicationRecord
   # the transactions included in the block no matter if the block is included in chain
   has_many :contained_transactions, class_name: "CkbTransaction",
                                     through: :block_transactions,
+                                    source: :ckb_transaction,
                                     inverse_of: :included_blocks
   has_many :uncle_blocks
   has_many :cell_outputs
   has_many :cell_inputs
   has_many :dao_events
   has_many :mining_infos
-  belongs_to :parent_block, class_name: "Block", foreign_key: "parent_hash", primary_key: "block_hash", optional: true,
-                            inverse_of: :subsequent_blocks
-
+  belongs_to :parent_block, class_name: "Block",
+                            foreign_key: "parent_hash",
+                            primary_key: "block_hash",
+                            inverse_of: :subsequent_blocks,
+                            optional: true
   # one block can have serveral different subsequent blocks, and only one can be included on chain
-  has_many :subsequent_blocks, class_name: "Block", foreign_key: "parent_hash", primary_key: "block_hash",
+  has_many :subsequent_blocks, class_name: "Block",
+                               foreign_key: "parent_hash",
+                               primary_key: "block_hash",
                                inverse_of: :parent_block
-  belongs_to :epoch_statistic, primary_key: :epoch_number, foreign_key: :epoch, optional: true
+  belongs_to :epoch_statistic, primary_key: :epoch_number,
+                               foreign_key: :epoch,
+                               optional: true
 
   validates_presence_of :block_hash, :number, :parent_hash, :timestamp, :transactions_root, :proposals_hash,
-                        :uncles_count, :extra_hash, :version, :cell_consumed, :reward, :total_transaction_fee,
-                        :ckb_transactions_count, :total_cell_capacity, on: :create
+                        :uncles_count, :extra_hash, :version,
+                        :ckb_transactions_count, on: :create
+  validates :cell_consumed, :total_transaction_fee, :total_cell_capacity, :reward, presence: true, if: :on_active?
   validates :reward, :total_transaction_fee, :ckb_transactions_count, :total_cell_capacity, :cell_consumed,
-            numericality: { greater_than_or_equal_to: 0 }
-
+            numericality: { greater_than_or_equal_to: 0 }, if: :on_active?
+  validates :number, uniqueness: { scope: :status }, if: :on_active?
   attribute :block_hash, :ckb_hash
   attribute :parent_hash, :ckb_hash
   attribute :transactions_root, :ckb_hash
@@ -91,18 +99,26 @@ class Block < ApplicationRecord
     connection.execute(sql).values
   end
 
+  def self.write_raw_hash_cache(hash, raw_hash = nil)
+    unless raw_hash
+      raw_hash = hash
+      hash = raw_hash["hash"]
+    end
+    Rails.cache.write([name, hash, "raw_hash"], raw_hash, expires_in: 1.day)
+  end
+
   # fetch block hash from cache
   # because the chain may reorg sometimes
   # so we can only store cache against block hash
   # See https://github.com/nervosnetwork/ckb/blob/master/rpc/README.md#method-get_block
   # @param block_hash [String] block hash
   # @return [Hash] raw hash of the block
-  def self.fetch_raw_hash_with_cycles(block_hash)
-    Rails.cache.fetch(["Block", block_hash, "raw_hash_with_cycles"], expires_in: 1.day) do
+  def self.fetch_raw_hash_with_cycles(block_hash, write_raw_hash_cache: true)
+    Rails.cache.fetch(["Block", block_hash, "raw_hash_with_cycles"], expires_in: 1.day, skip_nil: true) do
       res = CkbSync::Api.instance.directly_single_call_rpc method: "get_block", params: [block_hash, "0x2", true]
 
       r = res["result"].with_indifferent_access
-
+      self.write_raw_hash_cache r["block"] if write_raw_hash_cache
       # store transaction hash directly to cache ahead
       r["block"]["transactions"].each do |tx|
         CkbTransaction.write_raw_hash_cache tx["hash"], tx
@@ -116,7 +132,9 @@ class Block < ApplicationRecord
   # @param block_hash [String] block hash
   # @return [Hash] raw hash of the block
   def self.fetch_raw_hash(block_hash)
-    fetch_raw_hash_with_cycles(block_hash)[:block]
+    Rails.cache.fetch([name, block_hash, "raw_hash"], expires_in: 1.day, skip_nil: true) do
+      fetch_raw_hash_with_cycles(block_hash)[:block]
+    end
   end
 
   # fetch raw hash from chain with cycles information
@@ -161,7 +179,10 @@ class Block < ApplicationRecord
   # fetch block information by block number without cycles information of current block object
   # @return [Hash] raw hash of the block
   def raw_hash
-    @raw_hash ||= raw_hash_with_cycles[:block]
+    @raw_hash ||=
+      Rails.cache.fetch(["Block", block_hash, "raw_hash"], expires_in: 1.day, skip_nil: true) do
+        raw_hash_with_cycles[:block]
+      end
   end
 
   # the block object generated by ruby sdk
@@ -390,6 +411,7 @@ end
 #  median_timestamp           :bigint           default(0)
 #  ckb_node_version           :string
 #  cycles                     :bigint
+#  status                     :integer          default("active"), not null
 #
 # Indexes
 #

@@ -16,6 +16,7 @@ require "async"
 require "async/http"
 require "async/websocket"
 require "protocol/websocket/json_message"
+
 URL = ENV.fetch("CKB_WS_URL", "http://localhost:28114")
 $message_id = 0
 
@@ -31,13 +32,13 @@ def subscribe(connection, topic)
   connection.flush
 end
 
-queue = Queue.new
+tx_queue = Queue.new
 
-persister =
+tx_persister =
   Thread.new do
     Rails.application.executor.wrap do
       loop do
-        data = queue.pop
+        data = tx_queue.pop
 
         ImportTransactionJob.new.perform(data["transaction"], {
           cycles: data["cycles"].hex,
@@ -54,6 +55,7 @@ Async do |_task|
 
   Async::WebSocket::Client.connect(endpoint) do |connection|
     subscribe connection, "new_transaction"
+    subscribe connection, "new_tip_block"
 
     while message = connection.read
       message = Protocol::WebSocket::JSONMessage.wrap(message)
@@ -61,8 +63,12 @@ Async do |_task|
       if res[:method] == "subscribe"
         data = JSON.parse res[:params][:result]
         # binding.pry
-        puts data["transaction"]["hash"]
-        queue.push(data)
+        if data["transaction"]
+          puts data["transaction"]["tx_hash"]
+          tx_queue.push(data)
+        elsif data["header"]
+          puts "#{data['header']['number']} #{data['header']['hash']}"
+        end
       end
     end
   end
