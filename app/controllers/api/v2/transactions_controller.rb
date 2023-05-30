@@ -12,7 +12,7 @@ module Api
       protected
 
       def find_transaction
-        @transaction = CkbTransaction.cached_find(params[:id]) || PoolTransactionEntry.find_by(tx_hash: params[:id])
+        @transaction = CkbTransaction.cached_find(params[:id])
       end
     end
   end

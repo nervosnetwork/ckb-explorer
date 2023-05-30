@@ -105,7 +105,7 @@ class StatisticInfo < ApplicationRecord
     txs = CkbTransaction.tx_committed.
       where("bytes > 0 and transaction_fee > 0").
       order("id desc").limit(10000).
-      pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time, :block_timestamp)
+      pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time, :block_timestamp, :created_at)
     txs.map do |id, created_at, transaction_fee, bytes, confirmation_time, block_timestamp|
       if confirmation_time && confirmation_time >= 0
         {
@@ -118,15 +118,6 @@ class StatisticInfo < ApplicationRecord
         b = block_timestamp.to_i / 1000
         a = created_at.to_i
         c = b - a
-
-        if c <= 0
-          # because the transaction will be deleted when block rollback
-          # so the original created_at will be lost, so we fallback to the record in PoolTransactionEntry
-          d = PoolTransactionEntry.find_by(tx_hash: CkbTransaction.where(id: id).pick(:tx_hash))&.created_at
-          if d
-            c = b - d.to_i
-          end
-        end
 
         CkbTransaction.where(id: id).update_all(confirmation_time: c)
         {
@@ -141,7 +132,7 @@ class StatisticInfo < ApplicationRecord
 
   define_logic :pending_transaction_fee_rates do
     # select from database
-    fee_rates = PoolTransactionEntry.pool_transaction_pending.
+    fee_rates = CkbTransaction.tx_pending.
       where("transaction_fee > 0").
       order("id desc").limit(100)
 

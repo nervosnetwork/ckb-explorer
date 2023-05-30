@@ -90,6 +90,15 @@ class LockScript < ApplicationRecord
     end
   end
 
+  # @return [Integer] Byte
+  def calculate_bytesize
+    bytesize = 1
+    bytesize += CKB::Utils.hex_to_bin(code_hash).bytesize if code_hash
+    bytesize += CKB::Utils.hex_to_bin(args).bytesize if args
+
+    bytesize
+  end
+
   private
 
   def set_since_epoch_number_and_index(since_value)

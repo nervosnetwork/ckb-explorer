@@ -99,4 +99,8 @@ s.every "1h", overlap: false do
   call_worker UpdateH24CkbTransactionsCountOnUdtsWorker
 end
 
+s.every "1h", overlap: false do
+  CkbTransaction.clean_pending
+end
+
 s.join

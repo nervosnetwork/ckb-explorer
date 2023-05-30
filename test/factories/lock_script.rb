@@ -3,6 +3,6 @@ FactoryBot.define do
     address
     hash_type { "type" }
     args { "0x#{SecureRandom.hex(20)}" }
-    code_hash { "0x#{SecureRandom.hex(32)}" }
+    code_hash { Settings.secp_cell_type_hash }
   end
 end
