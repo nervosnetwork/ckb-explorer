@@ -92,7 +92,7 @@ module CkbSync
         # maybe can be changed to asynchronous update
         update_udt_info(local_block)
         process_dao_events!(local_block)
-        update_addresses_info(addrs_changes)
+        update_addresses_info(addrs_changes, local_block)
       end
 
       flush_inputs_outputs_caches(local_block)
@@ -533,7 +533,7 @@ module CkbSync
       CkbUtils.update_current_block_mining_info(local_block)
     end
 
-    def update_addresses_info(addrs_change)
+    def update_addresses_info(addrs_change, local_block)
       ### Backup the old upsert code
       # addrs = []
       # attributes =
@@ -580,7 +580,21 @@ module CkbSync
           live_cells_count: addr.live_cells_count + live_cells_diff,
           dao_transactions_count: addr.dao_transactions_count + dao_txs_count
         )
+
+        save_address_block_snapshot!(addr, local_block)
       end
+    end
+
+    def save_address_block_snapshot!(addr, local_block)
+      AddressBlockSnapshot.create!(
+        block_id: local_block.id,
+        block_number: local_block.number,
+        balance: addr.balance,
+        balance_occupied: addr.balance_occupied,
+        ckb_transactions_count: addr.ckb_transactions_count,
+        live_cells_count: addr.live_cells_count,
+        dao_transactions_count: addr.dao_transactions_count
+      )
     end
 
     def update_block_info!(local_block)
