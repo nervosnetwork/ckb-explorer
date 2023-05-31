@@ -587,6 +587,7 @@ module CkbSync
 
     def save_address_block_snapshot!(addr, local_block)
       AddressBlockSnapshot.create!(
+        address_id: addr.id,
         block_id: local_block.id,
         block_number: local_block.number,
         balance: addr.balance,
