@@ -29,7 +29,7 @@ module Api
                 capacity: value,
                 token_name: "CKB",
                 entity_type: "CKB",
-                transfer_type: "ordinary_transfer"
+                transfer_type: "simple_transfer"
               }
             ]
           }
