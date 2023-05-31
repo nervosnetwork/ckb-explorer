@@ -17,7 +17,7 @@ class Api::V1::UdtsController < ApplicationController
     else order_by
     end
 
-    head :not_found and return unless order_by.in? %w[id addresses_count block_timestamp]
+    head :not_found and return unless order_by.in? %w[id addresses_count block_timestamp ]
 
     udts = udts.order(order_by => asc_or_desc)
       .page(@page).per(@page_size).fast_page

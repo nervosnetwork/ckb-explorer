@@ -41,3 +41,7 @@ update_pool_txs_status:
 clean_up_worker:
   cron: "0 * * * *"
   class: 'CleanUpWorker'
+
+update_h24_ckb_transactioins_count_on_udts:
+  cron: "0 * * * *"
+  class: 'UpdateH24CkbTransactionsCountOnUdtsWorker'
