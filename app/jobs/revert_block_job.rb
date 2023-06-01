@@ -47,8 +47,7 @@ class RevertBlockJob < ApplicationJob
     local_tip_block.contained_addresses.each do |address|
       snapshot = snapshots.fetch(address.id, []).first
       if snapshot.present?
-        attrs = snapshot.attributes.slice("live_cells_count", "ckb_transactions_count", "dao_transactions_count",
-                                          "balance", "balance_occupied")
+        attrs = snapshot.final_state
         address.update!(attrs)
       else
         address.live_cells_count = address.cell_outputs.live.count

@@ -8,15 +8,11 @@ end
 #
 # Table name: address_block_snapshots
 #
-#  id                     :bigint           not null, primary key
-#  address_id             :bigint
-#  block_id               :bigint
-#  block_number           :bigint
-#  balance                :decimal(30, )
-#  balance_occupied       :decimal(30, )
-#  ckb_transactions_count :bigint
-#  dao_transactions_count :bigint
-#  live_cells_count       :bigint
+#  id           :bigint           not null, primary key
+#  address_id   :bigint
+#  block_id     :bigint
+#  block_number :bigint
+#  final_state  :jsonb
 #
 # Indexes
 #

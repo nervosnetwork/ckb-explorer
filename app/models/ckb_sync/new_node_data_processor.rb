@@ -590,11 +590,13 @@ module CkbSync
         address_id: addr.id,
         block_id: local_block.id,
         block_number: local_block.number,
-        balance: addr.balance,
-        balance_occupied: addr.balance_occupied,
-        ckb_transactions_count: addr.ckb_transactions_count,
-        live_cells_count: addr.live_cells_count,
-        dao_transactions_count: addr.dao_transactions_count
+        final_state: {
+          balance: addr.balance,
+          balance_occupied: addr.balance_occupied,
+          ckb_transactions_count: addr.ckb_transactions_count,
+          live_cells_count: addr.live_cells_count,
+          dao_transactions_count: addr.dao_transactions_count
+        }
       )
     end
 

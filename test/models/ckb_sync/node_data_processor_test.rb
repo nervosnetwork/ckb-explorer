@@ -941,7 +941,7 @@ module CkbSync
 
         address = new_local_block.contained_addresses.first
         snapshot = AddressBlockSnapshot.find_by(block_id: new_local_block.id, address_id: address.id)
-        assert_equal snapshot.live_cells_count, address.live_cells_count
+        assert_equal snapshot.final_state["live_cells_count"], address.live_cells_count
       end
     end
 
@@ -972,7 +972,7 @@ module CkbSync
 
         address = new_local_block.contained_addresses.first
         snapshot = AddressBlockSnapshot.find_by(block_id: new_local_block.id, address_id: address.id)
-        assert_equal snapshot.balance, address.balance
+        assert_equal snapshot.final_state["balance"], address.balance
       end
     end
 

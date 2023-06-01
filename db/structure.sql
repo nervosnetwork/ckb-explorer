@@ -356,11 +356,7 @@ CREATE TABLE public.address_block_snapshots (
     address_id bigint,
     block_id bigint,
     block_number bigint,
-    balance numeric(30,0),
-    balance_occupied numeric(30,0),
-    ckb_transactions_count bigint,
-    dao_transactions_count bigint,
-    live_cells_count bigint
+    final_state jsonb
 );
 
 
