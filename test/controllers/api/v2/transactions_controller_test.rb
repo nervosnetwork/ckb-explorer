@@ -21,7 +21,7 @@ module Api
 
         assert_equal 30, json['data'].size
         assert_equal "-800000000.0", json['data'][0]['transfers'][0]['capacity']
-        assert_equal 'ordinary_transfer', json['data'][0]['transfers'][0]['transfer_type']
+        assert_equal 'simple_transfer', json['data'][0]['transfers'][0]['transfer_type']
       end
 
     end
