@@ -34,4 +34,14 @@ class CellOutputTest < ActiveSupport::TestCase
     assert_equal raw[:type][:args], cell_output.type_script.args
     assert_equal raw[:type][:hash_type], cell_output.type_script.hash_type
   end
+
+  test "set data should update data_size & data_hash" do
+    cell = create(:cell_output, :with_full_transaction)
+    cell.data = "0x1234"
+    assert_equal cell.data_size, 2
+    assert_equal CKB::Utils.bin_to_hex(CKB::Blake2b.digest("\x12\x34")), cell.data_hash
+    assert_equal "\x12\x34", cell.cell_datum.data
+    assert_equal "\x12\x34", cell.binary_data
+    assert_equal "0x1234", cell.data
+  end
 end
