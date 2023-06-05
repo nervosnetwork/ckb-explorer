@@ -44,4 +44,19 @@ class CellOutputTest < ActiveSupport::TestCase
     assert_equal "\x12\x34", cell.binary_data
     assert_equal "0x1234", cell.data
   end
+
+  test "set cell datum via nested attributes" do
+    tx = create :ckb_transaction
+    address = create :address
+    co = tx.cell_outputs.create cell_datum_attributes: { data: "1234" },
+                                occupied_capacity: 0,
+                                address_id: address.id,
+                                block_id: tx.block_id,
+                                tx_hash: tx.tx_hash,
+                                block_timestamp: tx.block_timestamp,
+                                lock_script_id: address.lock_script.id
+
+    assert_equal co.cell_datum.data, "1234"
+    # assert_equal 4, co.data_size
+  end
 end

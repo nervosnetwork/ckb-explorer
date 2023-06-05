@@ -34,7 +34,7 @@ class CellOutput < ApplicationRecord
 
   has_many :cell_dependencies, foreign_key: :contract_cell_id, dependent: :delete_all
   has_one :cell_datum, class_name: "CellDatum", dependent: :destroy_async
-
+  accepts_nested_attributes_for :cell_datum
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   # on-chain cell outputs must be included in certain block
@@ -78,9 +78,12 @@ class CellOutput < ApplicationRecord
   def data=(new_data)
     @data = new_data
     if new_data
-      datum = cell_datum || build_cell_datum
-      datum.data = CKB::Utils.hex_to_bin(new_data)
-      datum.save
+      d = CKB::Utils.hex_to_bin(new_data)
+      if d.size > 0
+        datum = cell_datum || build_cell_datum
+        datum.data = d
+        datum.save
+      end
     elsif cell_datum
       cell_datum.destroy
     end
@@ -136,12 +139,10 @@ class CellOutput < ApplicationRecord
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
   end
 
-  # @param data [String] 0x...
+  # calculate the actual size of the cell output on chain
+  # @return [Integer]
   def calculate_bytesize
-    data ||= self.data || "0x"
-    bytesize = 8 + CKB::Utils.hex_to_bin(data).bytesize + lock_script.calculate_bytesize
-    bytesize += type_script.calculate_bytesize if type_script
-    bytesize
+    [8, binary_data&.bytesize || 0, lock_script.calculate_bytesize, type_script&.calculate_bytesize || 0].sum
   end
 
   def calculate_min_capacity

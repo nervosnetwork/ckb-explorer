@@ -507,8 +507,7 @@ CREATE TABLE public.blocks (
     extension jsonb,
     median_timestamp bigint DEFAULT 0.0,
     ckb_node_version character varying,
-    cycles bigint,
-    status integer DEFAULT 1 NOT NULL
+    cycles bigint
 );
 
 
@@ -4605,7 +4604,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230526070328'),
 ('20230526085258'),
 ('20230526135653'),
-('20230530070806'),
 ('20230603124843');
 
 

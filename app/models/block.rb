@@ -390,7 +390,6 @@ end
 #  median_timestamp           :bigint           default(0)
 #  ckb_node_version           :string
 #  cycles                     :bigint
-#  status                     :integer          default(1), not null
 #
 # Indexes
 #
