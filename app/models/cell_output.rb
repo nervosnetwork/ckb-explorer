@@ -124,7 +124,9 @@ class CellOutput < ApplicationRecord
   # @param [Integer] index
   # @return [CellOutput]
   def self.find_by_pointer(tx_hash, index)
-    Rails.cache.fetch(["cell_output", tx_hash, index], race_condition_ttl: 10.seconds, expires_in: 1.day) do
+    Rails.cache.fetch(["cell_output", tx_hash, index], skip_nil: true,
+                                                       race_condition_ttl: 10.seconds,
+                                                       expires_in: 1.day) do
       tx_id =
         Rails.cache.fetch(["tx_id", tx_hash], expires_in: 1.day) do
           CkbTransaction.find_by_tx_hash(tx_hash)&.id
