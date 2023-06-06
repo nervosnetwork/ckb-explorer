@@ -23,20 +23,18 @@ class ExportAddressTransactionsJob < ApplicationJob
       tx_ids = tx_ids.where("ckb_transactions.block_number <= ?", args[:end_number])
     end
 
-    Rails.cache.realize(args.values, race_condition_ttl: 1.minute) do
-      rows = []
-      ckb_transactions = CkbTransaction.includes(:inputs, :outputs).
-        select(:id, :tx_hash, :transaction_fee, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).
-        where(id: tx_ids.pluck(:ckb_transaction_id))
+    rows = []
+    ckb_transactions = CkbTransaction.includes(:inputs, :outputs).
+      select(:id, :tx_hash, :transaction_fee, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).
+      where(id: tx_ids.pluck(:ckb_transaction_id))
 
-      ckb_transactions.find_in_batches(batch_size: 1000, order: :desc) do |transactions|
-        transactions.each do |transaction|
-          rows += generate_data(transaction)
-        end
+    ckb_transactions.find_in_batches(batch_size: 1000, order: :desc) do |transactions|
+      transactions.each do |transaction|
+        rows += generate_data(transaction)
       end
-
-      rows
     end
+
+    rows
   end
 
   private

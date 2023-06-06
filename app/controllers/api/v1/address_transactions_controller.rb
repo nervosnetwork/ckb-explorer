@@ -47,7 +47,7 @@ module Api
 
       def download_csv
         args = params.permit(:id, :start_date, :end_date, :start_number, :end_number, address_transaction: {}).
-              merge(address_id: @address.id)
+          merge(address_id: @address.id)
         data = ExportAddressTransactionsJob.perform_now(args.to_h)
 
         file =
