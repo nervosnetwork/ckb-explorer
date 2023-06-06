@@ -15,7 +15,10 @@ class Udt < ApplicationRecord
   has_and_belongs_to_many :ckb_transactions, join_table: :udt_transactions
 
   def update_h24_ckb_transactions_count
-    update(h24_ckb_transactions_count: self.ckb_transactions.where("block_timestamp >= ?", CkbUtils.time_in_milliseconds(24.hours.ago)).count) if self.ckb_transactions.present?
+    if self.ckb_transactions.exists?
+      update(h24_ckb_transactions_count: self.ckb_transactions.where("block_timestamp >= ?",
+                                                                     CkbUtils.time_in_milliseconds(24.hours.ago)).count)
+    end
   end
 
   def type_script
