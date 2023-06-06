@@ -46,60 +46,9 @@ module Api
       end
 
       def download_csv
-        tx_ids = AccountBook.joins(:ckb_transaction).where(address_id: @address.id).order(ckb_transaction_id: :asc).limit(5000)
-        if params[:start_date].present?
-          start_date = DateTime.strptime(params[:start_date], "%Y-%m-%d").to_time.to_i * 1000
-          tx_ids = tx_ids.where("ckb_transactions.block_timestamp >= ?", start_date)
-        end
-        if params[:end_date].present?
-          end_date = DateTime.strptime(params[:end_date], "%Y-%m-%d").to_time.to_i * 1000
-          tx_ids = tx_ids.where("ckb_transactions.block_timestamp <= ?", end_date)
-        end
-        if params[:start_number].present?
-          tx_ids = tx_ids.where("ckb_transactions.block_number >= ?", params[:start_number])
-        end
-        if params[:end_number].present?
-          tx_ids = tx_ids.where("ckb_transactions.block_number <= ?", params[:end_number])
-        end
-
-        cache_key = [params[:id], params[:start_date], params[:end_date], params[:start_number], params[:end_number]]
-        data =
-          Rails.cache.realize(cache_key, race_condition_ttl: 1.minute) do
-            rows = []
-            CkbTransaction.includes(:inputs, :outputs).
-              select(:id, :tx_hash, :transaction_fee, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at).
-              where(id: tx_ids.pluck(:ckb_transaction_id)).
-              find_in_batches(batch_size: 1000, order: :desc) do |transactions|
-              transactions.each do |transaction, _index|
-                inputs =
-                  if transaction.is_cellbase
-                    return [nil]
-                  else
-                    cell_inputs_for_display = transaction.inputs.sort_by(&:id)
-                    cell_inputs_for_display.map(&:capacity)
-                  end
-
-                cell_outputs_for_display = transaction.outputs.sort_by(&:id)
-                outputs = cell_outputs_for_display.map(&:capacity)
-
-                max = inputs.size > outputs.size ? inputs.size : outputs.size
-                (0..max - 1).each do |i|
-                  rows << [
-                    transaction.tx_hash,
-                    transaction.block_number,
-                    transaction.block_timestamp,
-                    "Transfer",
-                    (inputs[i][:capacity].to_d / 1e8 rescue "/"),
-                    (outputs[i][:capacity].to_d / 1e8 rescue "/"),
-                    transaction.transaction_fee,
-                    transaction.updated_at
-                  ]
-                end
-              end
-            end
-
-            rows
-          end
+        args = params.permit(:id, :start_date, :end_date, :start_number, :end_number, address_transaction: {}).
+              merge(address_id: @address.id)
+        data = ExportAddressTransactionsJob.perform_now(args.to_h)
 
         file =
           CSV.generate do |csv|
