@@ -46,7 +46,8 @@ module Api
         get api_v1_address_transaction_url(address.address_hash),
             headers: {
               "Content-Type": "application/vnd.api+json",
-              "Accept": "application/json" }
+              "Accept": "application/json"
+            }
 
         assert_equal 406, response.status
       end
@@ -60,7 +61,8 @@ module Api
         get api_v1_address_transaction_url(address.address_hash),
             headers: {
               "Content-Type": "application/vnd.api+json",
-              "Accept": "application/json" }
+              "Accept": "application/json"
+            }
 
         assert_equal response_json, response.body
       end
@@ -84,11 +86,23 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash)
 
         records_counter = RecordCounters::AddressTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request,
-                                                           records: ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+        options = FastJsonapi::PaginationMetaGenerator.new(
+          request: request,
+          records: ckb_transactions,
+          page: page,
+          page_size: page_size,
+          records_counter: records_counter
+        ).call
 
-        assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address: address })).serialized_json,
-                     response.body
+        assert_equal CkbTransactionsSerializer.new(
+          ckb_transactions,
+          options.merge(
+            params: {
+              previews: true,
+              address: address
+            }
+          )
+        ).serialized_json, response.body
       end
 
       test "should return corresponding ckb transactions with given lock hash" do
@@ -100,11 +114,23 @@ module Api
         valid_get api_v1_address_transaction_url(address.lock_hash)
 
         records_counter = RecordCounters::AddressTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request,
-                                                           records: ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+        options = FastJsonapi::PaginationMetaGenerator.new(
+          request: request,
+          records: ckb_transactions,
+          page: page,
+          page_size: page_size,
+          records_counter: records_counter
+        ).call
 
-        assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address: address })).serialized_json,
-                     response.body
+        assert_equal CkbTransactionsSerializer.new(
+          ckb_transactions,
+          options.merge(
+            params: {
+              previews: true,
+              address: address
+            }
+          )
+        ).serialized_json, response.body
       end
 
       test "should contain right keys in the serialized object when call show" do
@@ -114,8 +140,17 @@ module Api
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number block_timestamp display_inputs display_inputs_count display_outputs display_outputs_count income is_cellbase transaction_hash).sort,
-                     response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(
+          block_number
+          block_timestamp
+          display_inputs
+          display_inputs_count
+          display_outputs
+          display_outputs_count
+          income
+          is_cellbase
+          transaction_hash
+        ).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return correct income" do
@@ -123,7 +158,8 @@ module Api
 
         block = create(:block, :with_block_hash)
         generated_ckb_transaction = create(:ckb_transaction, block: block,
-                                                             block_timestamp: "1567131126594", contained_address_ids: [address.id])
+                                                             block_timestamp: "1567131126594",
+                                                             contained_address_ids: [address.id])
         create(:cell_output, capacity: 10**8 * 8,
                              ckb_transaction: generated_ckb_transaction,
                              block: generated_ckb_transaction.block,
@@ -226,12 +262,16 @@ module Api
         page = 2
         page_size = 10
         address = create(:address, :with_transactions, transactions_count: 30)
-        address_ckb_transactions = address.custom_ckb_transactions.order("block_timestamp desc nulls last, id desc").page(page).per(page_size)
-        valid_get api_v1_address_transaction_url(address.address_hash),
-                  params: { page: page }
+        address_ckb_transactions = address.custom_ckb_transactions.
+          order("block_timestamp desc nulls last, id desc").
+          page(page).
+          per(page_size)
+        valid_get api_v1_address_transaction_url(address.address_hash), params: { page: page }
 
         options = FastJsonapi::PaginationMetaGenerator.new(request: request,
-                                                           records: address_ckb_transactions, page: page, page_size: page_size).call
+                                                           records: address_ckb_transactions,
+                                                           page: page,
+                                                           page_size: page_size).call
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
             previews: true,
@@ -253,11 +293,15 @@ module Api
 
         records_counter = RecordCounters::AddressTransactions.new(address)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request,
-                                                           records: address_ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+                                                           records: address_ckb_transactions,
+                                                           page: page,
+                                                           page_size: page_size,
+                                                           records_counter: records_counter).call
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
             previews: true,
-            address: address })
+            address: address
+          })
         ).serialized_json
 
         assert_equal response_transaction, response.body
@@ -275,11 +319,15 @@ module Api
 
         records_counter = RecordCounters::AddressTransactions.new(address)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request,
-                                                           records: address_ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+                                                           records: address_ckb_transactions,
+                                                           page: page,
+                                                           page_size: page_size,
+                                                           records_counter: records_counter).call
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
             previews: true,
-            address: address })
+            address: address
+          })
         ).serialized_json
 
         assert_equal response_transaction, response.body
@@ -296,11 +344,15 @@ module Api
 
         records_counter = RecordCounters::AddressTransactions.new(address)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request,
-                                                           records: address_ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+                                                           records: address_ckb_transactions,
+                                                           page: page,
+                                                           page_size: page_size,
+                                                           records_counter: records_counter).call
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
             previews: true,
-            address: address })
+            address: address
+          })
         ).serialized_json
 
         assert_equal [], json["data"]
@@ -318,9 +370,8 @@ module Api
       test "should return up to ten display_inputs" do
         address = create(:address)
         block = create(:block, :with_block_hash)
-        ckb_transaction = create(:ckb_transaction,
-                                 :with_multiple_inputs_and_outputs, block: block, contained_address_ids: [address.id])
-        # address.ckb_transactions << ckb_transaction
+        create(:ckb_transaction,
+               :with_multiple_inputs_and_outputs, block: block, contained_address_ids: [address.id])
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 
@@ -335,9 +386,8 @@ module Api
       test "should return up to ten display_outputs" do
         address = create(:address)
         block = create(:block, :with_block_hash)
-        ckb_transaction = create(:ckb_transaction,
-                                 :with_multiple_inputs_and_outputs, block: block, contained_address_ids: [address.id])
-        # address.ckb_transactions << ckb_transaction
+        create(:ckb_transaction,
+               :with_multiple_inputs_and_outputs, block: block, contained_address_ids: [address.id])
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 
@@ -349,15 +399,95 @@ module Api
                               }.uniq
       end
 
+      test "should get success code when call download csv" do
+        address = create(:address, :with_transactions)
+
+        valid_get download_csv_api_v1_address_transactions_url(id: address.address_hash)
+
+        assert_response :success
+      end
+
+      test "should set right content type when call download csv" do
+        address = create(:address, :with_transactions)
+
+        valid_get download_csv_api_v1_address_transactions_url(id: address.address_hash)
+
+        assert_equal "text/csv; charset=utf-8", response.headers["Content-Type"]
+      end
+
+      test "should respond with 415 Unsupported Media Type when call download csv Content-Type is wrong" do
+        address = create(:address, :with_transactions)
+
+        get download_csv_api_v1_address_transactions_url(address.address_hash),
+            headers: { "Content-Type": "text/plain" }
+
+        assert_equal 415, response.status
+      end
+
+      test "should respond with error object when call download csv Content-Type is wrong" do
+        address = create(:address, :with_transactions)
+        error_object = Api::V1::Exceptions::InvalidContentTypeError.new
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
+
+        get download_csv_api_v1_address_transactions_url(address.address_hash),
+            headers: { "Content-Type": "text/plain" }
+
+        assert_equal response_json, response.body
+      end
+
+      test "should respond with 406 Not Acceptable when call download csv Accept is wrong" do
+        address = create(:address, :with_transactions)
+
+        get download_csv_api_v1_address_transactions_url(address.address_hash),
+            headers: {
+              "Content-Type": "application/vnd.api+json",
+              "Accept": "application/json"
+            }
+
+        assert_equal 406, response.status
+      end
+
+      test "should respond with error object when call download csv Accept is wrong" do
+        address = create(:address, :with_transactions)
+        error_object = Api::V1::Exceptions::InvalidAcceptError.new
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
+
+        get download_csv_api_v1_address_transactions_url(address.address_hash),
+            headers: {
+              "Content-Type": "application/vnd.api+json",
+              "Accept": "application/json"
+            }
+
+        assert_equal response_json, response.body
+      end
+
+      test "should return error object when call download csv id is not a address hash" do
+        error_object = Api::V1::Exceptions::AddressHashInvalidError.new
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
+
+        valid_get download_csv_api_v1_address_transactions_url(id: "9034fwefwef")
+
+        assert_equal response_json, response.body
+      end
+
       test "should get download_csv" do
         address = create(:address)
         block = create(:block, :with_block_hash)
-        ckb_transaction = create(:ckb_transaction,
-                                 :with_multiple_inputs_and_outputs,
-                                 block: block, contained_address_ids: [address.id], transaction_fee: 1000 )
-        valid_get download_csv_api_v1_address_transactions_url(id: address.address_hash, start_date: Time.now.strftime("%Y-%m-%d"), end_date: Time.now.strftime("%Y-%m-%d"))
+        create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block,
+                                                                    contained_address_ids: [address.id],
+                                                                    transaction_fee: 1000)
+        valid_get download_csv_api_v1_address_transactions_url(
+          id: address.address_hash,
+          start_date: (Date.today - 2.days).to_s,
+          end_date: Date.today.to_s
+        )
 
-        assert_response :success
+        csv_data = CSV.parse(response.body)
+
+        assert_equal csv_data.length, 16
       end
     end
   end

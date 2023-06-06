@@ -7,9 +7,6 @@ module Api
       before_action :set_address_transactions, only: [:show, :download_csv]
 
       def show
-        @address = Address.find_address!(params[:id])
-        raise Api::V1::Exceptions::AddressNotFoundError if @address.is_a?(NullAddress)
-
         @tx_ids = AccountBook.
           joins(:ckb_transaction).
           where(address_id: @address.id)
