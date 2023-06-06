@@ -246,7 +246,7 @@ module CkbSync
       DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
       DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       target_address = nil
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
@@ -274,7 +274,7 @@ module CkbSync
       DaoCompensationCalculator.any_instance.stubs(:call).returns(100800000000)
       DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         output = tx.cell_outputs.first
@@ -301,7 +301,7 @@ module CkbSync
       DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         output = tx.cell_outputs.first
@@ -328,7 +328,7 @@ module CkbSync
       DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
       DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, timestamp: 1557282351075, number: node_block.header.number - 1)
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_interest_transaction(node_block)
@@ -356,7 +356,7 @@ module CkbSync
       DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
       DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       target_address = nil
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_interest_transaction(node_block)
@@ -384,7 +384,7 @@ module CkbSync
       DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_withdraw_transaction(node_block)
         output = tx.cell_outputs.first
@@ -543,7 +543,7 @@ module CkbSync
     test "should revert address dao deposit when block is invalid and there is dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       target_address = nil
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_deposit_transaction(node_block)
@@ -571,7 +571,7 @@ module CkbSync
     test "should revert dao contract total deposit when block is invalid and there is dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
         node_data_processor.process_block(node_block)
@@ -593,7 +593,7 @@ module CkbSync
     test "should revert dao contract deposit transactions count when block is invalid and there is dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
         node_data_processor.process_block(node_block)
@@ -615,7 +615,7 @@ module CkbSync
     test "should revert dao contract depositors count when block is invalid and there is dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
         node_data_processor.process_block(node_block)
@@ -953,7 +953,7 @@ module CkbSync
     end
 
     def fake_dao_withdraw_transaction(node_block)
-      block = create(:block, :with_block_hash)
+      block = create(:block, :with_block_hash, timestamp: 1557382351075)
       lock = create(:lock_script)
       ckb_transaction1 = create(:ckb_transaction,
                                 tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
@@ -988,7 +988,7 @@ module CkbSync
     end
 
     def fake_dao_interest_transaction(node_block)
-      block = create(:block, :with_block_hash)
+      block = create(:block, :with_block_hash, timestamp: 1557382351075)
       ckb_transaction1 = create(:ckb_transaction,
                                 tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
                                 block: block)
@@ -1059,7 +1059,7 @@ module CkbSync
     end
 
     def fake_dao_deposit_transaction(node_block)
-      block = create(:block, :with_block_hash)
+      block = create(:block, :with_block_hash, timestamp: 1557382351075)
       lock = create(:lock_script)
       ckb_transaction1 = create(:ckb_transaction,
                                 tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",

@@ -742,7 +742,7 @@ module CkbSync
 
     test "should create forked event when block is invalid " do
       node_block = fake_node_block
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
         node_data_processor.process_block(node_block)
@@ -760,7 +760,7 @@ module CkbSync
     test "should revert dao contract total depositors count when block is invalid and there is dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
+      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
         node_data_processor.process_block(node_block)
@@ -1960,7 +1960,7 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(22)
       VCR.use_cassette("blocks/21") do
         node_block = CkbSync::Api.instance.get_block_by_number(21)
-        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
 
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: Settings.sudt_cell_type_hash,
@@ -1990,7 +1990,7 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(22)
       VCR.use_cassette("blocks/21") do
         node_block = CkbSync::Api.instance.get_block_by_number(21)
-        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
 
         node_output = node_block.transactions.first.outputs.first
         node_output.type = CKB::Types::Script.new(code_hash: CkbSync::Api.instance.token_script_code_hash,
@@ -2017,7 +2017,7 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(22)
       VCR.use_cassette("blocks/21") do
         node_block = CkbSync::Api.instance.get_block_by_number(21)
-        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
 
         node_output = node_block.transactions.first.outputs.first
         new_node_output = node_output.dup
@@ -3598,7 +3598,7 @@ module CkbSync
     end
 
     def fake_dao_withdraw_transaction(node_block)
-      block = create(:block, :with_block_hash)
+      block = create(:block, :with_block_hash, timestamp: 1557382351075)
       ckb_transaction1 = create(:ckb_transaction,
                                 tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
       ckb_transaction2 = create(:ckb_transaction,
@@ -3632,7 +3632,7 @@ module CkbSync
     end
 
     def fake_dao_deposit_transaction(node_block)
-      block = create(:block, :with_block_hash)
+      block = create(:block, :with_block_hash, timestamp: 1557382351075)
       lock = create(:lock_script)
       ckb_transaction1 = create(:ckb_transaction,
                                 tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
