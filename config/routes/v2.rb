@@ -3,6 +3,7 @@ namespace :api do
     post "/das_accounts" => "das_accounts#query", as: :das_accounts
     resources :transactions, only: [:index, :show] do
       member do
+        get :details
         get :raw
       end
     end
