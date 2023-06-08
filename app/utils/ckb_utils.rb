@@ -379,7 +379,8 @@ class CkbUtils
     return "normal" unless ([
       Settings.dao_code_hash, Settings.dao_type_hash, Settings.sudt_cell_type_hash, Settings.sudt1_cell_type_hash,
       CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
-      CkbSync::Api.instance.token_script_code_hash
+      CkbSync::Api.instance.token_script_code_hash, CkbSync::Api.instance.cota_registry_code_hash,
+      CkbSync::Api.instance.cota_regular_code_hash
     ].include?(type_script&.code_hash) && type_script&.hash_type == "type") || is_nrc_721_token_cell?(output_data) || is_nrc_721_factory_cell?(output_data)
 
     case type_script&.code_hash
