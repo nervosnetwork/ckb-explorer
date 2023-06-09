@@ -5,19 +5,22 @@ module Api::V2
       pending_transactions = CkbTransaction.tx_pending
 
       params[:sort] ||= "id.desc"
-      order_by, asc_or_desc = params[:sort].split('.', 2)
-      order_by = case order_by
-      when 'time' then 'created_at'
-      when 'fee' then 'transaction_fee'
-      # current we don't support this in DB
-      #when 'capacity' then 'capacity_involved'
-      else order_by
-      end
+      order_by, asc_or_desc = params[:sort].split(".", 2)
+      order_by =
+        case order_by
+             when "time"
+               "created_at"
+             when "fee"
+               "transaction_fee"
+             # current we don't support this in DB
+             # when 'capacity' then 'capacity_involved'
+             else order_by
+        end
 
       head :not_found and return unless order_by.in? %w[id created_at transaction_fee]
 
-      pending_transactions = pending_transactions.order(order_by => asc_or_desc)
-        .page(@page).per(@page_size).fast_page
+      pending_transactions = pending_transactions.order(order_by => asc_or_desc).
+        page(@page).per(@page_size).fast_page
 
       render json: {
         data: pending_transactions.map do |tx|
