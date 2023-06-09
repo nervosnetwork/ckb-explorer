@@ -6,4 +6,3 @@ FactoryBot.define do
     status { 1 }
   end
 end
-

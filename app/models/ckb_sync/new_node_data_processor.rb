@@ -92,7 +92,7 @@ module CkbSync
         # maybe can be changed to asynchronous update
         update_udt_info(local_block)
         process_dao_events!(local_block)
-        update_addresses_info(addrs_changes)
+        update_addresses_info(addrs_changes, local_block)
       end
 
       flush_inputs_outputs_caches(local_block)
@@ -282,13 +282,13 @@ module CkbSync
     def process_interest_dao_events!(local_block, dao_contract)
       addrs_withdraw_info = {}
       claimed_compensation = 0
-      local_block.cell_inputs.nervos_dao_withdrawing.select(:id, :ckb_transaction_id,
+      local_block.cell_inputs.nervos_dao_withdrawing.select(:id, :ckb_transaction_id, :block_id,
                                                             :previous_cell_output_id).find_in_batches do |dao_inputs|
         dao_events_attributes = []
         dao_inputs.each do |dao_input|
           previous_cell_output = CellOutput.
             where(id: dao_input.previous_cell_output_id).
-            select(:address_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity).
+            select(:address_id, :block_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity).
             take!
           address = previous_cell_output.address
           interest = CkbUtils.dao_interest(previous_cell_output)
@@ -393,7 +393,6 @@ module CkbSync
     def update_pool_tx_status(local_block)
       hashes = local_block.ckb_transactions.pluck(:tx_hash)
 
-      PoolTransactionEntry.pool_transaction_pending.where(tx_hash: hashes).update_all(tx_status: "committed")
       CkbTransaction.tx_pending.where(tx_hash: hashes).update_all(tx_status: "committed")
     end
 
@@ -534,7 +533,7 @@ module CkbSync
       CkbUtils.update_current_block_mining_info(local_block)
     end
 
-    def update_addresses_info(addrs_change)
+    def update_addresses_info(addrs_change, local_block)
       ### Backup the old upsert code
       # addrs = []
       # attributes =
@@ -581,7 +580,24 @@ module CkbSync
           live_cells_count: addr.live_cells_count + live_cells_diff,
           dao_transactions_count: addr.dao_transactions_count + dao_txs_count
         )
+
+        save_address_block_snapshot!(addr, local_block)
       end
+    end
+
+    def save_address_block_snapshot!(addr, local_block)
+      AddressBlockSnapshot.create!(
+        address_id: addr.id,
+        block_id: local_block.id,
+        block_number: local_block.number,
+        final_state: {
+          balance: addr.balance,
+          balance_occupied: addr.balance_occupied,
+          ckb_transactions_count: addr.ckb_transactions_count,
+          live_cells_count: addr.live_cells_count,
+          dao_transactions_count: addr.dao_transactions_count
+        }
+      )
     end
 
     def update_block_info!(local_block)
@@ -768,7 +784,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       prev_outputs = nil
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
                         input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes)
-      # binding.pry
+
       CellInput.insert_all!(cell_inputs_attributes)
       CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
 
@@ -1044,7 +1060,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       when "udt"
         CkbUtils.parse_udt_cell_data(output_data)
       when "m_nft_token"
-        "0x#{type_script_args[-8..-1]}".hex
+        "0x#{type_script_args[-8..]}".hex
       end
     end
 
@@ -1053,7 +1069,8 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         {
           cell_input: {
             ckb_transaction_id: ckb_transaction_id,
-            previous_output: input.previous_output,
+            previous_tx_hash: nil,
+            previous_index: 0,
             since: input.since,
             block_id: local_block_id,
             from_cell_base: from_cell_base?(input),
@@ -1071,7 +1088,8 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         {
           cell_input: {
             ckb_transaction_id: ckb_transaction_id,
-            previous_output: input.previous_output,
+            previous_tx_hash: input.previous_output.tx_hash,
+            previous_index: input.previous_output.index,
             since: input.since,
             block_id: local_block_id,
             from_cell_base: from_cell_base?(input),

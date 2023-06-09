@@ -6,13 +6,17 @@ module Api
       include Pagy::Backend
       def show
         block = Block.find_by!(block_hash: params[:id])
+        temp_transactions = block.ckb_transactions
+          .select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
+          .where(block_timestamp: block.timestamp)
+        temp_transactions = temp_transactions.where(tx_hash: params[:tx_hash]) if params[:tx_hash].present?
+        temp_transactions = temp_transactions.order(id: :desc)
+
         @pagy, ckb_transactions = pagy(
-          block.ckb_transactions
-                .select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
-                .where(block_timestamp: block.timestamp)
-                .order(:id),
+          temp_transactions,
           items: params[:page_size] || 10,
-          overflow: :empty_page)
+          overflow: :empty_page
+        )
 
         json =
           Rails.cache.realize(ckb_transactions.cache_key, version: ckb_transactions.cache_version) do

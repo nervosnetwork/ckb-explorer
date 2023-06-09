@@ -23,7 +23,7 @@ class CellOutput < ApplicationRecord
   # the inputs which consumes this cell output
   # but one cell may be included by many pending transactions,
   # the cell_inputs won't always be the same as `consumed_by`.`cell_inputs`
-  has_many :cell_inputs, foreign_key: :previous_output_id
+  has_many :cell_inputs, foreign_key: :previous_cell_output_id
   belongs_to :deployed_cell, optional: true
   # the block_id is actually the same as ckb_transaction.block_id, must be on chain
   # but one cell may be included by pending transactions, so block_id may be null
@@ -101,6 +101,10 @@ class CellOutput < ApplicationRecord
     [data[2..]].pack("H*")
   end
 
+  def dao
+    self[:dao] || block.dao
+  end
+
   # find cell output according to the out point( tx_hash and output index )
   # @param [String] tx_hash
   # @param [Integer] index
@@ -119,6 +123,18 @@ class CellOutput < ApplicationRecord
     lock = CKB::Types::Script.new(**lock_script.to_node)
     type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node) : nil
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
+  end
+
+  # @param data [String] 0x...
+  def calculate_bytesize
+    data ||= self.data || "0x"
+    bytesize = 8 + CKB::Utils.hex_to_bin(data).bytesize + lock_script.calculate_bytesize
+    bytesize += type_script.calculate_bytesize if type_script
+    bytesize
+  end
+
+  def calculate_min_capacity
+    CKB::Utils.byte_to_shannon(calculate_bytesize)
   end
 
   def to_raw
@@ -180,11 +196,28 @@ class CellOutput < ApplicationRecord
       factory_cell_type_script = self.type_script
       factory_cell = NrcFactoryCell.find_by(code_hash: factory_cell_type_script.code_hash,
                                             hash_type: factory_cell_type_script.hash_type, args: factory_cell_type_script.args, verified: true)
-      value = { symbol: factory_cell&.symbol }
+      value = {
+        symbol: factory_cell&.symbol,
+        amount: self.udt_amount,
+        decimal: '',
+        type_hash: self.type_hash,
+        published: factory_cell.verified,
+        display_name: factory_cell.name,
+        nan: ''
+      }
     when "nrc_721_token"
       udt = Udt.find_by(type_hash: type_hash)
       factory_cell = NrcFactoryCell.where(id: udt.nrc_factory_cell_id, verified: true).first
-      value = { symbol: factory_cell&.symbol, amount: UdtAccount.where(udt_id: udt.id).first.nft_token_id }
+      udt_account = UdtAccount.where(udt_id: udt.id).first
+      value = {
+        symbol: factory_cell&.symbol,
+        amount: udt_account.nft_token_id,
+        decimal: udt_account.decimal,
+        type_hash: type_hash,
+        published: true,
+        display_name: udt_account.full_name,
+        uan: ''
+      }
     else
       raise "invalid cell type"
     end
@@ -283,6 +316,22 @@ class CellOutput < ApplicationRecord
         cell_output.save!
       end
     end
+  end
+
+  def cota_registry_info
+    return unless cota_registry?
+
+    code_hash = CkbSync::Api.instance.cota_registry_code_hash
+    CkbUtils.hash_value_to_s( symbol: '', amount: self.udt_amount, decimal: '', type_hash: self.type_hash,
+                             published: 'true', display_name: '', uan: '', code_hash: self.code_hash)
+  end
+
+  def cota_regular_info
+    return unless cota_regular?
+
+    code_hash = CkbSync::Api.instance.cota_regular_code_hash
+    CkbUtils.hash_value_to_s( symbol: '', amount: self.udt_amount, decimal: '', type_hash: self.type_hash,
+                             published: 'true', display_name: '', uan: '', code_hash: self.code_hash)
   end
 end
 

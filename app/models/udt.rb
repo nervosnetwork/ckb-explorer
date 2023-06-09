@@ -14,9 +14,10 @@ class Udt < ApplicationRecord
 
   has_and_belongs_to_many :ckb_transactions, join_table: :udt_transactions
 
-  def h24_ckb_transactions_count
-    Rails.cache.realize("udt_h24_ckb_transactions_count_#{id}", expires_in: 1.hour) do
-      ckb_transactions.where("block_timestamp >= ?", CkbUtils.time_in_milliseconds(24.hours.ago)).count
+  def update_h24_ckb_transactions_count
+    if self.ckb_transactions.exists?
+      update(h24_ckb_transactions_count: self.ckb_transactions.where("block_timestamp >= ?",
+                                                                     CkbUtils.time_in_milliseconds(24.hours.ago)).count)
     end
   end
 
@@ -35,29 +36,30 @@ end
 #
 # Table name: udts
 #
-#  id                     :bigint           not null, primary key
-#  code_hash              :binary
-#  hash_type              :string
-#  args                   :string
-#  type_hash              :string
-#  full_name              :string
-#  symbol                 :string
-#  decimal                :integer
-#  description            :string
-#  icon_file              :string
-#  operator_website       :string
-#  addresses_count        :bigint           default(0)
-#  total_amount           :decimal(40, )    default(0)
-#  udt_type               :integer
-#  published              :boolean          default(FALSE)
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  block_timestamp        :bigint
-#  issuer_address         :binary
-#  ckb_transactions_count :bigint           default(0)
-#  nrc_factory_cell_id    :bigint
-#  display_name           :string
-#  uan                    :string
+#  id                         :bigint           not null, primary key
+#  code_hash                  :binary
+#  hash_type                  :string
+#  args                       :string
+#  type_hash                  :string
+#  full_name                  :string
+#  symbol                     :string
+#  decimal                    :integer
+#  description                :string
+#  icon_file                  :string
+#  operator_website           :string
+#  addresses_count            :bigint           default(0)
+#  total_amount               :decimal(40, )    default(0)
+#  udt_type                   :integer
+#  published                  :boolean          default(FALSE)
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  block_timestamp            :bigint
+#  issuer_address             :binary
+#  ckb_transactions_count     :bigint           default(0)
+#  nrc_factory_cell_id        :bigint
+#  display_name               :string
+#  uan                        :string
+#  h24_ckb_transactions_count :bigint           default(0)
 #
 # Indexes
 #

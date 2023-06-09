@@ -3,5 +3,3 @@ FactoryBot.define do
     action { :normal }
   end
 end
-
-

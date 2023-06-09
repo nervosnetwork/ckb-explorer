@@ -162,12 +162,21 @@ module Api
         create(:udt, addresses_count: 2)
         create(:udt, addresses_count: 3)
 
-        valid_get api_v1_udts_url
+        valid_get api_v1_udts_url(addresses_count_desc: true)
         records = Udt.sudt.order(addresses_count: :desc).page(1).per(25)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: records, page: 1, page_size: 25).call
         expected_udts = UdtSerializer.new(records, options).serialized_json
 
         assert_equal expected_udts, response.body
+      end
+
+
+      test "should get download_csv" do
+        udt = create(:udt, :with_transactions, published: true)
+
+        valid_get download_csv_api_v1_udts_url(id: udt.type_hash, start_date: Time.now.strftime("%Y-%m-%d"), end_date: Time.now.strftime("%Y-%m-%d"))
+
+        assert_response :success
       end
     end
   end

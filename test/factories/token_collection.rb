@@ -10,4 +10,3 @@ FactoryBot.define do
     sn {"sn-#{SecureRandom.hex(32)}"}
   end
 end
-

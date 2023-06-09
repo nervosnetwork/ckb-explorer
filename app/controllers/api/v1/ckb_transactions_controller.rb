@@ -17,9 +17,24 @@ module Api
             end
           render json: json
         else
-          ckb_transactions = CkbTransaction.tx_committed.recent.normal.select(
+          ckb_transactions = CkbTransaction.normal.select(
             :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at
-          ).page(@page).per(@page_size).fast_page
+          )
+
+          params[:sort] ||= "id.desc"
+
+          order_by, asc_or_desc = params[:sort].split('.', 2)
+          order_by = case order_by
+          when 'height' then 'block_number'
+          when 'capacity' then 'capacity_involved'
+          else order_by
+          end
+
+          head :not_found and return unless order_by.in? %w[id block_number block_timestamp transaction_fee capacity_involved]
+
+          ckb_transactions = ckb_transactions.order(order_by => asc_or_desc)
+            .page(@page).per(@page_size).fast_page
+
           json =
             Rails.cache.realize(ckb_transactions.cache_key,
                                 version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
@@ -56,10 +71,10 @@ module Api
               ).select(
                 "ckb_transaction_id"
               ).page(@page).per(@page_size).fast_page
-            CkbTransaction.tx_committed.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
+            CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
           else
             records_counter = RecordCounters::Transactions.new
-            CkbTransaction.tx_committed.recent.normal.page(@page).per(@page_size).fast_page
+            CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
           end
         ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id,
                                                    :block_number, :block_timestamp, :is_cellbase, :updated_at)
@@ -81,7 +96,7 @@ module Api
       end
 
       def show
-        ckb_transaction = CkbTransaction.tx_committed.cached_find(params[:id]) || PoolTransactionEntry.find_by(tx_hash: params[:id])
+        ckb_transaction = CkbTransaction.cached_find(params[:id])
 
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if ckb_transaction.blank?
 
