@@ -13,9 +13,9 @@ namespace :migration do
         cell_outputs.update_all(cell_type: cell_type)
         cell_output_ids = cell_outputs.pluck(:id)
         CellInput.where(previous_cell_output_id: cell_output_ids).update_all(cell_type: cell_type)
-
-        progress_bar.progress += cell_outputs.count unless progress_bar.progress == total_count
       end
+
+      progress_bar.increment
     end
 
     cota_regular_scripts.each do |ts|
@@ -24,9 +24,9 @@ namespace :migration do
         cell_outputs.update_all(cell_type: cell_type)
         cell_output_ids = cell_outputs.pluck(:id)
         CellInput.where(previous_cell_output_id: cell_output_ids).update_all(cell_type: cell_type)
-
-        progress_bar.progress += cell_outputs.count unless progress_bar.progress == total_count
       end
+
+      progress_bar.increment
     end
 
     puts "done"
