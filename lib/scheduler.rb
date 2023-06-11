@@ -11,10 +11,14 @@ require File.join(root, "config", "environment")
 require "rufus-scheduler"
 s = Rufus::Scheduler.singleton
 
-def s.around_trigger(job)
+def s.around_trigger(job, &block)
   t = Time.now
   puts "Starting job #{job.id} at #{Time.now}"
-  yield
+  Rails.application.executor.wrap do
+    ActiveRecord::Base.connection_pool.with_connection do
+      ActiveRecord::Base.cache(&block)
+    end
+  end
   puts "job #{job.id} finished in #{Time.now - t} seconds."
 end
 
