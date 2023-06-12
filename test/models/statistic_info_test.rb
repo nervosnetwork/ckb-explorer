@@ -44,7 +44,7 @@ class StatisticInfoTest < ActiveSupport::TestCase
 
   test ".hash_rate should return average hash rate of the last 500 blocks" do
     statistic_info = StatisticInfo.default
-    create_list(:block, 500, :with_block_hash)
+    create_list(:block, 500, :with_block_number, :with_block_hash)
     block_count = 900
     last_500_blocks = Block.recent.includes(:uncle_blocks).limit(block_count.to_i)
     total_difficulties = last_500_blocks.flat_map { |block|
