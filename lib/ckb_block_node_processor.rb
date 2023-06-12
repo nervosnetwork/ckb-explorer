@@ -6,6 +6,8 @@ Rails.logger = Logger.new(STDERR)
 Rails.logger.level = ENV.fetch("LOG_LEVEL") { "info" }
 ActiveRecord::Base.logger = Rails.logger
 
+check_environments if Rails.env.production?
+
 at_exit do
   puts "exiting & clearing"
 end

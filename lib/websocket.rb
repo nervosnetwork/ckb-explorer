@@ -10,6 +10,8 @@ at_exit do
   puts "exiting & clearing"
 end
 
+check_environments if Rails.env.production?
+
 require "async"
 require "async/http"
 require "async/websocket"
