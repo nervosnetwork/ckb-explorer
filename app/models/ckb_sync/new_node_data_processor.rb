@@ -778,8 +778,9 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       prepare_script_ids(outputs)
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
                           udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
-
-      CellOutput.insert_all!(cell_outputs_attributes) if cell_outputs_attributes.present?
+      if cell_outputs_attributes.present?
+        CellOutput.create! cell_outputs_attributes
+      end
       # prev_outputs = prepare_previous_outputs(inputs)
       prev_outputs = nil
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
@@ -1032,12 +1033,10 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       udt_amount = udt_amount(cell_type(output.type, output_data), output_data, output.type&.args)
       cell_type = cell_type(output.type, output_data).to_s
       update_nrc_factory_cell_info(output.type, output_data) if cell_type == "nrc_721_factory"
-
-      {
+      binary_data = CKB::Utils.hex_to_bin(output_data)
+      attrs = {
         ckb_transaction_id: ckb_transaction["id"],
         capacity: output.capacity,
-        data: output_data,
-        data_size: 0,
         occupied_capacity: 0,
         address_id: address.id,
         block_id: local_block.id,
@@ -1053,6 +1052,17 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         created_at: Time.current,
         updated_at: Time.current
       }
+      # binding.pry
+      if binary_data && binary_data.bytesize > 0
+        attrs[:cell_datum_attributes] = { data: binary_data }
+        attrs[:data_size] = binary_data.bytesize
+        attrs[:data_hash] = CKB::Utils.bin_to_hex(CKB::Blake2b.digest(binary_data))
+      else
+        attrs[:data] = nil
+        attrs[:data_size] = 0
+        attrs[:data_hash] = nil
+      end
+      attrs
     end
 
     def udt_amount(cell_type, output_data, type_script_args)

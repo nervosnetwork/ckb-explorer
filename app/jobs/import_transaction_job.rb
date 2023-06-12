@@ -95,7 +95,7 @@ class ImportTransactionJob < ApplicationJob
       )
 
       if output_data.present? && output_data != "0x"
-        (cell.cell_data || cell.build_cell_data).update(data: [output_data[2..]].pack("H*"))
+        (cell.cell_datum || cell.build_cell_datum).update(data: [output_data[2..]].pack("H*"))
       end
       process_output cell
       process_deployed_cell(cell.lock_script)

@@ -517,9 +517,9 @@ module CkbSync
           0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815062
         )
         local_block = node_data_processor.process_block(node_block)
-        expected_data = local_block.cell_outputs.order(:id).pluck(:data)
+        cell = local_block.cell_outputs.order(:id).first
 
-        assert_equal expected_data, ["0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063"]
+        assert_equal "0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063", cell.data
       end
     end
 

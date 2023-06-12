@@ -33,8 +33,8 @@ class CellOutput < ApplicationRecord
   belongs_to :type_script, optional: true
 
   has_many :cell_dependencies, foreign_key: :contract_cell_id, dependent: :delete_all
-  has_one :cell_data, class_name: "CellDatum", dependent: :destroy_async
-
+  has_one :cell_datum, class_name: "CellDatum", dependent: :destroy_async
+  accepts_nested_attributes_for :cell_datum
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   # on-chain cell outputs must be included in certain block
@@ -70,14 +70,32 @@ class CellOutput < ApplicationRecord
                               generated_after(start_timestamp).generated_before(end_timestamp)
                             }
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
-  scope :free, -> { where(type_hash: nil, data: "0x") }
-  scope :occupied, -> { where.not(type_hash: nil, data: "0x") }
-
-  before_validation do
-    self.data_size ||= data ? CKB::Utils.hex_to_bin(data).bytesize : 0
-  end
+  scope :free, -> { where(type_hash: nil, data_hash: nil) }
+  scope :occupied, -> { where.not(type_hash: nil).or(where.not(data_hash: nil)) }
 
   before_create :setup_address
+
+  def data=(new_data)
+    @data = new_data
+    if new_data
+      d = CKB::Utils.hex_to_bin(new_data)
+      if d.size > 0
+        datum = cell_datum || build_cell_datum
+        datum.data = d
+        datum.save
+      end
+    elsif cell_datum
+      cell_datum.destroy
+    end
+  end
+
+  def data
+    @data ||= CKB::Utils.bin_to_hex(cell_datum&.data || "")
+  end
+
+  def binary_data
+    cell_datum&.data
+  end
 
   def setup_address
     self.address = Address.find_or_create_by_address_hash(raw_address, block_timestamp) if raw_address
@@ -97,10 +115,6 @@ class CellOutput < ApplicationRecord
     address.address_hash
   end
 
-  def binary_data
-    [data[2..]].pack("H*")
-  end
-
   def dao
     self[:dao] || block.dao
   end
@@ -110,7 +124,9 @@ class CellOutput < ApplicationRecord
   # @param [Integer] index
   # @return [CellOutput]
   def self.find_by_pointer(tx_hash, index)
-    Rails.cache.fetch(["cell_output", tx_hash, index], race_condition_ttl: 10.seconds, expires_in: 1.day) do
+    Rails.cache.fetch(["cell_output", tx_hash, index], skip_nil: true,
+                                                       race_condition_ttl: 10.seconds,
+                                                       expires_in: 1.day) do
       tx_id =
         Rails.cache.fetch(["tx_id", tx_hash], expires_in: 1.day) do
           CkbTransaction.find_by_tx_hash(tx_hash)&.id
@@ -125,12 +141,10 @@ class CellOutput < ApplicationRecord
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
   end
 
-  # @param data [String] 0x...
+  # calculate the actual size of the cell output on chain
+  # @return [Integer]
   def calculate_bytesize
-    data ||= self.data || "0x"
-    bytesize = 8 + CKB::Utils.hex_to_bin(data).bytesize + lock_script.calculate_bytesize
-    bytesize += type_script.calculate_bytesize if type_script
-    bytesize
+    [8, binary_data&.bytesize || 0, lock_script.calculate_bytesize, type_script&.calculate_bytesize || 0].sum
   end
 
   def calculate_min_capacity
@@ -199,11 +213,11 @@ class CellOutput < ApplicationRecord
       value = {
         symbol: factory_cell&.symbol,
         amount: self.udt_amount,
-        decimal: '',
+        decimal: "",
         type_hash: self.type_hash,
         published: factory_cell.verified,
         display_name: factory_cell.name,
-        nan: ''
+        nan: ""
       }
     when "nrc_721_token"
       udt = Udt.find_by(type_hash: type_hash)
@@ -216,7 +230,7 @@ class CellOutput < ApplicationRecord
         type_hash: type_hash,
         published: true,
         display_name: udt_account.full_name,
-        uan: ''
+        uan: ""
       }
     else
       raise "invalid cell type"
@@ -322,16 +336,16 @@ class CellOutput < ApplicationRecord
     return unless cota_registry?
 
     code_hash = CkbSync::Api.instance.cota_registry_code_hash
-    CkbUtils.hash_value_to_s( symbol: '', amount: self.udt_amount, decimal: '', type_hash: self.type_hash,
-                             published: 'true', display_name: '', uan: '', code_hash: self.code_hash)
+    CkbUtils.hash_value_to_s(symbol: "", amount: self.udt_amount, decimal: "", type_hash: self.type_hash,
+                             published: "true", display_name: "", uan: "", code_hash: self.code_hash)
   end
 
   def cota_regular_info
     return unless cota_regular?
 
     code_hash = CkbSync::Api.instance.cota_regular_code_hash
-    CkbUtils.hash_value_to_s( symbol: '', amount: self.udt_amount, decimal: '', type_hash: self.type_hash,
-                             published: 'true', display_name: '', uan: '', code_hash: self.code_hash)
+    CkbUtils.hash_value_to_s(symbol: "", amount: self.udt_amount, decimal: "", type_hash: self.type_hash,
+                             published: "true", display_name: "", uan: "", code_hash: self.code_hash)
   end
 end
 
