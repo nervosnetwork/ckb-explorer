@@ -17,23 +17,30 @@ module Api
             end
           render json: json
         else
-          ckb_transactions = CkbTransaction.normal.select(
+          ckb_transactions = CkbTransaction.tx_committed.normal.select(
             :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at
           )
 
           params[:sort] ||= "id.desc"
 
-          order_by, asc_or_desc = params[:sort].split('.', 2)
-          order_by = case order_by
-          when 'height' then 'block_number'
-          when 'capacity' then 'capacity_involved'
-          else order_by
-          end
+          order_by, asc_or_desc = params[:sort].split(".", 2)
+          order_by =
+            case order_by
+                     when "height"
+                       "block_number"
+                     when "capacity"
+                       "capacity_involved"
+                     else
+                       order_by
+            end
 
-          head :not_found and return unless order_by.in? %w[id block_number block_timestamp transaction_fee capacity_involved]
+          head :not_found and return unless order_by.in? %w[
+            id block_number block_timestamp transaction_fee
+            capacity_involved
+          ]
 
-          ckb_transactions = ckb_transactions.order(order_by => asc_or_desc)
-            .page(@page).per(@page_size).fast_page
+          ckb_transactions = ckb_transactions.order(order_by => asc_or_desc).
+            page(@page).per(@page_size).fast_page
 
           json =
             Rails.cache.realize(ckb_transactions.cache_key,

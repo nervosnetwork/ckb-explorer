@@ -119,6 +119,10 @@ class CellOutput < ApplicationRecord
     self[:dao] || block.dao
   end
 
+  def dao
+    self[:dao] || block.dao
+  end
+
   # find cell output according to the out point( tx_hash and output index )
   # @param [String] tx_hash
   # @param [Integer] index
@@ -337,7 +341,7 @@ class CellOutput < ApplicationRecord
 
     code_hash = CkbSync::Api.instance.cota_registry_code_hash
     CkbUtils.hash_value_to_s(symbol: "", amount: self.udt_amount, decimal: "", type_hash: self.type_hash,
-                             published: "true", display_name: "", uan: "", code_hash: self.code_hash)
+                             published: "true", display_name: "", uan: "", code_hash: code_hash)
   end
 
   def cota_regular_info
@@ -345,7 +349,7 @@ class CellOutput < ApplicationRecord
 
     code_hash = CkbSync::Api.instance.cota_regular_code_hash
     CkbUtils.hash_value_to_s(symbol: "", amount: self.udt_amount, decimal: "", type_hash: self.type_hash,
-                             published: "true", display_name: "", uan: "", code_hash: self.code_hash)
+                             published: "true", display_name: "", uan: "", code_hash: code_hash)
   end
 end
 
