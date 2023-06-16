@@ -51,7 +51,7 @@ class Block < ApplicationRecord
   attribute :uncle_block_hashes, :ckb_array_hash, hash_length: Settings.default_hash_length
   attribute :proposals, :ckb_array_hash, hash_length: Settings.default_short_hash_length
 
-  scope :recent, -> { order("timestamp desc nulls last") }
+  scope :recent, -> { order("number" => "desc") }
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
   scope :created_between, ->(from, to) { where(timestamp: from..to) }
