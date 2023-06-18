@@ -103,13 +103,15 @@ module Api
       end
 
       def show
-        ckb_transaction = CkbTransaction.cached_find(params[:id])
+        ckb_transaction = CkbTransaction.where(tx_hash: params[:id]).order(tx_status: :desc).first
 
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if ckb_transaction.blank?
 
         if ckb_transaction.tx_status.to_s == "rejected" && ckb_transaction.detailed_message.blank?
           PoolTransactionUpdateRejectReasonWorker.perform_async(ckb_transaction.tx_hash)
         end
+
+        expires_in 10.seconds, public: true, must_revalidate: true
 
         render json: CkbTransactionSerializer.new(ckb_transaction)
       end
