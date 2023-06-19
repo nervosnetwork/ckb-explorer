@@ -80,7 +80,7 @@ module Api
 
         valid_get api_v1_block_transaction_url(block.block_hash)
 
-        ckb_transactions = block.ckb_transactions.order('id desc').page(page).per(page_size)
+        ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
         records_counter = RecordCounters::BlockTransactions.new(block)
         options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
 
@@ -157,7 +157,7 @@ module Api
         page = 2
         page_size = 10
         block = create(:block, :with_ckb_transactions, transactions_count: 30)
-        block_ckb_transactions = block.ckb_transactions.order('id desc').page(page).per(page_size)
+        block_ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page: page }
 
@@ -173,7 +173,7 @@ module Api
         page = 1
         page_size = 12
         block = create(:block, :with_ckb_transactions, transactions_count: 15)
-        block_ckb_transactions = block.ckb_transactions.order('id desc').page(page).per(page_size)
+        block_ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page_size: page_size }
 
@@ -190,7 +190,7 @@ module Api
         page = 2
         page_size = 5
         block = create(:block, :with_ckb_transactions, transactions_count: 30)
-        block_ckb_transactions = block.ckb_transactions.order('id desc').page(page).per(page_size)
+        block_ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page: page, page_size: page_size }
 
@@ -205,7 +205,7 @@ module Api
         page = 2
         page_size = 5
         block = create(:block)
-        block_ckb_transactions = block.ckb_transactions.order('id desc').page(page).per(page_size)
+        block_ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page: page, page_size: page_size }
 
