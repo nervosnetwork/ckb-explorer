@@ -21,7 +21,7 @@ class CkbTransaction < ApplicationRecord
   accepts_nested_attributes_for :cell_outputs
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput"
-  has_many :dao_events, dependent: :delete_all
+  has_many :dao_events # , dependent: :delete_all
   has_many :script_transactions, dependent: :delete_all
   has_many :scripts, through: :script_transactions
 
