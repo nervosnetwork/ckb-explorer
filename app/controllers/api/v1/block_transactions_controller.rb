@@ -9,8 +9,8 @@ module Api
         temp_transactions = block.ckb_transactions
           .select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at)
           .where(block_timestamp: block.timestamp)
+          .order(:id)
         temp_transactions = temp_transactions.where(tx_hash: params[:tx_hash]) if params[:tx_hash].present?
-        temp_transactions = temp_transactions.order(id: :desc)
 
         @pagy, ckb_transactions = pagy(
           temp_transactions,

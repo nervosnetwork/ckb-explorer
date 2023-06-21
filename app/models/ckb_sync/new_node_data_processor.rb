@@ -779,12 +779,13 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
                           udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
       if cell_outputs_attributes.present?
-        CellOutput.create! cell_outputs_attributes
+        CellOutput.create_or_find_by! cell_outputs_attributes
       end
       # prev_outputs = prepare_previous_outputs(inputs)
       prev_outputs = nil
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
-                        input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes)
+                        input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids,
+                        prev_outputs, addrs_changes)
 
       CellInput.insert_all!(cell_inputs_attributes)
       CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?

@@ -14,6 +14,10 @@ class PoolTransactionCheckWorker
     # Only request the CKB Node for reject reason after we find the transaction is rejeceted.
     CkbTransaction.tx_pending.
       where(block_timestamp: ..latest_block.timestamp).includes(:cell_dependencies, cell_inputs: :previous_cell_output).find_each do |tx|
+      if CkbTransaction.tx_committed.exists?(tx_hash: tx.tx_hash)
+        tx.destroy!
+        next
+      end
       is_rejected = false
       rejected_transaction = nil
       # check if any input is used by other transactions
