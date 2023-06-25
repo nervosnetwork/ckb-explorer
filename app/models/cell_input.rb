@@ -63,7 +63,26 @@ class CellInput < ApplicationRecord
     end
   end
 
-  def self.clean_data
+  def self.fill_missing_index(last_tx_id = 0)
+    last_index = -1
+    input_cursor = 0
+    loop do
+      recs = where(
+        "ckb_transaction_id >= ? and id > ?", last_tx_id, input_cursor
+      ).order(ckb_transaction_id: :asc, id: :asc).limit(1000).to_a
+      break if recs.empty?
+
+      recs.each do |input|
+        input_cursor = input.id
+        if input.ckb_transaction_id != last_tx_id
+          last_tx_id = input.ckb_transaction_id
+          puts last_tx_id
+          last_index = -1
+        end
+        last_index += 1
+        input.update_column :index, last_index
+      end
+    end
   end
 end
 
@@ -87,7 +106,7 @@ end
 # Indexes
 #
 #  index_cell_inputs_on_block_id                             (block_id)
-#  index_cell_inputs_on_ckb_transaction_id                   (ckb_transaction_id)
+#  index_cell_inputs_on_ckb_transaction_id_and_index         (ckb_transaction_id,index) UNIQUE
 #  index_cell_inputs_on_previous_cell_output_id              (previous_cell_output_id)
 #  index_cell_inputs_on_previous_tx_hash_and_previous_index  (previous_tx_hash,previous_index)
 #

@@ -54,6 +54,7 @@ class CellOutput < ApplicationRecord
                                        if: :consumed_block_timestamp?
 
   attribute :tx_hash, :ckb_hash
+
   attr_accessor :raw_address
 
   scope :consumed_after, ->(block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
@@ -383,17 +384,17 @@ end
 #
 # Indexes
 #
-#  index_cell_outputs_on_address_id_and_status     (address_id,status)
-#  index_cell_outputs_on_block_id                  (block_id)
-#  index_cell_outputs_on_block_timestamp           (block_timestamp)
-#  index_cell_outputs_on_cell_type                 (cell_type)
-#  index_cell_outputs_on_ckb_transaction_id        (ckb_transaction_id)
-#  index_cell_outputs_on_consumed_block_timestamp  (consumed_block_timestamp)
-#  index_cell_outputs_on_consumed_by_id            (consumed_by_id)
-#  index_cell_outputs_on_data_hash                 (data_hash) USING hash
-#  index_cell_outputs_on_lock_script_id            (lock_script_id)
-#  index_cell_outputs_on_status                    (status)
-#  index_cell_outputs_on_tx_hash_and_cell_index    (tx_hash,cell_index)
-#  index_cell_outputs_on_type_script_id            (type_script_id)
-#  index_cell_outputs_on_type_script_id_and_id     (type_script_id,id)
+#  index_cell_outputs_on_address_id_and_status              (address_id,status)
+#  index_cell_outputs_on_block_id                           (block_id)
+#  index_cell_outputs_on_block_timestamp                    (block_timestamp)
+#  index_cell_outputs_on_cell_type                          (cell_type)
+#  index_cell_outputs_on_ckb_transaction_id_and_cell_index  (ckb_transaction_id,cell_index) UNIQUE
+#  index_cell_outputs_on_consumed_block_timestamp           (consumed_block_timestamp)
+#  index_cell_outputs_on_consumed_by_id                     (consumed_by_id)
+#  index_cell_outputs_on_data_hash                          (data_hash) USING hash
+#  index_cell_outputs_on_lock_script_id                     (lock_script_id)
+#  index_cell_outputs_on_status                             (status)
+#  index_cell_outputs_on_tx_hash_and_cell_index             (tx_hash,cell_index) UNIQUE
+#  index_cell_outputs_on_type_script_id                     (type_script_id)
+#  index_cell_outputs_on_type_script_id_and_id              (type_script_id,id)
 #

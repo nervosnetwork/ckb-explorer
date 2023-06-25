@@ -17,12 +17,14 @@ module CkbSync
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
                   :outputs, :inputs, :outputs_data,
                   :udt_address_ids, :contained_address_ids, :dao_address_ids, :contained_udt_ids,
-                  :tx_cell_deps
+                  :tx_cell_deps, :cell_datas, :cell_data_hashes
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
       @local_cache = LocalCache.new
       @offset = ENV["BLOCK_OFFSET"].to_i
+      @cell_datas = {} # data_hash => data
+      @cell_data_hashes = {} # cell_id => data_hash
     end
 
     # returns the remaining block numbers to process
@@ -708,8 +710,9 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       if ckb_transactions_attributes.present?
         CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:id, :tx_status])
       end
-
-      AccountBook.upsert_all full_tx_address_ids if full_tx_address_ids.present? # , unique_by: [:ckb_transaction_id, :address_id]
+      if full_tx_address_ids.present?
+        AccountBook.upsert_all full_tx_address_ids, unique_by: [:address_id, :ckb_transaction_id]
+      end
       UdtTransaction.upsert_all full_tx_udt_ids, unique_by: [:udt_id, :ckb_transaction_id] if full_tx_udt_ids.present?
       if full_dao_address_ids.present?
         AddressDaoTransaction.upsert_all full_dao_address_ids,
@@ -779,16 +782,34 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
                           udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
       if cell_outputs_attributes.present?
-        CellOutput.create_or_find_by! cell_outputs_attributes
+        id_hashes = CellOutput.upsert_all(cell_outputs_attributes, unique_by: [:tx_hash, :cell_index],
+                                                                   returning: [:id, :data_hash])
+        cell_data_attrs = []
+
+        id_hashes.each do |row|
+          hash = row["data_hash"]
+          if hash.present?
+            hash[0] = "0"
+            hash = CKB::Utils.hex_to_bin(hash)
+            cell_data_attrs << { cell_output_id: row["id"], data: @cell_datas[hash] }
+          end
+        end
+
+        if cell_data_attrs.present?
+          CellDatum.upsert_all(cell_data_attrs)
+        end
       end
+
       # prev_outputs = prepare_previous_outputs(inputs)
       prev_outputs = nil
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
                         input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids,
                         prev_outputs, addrs_changes)
 
-      CellInput.insert_all!(cell_inputs_attributes)
-      CellOutput.upsert_all(prev_cell_outputs_attributes) if prev_cell_outputs_attributes.present?
+      CellInput.upsert_all(cell_inputs_attributes, unique_by: [:ckb_transaction_id, :index])
+      if prev_cell_outputs_attributes.present?
+        CellOutput.upsert_all(prev_cell_outputs_attributes, unique_by: [:tx_hash, :cell_index])
+      end
 
       ScriptTransaction.create_from_scripts TypeScript.where(id: type_script_ids)
       ScriptTransaction.create_from_scripts LockScript.where(id: lock_script_ids)
@@ -912,14 +933,14 @@ input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, con
 
       inputs.each do |tx_index, items|
         input_capacities[tx_index] = 0 if tx_index != 0
-        items.each do |item|
+        items.each_with_index do |item, index|
           # attributes[0] is cell_inputs_attributes
           # attributes[1] is prev_cell_outputs_attributes
           # attributes[2] is previous_cell_output capacity
           # attributes[3] is previous_cell_output type_hash
           # attributes[4] is previous_cell address_id
           # attributes[5] is previous_cell data
-          attributes = cell_input_attributes(item, ckb_txs[tx_index]["id"], local_block_id, prev_outputs)
+          attributes = cell_input_attributes(item, ckb_txs[tx_index]["id"], local_block_id, prev_outputs, index)
           cell_inputs_attributes << attributes[:cell_input]
           previous_output = attributes[:previous_output]
           if previous_output.present?
@@ -1055,11 +1076,11 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       }
       # binding.pry
       if binary_data && binary_data.bytesize > 0
-        attrs[:cell_datum_attributes] = { data: binary_data }
         attrs[:data_size] = binary_data.bytesize
-        attrs[:data_hash] = CKB::Utils.bin_to_hex(CKB::Blake2b.digest(binary_data))
+        data_hash = CKB::Utils.bin_to_hex(CKB::Blake2b.digest(binary_data))
+        attrs[:data_hash] = data_hash
+        cell_datas[data_hash] = binary_data
       else
-        attrs[:data] = nil
         attrs[:data_size] = 0
         attrs[:data_hash] = nil
       end
@@ -1075,13 +1096,14 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       end
     end
 
-    def cell_input_attributes(input, ckb_transaction_id, local_block_id, prev_outputs)
+    def cell_input_attributes(input, ckb_transaction_id, local_block_id, prev_outputs, index = nil)
       if from_cell_base?(input)
         {
           cell_input: {
             ckb_transaction_id: ckb_transaction_id,
             previous_tx_hash: nil,
             previous_index: 0,
+            index: index,
             since: input.since,
             block_id: local_block_id,
             from_cell_base: from_cell_base?(input),
@@ -1101,6 +1123,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
             ckb_transaction_id: ckb_transaction_id,
             previous_tx_hash: input.previous_output.tx_hash,
             previous_index: input.previous_output.index,
+            index: index,
             since: input.since,
             block_id: local_block_id,
             from_cell_base: from_cell_base?(input),
@@ -1113,6 +1136,8 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
             id: previous_output.id,
             cell_type: previous_output.cell_type,
             created_at: previous_output.created_at,
+            tx_hash: input.previous_output.tx_hash,
+            cell_index: input.previous_output.index,
             status: "dead",
             updated_at: Time.current,
             consumed_by_id: ckb_transaction_id,
