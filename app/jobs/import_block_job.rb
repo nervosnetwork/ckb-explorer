@@ -1,5 +1,7 @@
 class ImportBlockJob < ApplicationJob
+  class_attribute :transaction_processors
   def perform(block_hash, cycles: nil, force: false)
+    self.transaction_processors ||= Concurrent::FixedThreadPool.new(5, fallback_policy: :caller_runs)
     case block_hash
     when Integer
       block = Block.fetch_raw_hash_by_number(block_hash)
@@ -49,8 +51,16 @@ class ImportBlockJob < ApplicationJob
     # setup the relationship between blocks and transactions.
     # notice: certain transaction may be included in different blocks
     BlockTransaction.upsert_all txs, unique_by: [:block_id, :tx_index]
+
+    reduce_changes
+    apply_changes
   end
 
+  # reduce all changes from transactions
   def reduce_changes
+  end
+
+  # apply the changes to states and make new snapshot
+  def apply_changes
   end
 end
