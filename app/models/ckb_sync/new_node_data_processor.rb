@@ -640,8 +640,9 @@ module CkbSync
             end
             if cell_type == "nrc_721_token"
               factory_cell = CkbUtils.parse_nrc_721_args(output.type.args)
-              nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash,
-                                                                      hash_type: factory_cell.hash_type, args: factory_cell.args)
+              nrc_721_factory_cell = NrcFactoryCell.create_or_find_by(code_hash: factory_cell.code_hash,
+                                                                      hash_type: factory_cell.hash_type,
+                                                                      args: factory_cell.args)
               if nrc_721_factory_cell.verified
                 nft_token_attr[:full_name] = nrc_721_factory_cell.name
                 nft_token_attr[:symbol] = nrc_721_factory_cell.symbol.to_s[0, 16]
@@ -654,7 +655,7 @@ module CkbSync
             # udts_attributes << {
             #   type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
             #   code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
-            Udt.find_or_create_by!({
+            Udt.create_or_find_by!({
               type_hash: type_hash,
               udt_type: udt_type(cell_type),
               block_timestamp: local_block.timestamp,
@@ -1145,8 +1146,8 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
           },
           capacity: previous_output.capacity,
           type_hash: previous_output.type_hash,
-          address_id: previous_output.address_id,
-          data: previous_output.data
+          address_id: previous_output.address_id
+          # data: previous_output.data
         }
       end
     end
@@ -1389,12 +1390,19 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
     end
 
     def update_nrc_factory_cell_info(type_script, output_data)
-      factory_cell = NrcFactoryCell.find_or_create_by(code_hash: type_script.code_hash,
-                                                      hash_type: type_script.hash_type, args: type_script.args)
+      factory_cell = NrcFactoryCell.find_or_create_by(
+        code_hash: type_script.code_hash,
+        hash_type: type_script.hash_type,
+        args: type_script.args
+      )
       # if  factory_cell&.verified
       parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(output_data)
-      factory_cell.update(name: parsed_factory_data.name, symbol: parsed_factory_data.symbol,
-                          base_token_uri: parsed_factory_data.base_token_uri, extra_data: parsed_factory_data.extra_data)
+      factory_cell.update(
+        name: parsed_factory_data.name,
+        symbol: parsed_factory_data.symbol,
+        base_token_uri: parsed_factory_data.base_token_uri,
+        extra_data: parsed_factory_data.extra_data
+      )
     end
 
     class LocalCache
