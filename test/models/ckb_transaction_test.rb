@@ -178,8 +178,9 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ended_block = Block.select(:number,
                                :timestamp).find(nervos_dao_withdrawing_cell_generated_tx.block_id)
     nervos_dao_withdrawing_cell.update(cell_type: "nervos_dao_withdrawing")
+
     deposit_cell = create(:cell_output, ckb_transaction: nervos_dao_withdrawing_cell.ckb_transaction,
-                                        cell_index: 0,
+                                        cell_index: nervos_dao_withdrawing_cell.ckb_transaction.cell_outputs.count,
                                         tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2",
                                         block: nervos_dao_withdrawing_cell.ckb_transaction.block,
                                         consumed_by: nervos_dao_withdrawing_cell.ckb_transaction,
@@ -508,7 +509,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                                    consumed_by: ckb_transaction,
                                                    status: "dead",
                                                    cell_type: "m_nft_class",
-                                                   cell_index: 0,
+                                                   cell_index: 1,
                                                    tx_hash: m_nft_input_transaction.tx_hash,
                                                    data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979",
                                                    type_hash: "0x",
@@ -624,7 +625,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                          consumed_by: m_nft_output_transaction,
                          status: "dead",
                          cell_type: "m_nft_class",
-                         cell_index: 0,
+                         cell_index: 1,
                          tx_hash: m_nft_output_transaction.tx_hash,
                          data: "0x00000003e800000000c000094669727374204e465400094669727374204e4654001768747470733a2f2f7878782e696d672e636f6d2f797979",
                          type_hash: "0x",
@@ -696,8 +697,12 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                        address: address,
                                        nft_token_id: "22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8")
 
-    factory_info = { symbol: "TTF", amount: "", decimal: "", type_hash: "0x", published: true, display_name: "Test token factory", nan: "" }
-    token_info = { symbol: "TTF", amount: udt_account.nft_token_id, decimal: "6", type_hash: "0x", published: true, display_name: "kingdom fat coin", uan: ""}
+    factory_info = {
+      symbol: "TTF", amount: "", decimal: "", type_hash: "0x", published: true,
+      display_name: "Test token factory", nan: "" }
+    token_info = {
+      symbol: "TTF", amount: udt_account.nft_token_id, decimal: "6", type_hash: "0x", published: true,
+      display_name: "kingdom fat coin", uan: "" }
     display_outputs = nrc_721_token_output_transaction.display_outputs
     assert_equal factory_info.to_a,
                  display_outputs.first[:nrc_721_token_info].to_a

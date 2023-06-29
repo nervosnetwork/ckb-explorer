@@ -100,7 +100,6 @@ class ImportTransactionJob < ApplicationJob
       cell.type_script = t
       cell.data = output_data
       cell.update!(
-        is_cellbase: index.zero?,
         address_id: lock.address_id,
         capacity: output.capacity,
         occupied_capacity: cell.calculate_min_capacity,
