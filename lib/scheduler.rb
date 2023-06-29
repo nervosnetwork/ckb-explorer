@@ -107,4 +107,8 @@ s.every "1h", overlap: false do
   CkbTransaction.clean_pending
 end
 
+s.cron "30 0 * * *" do
+  call_worker Charts::ForkedEventProcessor
+end
+
 s.join
