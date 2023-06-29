@@ -26,8 +26,8 @@ class EpochStatistic < ApplicationRecord
     @first_block_in_epoch ||= blocks.order(:number).first
   end
 
-  def last_lock_in_epoch
-    @last_lock_in_epoch ||= blocks.order(number: :desc).first
+  def last_block_in_epoch
+    @last_block_in_epoch ||= blocks.order(number: :desc).first
   end
 
   define_logic :difficulty do
@@ -43,12 +43,12 @@ class EpochStatistic < ApplicationRecord
   define_logic :hash_rate do
     difficulty = first_block_in_epoch.difficulty
     epoch_length = first_block_in_epoch.length
-    epoch_time = last_lock_in_epoch.timestamp - first_block_in_epoch.timestamp
+    epoch_time = last_block_in_epoch.timestamp - first_block_in_epoch.timestamp
     difficulty * epoch_length / epoch_time
   end
 
   define_logic :epoch_time do
-    last_lock_in_epoch.timestamp - first_block_in_epoch.timestamp
+    last_block_in_epoch.timestamp - first_block_in_epoch.timestamp
   end
 
   define_logic :epoch_length do
