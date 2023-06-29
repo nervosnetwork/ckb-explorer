@@ -53,7 +53,7 @@ def prepare_node_data(node_tip_block_number = 30)
   CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
     CKB::Types::Epoch.new(
       compact_target: "0x1000",
-      length: "0x07d0",
+      length: "0x03e8",
       number: "0x0",
       start_number: "0x0"
     )

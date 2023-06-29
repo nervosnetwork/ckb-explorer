@@ -40,9 +40,7 @@ module Api
       end
 
       test "should return difficulty, uncle_rate and epoch number" do
-        (1..15).each do |number|
-          EpochStatistic.create(epoch_number: number)
-        end
+        (1..15).each {|number| create(:epoch_statistic, epoch_number: number)}
         block_statistic_data = EpochStatistic.order(epoch_number: :desc).reverse
         valid_get api_v1_epoch_statistic_url("difficulty-uncle_rate")
 
@@ -51,14 +49,30 @@ module Api
       end
 
       test "should return difficulty, hash_rate and epoch number" do
-        (1..15).each do |number|
-          EpochStatistic.create(epoch_number: number)
-        end
+        (1..15).each {|number| create(:epoch_statistic, epoch_number: number)}
         block_statistic_data = EpochStatistic.order(epoch_number: :desc).reverse
         valid_get api_v1_epoch_statistic_url("difficulty-hash_rate")
 
         assert_equal [%w(difficulty hash_rate epoch_number largest_block largest_tx).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
         assert_equal EpochStatisticSerializer.new(block_statistic_data, { params: { indicator: "difficulty-hash_rate" } }).serialized_json, response.body
+      end
+
+      test "should return epoch_time and epoch_length" do
+        (1..15).each {|number| create(:epoch_statistic, epoch_number: number)}
+        block_statistic_data = EpochStatistic.order(epoch_number: :desc).reverse
+        valid_get api_v1_epoch_statistic_url("epoch_time-epoch_length")
+
+        assert_equal [%w(epoch_length epoch_time epoch_number largest_block largest_tx).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal EpochStatisticSerializer.new(block_statistic_data, { params: { indicator: "epoch_time-epoch_length" } }).serialized_json, response.body
+      end
+
+      test "should return latest 10 epoch statistics when limit is not present" do
+        (1..15).each {|number| create(:epoch_statistic, epoch_number: number)}
+        block_statistic_data = EpochStatistic.order(epoch_number: :desc).limit(10).reverse
+        valid_get api_v1_epoch_statistic_url("difficulty-uncle_rate", limit: 10)
+
+        assert_equal [%w(difficulty uncle_rate epoch_number largest_block largest_tx).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal EpochStatisticSerializer.new(block_statistic_data, { params: { indicator: "difficulty-uncle_rate" } }).serialized_json, response.body
       end
 
       test "should respond with error object when indicator name is invalid" do
