@@ -319,7 +319,7 @@ class DailyStatistic < ApplicationRecord
   private
 
   def to_be_counted_date
-    @to_be_counted_date ||= Time.at(created_at_unixtimestamp).beginning_of_day
+    @to_be_counted_date ||= Time.zone.at(created_at_unixtimestamp).beginning_of_day
   end
 
   def started_at
