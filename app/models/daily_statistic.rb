@@ -451,8 +451,8 @@ end
 #  avg_difficulty               :string           default("0")
 #  uncle_rate                   :string           default("0")
 #  total_depositors_count       :string           default("0")
-#  address_balance_distribution :jsonb
 #  total_tx_fee                 :decimal(30, )
+#  address_balance_distribution :jsonb
 #  occupied_capacity            :decimal(30, )
 #  daily_dao_deposit            :decimal(30, )
 #  daily_dao_depositors_count   :integer
@@ -470,5 +470,5 @@ end
 #
 # Indexes
 #
-#  index_daily_statistics_on_created_at_unixtimestamp  (created_at_unixtimestamp)
+#  index_daily_statistics_on_created_at_unixtimestamp  (created_at_unixtimestamp) UNIQUE
 #
