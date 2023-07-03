@@ -40,7 +40,8 @@ module Api
       test "should respond with 406 Not Acceptable when Accept is wrong" do
         udt = create(:udt)
 
-        get api_v1_udt_url(udt.type_hash), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_udt_url(udt.type_hash),
+            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal 406, response.status
       end
@@ -50,7 +51,8 @@ module Api
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_udt_url(udt.type_hash), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_udt_url(udt.type_hash),
+            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -106,7 +108,12 @@ module Api
         valid_get api_v1_udt_url(udt.type_hash)
 
         response_tx_transaction = json["data"]
-        assert_equal %w(symbol full_name display_name uan total_amount addresses_count decimal icon_file h24_ckb_transactions_count created_at description published type_hash type_script issuer_address).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(
+          symbol full_name display_name uan total_amount addresses_count
+          decimal icon_file h24_ckb_transactions_count created_at description
+          published type_hash type_script issuer_address
+        ).sort,
+                     response_tx_transaction["attributes"].keys.sort
       end
 
       test "should get success code when call index" do
@@ -164,17 +171,91 @@ module Api
 
         valid_get api_v1_udts_url(addresses_count_desc: true)
         records = Udt.sudt.order(addresses_count: :desc).page(1).per(25)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: records, page: 1, page_size: 25).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: records, page: 1,
+                                                           page_size: 25).call
         expected_udts = UdtSerializer.new(records, options).serialized_json
 
         assert_equal expected_udts, response.body
       end
 
+      test "should get success code when call download csv" do
+        udt = create(:udt, published: true)
+
+        valid_get download_csv_api_v1_udts_url(id: udt.type_hash)
+
+        assert_response :success
+      end
+
+      test "should respond with 415 Unsupported Media Type when call download csv Content-Type is wrong" do
+        udt = create(:udt, published: true)
+
+        get download_csv_api_v1_udts_url(id: udt.type_hash),
+            headers: { "Content-Type": "text/plain" }
+
+        assert_equal 415, response.status
+      end
+
+      test "should respond with error object when call download csv Content-Type is wrong" do
+        udt = create(:udt, published: true)
+        error_object = Api::V1::Exceptions::InvalidContentTypeError.new
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
+
+        get download_csv_api_v1_udts_url(id: udt.type_hash),
+            headers: { "Content-Type": "text/plain" }
+
+        assert_equal response_json, response.body
+      end
+
+      test "should respond with 406 Not Acceptable when call download csv Accept is wrong" do
+        udt = create(:udt, published: true)
+
+        get download_csv_api_v1_udts_url(id: udt.type_hash),
+            headers: {
+              "Content-Type": "application/vnd.api+json",
+              "Accept": "application/json"
+            }
+
+        assert_equal 406, response.status
+      end
+
+      test "should respond with error object when call download csv Accept is wrong" do
+        udt = create(:udt, published: true)
+        error_object = Api::V1::Exceptions::InvalidAcceptError.new
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
+
+        get download_csv_api_v1_udts_url(id: udt.type_hash),
+            headers: {
+              "Content-Type": "application/vnd.api+json",
+              "Accept": "application/json"
+            }
+
+        assert_equal response_json, response.body
+      end
+
+      test "should return error object when call download csv id is not a type hash" do
+        error_object = Api::V1::Exceptions::UdtNotFoundError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get download_csv_api_v1_udts_url(id: "9034fwefwef")
+
+        assert_equal response_json, response.body
+      end
+
+      test "should set right content type when call download csv" do
+        udt = create(:udt, published: true)
+
+        valid_get download_csv_api_v1_udts_url(id: udt.type_hash)
+
+        assert_equal "text/csv; charset=utf-8", response.headers["Content-Type"]
+      end
 
       test "should get download_csv" do
         udt = create(:udt, :with_transactions, published: true)
 
-        valid_get download_csv_api_v1_udts_url(id: udt.type_hash, start_date: Time.now.strftime("%Y-%m-%d"), end_date: Time.now.strftime("%Y-%m-%d"))
+        valid_get download_csv_api_v1_udts_url(id: udt.type_hash, start_date: Time.now.strftime("%Y-%m-%d"),
+                                               end_date: Time.now.strftime("%Y-%m-%d"))
 
         assert_response :success
       end
