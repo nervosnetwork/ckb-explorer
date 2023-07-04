@@ -14,7 +14,7 @@ module Api
 
         valid_get api_v2_pending_transactions_url
 
-        assert_equal 10, json["meta"]["page_size"]
+        assert_equal 10, json["data"].size
       end
 
       test "should return the corresponding transactions when page and page_size are set" do

@@ -50,7 +50,7 @@ module Api
         sort =
           case sort
           when "time" then "created_at"
-          when "fee" then  "transaction_fee"
+          when "fee" then "transaction_fee"
           when "capacity" then "capacity_involved"
           else "id"
           end

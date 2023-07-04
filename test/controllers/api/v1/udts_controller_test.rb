@@ -157,19 +157,175 @@ module Api
         assert_empty json["data"]
       end
 
-      test "should return udts in order of descending addresses count" do
-        create(:udt, addresses_count: 1, published: true)
-        create(:udt, addresses_count: 2)
-        create(:udt, addresses_count: 3)
+      test "should return error object when page param is invalid" do
+        error_object = Api::V1::Exceptions::PageParamError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        valid_get api_v1_udts_url(addresses_count_desc: true)
-        records = Udt.sudt.order(addresses_count: :desc).page(1).per(25)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: records, page: 1, page_size: 25).call
-        expected_udts = UdtSerializer.new(records, options).serialized_json
+        valid_get api_v1_udts_url, params: { page: "aaa" }
 
-        assert_equal expected_udts, response.body
+        assert_equal response_json, response.body
       end
 
+      test "should return error object when page size param is invalid" do
+        error_object = Api::V1::Exceptions::PageSizeParamError.new
+        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+
+        valid_get api_v1_udts_url, params: { page_size: "aaa" }
+
+        assert_equal response_json, response.body
+      end
+
+      test "should return error object when page and page size param are invalid" do
+        errors = []
+        errors << Api::V1::Exceptions::PageParamError.new
+        errors << Api::V1::Exceptions::PageSizeParamError.new
+        response_json = RequestErrorSerializer.new(errors, message: errors.first.title).serialized_json
+
+        valid_get api_v1_udts_url, params: { page: "bbb", page_size: "aaa" }
+
+        assert_equal response_json, response.body
+      end
+
+      test "should return 25 records when page and page_size are not set" do
+        create_list(:udt, 30)
+
+        valid_get api_v1_udts_url
+
+        assert_equal 25, json["data"].size
+      end
+
+      test "should return the corresponding udts when page and page_size are set" do
+        create_list(:udt, 30)
+        page = 2
+        page_size = 5
+        udts = Udt.sudt.order(id: :desc).page(page).per(page_size)
+
+        valid_get api_v1_udts_url, params: { page: page, page_size: page_size }
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
+                                                           page_size: page_size).call
+        response_udts = UdtSerializer.new(udts, options).serialized_json
+
+        assert_equal response_udts, response.body
+      end
+
+      test "should return default order when sort param not set" do
+        page = 1
+        page_size = 10
+        create_list(:udt, 10)
+        udts = Udt.sudt.order(id: :desc).page(page).per(page_size)
+
+       valid_get api_v1_udts_url, params: { page: page, page_size: page_size }
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
+                                                           page_size: page_size).call
+        response_udts = UdtSerializer.new(udts, options).serialized_json
+
+        assert_equal response_udts, response.body
+      end
+
+      test "should sorted by h24_ckb_transactions_count asc when sort param is transactions" do
+        page = 1
+        page_size = 10
+        10.times do |i|
+          create(:udt, h24_ckb_transactions_count: i)
+        end
+        udts = Udt.sudt.order(h24_ckb_transactions_count: :asc).page(page).per(page_size)
+
+       valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "transactions"}
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
+                                                           page_size: page_size).call
+        response_udts = UdtSerializer.new(udts, options).serialized_json
+
+        assert_equal response_udts, response.body
+      end
+
+      test "should sorted by h24_ckb_transactions_count asc when sort param is transactions.asc" do
+        page = 1
+        page_size = 10
+        10.times do |i|
+          create(:udt, h24_ckb_transactions_count: i)
+        end
+        udts = Udt.sudt.order(h24_ckb_transactions_count: :asc).page(page).per(page_size)
+
+       valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "transactions.asc"}
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
+                                                           page_size: page_size).call
+        response_udts = UdtSerializer.new(udts, options).serialized_json
+
+        assert_equal response_udts, response.body
+      end
+
+      test "should sorted by h24_ckb_transactions_count asc when sort param is transactions.abcd" do
+        page = 1
+        page_size = 10
+        10.times do |i|
+          create(:udt, h24_ckb_transactions_count: i)
+        end
+        udts = Udt.sudt.order(h24_ckb_transactions_count: :asc).page(page).per(page_size)
+
+       valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "transactions.abcd"}
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
+                                                           page_size: page_size).call
+        response_udts = UdtSerializer.new(udts, options).serialized_json
+
+        assert_equal response_udts, response.body
+      end
+
+      test "should sorted by h24_ckb_transactions_count desc when sort param is transactions.desc" do
+        page = 1
+        page_size = 10
+        10.times do |i|
+          create(:udt, h24_ckb_transactions_count: i)
+        end
+        udts = Udt.sudt.order(h24_ckb_transactions_count: :desc).page(page).per(page_size)
+
+       valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "transactions.desc"}
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
+                                                           page_size: page_size).call
+        response_udts = UdtSerializer.new(udts, options).serialized_json
+
+        assert_equal response_udts, response.body
+      end
+
+      test "should sorted by block_timestamp asc when sort param is created_time" do
+        page = 1
+        page_size = 10
+        current_time = Time.current
+        10.times do |i|
+          create(:udt, block_timestamp: (current_time - i.hours).to_i)
+        end
+        udts = Udt.sudt.order(block_timestamp: :asc).page(page).per(page_size)
+
+       valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "created_time"}
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
+                                                           page_size: page_size).call
+        response_udts = UdtSerializer.new(udts, options).serialized_json
+
+        assert_equal response_udts, response.body
+      end
+
+      test "should sorted by addresses_count asc when sort param is addresses_count" do
+        page = 1
+        page_size = 10
+        10.times do |i|
+          create(:udt, addresses_count: i)
+        end
+        udts = Udt.sudt.order(addresses_count: :asc).page(page).per(page_size)
+
+       valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "addresses_count"}
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
+                                                           page_size: page_size).call
+        response_udts = UdtSerializer.new(udts, options).serialized_json
+
+        assert_equal response_udts, response.body
+      end
 
       test "should get download_csv" do
         udt = create(:udt, :with_transactions, published: true)

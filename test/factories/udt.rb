@@ -8,6 +8,7 @@ FactoryBot.define do
     full_name { "kingdom fat coin" }
     symbol { "kfc" }
     decimal { 6 }
+    h24_ckb_transactions_count { 0 }
 
     trait :with_transactions do
       after(:create) do |udt, _evaluator|
