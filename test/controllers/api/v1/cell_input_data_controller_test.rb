@@ -40,7 +40,8 @@ module Api
       test "should respond with 406 Not Acceptable when Accept is wrong" do
         cell_input = create(:cell_input, :with_full_transaction)
 
-        get api_v1_cell_input_datum_url(cell_input.id), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_cell_input_datum_url(cell_input.id),
+            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal 406, response.status
       end
@@ -50,7 +51,8 @@ module Api
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_cell_input_datum_url(cell_input.id), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_cell_input_datum_url(cell_input.id),
+            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -107,7 +109,7 @@ module Api
 
         valid_get api_v1_cell_input_datum_url(cell_input.id)
 
-        assert_nil json.dig("data", "attributes", "data")
+        assert_equal json.dig("data", "attributes", "data"), "0x"
         assert_equal CellOutputDataSerializer.new(cell_output).serialized_json, response.body
       end
     end

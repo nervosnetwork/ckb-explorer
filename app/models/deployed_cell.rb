@@ -27,7 +27,8 @@ class DeployedCell < ApplicationRecord
     Rails.logger.info "=== ckb_transaction_id: #{ckb_transaction_id.inspect}"
     pool = Concurrent::FixedThreadPool.new(5, max_queue: 1000,
                                               fallback_policy: :caller_runs)
-    CkbTransaction.tx_committed.where(is_cellbase: false).where("id >= ?", ckb_transaction_id).find_each do |ckb_transaction|
+    CkbTransaction.tx_committed.where(is_cellbase: false).where("id >= ?",
+                                                                ckb_transaction_id).find_each do |ckb_transaction|
       Rails.logger.info "=== ckb_transaction: #{ckb_transaction.id}"
       # pool.post do
       Rails.application.executor.wrap do
@@ -35,7 +36,8 @@ class DeployedCell < ApplicationRecord
           ActiveRecord::Base.cache do
             if ckb_transaction.cell_dependencies.empty?
               puts ckb_transaction.raw_hash["cell_deps"]
-              DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction, ckb_transaction.raw_hash["cell_deps"]
+              DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction,
+                                                                   ckb_transaction.raw_hash["cell_deps"]
             end
           end
         end
@@ -76,7 +78,7 @@ class DeployedCell < ApplicationRecord
 
         # we don't know how the cells in transaction may refer to the contract cell
         # so we make index for both `data` and `type` of `hash_type`
-        cell_output.data_hash ||= CKB::Blake2b.hexdigest(cell_output.binary_data)
+        cell_output.data_hash ||= CKB::Blake2b.hexdigest(cell_output.binary_data) if cell_output.binary_data
 
         by_data_hash[cell_output.data_hash] = attr # data type refer by the hash value of data field of cell
         # `type` type refer by the hash value of type field of cell

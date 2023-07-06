@@ -48,7 +48,7 @@ module Api
 
       test "should get serialized objects" do
         15.times do |number|
-          create(:block, :with_block_hash, timestamp: 2.days.ago.to_i + number)
+          create(:block, :with_block_hash, timestamp: 2.days.ago.to_i + number, number: number)
         end
         block_timestamps = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).pluck(:timestamp)
         blocks = Block.where(timestamp: block_timestamps).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes).recent
@@ -136,7 +136,7 @@ module Api
 
       test "should return corresponding page's records when page is set and page_size is not set" do
         page = 2
-        create_list(:block, 20, :with_block_hash)
+        create_list(:block, 20, :with_block_number, :with_block_hash)
         block_timestamps = Block.recent.limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i).pluck(:timestamp)
         blocks = Block.where(timestamp: block_timestamps).select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count, :live_cell_changes).recent
 
@@ -149,7 +149,7 @@ module Api
       end
 
       test "should return the corresponding number of blocks when page is not set and page_size is set" do
-        create_list(:block, 20, :with_block_hash)
+        create_list(:block, 20, :with_block_number, :with_block_hash)
 
         valid_get api_v1_blocks_url, params: { page_size: 12 }
 
@@ -161,7 +161,7 @@ module Api
       end
 
       test "should return the corresponding blocks when page and page_size are set" do
-        create_list(:block, 15, :with_block_hash)
+        create_list(:block, 15, :with_block_number, :with_block_hash)
         create(:table_record_count, :block_counter, count: 15)
         page = 2
         page_size = 5

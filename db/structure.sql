@@ -3475,10 +3475,10 @@ CREATE INDEX index_cell_inputs_on_block_id ON public.cell_inputs USING btree (bl
 
 
 --
--- Name: index_cell_inputs_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_cell_inputs_on_ckb_transaction_id_and_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_inputs_on_ckb_transaction_id ON public.cell_inputs USING btree (ckb_transaction_id);
+CREATE UNIQUE INDEX index_cell_inputs_on_ckb_transaction_id_and_index ON public.cell_inputs USING btree (ckb_transaction_id, index);
 
 
 --
@@ -3524,10 +3524,10 @@ CREATE INDEX index_cell_outputs_on_cell_type ON public.cell_outputs USING btree 
 
 
 --
--- Name: index_cell_outputs_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_cell_outputs_on_ckb_transaction_id_and_cell_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_outputs_on_ckb_transaction_id ON public.cell_outputs USING btree (ckb_transaction_id);
+CREATE UNIQUE INDEX index_cell_outputs_on_ckb_transaction_id_and_cell_index ON public.cell_outputs USING btree (ckb_transaction_id, cell_index);
 
 
 --
@@ -3569,7 +3569,7 @@ CREATE INDEX index_cell_outputs_on_status ON public.cell_outputs USING btree (st
 -- Name: index_cell_outputs_on_tx_hash_and_cell_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_outputs_on_tx_hash_and_cell_index ON public.cell_outputs USING btree (tx_hash, cell_index);
+CREATE UNIQUE INDEX index_cell_outputs_on_tx_hash_and_cell_index ON public.cell_outputs USING btree (tx_hash, cell_index);
 
 
 --
@@ -4603,6 +4603,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230518061651'),
 ('20230526070328'),
 ('20230526085258'),
-('20230526135653');
-
-
+('20230526135653'),
+('20230603124843'),
+('20230622134109'),
+('20230622143224'),
+('20230622143339');

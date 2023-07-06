@@ -6,8 +6,8 @@ namespace :migration do
     values =
       (0..max_epoch_number).map do |epoch_number|
         first_block_in_epoch = Block.where(epoch: epoch_number).order(:number).first
-        last_lock_in_epoch = Block.where(epoch: epoch_number).order(:number).last
-        block_time = last_lock_in_epoch.timestamp - first_block_in_epoch.timestamp
+        last_block_in_epoch = Block.where(epoch: epoch_number).order(:number).last
+        block_time = last_block_in_epoch.timestamp - first_block_in_epoch.timestamp
         epoch_length = Block.where(epoch: epoch_number).count
         hash_rate = BigDecimal(first_block_in_epoch.difficulty * epoch_length) / block_time
         progress_bar.increment

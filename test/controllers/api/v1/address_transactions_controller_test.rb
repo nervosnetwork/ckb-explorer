@@ -475,13 +475,13 @@ module Api
 
       test "should get download_csv" do
         address = create(:address)
-        block = create(:block, :with_block_hash)
+        block = create(:block, :with_block_number, :with_block_hash)
         create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block,
                                                                     contained_address_ids: [address.id],
                                                                     transaction_fee: 1000)
         valid_get download_csv_api_v1_address_transactions_url(
           id: address.address_hash,
-          start_date: (Date.today - 2.days).to_s,
+          start_date: "2020-01-01",
           end_date: Date.today.to_s
         )
 

@@ -48,13 +48,24 @@ class ImportTransactionJob < ApplicationJob
     # process inputs
     sdk_tx.inputs.each_with_index do |input, index|
       if input.previous_output.tx_hash == CellOutput::SYSTEM_TX_HASH
-        tx.cell_inputs.create_with(index: index).create_or_find_by(previous_cell_output_id: nil, from_cell_base: true)
+        tx.cell_inputs.create_with(
+          index: index
+        ).create_or_find_by(
+          previous_cell_output_id: nil,
+          from_cell_base: true
+        )
       else
-        cell = CellOutput.find_by(tx_hash: input.previous_output.tx_hash, cell_index: input.previous_output.index)
+        cell = CellOutput.find_by(
+          tx_hash: input.previous_output.tx_hash,
+          cell_index: input.previous_output.index
+        )
 
         if cell
-          process_input tx.cell_inputs.create_with(previous_cell_output_id: cell.id).create_or_find_by!(
-            ckb_transaction_id: txid, index: index
+          process_input tx.cell_inputs.create_with(
+            previous_cell_output_id: cell.id
+          ).create_or_find_by!(
+            ckb_transaction_id: txid,
+            index: index
           )
           process_deployed_cell(cell.lock_script)
           process_deployed_cell(cell.type_script) if cell.type_script
@@ -82,6 +93,7 @@ class ImportTransactionJob < ApplicationJob
       lock = LockScript.process(output.lock)
       t = TypeScript.process(output.type) if output.type
       cell = tx.cell_outputs.find_or_create_by(
+        tx_hash: tx_hash,
         cell_index: index
       )
       cell.lock_script = lock
@@ -95,7 +107,7 @@ class ImportTransactionJob < ApplicationJob
       )
 
       if output_data.present? && output_data != "0x"
-        (cell.cell_data || cell.build_cell_data).update(data: [output_data[2..]].pack("H*"))
+        (cell.cell_datum || cell.build_cell_datum).update(data: [output_data[2..]].pack("H*"))
       end
       process_output cell
       process_deployed_cell(cell.lock_script)

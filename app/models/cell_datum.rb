@@ -1,11 +1,19 @@
 class CellDatum < ApplicationRecord
-  belongs_to :cell_output
-  validates :data, presence: true, length: { minimum: 1 }
+  self.primary_key = :cell_output_id
+  belongs_to :cell_output, primary_key: :id, inverse_of: :cell_datum
+  validates :data, length: { minimum: 1 }
 
-  after_create :update_data_hash
+  after_save :update_cell_data_hash_and_size
 
-  def update_data_hash
-    cell_output.update(data_hash: CKB::Utils.bin_to_hex(CKB::Blake2b.digest(data)))
+  def update_cell_data_hash_and_size
+    cell_output.update_columns(
+      data_hash: CKB::Utils.bin_to_hex(CKB::Blake2b.digest(data)),
+      data_size: data.bytesize
+    )
+  end
+
+  def hex_data
+    @hex_data ||= CKB::Utils.bin_to_hex(data)
   end
 end
 
