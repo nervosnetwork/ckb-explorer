@@ -3639,7 +3639,7 @@ CREATE INDEX index_contracts_on_verified ON public.contracts USING btree (verifi
 -- Name: index_daily_statistics_on_created_at_unixtimestamp; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_daily_statistics_on_created_at_unixtimestamp ON public.daily_statistics USING btree (created_at_unixtimestamp DESC NULLS LAST);
+CREATE UNIQUE INDEX index_daily_statistics_on_created_at_unixtimestamp ON public.daily_statistics USING btree (created_at_unixtimestamp);
 
 
 --
@@ -4607,4 +4607,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230603124843'),
 ('20230622134109'),
 ('20230622143224'),
-('20230622143339');
+('20230622143339'),
+('20230630112234');
