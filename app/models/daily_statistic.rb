@@ -31,7 +31,7 @@ class DailyStatistic < ApplicationRecord
   end
 
   define_logic :transactions_count do
-    CkbTransaction.created_between(started_at, ended_at).count
+    CkbTransaction.tx_committed.created_between(started_at, ended_at).count
   end
 
   define_logic :addresses_count do
