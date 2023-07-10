@@ -6,7 +6,8 @@ module Api
           token_items = find_collection.items.joins(:owner)
 
           if params[:address_hash].present?
-            token_items = token_items.where(owner: { address_hash: params[:address_hash] })
+            owner = Address.find_address!(params[:address_hash])
+            token_items = token_items.where(owner_id: owner.id)
           end
 
           counts = sort_token_items(token_items).group(:address_hash).count
