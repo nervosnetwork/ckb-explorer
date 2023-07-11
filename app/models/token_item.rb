@@ -10,9 +10,15 @@ class TokenItem < ApplicationRecord
   validates :token_id, uniqueness: { scope: :collection_id }
 
   before_save :update_type_script
+  after_save :update_collection_holders
 
   def update_type_script
     self.type_script_id = cell&.type_script_id
+  end
+
+  def update_collection_holders
+    holders_count = collection.items.normal.distinct.count(:owner_id)
+    collection.update(holders_count: holders_count)
   end
 
   def as_json(options = {})

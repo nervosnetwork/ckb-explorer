@@ -297,7 +297,7 @@ module Api
         page_size = 10
         current_time = Time.current
         10.times do |i|
-          create(:udt, block_timestamp: (current_time - i.hours).to_i)
+          create(:udt, block_timestamp: (current_time - i.hours).to_i * 1000)
         end
         udts = Udt.sudt.order(block_timestamp: :asc).page(page).per(page_size)
 
