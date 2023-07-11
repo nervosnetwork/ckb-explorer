@@ -3,7 +3,7 @@ require "test_helper"
 module Api
   module V1
     class ContractTransactionsControllerTest < ActionDispatch::IntegrationTest
-      test "should set right content type when call index" do
+      test "should set right content type when call show" do
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
         assert_equal "application/vnd.api+json", response.media_type
@@ -180,6 +180,48 @@ module Api
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
         assert_equal 3, json.dig("meta", "total")
+      end
+
+      test "should return the corresponding transactions when tx_hash are set" do
+        page = 1
+        page_size = 10
+        address = create(:address)
+        fake_dao_deposit_transaction(15, address)
+
+        tx_hash = address.ckb_dao_transactions.pick(:tx_hash)
+        contract_ckb_transactions = address.ckb_dao_transactions.where(tx_hash: tx_hash).page(page).per(page_size).fast_page
+
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME),
+                  params: { page: page, page_size: page_size, tx_hash: tx_hash }
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page,
+                                                           page_size: page_size).call
+        response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions,
+                                                             options.merge(params: { previews: true })).serialized_json
+
+        assert_equal 1, json["data"].size
+        assert_equal response_transaction, response.body
+      end
+
+      test "should return the corresponding transactions when address_hash are set" do
+        page = 1
+        page_size = 10
+        address = create(:address)
+        fake_dao_deposit_transaction(15, address)
+
+        contract_ckb_transactions = address.ckb_dao_transactions.includes(:contained_dao_addresses).
+          where(address_dao_transactions: { address_id: address.id }).
+          order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc").page(page).per(page_size).fast_page
+
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME),
+                  params: { page: page, page_size: page_size, address_hash: address.address_hash }
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page,
+                                                           page_size: page_size).call
+        response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions,
+                                                             options.merge(params: { previews: true })).serialized_json
+
+        assert_equal response_transaction, response.body
       end
     end
   end
