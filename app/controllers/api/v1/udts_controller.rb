@@ -1,108 +1,90 @@
-require 'csv'
-class Api::V1::UdtsController < ApplicationController
-  before_action :validate_query_params, only: :show
-  before_action :validate_pagination_params, :pagination_params, only: :index
+require "csv"
+module Api
+  module V1
+    class UdtsController < ApplicationController
+      before_action :validate_query_params, only: :show
+      before_action :validate_pagination_params, :pagination_params, only: :index
 
-  def index
-    udts = Udt.sudt
+      def index
+        udts = Udt.sudt
 
-    if stale?(udts)
-      expires_in 30.minutes, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 10.minutes
+        if stale?(udts)
+          expires_in 30.minutes, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 10.minutes
 
-      udts = sort_udts(udts).page(@page).per(@page_size).fast_page
-      options = FastJsonapi::PaginationMetaGenerator.new(
-        request: request,
-        records: udts,
-        page: @page,
-        page_size: @page_size
-      ).call
+          udts = sort_udts(udts).page(@page).per(@page_size).fast_page
+          options = FastJsonapi::PaginationMetaGenerator.new(
+            request: request,
+            records: udts,
+            page: @page,
+            page_size: @page_size
+          ).call
 
-      render json: UdtSerializer.new(udts, options)
-    end
-  end
-
-  def show
-    udt = Udt.find_by!(type_hash: params[:id], published: true)
-
-    render json: UdtSerializer.new(udt)
-  rescue ActiveRecord::RecordNotFound
-    raise Api::V1::Exceptions::UdtNotFoundError
-  end
-
-  def download_csv
-    udt = Udt.find_by!(type_hash: params[:id], published: true)
-
-    ckb_transactions = CkbTransaction.joins(:contained_udts).where("udt_transactions.udt_id = ?",  udt.id)
-    ckb_transactions = ckb_transactions.where('ckb_transactions.block_timestamp >= ?', DateTime.strptime(params[:start_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:start_date].present?
-    ckb_transactions = ckb_transactions.where('ckb_transactions.block_timestamp <= ?', DateTime.strptime(params[:end_date], '%Y-%m-%d').to_time.to_i * 1000 ) if params[:end_date].present?
-    ckb_transactions = ckb_transactions.where('ckb_transactions.block_number >= ?', params[:start_number]) if params[:start_number].present?
-    ckb_transactions = ckb_transactions.where('ckb_transactions.block_number <= ?', params[:end_number]) if params[:end_number].present?
-    ckb_transactions = ckb_transactions.order('ckb_transactions.block_timestamp desc').limit(5000)
-
-    file = CSV.generate do |csv|
-      csv << ["Txn hash", "Blockno", "UnixTimestamp", "Method", "Token In", "Token In Name", "Token OUT", "Token OUT Name", "Token From", "Token To", "TxnFee(CKB)", "date(UTC)" ]
-
-      ckb_transactions.find_each do |ckb_transaction|
-
-        token_inputs = ckb_transaction.display_inputs.select { |e| e[:cell_type] == 'udt' }
-        token_outputs = ckb_transaction.display_outputs.select { |e| e[:cell_type] == 'udt' }
-
-        max = token_inputs.size > token_outputs.size ? token_inputs.size : token_outputs.size
-        next if max == 0
-
-        (0 .. (max-1) ).each do |i|
-          token_input = token_inputs[i]
-          token_output = token_outputs[i]
-          operation_type = "Transfer"
-          row = [
-            ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp, operation_type,
-            (token_input[:udt_info][:amount].to_d / token_input[:udt_info][:decimal] rescue '/'),
-            (token_input[:udt_info][:symbol] rescue '/'),
-            (token_output[:udt_info][:amount].to_d / token_input[:udt_info][:decimal] rescue '/'),
-            (token_output[:udt_info][:symbol] rescue '/'),
-            (token_input[:addresses_hash] rescue '/'),
-            (token_output[:addresses_hash] rescue '/'),
-            ckb_transaction.transaction_fee, ckb_transaction.block_timestamp
-          ]
-          csv << row
+          render json: UdtSerializer.new(udts, options)
         end
       end
-    end
-    send_data file, :type => 'text/csv; charset=utf-8; header=present', :disposition => "attachment;filename=udt_transactions.csv"
-  end
 
-  private
+      def show
+        udt = Udt.find_by!(type_hash: params[:id], published: true)
 
-  def validate_query_params
-    validator = Validations::Udt.new(params)
-
-    if validator.invalid?
-      errors = validator.error_object[:errors]
-      status = validator.error_object[:status]
-
-      render json: errors, status: status
-    end
-  end
-
-  def pagination_params
-    @page = params[:page] || 1
-    @page_size = params[:page_size] || Udt.default_per_page
-  end
-
-  def sort_udts(records)
-    sort, order = params.fetch(:sort, "id.desc").split(".", 2)
-    sort =
-      case sort
-      when "created_time" then "block_timestamp"
-      when "transactions" then "h24_ckb_transactions_count"
-      when "addresses_count" then "addresses_count"
-      else "id"
+        render json: UdtSerializer.new(udt)
+      rescue ActiveRecord::RecordNotFound
+        raise Api::V1::Exceptions::UdtNotFoundError
       end
 
-    if order.nil? || !order.match?(/^(asc|desc)$/i)
-      order = "asc"
-    end
+      def download_csv
+        args = params.permit(:id, :start_date, :end_date, :start_number, :end_number, udt: {})
+        data = ExportUdtTransactionsJob.perform_now(args.to_h)
 
-    records.order("#{sort} #{order}")
+        file =
+          CSV.generate do |csv|
+            csv << [
+              "Txn hash", "Blockno", "UnixTimestamp", "Method",
+              "Token In", "Token In Name", "Token OUT", "Token OUT Name",
+              "Token From", "Token To", "TxnFee(CKB)", "date(UTC)"
+            ]
+            data.each { |row| csv << row }
+          end
+
+        send_data file, type: "text/csv; charset=utf-8; header=present",
+                        disposition: "attachment;filename=udt_transactions.csv"
+      rescue ActiveRecord::RecordNotFound
+        raise Api::V1::Exceptions::UdtNotFoundError
+      end
+
+      private
+
+      def validate_query_params
+        validator = Validations::Udt.new(params)
+
+        if validator.invalid?
+          errors = validator.error_object[:errors]
+          status = validator.error_object[:status]
+
+          render json: errors, status: status
+        end
+      end
+
+      def pagination_params
+        @page = params[:page] || 1
+        @page_size = params[:page_size] || Udt.default_per_page
+      end
+
+      def sort_udts(records)
+        sort, order = params.fetch(:sort, "id.desc").split(".", 2)
+        sort =
+          case sort
+          when "created_time" then "block_timestamp"
+          when "transactions" then "h24_ckb_transactions_count"
+          when "addresses_count" then "addresses_count"
+          else "id"
+          end
+
+        if order.nil? || !order.match?(/^(asc|desc)$/i)
+          order = "asc"
+        end
+
+        records.order("#{sort} #{order}")
+      end
+    end
   end
 end

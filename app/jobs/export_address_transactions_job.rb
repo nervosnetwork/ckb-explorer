@@ -30,7 +30,10 @@ class ExportAddressTransactionsJob < ApplicationJob
 
     ckb_transactions.find_in_batches(batch_size: 1000, order: :desc) do |transactions|
       transactions.each do |transaction|
-        rows += generate_data(transaction)
+        data = generate_data(transaction)
+        next if data.blank?
+
+        rows += data
       end
     end
 
