@@ -12,7 +12,9 @@ module Charts
       @ended_at = CkbUtils.time_in_milliseconds(to_be_counted_date.end_of_day) - 1
 
       @block = create(:block, :with_block_hash, number: 0, epoch: 69,
-                                                timestamp: 1575090866093, dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
+                                                timestamp: @datetime.to_i * 1000, dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
+      @tx = create(:ckb_transaction, block: @block, block_timestamp: @block.timestamp)
+
       @daily_dao_withdraw = DaoEvent.processed.withdraw_from_dao.created_after(@started_at).created_before(@ended_at).sum(:value)
       @current_tip_block = Block.created_after(@started_at).created_before(@ended_at).recent.first || Block.recent.first
       aggron_first_day =
@@ -87,24 +89,24 @@ module Charts
 
     test "it should get block_timestamp" do
       block_timestamp_temp = Block.created_after(@started_at).created_before(@ended_at).recent.pick(:timestamp)
-      block_timestamp = Charts::DailyStatisticGenerator.new(@datetime).block_timestamp
+      block_timestamp = Charts::DailyStatisticGenerator.new(@datetime).call.block_timestamp
       assert_equal block_timestamp_temp, block_timestamp
     end
 
     test "it should get transactions_count" do
       transactions_count_temp = CkbTransaction.created_after(@started_at).created_before(@ended_at).recent.count
-      transactions_count = Charts::DailyStatisticGenerator.new(@datetime).transactions_count
-      assert_equal transactions_count_temp, transactions_count
+      transactions_count = Charts::DailyStatisticGenerator.new(@datetime).call.transactions_count
+      assert_equal transactions_count_temp.to_s, transactions_count
     end
 
     test "it should get addresses_count" do
       addresses_count_temp = Address.created_after(@started_at).created_before(@ended_at).count + @yesterday_daily_statistic.addresses_count.to_i
-      addresses_count = Charts::DailyStatisticGenerator.new(@datetime).addresses_count
-      assert_equal addresses_count_temp, addresses_count
+      addresses_count = Charts::DailyStatisticGenerator.new(@datetime).call.addresses_count
+      assert_equal addresses_count_temp.to_s, addresses_count
     end
 
     test "it should get daily_dao_withdraw" do
-      daily_dao_withdraw = Charts::DailyStatisticGenerator.new(@datetime).daily_dao_withdraw
+      daily_dao_withdraw = Charts::DailyStatisticGenerator.new(@datetime).call.daily_dao_withdraw
       assert_equal @daily_dao_withdraw, daily_dao_withdraw
     end
 
@@ -114,20 +116,20 @@ module Charts
       withdraw_amount = DaoEvent.processed.withdraw_from_dao.created_before(@ended_at).sum(:value)
       total_dao_deposit1 = deposit_amount - withdraw_amount
       is_from_scratch = true
-      total_dao_deposit = Charts::DailyStatisticGenerator.new(@datetime).total_dao_deposit
-      assert_equal total_dao_deposit1, total_dao_deposit
+      total_dao_deposit = Charts::DailyStatisticGenerator.new(@datetime, is_from_scratch).call.total_dao_deposit
+      assert_equal total_dao_deposit1.to_s, total_dao_deposit
 
       # 2. not from scratch
       daily_dao_deposit = DaoEvent.processed.deposit_to_dao.created_after(@started_at).created_before(@ended_at).sum(:value)
       total_dao_deposit2 = daily_dao_deposit - @daily_dao_withdraw + @yesterday_daily_statistic.total_dao_deposit.to_i
-      total_dao_deposit = Charts::DailyStatisticGenerator.new(@datetime).total_dao_deposit
-      assert_equal total_dao_deposit2, total_dao_deposit
+      total_dao_deposit = Charts::DailyStatisticGenerator.new(@datetime).call.total_dao_deposit
+      assert_equal total_dao_deposit2.to_s, total_dao_deposit
     end
 
     test "it should get circulating_supply" do
       circulating_supply_temp = MarketData.new(indicator: "circulating_supply",
                                                tip_block_number: @current_tip_block.number, unit: "shannon").call
-      circulating_supply = Charts::DailyStatisticGenerator.new(@datetime).circulating_supply
+      circulating_supply = Charts::DailyStatisticGenerator.new(@datetime).call.circulating_supply
       assert_equal circulating_supply_temp, circulating_supply
     end
 
@@ -137,8 +139,8 @@ module Charts
           memo + CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
         end
       unclaimed_compensation_temp = phase1_dao_interests + @unmade_dao_interests
-      unclaimed_compensation = Charts::DailyStatisticGenerator.new(@datetime).unclaimed_compensation
-      assert_equal unclaimed_compensation_temp, unclaimed_compensation
+      unclaimed_compensation = Charts::DailyStatisticGenerator.new(@datetime).call.unclaimed_compensation
+      assert_equal unclaimed_compensation_temp.to_s, unclaimed_compensation
     end
 
     test "it should get claimed_compensation" do
@@ -147,16 +149,16 @@ module Charts
           memo + CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
         end
       claimed_compensation_temp = claimed_compensation_today + @yesterday_daily_statistic.claimed_compensation.to_i
-      claimed_compensation = Charts::DailyStatisticGenerator.new(@datetime).unclaimed_compensation
-      assert_equal claimed_compensation_temp, claimed_compensation
+      claimed_compensation = Charts::DailyStatisticGenerator.new(@datetime).call.unclaimed_compensation
+      assert_equal claimed_compensation_temp.to_s, claimed_compensation
     end
 
     test "it should get average_deposit_time" do
       total_deposits = 0
       # 1. total_deposits.zero?
       # average_deposit_time_temp = 0
-      average_deposit_time = Charts::DailyStatisticGenerator.new(@datetime).average_deposit_time
-      assert_equal 0, average_deposit_time
+      average_deposit_time = Charts::DailyStatisticGenerator.new(@datetime).call.average_deposit_time
+      assert_equal "0", average_deposit_time
 
       # 2. total_deposits
       interest_bearing_deposits = 0
@@ -182,16 +184,16 @@ module Charts
     test "it should get mining_reward" do
       mining_reward_temp = Block.where("timestamp <= ?",
                                        @ended_at).sum(:secondary_reward)
-      mining_reward = Charts::DailyStatisticGenerator.new(@datetime).mining_reward
-      assert_equal mining_reward_temp, mining_reward
+      mining_reward = Charts::DailyStatisticGenerator.new(@datetime).call.mining_reward
+      assert_equal mining_reward_temp.to_s, mining_reward
     end
 
     test "it should get deposit_compensation" do
-      unclaimed_compensation = Charts::DailyStatisticGenerator.new(@datetime).unclaimed_compensation
-      claimed_compensation = Charts::DailyStatisticGenerator.new(@datetime).unclaimed_compensation
+      unclaimed_compensation = Charts::DailyStatisticGenerator.new(@datetime).call.unclaimed_compensation
+      claimed_compensation = Charts::DailyStatisticGenerator.new(@datetime).call.unclaimed_compensation
       deposit_compensation_temp = unclaimed_compensation.to_i + claimed_compensation.to_i
-      deposit_compensation = Charts::DailyStatisticGenerator.new(@datetime).deposit_compensation
-      assert_equal deposit_compensation_temp, deposit_compensation
+      deposit_compensation = Charts::DailyStatisticGenerator.new(@datetime).call.deposit_compensation
+      assert_equal deposit_compensation_temp.to_s, deposit_compensation
     end
 
     test "it should get treasury_amount" do
@@ -200,70 +202,62 @@ module Charts
           parse_dao = CkbUtils.parse_dao(@current_tip_block.dao)
           parse_dao.s_i - @unmade_dao_interests
         end
-      treasury_amount = Charts::DailyStatisticGenerator.new(@datetime).treasury_amount
+      treasury_amount = Charts::DailyStatisticGenerator.new(@datetime).call.treasury_amount
       assert_equal treasury_amount, treasury_amount
     end
 
     test "it should get estimated_apc" do
-      estimated_apc = Charts::DailyStatisticGenerator.new(@datetime).estimated_apc
+      estimated_apc = Charts::DailyStatisticGenerator.new(@datetime).call.estimated_apc
       estimated_apc_temp = DaoContract.default_contract.estimated_apc(@current_tip_block.fraction_epoch)
-      assert_equal estimated_apc_temp, estimated_apc
+      assert_equal estimated_apc_temp.to_s, estimated_apc
     end
 
     test "it should get live_cells_count" do
       # 1. from scratch
       is_from_scratch = true
       live_cells_count1 = CellOutput.generated_before(@ended_at).unconsumed_at(@ended_at).count
-      live_cells_count = Charts::DailyStatisticGenerator.new(@datetime).live_cells_count
-      assert_equal live_cells_count1, live_cells_count
+      live_cells_count = Charts::DailyStatisticGenerator.new(@datetime).call.live_cells_count
+      assert_equal live_cells_count1.to_s, live_cells_count
       # 2. not from scratch
       dead_cells_count_today ||= CellOutput.consumed_after(@started_at).consumed_before(@ended_at).count
       live_cells_count2 = CellOutput.generated_after(@started_at).generated_before(@ended_at).count + @yesterday_daily_statistic.live_cells_count.to_i - dead_cells_count_today
-      live_cells_count = Charts::DailyStatisticGenerator.new(@datetime).live_cells_count
-      assert_equal live_cells_count2, live_cells_count
+      live_cells_count = Charts::DailyStatisticGenerator.new(@datetime).call.live_cells_count
+      assert_equal live_cells_count2.to_s, live_cells_count
     end
 
     test "it should get dead_cells_count" do
       # 1. from scratch
       # CellOutput.generated_before(ended_at).consumed_before(ended_at).count
-      datetime = 1.day.ago
-      block = create :block, :with_block_hash, timestamp: datetime.to_i * 1000
       cells = [
         create(:cell_output, :with_full_transaction,
-               block_timestamp: datetime.to_i * 1000, block: block),
+               block_timestamp: @datetime.to_i * 1000, block: @block),
         create(:cell_output, :with_full_transaction,
-               block_timestamp: datetime.to_i * 1000, block: block),
+               block_timestamp: @datetime.to_i * 1000, block: @block),
         create(:cell_output, :with_full_transaction,
-               block_timestamp: datetime.to_i * 1000, block: block)
+               block_timestamp: @datetime.to_i * 1000, block: @block)
       ]
-      CellOutput.where(id: cells.map(&:id)).update_all(consumed_block_timestamp: (datetime.to_i + 10) * 1000)
+      CellOutput.where(id: cells.map(&:id)).update_all(consumed_block_timestamp: (@datetime.to_i + 10) * 1000)
       is_from_scratch = true
-      assert_equal 3,
-                   Charts::DailyStatisticGenerator.new(datetime,
-                                                       is_from_scratch).dead_cells_count
+      assert_equal "3",
+                   Charts::DailyStatisticGenerator.new(@datetime,
+                                                       is_from_scratch).call.dead_cells_count
 
       # 2. not from scratch
       # dead_cells_count = dead_cells_count_today + yesterday_daily_statistic.dead_cells_count.to_i
       # dead_cells_count_today = CellOutput.consumed_after(started_at).consumed_before(ended_at).count
       #
-      assert_equal 3,
-                   Charts::DailyStatisticGenerator.new(datetime).send(:dead_cells_count_today)
+      create :daily_statistic, created_at_unixtimestamp: @datetime.yesterday.to_i, dead_cells_count: 888
 
-      daily_statistic = DailyStatistic.new
-      Charts::DailyStatisticGenerator.any_instance.stubs(:yesterday_daily_statistic).returns(daily_statistic)
-      DailyStatistic.any_instance.stubs(:dead_cells_count).returns(888)
-
-      assert_equal (3 + 888),
-                   Charts::DailyStatisticGenerator.new(datetime).dead_cells_count
+      assert_equal (3 + 888).to_s,
+                   Charts::DailyStatisticGenerator.new(@datetime).call.dead_cells_count
     end
 
     test "it should get avg_hash_rate" do
-      datetime = 1.day.ago
-      create :block, :with_block_hash, timestamp: datetime.to_i * 1000
-      create :block, :with_block_hash, timestamp: (datetime.to_i + 0.1) * 1000
-      Charts::DailyStatisticGenerator.any_instance.stubs(:total_difficulties_for_the_day).returns(20000)
-      assert_equal 200,
-                   Charts::DailyStatisticGenerator.new(datetime).avg_hash_rate
+      create :block, :with_block_hash, timestamp: (@datetime.to_i + 0.1) * 1000,
+                                       dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007"
+      ::DailyStatistic.any_instance.stubs(:total_difficulties_for_the_day).returns(20000)
+      assert_equal "200.0",
+                   Charts::DailyStatisticGenerator.new(@datetime).call.avg_hash_rate
     end
 
     test "it should get avg_difficulty" do
@@ -275,33 +269,34 @@ module Charts
           last_block_of_the_epoch = Block.created_after(@started_at).created_before(@ended_at).where(epoch: epoch_number).recent.first
           memo + first_block_of_the_epoch.difficulty * (last_block_of_the_epoch.number - first_block_of_the_epoch.number + 1)
         end
-      Charts::DailyStatisticGenerator.any_instance.stubs(:total_difficulties_for_the_day).returns(200)
-      Charts::DailyStatisticGenerator.any_instance.stubs(:total_blocks_count).returns(20000)
+      ::DailyStatistic.any_instance.stubs(:total_difficulties_for_the_day).returns(200)
+      ::DailyStatistic.any_instance.stubs(:total_blocks_count).returns(20000)
       avg_difficulty_temp = BigDecimal(total_difficulties_for_the_day) / total_blocks_count
-      avg_difficulty = Charts::DailyStatisticGenerator.new(@datetime).avg_difficulty
+      avg_difficulty = Charts::DailyStatisticGenerator.new(@datetime).call.avg_difficulty
       assert_in_delta avg_difficulty.to_f, avg_difficulty.to_f, 0.0001
     end
 
     test "it should get uncle_rate" do
       uncles_count = Block.created_after(@started_at).created_before(@ended_at).sum(:uncles_count)
       total_blocks_count = 20000
-      Charts::DailyStatisticGenerator.any_instance.stubs(:total_blocks_count).returns(20000)
+      ::DailyStatistic.any_instance.stubs(:total_blocks_count).returns(20000)
       uncle_rate_temp = BigDecimal(uncles_count) / total_blocks_count
-      uncle_rate = Charts::DailyStatisticGenerator.new(@datetime).uncle_rate
-      assert_equal uncle_rate_temp, uncle_rate
+      uncle_rate = Charts::DailyStatisticGenerator.new(@datetime).call.uncle_rate
+      assert_equal uncle_rate_temp.to_s, uncle_rate
     end
 
     test "it should get total_depositors_count" do
       # 1. from scratch
       is_from_scratch = true
       total_depositors_count_temp = DaoEvent.processed.take_away_all_deposit.created_before(@ended_at).count
-      total_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).total_depositors_count
-      assert_equal total_depositors_count_temp, total_depositors_count
+      total_depositors_count = Charts::DailyStatisticGenerator.new(@datetime,
+                                                                   is_from_scratch).call.total_depositors_count
+      assert_equal total_depositors_count_temp.to_s, total_depositors_count
       # 2. not from scratch
       new_depositors_count_today = DaoEvent.processed.new_dao_depositor.created_after(@started_at).created_before(@ended_at).count
       total_depositors_count_temp = new_depositors_count_today + @yesterday_daily_statistic.total_depositors_count.to_i
-      total_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).total_depositors_count
-      assert_equal total_depositors_count_temp, total_depositors_count
+      total_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).call.total_depositors_count
+      assert_equal total_depositors_count_temp.to_s, total_depositors_count
     end
 
     test "it should get address_balance_distribution" do
@@ -334,59 +329,63 @@ module Charts
 
           [range[1], addresses_count, total_addresses_count]
         end
-      address_balance_distribution = Charts::DailyStatisticGenerator.new(@datetime).address_balance_distribution
+      address_balance_distribution = Charts::DailyStatisticGenerator.new(@datetime).call.address_balance_distribution
       assert_equal temp_address_balance_distribution,
                    address_balance_distribution
     end
 
     test "it should get total_tx_fee" do
       total_tx_fee_temp = Block.created_after(@started_at).created_before(@ended_at).sum(:total_transaction_fee)
-      total_tx_fee = Charts::DailyStatisticGenerator.new(@datetime).total_tx_fee
+      total_tx_fee = Charts::DailyStatisticGenerator.new(@datetime).call.total_tx_fee
       assert_equal total_tx_fee_temp, total_tx_fee
     end
 
     test "it should get occupied_capacity" do
       occupied_capacity_temp = CellOutput.generated_before(@ended_at).unconsumed_at(@ended_at).sum(:occupied_capacity)
-      occupied_capacity = Charts::DailyStatisticGenerator.new(@datetime).occupied_capacity
+      occupied_capacity = Charts::DailyStatisticGenerator.new(@datetime).call.occupied_capacity
       assert_equal occupied_capacity_temp, occupied_capacity
     end
 
     test "it should get daily_dao_deposit" do
       daily_dao_deposit_temp = DaoEvent.processed.deposit_to_dao.created_after(@started_at).created_before(@ended_at).sum(:value)
-      daily_dao_deposit = Charts::DailyStatisticGenerator.new(@datetime).daily_dao_deposit
+      daily_dao_deposit = Charts::DailyStatisticGenerator.new(@datetime).call.daily_dao_deposit
       assert_equal daily_dao_deposit_temp, daily_dao_deposit
     end
 
     test "it should get daily_dao_depositors_count" do
-      daily_dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).daily_dao_depositors_count
+      daily_dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).call.daily_dao_depositors_count
       daily_dao_depositors_count_temp ||= DaoEvent.processed.new_dao_depositor.created_after(@started_at).created_before(@ended_at).count
       assert_equal daily_dao_depositors_count_temp, daily_dao_depositors_count
     end
 
     test "it should get dao_depositors_count" do
       # 1. from scratch
-      total_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).total_depositors_count
-      dao_depositors_count_temp = total_depositors_count - DaoEvent.processed.take_away_all_deposit.created_before(@ended_at).count
-      dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).dao_depositors_count
-      assert_equal dao_depositors_count_temp, dao_depositors_count
+      is_from_scratch = true
+      create :dao_event_with_block, block: @block, ckb_transaction: @tx, event_type: :new_dao_depositor,
+                                    status: :processed, block_timestamp: @block.timestamp
+      total_depositors_count = Charts::DailyStatisticGenerator.new(@datetime,
+                                                                   is_from_scratch).call.total_depositors_count
+      dao_depositors_count_temp = total_depositors_count.to_i - DaoEvent.processed.take_away_all_deposit.created_before(@ended_at).count
+      dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime, is_from_scratch).call.dao_depositors_count
+      assert_equal dao_depositors_count_temp.to_s, dao_depositors_count
       # 2. not from scratch
-      daily_dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).daily_dao_depositors_count
+      daily_dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).call.daily_dao_depositors_count
       withdrawals_today = DaoEvent.processed.take_away_all_deposit.created_after(@started_at).created_before(@ended_at).count
-      dao_depositors_count_temp = daily_dao_depositors_count - withdrawals_today + @yesterday_daily_statistic.dao_depositors_count.to_i
-      dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).dao_depositors_count
-      assert_equal dao_depositors_count_temp, dao_depositors_count
+      dao_depositors_count_temp = daily_dao_depositors_count.to_i - withdrawals_today + @yesterday_daily_statistic.dao_depositors_count.to_i
+      dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).call.dao_depositors_count
+      assert_equal dao_depositors_count_temp.to_s, dao_depositors_count
     end
 
     test "it should get circulation_ratio" do
-      total_dao_deposit = Charts::DailyStatisticGenerator.new(@datetime).total_dao_deposit
-      circulating_supply = Charts::DailyStatisticGenerator.new(@datetime).circulating_supply
+      total_dao_deposit = Charts::DailyStatisticGenerator.new(@datetime).call.total_dao_deposit
+      circulating_supply = Charts::DailyStatisticGenerator.new(@datetime).call.circulating_supply
       circulation_ratio_temp = total_dao_deposit.to_i / circulating_supply
-      circulation_ratio = Charts::DailyStatisticGenerator.new(@datetime).circulation_ratio
+      circulation_ratio = Charts::DailyStatisticGenerator.new(@datetime).call.circulation_ratio
       assert_equal circulation_ratio_temp, circulation_ratio
     end
 
     test "it should get block_time_distribution" do
-      block_time_distribution = Charts::DailyStatisticGenerator.new(@datetime).block_time_distribution
+      block_time_distribution = Charts::DailyStatisticGenerator.new(@datetime).call.block_time_distribution
       step = 0.1
       max_n = 50 - step
       ranges =
@@ -431,7 +430,7 @@ module Charts
 
           [range[1], epoch_count]
         }.compact
-      epoch_time_distribution = Charts::DailyStatisticGenerator.new(@datetime).epoch_time_distribution
+      epoch_time_distribution = Charts::DailyStatisticGenerator.new(@datetime).call.epoch_time_distribution
       assert_equal temp_epoch_time_distribution, epoch_time_distribution
     end
 
@@ -444,7 +443,7 @@ module Charts
           parse_dao.s_i - @unmade_dao_interests
         end
       total_supply_temp = tip_parse_dao.c_i - MarketData::BURN_QUOTA - treasury_amount
-      total_supply = Charts::DailyStatisticGenerator.new(@datetime).total_supply
+      total_supply = Charts::DailyStatisticGenerator.new(@datetime).call.total_supply
       assert_equal total_supply_temp, total_supply
     end
 
@@ -462,14 +461,14 @@ module Charts
 
         [range[1], epoch_count]
       }.compact
-      epoch_length_distribution = Charts::DailyStatisticGenerator.new.epoch_length_distribution
+      epoch_length_distribution = Charts::DailyStatisticGenerator.new.call.epoch_length_distribution
       assert_equal temp_epoch_length_distribution, epoch_length_distribution
     end
 
     test "it should get locked_capacity" do
       market_data = MarketData.new(tip_block_number: @current_tip_block.number)
       locked_capacity_temp = market_data.ecosystem_locked + market_data.team_locked + market_data.private_sale_locked + market_data.founding_partners_locked + market_data.foundation_reserve_locked + market_data.bug_bounty_locked
-      locked_capacity = Charts::DailyStatisticGenerator.new(@datetime).locked_capacity
+      locked_capacity = Charts::DailyStatisticGenerator.new(@datetime).call.locked_capacity
       assert_equal locked_capacity_temp, locked_capacity
     end
   end
