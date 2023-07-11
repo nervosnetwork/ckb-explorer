@@ -53,7 +53,7 @@ class FetchCotaWorker
 
   def find_or_create_item(collection, t)
     to = Address.find_or_create_by_address_hash t["to"]
-    i = collection.items.find_or_create_by(token_id: t["token_index"].hex)
+    i = collection.items.find_or_initialize_by(token_id: t["token_index"].hex)
     i.update! owner: to
     i
   end
