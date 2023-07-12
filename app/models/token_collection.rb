@@ -34,6 +34,7 @@ class TokenCollection < ApplicationRecord
       creator: creator&.address_hash || "",
       items_count: items_count,
       holders_count: holders_count,
+      h24_ckb_transactions_count: h24_ckb_transactions_count,
       type_script: type_script&.as_json
     }
   end
