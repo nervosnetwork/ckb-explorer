@@ -99,8 +99,13 @@ s.every "4h", overlap: false do
 end
 
 s.every "1h", overlap: false do
-  puts "update h24 transaction count"
+  puts "update udt h24 transaction count"
   call_worker UpdateH24CkbTransactionsCountOnUdtsWorker
+end
+
+s.every "1h", overlap: false do
+  puts "update token collection h24 transaction count"
+  call_worker UpdateH24CkbTransactionsCountOnCollectionsWorker
 end
 
 s.every "1h", overlap: false do

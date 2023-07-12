@@ -32,8 +32,8 @@ class TokenCollection < ApplicationRecord
       description: description,
       icon_url: icon_url,
       creator: creator&.address_hash || "",
-      items_count: items.count,
-      holders_count: items.normal.count("distinct owner_id"),
+      items_count: items_count,
+      holders_count: holders_count,
       type_script: type_script&.as_json
     }
   end
@@ -144,27 +144,37 @@ class TokenCollection < ApplicationRecord
       self.sn = type_script.script_hash
     end
   end
+
+  def update_h24_ckb_transactions_count
+    return unless transfers.exists?
+
+    timestamp = CkbUtils.time_in_milliseconds(24.hours.ago)
+    h24_transfers = transfers.joins(:ckb_transaction).where("ckb_transactions.block_timestamp >= ?", timestamp)
+    count = h24_transfers.distinct.count(:transaction_id)
+    update(h24_ckb_transactions_count: count)
+  end
 end
 
 # == Schema Information
 #
 # Table name: token_collections
 #
-#  id             :bigint           not null, primary key
-#  standard       :string
-#  name           :string
-#  description    :text
-#  creator_id     :integer
-#  icon_url       :string
-#  items_count    :integer
-#  holders_count  :integer
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
-#  symbol         :string
-#  cell_id        :integer
-#  verified       :boolean          default(FALSE)
-#  type_script_id :integer
-#  sn             :string
+#  id                         :bigint           not null, primary key
+#  standard                   :string
+#  name                       :string
+#  description                :text
+#  creator_id                 :integer
+#  icon_url                   :string
+#  items_count                :integer
+#  holders_count              :integer
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  symbol                     :string
+#  cell_id                    :integer
+#  verified                   :boolean          default(FALSE)
+#  type_script_id             :integer
+#  sn                         :string
+#  h24_ckb_transactions_count :bigint           default(0)
 #
 # Indexes
 #
