@@ -1,5 +1,5 @@
 class TokenCollection < ApplicationRecord
-  has_many :items, class_name: "TokenItem", foreign_key: :collection_id, counter_cache: true
+  has_many :items, class_name: "TokenItem", foreign_key: :collection_id
   belongs_to :creator, class_name: "Address", optional: true
   belongs_to :cell, class_name: "CellOutput", optional: true
   belongs_to :type_script, optional: true
