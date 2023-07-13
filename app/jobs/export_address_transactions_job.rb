@@ -45,7 +45,7 @@ class ExportAddressTransactionsJob < ApplicationJob
   def generate_data(transaction)
     inputs =
       if transaction.is_cellbase
-        return [nil]
+        [nil]
       else
         cell_inputs_for_display = transaction.inputs.sort_by(&:id)
         cell_inputs_for_display.map(&:capacity)
@@ -65,7 +65,7 @@ class ExportAddressTransactionsJob < ApplicationJob
         (inputs[i].to_d / 1e8 rescue "/"),
         (outputs[i].to_d / 1e8 rescue "/"),
         transaction.transaction_fee,
-        transaction.updated_at
+        Time.at((transaction.block_timestamp / 1000).to_i).in_time_zone("UTC").strftime("%Y-%m-%d %H:%M:%S")
       ]
     end
 
