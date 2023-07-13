@@ -34,6 +34,18 @@ module Api
         assert_equal @token_transfer.id, JSON.parse(response.body)['id']
       end
 
+      test "should get download_csv, by date" do
+
+        valid_get download_csv_api_v2_nft_transfers_url(collection_id: @token_collection.sn, start_date: 1.day.ago.strftime("%Y-%m-%d"))
+        assert_response :success
+      end
+
+      test "should get download_csv, by block_number" do
+
+        valid_get download_csv_api_v2_nft_transfers_url(collection_id: @token_collection.sn, start_number: 8, end_number: 12)
+        assert_response :success
+      end
+
     end
   end
 end

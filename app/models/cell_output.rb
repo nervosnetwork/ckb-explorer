@@ -23,7 +23,7 @@ class CellOutput < ApplicationRecord
   # the inputs which consumes this cell output
   # but one cell may be included by many pending transactions,
   # the cell_inputs won't always be the same as `consumed_by`.`cell_inputs`
-  has_many :cell_inputs, foreign_key: :previous_output_id
+  has_many :cell_inputs, foreign_key: :previous_cell_output_id
   belongs_to :deployed_cell, optional: true
   # the block_id is actually the same as ckb_transaction.block_id, must be on chain
   # but one cell may be included by pending transactions, so block_id may be null
@@ -33,8 +33,8 @@ class CellOutput < ApplicationRecord
   belongs_to :type_script, optional: true
 
   has_many :cell_dependencies, foreign_key: :contract_cell_id, dependent: :delete_all
-  has_one :cell_data, class_name: "CellDatum", dependent: :destroy_async
-
+  has_one :cell_datum, class_name: "CellDatum", dependent: :destroy_async
+  accepts_nested_attributes_for :cell_datum
   validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   # on-chain cell outputs must be included in certain block
@@ -54,6 +54,7 @@ class CellOutput < ApplicationRecord
                                        if: :consumed_block_timestamp?
 
   attribute :tx_hash, :ckb_hash
+
   attr_accessor :raw_address
 
   scope :consumed_after, ->(block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
@@ -70,14 +71,32 @@ class CellOutput < ApplicationRecord
                               generated_after(start_timestamp).generated_before(end_timestamp)
                             }
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
-  scope :free, -> { where(type_hash: nil, data: "0x") }
-  scope :occupied, -> { where.not(type_hash: nil, data: "0x") }
-
-  before_validation do
-    self.data_size ||= data ? CKB::Utils.hex_to_bin(data).bytesize : 0
-  end
+  scope :free, -> { where(type_hash: nil, data_hash: nil) }
+  scope :occupied, -> { where.not(type_hash: nil).or(where.not(data_hash: nil)) }
 
   before_create :setup_address
+
+  def data=(new_data)
+    @data = new_data
+    if new_data
+      d = CKB::Utils.hex_to_bin(new_data)
+      if d.size > 0
+        datum = cell_datum || build_cell_datum
+        datum.data = d
+        datum.save
+      end
+    elsif cell_datum
+      cell_datum.destroy
+    end
+  end
+
+  def data
+    @data ||= CKB::Utils.bin_to_hex(cell_datum&.data || "")
+  end
+
+  def binary_data
+    cell_datum&.data
+  end
 
   def setup_address
     self.address = Address.find_or_create_by_address_hash(raw_address, block_timestamp) if raw_address
@@ -97,8 +116,8 @@ class CellOutput < ApplicationRecord
     address.address_hash
   end
 
-  def binary_data
-    [data[2..]].pack("H*")
+  def dao
+    self[:dao] || block.dao
   end
 
   # find cell output according to the out point( tx_hash and output index )
@@ -106,7 +125,9 @@ class CellOutput < ApplicationRecord
   # @param [Integer] index
   # @return [CellOutput]
   def self.find_by_pointer(tx_hash, index)
-    Rails.cache.fetch(["cell_output", tx_hash, index], race_condition_ttl: 10.seconds, expires_in: 1.day) do
+    Rails.cache.fetch(["cell_output", tx_hash, index], skip_nil: true,
+                                                       race_condition_ttl: 10.seconds,
+                                                       expires_in: 1.day) do
       tx_id =
         Rails.cache.fetch(["tx_id", tx_hash], expires_in: 1.day) do
           CkbTransaction.find_by_tx_hash(tx_hash)&.id
@@ -119,6 +140,16 @@ class CellOutput < ApplicationRecord
     lock = CKB::Types::Script.new(**lock_script.to_node)
     type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node) : nil
     CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
+  end
+
+  # calculate the actual size of the cell output on chain
+  # @return [Integer]
+  def calculate_bytesize
+    [8, binary_data&.bytesize || 0, lock_script.calculate_bytesize, type_script&.calculate_bytesize || 0].sum
+  end
+
+  def calculate_min_capacity
+    CKB::Utils.byte_to_shannon(calculate_bytesize)
   end
 
   def to_raw
@@ -180,11 +211,28 @@ class CellOutput < ApplicationRecord
       factory_cell_type_script = self.type_script
       factory_cell = NrcFactoryCell.find_by(code_hash: factory_cell_type_script.code_hash,
                                             hash_type: factory_cell_type_script.hash_type, args: factory_cell_type_script.args, verified: true)
-      value = { symbol: factory_cell&.symbol }
+      value = {
+        symbol: factory_cell&.symbol,
+        amount: self.udt_amount,
+        decimal: "",
+        type_hash: self.type_hash,
+        published: factory_cell.verified,
+        display_name: factory_cell.name,
+        nan: ""
+      }
     when "nrc_721_token"
       udt = Udt.find_by(type_hash: type_hash)
       factory_cell = NrcFactoryCell.where(id: udt.nrc_factory_cell_id, verified: true).first
-      value = { symbol: factory_cell&.symbol, amount: UdtAccount.where(udt_id: udt.id).first.nft_token_id }
+      udt_account = UdtAccount.where(udt_id: udt.id).first
+      value = {
+        symbol: factory_cell&.symbol,
+        amount: udt_account.nft_token_id,
+        decimal: udt_account.decimal,
+        type_hash: type_hash,
+        published: true,
+        display_name: udt_account.full_name,
+        uan: ""
+      }
     else
       raise "invalid cell type"
     end
@@ -284,6 +332,22 @@ class CellOutput < ApplicationRecord
       end
     end
   end
+
+  def cota_registry_info
+    return unless cota_registry?
+
+    code_hash = CkbSync::Api.instance.cota_registry_code_hash
+    CkbUtils.hash_value_to_s(symbol: "", amount: self.udt_amount, decimal: "", type_hash: self.type_hash,
+                             published: "true", display_name: "", uan: "", code_hash: code_hash)
+  end
+
+  def cota_regular_info
+    return unless cota_regular?
+
+    code_hash = CkbSync::Api.instance.cota_regular_code_hash
+    CkbUtils.hash_value_to_s(symbol: "", amount: self.udt_amount, decimal: "", type_hash: self.type_hash,
+                             published: "true", display_name: "", uan: "", code_hash: code_hash)
+  end
 end
 
 # == Schema Information
@@ -316,17 +380,17 @@ end
 #
 # Indexes
 #
-#  index_cell_outputs_on_address_id_and_status     (address_id,status)
-#  index_cell_outputs_on_block_id                  (block_id)
-#  index_cell_outputs_on_block_timestamp           (block_timestamp)
-#  index_cell_outputs_on_cell_type                 (cell_type)
-#  index_cell_outputs_on_ckb_transaction_id        (ckb_transaction_id)
-#  index_cell_outputs_on_consumed_block_timestamp  (consumed_block_timestamp)
-#  index_cell_outputs_on_consumed_by_id            (consumed_by_id)
-#  index_cell_outputs_on_data_hash                 (data_hash) USING hash
-#  index_cell_outputs_on_lock_script_id            (lock_script_id)
-#  index_cell_outputs_on_status                    (status)
-#  index_cell_outputs_on_tx_hash_and_cell_index    (tx_hash,cell_index)
-#  index_cell_outputs_on_type_script_id            (type_script_id)
-#  index_cell_outputs_on_type_script_id_and_id     (type_script_id,id)
+#  index_cell_outputs_on_address_id_and_status              (address_id,status)
+#  index_cell_outputs_on_block_id                           (block_id)
+#  index_cell_outputs_on_block_timestamp                    (block_timestamp)
+#  index_cell_outputs_on_cell_type                          (cell_type)
+#  index_cell_outputs_on_ckb_transaction_id_and_cell_index  (ckb_transaction_id,cell_index) UNIQUE
+#  index_cell_outputs_on_consumed_block_timestamp           (consumed_block_timestamp)
+#  index_cell_outputs_on_consumed_by_id                     (consumed_by_id)
+#  index_cell_outputs_on_data_hash                          (data_hash) USING hash
+#  index_cell_outputs_on_lock_script_id                     (lock_script_id)
+#  index_cell_outputs_on_status                             (status)
+#  index_cell_outputs_on_tx_hash_and_cell_index             (tx_hash,cell_index) UNIQUE
+#  index_cell_outputs_on_type_script_id                     (type_script_id)
+#  index_cell_outputs_on_type_script_id_and_id              (type_script_id,id)
 #

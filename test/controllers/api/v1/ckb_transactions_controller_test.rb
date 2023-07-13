@@ -3,7 +3,10 @@ require "test_helper"
 module Api
   module V1
     class CkbTransactionsControllerTest < ActionDispatch::IntegrationTest
-      TransactionKeys = %w(block_number transaction_hash block_timestamp transaction_fee bytes version display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps tx_status detailed_message largest_tx largest_tx_in_epoch cycles max_cycles_in_epoch max_cycles).sort
+      TransactionKeys = %w(
+        block_number transaction_hash block_timestamp transaction_fee bytes version display_inputs
+        display_outputs is_cellbase income witnesses cell_deps header_deps tx_status detailed_message largest_tx largest_tx_in_epoch cycles max_cycles_in_epoch max_cycles
+      ).sort
       setup do
         CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
       end
@@ -45,7 +48,8 @@ module Api
       test "should respond with 406 Not Acceptable when Accept is wrong" do
         ckb_transaction = create(:ckb_transaction)
 
-        get api_v1_ckb_transaction_url(ckb_transaction.tx_hash), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_ckb_transaction_url(ckb_transaction.tx_hash),
+            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal 406, response.status
       end
@@ -55,7 +59,8 @@ module Api
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_ckb_transaction_url(ckb_transaction.tx_hash), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_ckb_transaction_url(ckb_transaction.tx_hash),
+            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -95,14 +100,14 @@ module Api
         assert_equal CkbTransactionSerializer.new(ckb_transaction).serialized_json, response.body
       end
 
-      # test "should return pool tx when tx is in the pool" do
-      #   tx = create(:pool_transaction_entry)
+      test "should return pool tx when tx is in the pool" do
+        tx = create(:pending_transaction)
 
-      #   valid_get api_v1_ckb_transaction_url(tx.tx_hash)
+        valid_get api_v1_ckb_transaction_url(tx.tx_hash)
 
-      #   expected_response = CkbTransactionSerializer.new(tx).serialized_json
-      #   assert_equal expected_response, response.body
-      # end
+        expected_response = CkbTransactionSerializer.new(tx).serialized_json
+        assert_equal expected_response, response.body
+      end
 
       test "should contain right keys in the serialized object when call show" do
         create(:table_record_count, :block_counter)
@@ -134,7 +139,9 @@ module Api
         valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
 
         assert_equal 15, json["data"].dig("attributes", "display_inputs").count
-        assert_equal [true], json["data"].dig("attributes", "display_inputs").map { |input| input.key?("from_cellbase") }.uniq
+        assert_equal [true], json["data"].dig("attributes", "display_inputs").map { |input|
+                               input.key?("from_cellbase")
+                             }.uniq
       end
 
       test "should return all display_outputs" do
@@ -144,7 +151,9 @@ module Api
         valid_get api_v1_ckb_transaction_url(ckb_transaction.tx_hash)
 
         assert_equal 15, json["data"].dig("attributes", "display_outputs").count
-        assert_equal [false], json["data"].dig("attributes", "display_outputs").map { |input| input.key?("from_cellbase") }.uniq
+        assert_equal [false], json["data"].dig("attributes", "display_outputs").map { |input|
+                                input.key?("from_cellbase")
+                              }.uniq
       end
 
       test "should get success code when call index" do
@@ -175,7 +184,8 @@ module Api
       end
 
       test "should respond with 406 Not Acceptable when  call index and Accept is wrong" do
-        get api_v1_ckb_transactions_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_ckb_transactions_url,
+            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal 406, response.status
       end
@@ -184,7 +194,8 @@ module Api
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_ckb_transactions_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_ckb_transactions_url,
+            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -209,7 +220,8 @@ module Api
         first_ckb_transaction = json["data"].first
         last_ckb_transaction = json["data"].last
 
-        assert_operator first_ckb_transaction.dig("attributes", "block_timestamp"), :>=, last_ckb_transaction.dig("attributes", "block_timestamp")
+        assert_operator first_ckb_transaction.dig("attributes", "block_timestamp"), :>=,
+                        last_ckb_transaction.dig("attributes", "block_timestamp")
       end
 
       test "should contain right keys in the serialized object" do
@@ -219,7 +231,8 @@ module Api
         valid_get api_v1_ckb_transactions_url
 
         response_ckb_transaction = json["data"].first
-        assert_equal %w(block_number transaction_hash block_timestamp capacity_involved live_cell_changes).sort, response_ckb_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp capacity_involved live_cell_changes).sort,
+                     response_ckb_transaction["attributes"].keys.sort
       end
 
       test "should return the corresponding number of ckb transactions " do
@@ -330,7 +343,8 @@ module Api
         valid_get api_v1_ckb_transactions_url, params: { page: page, page_size: page_size }
 
         records_counter = RecordCounters::Transactions.new
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page,
+                                                           page_size: page_size, records_counter: records_counter).call
         response_ckb_transactions = CkbTransactionListSerializer.new(ckb_transactions, options).serialized_json
         assert_equal response_ckb_transactions, response.body
       end
@@ -344,9 +358,11 @@ module Api
         valid_post api_v1_query_ckb_transactions_url, params: { address: address.address_hash }
 
         records_counter = RecordCounters::AddressTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page,
+                                                           page_size: page_size, records_counter: records_counter).call
 
-        assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address: address })).serialized_json, response.body
+        assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address: address })).serialized_json,
+                     response.body
       end
     end
   end

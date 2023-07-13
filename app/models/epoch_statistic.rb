@@ -1,7 +1,11 @@
 class EpochStatistic < ApplicationRecord
+  include AttrLogics
+
   VALID_INDICATORS = %w(difficulty uncle_rate hash_rate epoch_time epoch_length).freeze
+
   has_many :blocks, primary_key: :epoch_number, foreign_key: :epoch
   has_many :ckb_transactions, through: :blocks
+
   def max_cycles_block
     @max_cycles_block ||= blocks.where.not(cycles: nil).order(cycles: :desc).first
   end
@@ -18,29 +22,61 @@ class EpochStatistic < ApplicationRecord
     @largest_tx ||= ckb_transactions.where.not(bytes: nil).order(bytes: :desc).first
   end
 
-  def reset_largest_tx_hash
-    self.largest_tx_hash = largest_tx&.tx_hash
+  def first_block_in_epoch
+    @first_block_in_epoch ||= blocks.order(:number).first
   end
 
-  def reset_largest_tx_bytes
-    self.largest_tx_bytes = largest_tx&.bytes
+  def last_block_in_epoch
+    @last_block_in_epoch ||= blocks.order(number: :desc).first
   end
 
-  def reset_max_tx_cycles
-    self.max_tx_cycles = max_cycles_tx&.cycles
+  define_logic :difficulty do
+    first_block_in_epoch.difficulty
   end
 
-  def reset_max_block_cycles
-    self.max_block_cycles = max_cycles_block&.cycles
+  define_logic :uncle_rate do
+    uncles_count = blocks.sum(:uncles_count)
+    blocks_count = blocks.count
+    uncles_count.to_d / blocks_count
   end
 
-  def reset_largest_block_number
-    self.largest_block_number = largest_block.number
-    self.largest_block_size = largest_block.block_size
+  define_logic :hash_rate do
+    difficulty = first_block_in_epoch.difficulty
+    epoch_length = first_block_in_epoch.length
+    epoch_time = last_block_in_epoch.timestamp - first_block_in_epoch.timestamp
+    difficulty * epoch_length / epoch_time
   end
 
-  def reset_largest_block_size
-    self.largest_block_size = largest_block.block_size
+  define_logic :epoch_time do
+    last_block_in_epoch.timestamp - first_block_in_epoch.timestamp
+  end
+
+  define_logic :epoch_length do
+    first_block_in_epoch.length
+  end
+
+  define_logic :largest_tx_hash do
+    largest_tx&.tx_hash
+  end
+
+  define_logic :largest_tx_bytes do
+    largest_tx&.bytes
+  end
+
+  define_logic :max_tx_cycles do
+    max_cycles_tx&.cycles
+  end
+
+  define_logic :max_block_cycles do
+    max_cycles_block&.cycles
+  end
+
+  define_logic :largest_block_number do
+    largest_block.number
+  end
+
+  define_logic :largest_block_size do
+    largest_block.block_size
   end
 
   def self.largest_block_size

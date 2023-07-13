@@ -11,8 +11,8 @@ class RevertBlockJob < ApplicationJob
       end
 
     ApplicationRecord.transaction do
-      PoolTransactionEntry.pool_transaction_pending.
-        where(tx_hash: local_tip_block.ckb_transactions.pluck(:tx_hash)).delete_all
+      CkbTransaction.tx_pending.
+        where(tx_hash: local_tip_block.ckb_transactions.pluck(:tx_hash)).update_all(tx_status: "pending")
       benchmark :revert_dao_contract_related_operations, local_tip_block
       benchmark :revert_mining_info, local_tip_block
 
@@ -43,14 +43,23 @@ class RevertBlockJob < ApplicationJob
   end
 
   def update_address_balance_and_ckb_transactions_count(local_tip_block)
+    snapshots = AddressBlockSnapshot.where.not(block_id: local_tip_block.id).where(address_id: local_tip_block.address_ids).order(block_number: :desc).distinct.group_by(&:address_id)
     local_tip_block.contained_addresses.each do |address|
-      address.live_cells_count = address.cell_outputs.live.count
-      # address.ckb_transactions_count = address.custom_ckb_transactions.count
-      address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
-      address.dao_transactions_count = AddressDaoTransaction.where(address_id: address.id).count
-      address.cal_balance!
-      address.save!
+      snapshot = snapshots.fetch(address.id, []).first
+      if snapshot.present?
+        attrs = snapshot.final_state
+        address.update!(attrs)
+      else
+        address.live_cells_count = address.cell_outputs.live.count
+        # address.ckb_transactions_count = address.custom_ckb_transactions.count
+        address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
+        address.dao_transactions_count = AddressDaoTransaction.where(address_id: address.id).count
+        address.cal_balance!
+        address.save!
+      end
     end
+
+    AddressBlockSnapshot.where(block_id: local_tip_block.id).delete_all
   end
 
   def recalculate_dao_contract_transactions_count(local_tip_block)

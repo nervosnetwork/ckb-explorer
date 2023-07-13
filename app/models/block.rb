@@ -21,7 +21,9 @@ class Block < ApplicationRecord
   has_many :ckb_transactions
   has_many :block_transactions
   # the transactions included in the block no matter if the block is included in chain
-  has_many :contained_transactions, through: :block_transactions
+  has_many :contained_transactions, class_name: "CkbTransaction",
+                                    through: :block_transactions,
+                                    inverse_of: :included_blocks
   has_many :uncle_blocks
   has_many :cell_outputs
   has_many :cell_inputs
@@ -49,7 +51,7 @@ class Block < ApplicationRecord
   attribute :uncle_block_hashes, :ckb_array_hash, hash_length: Settings.default_hash_length
   attribute :proposals, :ckb_array_hash, hash_length: Settings.default_short_hash_length
 
-  scope :recent, -> { order("timestamp desc nulls last") }
+  scope :recent, -> { order("number" => "desc") }
   scope :created_after, ->(timestamp) { where("timestamp >= ?", timestamp) }
   scope :created_before, ->(timestamp) { where("timestamp <= ?", timestamp) }
   scope :created_between, ->(from, to) { where(timestamp: from..to) }

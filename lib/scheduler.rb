@@ -11,10 +11,14 @@ require File.join(root, "config", "environment")
 require "rufus-scheduler"
 s = Rufus::Scheduler.singleton
 
-def s.around_trigger(job)
+def s.around_trigger(job, &block)
   t = Time.now
   puts "Starting job #{job.id} at #{Time.now}"
-  yield
+  Rails.application.executor.wrap do
+    ActiveRecord::Base.connection_pool.with_connection do
+      ActiveRecord::Base.cache(&block)
+    end
+  end
   puts "job #{job.id} finished in #{Time.now - t} seconds."
 end
 
@@ -92,6 +96,19 @@ end
 s.every "4h", overlap: false do
   puts "reset address_balance_ranking, miner_ranking, last_n_days_transaction_fee_rates"
   StatisticInfo.default.reset! :address_balance_ranking, :miner_ranking, :last_n_days_transaction_fee_rates
+end
+
+s.every "1h", overlap: false do
+  puts "update h24 transaction count"
+  call_worker UpdateH24CkbTransactionsCountOnUdtsWorker
+end
+
+s.every "1h", overlap: false do
+  CkbTransaction.clean_pending
+end
+
+s.cron "30 0 * * *" do
+  call_worker Charts::ForkedEventProcessor
 end
 
 s.join

@@ -107,24 +107,61 @@ class AddressTest < ActiveSupport::TestCase
     previous_output_block = create(:block, :with_block_hash,
                                    dao: "0x28fbce93e82cbd2ff345ba74f2ba2300b0cd2c97f2953a000060983e29c50007")
     previous_output_tx = create(:ckb_transaction, block: previous_output_block)
-    create(:cell_output, block: previous_output_block, capacity: 50000 * 10**8, ckb_transaction: previous_output_tx,
-                         tx_hash: previous_output_tx.tx_hash, cell_type: "nervos_dao_deposit", cell_index: 0, occupied_capacity: 6100000000, dao: previous_output_block.dao)
-    create(:cell_output, block: previous_output_block, capacity: 50000 * 10**8, ckb_transaction: previous_output_tx,
-                         tx_hash: previous_output_tx.tx_hash, cell_type: "nervos_dao_deposit", cell_index: 1, occupied_capacity: 6100000000, dao: previous_output_block.dao)
+    create(:cell_output, block: previous_output_block,
+                         capacity: 50000 * 10**8,
+                         ckb_transaction: previous_output_tx,
+                         tx_hash: previous_output_tx.tx_hash,
+                         cell_type: "nervos_dao_deposit",
+                         cell_index: 0,
+                         occupied_capacity: 6100000000,
+                         dao: previous_output_block.dao)
+    create(:cell_output, block: previous_output_block,
+                         capacity: 50000 * 10**8,
+                         ckb_transaction: previous_output_tx,
+                         tx_hash: previous_output_tx.tx_hash,
+                         cell_type: "nervos_dao_deposit",
+                         cell_index: 1,
+                         occupied_capacity: 6100000000,
+                         dao: previous_output_block.dao)
     nervos_dao_withdrawing_block = create(:block, :with_block_hash,
                                           dao: "0x9a7a7ce1f34c6a332d147991f0602400aaf7346eb06bfc0000e2abc108760207", timestamp: CkbUtils.time_in_milliseconds(Time.current))
     nervos_dao_withdrawing_tx = create(:ckb_transaction, block: nervos_dao_withdrawing_block)
     create(:cell_input, block: nervos_dao_withdrawing_block,
-                        previous_output: { tx_hash: previous_output_tx.tx_hash, index: 0 }, ckb_transaction: nervos_dao_withdrawing_tx)
+                        previous_output: {
+                          tx_hash: previous_output_tx.tx_hash,
+                          index: 0
+                        },
+                        ckb_transaction: nervos_dao_withdrawing_tx)
     create(:cell_input, block: nervos_dao_withdrawing_block,
-                        previous_output: { tx_hash: previous_output_tx.tx_hash, index: 1 }, ckb_transaction: nervos_dao_withdrawing_tx)
-    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing",
-                         ckb_transaction: nervos_dao_withdrawing_tx, capacity: 10000 * 10**8, occupied_capacity: 6100000000, cell_index: 0, dao: nervos_dao_withdrawing_block.dao)
-    create(:cell_output, block: nervos_dao_withdrawing_block, address: address, cell_type: "nervos_dao_withdrawing",
-                         ckb_transaction: nervos_dao_withdrawing_tx, capacity: 20000 * 10**8, occupied_capacity: 6100000000, cell_index: 1, dao: nervos_dao_withdrawing_block.dao)
+                        previous_output: {
+                          tx_hash: previous_output_tx.tx_hash,
+                          index: 1
+                        },
+                        ckb_transaction: nervos_dao_withdrawing_tx)
+    create(:cell_output, block: nervos_dao_withdrawing_block,
+                         address: address,
+                         cell_type: "nervos_dao_withdrawing",
+                         ckb_transaction: nervos_dao_withdrawing_tx,
+                         capacity: 10000 * 10**8,
+                         occupied_capacity: 6100000000,
+                         cell_index: 0,
+                         dao: nervos_dao_withdrawing_block.dao)
+    create(:cell_output, block: nervos_dao_withdrawing_block,
+                         address: address,
+                         cell_type: "nervos_dao_withdrawing",
+                         ckb_transaction: nervos_dao_withdrawing_tx,
+                         capacity: 20000 * 10**8,
+                         occupied_capacity: 6100000000,
+                         cell_index: 1,
+                         dao: nervos_dao_withdrawing_block.dao)
 
-    deposit_cell = create(:cell_output, block: deposit_block, address: address, cell_type: "nervos_dao_deposit",
-                                        capacity: 60000 * 10**8, ckb_transaction: deposit_tx, cell_index: 0, occupied_capacity: 6100000000, dao: deposit_block.dao)
+    deposit_cell = create(:cell_output, block: deposit_block,
+                                        address: address, cell_type: "nervos_dao_deposit",
+                                        capacity: 60000 * 10**8,
+                                        ckb_transaction: deposit_tx,
+                                        cell_index: 0,
+                                        occupied_capacity: 6100000000,
+                                        dao: deposit_block.dao)
 
     expected_phase1_dao_interests = 54220579089
     parse_dao_ar_i = 10239678363827763
@@ -195,9 +232,9 @@ class AddressTest < ActiveSupport::TestCase
         tx1 = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id],
                                        udt_address_ids: [address.id], contained_address_ids: [address.id])
         create(:cell_output, block: block, ckb_transaction: tx1, cell_type: "udt", type_hash: udt.type_hash,
-                              address: address)
+                             address: address)
         create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash,
-                              consumed_by_id: tx1, address: address)
+                             consumed_by_id: tx1, address: address)
       end
     end
 

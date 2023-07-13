@@ -348,6 +348,38 @@ ALTER SEQUENCE public.account_books_id_seq OWNED BY public.account_books.id;
 
 
 --
+-- Name: address_block_snapshots; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.address_block_snapshots (
+    id bigint NOT NULL,
+    address_id bigint,
+    block_id bigint,
+    block_number bigint,
+    final_state jsonb
+);
+
+
+--
+-- Name: address_block_snapshots_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.address_block_snapshots_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: address_block_snapshots_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.address_block_snapshots_id_seq OWNED BY public.address_block_snapshots.id;
+
+
+--
 -- Name: address_dao_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -752,7 +784,6 @@ ALTER SEQUENCE public.cell_dependencies_id_seq OWNED BY public.cell_dependencies
 
 CREATE TABLE public.cell_inputs (
     id bigint NOT NULL,
-    previous_output jsonb,
     ckb_transaction_id bigint,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
@@ -761,7 +792,9 @@ CREATE TABLE public.cell_inputs (
     block_id numeric(30,0),
     since numeric(30,0) DEFAULT 0.0,
     cell_type integer DEFAULT 0,
-    index integer
+    index integer,
+    previous_tx_hash bytea,
+    previous_index integer
 );
 
 
@@ -1674,6 +1707,36 @@ ALTER SEQUENCE public.referring_cells_id_seq OWNED BY public.referring_cells.id;
 
 
 --
+-- Name: reject_reasons; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reject_reasons (
+    id bigint NOT NULL,
+    ckb_transaction_id bigint NOT NULL,
+    message text
+);
+
+
+--
+-- Name: reject_reasons_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.reject_reasons_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: reject_reasons_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.reject_reasons_id_seq OWNED BY public.reject_reasons.id;
+
+
+--
 -- Name: rolling_avg_block_time; Type: MATERIALIZED VIEW; Schema: public; Owner: -
 --
 
@@ -2138,7 +2201,8 @@ CREATE TABLE public.udts (
     ckb_transactions_count bigint DEFAULT 0.0,
     nrc_factory_cell_id bigint,
     display_name character varying,
-    uan character varying
+    uan character varying,
+    h24_ckb_transactions_count bigint DEFAULT 0
 );
 
 
@@ -2270,6 +2334,13 @@ ALTER TABLE ONLY public.ckb_transactions ATTACH PARTITION public.ckb_transaction
 --
 
 ALTER TABLE ONLY public.account_books ALTER COLUMN id SET DEFAULT nextval('public.account_books_id_seq'::regclass);
+
+
+--
+-- Name: address_block_snapshots id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.address_block_snapshots ALTER COLUMN id SET DEFAULT nextval('public.address_block_snapshots_id_seq'::regclass);
 
 
 --
@@ -2462,6 +2533,13 @@ ALTER TABLE ONLY public.referring_cells ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
+-- Name: reject_reasons id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reject_reasons ALTER COLUMN id SET DEFAULT nextval('public.reject_reasons_id_seq'::regclass);
+
+
+--
 -- Name: script_transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2565,6 +2643,14 @@ ALTER TABLE ONLY public.witnesses ALTER COLUMN id SET DEFAULT nextval('public.wi
 
 ALTER TABLE ONLY public.account_books
     ADD CONSTRAINT account_books_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: address_block_snapshots address_block_snapshots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.address_block_snapshots
+    ADD CONSTRAINT address_block_snapshots_pkey PRIMARY KEY (id);
 
 
 --
@@ -2861,6 +2947,14 @@ ALTER TABLE ONLY public.pool_transaction_entries
 
 ALTER TABLE ONLY public.referring_cells
     ADD CONSTRAINT referring_cells_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: reject_reasons reject_reasons_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reject_reasons
+    ADD CONSTRAINT reject_reasons_pkey PRIMARY KEY (id);
 
 
 --
@@ -3213,6 +3307,27 @@ CREATE INDEX index_account_books_on_ckb_transaction_id ON public.account_books U
 
 
 --
+-- Name: index_address_block_snapshots_on_address_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_address_block_snapshots_on_address_id ON public.address_block_snapshots USING btree (address_id);
+
+
+--
+-- Name: index_address_block_snapshots_on_block_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_address_block_snapshots_on_block_id ON public.address_block_snapshots USING btree (block_id);
+
+
+--
+-- Name: index_address_block_snapshots_on_block_id_and_address_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_address_block_snapshots_on_block_id_and_address_id ON public.address_block_snapshots USING btree (block_id, address_id);
+
+
+--
 -- Name: index_address_dao_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3360,10 +3475,10 @@ CREATE INDEX index_cell_inputs_on_block_id ON public.cell_inputs USING btree (bl
 
 
 --
--- Name: index_cell_inputs_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_cell_inputs_on_ckb_transaction_id_and_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_inputs_on_ckb_transaction_id ON public.cell_inputs USING btree (ckb_transaction_id);
+CREATE UNIQUE INDEX index_cell_inputs_on_ckb_transaction_id_and_index ON public.cell_inputs USING btree (ckb_transaction_id, index);
 
 
 --
@@ -3371,6 +3486,13 @@ CREATE INDEX index_cell_inputs_on_ckb_transaction_id ON public.cell_inputs USING
 --
 
 CREATE INDEX index_cell_inputs_on_previous_cell_output_id ON public.cell_inputs USING btree (previous_cell_output_id);
+
+
+--
+-- Name: index_cell_inputs_on_previous_tx_hash_and_previous_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_inputs_on_previous_tx_hash_and_previous_index ON public.cell_inputs USING btree (previous_tx_hash, previous_index);
 
 
 --
@@ -3402,10 +3524,10 @@ CREATE INDEX index_cell_outputs_on_cell_type ON public.cell_outputs USING btree 
 
 
 --
--- Name: index_cell_outputs_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_cell_outputs_on_ckb_transaction_id_and_cell_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_outputs_on_ckb_transaction_id ON public.cell_outputs USING btree (ckb_transaction_id);
+CREATE UNIQUE INDEX index_cell_outputs_on_ckb_transaction_id_and_cell_index ON public.cell_outputs USING btree (ckb_transaction_id, cell_index);
 
 
 --
@@ -3447,7 +3569,7 @@ CREATE INDEX index_cell_outputs_on_status ON public.cell_outputs USING btree (st
 -- Name: index_cell_outputs_on_tx_hash_and_cell_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_outputs_on_tx_hash_and_cell_index ON public.cell_outputs USING btree (tx_hash, cell_index);
+CREATE UNIQUE INDEX index_cell_outputs_on_tx_hash_and_cell_index ON public.cell_outputs USING btree (tx_hash, cell_index);
 
 
 --
@@ -3517,7 +3639,7 @@ CREATE INDEX index_contracts_on_verified ON public.contracts USING btree (verifi
 -- Name: index_daily_statistics_on_created_at_unixtimestamp; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_daily_statistics_on_created_at_unixtimestamp ON public.daily_statistics USING btree (created_at_unixtimestamp DESC NULLS LAST);
+CREATE UNIQUE INDEX index_daily_statistics_on_created_at_unixtimestamp ON public.daily_statistics USING btree (created_at_unixtimestamp);
 
 
 --
@@ -3728,6 +3850,13 @@ CREATE INDEX index_pool_transaction_entries_on_tx_hash ON public.pool_transactio
 --
 
 CREATE INDEX index_pool_transaction_entries_on_tx_status ON public.pool_transaction_entries USING btree (tx_status);
+
+
+--
+-- Name: index_reject_reasons_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_reject_reasons_on_ckb_transaction_id ON public.reject_reasons USING btree (ckb_transaction_id);
 
 
 --
@@ -4469,6 +4598,14 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230425114436'),
 ('20230425162318'),
 ('20230426133543'),
-('20230427025007');
-
-
+('20230427025007'),
+('20230504023535'),
+('20230518061651'),
+('20230526070328'),
+('20230526085258'),
+('20230526135653'),
+('20230603124843'),
+('20230622134109'),
+('20230622143224'),
+('20230622143339'),
+('20230630112234');

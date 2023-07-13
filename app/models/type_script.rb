@@ -52,6 +52,15 @@ class TypeScript < ApplicationRecord
     self.hash_type ||= "type"
     self.script_hash ||= CKB::Types::Script.new(**to_node).compute_hash rescue nil
   end
+
+  # @return [Integer] Byte
+  def calculate_bytesize
+    bytesize = 1
+    bytesize += CKB::Utils.hex_to_bin(code_hash).bytesize if code_hash
+    bytesize += CKB::Utils.hex_to_bin(args).bytesize if args
+
+    bytesize
+  end
 end
 
 # == Schema Information

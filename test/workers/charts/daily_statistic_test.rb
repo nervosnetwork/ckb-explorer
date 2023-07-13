@@ -2,6 +2,11 @@ require "test_helper"
 
 module Charts
   class DailyStatisticTest < ActiveSupport::TestCase
+    setup do
+      create :block, number: 0, timestamp: 1573852190812,
+                     dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007"
+    end
+
     test "daily statistic job should enqueue critical queue" do
       assert_difference -> { Charts::DailyStatistic.jobs.size }, 1 do
         Sidekiq::Testing.fake!
@@ -17,7 +22,8 @@ module Charts
       create :daily_statistic, created_at_unixtimestamp: 2.days.ago.to_i
 
       # create blocks and 3 tx
-      block = create :block, :with_block_hash, timestamp: 1.day.ago.to_i * 1000
+      block = create :block, :with_block_hash, timestamp: 1.day.ago.to_i * 1000,
+                                               dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007"
       create :ckb_transaction, block: block
       create :ckb_transaction, block: block
       create :ckb_transaction, block: block
@@ -38,7 +44,9 @@ module Charts
       create :daily_statistic, created_at_unixtimestamp: 2.days.ago.to_i
 
       # create blocks and 3 tx
-      block = create :block, :with_block_hash, timestamp: 1.day.ago.to_i * 1000
+      block = create :block, :with_block_hash, timestamp: 1.day.ago.to_i * 1000,
+                                               dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007"
+
       create :ckb_transaction, block: block
       create :ckb_transaction, block: block
       create :ckb_transaction, block: block

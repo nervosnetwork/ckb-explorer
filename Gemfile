@@ -129,3 +129,5 @@ gem "rack-cache"
 gem "dalli"
 gem "after_commit_everywhere"
 gem "kredis"
+
+gem "async-websocket", "~> 0.22.1", require: false

@@ -14,8 +14,8 @@ class EpochInfoGenerator
         values =
           (0...max_epoch_number).map do |epoch_number|
             first_block_in_epoch = Block.where(epoch: epoch_number).order(:number).select(:timestamp)[0]
-            last_lock_in_epoch = Block.where(epoch: epoch_number).order(number: :desc).select(:timestamp)[0]
-            epoch_time = last_lock_in_epoch.timestamp - first_block_in_epoch.timestamp
+            last_block_in_epoch = Block.where(epoch: epoch_number).order(number: :desc).select(:timestamp)[0]
+            epoch_time = last_block_in_epoch.timestamp - first_block_in_epoch.timestamp
             epoch_length = Block.where(epoch: epoch_number).limit(1)[0].length
             progress_bar.increment
             epoch_statistic = EpochStatistic.find_by(epoch_number: epoch_number)

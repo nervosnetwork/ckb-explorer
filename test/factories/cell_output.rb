@@ -1,10 +1,12 @@
 FactoryBot.define do
   factory :cell_output do
-    # block
+    block
     address
     status { "live" }
     capacity { 10**8 * 8 }
-    data {}
+    transient do
+      data { nil }
+    end
     cell_type { "normal" }
     lock_script
 
@@ -29,11 +31,16 @@ FactoryBot.define do
     end
 
     after(:create) do |cell, _evaluator|
+      if _evaluator.data
+        cell.data = _evaluator.data
+      end
       if cell.live?
         cell.address.increment! :balance, cell.capacity
         cell.address.increment! :balance_occupied, cell.capacity if cell.occupied?
         cell.address.increment! :live_cells_count
       end
+      AccountBook.upsert({ ckb_transaction_id: cell.ckb_transaction_id, address_id: cell.address_id },
+                         unique_by: [:address_id, :ckb_transaction_id])
     end
   end
 end

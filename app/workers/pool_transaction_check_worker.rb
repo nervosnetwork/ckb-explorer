@@ -1,3 +1,4 @@
+# Check every pending transaction in the pool if rejected
 class PoolTransactionCheckWorker
   include Sidekiq::Worker
   sidekiq_options retry: 0
@@ -11,14 +12,17 @@ class PoolTransactionCheckWorker
     # If any of the input or dependency cells is used, the transaction will never be valid.
     # Thus we can directly mark this transaction rejected without requesting to CKB Node.
     # Only request the CKB Node for reject reason after we find the transaction is rejeceted.
-    PoolTransactionEntry.pool_transaction_pending.where(block_timestamp: ..latest_block.timestamp).select(
-      :id, :tx_hash, :inputs, :created_at, :cell_deps
-    ).find_each do |tx|
+    CkbTransaction.tx_pending.
+      where(block_timestamp: ..latest_block.timestamp).includes(:cell_dependencies, cell_inputs: :previous_cell_output).find_each do |tx|
+      if CkbTransaction.tx_committed.exists?(tx_hash: tx.tx_hash)
+        tx.destroy!
+        next
+      end
       is_rejected = false
       rejected_transaction = nil
-      tx.inputs.each do |input|
-        if CellOutput.where(tx_hash: input["previous_output"]["tx_hash"],
-                            cell_index: input["previous_output"]["index"], status: "dead").exists?
+      # check if any input is used by other transactions
+      tx.cell_inputs.each do |input|
+        if input.previous_cell_output && input.previous_cell_output.dead?
           rejected_transaction = {
             id: tx.id,
             tx_status: "rejected",
@@ -29,10 +33,11 @@ class PoolTransactionCheckWorker
           break
         end
       end
+
       unless is_rejected
-        tx.cell_deps.each do |input|
-          if CellOutput.where(tx_hash: input["out_point"]["tx_hash"],
-                              cell_index: input["out_point"]["index"], status: "dead").exists?
+        # check if any dependency cell(contract) is consumed by other transactions
+        tx.cell_dependencies.each do |dep|
+          if dep.cell_output && dep.cell_output.dead?
             rejected_transaction = {
               id: tx.id,
               tx_status: "rejected",
@@ -44,8 +49,10 @@ class PoolTransactionCheckWorker
           end
         end
       end
+
       if is_rejected
         AfterCommitEverywhere.after_commit do
+          # fetch the reason from node
           PoolTransactionUpdateRejectReasonWorker.perform_async tx.tx_hash
         end
         CkbTransaction.where(tx_hash: tx.tx_hash).update_all tx_status: :rejected # , detailed_message: reason

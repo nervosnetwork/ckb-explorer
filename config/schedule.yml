@@ -13,11 +13,6 @@ epoch_statistic:
   class: "Charts::EpochStatistic"
   queue: critical
 
-chart_forked_event_processor:
-  cron: "30 0 * * *"
-  class: "Charts::ForkedEventProcessor"
-  queue: critical
-
 cal_unclaimed_compensation:
   cron: "0 */1 * * *"
   class: "DaoContractUnclaimedCompensationGenerator"
@@ -41,3 +36,7 @@ update_pool_txs_status:
 clean_up_worker:
   cron: "0 * * * *"
   class: 'CleanUpWorker'
+
+update_h24_ckb_transactioins_count_on_udts:
+  cron: "0 * * * *"
+  class: 'UpdateH24CkbTransactionsCountOnUdtsWorker'

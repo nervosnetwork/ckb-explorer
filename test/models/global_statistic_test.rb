@@ -8,9 +8,9 @@ class GlobalStatisticTest < ActiveSupport::TestCase
 
   test "should reset_ckb_transactions_count" do
     GlobalStatistic.reset_ckb_transactions_count
-    block1 = create :block, :with_block_hash
+    block1 = create :block, :with_block_hash, :with_block_number
     create(:ckb_transaction, block: block1)
-    block2 = create :block, :with_block_hash
+    block2 = create :block, :with_block_hash, :with_block_number
     create(:ckb_transaction, block: block2)
     assert_equal GlobalStatistic.find_by_name('ckb_transactions').value, 2
   end
