@@ -1179,10 +1179,16 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       end
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
+      pending_ids = CkbTransaction.where(tx_hash: hashes, tx_status: :pending).pluck(:id)
       CkbTransaction.where(tx_hash: hashes).update_all tx_status: "committed"
 
       txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:tx_status, :tx_hash],
-                                                                   returning: %w(id tx_hash created_at))
+                                                                   returning: %w(id tx_hash block_timestamp created_at))
+
+      if pending_ids.any?
+        confirmation_time_attrs = txs.select {|tx| tx["id"].in?(pending_ids) }.map { |tx| {id: tx["id"], tx_status: :committed, confirmation_time: (tx["block_timestamp"].to_i / 1000) - tx["created_at"].to_i}}
+        CkbTransaction.upsert_all(confirmation_time_attrs, update_only: [:confirmation_time], unique_by: [:id, :tx_status])
+      end
 
       hash2id = {}
       txs.each do |t|
