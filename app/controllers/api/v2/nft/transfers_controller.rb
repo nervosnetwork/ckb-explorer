@@ -13,6 +13,7 @@ module Api
               collection = TokenCollection.find_by_sn params[:collection_id]
             end
           end
+
           if collection && params[:token_id]
             item = collection.items.find_by token_id: params[:token_id]
           end
@@ -29,8 +30,8 @@ module Api
           to = Address.find_by_address_hash(params[:to]) if params[:to]
           scope = scope.where(from: from) if from
           scope = scope.where(to: to) if to
+          scope = scope.where(action: params[:transfer_action]) if params[:transfer_action]
           scope = scope.order(transaction_id: :desc)
-          # scope = scope.order(cell_id: :desc)
           pagy, token_transfers = pagy(scope)
 
           render json: {
