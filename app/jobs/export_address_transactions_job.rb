@@ -30,7 +30,10 @@ class ExportAddressTransactionsJob < ApplicationJob
 
     ckb_transactions.find_in_batches(batch_size: 1000, order: :desc) do |transactions|
       transactions.each do |transaction|
-        rows += generate_data(transaction)
+        data = generate_data(transaction)
+        next if data.blank?
+
+        rows += data
       end
     end
 
@@ -42,7 +45,7 @@ class ExportAddressTransactionsJob < ApplicationJob
   def generate_data(transaction)
     inputs =
       if transaction.is_cellbase
-        return [nil]
+        [nil]
       else
         cell_inputs_for_display = transaction.inputs.sort_by(&:id)
         cell_inputs_for_display.map(&:capacity)
@@ -62,7 +65,7 @@ class ExportAddressTransactionsJob < ApplicationJob
         (inputs[i].to_d / 1e8 rescue "/"),
         (outputs[i].to_d / 1e8 rescue "/"),
         transaction.transaction_fee,
-        transaction.updated_at
+        Time.at((transaction.block_timestamp / 1000).to_i).in_time_zone("UTC").strftime("%Y-%m-%d %H:%M:%S")
       ]
     end
 

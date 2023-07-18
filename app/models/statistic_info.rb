@@ -103,30 +103,16 @@ class StatisticInfo < ApplicationRecord
 
   define_logic :transaction_fee_rates do
     txs = CkbTransaction.tx_committed.
-      where("bytes > 0 and transaction_fee > 0").
+      where("bytes > 0 and transaction_fee > 0 and confirmation_time > 0").
       order("id desc").limit(10000).
-      pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time, :block_timestamp, :created_at)
-    txs.map do |id, created_at, transaction_fee, bytes, confirmation_time, block_timestamp|
-      if confirmation_time && confirmation_time >= 0
-        {
-          id: id,
-          timestamp: created_at.to_i,
-          fee_rate: (transaction_fee.to_f / bytes),
-          confirmation_time: confirmation_time < 0 ? 0 : confirmation_time
-        }
-      else
-        b = block_timestamp.to_i / 1000
-        a = created_at.to_i
-        c = b - a
-
-        CkbTransaction.where(id: id).update_all(confirmation_time: c)
-        {
-          id: id,
-          timestamp: created_at.to_i,
-          fee_rate: (transaction_fee.to_f / bytes),
-          confirmation_time: c < 0 ? 0 : c
-        }
-      end
+      pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time)
+    txs.map do |id, created_at, transaction_fee, bytes, confirmation_time|
+      {
+        id: id,
+        timestamp: created_at.to_i,
+        fee_rate: (transaction_fee.to_f / bytes),
+        confirmation_time: confirmation_time
+      }
     end
   end
 

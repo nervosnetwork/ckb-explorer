@@ -66,7 +66,8 @@ class DeployedCell < ApplicationRecord
     parse_code_dep =
       ->(cell_dep) do
         # this cell output is the contract cell, i.e. one of deployed cells of the contract
-        cell_output = CellOutput.find_by_pointer cell_dep["out_point"]["tx_hash"], cell_dep["out_point"]["index"]
+        cell_output = CellOutput.find_by tx_hash: cell_dep["out_point"]["tx_hash"],
+                                         cell_index: cell_dep["out_point"]["index"]
 
         attr = {
           contract_cell_id: cell_output.id,

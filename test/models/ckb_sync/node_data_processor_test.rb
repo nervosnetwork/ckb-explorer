@@ -151,6 +151,7 @@ module CkbSync
         assert_changes -> { tx.reload.tx_status }, from: "pending", to: "committed" do
           node_data_processor.process_block(node_block)
         end
+        assert_equal tx.reload.confirmation_time, tx.block_timestamp.to_i / 1000 - tx.created_at.to_i
       end
     end
 

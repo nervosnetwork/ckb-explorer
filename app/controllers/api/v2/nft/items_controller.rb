@@ -10,6 +10,7 @@ module Api
         end
         scope = scope.where(collection_id: @collection.id) if @collection
         scope = scope.where(collection:{standard: params[:standard]}) if params[:standard]
+        scope = scope.where(token_id: params[:token_id]) if params[:token_id]
         scope = scope.order(token_id: :asc)
         pagy, items = pagy(scope)
         items = items.map do |i|
