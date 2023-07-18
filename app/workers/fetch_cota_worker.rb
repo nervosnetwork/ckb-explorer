@@ -1,7 +1,10 @@
 class FetchCotaWorker
   include Sidekiq::Worker
-  def perform(block_number)
-    raise "COTA Sync Failed!!!" unless cota_syning?
+  def perform(block_number, check_aggregator_info=true)
+    # synchronize historical data, ignore cota aggregator info check
+    if check_aggregator_info && !cota_syning?
+      raise "COTA Sync Failed!!!"
+    end
 
     data = CotaAggregator.instance.get_transactions_by_block_number(block_number)
     if data["block_number"] < block_number
