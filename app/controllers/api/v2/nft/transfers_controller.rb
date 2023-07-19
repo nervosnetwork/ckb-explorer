@@ -84,7 +84,7 @@ module Api
                 ckb_transaction = transfer.ckb_transaction
                 row = [
                   ckb_transaction.tx_hash, ckb_transaction.block_number, ckb_transaction.block_timestamp,
-                  transfer.item.token_id, transfer.action, transfer.from.address_hash, transfer.to.address_hash,
+                  transfer.item.token_id, transfer.action, transfer.from&.address_hash, transfer.to&.address_hash,
                   ckb_transaction.transaction_fee,
                   Time.at((ckb_transaction.block_timestamp / 1000).to_i).in_time_zone("UTC").strftime("%Y-%m-%d %H:%M:%S")
                 ]
