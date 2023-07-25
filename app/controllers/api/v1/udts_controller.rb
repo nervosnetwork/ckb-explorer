@@ -33,17 +33,7 @@ module Api
 
       def download_csv
         args = params.permit(:id, :start_date, :end_date, :start_number, :end_number, udt: {})
-        data = ExportUdtTransactionsJob.perform_now(args.to_h)
-
-        file =
-          CSV.generate do |csv|
-            csv << [
-              "Txn hash", "Blockno", "UnixTimestamp", "Method",
-              "Token In", "Token In Name", "Token OUT", "Token OUT Name",
-              "Token From", "Token To", "TxnFee(CKB)", "date(UTC)"
-            ]
-            data.each { |row| csv << row }
-          end
+        file = CsvExportable::ExportUdtTransactionsJob.perform_now(args.to_h)
 
         send_data file, type: "text/csv; charset=utf-8; header=present",
                         disposition: "attachment;filename=udt_transactions.csv"

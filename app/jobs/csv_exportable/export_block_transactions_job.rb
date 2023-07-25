@@ -1,0 +1,52 @@
+# frozen_string_literal: true
+
+module CsvExportable
+  class ExportBlockTransactionsJob < BaseExporter
+    def perform(args)
+      blocks = Block.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count,
+                            :live_cell_changes, :updated_at)
+
+      if args[:start_date].present?
+        start_date = DateTime.strptime(args[:start_date], "%Y-%m-%d").to_time.to_i * 1000
+        blocks = blocks.where("timestamp >= ?", start_date)
+      end
+
+      if args[:end_date].present?
+        end_date = DateTime.strptime(args[:end_date], "%Y-%m-%d").to_time.to_i * 1000
+        blocks = blocks.where("timestamp <= ?", end_date)
+      end
+
+      blocks = blocks.where("number >= ?", args[:start_number]) if args[:start_number].present?
+      blocks = blocks.where("number <= ?", args[:end_number]) if args[:end_number].present?
+      blocks = blocks.order("number desc").limit(5000)
+
+      rows = []
+      blocks.find_in_batches(batch_size: 10, order: :desc) do |blocks|
+        blocks.each do |block|
+          row = generate_row(block)
+          next if row.blank?
+
+          rows << row
+        end
+      end
+
+      header = ["Blockno", "Transactions", "UnixTimestamp", "Reward(CKB)", "Miner", "date(UTC)"]
+
+      generate_csv(header, rows)
+    end
+
+    def generate_row(block)
+      datetime = datetime_utc(block.timestamp)
+      reward = CkbUtils.shannon_to_byte(BigDecimal(block.reward))
+
+      [
+        block.number,
+        block.ckb_transactions_count,
+        block.timestamp,
+        reward,
+        block.miner_hash,
+        datetime
+      ]
+    end
+  end
+end
