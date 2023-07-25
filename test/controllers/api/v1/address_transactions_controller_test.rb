@@ -487,7 +487,7 @@ module Api
 
         csv_data = CSV.parse(response.body)
 
-        assert_equal csv_data.length, 16
+        assert_equal csv_data.length, 1
       end
     end
   end

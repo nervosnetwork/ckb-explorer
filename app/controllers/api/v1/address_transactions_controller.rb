@@ -48,16 +48,7 @@ module Api
       def download_csv
         args = params.permit(:id, :start_date, :end_date, :start_number, :end_number, address_transaction: {}).
           merge(address_id: @address.id)
-        data = ExportAddressTransactionsJob.perform_now(args.to_h)
-
-        file =
-          CSV.generate do |csv|
-            csv << [
-              "TXn hash", "Blockno", "UnixTimestamp", "Method", "CKB In", "CKB OUT", "TxnFee(CKB)",
-              "date(UTC)"
-            ]
-            data.each { |row| csv << row }
-          end
+        file = CsvExportable::ExportAddressTransactionsJob.perform_now(args.to_h)
 
         send_data file, type: "text/csv; charset=utf-8; header=present",
                         disposition: "attachment;filename=ckb_transactions.csv"
