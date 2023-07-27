@@ -1,19 +1,19 @@
 name: Deploy to mainnet
 
-on: 
+on:
   push:
     branches:
       - master
 jobs:
   build:
-    uses: ./.github/workflows/build.yml 
+    uses: ./.github/workflows/build.yml
     secrets: inherit
   deploy-update:
     needs: build
     strategy:
       matrix:
-        workload: [ckb-explorer-api, ckb-explorer-syncer, ckb-explorer-worker]
-    uses: ./.github/workflows/update-image.yml 
+        workload: [ckb-explorer-api, ckb-explorer-poolsyncer, ckb-explorer-scheduler, ckb-explorer-blocksyncer]
+    uses: ./.github/workflows/update-image.yml
     with:
       k8s-namespace: mainnet
       k8s-workload: ${{ matrix.workload }}
