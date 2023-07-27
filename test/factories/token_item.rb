@@ -4,5 +4,6 @@ FactoryBot.define do
     name { Faker::Name.unique.name }
     icon_url {}
     status { 1 }
+    association :owner, factory: :address
   end
 end

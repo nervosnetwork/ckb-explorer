@@ -1912,7 +1912,8 @@ CREATE TABLE public.token_collections (
     cell_id integer,
     verified boolean DEFAULT false,
     type_script_id integer,
-    sn character varying
+    sn character varying,
+    h24_ckb_transactions_count bigint DEFAULT 0
 );
 
 
@@ -4608,4 +4609,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230622134109'),
 ('20230622143224'),
 ('20230622143339'),
-('20230630112234');
+('20230630112234'),
+('20230711040233');
+
+
