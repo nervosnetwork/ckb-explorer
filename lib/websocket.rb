@@ -39,12 +39,16 @@ persister =
       loop do
         data = queue.pop
 
-        ImportTransactionJob.new.perform(data["transaction"], {
-          cycles: data["cycles"].hex,
-          fee: data["fee"].hex,
-          size: data["size"].hex,
-          timestamp: data["timestamp"].hex
-        })
+        begin
+          ImportTransactionJob.new.perform(data["transaction"], {
+            cycles: data["cycles"].hex,
+            fee: data["fee"].hex,
+            size: data["size"].hex,
+            timestamp: data["timestamp"].hex
+          })
+        rescue StandardError => e
+          Rails.logger.error "Error occurred during ImportTransactionJob data: #{data}, error: #{e.message}"
+        end
       end
     end
   end
