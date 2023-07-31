@@ -1,21 +1,22 @@
 name: Deploy to testnet
 
-on: 
+on:
   push:
     branches:
       - testnet
 jobs:
   build:
-    uses: ./.github/workflows/build.yml 
+    uses: ./.github/workflows/build.yml
     secrets: inherit
   deploy-update:
     needs: build
     strategy:
       matrix:
         workload: [ckb-explorer-api, ckb-explorer-syncer, ckb-explorer-worker]
-    uses: ./.github/workflows/update-image.yml 
+    uses: ./.github/workflows/update-image.yml
     with:
       k8s-namespace: testnet
       k8s-workload: ${{ matrix.workload }}
-      image: ${{ needs.build.outputs.image }}
+      image-name: ${{ needs.build.outputs.image-name }}
+      image-tag: ${{ needs.build.outputs.image-tag }}
     secrets: inherit
