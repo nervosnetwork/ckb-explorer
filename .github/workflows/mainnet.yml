@@ -17,5 +17,6 @@ jobs:
     with:
       k8s-namespace: mainnet
       k8s-workload: ${{ matrix.workload }}
-      image: ${{ needs.build.outputs.image }}
+      image-name: ${{ needs.build.outputs.image-name }}
+      image-tag: ${{ needs.build.outputs.image-tag }}
     secrets: inherit

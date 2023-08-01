@@ -1,5 +1,5 @@
 name: Pull, build docker image and push to repository
-on: 
+on:
   workflow_call:
     secrets:
       GHCR_USERNAME:
@@ -7,14 +7,20 @@ on:
       GHCR_TOKEN:
         required: true
     outputs:
-      image:
-        description: URL for docker image with tag
-        value: ${{ jobs.build.outputs.image }}
-jobs:        
+      # Image name
+      image-name:
+        description: URL for docker image
+        value: ${{ jobs.build.outputs.image-name }}
+      # Image tag (version)
+      image-tag:
+        description: image tag(version)
+        value: ${{ jobs.build.outputs.image-tag }}
+jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      image: '${{ steps.docker_build.outputs.imageFullName }}:${{ steps.docker_build.outputs.tags }}'
+      image-name: '${{ steps.docker_build.outputs.imageFullName }}'
+      image-tag: '${{ steps.docker_build.outputs.tags }}'
     steps:
       - uses: actions/checkout@v3
         with:
