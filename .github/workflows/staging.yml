@@ -16,7 +16,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        workload: [ckb-explorer-api, ckb-explorer-syncer, ckb-explorer-worker]
+        workload: [ckb-explorer-api, ckb-explorer-poolsyncer, ckb-explorer-scheduler, ckb-explorer-blocksyncer]
     uses: ./.github/workflows/update-image.yml
     with:
       k8s-namespace: staging
