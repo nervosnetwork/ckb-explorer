@@ -1,6 +1,6 @@
 name: Deploy to staging
 
-on: 
+on:
   push:
     branches:
       - develop
@@ -10,16 +10,17 @@ on:
       - '*-rc*'
 jobs:
   build:
-    uses: ./.github/workflows/build.yml 
+    uses: ./.github/workflows/build.yml
     secrets: inherit
   deploy-update:
     needs: build
     strategy:
       matrix:
         workload: [ckb-explorer-api, ckb-explorer-syncer, ckb-explorer-worker]
-    uses: ./.github/workflows/update-image.yml 
+    uses: ./.github/workflows/update-image.yml
     with:
       k8s-namespace: staging
       k8s-workload: ${{ matrix.workload }}
-      image: ${{ needs.build.outputs.image }}
+      image-name: ${{ needs.build.outputs.image-name }}
+      image-tag: ${{ needs.build.outputs.image-tag }}
     secrets: inherit
