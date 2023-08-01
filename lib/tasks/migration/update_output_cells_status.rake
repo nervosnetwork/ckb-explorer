@@ -39,8 +39,7 @@ class UpdateCellOutputsStatus
 
     address = Address.find(udt_output.address_id)
     udt_type = udt_type(udt_output.cell_type)
-    udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id,
-                                                                                                         :created_at).first
+    udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type: udt_type).first
     amount = udt_account_amount(udt_type, udt_output.type_hash, address)
 
     if udt_account.present?
@@ -48,8 +47,7 @@ class UpdateCellOutputsStatus
     else
       puts "udt_account not: #{udt_output.id}"
 
-      udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name,
-                                                                                  :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
+      udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).take!
       nft_token_id =
         udt_type == "nrc_721_token" ? CkbUtils.parse_nrc_721_args(udt_output.type_script.args).token_id : nil
       new_udt_accounts_attribute = {
