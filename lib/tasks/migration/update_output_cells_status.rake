@@ -9,6 +9,8 @@ class UpdateCellOutputsStatus
       task update_output_cells_status: :environment do
         ApplicationRecord.transaction do
           CellOutput.pending.includes(:ckb_transaction).where(ckb_transaction: { tx_status: "committed" }).find_each do |output|
+            puts "output id: #{output.id}"
+
             output.live!
             update_udt_account(output)
             @address_ids << output.address_id
@@ -44,6 +46,8 @@ class UpdateCellOutputsStatus
     if udt_account.present?
       udt_account.update(amount: amount)
     else
+      puts "udt_account not: #{udt_output.id}"
+
       udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name,
                                                                                   :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
       nft_token_id =
