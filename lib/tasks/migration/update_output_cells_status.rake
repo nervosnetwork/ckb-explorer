@@ -8,8 +8,7 @@ class UpdateCellOutputsStatus
       desc "Usage: RAILS_ENV=production bundle exec rake migration:update_output_cells_status"
       task update_output_cells_status: :environment do
         ApplicationRecord.transaction do
-          outputs = CellOutput.pending.includes(:ckb_transaction).where(ckb_transaction: { tx_status: "committed" })
-          outputs.each do |output|
+          CellOutput.pending.includes(:ckb_transaction).where(ckb_transaction: { tx_status: "committed" }).find_each do |output|
             output.live!
             update_udt_account(output)
             @address_ids << output.address_id
@@ -17,6 +16,8 @@ class UpdateCellOutputsStatus
         end
 
         update_addresses_live_cells_count
+
+        puts "done"
       end
     end
   end
