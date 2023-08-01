@@ -1072,6 +1072,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         lock_script_id: lock_script.id,
         type_script_id: type_script&.id,
         udt_amount: udt_amount,
+        status: "live",
         created_at: Time.current,
         updated_at: Time.current
       }
