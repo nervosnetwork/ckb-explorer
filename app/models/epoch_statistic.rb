@@ -122,7 +122,7 @@ end
 #  largest_tx_hash      :binary
 #  largest_tx_bytes     :integer
 #  max_block_cycles     :bigint
-#  max_tx_cycles        :integer
+#  max_tx_cycles        :bigint
 #
 # Indexes
 #
