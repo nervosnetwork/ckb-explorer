@@ -96,7 +96,7 @@ end
 #  updated_at              :datetime         not null
 #  previous_cell_output_id :bigint
 #  from_cell_base          :boolean          default(FALSE)
-#  block_id                :decimal(30, )
+#  block_id                :bigint
 #  since                   :decimal(30, )    default(0)
 #  cell_type               :integer          default("normal")
 #  index                   :integer
@@ -105,8 +105,8 @@ end
 #
 # Indexes
 #
-#  index_cell_inputs_on_block_id                             (block_id)
-#  index_cell_inputs_on_ckb_transaction_id_and_index         (ckb_transaction_id,index) UNIQUE
-#  index_cell_inputs_on_previous_cell_output_id              (previous_cell_output_id)
-#  index_cell_inputs_on_previous_tx_hash_and_previous_index  (previous_tx_hash,previous_index)
+#  idx_cell_inputs_on_block_id                             (block_id)
+#  idx_cell_inputs_on_previous_cell_output_id              (previous_cell_output_id)
+#  idx_cell_inputs_on_previous_tx_hash_and_previous_index  (previous_tx_hash,previous_index)
+#  index_cell_inputs_on_ckb_transaction_id_and_index       (ckb_transaction_id,index) UNIQUE
 #

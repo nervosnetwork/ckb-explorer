@@ -174,7 +174,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;
+    END LOOP;    
     close c;
 end
 $$;
@@ -196,21 +196,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null
+	if old is null 
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-
+	
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP
+	   LOOP 
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id)
+			insert into account_books (ckb_transaction_id, address_id) 
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -779,10 +779,10 @@ ALTER SEQUENCE public.cell_dependencies_id_seq OWNED BY public.cell_dependencies
 
 
 --
--- Name: cell_inputs; Type: TABLE; Schema: public; Owner: -
+-- Name: cell_inputs_old; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.cell_inputs (
+CREATE TABLE public.cell_inputs_old (
     id bigint NOT NULL,
     ckb_transaction_id bigint,
     created_at timestamp without time zone NOT NULL,
@@ -814,7 +814,27 @@ CREATE SEQUENCE public.cell_inputs_id_seq
 -- Name: cell_inputs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE public.cell_inputs_id_seq OWNED BY public.cell_inputs.id;
+ALTER SEQUENCE public.cell_inputs_id_seq OWNED BY public.cell_inputs_old.id;
+
+
+--
+-- Name: cell_inputs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cell_inputs (
+    id bigint DEFAULT nextval('public.cell_inputs_id_seq'::regclass) NOT NULL,
+    ckb_transaction_id bigint,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
+    previous_cell_output_id bigint,
+    from_cell_base boolean DEFAULT false,
+    block_id bigint,
+    since numeric(30,0) DEFAULT 0.0,
+    cell_type integer DEFAULT 0,
+    index integer,
+    previous_tx_hash bytea,
+    previous_index integer
+);
 
 
 --
@@ -1243,7 +1263,7 @@ CREATE TABLE public.epoch_statistics (
     largest_tx_hash bytea,
     largest_tx_bytes integer,
     max_block_cycles bigint,
-    max_tx_cycles integer
+    max_tx_cycles bigint
 );
 
 
@@ -2401,10 +2421,10 @@ ALTER TABLE ONLY public.cell_dependencies ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
--- Name: cell_inputs id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: cell_inputs_old id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.cell_inputs ALTER COLUMN id SET DEFAULT nextval('public.cell_inputs_id_seq'::regclass);
+ALTER TABLE ONLY public.cell_inputs_old ALTER COLUMN id SET DEFAULT nextval('public.cell_inputs_id_seq'::regclass);
 
 
 --
@@ -2727,11 +2747,19 @@ ALTER TABLE ONLY public.cell_dependencies
 
 
 --
--- Name: cell_inputs cell_inputs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: cell_inputs_old cell_inputs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cell_inputs_old
+    ADD CONSTRAINT cell_inputs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: cell_inputs cell_inputs_pkey_new; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.cell_inputs
-    ADD CONSTRAINT cell_inputs_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT cell_inputs_pkey_new PRIMARY KEY (id);
 
 
 --
@@ -3294,6 +3322,27 @@ CREATE INDEX ckb_transactions_rejected_tx_hash_idx ON public.ckb_transactions_re
 
 
 --
+-- Name: idx_cell_inputs_on_block_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_cell_inputs_on_block_id ON public.cell_inputs USING btree (block_id);
+
+
+--
+-- Name: idx_cell_inputs_on_previous_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_cell_inputs_on_previous_cell_output_id ON public.cell_inputs USING btree (previous_cell_output_id);
+
+
+--
+-- Name: idx_cell_inputs_on_previous_tx_hash_and_previous_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_cell_inputs_on_previous_tx_hash_and_previous_index ON public.cell_inputs USING btree (previous_tx_hash, previous_index);
+
+
+--
 -- Name: index_account_books_on_address_id_and_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3472,7 +3521,14 @@ CREATE INDEX index_cell_dependencies_on_script_id ON public.cell_dependencies US
 -- Name: index_cell_inputs_on_block_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_inputs_on_block_id ON public.cell_inputs USING btree (block_id);
+CREATE INDEX index_cell_inputs_on_block_id ON public.cell_inputs_old USING btree (block_id);
+
+
+--
+-- Name: index_cell_inputs_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_inputs_on_ckb_transaction_id ON public.cell_inputs_old USING btree (ckb_transaction_id);
 
 
 --
@@ -3486,14 +3542,14 @@ CREATE UNIQUE INDEX index_cell_inputs_on_ckb_transaction_id_and_index ON public.
 -- Name: index_cell_inputs_on_previous_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_inputs_on_previous_cell_output_id ON public.cell_inputs USING btree (previous_cell_output_id);
+CREATE INDEX index_cell_inputs_on_previous_cell_output_id ON public.cell_inputs_old USING btree (previous_cell_output_id);
 
 
 --
 -- Name: index_cell_inputs_on_previous_tx_hash_and_previous_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_inputs_on_previous_tx_hash_and_previous_index ON public.cell_inputs USING btree (previous_tx_hash, previous_index);
+CREATE INDEX index_cell_inputs_on_previous_tx_hash_and_previous_index ON public.cell_inputs_old USING btree (previous_tx_hash, previous_index);
 
 
 --
@@ -4610,6 +4666,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230622143224'),
 ('20230622143339'),
 ('20230630112234'),
-('20230711040233');
+('20230711040233'),
+('20230802015907');
 
 
