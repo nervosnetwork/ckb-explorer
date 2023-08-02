@@ -2,22 +2,16 @@ class UpdateCellOutputsStatus
   include Rake::DSL
 
   def initialize
-    @address_ids = []
-
     namespace :migration do
       desc "Usage: RAILS_ENV=production bundle exec rake migration:update_output_cells_status"
       task update_output_cells_status: :environment do
-        ApplicationRecord.transaction do
-          CellOutput.pending.includes(:ckb_transaction).where(ckb_transaction: { tx_status: "committed" }).find_each do |output|
-            puts "output id: #{output.id}"
+        CellOutput.includes(:ckb_transaction).pending.where(ckb_transaction: { tx_status: "committed" }).find_each do |output|
+          puts "output id: #{output.id}"
 
-            output.live!
-            update_udt_account(output)
-            @address_ids << output.address_id
-          end
+          output.live!
+          update_udt_account(output)
+          update_address_live_cells_count(output.address_id)
         end
-
-        update_addresses_live_cells_count
 
         puts "done"
       end
@@ -26,12 +20,14 @@ class UpdateCellOutputsStatus
 
   private
 
-  def update_addresses_live_cells_count
-    Address.where(id: @address_ids.uniq).find_each do |address|
-      address.live_cells_count = address.cell_outputs.live.count
-      address.cal_balance!
-      address.save!
-    end
+  def update_address_live_cells_count(address_id)
+    address = Address.find_by_id address_id
+    return unless address
+
+    address.live_cells_count = address.cell_outputs.live.count
+    address.cal_balance!
+    address.save!
+    address.flush_cache
   end
 
   def update_udt_account(udt_output)
