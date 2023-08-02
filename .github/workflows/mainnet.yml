@@ -12,7 +12,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        workload: [ckb-explorer-api, ckb-explorer-poolsyncer, ckb-explorer-scheduler, ckb-explorer-blocksyncer]
+        workload: [ckb-explorer-api, ckb-explorer-poolsyncer, ckb-explorer-scheduler, ckb-explorer-blocksyncer, ckb-explorer-worker]
     uses: ./.github/workflows/update-image.yml
     with:
       k8s-namespace: mainnet
