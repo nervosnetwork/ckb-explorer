@@ -50,31 +50,29 @@ module CsvExportable
       rows = []
       max = [inputs.size, outputs.size].max
       (0..max - 1).each do |i|
-        units = capacity_units(outputs[i] || inputs[i])
-        units.each do |unit|
-          token_in = cell_capacity(inputs[i], unit)
-          token_out = cell_capacity(outputs[i], unit)
-          balance_change = token_out.to_f - token_in.to_f
-          method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
-          token_from = inputs[i].nil? ? "/" : inputs[i][:address_hash]
-          token_to = outputs[i].nil? ? "/" : outputs[i][:address_hash]
-          datetime = datetime_utc(transaction.block_timestamp)
-          fee = parse_transaction_fee(transaction.transaction_fee)
+        unit = capacity_unit(outputs[i] || inputs[i])
+        token_in = cell_capacity(inputs[i], unit)
+        token_out = cell_capacity(outputs[i], unit)
+        balance_change = token_out.to_f - token_in.to_f
+        method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
+        token_from = inputs[i].nil? ? "/" : inputs[i][:address_hash]
+        token_to = outputs[i].nil? ? "/" : outputs[i][:address_hash]
+        datetime = datetime_utc(transaction.block_timestamp)
+        fee = parse_transaction_fee(transaction.transaction_fee)
 
-          rows << [
-            transaction.tx_hash,
-            transaction.block_number,
-            transaction.block_timestamp,
-            unit,
-            method,
-            (token_in || "/"),
-            (token_out || "/"),
-            token_from,
-            token_to,
-            (unit == "CKB" ? fee : "/"),
-            datetime
-          ]
-        end
+        rows << [
+          transaction.tx_hash,
+          transaction.block_number,
+          transaction.block_timestamp,
+          unit,
+          method,
+          (token_in || "/"),
+          (token_out || "/"),
+          token_from,
+          token_to,
+          fee,
+          datetime
+        ]
       end
 
       rows
