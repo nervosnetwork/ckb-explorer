@@ -41,7 +41,7 @@ class UpdateCellOutputsStatus
     if udt_account.present?
       udt_account.update(amount: amount)
     else
-      puts "udt_account not: #{udt_output.id}"
+      puts "udt_account not found: #{udt_output.id}"
 
       udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).take!
       nft_token_id =
