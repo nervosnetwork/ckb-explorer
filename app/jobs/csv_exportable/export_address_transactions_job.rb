@@ -85,12 +85,12 @@ module CsvExportable
       capacities = Hash.new
       display_cells =
         outputs.map do |cell_output|
-          display_input = { capacity: cell_output.capacity, cell_type: cell_output.cell_type }
+          display_cell = { capacity: cell_output.capacity, cell_type: cell_output.cell_type }
           if cell_output.udt?
-            display_input.merge!(attributes_for_udt_cell(cell_output))
+            display_cell.merge!(attributes_for_udt_cell(cell_output))
           end
 
-          CkbUtils.hash_value_to_s(display_input)
+          CkbUtils.hash_value_to_s(display_cell)
         end
 
       display_cells.each do |display_cell|
