@@ -59,7 +59,7 @@ module Api
           order = "asc"
         end
 
-        records.order("#{sort} #{order}")
+        records.order("#{sort} #{order} NULLS LAST")
       end
     end
   end
