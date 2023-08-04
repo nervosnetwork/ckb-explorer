@@ -47,61 +47,58 @@ module CsvExportable
     end
 
     def generate_row(transaction, address_id)
-      inputs = simple_display_inputs(transaction, address_id)
-      outputs = simple_display_outputs(transaction, address_id)
+      inputs = transaction.inputs.where(address_id: address_id).order(id: :asc)
+      outputs = transaction.outputs.where(address_id: address_id).order(id: :asc)
+
+      input_capacities = cell_capacities(inputs)
+      output_capacities = cell_capacities(outputs)
+
       datetime = datetime_utc(transaction.block_timestamp)
+      fee = parse_transaction_fee(transaction.transaction_fee)
 
       rows = []
-      max = [inputs.size, outputs.size].max
-      (0..max - 1).each do |i|
-        units = capacity_units(outputs[i] || inputs[i])
-        units.each do |unit|
-          token_in = cell_capacity(inputs[i], unit)
-          token_out = cell_capacity(outputs[i], unit)
-          balance_change = token_out.to_f - token_in.to_f
-          method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
-          fee = parse_transaction_fee(transaction.transaction_fee)
+      (input_capacities.keys | output_capacities.keys).each do |unit|
+        token_in = input_capacities[unit]
+        token_out = output_capacities[unit]
 
-          rows << [
-            transaction.tx_hash,
-            transaction.block_number,
-            transaction.block_timestamp,
-            unit,
-            method,
-            (token_in || "/"),
-            (token_out || "/"),
-            balance_change,
-            (unit == "CKB" ? fee : "/"),
-            datetime
-          ]
-        end
+        balance_change = token_out.to_f - token_in.to_f
+        method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
+
+        rows << [
+          transaction.tx_hash,
+          transaction.block_number,
+          transaction.block_timestamp,
+          unit,
+          method,
+          (token_in || "/"),
+          (token_out || "/"),
+          balance_change,
+          (unit == "CKB" ? fee : "/"),
+          datetime
+        ]
       end
 
       rows
     end
 
-    def simple_display_inputs(transaction, address_id)
-      previous_cell_outputs = transaction.inputs.where(address_id: address_id).order(id: :asc)
-      previous_cell_outputs.map do |cell_output|
-        display_input = { capacity: cell_output.capacity }
-        if cell_output.udt?
-          display_input.merge!(attributes_for_udt_cell(cell_output))
+    def cell_capacities(outputs)
+      capacities = Hash.new
+      display_cells =
+        outputs.map do |cell_output|
+          display_cell = { capacity: cell_output.capacity, cell_type: cell_output.cell_type }
+          if cell_output.udt?
+            display_cell.merge!(attributes_for_udt_cell(cell_output))
+          end
+
+          CkbUtils.hash_value_to_s(display_cell)
         end
 
-        CkbUtils.hash_value_to_s(display_input)
+      display_cells.each do |display_cell|
+        unit = capacity_unit(display_cell)
+        capacities[unit] = capacities[unit].to_f + cell_capacity(display_cell, unit).to_f
       end
-    end
 
-    def simple_display_outputs(transaction, address_id)
-      cell_outputs = transaction.outputs.where(address_id: address_id).order(id: :asc)
-      cell_outputs.map do |cell_output|
-        display_output = { capacity: cell_output.capacity }
-        if cell_output.udt?
-          display_output.merge!(attributes_for_udt_cell(cell_output))
-        end
-
-        CkbUtils.hash_value_to_s(display_output)
-      end
+      capacities
     end
   end
 end

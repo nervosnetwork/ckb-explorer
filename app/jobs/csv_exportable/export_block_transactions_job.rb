@@ -18,16 +18,14 @@ module CsvExportable
 
       blocks = blocks.where("number >= ?", args[:start_number]) if args[:start_number].present?
       blocks = blocks.where("number <= ?", args[:end_number]) if args[:end_number].present?
-      blocks = blocks.order("number desc").limit(5000)
+      blocks = blocks.order(number: :desc).last(5000)
 
       rows = []
-      blocks.find_in_batches(batch_size: 10, order: :desc) do |blocks|
-        blocks.each do |block|
-          row = generate_row(block)
-          next if row.blank?
+      blocks.each do |block|
+        row = generate_row(block)
+        next if row.blank?
 
-          rows << row
-        end
+        rows << row
       end
 
       header = ["Blockno", "Transactions", "UnixTimestamp", "Reward(CKB)", "Miner", "date(UTC)"]
