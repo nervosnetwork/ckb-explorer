@@ -60,6 +60,7 @@ end
 #  display_name               :string
 #  uan                        :string
 #  h24_ckb_transactions_count :bigint           default(0)
+#  contact_info               :string
 #
 # Indexes
 #
