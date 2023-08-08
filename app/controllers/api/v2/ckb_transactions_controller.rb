@@ -1,39 +1,55 @@
 module Api
   module V2
-    class CkbTransactionsController < ApplicationController
+    class CkbTransactionsController < BaseController
       before_action :find_transaction, only: :details
       before_action :set_page_and_page_size, only: :details
 
       def details
         capacities = {}
-        @ckb_transaction.display_inputs.select{ |e| e[:cell_type] == 'normal' }.each {|input|
+        @ckb_transaction.display_inputs.select { |e| e[:cell_type] == "normal" }.each do |input|
           capacities[input[:address_hash]] ||= 0
           capacities[input[:address_hash]] -= input[:capacity].to_d
-        }
+        end
 
-        @ckb_transaction.display_outputs.select{ |e| e[:cell_type] == 'normal' }.each {|output|
+        @ckb_transaction.display_outputs.select { |e| e[:cell_type] == "normal" }.each do |output|
           capacities[output[:address_hash]] ||= 0
           capacities[output[:address_hash]] += output[:capacity].to_d
-        }
-        json = capacities.map { |address, value|
-          {
-            address: address,
-            transfers: [
-              {
-                asset: "CKB",
-                capacity: value,
-                token_name: "CKB",
-                entity_type: "CKB",
-                transfer_type: "ordinary_transfer"
-              }
-            ]
-          }
-        }
+        end
+        json =
+          capacities.map do |address, value|
+            {
+              address: address,
+              transfers: [
+                {
+                  asset: "CKB",
+                  capacity: value,
+                  token_name: "CKB",
+                  entity_type: "CKB",
+                  transfer_type: "ordinary_transfer"
+                }
+              ]
+            }
+          end
 
-        render json: {data: json}
+        if @ckb_transaction.tags.include?("dao")
+          json ||= []
+          json[0] ||= { address: address, transfers: [] }
+          @ckb_transaction.dao_events.find_each do |dao_event|
+            json[0][:transfers] << {
+              transfer_type: dao_event.event_type,
+              capacity: dao_event.value,
+              asset: "CKB",
+              token_name: "CKB",
+              entity_type: "CKB"
+            }
+          end
+        end
+
+        render json: { data: json }
       end
 
       private
+
       def find_transaction
         @ckb_transaction = CkbTransaction.find_by(tx_hash: params[:id])
       end
@@ -43,7 +59,7 @@ module Api
         @page_size = params[:page_size] || 10
       end
 
-      def get_transaction_content address_ids, cell_outputs
+      def get_transaction_content(address_ids, cell_outputs)
         transaction_data = []
         transfers = []
         address_ids.each do |address_id|
@@ -62,14 +78,14 @@ module Api
             elsif cell_output.cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
               transfer_type = "nft_mint"
               entity_type = "nft"
-              nft_token =  "NFT"   # token 缩写
-              nft_id =  "001"       # NFT ID
+              nft_token = "NFT"   # token 缩写
+              nft_id = "001"       # NFT ID
             end
             transfer = {
               asset: "unknown #62bc",
               capacity: cell_output.capacity.to_s,
               entity_type: entity_type,
-              transfer_type: transfer_type,
+              transfer_type: transfer_type
             }
             transfers.push(transfer)
           end
@@ -95,7 +111,7 @@ module Api
           compensation_ended_timestamp: compensation_ended_block.timestamp.to_s,
           interest: interest,
           locked_until_block_timestamp: @transaction.block.timestamp,
-          locked_until_block_number: @transaction.block.number,
+          locked_until_block_number: @transaction.block.number
         }
         return interest_data
       end
