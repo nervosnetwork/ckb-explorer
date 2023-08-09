@@ -12,7 +12,7 @@ module CkbSync
     attr_accessor :enable_cota
     # benchmark :call, :process_block, :build_block!, :build_uncle_blocks!, :build_ckb_transactions!, :build_udts!, :process_ckb_txs, :build_cells_and_locks!,
     #           :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
-    #           :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
+    #           :update_or_create_udt_accounts!, :update_udt_info, :process_dao_events!, :update_addresses_info,
     #           :cache_address_txs, :flush_inputs_outputs_caches, :generate_statistics_data
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
                   :outputs, :inputs, :outputs_data,
@@ -90,7 +90,6 @@ module CkbSync
         update_mining_info(local_block)
         update_table_records_count(local_block)
         update_or_create_udt_accounts!(local_block)
-        update_pool_tx_status(local_block)
         # maybe can be changed to asynchronous update
         update_udt_info(local_block)
         process_dao_events!(local_block)
@@ -390,12 +389,6 @@ module CkbSync
         }
       end
       Address.upsert_all(addresses_deposit_attributes) if addresses_deposit_attributes.present?
-    end
-
-    def update_pool_tx_status(local_block)
-      hashes = local_block.ckb_transactions.pluck(:tx_hash)
-
-      CkbTransaction.tx_pending.where(tx_hash: hashes).update_all(tx_status: "committed")
     end
 
     def update_udt_info(local_block)
@@ -1180,6 +1173,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       end
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
+      hashes = CkbUtils.hexes_to_bins(hashes)
       pending_ids = CkbTransaction.where(tx_hash: hashes, tx_status: :pending).pluck(:id)
       CkbTransaction.where(tx_hash: hashes).update_all tx_status: "committed"
 
