@@ -687,16 +687,18 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
           tags: tags[tx_index].to_a,
           tx_status: "committed",
           capacity_involved: input_capacities[tx_index],
-          transaction_fee: if tx_index == 0
-                             0
-                           else
-                             CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index],
+          transaction_fee:
+            if tx_index == 0
+              0
+            else
+              CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index],
                                                           output_capacities[tx_index])
-                           end,
+          end,
           created_at: tx["created_at"],
           updated_at: Time.current
         }
-        # binding.pry if attr[:transaction_fee] < 0
+
+        #binding.pry if attr[:transaction_fee] < 0
         ckb_transactions_attributes << attr
         tx_index += 1
       end
@@ -1173,7 +1175,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       end
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
-      hashes = CkbUtils.hexes_to_bins(hashes)
+      # hashes = CkbUtils.hexes_to_bins(hashes)
       pending_ids = CkbTransaction.where(tx_hash: hashes, tx_status: :pending).pluck(:id)
       CkbTransaction.where(tx_hash: hashes).update_all tx_status: "committed"
 
