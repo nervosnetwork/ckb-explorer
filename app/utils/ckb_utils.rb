@@ -529,8 +529,16 @@ class CkbUtils
   def self.hex_since(int_since_value)
     return "0x#{int_since_value.to_s(16).rjust(16, '0')}"
   end
-  
+
   def self.shannon_to_byte(shannon)
     shannon / (10**8)
+  end
+
+  def self.hexes_to_bins(hashes)
+    if hashes.kind_of?(Array) && hashes.length > 0
+      hashes.map { |h| [h[2..-1]].pack('H*') }
+    else
+      []
+    end
   end
 end

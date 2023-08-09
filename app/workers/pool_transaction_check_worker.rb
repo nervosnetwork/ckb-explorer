@@ -13,6 +13,7 @@ class PoolTransactionCheckWorker
     # Thus we can directly mark this transaction rejected without requesting to CKB Node.
     # Only request the CKB Node for reject reason after we find the transaction is rejeceted.
     CkbTransaction.tx_pending.includes(:cell_dependencies, cell_inputs: :previous_cell_output).find_each do |tx|
+      # FIXME: remove this code
       if CkbTransaction.tx_committed.exists?(tx_hash: tx.tx_hash)
         tx.destroy!
         next
