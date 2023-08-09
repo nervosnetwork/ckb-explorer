@@ -691,20 +691,8 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
             if tx_index == 0
               0
             else
-              fee = CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index],
+              CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index],
                                                           output_capacities[tx_index])
-              if fee < 0
-                Sentry.capture_message(
-                  "Needs fix value",
-                  extra: {
-                    tx_index: tx_index,
-                    tx_hash: tx.tx_hash,
-                  }
-                )
-              0
-              else
-                fee
-              end
           end,
           created_at: tx["created_at"],
           updated_at: Time.current
@@ -1187,7 +1175,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       end
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
-      hashes = CkbUtils.hexes_to_bins(hashes)
+      # hashes = CkbUtils.hexes_to_bins(hashes)
       pending_ids = CkbTransaction.where(tx_hash: hashes, tx_status: :pending).pluck(:id)
       CkbTransaction.where(tx_hash: hashes).update_all tx_status: "committed"
 
