@@ -404,6 +404,13 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal extra_data, parsed_data.extra_data
   end
 
+  test "hexes to bins" do
+    hashes = ["0x7f7d0a35a8a985ac5a504d445122f3b45564b6b2e0cd5b8b809d5f3a2c927814", "0x706fef723f0762fc363a9438bac0b03e5258711a99243ed0bebd69b025a17eed"]
+    values = CkbUtils.hexes_to_bins(hashes)
+    assert_equal values.length, 2
+    assert_equal values.first.unpack("H*"), ["7f7d0a35a8a985ac5a504d445122f3b45564b6b2e0cd5b8b809d5f3a2c927814"]
+  end
+
   private
 
   def node_data_processor
