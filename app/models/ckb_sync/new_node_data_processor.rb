@@ -687,16 +687,30 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
           tags: tags[tx_index].to_a,
           tx_status: "committed",
           capacity_involved: input_capacities[tx_index],
-          transaction_fee: if tx_index == 0
-                             0
-                           else
-                             CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index],
+          transaction_fee:
+            if tx_index == 0
+              0
+            else
+              fee = CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index],
                                                           output_capacities[tx_index])
-                           end,
+              if fee < 0
+                Sentry.capture_message(
+                  "Needs fix value",
+                  extra: {
+                    tx_index: tx_index,
+                    tx_hash: tx.tx_hash,
+                  }
+                )
+              0
+              else
+                fee
+              end
+          end,
           created_at: tx["created_at"],
           updated_at: Time.current
         }
-        binding.pry if attr[:transaction_fee] < 0
+
+        #binding.pry if attr[:transaction_fee] < 0
         ckb_transactions_attributes << attr
         tx_index += 1
       end
