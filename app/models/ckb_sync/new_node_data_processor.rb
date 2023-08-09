@@ -696,7 +696,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
           created_at: tx["created_at"],
           updated_at: Time.current
         }
-        # binding.pry if attr[:transaction_fee] < 0
+        binding.pry if attr[:transaction_fee] < 0
         ckb_transactions_attributes << attr
         tx_index += 1
       end
