@@ -28,7 +28,7 @@ module CsvExportable
       rows = []
       ckb_transactions.find_in_batches(batch_size: 1000, order: :desc) do |transactions|
         transactions.each do |transaction|
-          row = generate_row(transaction)
+          row = generate_row(transaction, udt)
           next if row.blank?
 
           rows += row
@@ -36,78 +36,67 @@ module CsvExportable
       end
 
       header = [
-        "Txn hash", "Blockno", "UnixTimestamp", "Token", "Method",
-        "Token In", "Token Out", "Token From", "Token To", "TxnFee(CKB)", "date(UTC)"
+        "Txn hash", "Blockno", "UnixTimestamp", "Method", "Token",
+        "Amount", "Token From", "date(UTC)"
       ]
 
       generate_csv(header, rows)
     end
 
-    def generate_row(transaction)
-      inputs = simple_display_inputs(transaction).compact
-      outputs = simple_display_outputs(transaction)
+    def generate_row(transaction, udt)
+      inputs = transaction.inputs.udt
+      outputs = transaction.outputs.udt
+
+      input_capacities = cell_capacities(inputs)
+      output_capacities = cell_capacities(outputs)
 
       rows = []
-      max = [inputs.size, outputs.size].max
-      (0..max - 1).each do |i|
-        units = capacity_units(outputs[i] || inputs[i])
-        units.each do |unit|
-          token_in = cell_capacity(inputs[i], unit)
-          token_out = cell_capacity(outputs[i], unit)
-          balance_change = token_out.to_f - token_in.to_f
-          method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
-          token_from = inputs[i].nil? ? "/" : inputs[i][:address_hash]
-          token_to = outputs[i].nil? ? "/" : outputs[i][:address_hash]
-          datetime = datetime_utc(transaction.block_timestamp)
-          fee = parse_transaction_fee(transaction.transaction_fee)
-
-          rows << [
-            transaction.tx_hash,
-            transaction.block_number,
-            transaction.block_timestamp,
-            unit,
-            method,
-            (token_in || "/"),
-            (token_out || "/"),
-            token_from,
-            token_to,
-            (unit == "CKB" ? fee : "/"),
-            datetime
-          ]
+      datetime = datetime_utc(transaction.block_timestamp)
+      unit =
+        if udt.published
+          udt.uan.presence || udt.symbol
+        else
+          type_hash = udt.type_hash
+          "Unknown Token ##{type_hash[-4..]}"
         end
+
+      (input_capacities.keys | output_capacities.keys).each do |address_hash|
+        token_in = input_capacities[address_hash]
+        token_out = output_capacities[address_hash]
+
+        balance_change = token_out.to_f - token_in.to_f
+        method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
+
+        rows << [
+          transaction.tx_hash,
+          transaction.block_number,
+          transaction.block_timestamp,
+          method,
+          unit,
+          balance_change.abs,
+          address_hash,
+          datetime
+        ]
       end
 
       rows
     end
 
-    def simple_display_inputs(transaction)
-      cell_inputs = transaction.cell_inputs.order(id: :asc)
-      cell_inputs.map do |cell_input|
-        previous_cell_output = cell_input.previous_cell_output
-        next unless previous_cell_output
-        next unless previous_cell_output.udt?
+    def cell_capacities(outputs)
+      capacities = Hash.new { |hash, key| hash[key] = 0.0 }
+      display_cells =
+        outputs.map do |cell_output|
+          display_cell = { capacity: cell_output.capacity, address_hash: cell_output.address_hash }
+          display_cell.merge!(attributes_for_udt_cell(cell_output))
+        end
 
-        display_input = {
-          id: previous_cell_output.id,
-          capacity: previous_cell_output.capacity,
-          address_hash: previous_cell_output.address_hash
-        }
-        display_input.merge!(attributes_for_udt_cell(previous_cell_output))
-        CkbUtils.hash_value_to_s(display_input)
+      display_cells.each do |display_cell|
+        unit = capacity_unit(display_cell)
+        address_hash = display_cell[:address_hash]
+        capacities[address_hash] += cell_capacity(display_cell, unit).to_f
       end
-    end
 
-    def simple_display_outputs(transaction)
-      cell_outputs = transaction.outputs.udt.order(id: :asc)
-      cell_outputs.map do |cell_output|
-        display_output = {
-          id: cell_output.id,
-          capacity: cell_output.capacity,
-          address_hash: cell_output.address_hash
-        }
-        display_output.merge!(attributes_for_udt_cell(cell_output))
-        CkbUtils.hash_value_to_s(display_output)
-      end
+      capacities
     end
   end
 end

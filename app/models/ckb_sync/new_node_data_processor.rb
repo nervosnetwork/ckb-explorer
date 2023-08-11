@@ -12,7 +12,7 @@ module CkbSync
     attr_accessor :enable_cota
     # benchmark :call, :process_block, :build_block!, :build_uncle_blocks!, :build_ckb_transactions!, :build_udts!, :process_ckb_txs, :build_cells_and_locks!,
     #           :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
-    #           :update_or_create_udt_accounts!, :update_pool_tx_status, :update_udt_info, :process_dao_events!, :update_addresses_info,
+    #           :update_or_create_udt_accounts!, :update_udt_info, :process_dao_events!, :update_addresses_info,
     #           :cache_address_txs, :flush_inputs_outputs_caches, :generate_statistics_data
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
                   :outputs, :inputs, :outputs_data,
@@ -90,7 +90,6 @@ module CkbSync
         update_mining_info(local_block)
         update_table_records_count(local_block)
         update_or_create_udt_accounts!(local_block)
-        update_pool_tx_status(local_block)
         # maybe can be changed to asynchronous update
         update_udt_info(local_block)
         process_dao_events!(local_block)
@@ -392,12 +391,6 @@ module CkbSync
       Address.upsert_all(addresses_deposit_attributes) if addresses_deposit_attributes.present?
     end
 
-    def update_pool_tx_status(local_block)
-      hashes = local_block.ckb_transactions.pluck(:tx_hash)
-
-      CkbTransaction.tx_pending.where(tx_hash: hashes).update_all(tx_status: "committed")
-    end
-
     def update_udt_info(local_block)
       type_hashes = []
       local_block.cell_outputs.udt.select(:id, :type_hash).each do |udt_output|
@@ -694,16 +687,18 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
           tags: tags[tx_index].to_a,
           tx_status: "committed",
           capacity_involved: input_capacities[tx_index],
-          transaction_fee: if tx_index == 0
-                             0
-                           else
-                             CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index],
+          transaction_fee:
+            if tx_index == 0
+              0
+            else
+              CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index],
                                                           output_capacities[tx_index])
-                           end,
+          end,
           created_at: tx["created_at"],
           updated_at: Time.current
         }
-        # binding.pry if attr[:transaction_fee] < 0
+
+        #binding.pry if attr[:transaction_fee] < 0
         ckb_transactions_attributes << attr
         tx_index += 1
       end
@@ -1180,14 +1175,16 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       end
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
-      pending_ids = CkbTransaction.where(tx_hash: hashes, tx_status: :pending).pluck(:id)
+      binary_hashes = CkbUtils.hexes_to_bins(hashes)
+      pending_txs = CkbTransaction.where(tx_hash: binary_hashes, tx_status: :pending).pluck(:tx_hash, :created_at)
       CkbTransaction.where(tx_hash: hashes).update_all tx_status: "committed"
 
       txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:tx_status, :tx_hash],
                                                                    returning: %w(id tx_hash block_timestamp created_at))
 
-      if pending_ids.any?
-        confirmation_time_attrs = txs.select {|tx| tx["id"].in?(pending_ids) }.map { |tx| {id: tx["id"], tx_status: :committed, confirmation_time: (tx["block_timestamp"].to_i / 1000) - tx["created_at"].to_i}}
+      if pending_txs.any?
+        hash_to_pool_times = pending_txs.to_h
+        confirmation_time_attrs = txs.select {|tx| tx["tx_hash"].tr("\\", "0").in?(hash_to_pool_times.keys) }.map { |tx| {id: tx["id"], tx_status: :committed, confirmation_time: (tx["block_timestamp"].to_i / 1000) - hash_to_pool_times[tx["tx_hash"].tr("\\", "0")].to_i}}
         CkbTransaction.upsert_all(confirmation_time_attrs, update_only: [:confirmation_time], unique_by: [:id, :tx_status])
       end
 

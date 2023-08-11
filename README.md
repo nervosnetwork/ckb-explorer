@@ -87,7 +87,10 @@ CKB Explorer Server is an open source project and your contribution is very much
 [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines about how to proceed.
 
 ## API Documentation
-Please see this [Documentation](https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html).
+
+API reference has been migrated to [CKB Explorer on ReadMe](https://ckb-explorer.readme.io/)
+
+<sub>Note: [Obsolete API documentation](https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html).</sub>
 
 ## License
 

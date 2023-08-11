@@ -16,25 +16,25 @@ module CsvExportable
     end
 
     def attributes_for_udt_cell(udt_cell)
-      udt_info = Udt.find_by(type_hash: udt_cell.type_hash, published: true)
-      CkbUtils.hash_value_to_s(
-        udt_info: {
-          symbol: udt_info&.symbol,
-          amount: udt_cell.udt_amount,
-          decimal: udt_info&.decimal,
-          uan: udt_info&.uan,
-          type_hash: udt_cell.type_hash
-        }
-      )
+      info = CkbUtils.hash_value_to_s(udt_cell.udt_info)
+
+      return { udt_info: info }
     end
 
-    def capacity_units(cell)
-      units = ["CKB"]
+    def capacity_unit(cell)
+      is_dao = cell[:cell_type].in?(%w(nervos_dao_deposit nervos_dao_withdrawing))
+      return "CKB" if is_dao
+
       if cell[:udt_info]
-        units << (cell[:udt_info][:uan].presence || cell[:udt_info][:symbol])
+        if cell[:udt_info][:published]
+          unit = (cell[:udt_info][:uan].presence || cell[:udt_info][:symbol])
+        else
+          type_hash = cell[:udt_info][:type_hash]
+          unit = "Unknown Token ##{type_hash[-4..]}"
+        end
       end
 
-      units
+      unit || "CKB"
     end
 
     def cell_capacity(cell, unit)
