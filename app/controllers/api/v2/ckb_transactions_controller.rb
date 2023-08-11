@@ -79,7 +79,7 @@ module Api
         end
 
         capacities.map do |address, value|
-          { address_hash: address, transfers: value }
+          { address: address, transfers: value }
         end
       end
 

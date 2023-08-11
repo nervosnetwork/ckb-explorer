@@ -60,9 +60,9 @@ module Api
 
         get details_api_v2_ckb_transaction_url(tx2.tx_hash)
 
-        data1 = json["data"].select { |item| item["address_hash"] == input_address1.address_hash }
+        data1 = json["data"].select { |item| item["address"] == input_address1.address_hash }
         transfers1 = data1[0]["transfers"]
-        data2 = json["data"].select { |item| item["address_hash"] == input_address2.address_hash }
+        data2 = json["data"].select { |item| item["address"] == input_address2.address_hash }
         transfers2 = data2[0]["transfers"]
 
         assert_equal 2, json["data"].size
@@ -135,9 +135,9 @@ module Api
 
         get details_api_v2_ckb_transaction_url(tx2.tx_hash)
 
-        data1 = json["data"].select { |item| item["address_hash"] == input_address1.address_hash }
+        data1 = json["data"].select { |item| item["address"] == input_address1.address_hash }
         transfers1 = data1[0]["transfers"]
-        data2 = json["data"].select { |item| item["address_hash"] == input_address2.address_hash }
+        data2 = json["data"].select { |item| item["address"] == input_address2.address_hash }
         transfers2 = data2[0]["transfers"]
 
         assert_equal 2, json["data"].size
