@@ -1,103 +1,94 @@
 module Api
   module V2
-    class CkbTransactionsController < ApplicationController
-      before_action :find_transaction, only: :details
-      before_action :set_page_and_page_size, only: :details
-
+    class CkbTransactionsController < BaseController
+      # transaction lite info
       def details
-        capacities = {}
-        @ckb_transaction.display_inputs.select{ |e| e[:cell_type] == 'normal' }.each {|input|
-          capacities[input[:address_hash]] ||= 0
-          capacities[input[:address_hash]] -= input[:capacity].to_d
-        }
+        ckb_transaction = CkbTransaction.where(tx_hash: params[:id]).order(tx_status: :desc).first
+        head :not_found and return if ckb_transaction.blank?
 
-        @ckb_transaction.display_outputs.select{ |e| e[:cell_type] == 'normal' }.each {|output|
-          capacities[output[:address_hash]] ||= 0
-          capacities[output[:address_hash]] += output[:capacity].to_d
-        }
-        json = capacities.map { |address, value|
-          {
-            address: address,
-            transfers: [
-              {
-                asset: "CKB",
-                capacity: value,
-                token_name: "CKB",
-                entity_type: "CKB",
-                transfer_type: "ordinary_transfer"
-              }
-            ]
-          }
-        }
+        expires_in 10.seconds, public: true, must_revalidate: true
 
-        render json: {data: json}
+        input_capacities = build_cell_capacities(ckb_transaction.display_inputs)
+        output_capacities = build_cell_capacities(ckb_transaction.display_outputs)
+        transfers = build_transfers(input_capacities, output_capacities)
+
+        render json: { data: transfers }
       end
 
       private
-      def find_transaction
-        @ckb_transaction = CkbTransaction.find_by(tx_hash: params[:id])
-      end
 
-      def set_page_and_page_size
-        @page = params[:page] || 1
-        @page_size = params[:page_size] || 10
-      end
+      def build_cell_capacities(outputs)
+        cell_capacities = Hash.new { |hash, key| hash[key] = {} }
+        outputs.each do |output|
+          parsed_output = JSON.parse(output.to_json, object_class: OpenStruct)
+          next if parsed_output.from_cellbase
 
-      def get_transaction_content address_ids, cell_outputs
-        transaction_data = []
-        transfers = []
-        address_ids.each do |address_id|
-          cell_outputs.where(address_id: address_id.address_id).each do |cell_output|
-            entity_type = "CKB"
-            transfer_type = "ordinary_transfer"
-            if cell_output.nervos_dao_deposit?
-              transfer_type = "nervos_dao_deposit"
-            elsif cell_output.nervos_dao_withdrawing?
-              transfer_type = "nervos_dao_withdrawing"
-              interest_data = get_nervos_dao_withdrawing_data(cell_output)
-              transfer.merge(interest_data)
-            elsif cell_output.cell_type.in?(%w(nrc_721_token nrc_721_factory))
-              entity_type = "nft"
-              transfer_type = "nft_transfer"
-            elsif cell_output.cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
-              transfer_type = "nft_mint"
-              entity_type = "nft"
-              nft_token =  "NFT"   # token 缩写
-              nft_id =  "001"       # NFT ID
-            end
-            transfer = {
-              asset: "unknown #62bc",
-              capacity: cell_output.capacity.to_s,
-              entity_type: entity_type,
-              transfer_type: transfer_type,
+          unit = token_unit(parsed_output)
+          address = parsed_output.address_hash
+          udt_info = parsed_output.udt_info
+
+          if (cell_capacity = cell_capacities[[address, unit]]).blank?
+            capacity = unit == "CKB" ? parsed_output.capacity.to_f : 0.0
+            cell_capacity = {
+              capacity: capacity,
+              cell_type: parsed_output.cell_type,
+              udt_info: {
+                symbol: udt_info&.symbol,
+                amount: udt_info&.amount.to_f,
+                decimal: udt_info&.decimal,
+                type_hash: udt_info&.type_hash,
+                published: !!udt_info&.published,
+                display_name: udt_info&.display_name,
+                uan: udt_info&.uan
+              }
             }
-            transfers.push(transfer)
+          elsif unit == "CKB"
+            cell_capacity[:capacity] += parsed_output.capacity.to_f
+          else
+            cell_capacity[:udt_info][:amount] += udt_info.amount.to_f
           end
-          address = Address.find address_id.address_id
-          data = {
-            address: address.address_hash,
-            transfers: transfers
-          }
-          transaction_data.push(data)
+
+          cell_capacities[[address, unit]] = cell_capacity
         end
-        return transaction_data
+
+        cell_capacities
       end
 
-      def get_nervos_dao_withdrawing_data
-        nervos_dao_deposit_cell = @transaction.cell_inputs.order(:id)[cell_output.cell_index].previous_cell_output
-        compensation_started_block = Block.find(nervos_dao_deposit_cell.block.id)
-        compensation_ended_block = Block.select(:number, :timestamp).find(@transaction.block_id)
-        interest = CkbUtils.dao_interest(cell_output)
-        interest_data = {
-          compensation_started_block_number: compensation_started_block.number.to_s,
-          compensation_ended_block_number: compensation_ended_block.number.to_s,
-          compensation_started_timestamp: compensation_started_block.timestamp.to_s,
-          compensation_ended_timestamp: compensation_ended_block.timestamp.to_s,
-          interest: interest,
-          locked_until_block_timestamp: @transaction.block.timestamp,
-          locked_until_block_number: @transaction.block.number,
-        }
-        return interest_data
+      def build_transfers(input_capacities, output_capacities)
+        capacities = Hash.new { |hash, key| hash[key] = [] }
+        keys = input_capacities.keys | output_capacities.keys
+        keys.each do |key|
+          address_hash, unit = key
+          input = input_capacities[key]
+          output = output_capacities[key]
+
+          # There may be keys in both input_capacities and output_capacities that do not exist
+          cell_type = output[:cell_type] || input[:cell_type]
+          capacity_change = output[:capacity].to_f - input[:capacity].to_f
+
+          transfer = { capacity: capacity_change, cell_type: cell_type }
+          if unit != "CKB"
+            output_amount = output[:udt_info] ? output[:udt_info][:amount] : 0.0
+            input_amount = input[:udt_info] ? input[:udt_info][:amount] : 0.0
+            amount_change = output_amount - input_amount
+            transfer[:udt_info] = output[:udt_info] || input[:udt_info]
+            transfer[:udt_info][:amount] = amount_change
+          end
+
+          capacities[address_hash] << CkbUtils.hash_value_to_s(transfer)
+        end
+
+        capacities.map do |address, value|
+          { address_hash: address, transfers: value }
+        end
+      end
+
+      def token_unit(cell)
+        if (udt_info = cell.udt_info).present?
+          udt_info.type_hash
+        else
+          "CKB"
+        end
       end
     end
   end
