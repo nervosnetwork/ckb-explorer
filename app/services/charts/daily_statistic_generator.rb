@@ -17,6 +17,8 @@ module Charts
       daily_statistic.reset!(updated_attrs)
 
       daily_statistic
+    rescue Exception => e
+      NewRelic::Agent.notice_error(e.message)
     end
 
     private
