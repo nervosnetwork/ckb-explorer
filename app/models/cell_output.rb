@@ -81,7 +81,7 @@ class CellOutput < ApplicationRecord
     if new_data
       d = CKB::Utils.hex_to_bin(new_data)
       if d.size > 0
-        datum = cell_datum || build_cell_datum
+        datum = cell_datum || build_cell_datum(cell_output_id: id)
         datum.data = d
         datum.save
       end
