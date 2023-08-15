@@ -48,13 +48,6 @@ persister =
           })
         rescue StandardError => e
           Rails.logger.error "Error occurred during ImportTransactionJob data: #{data}, error: #{e.message}"
-          Sentry.capture_message(
-            "Import pending transaction",
-            extra: {
-              tx_hash: data["transaction"]["hash"],
-              timestamp: data["timestamp"].hex
-            }
-          )
         end
       end
     end
