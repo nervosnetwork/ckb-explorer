@@ -406,6 +406,10 @@ class CkbUtils
       "cota_registry"
     when CkbSync::Api.instance.cota_regular_code_hash
       "cota_regular"
+    when CkbSync::Api.instance.spore_cluster_code_hash
+      "spore_cluster"
+    when *CkbSync::Api.instance.spore_cell_code_hash
+      "spore_cell"
     else
       if is_nrc_721_token_cell?(output_data)
         "nrc_721_token"
@@ -535,8 +539,8 @@ class CkbUtils
   end
 
   def self.hexes_to_bins(hashes)
-    if hashes.kind_of?(Array) && hashes.length > 0
-      hashes.map { |h| [h[2..-1]].pack('H*') }
+    if hashes.is_a?(Array) && hashes.length > 0
+      hashes.map { |h| [h[2..-1]].pack("H*") }
     else
       []
     end
