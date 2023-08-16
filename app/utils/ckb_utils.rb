@@ -545,4 +545,28 @@ class CkbUtils
       []
     end
   end
+
+  def self.parse_spore_cluster_data(hex_data)
+    data = hex_data.slice(2..-1)
+    name_offset = [data.slice(8, 8)].pack("H*").unpack1("v") * 2
+    description_offset = [data.slice(16, 8)].pack("H*").unpack1("v") * 2
+    name = [data.slice(name_offset + 8..description_offset - 1)].pack("H*")
+    description = [data.slice(description_offset + 8..-1)].pack("H*")
+    { name: name, description: description }
+  rescue => _e
+    { name: nil, description: nil }
+  end
+
+  def self.parse_spore_cell_data(hex_data)
+    data = hex_data.slice(2..-1)
+    content_type_offset = [data.slice(8, 8)].pack("H*").unpack1("v") * 2
+    content_offset = [data.slice(16, 8)].pack("H*").unpack1("v") * 2
+    cluster_id_offset = [data.slice(24, 8)].pack("H*").unpack1("v") * 2
+    content_type = [data.slice(content_type_offset + 8..content_offset - 1)].pack("H*")
+    content = data.slice(content_offset + 8..cluster_id_offset - 1)
+    cluster_id = data.slice(cluster_id_offset + 8..-1)
+    { content_type: content_type, content: content, cluster_id: cluster_id.nil? ? nil : "0x#{cluster_id}" }
+  rescue => _e
+    { content_type: nil, content: nil, cluster_id: nil }
+  end
 end
