@@ -408,7 +408,7 @@ class CkbUtils
       "cota_regular"
     when CkbSync::Api.instance.spore_cluster_code_hash
       "spore_cluster"
-    when *CkbSync::Api.instance.spore_cell_code_hash
+    when *CkbSync::Api.instance.spore_cell_code_hashes
       "spore_cell"
     else
       if is_nrc_721_token_cell?(output_data)

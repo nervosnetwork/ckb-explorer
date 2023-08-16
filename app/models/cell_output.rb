@@ -14,7 +14,9 @@ class CellOutput < ApplicationRecord
     nrc_721_token: 7,
     nrc_721_factory: 8,
     cota_registry: 9,
-    cota_regular: 10
+    cota_regular: 10,
+    spore_cluster: 11,
+    spore_cell: 12
   }
 
   belongs_to :ckb_transaction
