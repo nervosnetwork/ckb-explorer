@@ -98,13 +98,17 @@ class ImportTransactionJob < ApplicationJob
       )
       cell.lock_script = lock
       cell.type_script = t
-      cell.data = output_data
       cell.update!(
         address_id: lock.address_id,
         capacity: output.capacity,
         occupied_capacity: cell.calculate_min_capacity,
         status: "pending"
       )
+      puts "output cell created tx_hash: #{tx_hash}, index: #{index}, cell_id: #{cell.id}"
+      # after the cell is created, create a datum
+      if output_data.present? && output_data != "0x"
+        (cell.cell_datum || cell.build_cell_datum).update(data: [output_data[2..]].pack("H*"))
+      end
 
       process_output cell
       process_deployed_cell(cell.lock_script)
