@@ -57,7 +57,7 @@ class DeployedCell < ApplicationRecord
     by_type_hash = {}
     by_data_hash = {}
 
-    # intialize cell dependencies records
+    # initialize cell dependencies records
     # the `cell_deps` field in ckb transactions stores the contract cell (referred by out point,
     # which contains the compiled byte code of contract) the transaction should refer.
     # the submitter of the transaction is responsible for including all the contract cells
