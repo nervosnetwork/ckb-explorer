@@ -24,14 +24,19 @@ module CsvExportable
         tx_ids = tx_ids.where("ckb_transactions.block_number <= ?", args[:end_number])
       end
 
-      ckb_transactions = CkbTransaction.includes(:inputs, :outputs).
-        select(:id, :tx_hash, :transaction_fee, :block_id, :block_number, :block_timestamp, :updated_at).
-        where(id: tx_ids.pluck(:ckb_transaction_id))
+      ckb_transactions = CkbTransaction.where(id: tx_ids.pluck(:ckb_transaction_id))
 
       rows = []
-      ckb_transactions.find_in_batches(batch_size: 1000, order: :desc) do |transactions|
+      ckb_transactions.find_in_batches(batch_size: 500, order: :desc) do |transactions|
+        tx_ids = transactions.pluck(:id)
+        inputs = CellOutput.where(consumed_by_id: tx_ids, address_id: args[:address_id])
+        outputs = CellOutput.where(ckb_transaction_id: tx_ids, address_id: args[:address_id])
+
         transactions.each do |transaction|
-          row = generate_row(transaction, args[:address_id])
+          tx_inputs = inputs.select { |input| input.consumed_by_id == transaction.id }.sort_by(&:id)
+          tx_outputs = outputs.select { |output| output.ckb_transaction_id == transaction.id }.sort_by(&:id)
+
+          row = generate_row(transaction, tx_inputs, tx_outputs)
           next if row.blank?
 
           rows += row
@@ -46,10 +51,7 @@ module CsvExportable
       generate_csv(header, rows)
     end
 
-    def generate_row(transaction, address_id)
-      inputs = transaction.inputs.where(address_id: address_id).order(id: :asc)
-      outputs = transaction.outputs.where(address_id: address_id).order(id: :asc)
-
+    def generate_row(transaction, inputs, outputs)
       input_capacities = cell_capacities(inputs)
       output_capacities = cell_capacities(outputs)
 
@@ -57,12 +59,14 @@ module CsvExportable
       fee = parse_transaction_fee(transaction.transaction_fee)
 
       rows = []
-      (input_capacities.keys | output_capacities.keys).each do |unit|
+      units = input_capacities.keys | output_capacities.keys
+      units.each do |unit|
         token_in = input_capacities[unit]
         token_out = output_capacities[unit]
 
         balance_change = token_out.to_f - token_in.to_f
         method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
+        display_fee = units.length == 1 || (units.length > 1 && unit == "CKB")
 
         rows << [
           transaction.tx_hash,
@@ -73,7 +77,7 @@ module CsvExportable
           (token_in || "/"),
           (token_out || "/"),
           balance_change,
-          (unit == "CKB" ? fee : "/"),
+          (display_fee ? fee : "/"),
           datetime
         ]
       end
