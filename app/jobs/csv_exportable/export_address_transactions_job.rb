@@ -57,12 +57,14 @@ module CsvExportable
       fee = parse_transaction_fee(transaction.transaction_fee)
 
       rows = []
-      (input_capacities.keys | output_capacities.keys).each do |unit|
+      units = input_capacities.keys | output_capacities.keys
+      units.each do |unit|
         token_in = input_capacities[unit]
         token_out = output_capacities[unit]
 
         balance_change = token_out.to_f - token_in.to_f
         method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
+        display_fee = units.length == 1 || (units.length > 1 && unit == "CKB")
 
         rows << [
           transaction.tx_hash,
@@ -73,7 +75,7 @@ module CsvExportable
           (token_in || "/"),
           (token_out || "/"),
           balance_change,
-          (unit == "CKB" ? fee : "/"),
+          (display_fee ? fee : "/"),
           datetime
         ]
       end
