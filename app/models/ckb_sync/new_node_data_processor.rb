@@ -635,7 +635,7 @@ module CkbSync
             end
             if cell_type == "spore_cell"
               parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[tx_index][index])
-              if parsed_spore_cell[:cluster_id].nil?
+              if parsed_spore_cell[:cluster_id].present?
                 spore_cluster_type = TypeScript.where(code_hash: CkbSync::Api.instance.spore_cluster_code_hash,
                                                       args: parsed_spore_cell[:cluster_id]).first
                 if spore_cluster_type.present?
@@ -643,13 +643,13 @@ module CkbSync
                   parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
                   coll = TokenCollection.find_or_create_by(
                     standard: "spore_nft",
-                    name: parsed_cluster_data.name,
-                    description: parsed_cluster_data.description,
+                    name: parsed_cluster_data[:name],
+                    description: parsed_cluster_data[:description],
                     cell_id: spore_cluster_cell.id,
                     creator_id: spore_cluster_cell.address_id
                   )
 
-                  nft_token_attr[:full_name] = parsed_class_data.name
+                  nft_token_attr[:full_name] = parsed_class_data[:name]
                   nft_token_attr[:published] = true
                 end
               end
