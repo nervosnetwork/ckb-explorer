@@ -1,4 +1,3 @@
-require "csv"
 module Api
   module V2
     module NFT
@@ -29,6 +28,7 @@ module Api
           scope = scope.where(from: from) if from
           scope = scope.where(to: to) if to
           scope = scope.where(action: params[:transfer_action]) if params[:transfer_action]
+          scope = scope.includes(:ckb_transaction).where(ckb_transaction: { tx_hash: params[:tx_hash] }) if params[:tx_hash]
           scope = scope.order(transaction_id: :desc)
           pagy, token_transfers = pagy(scope)
 
