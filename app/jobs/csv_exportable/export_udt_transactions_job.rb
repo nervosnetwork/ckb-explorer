@@ -65,7 +65,7 @@ module CsvExportable
         token_out = output_capacities[address_hash]
 
         balance_change = token_out.to_f - token_in.to_f
-        method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
+        method = balance_change.negative? ? "PAYMENT SENT" : "PAYMENT RECEIVED"
 
         rows << [
           transaction.tx_hash,
