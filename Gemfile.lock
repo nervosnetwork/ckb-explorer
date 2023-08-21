@@ -1,14 +1,4 @@
 GIT
-  remote: https://github.com/ShiningRay/ckb-sdk-ruby.git
-  revision: abf9f2f43eead30b85addfd00eda6e0903c1b3de
-  branch: move_to_-rbsecp256k1
-  specs:
-    ckb-sdk-ruby (0.103.0)
-      net-http-persistent (~> 4.0.1)
-      rbnacl (~> 7.1.1)
-      rbsecp256k1 (~> 5.1.1)
-
-GIT
   remote: https://github.com/dougmrqs/sidekiq-statistic.git
   revision: 590a190fcc8020b4fa05f400d51f6980514f25dd
   branch: fix-problem-with-sidekiq-7
@@ -16,6 +6,15 @@ GIT
     sidekiq-statistic (1.5.1)
       sidekiq (>= 5.0)
       tilt (~> 2.0)
+
+GIT
+  remote: https://github.com/nervosnetwork/ckb-sdk-ruby.git
+  revision: 1790c72fb886bda3e30936a73bc3d1cbcee6c91f
+  specs:
+    ckb-sdk-ruby (0.103.0)
+      net-http-persistent (~> 4.0.1)
+      rbnacl (~> 7.1.1)
+      rbsecp256k1 (~> 5.1.1)
 
 GEM
   remote: https://rubygems.org/
@@ -284,7 +283,7 @@ GEM
     mocha (2.0.2)
       ruby2_keywords (>= 0.0.5)
     msgpack (1.6.0)
-    net-http-persistent (4.0.1)
+    net-http-persistent (4.0.2)
       connection_pool (~> 2.2)
     net-imap (0.3.1)
       net-protocol
@@ -310,7 +309,7 @@ GEM
     parser (3.2.2.0)
       ast (~> 2.4.1)
     pg (1.4.5)
-    pkg-config (1.5.1)
+    pkg-config (1.5.2)
     protocol-hpack (1.4.2)
     protocol-http (0.24.0)
     protocol-http1 (0.14.6)
