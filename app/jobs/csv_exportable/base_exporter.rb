@@ -1,3 +1,5 @@
+require "csv"
+
 module CsvExportable
   class BaseExporter < ApplicationJob
     def perform(*)

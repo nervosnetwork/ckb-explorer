@@ -35,13 +35,11 @@ module Api
       end
 
       test "should get download_csv, by date" do
-
-        valid_get download_csv_api_v2_nft_transfers_url(collection_id: @token_collection.sn, start_date: 1.day.ago.strftime("%Y-%m-%d"))
+        valid_get download_csv_api_v2_nft_transfers_url(collection_id: @token_collection.sn, start_date: 1.day.ago.to_i * 1000)
         assert_response :success
       end
 
       test "should get download_csv, by block_number" do
-
         valid_get download_csv_api_v2_nft_transfers_url(collection_id: @token_collection.sn, start_number: 8, end_number: 12)
         assert_response :success
       end

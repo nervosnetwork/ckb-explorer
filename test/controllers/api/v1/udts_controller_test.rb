@@ -409,9 +409,8 @@ module Api
 
       test "should get download_csv" do
         udt = create(:udt, :with_transactions, published: true)
-
-        valid_get download_csv_api_v1_udts_url(id: udt.type_hash, start_date: Time.now.strftime("%Y-%m-%d"),
-                                               end_date: Time.now.strftime("%Y-%m-%d"))
+        valid_get download_csv_api_v1_udts_url(id: udt.type_hash, start_date: Time.now.to_i * 1000,
+                                               end_date: Time.now.to_i * 1000)
 
         assert_response :success
       end

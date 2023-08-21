@@ -481,8 +481,8 @@ module Api
                                                                     transaction_fee: 1000)
         valid_get download_csv_api_v1_address_transactions_url(
           id: address.address_hash,
-          start_date: "2020-01-01",
-          end_date: Date.today.to_s
+          start_date: "2020-01-01".to_time.to_i * 1000,
+          end_date: Date.today.to_time.to_i * 1000
         )
 
         csv_data = CSV.parse(response.body)
