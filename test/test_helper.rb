@@ -448,6 +448,13 @@ module RequestHelpers
     params[:headers] = { "Content-Type": "application/vnd.api+json", "Accept": "application/vnd.api+json" }
     post uri, as: :json, **params
   end
+
+  def valid_put(uri, **params)
+    params[:params] ||= {}
+    params[:headers] = { "Content-Type": "application/vnd.api+json", "Accept": "application/vnd.api+json" }
+    put uri, as: :json, **params
+  end
+
 end
 
 module ActiveSupport

@@ -184,6 +184,13 @@ module Api
           super code: 1029, status: 404, title: "Script not found", detail: "Script not found", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
         end
       end
+
+      class UdtInfoInvalidError < Error
+        def initialize(detail)
+          super code: 1030, status: 400, title: "UDT info parameters invalid", detail: detail, href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
+
     end
   end
 end
