@@ -7,12 +7,12 @@ module CsvExportable
                             :live_cell_changes, :updated_at)
 
       if args[:start_date].present?
-        start_date = DateTime.strptime(args[:start_date], "%Y-%m-%d").to_time.to_i * 1000
+        start_date = BigDecimal(args[:start_date])
         blocks = blocks.where("timestamp >= ?", start_date)
       end
 
       if args[:end_date].present?
-        end_date = DateTime.strptime(args[:end_date], "%Y-%m-%d").to_time.to_i * 1000
+        end_date = BigDecimal(args[:end_date])
         blocks = blocks.where("timestamp <= ?", end_date)
       end
 
