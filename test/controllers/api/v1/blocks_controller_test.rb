@@ -304,7 +304,7 @@ module Api
 
         block = create :block, timestamp: Time.now.to_i * 1000, miner_hash: 'ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwau7qpcpealv6xf3a37pdcq6ajhwuyaxgs5g955'
 
-        valid_get download_csv_api_v1_blocks_url(start_date: 1.day.ago.strftime("%Y-%m-%d"))
+        valid_get download_csv_api_v1_blocks_url(start_date: 1.day.ago.to_i * 1000)
         assert_response :success
       end
 

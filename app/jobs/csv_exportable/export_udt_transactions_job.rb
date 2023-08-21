@@ -5,12 +5,12 @@ module CsvExportable
       ckb_transactions = udt.ckb_transactions
 
       if args[:start_date].present?
-        start_date = DateTime.strptime(args[:start_date], "%Y-%m-%d").to_time.to_i * 1000
+        start_date = BigDecimal(args[:start_date])
         ckb_transactions = ckb_transactions.where("block_timestamp >= ?", start_date)
       end
 
       if args[:end_date].present?
-        end_date = DateTime.strptime(args[:end_date], "%Y-%m-%d").to_time.to_i * 1000
+        end_date = BigDecimal(args[:end_date])
         ckb_transactions = ckb_transactions.where("block_timestamp <= ?", end_date)
       end
 
@@ -65,7 +65,7 @@ module CsvExportable
         token_out = output_capacities[address_hash]
 
         balance_change = token_out.to_f - token_in.to_f
-        method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
+        method = balance_change.negative? ? "PAYMENT SENT" : "PAYMENT RECEIVED"
 
         rows << [
           transaction.tx_hash,
