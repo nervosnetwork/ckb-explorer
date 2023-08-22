@@ -76,6 +76,8 @@ class TokenTransferDetectWorker
            type_script.args[50..-1].hex
          when "nrc_721_token"
            type_script.args[132..-1].hex
+         when "spore_cell"
+           type_script.args.hex
       end
     item.save!
     item
