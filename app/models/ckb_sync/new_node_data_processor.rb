@@ -649,7 +649,7 @@ module CkbSync
                     creator_id: spore_cluster_cell.address_id
                   )
 
-                  nft_token_attr[:full_name] = parsed_class_data[:name]
+                  nft_token_attr[:full_name] = parsed_cluster_data[:name]
                   nft_token_attr[:published] = true
                 end
               end
