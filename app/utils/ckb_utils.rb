@@ -381,7 +381,10 @@ class CkbUtils
       CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
       CkbSync::Api.instance.token_script_code_hash, CkbSync::Api.instance.cota_registry_code_hash,
       CkbSync::Api.instance.cota_regular_code_hash
-    ].include?(type_script&.code_hash) && type_script&.hash_type == "type") || is_nrc_721_token_cell?(output_data) || is_nrc_721_factory_cell?(output_data)
+    ].include?(type_script&.code_hash) && type_script&.hash_type == "type") ||
+     is_nrc_721_token_cell?(output_data) ||
+     is_nrc_721_factory_cell?(output_data) ||
+     [CkbSync::Api.instance.spore_cluster_code_hash, *CkbSync::Api.instance.spore_cell_code_hashes].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
 
     case type_script&.code_hash
     when Settings.dao_code_hash, Settings.dao_type_hash
@@ -406,6 +409,10 @@ class CkbUtils
       "cota_registry"
     when CkbSync::Api.instance.cota_regular_code_hash
       "cota_regular"
+    when CkbSync::Api.instance.spore_cluster_code_hash
+      "spore_cluster"
+    when *CkbSync::Api.instance.spore_cell_code_hashes
+      "spore_cell"
     else
       if is_nrc_721_token_cell?(output_data)
         "nrc_721_token"
@@ -535,10 +542,34 @@ class CkbUtils
   end
 
   def self.hexes_to_bins(hashes)
-    if hashes.kind_of?(Array) && hashes.length > 0
-      hashes.map { |h| [h[2..-1]].pack('H*') }
+    if hashes.is_a?(Array) && hashes.length > 0
+      hashes.map { |h| [h[2..-1]].pack("H*") }
     else
       []
     end
+  end
+
+  def self.parse_spore_cluster_data(hex_data)
+    data = hex_data.slice(2..-1)
+    name_offset = [data.slice(8, 8)].pack("H*").unpack1("v") * 2
+    description_offset = [data.slice(16, 8)].pack("H*").unpack1("v") * 2
+    name = [data.slice(name_offset + 8..description_offset - 1)].pack("H*")
+    description = [data.slice(description_offset + 8..-1)].pack("H*")
+    { name: name, description: description }
+  rescue => _e
+    { name: nil, description: nil }
+  end
+
+  def self.parse_spore_cell_data(hex_data)
+    data = hex_data.slice(2..-1)
+    content_type_offset = [data.slice(8, 8)].pack("H*").unpack1("v") * 2
+    content_offset = [data.slice(16, 8)].pack("H*").unpack1("v") * 2
+    cluster_id_offset = [data.slice(24, 8)].pack("H*").unpack1("v") * 2
+    content_type = [data.slice(content_type_offset + 8..content_offset - 1)].pack("H*")
+    content = data.slice(content_offset + 8..cluster_id_offset - 1)
+    cluster_id = data.slice(cluster_id_offset + 8..-1)
+    { content_type: content_type, content: content, cluster_id: cluster_id.nil? ? nil : "0x#{cluster_id}" }
+  rescue => _e
+    { content_type: nil, content: nil, cluster_id: nil }
   end
 end

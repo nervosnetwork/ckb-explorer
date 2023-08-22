@@ -11,7 +11,7 @@ class TokenTransferDetectWorker
       source_collections = []
 
       tx.cell_inputs.each do |input|
-        if input.cell_type.in?(%w(m_nft_token nrc_721_token))
+        if input.cell_type.in?(%w(m_nft_token nrc_721_token spore_cell))
           cell = input.previous_cell_output
           type_script = input.type_script
 
@@ -20,7 +20,7 @@ class TokenTransferDetectWorker
       end
 
       tx.cell_outputs.each do |output|
-        if output.cell_type.in?(%w(m_nft_token nrc_721_token))
+        if output.cell_type.in?(%w(m_nft_token nrc_721_token spore_cell))
           type_script = output.type_script
           item = find_or_create_item(output, type_script)
           attrs = {
@@ -87,12 +87,15 @@ class TokenTransferDetectWorker
       find_or_create_nrc_721_collection(cell, type_script)
     when "m_nft_token"
       find_or_create_m_nft_collection(cell, type_script)
+    when "spore_cell"
+      find_or_create_spore_nft_collection(cell, type_script)
     end
   end
 
   def find_or_create_nrc_721_collection(cell, type_script)
     factory_cell = CkbUtils.parse_nrc_721_args(type_script.args)
-    nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash, hash_type: factory_cell.hash_type, args: factory_cell.args)
+    nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash,
+                                                            hash_type: factory_cell.hash_type, args: factory_cell.args)
 
     if nrc_721_factory_cell.name.blank? || nrc_721_factory_cell.symbol.blank?
       nrc_721_factory_cell.parse_data
@@ -131,6 +134,29 @@ class TokenTransferDetectWorker
       coll.icon_url = parsed_class_data.renderer
       coll.name = parsed_class_data.name
       coll.description = parsed_class_data.description
+      coll.save
+    end
+    coll
+  end
+
+  def find_or_create_spore_nft_collection(cell, type_script)
+    spore_cell = type_script.cell_outputs.last
+    parsed_spore_cell = CkbUtils.parse_spore_cell_data(spore_cell.data)
+    spore_cluster_type = TypeScript.create_with(hash_type: "data1").find_or_create_by!(
+      code_hash: CkbSync::Api.instance.spore_cluster_code_hash,
+      args: parsed_spore_cell[:cluster_id]
+    )
+    coll = TokenCollection.find_or_create_by(
+      standard: "spore_nft",
+      type_script_id: spore_cluster_type.id,
+      sn: spore_cluster_type.script_hash
+    )
+    spore_cluster_cell = spore_cluster_type.cell_outputs.last
+    if spore_cluster_cell.present? && coll.cell_id.blank?
+      parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
+      coll.cell_id = spore_cluster_cell.id
+      coll.name = parsed_cluster_data.name
+      coll.description = parsed_cluster_data.description
       coll.save
     end
     coll

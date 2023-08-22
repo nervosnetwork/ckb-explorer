@@ -20,6 +20,11 @@ mainnet_cota_regular_code_hash: "0x1122a4fb54697cf2e6e3a96c9d80fd398a936559b9095
 nrc_721_factory_output_data_header: "0x24ff5a9ab8c38d195ce2b4ea75ca8987"
 nrc_721_token_output_data_header: "0x0ddeff3e8ee03cbf6a2c6920d05c381e"
 
+# spore nft code hash
+spore_cluster_code_hash: "0x598d793defef36e2eeba54a9b45130e4ca92822e1d193671f490950c3b856080"
+spore_cell1_code_hash: "0xc1a7e2d2bd7e0fa90e2f1121782aa9f71204d1fee3a634bf3b12c61a69ee574f"
+spore_cell2_code_hash: "0xbbad126377d45f90a8ee120da988a2d7332c78ba8fd679aab478a19d6c133494"
+
 # hash length of an attribute(especially which comes from bytea column),
 # e.g. Block.uncle_block_hashes: "0x587f354162afd133b4a4f7a4b621d11e043c3c08b0af2801f1686b5403b14953", which has a length of 66 ( 2 + 64)
 default_hash_length: "64"

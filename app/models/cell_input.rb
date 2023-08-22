@@ -9,7 +9,8 @@ class CellInput < ApplicationRecord
 
   enum cell_type: {
     normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4,
-    m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9, cota_regular: 10 }
+    m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9,
+    cota_regular: 10, spore_cluster: 11, spore_cell: 12 }
   def output
     previous_cell_output
   end
