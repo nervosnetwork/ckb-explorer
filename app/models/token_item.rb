@@ -26,10 +26,12 @@ class TokenItem < ApplicationRecord
       id: id,
       token_id: token_id.to_s,
       owner: owner.address_hash,
+      standard: collection.standard,
       cell: {
         status: cell&.status,
         tx_hash: cell&.tx_hash,
-        cell_index: cell&.cell_index
+        cell_index: cell&.cell_index,
+        data: cell&.data
       },
       type_script: type_script&.as_json,
       name: name,
