@@ -157,8 +157,8 @@ class TokenTransferDetectWorker
     if spore_cluster_cell.present? && coll.cell_id.blank?
       parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
       coll.cell_id = spore_cluster_cell.id
-      coll.name = parsed_cluster_data.name
-      coll.description = parsed_cluster_data.description
+      coll.name = parsed_cluster_data[:name]
+      coll.description = parsed_cluster_data[:description]
       coll.save
     end
     coll
