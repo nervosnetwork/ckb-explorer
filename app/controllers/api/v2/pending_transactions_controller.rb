@@ -4,7 +4,8 @@ module Api
       before_action :set_page_and_page_size
 
       def index
-        pending_transactions = CkbTransaction.tx_pending
+        pending_transactions = CkbTransaction.tx_pending.includes(:cell_inputs).
+          where.not(cell_inputs: { previous_cell_output_id: nil, from_cell_base: false })
 
         if stale?(pending_transactions)
           expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
