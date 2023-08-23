@@ -94,7 +94,7 @@ module CsvExportable
         token_in: (CkbUtils.shannon_to_byte(capacity_in) rescue "/"),
         token_out: (CkbUtils.shannon_to_byte(capacity_out) rescue "/"),
         balance_diff: CkbUtils.shannon_to_byte(capacity_diff),
-        method:method
+        method: method
       }
     end
 
@@ -106,19 +106,19 @@ module CsvExportable
       amount_diff = (amount_out.to_d - amount_in.to_d).abs
 
       decimal = input&.dig(:udt_info, :decimal) || output&.dig(:udt_info, :decimal)
-      unless decimal
-        {
-          token_in: amount_in.nil? ? "/" : "#{amount_in} (raw)",
-          token_out: amount_out.nil? ? "/" : "#{amount_out} (raw)",
-          balance_diff: "#{amount_diff} (raw)",
-          method:method
-        }
-      else
+      if decimal
         {
           token_in: amount_in.nil? ? "/" : parse_udt_amount(amount_in, decimal),
           token_out: amount_out.nil? ? "/" : parse_udt_amount(amount_out, decimal),
           balance_diff: parse_udt_amount(amount_diff, decimal),
-          method:method
+          method: method
+        }
+      else
+        {
+          token_in: amount_in.nil? ? "/" : "#{amount_in} (raw)",
+          token_out: amount_out.nil? ? "/" : "#{amount_out} (raw)",
+          balance_diff: "#{amount_diff} (raw)",
+          method: method
         }
       end
     end
