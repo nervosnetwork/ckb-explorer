@@ -18,38 +18,29 @@ module CsvExportable
     end
 
     def attributes_for_udt_cell(udt_cell)
-      info = CkbUtils.hash_value_to_s(udt_cell.udt_info)
+      udt_info = Udt.find_by(type_hash: udt_cell.type_hash, published: true)
+      info = {
+        symbol: udt_info&.symbol,
+        amount: udt_cell.udt_amount,
+        decimal: udt_info&.decimal,
+        type_hash: udt_cell.type_hash,
+        published: !!udt_info&.published,
+        display_name: udt_info&.display_name,
+        uan: udt_info&.uan
+      }
 
       return { udt_info: info }
     end
 
-    def capacity_unit(cell)
+    def token_unit(cell)
       is_dao = cell[:cell_type].in?(%w(nervos_dao_deposit nervos_dao_withdrawing))
       return "CKB" if is_dao
 
       if cell[:udt_info]
-        if cell[:udt_info][:published]
-          unit = (cell[:udt_info][:uan].presence || cell[:udt_info][:symbol])
-        else
-          type_hash = cell[:udt_info][:type_hash]
-          unit = "Unknown Token ##{type_hash[-4..]}"
-        end
+        return cell[:udt_info][:type_hash]
       end
 
-      unit || "CKB"
-    end
-
-    def cell_capacity(cell, unit)
-      return nil unless cell
-
-      if unit == "CKB"
-        byte = CkbUtils.shannon_to_byte(BigDecimal(cell[:capacity]))
-        return byte.to_s("F")
-      end
-
-      if cell[:udt_info] && cell[:udt_info][:type_hash].present?
-        return parse_udt_amount(cell[:udt_info][:amount], cell[:udt_info][:decimal])
-      end
+      "CKB"
     end
 
     def datetime_utc(timestamp)
@@ -77,6 +68,69 @@ module CsvExportable
     rescue StandardError => e
       puts "udt amount parse failed: #{e.message}"
       return "0"
+    end
+
+    def transfer_method(amount_in, amount_out)
+      change = amount_out.to_d - amount_in.to_d
+      unless change.zero?
+        return change.negative? ? "PAYMENT SENT" : "PAYMENT RECEIVED"
+      end
+
+      if amount_in && amount_in.zero?
+        amount_out.nil? ? "PAYMENT BURN" : "PAYMENT SEND"
+      else
+        "PAYMENT MINT"
+      end
+    end
+
+    def build_ckb_data(input, output)
+      capacity_in = input&.dig(:capacity)
+      capacity_out = output&.dig(:capacity)
+
+      method = transfer_method(capacity_in, capacity_out)
+      capacity_diff = (capacity_out.to_d - capacity_in.to_d).abs
+
+      {
+        token_in: (CkbUtils.shannon_to_byte(capacity_in) rescue "/"),
+        token_out: (CkbUtils.shannon_to_byte(capacity_out) rescue "/"),
+        balance_diff: CkbUtils.shannon_to_byte(capacity_diff),
+        method:method
+      }
+    end
+
+    def build_udt_data(input, output)
+      amount_in = input&.dig(:udt_info, :amount)
+      amount_out = output&.dig(:udt_info, :amount)
+
+      method = transfer_method(amount_in, amount_out)
+      amount_diff = (amount_out.to_d - amount_in.to_d).abs
+
+      decimal = input&.dig(:udt_info, :decimal) || output&.dig(:udt_info, :decimal)
+      unless decimal
+        {
+          token_in: amount_in.nil? ? "/" : "#{amount_in} (raw)",
+          token_out: amount_out.nil? ? "/" : "#{amount_out} (raw)",
+          balance_diff: "#{amount_diff} (raw)",
+          method:method
+        }
+      else
+        {
+          token_in: amount_in.nil? ? "/" : parse_udt_amount(amount_in, decimal),
+          token_out: amount_out.nil? ? "/" : parse_udt_amount(amount_out, decimal),
+          balance_diff: parse_udt_amount(amount_diff, decimal),
+          method:method
+        }
+      end
+    end
+
+    def parse_udt_token(input, output)
+      udt_info = output&.dig(:udt_info) || input&.dig(:udt_info)
+      if udt_info[:published]
+        udt_info[:uan].presence || udt_info[:symbol]
+      else
+        type_hash = udt_info[:type_hash]
+        "Unknown Token ##{type_hash[-4..]}"
+      end
     end
   end
 end
