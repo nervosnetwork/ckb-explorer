@@ -40,7 +40,8 @@ module Api
       test "should respond with 406 Not Acceptable when Accept is wrong" do
         address = create(:address, :with_lock_script)
 
-        get api_v1_address_url(address.address_hash), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_address_url(address.address_hash),
+            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal 406, response.status
       end
@@ -50,7 +51,8 @@ module Api
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_address_url(address.address_hash), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_address_url(address.address_hash),
+            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -86,7 +88,8 @@ module Api
 
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal %w(address_hash balance transactions_count lock_script dao_deposit interest lock_info is_special live_cells_count mined_blocks_count average_deposit_time udt_accounts dao_compensation balance_occupied).sort, json["data"]["attributes"].keys.sort
+        assert_equal %w(address_hash balance transactions_count lock_script dao_deposit interest lock_info is_special live_cells_count mined_blocks_count average_deposit_time udt_accounts dao_compensation balance_occupied).sort,
+                     json["data"]["attributes"].keys.sort
       end
 
       test "should return NullAddress when address no found by id" do
@@ -124,7 +127,8 @@ module Api
       end
 
       test "should support short address query when full address's lock script exists" do
-        address = create(:address, :with_lock_script, address_hash: "ckb1qjda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xw3vumhs9nvu786dj9p0q5elx66t24n3kxgj53qks")
+        address = create(:address, :with_lock_script,
+                         address_hash: "ckb1qjda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xw3vumhs9nvu786dj9p0q5elx66t24n3kxgj53qks")
         query_key = "ckb1qyqt8xaupvm8837nv3gtc9x0ekkj64vud3jqfwyw5v"
         address.query_address = query_key
         valid_get api_v1_address_url(query_key)
@@ -180,8 +184,10 @@ module Api
                               code_hash: type_script.code_hash,
                               hash_type: type_script.hash_type,
                               args: type_script.args)
-        udt = create(:udt, udt_type: "nrc_721_token", nrc_factory_cell_id: factory_cell.id, full_name: "OldName", symbol: "ON")
-        udt_account = create(:udt_account, published: true, address: address, udt_id: udt.id, nft_token_id: "1a2b3c", udt_type: "nrc_721_token")
+        udt = create(:udt, udt_type: "nrc_721_token", nrc_factory_cell_id: factory_cell.id, full_name: "OldName",
+                           symbol: "ON")
+        udt_account = create(:udt_account, published: true, address: address, udt_id: udt.id, nft_token_id: "1a2b3c",
+                                           udt_type: "nrc_721_token")
         address.query_address = address.address_hash
         valid_get api_v1_address_url(address.address_hash)
 
@@ -193,6 +199,30 @@ module Api
             "udt_icon_file" => "https://dev.nrc.com/1a2b3c",
             "udt_type" => udt_account.udt_type,
             "collection" => { "type_hash" => type_script.script_hash }
+          }
+        ], json.dig("data", "attributes", "udt_accounts")
+      end
+
+      test "should return spore cell udt accounts with given address hash" do
+        output = create :cell_output, :with_full_transaction, cell_type: "spore_cell"
+        cell_data = create :cell_datum, cell_output: output
+        cluster_type = create :type_script
+        tc = create :token_collection, type_script: cluster_type, standard: "spore_cell"
+        create :token_item, collection_id: tc.id, cell_id: output.id
+        address = create(:address, :with_lock_script)
+        udt = create(:udt, udt_type: "spore_cell", full_name: "SporeTest")
+        udt_account = create(:udt_account, full_name: udt.full_name, published: true, address: address, udt_id: udt.id, nft_token_id: "123456",
+                                           udt_type: "spore_cell", type_hash: output.type_script.script_hash)
+        address.query_address = address.address_hash
+        valid_get api_v1_address_url(address.address_hash)
+        assert_equal [
+          {
+            "symbol" => "SporeTest",
+            "amount" => udt_account.nft_token_id.to_s,
+            "type_hash" => output.type_script.script_hash,
+            "udt_icon_file" => cell_data.hex_data,
+            "udt_type" => udt_account.udt_type,
+            "collection" => { "type_hash" => cluster_type.script_hash }
           }
         ], json.dig("data", "attributes", "udt_accounts")
       end

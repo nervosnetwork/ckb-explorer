@@ -431,7 +431,7 @@ module CkbSync
       new_udt_accounts_attributes = Set.new
       udt_accounts_attributes = Set.new
       local_block.cell_outputs.select(:id, :address_id, :type_hash, :cell_type, :type_script_id).each do |udt_output|
-        next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token))
+        next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell))
 
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
@@ -439,7 +439,12 @@ module CkbSync
                                                                                                              :created_at).first
         amount = udt_account_amount(udt_type, udt_output.type_hash, address)
         nft_token_id =
-          udt_type == "nrc_721_token" ? CkbUtils.parse_nrc_721_args(udt_output.type_script.args).token_id : nil
+          case udt_type
+          when "nrc_721_token"
+            CkbUtils.parse_nrc_721_args(udt_output.type_script.args).token_id
+          when "spore_cell"
+            udt_output.type_script.args.hex
+          end
         udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name,
                                                                                     :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
         if udt_account.present?
@@ -453,7 +458,7 @@ module CkbSync
 
       local_block.ckb_transactions.pluck(:id).each do |tx_id| # iterator over each tx id for better sql performance
         CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id, :type_hash, :cell_type).each do |udt_output|
-          next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token))
+          next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell))
 
           address = Address.find(udt_output.address_id)
           udt_type = udt_type(udt_output.cell_type)
@@ -470,6 +475,8 @@ module CkbSync
               udt_account.destroy unless address.cell_outputs.live.m_nft_token.where(type_hash: udt_output.type_hash).exists?
             when "nrc_721_token"
               udt_account.destroy unless address.cell_outputs.live.nrc_721_token.where(type_hash: udt_output.type_hash).exists?
+            when "spore_cell"
+              udt_account.destroy unless address.cell_outputs.live.spore_cell.where(type_hash: udt_output.type_hash).exists?
             end
           end
         end
@@ -642,7 +649,7 @@ module CkbSync
                   spore_cluster_cell = spore_cluster_type.cell_outputs.last
                   parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
                   coll = TokenCollection.find_or_create_by(
-                    standard: "spore_nft",
+                    standard: "spore_cell",
                     name: parsed_cluster_data[:name],
                     description: parsed_cluster_data[:description],
                     cell_id: spore_cluster_cell.id,
