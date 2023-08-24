@@ -4,14 +4,15 @@ module Api
       before_action :set_page_and_page_size
 
       def index
-        pending_transactions = CkbTransaction.tx_pending
+        pending_transactions = CkbTransaction.tx_pending.includes(:cell_inputs).
+          where.not(cell_inputs: { previous_cell_output_id: nil, from_cell_base: false })
 
         if stale?(pending_transactions)
           expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
           total_count = pending_transactions.count
           pending_transactions = sort_transactions(pending_transactions).
-            page(@page).per(@page_size).fast_page
+            page(@page).per(@page_size)
 
           json = {
             data: pending_transactions.map do |tx|
@@ -28,6 +29,7 @@ module Api
               page_size: @page_size.to_i
             }
           }
+
           render json: json
         end
       end
@@ -59,7 +61,7 @@ module Api
           order = "asc"
         end
 
-        records.order("#{sort} #{order} NULLS LAST")
+        records.order("ckb_transactions.#{sort} #{order} NULLS LAST")
       end
     end
   end
