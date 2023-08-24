@@ -12,7 +12,7 @@ module Api
 
           total_count = pending_transactions.count
           pending_transactions = sort_transactions(pending_transactions).
-            page(@page).per(@page_size).fast_page
+            page(@page).per(@page_size)
 
           json = {
             data: pending_transactions.map do |tx|
@@ -29,6 +29,7 @@ module Api
               page_size: @page_size.to_i
             }
           }
+
           render json: json
         end
       end
@@ -60,7 +61,7 @@ module Api
           order = "asc"
         end
 
-        records.order("#{sort} #{order} NULLS LAST")
+        records.order("ckb_transactions.#{sort} #{order} NULLS LAST")
       end
     end
   end
