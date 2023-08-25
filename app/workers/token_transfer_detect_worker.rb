@@ -142,7 +142,7 @@ class TokenTransferDetectWorker
   end
 
   def find_or_create_spore_collection(cell, type_script)
-    spore_cell = type_script.cell_outputs.last
+    spore_cell = type_script.cell_outputs.order("id desc").first
     parsed_spore_cell = CkbUtils.parse_spore_cell_data(spore_cell.data)
     spore_cluster_type = TypeScript.create_with(hash_type: "data1").find_or_create_by!(
       code_hash: CkbSync::Api.instance.spore_cluster_code_hash,
@@ -153,7 +153,7 @@ class TokenTransferDetectWorker
       type_script_id: spore_cluster_type.id,
       sn: spore_cluster_type.script_hash
     )
-    spore_cluster_cell = spore_cluster_type.cell_outputs.last
+    spore_cluster_cell = spore_cluster_type.cell_outputs.order("id desc").first
     if spore_cluster_cell.present? && coll.cell_id.blank?
       parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
       coll.cell_id = spore_cluster_cell.id
