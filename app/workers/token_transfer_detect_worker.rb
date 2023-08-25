@@ -90,7 +90,7 @@ class TokenTransferDetectWorker
     when "m_nft_token"
       find_or_create_m_nft_collection(cell, type_script)
     when "spore_cell"
-      find_or_create_spore_nft_collection(cell, type_script)
+      find_or_create_spore_cell_collection(cell, type_script)
     end
   end
 
@@ -141,7 +141,7 @@ class TokenTransferDetectWorker
     coll
   end
 
-  def find_or_create_spore_nft_collection(cell, type_script)
+  def find_or_create_spore_cell_collection(cell, type_script)
     spore_cell = type_script.cell_outputs.last
     parsed_spore_cell = CkbUtils.parse_spore_cell_data(spore_cell.data)
     spore_cluster_type = TypeScript.create_with(hash_type: "data1").find_or_create_by!(
@@ -149,7 +149,7 @@ class TokenTransferDetectWorker
       args: parsed_spore_cell[:cluster_id]
     )
     coll = TokenCollection.find_or_create_by(
-      standard: "spore_nft",
+      standard: "spore_cell",
       type_script_id: spore_cluster_type.id,
       sn: spore_cluster_type.script_hash
     )
