@@ -10,7 +10,7 @@ module Api
 
       test "should return 10 records when page and page_size are not set" do
         block = create(:block, :with_block_hash)
-        create_list(:ckb_transaction, 15, tx_status: "pending", block: block)
+        create_list(:ckb_transaction, 15, :with_multiple_inputs_and_outputs, tx_status: "pending", block: block)
 
         valid_get api_v2_pending_transactions_url
 
@@ -21,7 +21,7 @@ module Api
         page = 2
         page_size = 5
         block = create(:block, :with_block_hash)
-        create_list(:ckb_transaction, 15, tx_status: "pending", block: block)
+        create_list(:ckb_transaction, 15, :with_multiple_inputs_and_outputs, tx_status: "pending", block: block)
         ckb_transactions = CkbTransaction.tx_pending.order(id: :desc).recent.page(page).per(page_size)
 
         valid_get api_v2_pending_transactions_url, params: { page: page, page_size: page_size }
@@ -47,7 +47,7 @@ module Api
 
       test "should return default order when sort param not set" do
         block = create(:block, :with_block_hash)
-        create_list(:ckb_transaction, 10, tx_status: "pending", block: block)
+        create_list(:ckb_transaction, 10, :with_multiple_inputs_and_outputs, tx_status: "pending", block: block)
 
         ckb_transactions = CkbTransaction.tx_pending.order(id: :desc)
         response_json = {
@@ -75,7 +75,8 @@ module Api
         block = create(:block, :with_block_hash)
         current_time = Time.current
         10.times do |i|
-          create(:ckb_transaction, tx_status: "pending", block: block, created_at: current_time - i.hours)
+          create(:ckb_transaction, :with_multiple_inputs_and_outputs, tx_status: "pending", block: block,
+                                                                      created_at: current_time - i.hours)
         end
 
         ckb_transactions = CkbTransaction.tx_pending.order(created_at: :asc)
@@ -104,7 +105,8 @@ module Api
         block = create(:block, :with_block_hash)
         current_time = Time.current
         10.times do |i|
-          create(:ckb_transaction, tx_status: "pending", block: block, created_at: current_time - i.hours)
+          create(:ckb_transaction, :with_multiple_inputs_and_outputs, tx_status: "pending", block: block,
+                                                                      created_at: current_time - i.hours)
         end
 
         ckb_transactions = CkbTransaction.tx_pending.order(created_at: :asc)
@@ -133,7 +135,8 @@ module Api
         block = create(:block, :with_block_hash)
         current_time = Time.current
         10.times do |i|
-          create(:ckb_transaction, tx_status: "pending", block: block, created_at: current_time - i.hours)
+          create(:ckb_transaction, :with_multiple_inputs_and_outputs, tx_status: "pending", block: block,
+                                                                      created_at: current_time - i.hours)
         end
 
         ckb_transactions = CkbTransaction.tx_pending.order(created_at: :asc)
@@ -162,7 +165,8 @@ module Api
         block = create(:block, :with_block_hash)
         current_time = Time.current
         10.times do |i|
-          create(:ckb_transaction, tx_status: "pending", block: block, created_at: current_time - i.hours)
+          create(:ckb_transaction, :with_multiple_inputs_and_outputs, tx_status: "pending", block: block,
+                                                                      created_at: current_time - i.hours)
         end
 
         ckb_transactions = CkbTransaction.tx_pending.order(created_at: :desc)
@@ -190,7 +194,8 @@ module Api
       test "should sorted by transaction_fee asc when sort param is fee" do
         block = create(:block, :with_block_hash)
         10.times do |i|
-          create(:ckb_transaction, tx_status: "pending", block: block, transaction_fee: i)
+          create(:ckb_transaction, :with_multiple_inputs_and_outputs, tx_status: "pending", block: block,
+                                                                      transaction_fee: i)
         end
 
         ckb_transactions = CkbTransaction.tx_pending.order(transaction_fee: :asc)
@@ -218,7 +223,8 @@ module Api
       test "should sorted by capacity_involved asc when sort param is capacity" do
         block = create(:block, :with_block_hash)
         10.times do |i|
-          create(:ckb_transaction, tx_status: "pending", block: block, capacity_involved: i)
+          create(:ckb_transaction, :with_multiple_inputs_and_outputs, tx_status: "pending", block: block,
+                                                                      capacity_involved: i)
         end
 
         ckb_transactions = CkbTransaction.tx_pending.order(capacity_involved: :asc)
@@ -244,7 +250,7 @@ module Api
       end
 
       test "should get success code when call count" do
-        create_list(:ckb_transaction, 10, tx_status: "pending")
+        create_list(:ckb_transaction, 10, :with_multiple_inputs_and_outputs, tx_status: "pending")
         get count_api_v2_pending_transactions_url
 
         assert_equal 10, json["data"]

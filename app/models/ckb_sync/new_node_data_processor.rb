@@ -431,7 +431,7 @@ module CkbSync
       new_udt_accounts_attributes = Set.new
       udt_accounts_attributes = Set.new
       local_block.cell_outputs.select(:id, :address_id, :type_hash, :cell_type, :type_script_id).each do |udt_output|
-        next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token))
+        next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell))
 
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
@@ -439,7 +439,12 @@ module CkbSync
                                                                                                              :created_at).first
         amount = udt_account_amount(udt_type, udt_output.type_hash, address)
         nft_token_id =
-          udt_type == "nrc_721_token" ? CkbUtils.parse_nrc_721_args(udt_output.type_script.args).token_id : nil
+          case udt_type
+          when "nrc_721_token"
+            CkbUtils.parse_nrc_721_args(udt_output.type_script.args).token_id
+          when "spore_cell"
+            udt_output.type_script.args.hex
+          end
         udt = Udt.where(type_hash: udt_output.type_hash, udt_type: udt_type).select(:id, :udt_type, :full_name,
                                                                                     :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
         if udt_account.present?
@@ -453,7 +458,7 @@ module CkbSync
 
       local_block.ckb_transactions.pluck(:id).each do |tx_id| # iterator over each tx id for better sql performance
         CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id, :type_hash, :cell_type).each do |udt_output|
-          next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token))
+          next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell))
 
           address = Address.find(udt_output.address_id)
           udt_type = udt_type(udt_output.cell_type)
@@ -470,6 +475,8 @@ module CkbSync
               udt_account.destroy unless address.cell_outputs.live.m_nft_token.where(type_hash: udt_output.type_hash).exists?
             when "nrc_721_token"
               udt_account.destroy unless address.cell_outputs.live.nrc_721_token.where(type_hash: udt_output.type_hash).exists?
+            when "spore_cell"
+              udt_account.destroy unless address.cell_outputs.live.spore_cell.where(type_hash: udt_output.type_hash).exists?
             end
           end
         end
@@ -497,6 +504,8 @@ module CkbSync
         address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
       when "m_nft_token"
         address.cell_outputs.live.m_nft_token.where(type_hash: type_hash).sum(:udt_amount)
+      when "spore_cell"
+        address.cell_outputs.live.spore_cell.where(type_hash: type_hash).sum(:udt_amount)
       else
         0
       end
@@ -607,7 +616,7 @@ module CkbSync
       outputs.each do |tx_index, items|
         items.each_with_index do |output, index|
           cell_type = cell_type(output.type, outputs_data[tx_index][index])
-          next unless cell_type.in?(%w(udt m_nft_token nrc_721_token))
+          next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell))
 
           type_hash = output.type.compute_hash
           unless Udt.where(type_hash: type_hash).exists?
@@ -629,6 +638,27 @@ module CkbSync
                 nft_token_attr[:full_name] = parsed_class_data.name
                 nft_token_attr[:icon_file] = parsed_class_data.renderer
                 nft_token_attr[:published] = true
+              end
+            end
+            if cell_type == "spore_cell"
+              parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[tx_index][index])
+              if parsed_spore_cell[:cluster_id].present?
+                spore_cluster_type = TypeScript.where(code_hash: CkbSync::Api.instance.spore_cluster_code_hash,
+                                                      args: parsed_spore_cell[:cluster_id]).first
+                if spore_cluster_type.present?
+                  spore_cluster_cell = spore_cluster_type.cell_outputs.last
+                  parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
+                  coll = TokenCollection.find_or_create_by(
+                    standard: "spore",
+                    name: parsed_cluster_data[:name],
+                    description: parsed_cluster_data[:description],
+                    cell_id: spore_cluster_cell.id,
+                    creator_id: spore_cluster_cell.address_id
+                  )
+
+                  nft_token_attr[:full_name] = parsed_cluster_data[:name]
+                  nft_token_attr[:published] = true
+                end
               end
             end
             if cell_type == "nrc_721_token"
@@ -692,13 +722,13 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
               0
             else
               CkbUtils.ckb_transaction_fee(tx, input_capacities[tx_index],
-                                                          output_capacities[tx_index])
-          end,
+                                           output_capacities[tx_index])
+            end,
           created_at: tx["created_at"],
           updated_at: Time.current
         }
 
-        #binding.pry if attr[:transaction_fee] < 0
+        # binding.pry if attr[:transaction_fee] < 0
         ckb_transactions_attributes << attr
         tx_index += 1
       end
@@ -964,7 +994,7 @@ input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, con
               dao_address_ids[tx_index] << address_id
               change_rec[:dao_txs] ||= Set.new
               change_rec[:dao_txs] << ckb_txs[tx_index]["tx_hash"]
-            elsif cell_type.in?(%w(m_nft_token nrc_721_token))
+            elsif cell_type.in?(%w(m_nft_token nrc_721_token spore_cell))
               TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
             end
 
@@ -1028,7 +1058,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
             tags[tx_index] << "udt"
             udt_address_ids[tx_index] << address.id
             contained_udt_ids[tx_index] << Udt.where(type_hash: item.type.compute_hash, udt_type: "sudt").pick(:id)
-          elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token))
+          elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token spore_cell))
             TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
           end
 
@@ -1184,8 +1214,17 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
 
       if pending_txs.any?
         hash_to_pool_times = pending_txs.to_h
-        confirmation_time_attrs = txs.select {|tx| tx["tx_hash"].tr("\\", "0").in?(hash_to_pool_times.keys) }.map { |tx| {id: tx["id"], tx_status: :committed, confirmation_time: (tx["block_timestamp"].to_i / 1000) - hash_to_pool_times[tx["tx_hash"].tr("\\", "0")].to_i}}
-        CkbTransaction.upsert_all(confirmation_time_attrs, update_only: [:confirmation_time], unique_by: [:id, :tx_status])
+        confirmation_time_attrs =
+          txs.select { |tx|
+            tx["tx_hash"].tr("\\",
+                             "0").in?(hash_to_pool_times.keys)
+          }.map do |tx|
+            {
+              id: tx["id"], tx_status: :committed,
+              confirmation_time: (tx["block_timestamp"].to_i / 1000) - hash_to_pool_times[tx["tx_hash"].tr("\\", "0")].to_i }
+          end
+        CkbTransaction.upsert_all(confirmation_time_attrs, update_only: [:confirmation_time],
+                                                           unique_by: [:id, :tx_status])
       end
 
       hash2id = {}

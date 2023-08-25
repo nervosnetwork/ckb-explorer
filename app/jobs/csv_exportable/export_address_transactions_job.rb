@@ -52,31 +52,38 @@ module CsvExportable
     end
 
     def generate_row(transaction, inputs, outputs)
-      input_capacities = cell_capacities(inputs)
-      output_capacities = cell_capacities(outputs)
+      input_info = cell_infos(inputs)
+      output_info = cell_infos(outputs)
 
       datetime = datetime_utc(transaction.block_timestamp)
       fee = parse_transaction_fee(transaction.transaction_fee)
 
       rows = []
-      units = input_capacities.keys | output_capacities.keys
-      units.each do |unit|
-        token_in = input_capacities[unit]
-        token_out = output_capacities[unit]
+      units = input_info.keys | output_info.keys
+      units.each_with_index do |unit, index|
+        if unit == "CKB"
+          data = build_ckb_data(input_info[unit], output_info[unit])
+        else
+          data = build_udt_data(input_info[unit], output_info[unit])
+        end
 
-        balance_change = token_out.to_f - token_in.to_f
-        method = balance_change.negative? ? "PAYMENT SENT" : "PAYMENT RECEIVED"
-        display_fee = units.length == 1 || (units.length > 1 && unit == "CKB")
+        display_fee =
+          if units.include?("CKB")
+            units.length == 1 || (units.length > 1 && unit == "CKB")
+          else
+            index == 0
+          end
+        token = unit == "CKB" ? unit : parse_udt_token(input_info[unit], output_info[unit])
 
         rows << [
           transaction.tx_hash,
           transaction.block_number,
           transaction.block_timestamp,
-          unit,
-          method,
-          (token_in || "/"),
-          (token_out || "/"),
-          balance_change,
+          token,
+          data[:method],
+          data[:token_in],
+          data[:token_out],
+          data[:balance_diff],
           (display_fee ? fee : "/"),
           datetime
         ]
@@ -85,24 +92,29 @@ module CsvExportable
       rows
     end
 
-    def cell_capacities(outputs)
-      capacities = Hash.new
-      display_cells =
-        outputs.map do |cell_output|
-          display_cell = { capacity: cell_output.capacity, cell_type: cell_output.cell_type }
-          if cell_output.udt?
-            display_cell.merge!(attributes_for_udt_cell(cell_output))
-          end
-
-          CkbUtils.hash_value_to_s(display_cell)
+    def cell_infos(outputs)
+      infos = Hash.new
+      outputs.each do |output|
+        cell = { capacity: output.capacity, cell_type: output.cell_type }
+        if output.udt?
+          cell.merge!(attributes_for_udt_cell(output))
         end
 
-      display_cells.each do |display_cell|
-        unit = capacity_unit(display_cell)
-        capacities[unit] = capacities[unit].to_f + cell_capacity(display_cell, unit).to_f
+        unit = token_unit(cell)
+        unless infos[unit]
+          infos[unit] = cell
+          next
+        end
+
+        info = infos[unit]
+        info[:capacity] += cell[:capacity]
+
+        if (cell_udt_info = cell[:udt_info]).present?
+          info[:udt_info][:amount] += cell_udt_info[:amount]
+        end
       end
 
-      capacities
+      infos
     end
   end
 end
