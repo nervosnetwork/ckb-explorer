@@ -649,7 +649,7 @@ module CkbSync
                   spore_cluster_cell = spore_cluster_type.cell_outputs.last
                   parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
                   coll = TokenCollection.find_or_create_by(
-                    standard: "spore_cell",
+                    standard: "spore",
                     name: parsed_cluster_data[:name],
                     description: parsed_cluster_data[:description],
                     cell_id: spore_cluster_cell.id,

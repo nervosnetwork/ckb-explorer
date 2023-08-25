@@ -48,7 +48,7 @@ module Api
       end
 
       test "should return spore cell" do
-        token_collection = create :token_collection, name: "token1", standard: "spore_cell"
+        token_collection = create :token_collection, name: "token1", standard: "spore"
         address = create :address, is_depositor: true
         my_token_id = 100
         cell = create :cell_output, :with_full_transaction
@@ -59,7 +59,7 @@ module Api
         get api_v2_nft_collection_item_url(id: my_token_id, collection_id: token_collection.id)
 
         assert_response :success
-        assert_equal JSON.parse(response.body)["standard"], "spore_cell"
+        assert_equal JSON.parse(response.body)["standard"], "spore"
         assert_not_nil JSON.parse(response.body)["cell"]["data"]
       end
     end
