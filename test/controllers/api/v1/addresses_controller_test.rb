@@ -207,7 +207,7 @@ module Api
         output = create :cell_output, :with_full_transaction, cell_type: "spore_cell"
         cell_data = create :cell_datum, cell_output: output
         cluster_type = create :type_script
-        tc = create :token_collection, type_script: cluster_type, standard: "spore_cell"
+        tc = create :token_collection, type_script: cluster_type, standard: "spore"
         create :token_item, collection_id: tc.id, cell_id: output.id
         address = create(:address, :with_lock_script)
         udt = create(:udt, udt_type: "spore_cell", full_name: "SporeTest")
