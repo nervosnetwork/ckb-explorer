@@ -87,8 +87,8 @@ class AddressSerializer
           }
         elsif udt_account.udt_type == "spore_cell"
           ts = TypeScript.where(script_hash: udt_account.type_hash).first
-          data = ts.cell_outputs.order("id desc").first.data
           if ts
+            data = ts.cell_outputs.order("id desc").first.data
             i = TokenItem.includes(collection: :type_script).find_by type_script_id: ts.id
             coll = i&.collection
           end
