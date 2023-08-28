@@ -209,8 +209,8 @@ module Api
         address = create(:address)
         fake_dao_deposit_transaction(15, address)
 
-        contract_ckb_transactions = address.ckb_dao_transactions.includes(:contained_dao_addresses).
-          where(address_dao_transactions: { address_id: address.id }).
+        contract_ckb_transactions = address.ckb_dao_transactions.joins(:account_books).
+          where(account_books: { address_id: address.id }).
           order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc").page(page).per(page_size).fast_page
 
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME),
