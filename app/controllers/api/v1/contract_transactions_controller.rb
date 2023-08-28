@@ -23,8 +23,8 @@ module Api
             address = Address.find_address!(params[:address_hash])
             raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
 
-            ckb_transactions = ckb_transactions.includes(:contained_dao_addresses).
-              where(address_dao_transactions: { address_id: address.id })
+            ckb_transactions = ckb_transactions.joins(:account_books).
+              where(account_books: { address_id: address.id })
           end
 
           ckb_transactions = ckb_transactions.page(@page).per(@page_size).fast_page
