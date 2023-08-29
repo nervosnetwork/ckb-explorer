@@ -16,7 +16,7 @@ class TypeScript < ApplicationRecord
     # script = Script
     create_with(
       script_hash: type_hash
-    ).create_or_find_by(
+    ).find_or_create_by(
       code_hash: sdk_type.code_hash,
       hash_type: sdk_type.hash_type,
       args: sdk_type.args

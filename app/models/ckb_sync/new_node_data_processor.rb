@@ -779,7 +779,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
             contract = Contract.create code_hash: lock_script.script_hash
             temp_hash = temp_hash.merge contract_id: contract.id
           end
-          script = Script.create_or_find_by temp_hash
+          script = Script.find_or_create_by temp_hash
           lock_script.update script_id: script.id
         end
       end
@@ -798,7 +798,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
             contract = Contract.create code_hash: type_script.script_hash
             temp_hash = temp_hash.merge contract_id: contract.id
           end
-          script = Script.create_or_find_by temp_hash
+          script = Script.find_or_create_by temp_hash
           type_script.update script_id: script.id
         end
       end
@@ -1401,7 +1401,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       return if cellbase.witnesses.blank?
 
       lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-      lock = LockScript.create_or_find_by(
+      lock = LockScript.find_or_create_by(
         code_hash: lock_script.code_hash,
         hash_type: lock_script.hash_type,
         args: lock_script.args
