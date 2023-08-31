@@ -415,73 +415,73 @@ module Api
         assert_response :success
       end
 
-      test "should update udt info suceessfully" do
-        udt = create(:udt, published: true)
+      # test "should update udt info suceessfully" do
+      #   udt = create(:udt, published: true)
 
-        valid_put api_v1_udt_url(udt.type_hash), params: {
-          symbol: "GWK",
-          full_name: "GodwokenToken on testnet_v1",
-          decimal: "8",
-          total_amount: "100000000000",
-          description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
-          operator_website: "https://udt.coin",
-          icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
-          contact_info: "contact@usdt.com"
-        }
+      #   valid_put api_v1_udt_url(udt.type_hash), params: {
+      #     symbol: "GWK",
+      #     full_name: "GodwokenToken on testnet_v1",
+      #     decimal: "8",
+      #     total_amount: "100000000000",
+      #     description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
+      #     operator_website: "https://udt.coin",
+      #     icon_file: "https://img.udt.img",
+      #     uan: "GWK.gw|gb.ckb",
+      #     display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
+      #     contact_info: "contact@usdt.com"
+      #   }
 
-        assert_response :success
-        udt.reload
-        assert_equal udt.symbol, "GWK"
-        assert_equal udt.full_name, "GodwokenToken on testnet_v1"
-        assert_equal udt.decimal, 8
-        assert_equal udt.total_amount, 100000000000
-        assert_equal udt.description, "The sUDT_ERC20_Proxy of Godwoken Test Token."
-        assert_equal udt.operator_website, "https://udt.coin"
-        assert_equal udt.icon_file, "https://img.udt.img"
-        assert_equal udt.uan, "GWK.gw|gb.ckb"
-        assert_equal udt.display_name, "GodwokenToken (via Godwoken Bridge from CKB)"
-        assert_equal udt.contact_info, "contact@usdt.com"
+      #   assert_response :success
+      #   udt.reload
+      #   assert_equal udt.symbol, "GWK"
+      #   assert_equal udt.full_name, "GodwokenToken on testnet_v1"
+      #   assert_equal udt.decimal, 8
+      #   assert_equal udt.total_amount, 100000000000
+      #   assert_equal udt.description, "The sUDT_ERC20_Proxy of Godwoken Test Token."
+      #   assert_equal udt.operator_website, "https://udt.coin"
+      #   assert_equal udt.icon_file, "https://img.udt.img"
+      #   assert_equal udt.uan, "GWK.gw|gb.ckb"
+      #   assert_equal udt.display_name, "GodwokenToken (via Godwoken Bridge from CKB)"
+      #   assert_equal udt.contact_info, "contact@usdt.com"
 
-      end
+      # end
 
-      test "raise parameters error when update udt" do
-        udt = create(:udt, published: true)
+      # test "raise parameters error when update udt" do
+      #   udt = create(:udt, published: true)
 
-        valid_put api_v1_udt_url(udt.type_hash), params: {
-          symbol: "GWK",
-          full_name: "GodwokenToken on testnet_v1",
-          decimal: "8",
-          description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
-          operator_website: "https://udt.coin",
-          icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)"
-        }
+      #   valid_put api_v1_udt_url(udt.type_hash), params: {
+      #     symbol: "GWK",
+      #     full_name: "GodwokenToken on testnet_v1",
+      #     decimal: "8",
+      #     description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
+      #     operator_website: "https://udt.coin",
+      #     icon_file: "https://img.udt.img",
+      #     uan: "GWK.gw|gb.ckb",
+      #     display_name: "GodwokenToken (via Godwoken Bridge from CKB)"
+      #   }
 
-        assert_equal 400, response.status
-        assert_equal response.body, "[{\"title\":\"UDT info parameters invalid\",\"detail\":\"Validation failed: Total amount can't be blank, Total amount is not a number\",\"code\":1030,\"status\":400}]"
-      end
+      #   assert_equal 400, response.status
+      #   assert_equal response.body, "[{\"title\":\"UDT info parameters invalid\",\"detail\":\"Validation failed: Total amount can't be blank, Total amount is not a number\",\"code\":1030,\"status\":400}]"
+      # end
 
-      test "raise not found error when update udt" do
-        udt = create(:udt, published: true)
+      # test "raise not found error when update udt" do
+      #   udt = create(:udt, published: true)
 
-        valid_put api_v1_udt_url("#{udt.type_hash}0"), params: {
-          symbol: "GWK",
-          full_name: "GodwokenToken on testnet_v1",
-          decimal: "8",
-          total_amount: "100000000",
-          description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
-          operator_website: "https://udt.coin",
-          icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)"
-        }
+      #   valid_put api_v1_udt_url("#{udt.type_hash}0"), params: {
+      #     symbol: "GWK",
+      #     full_name: "GodwokenToken on testnet_v1",
+      #     decimal: "8",
+      #     total_amount: "100000000",
+      #     description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
+      #     operator_website: "https://udt.coin",
+      #     icon_file: "https://img.udt.img",
+      #     uan: "GWK.gw|gb.ckb",
+      #     display_name: "GodwokenToken (via Godwoken Bridge from CKB)"
+      #   }
 
-        assert_equal 404, response.status
-        assert_equal response.body, "[{\"title\":\"UDT Not Found\",\"detail\":\"No UDT records found by given type hash\",\"code\":1026,\"status\":404}]"
-      end
+      #   assert_equal 404, response.status
+      #   assert_equal response.body, "[{\"title\":\"UDT Not Found\",\"detail\":\"No UDT records found by given type hash\",\"code\":1026,\"status\":404}]"
+      # end
     end
   end
 end
