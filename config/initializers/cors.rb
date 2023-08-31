@@ -21,7 +21,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       "https://explorer-testnet.nervos.org",
       "https://aggron.explorer.nervos.org",
       "https://pudge.explorer.nervos.org",
-      "https://explorer.staging.nervos.org",
+      "https://staging.explorer.nervos.org",
       /\Ahttps:\/\/ckb-explorer-.*-magickbase.vercel.app\z/,
       "http://localhost:3000",
       (ENV["STAGING_DOMAIN"]).to_s

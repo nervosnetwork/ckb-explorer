@@ -1,4 +1,3 @@
-require "csv"
 module Api
   module V1
     class AddressTransactionsController < ApplicationController

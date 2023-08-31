@@ -5,12 +5,12 @@ module CsvExportable
       ckb_transactions = udt.ckb_transactions
 
       if args[:start_date].present?
-        start_date = DateTime.strptime(args[:start_date], "%Y-%m-%d").to_time.to_i * 1000
+        start_date = BigDecimal(args[:start_date])
         ckb_transactions = ckb_transactions.where("block_timestamp >= ?", start_date)
       end
 
       if args[:end_date].present?
-        end_date = DateTime.strptime(args[:end_date], "%Y-%m-%d").to_time.to_i * 1000
+        end_date = BigDecimal(args[:end_date])
         ckb_transactions = ckb_transactions.where("block_timestamp <= ?", end_date)
       end
 
@@ -47,11 +47,11 @@ module CsvExportable
       inputs = transaction.inputs.udt
       outputs = transaction.outputs.udt
 
-      input_capacities = cell_capacities(inputs)
-      output_capacities = cell_capacities(outputs)
+      input_info = cell_infos(inputs)
+      output_info = cell_infos(outputs)
+      datetime = datetime_utc(transaction.block_timestamp)
 
       rows = []
-      datetime = datetime_utc(transaction.block_timestamp)
       unit =
         if udt.published
           udt.uan.presence || udt.symbol
@@ -60,20 +60,16 @@ module CsvExportable
           "Unknown Token ##{type_hash[-4..]}"
         end
 
-      (input_capacities.keys | output_capacities.keys).each do |address_hash|
-        token_in = input_capacities[address_hash]
-        token_out = output_capacities[address_hash]
-
-        balance_change = token_out.to_f - token_in.to_f
-        method = balance_change.positive? ? "PAYMENT RECEIVED" : "PAYMENT SENT"
-
+      address_hashes = input_info.keys | output_info.keys
+      address_hashes.each do |address_hash|
+        data = build_udt_data(input_info[address_hash], output_info[address_hash])
         rows << [
           transaction.tx_hash,
           transaction.block_number,
           transaction.block_timestamp,
-          method,
+          data[:method],
           unit,
-          balance_change.abs,
+          data[:balance_diff],
           address_hash,
           datetime
         ]
@@ -82,21 +78,24 @@ module CsvExportable
       rows
     end
 
-    def cell_capacities(outputs)
-      capacities = Hash.new { |hash, key| hash[key] = 0.0 }
-      display_cells =
-        outputs.map do |cell_output|
-          display_cell = { capacity: cell_output.capacity, address_hash: cell_output.address_hash }
-          display_cell.merge!(attributes_for_udt_cell(cell_output))
+    def cell_infos(outputs)
+      infos = Hash.new
+      outputs.each do |output|
+        cell = { capacity: output.capacity, address_hash: output.address_hash }
+        cell.merge!(attributes_for_udt_cell(output))
+
+        address_hash = cell[:address_hash]
+        unless infos[address_hash]
+          infos[address_hash] = cell
+          next
         end
 
-      display_cells.each do |display_cell|
-        unit = capacity_unit(display_cell)
-        address_hash = display_cell[:address_hash]
-        capacities[address_hash] += cell_capacity(display_cell, unit).to_f
+        info = infos[address_hash]
+        info[:capacity] += cell[:capacity]
+        info[:udt_info][:amount] += cell[:udt_info][:amount]
       end
 
-      capacities
+      infos
     end
   end
 end

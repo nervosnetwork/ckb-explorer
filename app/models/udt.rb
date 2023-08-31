@@ -2,7 +2,7 @@ class Udt < ApplicationRecord
   belongs_to :nrc_factory_cell, optional: true
 
   MAX_PAGINATES_PER = 100
-  enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2 }
+  enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3 }
 
   validates_presence_of :total_amount
   validates_length_of :symbol, minimum: 1, maximum: 16, allow_nil: true
@@ -60,6 +60,7 @@ end
 #  display_name               :string
 #  uan                        :string
 #  h24_ckb_transactions_count :bigint           default(0)
+#  contact_info               :string
 #
 # Indexes
 #

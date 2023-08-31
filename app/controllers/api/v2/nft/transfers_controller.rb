@@ -1,4 +1,3 @@
-require "csv"
 module Api
   module V2
     module NFT
@@ -24,11 +23,23 @@ module Api
             scope = TokenTransfer.all
           end
 
-          from = Address.find_by_address_hash(params[:from]) if params[:from]
-          to = Address.find_by_address_hash(params[:to]) if params[:to]
-          scope = scope.where(from: from) if from
-          scope = scope.where(to: to) if to
-          scope = scope.where(action: params[:transfer_action]) if params[:transfer_action]
+          if params[:from]
+            scope = scope.where(from: find_address(params[:from]))
+          end
+          if params[:to]
+            scope = scope.where(to: find_address(params[:to]))
+          end
+          if params[:address_hash]
+            address = find_address(params[:address_hash])
+            scope = scope.where(from: address).or(scope.where(to: address))
+          end
+          if params[:transfer_action]
+            scope = scope.where(action: params[:transfer_action])
+          end
+          if params[:tx_hash]
+            scope = scope.includes(:ckb_transaction).where(ckb_transaction: { tx_hash: params[:tx_hash] })
+          end
+
           scope = scope.order(transaction_id: :desc)
           pagy, token_transfers = pagy(scope)
 
@@ -49,6 +60,12 @@ module Api
 
           send_data file, type: "text/csv; charset=utf-8; header=present",
                           disposition: "attachment;filename=token_transfers.csv"
+        end
+
+        private
+
+        def find_address(address_hash)
+          Address.find_by_address_hash(address_hash)
         end
       end
     end

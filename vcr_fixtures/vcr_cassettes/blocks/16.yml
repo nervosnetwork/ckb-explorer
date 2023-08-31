@@ -5,7 +5,7 @@ http_interactions:
     uri: http://localhost:8114/
     body:
       encoding: UTF-8
-      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_by_number","params":["0x10"]}'
+      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_by_number","params":["0x10","0x2",false]}'
     headers:
       Accept-Encoding:
       - gzip;q=1.0,deflate;q=0.6,identity;q=0.3

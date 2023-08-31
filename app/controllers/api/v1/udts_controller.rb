@@ -1,4 +1,3 @@
-require "csv"
 module Api
   module V1
     class UdtsController < ApplicationController
@@ -23,9 +22,30 @@ module Api
         end
       end
 
+      def update
+        udt = Udt.find_by!(type_hash: params[:id], published: true)
+        attrs = {
+          symbol: params[:symbol],
+          full_name: params[:full_name],
+          decimal: params[:decimal],
+          total_amount: params[:total_amount],
+          description: params[:description],
+          operator_website: params[:operator_website],
+          icon_file: params[:icon_file],
+          uan: params[:uan],
+          display_name: params[:display_name],
+          contact_info: params[:contact_info]
+        }
+        udt.update!(attrs)
+        render json: :ok
+      rescue ActiveRecord::RecordNotFound
+        raise Api::V1::Exceptions::UdtNotFoundError
+      rescue ActiveRecord::RecordInvalid => e
+        raise Api::V1::Exceptions::UdtInfoInvalidError.new(e)
+      end
+
       def show
         udt = Udt.find_by!(type_hash: params[:id], published: true)
-
         render json: UdtSerializer.new(udt)
       rescue ActiveRecord::RecordNotFound
         raise Api::V1::Exceptions::UdtNotFoundError
