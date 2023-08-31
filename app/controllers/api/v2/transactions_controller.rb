@@ -3,8 +3,8 @@ module Api
     class TransactionsController < BaseController
       before_action :find_transaction, only: [:raw, :details]
       def raw
-        if stale?(etag: @transaction.tx_hash, public: true)
-          expires_in 1.day
+        if stale?(@transaction)
+          expires_in 1.day, public: true
           render json: @transaction.to_raw
         end
       end
