@@ -17,21 +17,21 @@ class ReferringCell < ApplicationRecord
     inputs = ckb_transaction.inputs
     outputs = ckb_transaction.outputs
 
-    (inputs + outputs).each do |output|
-      contract = output.lock_script.contract
-      contract ||= output.type_script&.contract
+    (inputs + outputs).each do |cell|
+      contract = cell.lock_script.contract
+      contract ||= cell.type_script&.contract
 
       next unless contract
 
-      if output.live?
+      if cell.live?
         ReferringCell.create_or_find_by(
-          cell_output_id: output.id,
+          cell_output_id: cell.id,
           ckb_transaction_id: ckb_transaction.id,
           contract_id: contract.id
         )
-      elsif output.dead?
+      elsif cell.dead?
         referring_cell = ReferringCell.find_by(
-          cell_output_id: output.id,
+          cell_output_id: cell.id,
           ckb_transaction_id: ckb_transaction.id,
           contract_id: contract.id
         )
