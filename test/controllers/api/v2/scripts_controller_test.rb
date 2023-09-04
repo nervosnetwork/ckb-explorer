@@ -16,6 +16,9 @@ module Api
         create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output1.id
         create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output2.id
         create :deployed_cell, contract_id: @contract.id, cell_output_id: @cell_output3.id
+        create :referring_cell, contract_id: @contract.id, cell_output_id: @cell_output1.id, ckb_transaction_id: @cell_output1.ckb_transaction_id
+        create :referring_cell, contract_id: @contract.id, cell_output_id: @cell_output2.id, ckb_transaction_id: @cell_output2.ckb_transaction_id
+        create :referring_cell, contract_id: @contract.id, cell_output_id: @cell_output3.id, ckb_transaction_id: @cell_output3.ckb_transaction_id
       end
 
       test "should get ckb_transactions" do
@@ -28,6 +31,10 @@ module Api
         assert_response :success
       end
 
+      test "should get referring_cells" do
+        valid_get referring_cells_api_v2_scripts_url(code_hash: @code_hash, hash_type: @hash_type)
+        assert_response :success
+      end
     end
   end
 end
