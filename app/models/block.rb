@@ -235,13 +235,20 @@ class Block < ApplicationRecord
   end
 
   def self.cached_find(query_key)
-    Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds) do
-      if QueryKeyUtils.valid_hex?(query_key)
-        block = where(block_hash: query_key).first
-      else
-        block = where(number: query_key).first
+    if Rails.cache.exist?([name, query_key])
+      Rails.cache.read([name, query_key])
+    else
+      block =
+        if QueryKeyUtils.valid_hex?(query_key)
+          where(block_hash: query_key).first
+        else
+          where(number: query_key).first
+        end
+      if block.present?
+        Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds, expires_in: 30.minutes) do
+          BlockSerializer.new(block)
+        end
       end
-      BlockSerializer.new(block) if block.present?
     end
   end
 
