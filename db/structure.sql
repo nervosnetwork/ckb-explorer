@@ -3911,6 +3911,20 @@ CREATE INDEX index_pool_transaction_entries_on_tx_status ON public.pool_transact
 
 
 --
+-- Name: index_referring_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_referring_cells_on_cell_output_id ON public.referring_cells USING btree (cell_output_id);
+
+
+--
+-- Name: index_referring_cells_on_contract_id_and_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_referring_cells_on_contract_id_and_cell_output_id ON public.referring_cells USING btree (contract_id, cell_output_id);
+
+
+--
 -- Name: index_reject_reasons_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4669,6 +4683,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230630112234'),
 ('20230711040233'),
 ('20230802015907'),
-('20230808020637');
+('20230808020637'),
+('20230829061910');
 
 
