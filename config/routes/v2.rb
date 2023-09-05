@@ -58,6 +58,7 @@ namespace :api do
       collection do
         get :ckb_transactions
         get :deployed_cells
+        get :referring_cells
         get :general_info
       end
     end

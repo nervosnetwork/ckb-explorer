@@ -7,21 +7,37 @@ class ReferringCell < ApplicationRecord
 
   # create initial data
   # please run this script
-  def self.create_initial_data ckb_transaction_id = nil
+  def self.create_initial_data(ckb_transaction_id = nil)
     CkbTransaction.where("id <= ?", ckb_transaction_id).find_each do |ckb_transaction|
       self.create_initial_data_for_ckb_transaction ckb_transaction
     end
   end
 
-  def self.create_initial_data_for_ckb_transaction ckb_transaction
-    ckb_transaction.cell_outputs.each do |cell_output|
-      contract_id = nil
-      if cell_output.lock_script_id.present?
-        contract_id = cell_output.lock_script.contract.id rescue nil
-      elsif cell_output.type_script_id.present?
-        contract_id = cell_output.type_script.contract.id rescue nil
+  def self.create_initial_data_for_ckb_transaction(ckb_transaction)
+    inputs = ckb_transaction.inputs
+    outputs = ckb_transaction.outputs
+
+    (inputs + outputs).each do |cell|
+      contract = cell.lock_script.contract
+      contract ||= cell.type_script&.contract
+
+      next unless contract
+
+      if cell.live?
+        ReferringCell.create_or_find_by(
+          cell_output_id: cell.id,
+          ckb_transaction_id: ckb_transaction.id,
+          contract_id: contract.id
+        )
+      elsif cell.dead?
+        referring_cell = ReferringCell.find_by(
+          cell_output_id: cell.id,
+          ckb_transaction_id: ckb_transaction.id,
+          contract_id: contract.id
+        )
+
+        referring_cell.destroy if referring_cell
       end
-      ReferringCell.create_or_find_by(cell_output_id: cell_output.id, ckb_transaction_id: ckb_transaction.id, contract_id: contract_id) if contract_id.present?
     end
   end
 end
@@ -36,4 +52,9 @@ end
 #  ckb_transaction_id :bigint
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
+#
+# Indexes
+#
+#  index_referring_cells_on_cell_output_id                  (cell_output_id) UNIQUE
+#  index_referring_cells_on_contract_id_and_cell_output_id  (contract_id,cell_output_id) UNIQUE
 #

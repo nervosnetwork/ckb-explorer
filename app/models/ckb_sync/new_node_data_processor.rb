@@ -128,7 +128,7 @@ module CkbSync
     def generate_deployed_cells_and_referring_cells(local_block)
       local_block.ckb_transactions.each do |ckb_transaction|
         DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction, tx_cell_deps[ckb_transaction.tx_hash]
-        # ReferringCell.create_initial_data_for_ckb_transaction ckb_transaction
+        ReferringCell.create_initial_data_for_ckb_transaction ckb_transaction
       end
     end
 
