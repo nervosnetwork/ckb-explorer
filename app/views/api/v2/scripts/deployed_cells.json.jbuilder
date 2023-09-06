@@ -24,7 +24,7 @@ json.data do
     json.type_script_id cell_output.type_script_id
   end
   json.meta do
-    json.total @deployed_cells.count
+    json.total @deployed_cells.total_count
     json.page_size @page_size.to_i
   end
 end

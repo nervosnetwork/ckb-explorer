@@ -3,6 +3,7 @@ class Contract < ApplicationRecord
   has_many :deployed_cells
   has_many :deployed_cell_outputs, through: :deployed_cells, source: :cell_output
   has_many :referring_cells
+  has_many :referring_cell_outputs, through: :deployed_cells, source: :cell_output
   has_many :cell_dependencies
   has_many :ckb_transactions, through: :cell_dependencies
 

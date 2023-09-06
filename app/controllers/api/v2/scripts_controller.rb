@@ -1,4 +1,5 @@
 require "jbuilder"
+
 module Api
   module V2
     class ScriptsController < BaseController
@@ -8,16 +9,16 @@ module Api
       def general_info
         head :not_found and return if @script.blank?
 
-        render json: {
-          data: get_script_content(@script)
-        }
+        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        render json: { data: get_script_content }
       end
 
       def ckb_transactions
         head :not_found and return if @script.blank?
 
+        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         scope = CellDependency.where(contract_id: @contract.id).order(ckb_transaction_id: :desc)
-        tx_ids = scope.page(params[:page]).pluck(:ckb_transaction_id)
+        tx_ids = scope.page(@page).per(@page_size).pluck(:ckb_transaction_id)
         @ckb_transactions = CkbTransaction.find(tx_ids)
         @total = scope.count
       end
@@ -25,31 +26,34 @@ module Api
       def deployed_cells
         head :not_found and return if @script.blank? || @script.contract.blank?
 
+        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         @deployed_cells = @contract.deployed_cells.page(@page).per(@page_size).fast_page
       end
 
       def referring_cells
         head :not_found and return if @script.blank?
 
+        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         @referring_cells = @contract.referring_cells.page(@page).per(@page_size).fast_page
       end
 
       private
 
-      def get_script_content(script)
-        column_name = script.instance_of?(TypeScript) ? "type_script_id" : "lock_script_id"
-        @my_referring_cells = CellOutput.live.where(column_name => script.id)
-        @deployed_cells = @contract&.deployed_cell_outputs&.live
+      def get_script_content
+        referring_cells = @contract&.referring_cell_outputs
+        deployed_cells = @contract&.deployed_cell_outputs&.live
+        transactions = @contract&.cell_dependencies
+
         {
-          id: script.id,
-          code_hash: script.code_hash,
-          hash_type: script.hash_type,
-          script_type: script.class.to_s,
-          capacity_of_deployed_cells: @deployed_cells&.sum(:capacity),
-          capacity_of_referring_cells: @my_referring_cells.sum(:capacity),
-          count_of_transactions: @contract&.ckb_transactions&.count.to_i,
-          count_of_deployed_cells: @deployed_cells&.count.to_i,
-          count_of_referring_cells: @my_referring_cells.size.to_i
+          id: @script.id,
+          code_hash: @script.code_hash,
+          hash_type: @script.hash_type,
+          script_type: @script.class.to_s,
+          capacity_of_deployed_cells: deployed_cells&.sum(:capacity),
+          capacity_of_referring_cells: referring_cells&.sum(:capacity),
+          count_of_transactions: transactions&.count.to_i,
+          count_of_deployed_cells: deployed_cells&.count.to_i,
+          count_of_referring_cells: referring_cells&.count.to_i
         }
       end
 

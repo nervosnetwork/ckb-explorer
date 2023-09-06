@@ -8,7 +8,7 @@ namespace :migration do
       outputs.each do |output|
         progress_bar.increment
 
-        contract = output.lock_script.contract
+        contract = output.lock_script&.contract
         contract ||= output.type_script&.contract
 
         next unless contract
