@@ -20,14 +20,12 @@ class DasIndexerService
                       }
                     })
     data = JSON.parse(res.to_s)
-
-    case data["err_no"]
-    when 0
+    if data["err_no"] == 0
       return data["data"]["account"]
-    when 20007
-      return ""
     else
-      raise data["err_msg"] || "Unknown Error"
+      err_msg = data["err_msg"]
+      Rails.logger.info "das service response error: #{err_msg}, address: #{ckb_address}"
+      return ""
     end
   end
 end
