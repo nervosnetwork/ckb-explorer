@@ -19,15 +19,15 @@ class DasIndexerService
                         "key": "0x#{manager_addr}"
                       }
                     })
-    data = JSON.parse res.to_s
-    case data["errno"]
+    data = JSON.parse(res.to_s)
+
+    case data["err_no"]
     when 0
+      return data["data"]["account"]
     when 20007
       return ""
     else
-      raise data["errmsg"]
+      raise data["err_msg"] || "Unknown Error"
     end
-
-    data["data"]["account"]
   end
 end
