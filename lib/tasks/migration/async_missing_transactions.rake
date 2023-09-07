@@ -11,18 +11,21 @@ class AsyncMissingTransactions
 
         blocks = Block.where(created_at: start_at..end_at)
         blocks.find_each do |local_block|
-          txs_count1 = local_block.ckb_transactions_count
-          txs_count2 = local_block.ckb_transactions.count
-          next if txs_count1 == txs_count2
+          ApplicationRecord.transaction do
+            txs_count1 = local_block.ckb_transactions_count
+            txs_count2 = local_block.ckb_transactions.count
+            next if txs_count1 == txs_count2
 
-          puts "async missing block number: #{local_block.number} transactions count: #{txs_count1}"
+            puts "async missing block number: #{local_block.number} transactions count: #{txs_count1}"
 
-          node_block = CkbSync::Api.instance.get_block_by_number(local_block.number)
-          CkbSync::NewNodeDataProcessor.new.process_block(node_block)
+            node_block = CkbSync::Api.instance.get_block_by_number(local_block.number)
+            CkbSync::NewNodeDataProcessor.new.process_block(node_block)
 
-          process_duplicate_blocks(local_block.number)
-
-          count += 1
+            process_duplicate_blocks(local_block.number)
+            count += 1
+          end
+        rescue StandardError => e
+          puts "async missing block number: #{local_block.number} failed, error：#{e}"
         end
 
         puts "done, the number of blocks: #{count}"
