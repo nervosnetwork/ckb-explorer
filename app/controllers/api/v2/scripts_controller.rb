@@ -7,14 +7,18 @@ module Api
       before_action :find_script
 
       def general_info
-        head :not_found and return if @script.blank?
+        head :not_found and return if @script.blank? || @contract.blank?
 
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        render json: { data: get_script_content }
+        key = ["contract_info", @contract.code_hash, @contract.hash_type]
+        result =
+          Rails.cache.fetch(key, expires_in: 10.minutes) do
+            get_script_content
+          end
+        render json: { data: result }
       end
 
       def ckb_transactions
-        head :not_found and return if @script.blank?
+        head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         scope = CellDependency.where(contract_id: @contract.id).order(ckb_transaction_id: :desc)
@@ -24,14 +28,14 @@ module Api
       end
 
       def deployed_cells
-        head :not_found and return if @script.blank? || @script.contract.blank?
+        head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         @deployed_cells = @contract.deployed_cells.page(@page).per(@page_size).fast_page
       end
 
       def referring_cells
-        head :not_found and return if @script.blank?
+        head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         @referring_cells = @contract.referring_cells.page(@page).per(@page_size).fast_page
