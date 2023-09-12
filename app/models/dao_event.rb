@@ -31,14 +31,12 @@ class DaoEvent < ApplicationRecord
              CkbUtils.generate_address(CkbUtils.parse_address(display_input[:address_hash]).script)
            end
          when "withdraw_from_dao"
-
            ckb_transaction.display_inputs.select { |display_input|
              display_input[:cell_type] == "nervos_dao_deposit"
            }.map do |display_input|
              CkbUtils.generate_address(CkbUtils.parse_address(display_input[:address_hash]).script)
            end
          when "issue_interest"
-
            ckb_transaction.display_inputs.select { |display_input|
              display_input[:cell_type] == "nervos_dao_withdrawing"
            }.map do |display_input|

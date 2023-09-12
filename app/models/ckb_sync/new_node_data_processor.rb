@@ -56,7 +56,7 @@ module CkbSync
       raise e
     end
 
-    def process_block(node_block)
+    def process_block(node_block, refresh_balance: true)
       local_block = nil
 
       ApplicationRecord.transaction do
@@ -77,7 +77,7 @@ module CkbSync
         @contained_udt_ids = contained_udt_ids = []
         @contained_address_ids = contained_address_ids = []
 
-        process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
+        process_ckb_txs(node_block, ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
         addrs_changes = Hash.new { |hash, key| hash[key] = {} }
         input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs,
                                                                      tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
@@ -93,7 +93,7 @@ module CkbSync
         # maybe can be changed to asynchronous update
         update_udt_info(local_block)
         process_dao_events!(local_block)
-        update_addresses_info(addrs_changes, local_block)
+        update_addresses_info(addrs_changes, local_block) if refresh_balance
       end
 
       flush_inputs_outputs_caches(local_block)
@@ -136,7 +136,7 @@ module CkbSync
       GenerateStatisticsDataWorker.perform_async(local_block.id)
     end
 
-    def process_ckb_txs(ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
+    def process_ckb_txs(node_block, ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
       tx_index = 0
       ckb_txs.each do |cbk_tx|
         cbk_tx["tx_hash"][0] = "0"
@@ -147,7 +147,8 @@ module CkbSync
         contained_address_ids[tx_index] = Set.new
         tx_index += 1
       end
-      ckb_txs.sort! { |tx1, tx2| tx1["id"] <=> tx2["id"] }
+      tx_hashes = node_block.transactions.map(&:hash)
+      ckb_txs.sort_by! { |tx| tx_hashes.index(tx["tx_hash"]) }
     end
 
     attr_accessor :local_cache
@@ -201,8 +202,8 @@ module CkbSync
     end
 
     # Process DAO withdraw
-    # Warning：because DAO withdraw is also a cell, to the destination address of withdrawl is the address of the withdraw cell output.
-    # So it's possible that the deposit address is different with the withrawal address.
+    # Warning：because DAO withdraw is also a cell, to the destination address of withdraw is the address of the withdraw cell output.
+    # So it's possible that the deposit address is different with the withdraw address.
     def process_withdraw_dao_events!(local_block, new_dao_depositors, dao_contract)
       dao_contract = DaoContract.default_contract
       withdraw_amount = 0
@@ -210,7 +211,7 @@ module CkbSync
       addrs_withdraw_info = {}
       claimed_compensation = 0
       take_away_all_deposit_count = 0
-      # When DAO Deposit Cell appears in cell inputs, the transcation is DAO withdrawal
+      # When DAO Deposit Cell appears in cell inputs, the transaction is DAO withdrawal
       local_block.cell_inputs.nervos_dao_deposit.select(:id, :ckb_transaction_id,
                                                         :previous_cell_output_id).find_in_batches do |dao_inputs|
         dao_events_attributes = []
@@ -590,9 +591,7 @@ module CkbSync
     end
 
     def save_address_block_snapshot!(addr, local_block)
-      AddressBlockSnapshot.create!(
-        address_id: addr.id,
-        block_id: local_block.id,
+      AddressBlockSnapshot.create_with(
         block_number: local_block.number,
         final_state: {
           balance: addr.balance,
@@ -601,6 +600,9 @@ module CkbSync
           live_cells_count: addr.live_cells_count,
           dao_transactions_count: addr.dao_transactions_count
         }
+      ).find_or_create_by!(
+        address_id: addr.id,
+        block_id: local_block.id
       )
     end
 
@@ -822,7 +824,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
         end
 
         if cell_data_attrs.present?
-          CellDatum.upsert_all(cell_data_attrs)
+          CellDatum.upsert_all(cell_data_attrs, unique_by: [:cell_output_id])
         end
       end
 
@@ -1101,7 +1103,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         created_at: Time.current,
         updated_at: Time.current
       }
-      # binding.pry
+
       if binary_data && binary_data.bytesize > 0
         attrs[:data_size] = binary_data.bytesize
         data_hash = CKB::Utils.bin_to_hex(CKB::Blake2b.digest(binary_data))
@@ -1329,10 +1331,8 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         miner_hash = CkbUtils.miner_hash(cellbase)
         miner_lock_hash = CkbUtils.miner_lock_hash(cellbase)
         base_reward = CkbUtils.base_reward(header.number, epoch_info.number)
-        block = Block.find_or_create_by!(
+        block = Block.create_with(
           compact_target: header.compact_target,
-          block_hash: header.hash,
-          number: header.number,
           parent_hash: header.parent_hash,
           nonce: header.nonce,
           timestamp: header.timestamp,
@@ -1362,6 +1362,9 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
           miner_message: CkbUtils.miner_message(cellbase),
           extension: node_block.extension,
           median_timestamp: get_median_timestamp(header.hash)
+        ).find_or_create_by!(
+          block_hash: header.hash,
+          number: header.number
         )
       end
       block
@@ -1438,7 +1441,6 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
         hash_type: type_script.hash_type,
         args: type_script.args
       )
-      # if  factory_cell&.verified
       parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(output_data)
       factory_cell.update(
         name: parsed_factory_data.name,
