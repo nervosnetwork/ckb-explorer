@@ -12,7 +12,7 @@ namespace :migration do
         txs_count2 = local_block.ckb_transactions.count
         next if txs_count1 == txs_count2
 
-        puts "async missing block number: #{local_block.number} transactions count: #{txs_count1}"
+        puts "async missing block number: #{local_block.number}, rpc transactions count: #{txs_count1}, db transactions count: #{txs_count2}"
 
         node_block = CkbSync::Api.instance.get_block_by_number(local_block.number)
         CkbSync::NewNodeDataProcessor.new.process_block(node_block, refresh_balance: false)
