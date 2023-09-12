@@ -1297,10 +1297,8 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       node_block.uncles.each do |uncle_block|
         header = uncle_block.header
         epoch_info = CkbUtils.parse_epoch_info(header)
-        UncleBlock.create!(
-          block_id: local_block_id,
+        UncleBlock.create_with(
           compact_target: header.compact_target,
-          block_hash: header.hash,
           number: header.number,
           parent_hash: header.parent_hash,
           nonce: header.nonce,
@@ -1313,6 +1311,9 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
           proposals_count: uncle_block.proposals.count,
           epoch: epoch_info.number,
           dao: header.dao
+        ).find_or_create_by!(
+          block_id: local_block_id,
+          block_hash: header.hash
         )
       end
     end
