@@ -221,8 +221,8 @@ class CellOutput < ApplicationRecord
         amount: self.udt_amount,
         decimal: "",
         type_hash: self.type_hash,
-        published: factory_cell.verified,
-        display_name: factory_cell.name,
+        published: factory_cell&.verified,
+        display_name: factory_cell&.name,
         nan: ""
       }
     when "nrc_721_token"
