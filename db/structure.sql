@@ -2259,7 +2259,7 @@ CREATE TABLE public.udts (
     display_name character varying,
     uan character varying,
     h24_ckb_transactions_count bigint DEFAULT 0,
-    contact_info character varying
+    email character varying
 );
 
 
@@ -4749,6 +4749,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230802015907'),
 ('20230808020637'),
 ('20230829061910'),
-('20230913091025');
+('20230913091025'),
+('20230914120928');
 
 

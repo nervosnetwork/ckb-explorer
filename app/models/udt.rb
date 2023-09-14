@@ -1,6 +1,8 @@
 class Udt < ApplicationRecord
   belongs_to :nrc_factory_cell, optional: true
 
+  has_one :udt_verification
+
   MAX_PAGINATES_PER = 100
   enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3 }
 
@@ -60,7 +62,7 @@ end
 #  display_name               :string
 #  uan                        :string
 #  h24_ckb_transactions_count :bigint           default(0)
-#  contact_info               :string
+#  email                      :string
 #
 # Indexes
 #
