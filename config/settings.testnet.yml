@@ -61,6 +61,9 @@ secp_multisig_cell_code_hash: "0xc1fb0ae6915d3d4eded3498aedf5faddd8c5f6bd8921e0f
 hash_rate_statistical_interval: 900
 average_block_time_interval: 100
 
+# type id code hash
+type_id_code_hash: "0x00000000000000000000000000000000000000000000000000545950455f4944"
+
 homepage_transactions_records_count: 15
 homepage_block_records_count: 15
 proposal_window: 10
