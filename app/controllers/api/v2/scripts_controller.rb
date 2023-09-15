@@ -48,8 +48,15 @@ module Api
         deployed_cells = @contract&.deployed_cell_outputs&.live
         transactions = @contract&.cell_dependencies
 
+        if deployed_cells.present?
+          deployed_type_script = deployed_cells[0].type_script
+          if deployed_type_script.code_hash == Settings.type_id_code_hash
+            type_id = deployed_type_script.script_hash
+          end
+        end
+
         {
-          id: @script.id,
+          id: type_id,
           code_hash: @script.code_hash,
           hash_type: @script.hash_type,
           script_type: @script.class.to_s,
