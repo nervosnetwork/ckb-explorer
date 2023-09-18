@@ -25,18 +25,23 @@ end
 #
 # Table name: contracts
 #
-#  id            :bigint           not null, primary key
-#  code_hash     :binary
-#  hash_type     :string
-#  deployed_args :string
-#  role          :string           default("type_script")
-#  name          :string
-#  symbol        :string
-#  description   :string
-#  verified      :boolean          default(FALSE)
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  deprecated    :boolean
+#  id                             :bigint           not null, primary key
+#  code_hash                      :binary
+#  hash_type                      :string
+#  deployed_args                  :string
+#  role                           :string           default("type_script")
+#  name                           :string
+#  symbol                         :string
+#  description                    :string
+#  verified                       :boolean          default(FALSE)
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
+#  deprecated                     :boolean
+#  ckb_transactions_count         :decimal(30, )    default(0)
+#  deployed_cells_count           :decimal(30, )    default(0)
+#  referring_cells_count          :decimal(30, )    default(0)
+#  total_deployed_cells_capacity  :decimal(30, )    default(0)
+#  total_referring_cells_capacity :decimal(30, )    default(0)
 #
 # Indexes
 #
