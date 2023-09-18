@@ -51,7 +51,7 @@ Rails.application.routes.draw do
       resources :block_statistics, only: :show ## TODO: unused route
       resources :epoch_statistics, only: :show
       resources :market_data, only: :show
-      resources :udts, only: %i(index show) do
+      resources :udts, only: %i(index show update) do
         collection do
           get :download_csv
         end
@@ -60,6 +60,7 @@ Rails.application.routes.draw do
       resources :address_udt_transactions, only: :show
       resources :distribution_data, only: :show
       resources :monetary_data, only: :show
+      resources :udt_verifications, only: :update
     end
   end
   draw "v2"

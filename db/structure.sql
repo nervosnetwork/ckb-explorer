@@ -2196,6 +2196,41 @@ CREATE TABLE public.udt_transactions (
 
 
 --
+-- Name: udt_verifications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.udt_verifications (
+    id bigint NOT NULL,
+    token integer,
+    sent_at timestamp(6) without time zone,
+    last_ip inet,
+    udt_id bigint,
+    udt_type_hash integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: udt_verifications_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.udt_verifications_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: udt_verifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.udt_verifications_id_seq OWNED BY public.udt_verifications.id;
+
+
+--
 -- Name: udts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2224,7 +2259,7 @@ CREATE TABLE public.udts (
     display_name character varying,
     uan character varying,
     h24_ckb_transactions_count bigint DEFAULT 0,
-    contact_info character varying
+    email character varying
 );
 
 
@@ -2636,6 +2671,13 @@ ALTER TABLE ONLY public.type_scripts ALTER COLUMN id SET DEFAULT nextval('public
 --
 
 ALTER TABLE ONLY public.udt_accounts ALTER COLUMN id SET DEFAULT nextval('public.udt_accounts_id_seq'::regclass);
+
+
+--
+-- Name: udt_verifications id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udt_verifications ALTER COLUMN id SET DEFAULT nextval('public.udt_verifications_id_seq'::regclass);
 
 
 --
@@ -3089,6 +3131,14 @@ ALTER TABLE ONLY public.type_scripts
 
 ALTER TABLE ONLY public.udt_accounts
     ADD CONSTRAINT udt_accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: udt_verifications udt_verifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udt_verifications
+    ADD CONSTRAINT udt_verifications_pkey PRIMARY KEY (id);
 
 
 --
@@ -4128,6 +4178,20 @@ CREATE INDEX index_udt_transactions_on_udt_id ON public.udt_transactions USING b
 
 
 --
+-- Name: index_udt_verifications_on_udt_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_udt_verifications_on_udt_id ON public.udt_verifications USING btree (udt_id);
+
+
+--
+-- Name: index_udt_verifications_on_udt_type_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_udt_verifications_on_udt_type_hash ON public.udt_verifications USING btree (udt_type_hash);
+
+
+--
 -- Name: index_udts_on_type_hash; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4684,6 +4748,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230711040233'),
 ('20230802015907'),
 ('20230808020637'),
-('20230829061910');
+('20230829061910'),
+('20230913091025'),
+('20230914120928');
 
 
