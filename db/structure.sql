@@ -1048,7 +1048,12 @@ CREATE TABLE public.contracts (
     verified boolean DEFAULT false,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    deprecated boolean
+    deprecated boolean,
+    ckb_transactions_count numeric(30,0) DEFAULT 0.0,
+    deployed_cells_count numeric(30,0) DEFAULT 0.0,
+    referring_cells_count numeric(30,0) DEFAULT 0.0,
+    total_deployed_cells_capacity numeric(30,0) DEFAULT 0.0,
+    total_referring_cells_capacity numeric(30,0) DEFAULT 0.0
 );
 
 
@@ -4750,6 +4755,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230808020637'),
 ('20230829061910'),
 ('20230913091025'),
-('20230914120928');
+('20230914120928'),
+('20230918033957');
 
 
