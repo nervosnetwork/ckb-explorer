@@ -9,6 +9,7 @@ module Api
       def general_info
         head :not_found and return if @script.blank? || @contract.blank?
 
+        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         render json: { data: get_script_content }
       end
 
@@ -26,14 +27,14 @@ module Api
         head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @deployed_cells = @contract.deployed_cells.live.page(@page).per(@page_size).fast_page
+        @deployed_cells = @contract.deployed_cell_outputs.live.page(@page).per(@page_size).fast_page
       end
 
       def referring_cells
         head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @referring_cells = @contract.referring_cells.live.page(@page).per(@page_size).fast_page
+        @referring_cells = @contract.referring_cell_outputs.live.page(@page).per(@page_size).fast_page
       end
 
       private
