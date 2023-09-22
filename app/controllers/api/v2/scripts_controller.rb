@@ -17,24 +17,21 @@ module Api
         head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        scope = CellDependency.where(contract_id: @contract.id).order(ckb_transaction_id: :desc)
-        tx_ids = scope.page(@page).per(@page_size).pluck(:ckb_transaction_id)
-        @ckb_transactions = CkbTransaction.find(tx_ids)
-        @total = scope.count
+        @ckb_transactions = @contract.ckb_transactions.order(id: :desc).page(@page).per(@page_size)
       end
 
       def deployed_cells
         head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @deployed_cells = @contract.deployed_cell_outputs.live.page(@page).per(@page_size).fast_page
+        @deployed_cells = @contract.deployed_cell_outputs.live.page(@page).per(@page_size)
       end
 
       def referring_cells
         head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @referring_cells = @contract.referring_cell_outputs.live.page(@page).per(@page_size).fast_page
+        @referring_cells = @contract.referring_cell_outputs.live.page(@page).per(@page_size)
       end
 
       private
