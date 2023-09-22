@@ -23,7 +23,7 @@ json.data do
     json.display_outputs tx.display_outputs
   end
   json.meta do
-    json.total @total
+    json.total @contract.ckb_transactions_count
     json.page_size @page_size.to_i
   end
 end

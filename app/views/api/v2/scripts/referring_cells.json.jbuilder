@@ -23,7 +23,7 @@ json.data do
     json.type_script_id referring_cell.type_script_id
   end
   json.meta do
-    json.total @referring_cells.total_count
+    json.total @contract.referring_cells_count
     json.page_size @page_size.to_i
   end
 end
