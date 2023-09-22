@@ -34,14 +34,27 @@ module Api
           icon_file: params[:icon_file],
           uan: params[:uan],
           display_name: params[:display_name],
-          contact_info: params[:contact_info]
+          email: params[:email]
         }
-        udt.update!(attrs)
+        if udt.email.blank?
+          raise Api::V1::Exceptions::UdtInfoInvalidError.new("Email can't be blank") if params[:email].blank?
+
+          udt.update!(attrs)
+        else
+          raise Api::V1::Exceptions::UdtVerificationNotFoundError if udt.udt_verification.nil?
+
+          udt.udt_verification.validate_token!(params[:token])
+          udt.update!(attrs)
+        end
         render json: :ok
       rescue ActiveRecord::RecordNotFound
         raise Api::V1::Exceptions::UdtNotFoundError
       rescue ActiveRecord::RecordInvalid => e
         raise Api::V1::Exceptions::UdtInfoInvalidError.new(e)
+      rescue UdtVerification::TokenExpiredError
+        raise Api::V1::Exceptions::TokenExpiredError
+      rescue UdtVerification::TokenNotMatchError
+        raise Api::V1::Exceptions::TokenNotMatchError
       end
 
       def show

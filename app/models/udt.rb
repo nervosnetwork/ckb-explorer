@@ -1,7 +1,10 @@
 class Udt < ApplicationRecord
+  MAX_PAGINATES_PER = 100
+
   belongs_to :nrc_factory_cell, optional: true
 
-  MAX_PAGINATES_PER = 100
+  has_one :udt_verification
+
   enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3 }
 
   validates_presence_of :total_amount
@@ -9,6 +12,7 @@ class Udt < ApplicationRecord
   validates_length_of :full_name, minimum: 1, maximum: 100, allow_nil: true
   validates :decimal, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }, allow_nil: true
   validates :total_amount, numericality: { greater_than_or_equal_to: 0 }
+  validates :email, format: { with: /\A(.+)@(.+)\z/, message: "Not a valid email" }, allow_nil: true
 
   attribute :code_hash, :ckb_hash
 
@@ -60,7 +64,7 @@ end
 #  display_name               :string
 #  uan                        :string
 #  h24_ckb_transactions_count :bigint           default(0)
-#  contact_info               :string
+#  email                      :string
 #
 # Indexes
 #
