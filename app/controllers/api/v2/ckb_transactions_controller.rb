@@ -40,7 +40,8 @@ module Api
                 published: !!udt_info&.published,
                 display_name: udt_info&.display_name,
                 uan: udt_info&.uan
-              }
+              },
+              m_nft_info: parsed_output.m_nft_info.to_h
             }
           elsif unit == "CKB"
             cell_capacity[:capacity] += parsed_output.capacity.to_f
@@ -65,8 +66,11 @@ module Api
           # There may be keys in both input_capacities and output_capacities that do not exist
           cell_type = output[:cell_type] || input[:cell_type]
           capacity_change = output[:capacity].to_f - input[:capacity].to_f
+          m_nft_info = output[:m_nft_info] || input[:m_nft_info]
 
           transfer = { capacity: capacity_change, cell_type: cell_type }
+          transfer[:m_nft_info] = m_nft_info if m_nft_info.present?
+
           if unit != "CKB"
             output_amount = output[:udt_info] ? output[:udt_info][:amount] : 0.0
             input_amount = input[:udt_info] ? input[:udt_info][:amount] : 0.0
