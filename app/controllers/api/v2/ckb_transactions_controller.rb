@@ -28,9 +28,8 @@ module Api
           udt_info = parsed_output.udt_info
 
           if (cell_capacity = cell_capacities[[address, unit]]).blank?
-            capacity = unit == "CKB" ? parsed_output.capacity.to_f : 0.0
             cell_capacity = {
-              capacity: capacity,
+              capacity: parsed_output.capacity.to_f,
               cell_type: parsed_output.cell_type,
               udt_info: {
                 symbol: udt_info&.symbol,
@@ -43,10 +42,9 @@ module Api
               },
               m_nft_info: parsed_output.m_nft_info.to_h
             }
-          elsif unit == "CKB"
-            cell_capacity[:capacity] += parsed_output.capacity.to_f
           else
-            cell_capacity[:udt_info][:amount] += udt_info.amount.to_f
+            cell_capacity[:capacity] += parsed_output.capacity.to_f
+            cell_capacity[:udt_info][:amount] += udt_info.amount.to_f unless unit == "CKB"
           end
 
           cell_capacities[[address, unit]] = cell_capacity
