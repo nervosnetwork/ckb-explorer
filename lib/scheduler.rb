@@ -35,7 +35,7 @@ s.cron "0 2 * * 1" do
   ApplicationRecord.connection.execute "vacuum (verbose, analyze)"
 end
 
-s.cron "5 0 * * *" do
+s.cron "0 8 * * *" do
   call_worker Charts::DailyStatistic
 end
 
