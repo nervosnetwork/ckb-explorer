@@ -6,9 +6,9 @@ module Api
       before_action :set_address_transactions, only: [:show, :download_csv]
 
       def show
-        @tx_ids = AccountBook.
-          joins(:ckb_transaction).
-          where(address_id: @address.id)
+        @tx_ids = AccountBook.joins(:ckb_transaction).
+          where(account_books: { address_id: @address.id },
+                ckb_transactions: { tx_status: "committed" })
 
         params[:sort] ||= "ckb_transaction_id.desc"
         order_by, asc_or_desc = params[:sort].split(".", 2)
@@ -29,7 +29,7 @@ module Api
           page(@page).per(@page_size).fast_page
 
         order_by = "id" if order_by == "ckb_transaction_id"
-        @ckb_transactions = CkbTransaction.tx_committed.where(id: @tx_ids.map(&:ckb_transaction_id)).
+        @ckb_transactions = CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).
           select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :capacity_involved).
           order(order_by => asc_or_desc)
 
