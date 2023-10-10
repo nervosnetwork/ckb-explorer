@@ -560,6 +560,7 @@ class CkbUtils
     description_offset = [data.slice(16, 8)].pack("H*").unpack1("l") * 2
     name = [data.slice(name_offset + 8..description_offset - 1)].pack("H*")
     description = [data.slice(description_offset + 8..-1)].pack("H*")
+    name = "#{name[0,97]}..." if name.length > 100
     { name: name, description: description }
   rescue => _e
     { name: nil, description: nil }
