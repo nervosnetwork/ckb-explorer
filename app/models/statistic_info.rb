@@ -95,10 +95,10 @@ class StatisticInfo < ApplicationRecord
   end
 
   define_logic :blockchain_info do
-    message_need_to_be_fitlered_out = "CKB v0.105.* have bugs. Please upgrade to the latest version."
+    message_need_to_be_filtered_out = "CKB v0.105.* have bugs. Please upgrade to the latest version."
     result = CkbSync::Api.instance.get_blockchain_info
-    result.alerts.delete_if { |alert| alert.message == message_need_to_be_fitlered_out }
-    result
+    result.alerts.delete_if { |alert| alert.message == message_need_to_be_filtered_out }
+    JSON.generate(result.as_json)
   end
 
   define_logic :transaction_fee_rates do
