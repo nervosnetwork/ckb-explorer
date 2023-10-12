@@ -23,7 +23,9 @@ class StatisticSerializer
 
   attribute :blockchain_info, if: Proc.new { |_record, params|
     params && params[:info_name] == "blockchain_info"
-  }
+  } do |object|
+    JSON.parse(object.blockchain_info)
+  end
 
   attribute :flush_cache_info, if: Proc.new { |_record, params|
     params && params[:info_name] == "flush_cache_info"

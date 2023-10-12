@@ -204,13 +204,14 @@ module Api
           chain: "ckb_testnet",
           alerts: []
         )
-        StatisticInfo.any_instance.stubs(:blockchain_info).returns(blockchain_info)
+        CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(blockchain_info)
         statistic_info = StatisticInfo.default
         statistic_info.reset! :blockchain_info
         valid_get api_v1_statistic_url("blockchain_info")
 
         assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "blockchain_info" } }).serialized_json,
                      response.body
+        assert_equal blockchain_info.as_json, json.dig("data", "attributes", "blockchain_info")
       end
 
       test "should return top 50 addresses balance list when param is address balance ranking" do
