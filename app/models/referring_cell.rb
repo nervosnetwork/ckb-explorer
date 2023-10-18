@@ -55,6 +55,5 @@ end
 #
 # Indexes
 #
-#  index_referring_cells_on_cell_output_id                  (cell_output_id) UNIQUE
 #  index_referring_cells_on_contract_id_and_cell_output_id  (contract_id,cell_output_id) UNIQUE
 #
