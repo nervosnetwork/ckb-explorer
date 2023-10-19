@@ -18,25 +18,26 @@ class ReferringCell < ApplicationRecord
     outputs = ckb_transaction.outputs
 
     (inputs + outputs).each do |cell|
-      contract = cell.lock_script.contract
-      contract ||= cell.type_script&.contract
+      contracts = [cell.lock_script.contract, cell.type_script&.contract].compact
 
-      next unless contract
+      next if contracts.empty?
 
-      if cell.live?
-        ReferringCell.create_or_find_by(
-          cell_output_id: cell.id,
-          ckb_transaction_id: ckb_transaction.id,
-          contract_id: contract.id
-        )
-      elsif cell.dead?
-        referring_cell = ReferringCell.find_by(
-          cell_output_id: cell.id,
-          ckb_transaction_id: ckb_transaction.id,
-          contract_id: contract.id
-        )
+      contracts.each do |contract|
+        if cell.live?
+          ReferringCell.create_or_find_by(
+            cell_output_id: cell.id,
+            ckb_transaction_id: ckb_transaction.id,
+            contract_id: contract.id
+          )
+        elsif cell.dead?
+          referring_cell = ReferringCell.find_by(
+            cell_output_id: cell.id,
+            ckb_transaction_id: ckb_transaction.id,
+            contract_id: contract.id
+          )
 
-        referring_cell.destroy if referring_cell
+          referring_cell.destroy if referring_cell
+        end
       end
     end
   end
@@ -55,6 +56,5 @@ end
 #
 # Indexes
 #
-#  index_referring_cells_on_cell_output_id                  (cell_output_id) UNIQUE
 #  index_referring_cells_on_contract_id_and_cell_output_id  (contract_id,cell_output_id) UNIQUE
 #
