@@ -8,7 +8,7 @@ namespace :migration do
       outputs.each do |output|
         progress_bar.increment
 
-        contracts = [cell.lock_script.contract, cell.type_script&.contract].compact
+        contracts = [output.lock_script.contract, output.type_script&.contract].compact
 
         next if contracts.empty?
 
@@ -37,7 +37,7 @@ namespace :migration do
       outputs.each do |output|
         progress_bar.increment
 
-        contract = cell.type_script&.contract
+        contract = output.type_script&.contract
 
         next unless contract
 
