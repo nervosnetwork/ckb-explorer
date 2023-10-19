@@ -272,6 +272,7 @@ class CkbTransaction < ApplicationRecord
       display_output = {
         id: output.id,
         capacity: output.capacity,
+        occupied_capacity: output.occupied_capacity,
         address_hash: output.address_hash,
         status: output.status,
         consumed_tx_hash: consumed_tx_hash,
@@ -299,7 +300,7 @@ class CkbTransaction < ApplicationRecord
     cellbase = Cellbase.new(block)
     cell_outputs_for_display.map do |output|
       consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-      CkbUtils.hash_value_to_s(id: output.id, capacity: output.capacity, address_hash: output.address_hash,
+      CkbUtils.hash_value_to_s(id: output.id, capacity: output.capacity, occupied_capacity: output.occupied_capacity, address_hash: output.address_hash,
                                target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash)
     end
   end
@@ -315,6 +316,7 @@ class CkbTransaction < ApplicationRecord
         next({
           from_cellbase: false,
           capacity: "",
+          occupied_capacity: "",
           address_hash: "",
           generated_tx_hash: cell_input.previous_tx_hash,
           cell_index: cell_input.previous_index,
@@ -329,6 +331,7 @@ class CkbTransaction < ApplicationRecord
         id: previous_cell_output.id,
         from_cellbase: false,
         capacity: previous_cell_output.capacity,
+        occupied_capacity: previous_cell_output.occupied_capacity,
         address_hash: previous_cell_output.address_hash,
         generated_tx_hash: previous_cell_output.ckb_transaction.tx_hash,
         cell_index: previous_cell_output.cell_index,
@@ -420,6 +423,7 @@ class CkbTransaction < ApplicationRecord
         id: nil,
         from_cellbase: true,
         capacity: nil,
+        occupied_capacity: nil,
         address_hash: nil,
         target_block_number: cellbase.target_block_number,
         generated_tx_hash: tx_hash
