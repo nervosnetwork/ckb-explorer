@@ -27,7 +27,7 @@ namespace :migration do
 
   desc "Usage: RAILS_ENV=production bundle exec rake migration:generate_missed_type_script_contract_referring_cells"
   task generate_missed_type_script_contract_referring_cells: :environment do
-    contract_hashes = Contract.pluck(:code_hash)
+    contract_hashes = Contract.where(role: "type_script").pluck(:code_hash)
     binary_hashes = CkbUtils.hexes_to_bins(contract_hashes)
     contract_type_ids = TypeScript.where(code_hash: binary_hashes).pluck(:id)
     live_cells = CellOutput.live.where(type_script_id: contract_type_ids)
