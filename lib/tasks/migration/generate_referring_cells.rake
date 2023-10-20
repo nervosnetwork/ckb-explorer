@@ -30,10 +30,8 @@ namespace :migration do
     contract_hashes = Contract.where(role: "type_script").pluck(:code_hash)
     binary_hashes = CkbUtils.hexes_to_bins(contract_hashes)
     contract_type_ids = TypeScript.where(code_hash: binary_hashes).pluck(:id)
-    progress_bar = ProgressBar.create({ total: live_cells.count, format: "%e %B %p%% %c/%C" })
     contract_type_ids.each do |type_id|
       puts "============#{type_id}"
-      progress_bar.increment
       live_cells = CellOutput.live.where(type_script_id: type_id)
 
       live_cells.find_in_batches do |outputs|
