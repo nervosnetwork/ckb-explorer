@@ -79,7 +79,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction = create(:ckb_transaction,
                              :with_multiple_inputs_and_outputs)
     expected_attributes = %i(
-      id from_cellbase capacity address_hash
+      id from_cellbase capacity occupied_capacity address_hash
       generated_tx_hash cell_type cell_index since
     ).sort
 
@@ -91,7 +91,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction = create(:ckb_transaction, :with_single_output,
                              is_cellbase: true)
     expected_attributes = %i(
-      id from_cellbase capacity address_hash
+      id from_cellbase capacity occupied_capacity address_hash
       target_block_number generated_tx_hash
     )
 
@@ -103,7 +103,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction = create(:ckb_transaction,
                              :with_multiple_inputs_and_outputs)
     expected_attributes = %i(
-      id capacity address_hash status consumed_tx_hash
+      id capacity occupied_capacity address_hash status consumed_tx_hash
       cell_type
     ).sort
 
@@ -117,7 +117,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction = create(:ckb_transaction, :with_single_output,
                              is_cellbase: true, block: block)
     expected_attributes = %i(
-      id capacity address_hash target_block_number
+      id capacity occupied_capacity address_hash target_block_number
       base_reward commit_reward proposal_reward secondary_reward status consumed_tx_hash
     )
 
@@ -201,6 +201,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       id: nervos_dao_withdrawing_cell.id,
       from_cellbase: false,
       capacity: nervos_dao_withdrawing_cell.capacity,
+      occupied_capacity: nervos_dao_withdrawing_cell.occupied_capacity,
       address_hash: nervos_dao_withdrawing_cell.address_hash,
       generated_tx_hash: nervos_dao_withdrawing_cell.ckb_transaction.tx_hash,
       compensation_started_block_number: started_block.number,
@@ -218,7 +219,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       }
     ).sort
     expected_attributes = %i(
-      id from_cellbase capacity address_hash generated_tx_hash compensation_started_block_number
+      id from_cellbase capacity occupied_capacity address_hash generated_tx_hash compensation_started_block_number
       compensation_ended_block_number compensation_started_timestamp compensation_ended_timestamp
       interest cell_type cell_index since locked_until_block_number locked_until_block_timestamp
     ).sort
@@ -269,6 +270,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       id: deposit_output_cell.id,
       from_cellbase: false,
       capacity: deposit_output_cell.capacity,
+      occupied_capacity: deposit_output_cell.occupied_capacity,
       address_hash: deposit_output_cell.address_hash,
       generated_tx_hash: deposit_output_cell.ckb_transaction.tx_hash,
       compensation_started_block_number: started_block.number,
@@ -284,7 +286,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       }
     ).sort
     expected_attributes = %i(
-      id from_cellbase capacity address_hash generated_tx_hash interest cell_type
+      id from_cellbase capacity occupied_capacity address_hash generated_tx_hash interest cell_type
       compensation_ended_block_number compensation_ended_timestamp compensation_started_block_number
       compensation_started_timestamp cell_index since
     ).sort
@@ -301,12 +303,12 @@ class CkbTransactionTest < ActiveSupport::TestCase
     dao_output = ckb_transaction.outputs.first
     dao_output.update(cell_type: "nervos_dao_withdrawing")
     expected_attributes = %i(
-      id capacity address_hash status consumed_tx_hash
+      id capacity occupied_capacity address_hash status consumed_tx_hash
       cell_type
     ).sort
     consumed_tx_hash = dao_output.live? ? nil : dao_output.consumed_by.tx_hash
     expected_display_output = CkbUtils.hash_value_to_s(id: dao_output.id,
-                                                       capacity: dao_output.capacity, address_hash: dao_output.address_hash, status: dao_output.status, consumed_tx_hash: consumed_tx_hash, cell_type: dao_output.cell_type).sort
+                                                       capacity: dao_output.capacity, occupied_capacity: dao_output.occupied_capacity, address_hash: dao_output.address_hash, status: dao_output.status, consumed_tx_hash: consumed_tx_hash, cell_type: dao_output.cell_type).sort
     display_outputs = ckb_transaction.display_outputs
     assert_equal expected_attributes - display_outputs.first.keys, []
     assert_equal expected_display_output, display_outputs.first.sort
@@ -343,6 +345,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       id: udt_cell_output.id,
       from_cellbase: false,
       capacity: udt_cell_output.capacity,
+      occupied_capacity: udt_cell_output.occupied_capacity,
       address_hash: udt_cell_output.address_hash,
       generated_tx_hash: udt_cell_output.ckb_transaction.tx_hash,
       cell_index: udt_cell_output.cell_index,
@@ -383,6 +386,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_display_input = CkbUtils.hash_value_to_s(
       id: udt_cell_output.id,
       capacity: udt_cell_output.capacity,
+      occupied_capacity: udt_cell_output.occupied_capacity,
       address_hash: udt_cell_output.address_hash,
       status: udt_cell_output.status,
       consumed_tx_hash: nil,
@@ -423,6 +427,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       id: m_nft_cell_output.id,
       from_cellbase: false,
       capacity: m_nft_cell_output.capacity,
+      occupied_capacity: m_nft_cell_output.occupied_capacity,
       address_hash: m_nft_cell_output.address_hash,
       generated_tx_hash: m_nft_cell_output.ckb_transaction.tx_hash,
       cell_index: m_nft_cell_output.cell_index,
@@ -465,6 +470,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       id: m_nft_cell_output.id,
       from_cellbase: false,
       capacity: m_nft_cell_output.capacity,
+      occupied_capacity: m_nft_cell_output.occupied_capacity,
       address_hash: m_nft_cell_output.address_hash,
       generated_tx_hash: m_nft_cell_output.ckb_transaction.tx_hash,
       cell_index: m_nft_cell_output.cell_index,
@@ -525,6 +531,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       id: m_nft_cell_output.id,
       from_cellbase: false,
       capacity: m_nft_cell_output.capacity,
+      occupied_capacity: m_nft_cell_output.occupied_capacity,
       address_hash: m_nft_cell_output.address_hash,
       generated_tx_hash: m_nft_cell_output.ckb_transaction.tx_hash,
       cell_index: m_nft_cell_output.cell_index,
@@ -558,6 +565,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_display_output = CkbUtils.hash_value_to_s(
       id: m_nft_cell_output.id,
       capacity: m_nft_cell_output.capacity,
+      occupied_capacity: m_nft_cell_output.occupied_capacity,
       address_hash: m_nft_cell_output.address_hash,
       status: m_nft_cell_output.status,
       consumed_tx_hash: nil,
@@ -586,6 +594,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_display_output = CkbUtils.hash_value_to_s(
       id: m_nft_cell_output.id,
       capacity: m_nft_cell_output.capacity,
+      occupied_capacity: m_nft_cell_output.occupied_capacity,
       address_hash: m_nft_cell_output.address_hash,
       status: m_nft_cell_output.status,
       consumed_tx_hash: nil,
@@ -639,6 +648,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_display_output = CkbUtils.hash_value_to_s(
       id: m_nft_cell_output.id,
       capacity: m_nft_cell_output.capacity,
+      occupied_capacity: m_nft_cell_output.occupied_capacity,
       address_hash: m_nft_cell_output.address_hash,
       status: m_nft_cell_output.status,
       consumed_tx_hash: nil,

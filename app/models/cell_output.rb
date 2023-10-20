@@ -27,7 +27,7 @@ class CellOutput < ApplicationRecord
   # the cell_inputs won't always be the same as `consumed_by`.`cell_inputs`
   has_many :cell_inputs, foreign_key: :previous_cell_output_id
   belongs_to :deployed_cell, optional: true
-  has_one :referring_cell
+  has_many :referring_cells
   # the block_id is actually the same as ckb_transaction.block_id, must be on chain
   # but one cell may be included by pending transactions, so block_id may be null
   belongs_to :block, optional: true
