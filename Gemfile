@@ -49,11 +49,6 @@ gem "digest-crc"
 # Backgroud Jobs
 
 gem "sidekiq"
-# fixed sidekiq7 bug.
-gem "sidekiq-statistic", github: "dougmrqs/sidekiq-statistic", branch: "fix-problem-with-sidekiq-7"
-gem "sidekiq-unique-jobs"
-gem "sidekiq-status"
-gem "sidekiq-failures"
 gem "rufus-scheduler"
 # bulk insertion of data into database using ActiveRecord
 gem "activerecord-import"
