@@ -351,7 +351,7 @@ module Api
         assert_equal 415, response.status
       end
 
-      test "should respond with error object when call download csv Content-Type is wrong" do
+      test "should respond with error object when Call download csv Content-Type is wrong" do
         udt = create(:udt, published: true)
         error_object = Api::V1::Exceptions::InvalidContentTypeError.new
         response_json = RequestErrorSerializer.new([error_object],
@@ -375,7 +375,7 @@ module Api
         assert_equal 406, response.status
       end
 
-      test "should respond with error object when call download csv Accept is wrong" do
+      test "should respond with error object when Call download csv Accept is wrong" do
         udt = create(:udt, published: true)
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object],

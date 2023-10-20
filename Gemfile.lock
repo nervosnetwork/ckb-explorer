@@ -195,6 +195,7 @@ GEM
       dry-schema (>= 1.12, < 2)
       zeitwerk (~> 2.6)
     e2mmap (0.1.0)
+    ecdsa (1.2.0)
     erubi (1.11.0)
     et-orbi (1.2.7)
       tzinfo
@@ -240,6 +241,7 @@ GEM
       actionview (>= 5.0.0)
       activesupport (>= 5.0.0)
     json (2.6.3)
+    jwt (2.7.1)
     kaminari (1.2.2)
       activesupport (>= 4.1.0)
       kaminari-actionview (= 1.2.2)
@@ -515,6 +517,7 @@ DEPENDENCIES
   database_cleaner-active_record
   digest-crc
   dotenv-rails
+  ecdsa
   factory_bot_rails
   faker
   fast_jsonapi
@@ -523,6 +526,7 @@ DEPENDENCIES
   hiredis-client
   http
   jbuilder
+  jwt
   kaminari
   kredis
   listen (>= 3.0.5)

@@ -50,7 +50,6 @@ namespace :api do
           get :download_csv
         end
       end
-
     end
 
     resources :dao_events, only: [:index]
@@ -73,6 +72,10 @@ namespace :api do
       collection do
         get :transaction_fees
       end
+    end
+
+    namespace :portfolio do
+      resources :sessions, only: [:create]
     end
   end
 end

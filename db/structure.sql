@@ -1699,6 +1699,72 @@ ALTER SEQUENCE public.pool_transaction_entries_id_seq OWNED BY public.pool_trans
 
 
 --
+-- Name: portfolio_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.portfolio_statistics (
+    id bigint NOT NULL,
+    user_id bigint,
+    capacity numeric(30,0) DEFAULT 0.0,
+    occupied_capacity numeric(30,0) DEFAULT 0.0,
+    dao_deposit numeric(30,0) DEFAULT 0.0,
+    interest numeric(30,0) DEFAULT 0.0,
+    unclaimed_compensation numeric(30,0) DEFAULT 0.0,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: portfolio_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.portfolio_statistics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: portfolio_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.portfolio_statistics_id_seq OWNED BY public.portfolio_statistics.id;
+
+
+--
+-- Name: portfolios; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.portfolios (
+    id bigint NOT NULL,
+    user_id bigint,
+    address_id bigint
+);
+
+
+--
+-- Name: portfolios_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.portfolios_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: portfolios_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.portfolios_id_seq OWNED BY public.portfolios.id;
+
+
+--
 -- Name: referring_cells; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2333,6 +2399,39 @@ ALTER SEQUENCE public.uncle_blocks_id_seq OWNED BY public.uncle_blocks.id;
 
 
 --
+-- Name: users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.users (
+    id bigint NOT NULL,
+    uuid character varying(36),
+    identifier character varying,
+    name character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.users_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
 -- Name: witnesses; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2588,6 +2687,20 @@ ALTER TABLE ONLY public.pool_transaction_entries ALTER COLUMN id SET DEFAULT nex
 
 
 --
+-- Name: portfolio_statistics id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.portfolio_statistics ALTER COLUMN id SET DEFAULT nextval('public.portfolio_statistics_id_seq'::regclass);
+
+
+--
+-- Name: portfolios id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.portfolios ALTER COLUMN id SET DEFAULT nextval('public.portfolios_id_seq'::regclass);
+
+
+--
 -- Name: referring_cells id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2697,6 +2810,13 @@ ALTER TABLE ONLY public.udts ALTER COLUMN id SET DEFAULT nextval('public.udts_id
 --
 
 ALTER TABLE ONLY public.uncle_blocks ALTER COLUMN id SET DEFAULT nextval('public.uncle_blocks_id_seq'::regclass);
+
+
+--
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
@@ -3019,6 +3139,22 @@ ALTER TABLE ONLY public.pool_transaction_entries
 
 
 --
+-- Name: portfolio_statistics portfolio_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.portfolio_statistics
+    ADD CONSTRAINT portfolio_statistics_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: portfolios portfolios_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.portfolios
+    ADD CONSTRAINT portfolios_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: referring_cells referring_cells_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3192,6 +3328,14 @@ ALTER TABLE ONLY public.pool_transaction_entries
 
 ALTER TABLE ONLY public.udts
     ADD CONSTRAINT unique_type_hash UNIQUE (type_hash);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 
 --
@@ -3966,6 +4110,20 @@ CREATE INDEX index_pool_transaction_entries_on_tx_status ON public.pool_transact
 
 
 --
+-- Name: index_portfolio_statistics_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_portfolio_statistics_on_user_id ON public.portfolio_statistics USING btree (user_id);
+
+
+--
+-- Name: index_portfolios_on_user_id_and_address_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_portfolios_on_user_id_and_address_id ON public.portfolios USING btree (user_id, address_id);
+
+
+--
 -- Name: index_referring_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4215,6 +4373,20 @@ CREATE UNIQUE INDEX index_uncle_blocks_on_block_hash_and_block_id ON public.uncl
 --
 
 CREATE INDEX index_uncle_blocks_on_block_id ON public.uncle_blocks USING btree (block_id);
+
+
+--
+-- Name: index_users_on_identifier; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_users_on_identifier ON public.users USING btree (identifier);
+
+
+--
+-- Name: index_users_on_uuid; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_users_on_uuid ON public.users USING btree (uuid);
 
 
 --
@@ -4756,6 +4928,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230829061910'),
 ('20230913091025'),
 ('20230914120928'),
-('20230918033957');
+('20230918033957'),
+('20231017023456'),
+('20231017024100'),
+('20231017024109');
 
 
