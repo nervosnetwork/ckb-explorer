@@ -4,16 +4,12 @@ class ContractStatisticWorker
 
   def perform
     Contract.find_each do |contract|
-      referring_cells = contract.referring_cell_outputs&.live
-      deployed_cells = contract.deployed_cell_outputs&.live
-      transactions = contract.cell_dependencies
-
       contract.update(
-        ckb_transactions_count: transactions.count,
-        deployed_cells_count: deployed_cells&.count.to_i,
-        referring_cells_count: referring_cells&.count.to_i,
-        total_deployed_cells_capacity: deployed_cells&.sum(:capacity),
-        total_referring_cells_capacity: referring_cells&.sum(:capacity)
+        ckb_transactions_count: contract.cell_dependencies.count,
+        deployed_cells_count: contract.deployed_cell_outputs&.live&.size,
+        referring_cells_count: contract.referring_cell_outputs&.live&.size,
+        total_deployed_cells_capacity: contract.deployed_cell_outputs&.live&.sum(:capacity),
+        total_referring_cells_capacity: contract.referring_cell_outputs&.live&.sum(:capacity)
       )
     end
   end
