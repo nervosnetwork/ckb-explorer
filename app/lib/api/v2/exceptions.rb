@@ -36,6 +36,18 @@ module Api
           super(code: 2004, status: 400, title: "portfolio signature is invalid", detail: "", href: "")
         end
       end
+
+      class UserNotExistError < Error
+        def initialize(detail)
+          super(code: 2005, status: 400, title: "user not exist", detail: detail, href: "")
+        end
+      end
+
+      class DecodeJWTFailedError < Error
+        def initialize(detail)
+          super(code: 2006, status: 400, title: "decode JWT failed", detail: detail, href: "")
+        end
+      end
     end
   end
 end

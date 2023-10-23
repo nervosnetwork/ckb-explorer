@@ -75,7 +75,8 @@ namespace :api do
     end
 
     namespace :portfolio do
-      resources :sessions, only: [:create]
+      resources :sessions, only: :create
+      resource :user, only: :update
     end
   end
 end
