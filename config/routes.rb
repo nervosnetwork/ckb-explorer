@@ -1,5 +1,4 @@
 require "sidekiq/web"
-require "sidekiq_unique_jobs/web"
 
 Sidekiq::Web.use ActionDispatch::Cookies
 Sidekiq::Web.use ActionDispatch::Session::CookieStore
