@@ -34,6 +34,8 @@ Rails.application.routes.draw do
       resources :cell_output_type_scripts, only: :show
       resources :cell_output_data, only: :show
       resources :suggest_queries, only: :index
+      resources :udt_queries, only: :index
+      resources :statistics, only: %i(index show)
       resources :statistics, only: %i(index show)
       resources :nets, only: %i(index show)
       resources :statistic_info_charts, only: :index

@@ -14,6 +14,10 @@ class Udt < ApplicationRecord
   validates :total_amount, numericality: { greater_than_or_equal_to: 0 }
   validates :email, format: { with: /\A(.+)@(.+)\z/, message: "Not a valid email" }, allow_nil: true
 
+  scope :query_by_name_or_symbl, ->(search) {
+                                   where("lower(full_name) LIKE ? or lower(symbol) LIKE ?", "%#{search}%", "%#{search}%")
+                                 }
+
   attribute :code_hash, :ckb_hash
 
   has_and_belongs_to_many :ckb_transactions, join_table: :udt_transactions
