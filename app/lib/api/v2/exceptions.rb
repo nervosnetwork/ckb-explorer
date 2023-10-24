@@ -48,6 +48,12 @@ module Api
           super(code: 2006, status: 400, title: "decode JWT failed", detail: detail, href: "")
         end
       end
+
+      class PortfolioLatestDiscrepancyError < Error
+        def initialize
+          super(code: 2007, status: 400, title: "portfolio has not synchronized the latest addresses", detail: "", href: "")
+        end
+      end
     end
   end
 end
