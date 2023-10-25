@@ -13,7 +13,8 @@ module Api
         def check_addresses_consistent!
           address = Address.find_by_address_hash(params[:address])
           unless current_user.portfolios.exists?(address: address)
-            raise Api::V2::Exceptions::PortfolioLatestDiscrepancyError
+            latest_address = current_user.portfolios.last&.address
+            raise Api::V2::Exceptions::PortfolioLatestDiscrepancyError.new(latest_address&.address_hash)
           end
         end
       end

@@ -50,8 +50,14 @@ module Api
       end
 
       class PortfolioLatestDiscrepancyError < Error
-        def initialize
+        def initialize(detail)
           super(code: 2007, status: 400, title: "portfolio has not synchronized the latest addresses", detail: "", href: "")
+        end
+      end
+
+      class SyncPortfolioAddressesError < Error
+        def initialize
+          super(code: 2008, status: 400, title: "sync portfolio addresses failed", detail: "", href: "")
         end
       end
     end

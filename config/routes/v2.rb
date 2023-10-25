@@ -78,6 +78,7 @@ namespace :api do
       resources :sessions, only: :create
       resource :user, only: :update
       resources :statistics, only: :index
+      resources :addresses, only: :create
     end
   end
 end

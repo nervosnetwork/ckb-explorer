@@ -11,10 +11,11 @@ module Api
         end
 
         test "should respond with error object when addresses inconsistencies detected" do
-          error_object = Api::V2::Exceptions::PortfolioLatestDiscrepancyError.new
+          address = "ckt1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323k5v49yzmvm0q0kfqw0hk0kyal6z32nwjvcqqr7qyzq8yqtec2wj"
+          error_object = Api::V2::Exceptions::PortfolioLatestDiscrepancyError.new(address)
           response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-          get api_v2_portfolio_statistics_url(address: "ckt1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323k5v49yzmvm0q0kfqw0hk0kyal6z32nwjvcqqr7qyzq8yqtec2wj"),
+          get api_v2_portfolio_statistics_url(address: address),
               headers: { "Authorization": @jwt }
           assert_equal response_json, response.body
         end
