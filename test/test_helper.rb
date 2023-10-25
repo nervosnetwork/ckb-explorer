@@ -13,7 +13,7 @@ require "database_cleaner/active_record"
 require "minitest/reporters"
 require "mocha/minitest"
 require "sidekiq/testing"
-# Minitest::Reporters.use!
+Minitest::Reporters.use!
 
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
