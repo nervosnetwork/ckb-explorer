@@ -79,6 +79,8 @@ namespace :api do
       resource :user, only: :update
       resources :statistics, only: :index
       resources :addresses, only: :create
+      resources :udt_accounts, only: :index
+      resources :ckb_transactions, only: :index
     end
   end
 end

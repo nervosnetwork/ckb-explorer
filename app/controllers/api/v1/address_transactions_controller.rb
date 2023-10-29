@@ -25,7 +25,7 @@ module Api
 
         @tx_ids = @tx_ids.
           order(order_by => asc_or_desc).
-          select("ckb_transaction_id").
+
           page(@page).per(@page_size).fast_page
 
         order_by = "id" if order_by == "ckb_transaction_id"

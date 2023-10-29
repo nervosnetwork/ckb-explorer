@@ -5,6 +5,7 @@ module Api
         before_action :validate_jwt!, :check_addresses_consistent!
 
         def index
+          expires_in 30.minutes, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 10.minutes
           @portfolio_statistic = current_user.portfolio_statistic
         end
 

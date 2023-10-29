@@ -3,6 +3,7 @@ class User < ApplicationRecord
 
   has_one :portfolio_statistic
   has_many :portfolios
+  has_many :addresses, through: :portfolios
 end
 
 # == Schema Information
