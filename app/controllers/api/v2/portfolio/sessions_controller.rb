@@ -8,7 +8,10 @@ module Api
           user = User.find_or_create_by(identifier: params[:address])
           payload = { uuid: user.uuid }
 
-          render json: { jwt: PortfolioUtils.generate_jwt(payload) }
+          render json: {
+            name: user.name,
+            jwt: PortfolioUtils.generate_jwt(payload)
+          }
         end
 
         private
