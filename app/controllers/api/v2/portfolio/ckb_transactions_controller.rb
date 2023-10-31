@@ -24,11 +24,20 @@ module Api
             ckb_transactions,
             options.merge(params: {
               previews: true,
-              address: current_user.addresses })
+              address: current_user.addresses
+            })
           )
           json = ckb_transaction_serializer.serialized_json
 
           render json: json
+        end
+
+        def download_csv
+          args = download_params.merge(address_ids: current_user.address_ids)
+          file = CsvExportable::ExportPortfolioTransactionsJob.perform_now(args.to_h)
+
+          send_data file, type: "text/csv; charset=utf-8; header=present",
+                          disposition: "attachment;filename=portfolio_ckb_transactions.csv"
         end
 
         private
@@ -67,6 +76,10 @@ module Api
           end
 
           records.order("#{sort} #{order}")
+        end
+
+        def download_params
+          params.permit(:start_date, :end_date, :start_number, :end_number)
         end
       end
     end

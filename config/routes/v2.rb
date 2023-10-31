@@ -80,7 +80,11 @@ namespace :api do
       resources :statistics, only: :index
       resources :addresses, only: :create
       resources :udt_accounts, only: :index
-      resources :ckb_transactions, only: :index
+      resources :ckb_transactions, only: :index do
+        collection do
+          get :download_csv
+        end
+      end
     end
   end
 end
