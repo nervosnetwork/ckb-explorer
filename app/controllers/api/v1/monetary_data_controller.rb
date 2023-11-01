@@ -4,6 +4,8 @@ module Api
       before_action :validate_query_params, only: :show
 
       def show
+        expires_in 1.hour, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 1.hour
+
         monetary_data = MonetaryData.new
 
         render json: MonetaryDataSerializer.new(monetary_data, params: { indicator: params[:id] })
