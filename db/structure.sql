@@ -1699,42 +1699,6 @@ ALTER SEQUENCE public.pool_transaction_entries_id_seq OWNED BY public.pool_trans
 
 
 --
--- Name: portfolio_statistics; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.portfolio_statistics (
-    id bigint NOT NULL,
-    user_id bigint,
-    capacity numeric(30,0) DEFAULT 0.0,
-    occupied_capacity numeric(30,0) DEFAULT 0.0,
-    dao_deposit numeric(30,0) DEFAULT 0.0,
-    interest numeric(30,0) DEFAULT 0.0,
-    unclaimed_compensation numeric(30,0) DEFAULT 0.0,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: portfolio_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.portfolio_statistics_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: portfolio_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.portfolio_statistics_id_seq OWNED BY public.portfolio_statistics.id;
-
-
---
 -- Name: portfolios; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2687,13 +2651,6 @@ ALTER TABLE ONLY public.pool_transaction_entries ALTER COLUMN id SET DEFAULT nex
 
 
 --
--- Name: portfolio_statistics id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.portfolio_statistics ALTER COLUMN id SET DEFAULT nextval('public.portfolio_statistics_id_seq'::regclass);
-
-
---
 -- Name: portfolios id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3136,14 +3093,6 @@ ALTER TABLE ONLY public.old_ckb_transactions
 
 ALTER TABLE ONLY public.pool_transaction_entries
     ADD CONSTRAINT pool_transaction_entries_pkey PRIMARY KEY (id);
-
-
---
--- Name: portfolio_statistics portfolio_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.portfolio_statistics
-    ADD CONSTRAINT portfolio_statistics_pkey PRIMARY KEY (id);
 
 
 --
@@ -4110,13 +4059,6 @@ CREATE INDEX index_pool_transaction_entries_on_tx_status ON public.pool_transact
 
 
 --
--- Name: index_portfolio_statistics_on_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_portfolio_statistics_on_user_id ON public.portfolio_statistics USING btree (user_id);
-
-
---
 -- Name: index_portfolios_on_user_id_and_address_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4930,7 +4872,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230914120928'),
 ('20230918033957'),
 ('20231017023456'),
-('20231017024100'),
-('20231017024109');
+('20231017024100');
 
 

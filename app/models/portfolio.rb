@@ -1,6 +1,15 @@
 class Portfolio < ApplicationRecord
   belongs_to :user
   belongs_to :address
+
+  def self.sync_addresses(user, address_hashes)
+    transaction do
+      address_hashes.each do |address_hash|
+        address = Address.find_or_create_by_address_hash(address_hash)
+        user.portfolios.find_or_create_by(address: address)
+      end
+    end
+  end
 end
 
 # == Schema Information

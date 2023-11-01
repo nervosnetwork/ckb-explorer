@@ -6,7 +6,23 @@ module Api
 
         def index
           expires_in 30.minutes, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 10.minutes
-          @portfolio_statistic = current_user.portfolio_statistic || PortfolioStatistic.new
+
+          addresses = current_user.addresses
+          balance = addresses.pluck(:balance).sum
+          balance_occupied = addresses.pluck(:balance_occupied).sum
+          dao_deposit = addresses.pluck(:dao_deposit).sum
+          interest = addresses.pluck(:interest).sum
+          unclaimed_compensation = addresses.pluck(:unclaimed_compensation).sum
+
+          json = {
+            balance: balance.to_s,
+            balance_occupied: balance_occupied.to_s,
+            dao_deposit: dao_deposit.to_s,
+            interest: interest.to_s,
+            dao_compensation: (interest.to_i + unclaimed_compensation.to_i).to_s
+          }
+
+          render json: { data: json }
         end
 
         private

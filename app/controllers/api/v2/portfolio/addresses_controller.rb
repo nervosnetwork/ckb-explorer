@@ -6,10 +6,7 @@ module Api
 
         def create
           address_hashes = params.fetch(:addresses, [])
-          address_hashes.each do |address_hash|
-            address = Address.find_or_create_by_address_hash(address_hash)
-            current_user.portfolios.find_or_create_by(address: address)
-          end
+          Portfolio.sync_addresses(current_user, address_hashes)
 
           head :no_content
         rescue StandardError => e
