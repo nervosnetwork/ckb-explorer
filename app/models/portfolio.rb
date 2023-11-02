@@ -4,10 +4,13 @@ class Portfolio < ApplicationRecord
 
   def self.sync_addresses(user, address_hashes)
     transaction do
+      portfolio_attributes = []
       address_hashes.each do |address_hash|
         address = Address.find_or_create_by_address_hash(address_hash)
-        user.portfolios.find_or_create_by(address: address)
+        portfolio_attributes << { user_id: user.id, address_id: address.id }
       end
+
+      Portfolio.upsert_all(portfolio_attributes, unique_by: [:user_id, :address_id])
     end
   end
 end
