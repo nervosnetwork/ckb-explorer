@@ -52,6 +52,7 @@ class CkbTransaction < ApplicationRecord
 
   after_commit :flush_cache
   before_destroy :recover_dead_cell
+  before_destroy :log_deletion_chain
 
   def self.cached_find(query_key)
     Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
@@ -433,6 +434,12 @@ class CkbTransaction < ApplicationRecord
 
   def recover_dead_cell
     inputs.update_all(status: "live", consumed_by_id: nil, consumed_block_timestamp: nil)
+  end
+
+  def log_deletion_chain
+    unless tx_pending?
+      Rails.logger.info "Deleting #{self.class.name} with ID #{id} using #{caller}: #{as_json}"
+    end
   end
 end
 
