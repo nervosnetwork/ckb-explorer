@@ -6,7 +6,9 @@ module Api
       def show
         daily_statistics = DailyStatistic.order(created_at_unixtimestamp: :asc).valid_indicators
 
-        render json: rendered_json(daily_statistics)
+        if stale?(daily_statistics, public: true)
+          render json: rendered_json(daily_statistics)
+        end
       end
 
       private
