@@ -437,8 +437,8 @@ class CkbTransaction < ApplicationRecord
   end
 
   def log_deletion_chain
-    unless tx_pending?
-      Rails.logger.info "Deleting #{self.class.name} with ID #{id} using #{caller}: #{as_json}"
+    if tx_committed?
+      Rails.logger.info "Deleting #{self.class.name} with tx_hash #{tx_hash}, block_number #{block_number} using #{caller}"
     end
   end
 end
