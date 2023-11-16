@@ -51,7 +51,6 @@ class DeployedCell < ApplicationRecord
 
   def self.create_initial_data_for_ckb_transaction(ckb_transaction, cell_deps)
     return if cell_deps.blank?
-    Rails.logger.info("create cell deps cell_deps: #{cell_deps}")
 
     deployed_cells = []
     cell_dependencies_attrs = []
@@ -67,7 +66,6 @@ class DeployedCell < ApplicationRecord
     parse_code_dep =
       ->(cell_dep) do
         # this cell output is the contract cell, i.e. one of deployed cells of the contract
-        Rails.logger.info("parse_code_dep cell_dep: #{cell_dep}")
         cell_output = CellOutput.find_by_pointer cell_dep["out_point"]["tx_hash"], cell_dep["out_point"]["index"]
 
         attr = {

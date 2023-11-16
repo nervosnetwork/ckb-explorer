@@ -131,8 +131,7 @@ class CellOutput < ApplicationRecord
     Rails.cache.fetch(["cell_output", tx_hash, index], skip_nil: true,
                                                        race_condition_ttl: 10.seconds,
                                                        expires_in: 1.day) do
-      tx_id = CkbTransaction.find_by_tx_hash(tx_hash)&.id
-
+      tx_id = CkbTransaction.tx_committed.find_by_tx_hash(tx_hash)&.id
       Rails.logger.info("find_by_pointer: tx_hash: #{tx_hash}, index: #{index}, tx_id: #{tx_id}")
       find_by(ckb_transaction_id: tx_id, cell_index: index.is_a?(String) ? index.hex : index) if tx_id
     end
