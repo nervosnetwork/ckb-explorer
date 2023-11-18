@@ -1,9 +1,9 @@
 module Api
   module V1
     class CkbTransactionsController < ApplicationController
-      before_action :validate_query_params, only: :show
-      before_action :validate_pagination_params, :pagination_params,
-                    only: :index
+      before_action :validate_query_params, only: [:show, :display_inputs, :display_outputs]
+      before_action :find_transaction, only: [:show, :display_inputs, :display_outputs]
+      before_action :validate_pagination_params, :pagination_params, only: [:index, :display_inputs, :display_outputs]
 
       def index
         if from_home_page?
@@ -103,17 +103,41 @@ module Api
       end
 
       def show
-        ckb_transaction = CkbTransaction.where(tx_hash: params[:id]).order(tx_status: :desc).first
-
-        raise Api::V1::Exceptions::CkbTransactionNotFoundError if ckb_transaction.blank?
-
-        if ckb_transaction.tx_status.to_s == "rejected" && ckb_transaction.detailed_message.blank?
-          PoolTransactionUpdateRejectReasonWorker.perform_async(ckb_transaction.tx_hash)
-        end
-
         expires_in 10.seconds, public: true, must_revalidate: true
 
-        render json: CkbTransactionSerializer.new(ckb_transaction)
+        render json: CkbTransactionSerializer.new(@ckb_transaction)
+      end
+
+      def display_inputs
+        expires_in 1.hour, public: true, must_revalidate: true
+
+        if @ckb_transaction.is_cellbase
+          cell_inputs = @ckb_transaction.cellbase_display_inputs
+          total_count = cell_inputs.count
+        else
+          cell_inputs = @ckb_transaction.cell_inputs.order(id: :asc).
+            page(@page).per(@page_size).fast_page
+          total_count = cell_inputs.total_count
+          cell_inputs = @ckb_transaction.normal_tx_display_inputs(cell_inputs)
+        end
+
+        render json: { data: cell_inputs, meta: { total: total_count, page_size: @page_size.to_i } }
+      end
+
+      def display_outputs
+        expires_in 1.hour, public: true, must_revalidate: true
+
+        if @ckb_transaction.is_cellbase
+          cell_outputs = @ckb_transaction.cellbase_display_outputs
+          total_count = cell_outputs.count
+        else
+          cell_outputs = @ckb_transaction.outputs.order(id: :asc).
+            page(@page).per(@page_size).fast_page
+          total_count = cell_outputs.total_count
+          cell_outputs = @ckb_transaction.normal_tx_display_outputs(cell_outputs)
+        end
+
+        render json: { data: cell_outputs, meta: { total: total_count, page_size: @page_size.to_i } }
       end
 
       private
@@ -138,6 +162,15 @@ module Api
           status = validator.error_object[:status]
 
           render json: errors, status: status
+        end
+      end
+
+      def find_transaction
+        @ckb_transaction = CkbTransaction.where(tx_hash: params[:id]).order(tx_status: :desc).first
+        raise Api::V1::Exceptions::CkbTransactionNotFoundError if @ckb_transaction.blank?
+
+        if @ckb_transaction.tx_status.to_s == "rejected" && @ckb_transaction.detailed_message.blank?
+          PoolTransactionUpdateRejectReasonWorker.perform_async(@ckb_transaction.tx_hash)
         end
       end
     end

@@ -1,6 +1,8 @@
 # A transaction in CKB is composed by several inputs and several outputs
 # the inputs are the previous generated outputs
 class CkbTransaction < ApplicationRecord
+  include DisplayCells
+
   self.primary_key = :id
   MAX_PAGINATES_PER = 100
   DEFAULT_PAGINATES_PER = 10
@@ -194,22 +196,6 @@ class CkbTransaction < ApplicationRecord
     cell_dependencies.explicit.includes(:cell_output).to_a.map(&:to_raw)
   end
 
-  def display_inputs(previews: false)
-    if is_cellbase
-      cellbase_display_inputs
-    else
-      normal_tx_display_inputs(previews)
-    end
-  end
-
-  def display_outputs(previews: false)
-    if is_cellbase
-      cellbase_display_outputs
-    else
-      normal_tx_display_outputs(previews)
-    end
-  end
-
   def income(address)
     outputs.where(address: address).sum(:capacity) - inputs.where(address: address).sum(:capacity)
   end
@@ -222,10 +208,6 @@ class CkbTransaction < ApplicationRecord
                                                nervos_dao_deposit
                                                nervos_dao_withdrawing
                                              )).exists?
-  end
-
-  def cell_info
-    nil
   end
 
   def detailed_message
@@ -262,175 +244,6 @@ class CkbTransaction < ApplicationRecord
   end
 
   private
-
-  def normal_tx_display_outputs(previews)
-    cell_outputs_for_display = outputs.sort_by(&:id)
-    if previews
-      cell_outputs_for_display = cell_outputs_for_display[0, 10]
-    end
-    cell_outputs_for_display.map do |output|
-      consumed_tx_hash = output.live? ? nil : output.consumed_by&.tx_hash
-      display_output = {
-        id: output.id,
-        capacity: output.capacity,
-        occupied_capacity: output.occupied_capacity,
-        address_hash: output.address_hash,
-        status: output.status,
-        consumed_tx_hash: consumed_tx_hash,
-        cell_type: output.cell_type
-      }
-      display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
-      display_output.merge!(attributes_for_cota_registry_cell(output)) if output.cota_registry?
-      display_output.merge!(attributes_for_cota_regular_cell(output)) if output.cota_regular?
-
-      display_output.merge!(attributes_for_m_nft_cell(output)) if output.cell_type.in?(%w(
-                                                                                         m_nft_issuer m_nft_class
-                                                                                         m_nft_token
-                                                                                       ))
-      display_output.merge!(attributes_for_nrc_721_cell(output)) if output.cell_type.in?(%w(
-                                                                                           nrc_721_token
-                                                                                           nrc_721_factory
-                                                                                         ))
-
-      CkbUtils.hash_value_to_s(display_output)
-    end
-  end
-
-  def cellbase_display_outputs
-    cell_outputs_for_display = outputs.to_a.sort_by(&:id)
-    cellbase = Cellbase.new(block)
-    cell_outputs_for_display.map do |output|
-      consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
-      CkbUtils.hash_value_to_s(id: output.id, capacity: output.capacity, occupied_capacity: output.occupied_capacity, address_hash: output.address_hash,
-                               target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: output.status, consumed_tx_hash: consumed_tx_hash)
-    end
-  end
-
-  def normal_tx_display_inputs(previews)
-    cell_inputs_for_display = cell_inputs.to_a.sort_by(&:id)
-    if previews
-      cell_inputs_for_display = cell_inputs_for_display[0, 10]
-    end
-    cell_inputs_for_display.each_with_index.map do |cell_input, index|
-      previous_cell_output = cell_input.previous_cell_output
-      unless previous_cell_output
-        next({
-          from_cellbase: false,
-          capacity: "",
-          occupied_capacity: "",
-          address_hash: "",
-          generated_tx_hash: cell_input.previous_tx_hash,
-          cell_index: cell_input.previous_index,
-          since: {
-            raw: hex_since(cell_input.since.to_i),
-            median_timestamp: cell_input.block&.median_timestamp.to_i
-          }
-        })
-      end
-
-      display_input = {
-        id: previous_cell_output.id,
-        from_cellbase: false,
-        capacity: previous_cell_output.capacity,
-        occupied_capacity: previous_cell_output.occupied_capacity,
-        address_hash: previous_cell_output.address_hash,
-        generated_tx_hash: previous_cell_output.ckb_transaction.tx_hash,
-        cell_index: previous_cell_output.cell_index,
-        cell_type: previous_cell_output.cell_type,
-        since: {
-          raw: hex_since(cell_input.since.to_i),
-          median_timestamp: cell_input.block&.median_timestamp.to_i
-        }
-      }
-      display_input.merge!(attributes_for_dao_input(previous_cell_output)) if previous_cell_output.nervos_dao_withdrawing?
-      if previous_cell_output.nervos_dao_deposit?
-        display_input.merge!(attributes_for_dao_input(cell_outputs[index],
-                                                      false))
-      end
-      display_input.merge!(attributes_for_udt_cell(previous_cell_output)) if previous_cell_output.udt?
-      display_input.merge!(attributes_for_m_nft_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(
-                                                                                                                    m_nft_issuer m_nft_class m_nft_token
-                                                                                                                  ))
-      display_input.merge!(attributes_for_nrc_721_cell(previous_cell_output)) if previous_cell_output.cell_type.in?(%w(
-                                                                                                                      nrc_721_token nrc_721_factory
-                                                                                                                    ))
-
-      CkbUtils.hash_value_to_s(display_input)
-    end
-  end
-
-  def hex_since(int_since_value)
-    return "0x#{int_since_value.to_s(16).rjust(16, '0')}"
-  end
-
-  def attributes_for_udt_cell(udt_cell)
-    info = CkbUtils.hash_value_to_s(udt_cell.udt_info)
-    {
-      udt_info: info,
-      extra_info: info
-    }
-  end
-
-  def attributes_for_m_nft_cell(m_nft_cell)
-    info = m_nft_cell.m_nft_info
-    { m_nft_info: info, extra_info: info }
-  end
-
-  def attributes_for_cota_registry_cell(cota_cell)
-    info = cota_cell.cota_registry_info
-    { cota_registry_info: info, extra_info: info }
-  end
-
-  def attributes_for_cota_regular_cell(cota_cell)
-    info = cota_cell.cota_regular_info
-    { cota_regular_info: info, extra_info: info }
-  end
-
-  def attributes_for_nrc_721_cell(nrc_721_cell)
-    info = nrc_721_cell.nrc_721_nft_info
-    { nrc_721_token_info: info, extra_info: info }
-  end
-
-  def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
-    nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
-    nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
-    # start block: the block contains the trasaction which generated the deposit cell output
-    compensation_started_block = Block.select(:number, :timestamp).find(nervos_dao_deposit_cell.block.id)
-    # end block: the block contains the transaction which generated the withdrawing cell
-    compensation_ended_block = Block.select(:number, :timestamp).find(nervos_dao_withdrawing_cell_generated_tx.block_id)
-    interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
-
-    attributes = {
-      compensation_started_block_number: compensation_started_block.number,
-      compensation_started_timestamp: compensation_started_block.timestamp,
-      compensation_ended_block_number: compensation_ended_block.number,
-      compensation_ended_timestamp: compensation_ended_block.timestamp,
-      interest: interest
-    }
-
-    if is_phase2
-      number, timestamp = Block.where(id: block_id).pick(:number, :timestamp) # locked_until_block
-      attributes[:locked_until_block_number] = number
-      attributes[:locked_until_block_timestamp] = timestamp
-    end
-
-    CkbUtils.hash_value_to_s(attributes)
-  end
-
-  def cellbase_display_inputs
-    cellbase = Cellbase.new(block)
-    [
-      CkbUtils.hash_value_to_s(
-        id: nil,
-        from_cellbase: true,
-        capacity: nil,
-        occupied_capacity: nil,
-        address_hash: nil,
-        target_block_number: cellbase.target_block_number,
-        generated_tx_hash: tx_hash
-      )
-    ]
-  end
 
   def recover_dead_cell
     inputs.update_all(status: "live", consumed_by_id: nil, consumed_block_timestamp: nil)
