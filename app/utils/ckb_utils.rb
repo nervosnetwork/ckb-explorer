@@ -93,7 +93,12 @@ class CkbUtils
 
     epoch_info = get_epoch_info(epoch_number)
     start_number = epoch_info.start_number.to_i
-    epoch_reward = Settings.default_epoch_reward.to_i
+    epoch_reward =
+      if CkbSync::Api.instance.mode == "mainnet" && epoch_number >= 8760
+        Settings.default_epoch_reward.to_i / 2
+      else
+        Settings.default_epoch_reward.to_i
+      end
     base_reward = epoch_reward / epoch_info.length.to_i
     remainder_reward = epoch_reward % epoch_info.length.to_i
     if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward
@@ -560,7 +565,7 @@ class CkbUtils
     description_offset = [data.slice(16, 8)].pack("H*").unpack1("l") * 2
     name = [data.slice(name_offset + 8..description_offset - 1)].pack("H*")
     description = [data.slice(description_offset + 8..-1)].pack("H*")
-    name = "#{name[0,97]}..." if name.length > 100
+    name = "#{name[0, 97]}..." if name.length > 100
     { name: name, description: description }
   rescue => _e
     { name: nil, description: nil }
