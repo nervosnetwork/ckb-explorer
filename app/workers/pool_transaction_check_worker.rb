@@ -4,20 +4,22 @@ class PoolTransactionCheckWorker
   sidekiq_options retry: 0
 
   def perform
-    pool_tx_entry_attributes = []
-    latest_block = Block.recent.first
     # Because iterating over all pool transaction entry record and get tx detail from CKB Node one by one
     # will make heavy load to CKB node, slowing block processing, sometimes will lead to HTTP timeout
     # So here we directly check the inputs and dependencies of the transaction locally in database
     # If any of the input or dependency cells is used, the transaction will never be valid.
     # Thus we can directly mark this transaction rejected without requesting to CKB Node.
-    # Only request the CKB Node for reject reason after we find the transaction is rejeceted.
-    CkbTransaction.tx_pending.includes(:cell_dependencies, cell_inputs: :previous_cell_output).find_each do |tx|
+    # Only request the CKB Node for reject reason after we find the transaction is rejected.
+    pending_transactions = CkbTransaction.tx_pending.
+      includes(:cell_dependencies, cell_inputs: :previous_cell_output).
+      order(id: :asc).limit(150)
+    pending_transactions.each do |tx|
       # FIXME: remove this code
       if CkbTransaction.tx_committed.exists?(tx_hash: tx.tx_hash)
         tx.destroy!
         next
       end
+
       is_rejected = false
       rejected_transaction = nil
       # check if any input is used by other transactions
