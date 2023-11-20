@@ -1,4 +1,7 @@
 class CkbUtils
+  # The block reward halves approximately every 4 years, one epoch is about 4 hours
+  HALVING_EPOCH = 4 * 365 * 24 / 4
+
   def self.int_to_hex(i)
     "0x#{i.to_s(16)}"
   end
@@ -93,7 +96,7 @@ class CkbUtils
 
     epoch_info = get_epoch_info(epoch_number)
     start_number = epoch_info.start_number.to_i
-    epoch_reward = Settings.default_epoch_reward.to_i
+    epoch_reward = epoch_reward_with_halving(epoch_number)
     base_reward = epoch_reward / epoch_info.length.to_i
     remainder_reward = epoch_reward % epoch_info.length.to_i
     if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward
@@ -101,6 +104,10 @@ class CkbUtils
     else
       base_reward
     end
+  end
+
+  def self.epoch_reward_with_halving(epoch_number)
+    Settings.default_epoch_reward.to_i >> epoch_number / HALVING_EPOCH 
   end
 
   def self.primary_reward(block_number, block_economic_state)
@@ -560,7 +567,7 @@ class CkbUtils
     description_offset = [data.slice(16, 8)].pack("H*").unpack1("l") * 2
     name = [data.slice(name_offset + 8..description_offset - 1)].pack("H*")
     description = [data.slice(description_offset + 8..-1)].pack("H*")
-    name = "#{name[0,97]}..." if name.length > 100
+    name = "#{name[0, 97]}..." if name.length > 100
     { name: name, description: description }
   rescue => _e
     { name: nil, description: nil }
