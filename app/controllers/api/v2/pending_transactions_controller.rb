@@ -4,34 +4,32 @@ module Api
       before_action :set_page_and_page_size
 
       def index
-        pending_transactions = CkbTransaction.tx_pending.includes(:cell_inputs).
-          where.not(cell_inputs: { previous_cell_output_id: nil, from_cell_base: false })
+        expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
-        if stale?(pending_transactions)
-          expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        tx_ids = CkbTransaction.tx_pending.ids
+        unique_tx_ids = CellInput.where(ckb_transaction_id: tx_ids).
+          where.not(previous_cell_output_id: nil, from_cell_base: false).
+          pluck(:ckb_transaction_id).uniq
+        pending_transactions = CkbTransaction.where(id: unique_tx_ids).
+          order(transactions_ordering).page(@page).per(@page_size)
 
-          total_count = pending_transactions.count
-          pending_transactions = sort_transactions(pending_transactions).
-            page(@page).per(@page_size)
-
-          json = {
-            data: pending_transactions.map do |tx|
-              {
-                transaction_hash: tx.tx_hash,
-                capacity_involved: tx.capacity_involved,
-                transaction_fee: tx.transaction_fee,
-                created_at: tx.created_at,
-                create_timestamp: (tx.created_at.to_f * 1000).to_i
-              }
-            end,
-            meta: {
-              total: total_count,
-              page_size: @page_size.to_i
+        json = {
+          data: pending_transactions.map do |tx|
+            {
+              transaction_hash: tx.tx_hash,
+              capacity_involved: tx.capacity_involved,
+              transaction_fee: tx.transaction_fee,
+              created_at: tx.created_at,
+              create_timestamp: (tx.created_at.to_f * 1000).to_i
             }
+          end,
+          meta: {
+            total: pending_transactions.total_count,
+            page_size: @page_size.to_i
           }
+        }
 
-          render json: json
-        end
+        render json: json
       end
 
       def count
@@ -47,7 +45,7 @@ module Api
         @page_size = params[:page_size] || CkbTransaction.default_per_page
       end
 
-      def sort_transactions(records)
+      def transactions_ordering
         sort, order = params.fetch(:sort, "id.desc").split(".", 2)
         sort =
           case sort
@@ -61,7 +59,7 @@ module Api
           order = "asc"
         end
 
-        records.order("ckb_transactions.#{sort} #{order} NULLS LAST")
+        "#{sort} #{order} NULLS LAST"
       end
     end
   end

@@ -1,4 +1,7 @@
 class CkbUtils
+  # The block reward halves approximately every 4 years, one epoch is about 4 hours
+  HALVING_EPOCH = 4 * 365 * 24 / 4
+
   def self.int_to_hex(i)
     "0x#{i.to_s(16)}"
   end
@@ -93,12 +96,7 @@ class CkbUtils
 
     epoch_info = get_epoch_info(epoch_number)
     start_number = epoch_info.start_number.to_i
-    epoch_reward =
-      if CkbSync::Api.instance.mode == "mainnet" && epoch_number >= 8760
-        Settings.default_epoch_reward.to_i / 2
-      else
-        Settings.default_epoch_reward.to_i
-      end
+    epoch_reward = epoch_reward_with_halving(epoch_number)
     base_reward = epoch_reward / epoch_info.length.to_i
     remainder_reward = epoch_reward % epoch_info.length.to_i
     if block_number.to_i >= start_number && block_number.to_i < start_number + remainder_reward
@@ -106,6 +104,10 @@ class CkbUtils
     else
       base_reward
     end
+  end
+
+  def self.epoch_reward_with_halving(epoch_number)
+    Settings.default_epoch_reward.to_i >> epoch_number / HALVING_EPOCH
   end
 
   def self.primary_reward(block_number, block_economic_state)
