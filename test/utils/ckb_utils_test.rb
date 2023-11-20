@@ -179,6 +179,15 @@ class CkbUtilsTest < ActiveSupport::TestCase
     end
   end
 
+  test ".epoch_reward_with_halving should changed after halving" do
+    assert_equal 95890410958904,
+                 CkbUtils.epoch_reward_with_halving(8760)
+    assert_equal 95890410958904,
+                 CkbUtils.epoch_reward_with_halving(8761)
+    assert_equal 47945205479452,
+                 CkbUtils.epoch_reward_with_halving(17520)
+  end
+
   test ".calculate_cell_min_capacity should return output's min capacity" do
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
