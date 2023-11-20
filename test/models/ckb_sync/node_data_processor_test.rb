@@ -212,7 +212,7 @@ module CkbSync
         node_block.transactions.first
         local_block = node_data_processor.process_block(node_block)
 
-        assert_equal  CkbUtils.base_reward(node_block.header.number, node_block.header.epoch), local_block.reward
+        assert_equal  CkbUtils.base_reward(node_block.header.number, CkbUtils.parse_epoch_info(node_block.header).number), local_block.reward
       end
     end
 
@@ -223,7 +223,7 @@ module CkbSync
 
         local_block = node_data_processor.process_block(node_block)
 
-        assert_equal CkbUtils.base_reward(node_block.header.number, node_block.header.epoch), local_block.primary_reward
+        assert_equal CkbUtils.base_reward(node_block.header.number, CkbUtils.parse_epoch_info(node_block.header).number), local_block.primary_reward
       end
     end
 
