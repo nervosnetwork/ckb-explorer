@@ -11,8 +11,6 @@ class RevertBlockJob < ApplicationJob
       end
 
     ApplicationRecord.transaction do
-      CkbTransaction.tx_pending.
-        where(tx_hash: CkbUtils.hexes_to_bins(local_tip_block.ckb_transactions.pluck(:tx_hash))).update_all(tx_status: "pending")
       benchmark :revert_dao_contract_related_operations, local_tip_block
       benchmark :revert_mining_info, local_tip_block
 
