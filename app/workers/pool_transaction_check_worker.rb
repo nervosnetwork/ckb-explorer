@@ -14,12 +14,6 @@ class PoolTransactionCheckWorker
       includes(:cell_dependencies, cell_inputs: :previous_cell_output).
       order(id: :asc).limit(150)
     pending_transactions.each do |tx|
-      # FIXME: remove this code
-      if CkbTransaction.tx_committed.exists?(tx_hash: tx.tx_hash)
-        tx.destroy!
-        next
-      end
-
       is_rejected = false
       rejected_transaction = nil
       # check if any input is used by other transactions
