@@ -107,7 +107,7 @@ class CkbUtils
   end
 
   def self.epoch_reward_with_halving(epoch_number)
-    Settings.default_epoch_reward.to_i >> epoch_number / HALVING_EPOCH 
+    Settings.default_epoch_reward.to_i >> epoch_number / HALVING_EPOCH
   end
 
   def self.primary_reward(block_number, block_economic_state)

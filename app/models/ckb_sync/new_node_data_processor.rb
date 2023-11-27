@@ -77,7 +77,8 @@ module CkbSync
         @contained_udt_ids = contained_udt_ids = []
         @contained_address_ids = contained_address_ids = []
 
-        process_ckb_txs(node_block, ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
+        process_ckb_txs(node_block, ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags,
+                        udt_address_ids)
         addrs_changes = Hash.new { |hash, key| hash[key] = {} }
         input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs,
                                                                      tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
@@ -136,7 +137,10 @@ module CkbSync
       GenerateStatisticsDataWorker.perform_async(local_block.id)
     end
 
-    def process_ckb_txs(node_block, ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids)
+    def process_ckb_txs(
+      node_block, ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags,
+udt_address_ids
+    )
       tx_index = 0
       ckb_txs.each do |cbk_tx|
         cbk_tx["tx_hash"][0] = "0"
@@ -1182,7 +1186,6 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
 
     def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
       cycles = CkbSync::Api.instance.get_block_cycles node_block.header.hash
-      txs = nil
       ckb_transactions_attributes = []
       tx_index = 0
       hashes = []
@@ -1209,7 +1212,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       # locate correct record according to tx_hash
       binary_hashes = CkbUtils.hexes_to_bins(hashes)
       pending_txs = CkbTransaction.where(tx_hash: binary_hashes, tx_status: :pending).pluck(:tx_hash, :created_at)
-      CkbTransaction.where(tx_hash: hashes).update_all tx_status: "committed"
+      CkbTransaction.where(tx_hash: binary_hashes).update_all tx_status: "committed"
 
       txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:tx_status, :tx_hash],
                                                                    returning: %w(id tx_hash block_timestamp created_at))

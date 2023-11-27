@@ -1,3 +1,4 @@
+# No used
 class ImportBlockJob < ApplicationJob
   def perform(block_hash)
     if block_hash.is_a?(Integer)
