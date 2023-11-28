@@ -1,7 +1,8 @@
 FactoryBot.define do
   factory :address do
     address_hash do
-      script = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, args: "0x#{SecureRandom.hex(20)}", hash_type: "type")
+      script = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, args: "0x#{SecureRandom.hex(20)}",
+                                      hash_type: "type")
       CKB::Address.new(script).generate
     end
 
@@ -40,11 +41,21 @@ FactoryBot.define do
           ckb_transactions << create(:ckb_transaction, block: block, block_timestamp: Time.current.to_i + i)
         end
 
-        # ckb_transactions.each do |tx|
-        #   tx.contained_address_ids << address.id
-        #   tx.save
-        # end
-        # binding.pry
+        AccountBook.upsert_all ckb_transactions.map { |t| { address_id: address.id, ckb_transaction_id: t.id } }
+        address.update(ckb_transactions_count: address.ckb_transactions.count)
+      end
+    end
+
+    trait :with_pending_transactions do
+      ckb_transactions_count { 3 }
+      after(:create) do |address, evaluator|
+        block = create(:block, :with_block_hash)
+        ckb_transactions = []
+        evaluator.transactions_count.times do |i|
+          ckb_transactions << create(:pending_transaction, :with_multiple_inputs_and_outputs, block: block,
+                                                                                              block_timestamp: Time.current.to_i + i)
+        end
+
         AccountBook.upsert_all ckb_transactions.map { |t| { address_id: address.id, ckb_transaction_id: t.id } }
         address.update(ckb_transactions_count: address.ckb_transactions.count)
       end
