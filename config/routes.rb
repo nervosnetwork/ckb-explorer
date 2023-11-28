@@ -64,6 +64,7 @@ Rails.application.routes.draw do
       resources :distribution_data, only: :show
       resources :monetary_data, only: :show
       resources :udt_verifications, only: :update
+      resources :address_pending_transactions, only: :show
     end
   end
   draw "v2"
