@@ -23,6 +23,10 @@ class MarketData
     send(indicator)
   end
 
+  def indicators_json
+    VALID_INDICATORS.index_with { |indicator| send(indicator) }
+  end
+
   def ecosystem_locked
     if current_timestamp < first_released_timestamp_other
       ECOSYSTEM_QUOTA * 0.97

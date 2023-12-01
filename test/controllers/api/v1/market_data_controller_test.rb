@@ -36,7 +36,7 @@ module Api
         create(:daily_statistic, treasury_amount: "45507635189304330.674891957030103511696912093394364431189654516859837775", created_at_unixtimestamp: Time.current.yesterday.beginning_of_day.to_i)
       end
 
-      test "should set right content type when call index" do
+      test "should set right content type when call show" do
         create(:address, address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
         valid_get api_v1_market_datum_url("circulating_supply")
 
@@ -69,9 +69,9 @@ module Api
       test "should return current circulating supply" do
         create(:address, address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
         valid_get api_v1_market_datum_url("circulating_supply")
-        MarketData.new(indicator: "circulating_supply").call
+        result = MarketData.new(indicator: "circulating_supply").call
 
-        assert_equal MarketData.new(indicator: "circulating_supply").call.to_s, json
+        assert_equal result.to_s, json
       end
     end
   end
