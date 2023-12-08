@@ -63,9 +63,9 @@ s.every "1h", overlap: false do
   call_worker AddressUnclaimedCompensationGenerator
 end
 
-s.every "5m", overlap: false do
-  call_worker PoolTransactionCheckWorker
-end
+# s.every "5m", overlap: false do
+#   call_worker PoolTransactionCheckWorker
+# end
 
 s.every "1h", overlap: false do
   call_worker CleanUpWorker
@@ -106,10 +106,6 @@ end
 s.every "1h", overlap: false do
   puts "update token collection h24 transaction count"
   call_worker UpdateH24CkbTransactionsCountOnCollectionsWorker
-end
-
-s.every "1h", overlap: false do
-  CkbTransaction.clean_pending
 end
 
 s.cron "30 0 * * *" do
