@@ -62,14 +62,6 @@ class CkbTransaction < ApplicationRecord
     end
   end
 
-  def self.clean_pending
-    tx_pending.find_each do |t|
-      if where(tx_hash: t.tx_hash).where.not(tx_status: :pending).exists?
-        t.destroy
-      end
-    end
-  end
-
   def self.largest_in_epoch(epoch_number)
     Rails.cache.fetch(["epoch", epoch_number, "largest_tx"]) do
       tx = CkbTransaction.where(block: { epoch_number: epoch_number }).order(bytes: :desc).first
