@@ -15,6 +15,9 @@ module Api
           order(order_by => asc_or_desc).
           page(@page).per(@page_size).fast_page
 
+        total_count = AccountBook.where(address_id: @address.id).count
+        total_count = tx_ids.total_count if total_count < 1_000
+
         ckb_transaction_ids = tx_ids.map(&:ckb_transaction_id)
         ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).
           select(:id, :tx_hash, :block_id, :block_number, :block_timestamp,
@@ -26,7 +29,7 @@ module Api
           records: ckb_transactions,
           page: @page,
           page_size: @page_size,
-          records_counter: tx_ids
+          total_count: total_count
         ).call
         ckb_transaction_serializer = CkbTransactionsSerializer.new(
           ckb_transactions,
