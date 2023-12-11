@@ -6,39 +6,45 @@ module Api
       before_action :set_address_transactions, only: [:show, :download_csv]
 
       def show
-        @tx_ids = AccountBook.joins(:ckb_transaction).
+        expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+
+        order_by, asc_or_desc = account_books_ordering
+        tx_ids = AccountBook.joins(:ckb_transaction).
           where(account_books: { address_id: @address.id },
-                ckb_transactions: { tx_status: "committed" })
-
-        params[:sort] ||= "ckb_transaction_id.desc"
-        order_by, asc_or_desc = params[:sort].split(".", 2)
-        order_by =
-          case order_by
-                   when "time" then "ckb_transactions.block_timestamp"
-                   else order_by
-          end
-
-        head :not_found and return unless order_by.in? %w[
-          ckb_transaction_id block_timestamp
-          ckb_transactions.block_timestamp
-        ]
-
-        @tx_ids = @tx_ids.
+                ckb_transactions: { tx_status: "committed" }).
           order(order_by => asc_or_desc).
-          select("ckb_transaction_id").
           page(@page).per(@page_size).fast_page
 
-        order_by = "id" if order_by == "ckb_transaction_id"
-        @ckb_transactions = CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).
-          select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :capacity_involved).
+        total_count = AccountBook.where(address_id: @address.id).count
+        total_count = tx_ids.total_count if total_count < 1_000
+
+        ckb_transaction_ids = tx_ids.map(&:ckb_transaction_id)
+        ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).
+          select(:id, :tx_hash, :block_id, :block_number, :block_timestamp,
+                 :is_cellbase, :updated_at, :capacity_involved).
           order(order_by => asc_or_desc)
 
+        options = FastJsonapi::PaginationMetaGenerator.new(
+          request: request,
+          records: ckb_transactions,
+          page: @page,
+          page_size: @page_size,
+          total_count: total_count
+        ).call
+        ckb_transaction_serializer = CkbTransactionsSerializer.new(
+          ckb_transactions,
+          options.merge(params: { previews: true, address: @address })
+        )
+
         json =
-          Rails.cache.realize("#{@ckb_transactions.cache_key}/#{@address.query_address}",
-                              version: @ckb_transactions.cache_version) do
-            @options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: @ckb_transactions,
-                                                                page: @page, page_size: @page_size, records_counter: @tx_ids).call
-            json_result
+          if QueryKeyUtils.valid_address?(params[:id])
+            if @address.address_hash == @address.query_address
+              ckb_transaction_serializer.serialized_json
+            else
+              ckb_transaction_serializer.serialized_json.gsub(@address.address_hash, @address.query_address)
+            end
+          else
+            ckb_transaction_serializer.serialized_json
           end
 
         render json: json
@@ -71,26 +77,24 @@ module Api
         @page_size = params[:page_size] || CkbTransaction.default_per_page
       end
 
-      def json_result
-        ckb_transaction_serializer = CkbTransactionsSerializer.new(@ckb_transactions,
-                                                                   @options.merge(params: {
-                                                                     previews: true,
-                                                                     address: @address }))
-
-        if QueryKeyUtils.valid_address?(params[:id])
-          if @address.address_hash == @address.query_address
-            ckb_transaction_serializer.serialized_json
-          else
-            ckb_transaction_serializer.serialized_json.gsub(@address.address_hash, @address.query_address)
-          end
-        else
-          ckb_transaction_serializer.serialized_json
-        end
-      end
-
       def set_address_transactions
         @address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if @address.is_a?(NullAddress)
+      end
+
+      def account_books_ordering
+        sort, order = params.fetch(:sort, "ckb_transaction_id.desc").split(".", 2)
+        sort =
+          case sort
+          when "time" then "ckb_transactions.block_timestamp"
+          else "ckb_transactions.id"
+          end
+
+        if order.nil? || !order.match?(/^(asc|desc)$/i)
+          order = "asc"
+        end
+
+        [sort, order]
       end
     end
   end
