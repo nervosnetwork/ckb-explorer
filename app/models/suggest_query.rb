@@ -56,8 +56,8 @@ class SuggestQuery
   end
 
   def find_type_script_by_type_id
-    type_script = TypeScript.find_by(script_hash: query_key)
-    { data: { args: type_script.args } } if type_script.present?
+    type_script = TypeScript.find_by(args: query_key, code_hash: Settings.type_id_code_hash)
+    TypeScriptSerializer.new(type_script) if type_script.present?
   end
 
   def find_by_hex

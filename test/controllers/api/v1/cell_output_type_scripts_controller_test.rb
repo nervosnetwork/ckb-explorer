@@ -86,7 +86,7 @@ module Api
 
         valid_get api_v1_cell_output_type_script_url(cell_output.id)
 
-        assert_equal %w(args code_hash hash_type).sort, json["data"]["attributes"].keys.sort
+        assert_equal %w(args code_hash hash_type script_hash).sort, json["data"]["attributes"].keys.sort
       end
 
       test "should return error object when no cell output found by id" do
