@@ -28,7 +28,7 @@ class StatisticInfo < ApplicationRecord
     {
       epoch_number: tip_block.epoch.to_s,
       epoch_length: tip_block.length.to_s,
-      index: (tip_block_number - tip_block.start_number).to_s
+      index: (tip_block_number - tip_block.start_number).to_s,
     }
   end
 
@@ -49,7 +49,8 @@ class StatisticInfo < ApplicationRecord
   define_logic :transactions_count_per_minute do
     interval = 100
     start_block_number = [tip_block_number.to_i - interval + 1, 0].max
-    timestamps = Block.where(number: [start_block_number, tip_block_number]).recent.pluck(:timestamp)
+    timestamps = Block.where(number: [start_block_number,
+                                      tip_block_number]).recent.pluck(:timestamp)
     next if timestamps.empty?
 
     transactions_count = Block.where(number: start_block_number..tip_block_number).sum(:ckb_transactions_count)
@@ -60,7 +61,8 @@ class StatisticInfo < ApplicationRecord
   define_logic :average_block_time do
     interval = (Settings.average_block_time_interval || 100)
     start_block_number = [tip_block_number.to_i - interval + 1, 0].max
-    timestamps = Block.where(number: [start_block_number, tip_block_number]).recent.pluck(:timestamp)
+    timestamps = Block.where(number: [start_block_number,
+                                      tip_block_number]).recent.pluck(:timestamp)
     next if timestamps.empty?
 
     total_block_time(timestamps) / blocks_count(interval)
@@ -90,14 +92,17 @@ class StatisticInfo < ApplicationRecord
   define_logic :address_balance_ranking do
     addresses = Address.visible.where("balance > 0").order(balance: :desc).limit(50)
     addresses.each.with_index(1).map do |address, index|
-      { address: address.address_hash, balance: address.balance.to_s, ranking: index.to_s }
+      { address: address.address_hash, balance: address.balance.to_s,
+        ranking: index.to_s }
     end
   end
 
   define_logic :blockchain_info do
     message_need_to_be_filtered_out = "CKB v0.105.* have bugs. Please upgrade to the latest version."
     result = CkbSync::Api.instance.get_blockchain_info
-    result.alerts.delete_if { |alert| alert.message == message_need_to_be_filtered_out }
+    result.alerts.delete_if do |alert|
+      alert.message == message_need_to_be_filtered_out
+    end
     JSON.generate(result.as_json)
   end
 
@@ -108,10 +113,10 @@ class StatisticInfo < ApplicationRecord
       pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time)
     txs.map do |id, created_at, transaction_fee, bytes, confirmation_time|
       {
-        id: id,
+        id:,
         timestamp: created_at.to_i,
         fee_rate: (transaction_fee.to_f / bytes),
-        confirmation_time: confirmation_time
+        confirmation_time:,
       }
     end
   end
@@ -123,7 +128,7 @@ class StatisticInfo < ApplicationRecord
       order("id desc").limit(100)
 
     # This is a patch for those pending tx which has no `bytes`
-    fee_rates = fee_rates.map { |tx|
+    fee_rates = fee_rates.map do |tx|
       tx_bytes = 0
       if tx.bytes.blank? || tx.bytes == 0
         Rails.logger.info "== checking tx bytes: #{tx.tx_hash}, #{tx.id}"
@@ -137,12 +142,12 @@ class StatisticInfo < ApplicationRecord
       end
 
       tx
-    }.select { |e| e.bytes > 0 }
+    end.select { |e| e.bytes > 0 }
 
     fee_rates.map do |tx|
       {
         id: tx.id,
-        fee_rate: (tx.transaction_fee.to_f / tx.bytes)
+        fee_rate: (tx.transaction_fee.to_f / tx.bytes),
       }
     end
   end
@@ -210,4 +215,5 @@ end
 #  updated_at                        :datetime         not null
 #  pending_transaction_fee_rates     :jsonb
 #  transaction_fee_rates             :jsonb
+#  ckb_hodl_waves                    :jsonb
 #

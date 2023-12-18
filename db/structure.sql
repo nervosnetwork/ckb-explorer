@@ -1863,7 +1863,8 @@ CREATE TABLE public.statistic_infos (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     pending_transaction_fee_rates jsonb,
-    transaction_fee_rates jsonb
+    transaction_fee_rates jsonb,
+    ckb_hodl_waves jsonb
 );
 
 
@@ -4750,6 +4751,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230913091025'),
 ('20230914120928'),
 ('20230918033957'),
-('20231017074221');
+('20231017074221'),
+('20231218082938');
 
 
