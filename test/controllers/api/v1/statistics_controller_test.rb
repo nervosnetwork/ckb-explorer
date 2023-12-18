@@ -6,15 +6,15 @@ module Api
       setup do
         CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(100)
         CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(
-          OpenStruct.new(alerts: OpenStruct.new(message: "test"))
+          OpenStruct.new(alerts: OpenStruct.new(message: "test")),
         )
         CkbSync::Api.any_instance.stubs(:get_current_epoch).returns(
           CKB::Types::Epoch.new(
             compact_target: "0x1000",
             length: "0x07d0",
             number: "0x0",
-            start_number: "0x0"
-          )
+            start_number: "0x0",
+          ),
         )
         # StatisticInfo.any_instance.stubs(:id).returns(1)
       end
@@ -43,7 +43,8 @@ module Api
 
       test "should respond with error object when Content-Type is wrong" do
         error_object = Api::V1::Exceptions::InvalidContentTypeError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         get api_v1_statistics_url, headers: { "Content-Type": "text/plain" }
 
@@ -51,16 +52,21 @@ module Api
       end
 
       test "should respond with 406 Not Acceptable when Accept is wrong" do
-        get api_v1_statistics_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_statistics_url,
+            headers: { "Content-Type": "application/vnd.api+json",
+                       "Accept": "application/json" }
 
         assert_equal 406, response.status
       end
 
       test "should respond with error object when Accept is wrong" do
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
-        get api_v1_statistics_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_statistics_url,
+            headers: { "Content-Type": "application/vnd.api+json",
+                       "Accept": "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -80,7 +86,8 @@ module Api
         statistic_info.reset_all!
         valid_get api_v1_statistics_url
 
-        assert_equal IndexStatisticSerializer.new(statistic_info).serialized_json, response.body
+        assert_equal IndexStatisticSerializer.new(statistic_info).serialized_json,
+                     response.body
       end
 
       test "should get success code when call show" do
@@ -99,8 +106,8 @@ module Api
             compact_target: "0x1000",
             length: "0x07d0",
             number: "0x0",
-            start_number: "0x0"
-          )
+            start_number: "0x0",
+          ),
         )
         generate_miner_ranking_related_data
         StatisticInfo.default.reset_all!
@@ -116,8 +123,8 @@ module Api
             compact_target: "0x1000",
             length: "0x07d0",
             number: "0x0",
-            start_number: "0x0"
-          )
+            start_number: "0x0",
+          ),
         )
         generate_miner_ranking_related_data
         statistic_info = StatisticInfo.default
@@ -134,8 +141,8 @@ module Api
             compact_target: "0x1000",
             length: "0x07d0",
             number: "0x0",
-            start_number: "0x0"
-          )
+            start_number: "0x0",
+          ),
         )
         generate_miner_ranking_related_data(1550578400000)
         StatisticInfo.default.reset! :miner_ranking
@@ -164,7 +171,8 @@ module Api
 
         valid_get api_v1_statistic_url("tip_block_number")
 
-        assert_equal tip_block_number, json.dig("data", "attributes", "tip_block_number")
+        assert_equal tip_block_number,
+                     json.dig("data", "attributes", "tip_block_number")
       end
 
       test "should return average block time when param is average_block_time" do
@@ -174,7 +182,8 @@ module Api
 
         valid_get api_v1_statistic_url("average_block_time")
 
-        assert_equal average_block_time, json.dig("data", "attributes", "average_block_time")
+        assert_equal average_block_time,
+                     json.dig("data", "attributes", "average_block_time")
       end
 
       test "should return current epoch difficulty when param is current_epoch_difficulty" do
@@ -183,7 +192,8 @@ module Api
 
         valid_get api_v1_statistic_url("current_epoch_difficulty")
 
-        assert_equal current_epoch_difficulty, json.dig("data", "attributes", "current_epoch_difficulty")
+        assert_equal current_epoch_difficulty,
+                     json.dig("data", "attributes", "current_epoch_difficulty")
       end
 
       test "should return current hash rate when param is hash_rate" do
@@ -202,7 +212,7 @@ module Api
           difficulty: "0x100",
           median_time: "0x16bd6605e65",
           chain: "ckb_testnet",
-          alerts: []
+          alerts: [],
         )
         CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(blockchain_info)
         statistic_info = StatisticInfo.default
@@ -211,7 +221,8 @@ module Api
 
         assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "blockchain_info" } }).serialized_json,
                      response.body
-        assert_equal blockchain_info.as_json, json.dig("data", "attributes", "blockchain_info")
+        assert_equal blockchain_info.as_json,
+                     json.dig("data", "attributes", "blockchain_info")
       end
 
       test "should return top 50 addresses balance list when param is address balance ranking" do
@@ -222,18 +233,39 @@ module Api
         statistic_info.reset! :address_balance_ranking
         valid_get api_v1_statistic_url("address_balance_ranking")
         assert_equal %w(ranking address balance).sort,
-                     json.dig("data", "attributes", "address_balance_ranking").map(&:keys).uniq.flatten.sort
+                     json.dig("data", "attributes",
+                              "address_balance_ranking").map(&:keys).uniq.flatten.sort
         assert_equal StatisticSerializer.new(statistic_info, { params: { info_name: "address_balance_ranking" } }).serialized_json,
                      response.body
       end
 
       test "should respond with error object when statistic info name is invalid" do
         error_object = Api::V1::Exceptions::StatisticInfoNameInvalidError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         valid_get api_v1_statistic_url("hash_rates")
 
         assert_equal response_json, response.body
+      end
+
+      test "should return current ckb_hodl_waves when param is ckb_hodl_waves" do
+        ckb_hodl_waves = { "over_three_years" => 19531171649.691193,
+                           "one_year_to_three_years" => 23338346194.19826,
+                           "six_months_to_one_year" => 19609620799.532352,
+                           "three_months_to_six_months" => 2236264635.3570275,
+                           "one_month_to_three_months" => 814754775.4523662,
+                           "one_week_to_one_month" => 456541010.49045384,
+                           "day_to_one_week" => 104631888.5063308,
+                           "latest_day" => 22211617.27774267,
+                           "total_supply" => 40845092357.49983,
+                           "updated_at" => 1702895323 }
+        create(:statistic_info, ckb_hodl_waves:)
+
+        valid_get api_v1_statistic_url("ckb_hodl_waves")
+
+        assert_equal ckb_hodl_waves,
+                     json.dig("data", "attributes", "ckb_hodl_waves")
       end
     end
   end
