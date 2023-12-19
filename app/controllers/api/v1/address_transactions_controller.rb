@@ -21,7 +21,7 @@ module Api
         ckb_transaction_ids = tx_ids.map(&:ckb_transaction_id)
         ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).
           select(:id, :tx_hash, :block_id, :block_number, :block_timestamp,
-                 :is_cellbase, :updated_at, :capacity_involved).
+                 :is_cellbase, :updated_at, :capacity_involved, :created_at).
           order(order_by => asc_or_desc)
 
         options = FastJsonapi::PaginationMetaGenerator.new(

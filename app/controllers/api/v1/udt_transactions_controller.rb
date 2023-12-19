@@ -9,7 +9,7 @@ module Api
 
         ckb_transactions = udt.ckb_transactions.tx_committed.
           select(:id, :tx_hash, :block_id, :block_number,
-                 :block_timestamp, :is_cellbase, :updated_at).
+                 :block_timestamp, :is_cellbase, :updated_at, :created_at).
           order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc")
 
         if params[:tx_hash].present?
