@@ -190,7 +190,7 @@ module Api
         type_script = create(
           :type_script,
           code_hash: Settings.type_id_code_hash,
-          args: "0x2ab17f74009a9948ae2d3623dac853cc3ff1ef8270304ea5d9980b1f2b6810d5",
+          args: "0x8536c9d5d908bd89fc70099e4284870708b6632356aad98734fcf43f6f71c304",
           script_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
         )
         response_json = TypeScriptSerializer.new(type_script).serialized_json
