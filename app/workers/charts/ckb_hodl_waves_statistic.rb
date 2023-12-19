@@ -43,7 +43,7 @@ module Charts
         latest_day:,
       }.transform_values { |value| (value / 10**8).truncate(8) }
 
-      StatisticInfo.first.update(capacity_hodl_waves: ckb.merge!(info))
+      StatisticInfo.first.update(ckb_hodl_waves: ckb.merge!(info))
     end
   end
 end
