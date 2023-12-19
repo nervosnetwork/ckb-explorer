@@ -1,5 +1,5 @@
 module Charts
-  class CkbbHodlWavesStatistic
+  class CkbHodlWavesStatistic
     include Sidekiq::Worker
     sidekiq_options queue: "critical"
 
