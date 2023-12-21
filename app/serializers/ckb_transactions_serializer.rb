@@ -56,6 +56,6 @@ class CkbTransactionsSerializer
   end
 
   attribute :create_timestamp do |object|
-    (object.created_at.to_f * 1000).to_s
+    (object.created_at.to_f * 1000).to_i.to_s
   end
 end

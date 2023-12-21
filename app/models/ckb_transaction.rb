@@ -189,7 +189,11 @@ class CkbTransaction < ApplicationRecord
   end
 
   def income(address)
-    outputs.where(address: address).sum(:capacity) - inputs.where(address: address).sum(:capacity)
+    if tx_pending?
+      cell_outputs.where(address: address).sum(:capacity) - input_cells.where(address: address).sum(:capacity)
+    else
+      outputs.where(address: address).sum(:capacity) - inputs.where(address: address).sum(:capacity)
+    end
   end
 
   def dao_transaction?
