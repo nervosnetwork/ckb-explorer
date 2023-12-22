@@ -12,7 +12,7 @@ module Api
           expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
           ckb_transactions = dao_contract.ckb_transactions.includes(:cell_inputs, :cell_outputs).tx_committed.select(
-            :id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at
+            :id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at
           ).order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc")
 
           if params[:tx_hash].present?

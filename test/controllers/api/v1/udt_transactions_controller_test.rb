@@ -90,7 +90,7 @@ module Api
         response_tx_transaction = json["data"].first
 
         assert_equal %w(
-          block_number block_timestamp display_inputs display_inputs_count
+          block_number block_timestamp display_inputs display_inputs_count created_at create_timestamp
           display_outputs display_outputs_count income is_cellbase transaction_hash
         ).sort,
                      response_tx_transaction["attributes"].keys.sort

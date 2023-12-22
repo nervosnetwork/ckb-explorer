@@ -8,7 +8,7 @@ module Api
       def index
         if from_home_page?
           ckb_transactions = CkbTransaction.tx_committed.recent.normal.select(
-            :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at
+            :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at, :created_at
           ).limit((Settings.homepage_transactions_records_count || 15).to_i)
           json =
             Rails.cache.realize(ckb_transactions.cache_key,
@@ -18,7 +18,7 @@ module Api
           render json: json
         else
           ckb_transactions = CkbTransaction.tx_committed.normal.select(
-            :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at
+            :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at, :created_at
           )
 
           params[:sort] ||= "id.desc"
@@ -84,7 +84,7 @@ module Api
             CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
           end
         ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id,
-                                                   :block_number, :block_timestamp, :is_cellbase, :updated_at)
+                                                   :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at)
         json =
           Rails.cache.realize(ckb_transactions.cache_key,
                               version: ckb_transactions.cache_version, race_condition_ttl: 1.minute) do

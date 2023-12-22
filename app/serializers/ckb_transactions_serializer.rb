@@ -24,7 +24,8 @@ class CkbTransactionsSerializer
   end
 
   attribute :display_inputs do |object, params|
-    Rails.cache.fetch("display_inputs_previews_#{params[:previews].present?}_#{object.id}", expires_in: 1.day) do
+    cache_key = "display_inputs_previews_#{params[:previews].present?}_#{object.id}_#{object.inputs.cache_key}"
+    Rails.cache.fetch(cache_key, expires_in: 1.day) do
       if params && params[:previews]
         object.display_inputs(previews: true)
       else
@@ -34,7 +35,8 @@ class CkbTransactionsSerializer
   end
 
   attribute :display_outputs do |object, params|
-    Rails.cache.fetch("display_outputs_previews_#{params[:previews].present?}_#{object.id}", expires_in: 1.day) do
+    cache_key = "display_outputs_previews_#{params[:previews].present?}_#{object.id}_#{object.outputs.cache_key}"
+    Rails.cache.fetch(cache_key, expires_in: 1.day) do
       if params && params[:previews]
         object.display_outputs(previews: true)
       else
@@ -47,5 +49,13 @@ class CkbTransactionsSerializer
     if params && params[:previews] && params[:address].present?
       object.income(params[:address])
     end
+  end
+
+  attribute :created_at do |object|
+    object.created_at.to_s
+  end
+
+  attribute :create_timestamp do |object|
+    (object.created_at.to_f * 1000).to_i.to_s
   end
 end
