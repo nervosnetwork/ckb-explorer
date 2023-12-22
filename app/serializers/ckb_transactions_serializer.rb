@@ -24,7 +24,7 @@ class CkbTransactionsSerializer
   end
 
   attribute :display_inputs do |object, params|
-    cache_key = "display_inputs_previews_#{params[:previews].present?}_#{object.id}_#{object.inputs.cache_key}"
+    cache_key = "display_inputs_previews_#{params[:previews].present?}_#{object.id}_#{object.inputs.cache_version}"
     Rails.cache.fetch(cache_key, expires_in: 1.day) do
       if params && params[:previews]
         object.display_inputs(previews: true)
@@ -35,7 +35,7 @@ class CkbTransactionsSerializer
   end
 
   attribute :display_outputs do |object, params|
-    cache_key = "display_outputs_previews_#{params[:previews].present?}_#{object.id}_#{object.outputs.cache_key}"
+    cache_key = "display_outputs_previews_#{params[:previews].present?}_#{object.id}_#{object.outputs.cache_version}"
     Rails.cache.fetch(cache_key, expires_in: 1.day) do
       if params && params[:previews]
         object.display_outputs(previews: true)
