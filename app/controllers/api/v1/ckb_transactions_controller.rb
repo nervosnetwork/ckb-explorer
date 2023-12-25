@@ -1,9 +1,12 @@
 module Api
   module V1
     class CkbTransactionsController < ApplicationController
-      before_action :validate_query_params, only: [:show, :display_inputs, :display_outputs]
-      before_action :find_transaction, only: [:show, :display_inputs, :display_outputs]
-      before_action :validate_pagination_params, :pagination_params, only: [:index, :display_inputs, :display_outputs]
+      before_action :validate_query_params,
+                    only: %i[show display_inputs display_outputs]
+      before_action :find_transaction,
+                    only: %i[show display_inputs display_outputs]
+      before_action :validate_pagination_params, :pagination_params,
+                    only: %i[index display_inputs display_outputs]
 
       def index
         if from_home_page?
@@ -15,7 +18,7 @@ module Api
                                 version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
               CkbTransactionListSerializer.new(ckb_transactions).serialized_json
             end
-          render json: json
+          render json:
         else
           ckb_transactions = CkbTransaction.tx_committed.normal.select(
             :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at, :created_at
@@ -26,12 +29,12 @@ module Api
           order_by, asc_or_desc = params[:sort].split(".", 2)
           order_by =
             case order_by
-                     when "height"
-                       "block_number"
-                     when "capacity"
-                       "capacity_involved"
-                     else
-                       order_by
+            when "height"
+              "block_number"
+            when "capacity"
+              "capacity_involved"
+            else
+              order_by
             end
 
           head :not_found and return unless order_by.in? %w[
@@ -47,16 +50,16 @@ module Api
                                 version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
               records_counter = RecordCounters::Transactions.new
               options = FastJsonapi::PaginationMetaGenerator.new(
-                request: request,
+                request:,
                 records: ckb_transactions,
                 page: @page,
                 page_size: @page_size,
-                records_counter: records_counter
+                records_counter:,
               ).call
               CkbTransactionListSerializer.new(ckb_transactions,
                                                options).serialized_json
             end
-          render json: json
+          render json:
         end
       end
 
@@ -72,11 +75,11 @@ module Api
           if @address
             records_counter = @tx_ids =
               AccountBook.where(
-                address_id: @address.id
+                address_id: @address.id,
               ).order(
-                "ckb_transaction_id" => :desc
+                "ckb_transaction_id" => :desc,
               ).select(
-                "ckb_transaction_id"
+                "ckb_transaction_id",
               ).page(@page).per(@page_size).fast_page
             CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
           else
@@ -89,17 +92,18 @@ module Api
           Rails.cache.realize(ckb_transactions.cache_key,
                               version: ckb_transactions.cache_version, race_condition_ttl: 1.minute) do
             options = FastJsonapi::PaginationMetaGenerator.new(
-              request: request,
+              request:,
               records: ckb_transactions,
               page: @page,
               page_size: @page_size,
-              records_counter: records_counter
+              records_counter:,
             ).call
             CkbTransactionsSerializer.new(ckb_transactions,
                                           options.merge(params: {
-                                            previews: true, address: @address })).serialized_json
+                                                          previews: true, address: @address
+                                                        })).serialized_json
           end
-        render json: json
+        render json:
       end
 
       def show
@@ -121,7 +125,9 @@ module Api
           cell_inputs = @ckb_transaction.normal_tx_display_inputs(cell_inputs)
         end
 
-        render json: { data: cell_inputs, meta: { total: total_count, page_size: @page_size.to_i } }
+        render json: { data: cell_inputs,
+                       meta: { total: total_count,
+                               page_size: @page_size.to_i } }
       end
 
       def display_outputs
@@ -137,7 +143,9 @@ module Api
           cell_outputs = @ckb_transaction.normal_tx_display_outputs(cell_outputs)
         end
 
-        render json: { data: cell_outputs, meta: { total: total_count, page_size: @page_size.to_i } }
+        render json: { data: cell_outputs,
+                       meta: { total: total_count,
+                               page_size: @page_size.to_i } }
       end
 
       private
@@ -161,17 +169,13 @@ module Api
           errors = validator.error_object[:errors]
           status = validator.error_object[:status]
 
-          render json: errors, status: status
+          render json: errors, status:
         end
       end
 
       def find_transaction
         @ckb_transaction = CkbTransaction.where(tx_hash: params[:id]).order(tx_status: :desc).first
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if @ckb_transaction.blank?
-
-        if @ckb_transaction.tx_status.to_s == "rejected" && @ckb_transaction.detailed_message.blank?
-          PoolTransactionUpdateRejectReasonWorker.perform_async(@ckb_transaction.tx_hash)
-        end
       end
     end
   end
