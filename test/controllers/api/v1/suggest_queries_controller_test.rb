@@ -185,6 +185,20 @@ module Api
 
         assert_equal response_json, response.body
       end
+
+      test "should return a type_script when query key is a exist script hash" do
+        type_script = create(
+          :type_script,
+          code_hash: Settings.type_id_code_hash,
+          args: "0x8536c9d5d908bd89fc70099e4284870708b6632356aad98734fcf43f6f71c304",
+          script_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
+        )
+        response_json = TypeScriptSerializer.new(type_script).serialized_json
+
+        valid_get api_v1_suggest_queries_url, params: { q: type_script.args }
+
+        assert_equal response_json, response.body
+      end
     end
   end
 end
