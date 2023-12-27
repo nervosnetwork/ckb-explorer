@@ -1210,9 +1210,9 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       end
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
-      binary_hashes = CkbUtils.hexes_to_bins(hashes)
-      pending_txs = CkbTransaction.where(tx_hash: binary_hashes, tx_status: :pending).pluck(:tx_hash, :created_at)
-      CkbTransaction.where(tx_hash: binary_hashes).update_all tx_status: "committed"
+      binary_hashes = CkbUtils.hexes_to_bins_sql(hashes)
+      pending_txs = CkbTransaction.where("tx_hash IN (#{binary_hashes})").where(tx_status: :pending).pluck(:tx_hash, :created_at)
+      CkbTransaction.where("tx_hash IN (#{binary_hashes})").update_all tx_status: "committed"
 
       txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: [:tx_status, :tx_hash],
                                                                    returning: %w(id tx_hash block_timestamp created_at))
