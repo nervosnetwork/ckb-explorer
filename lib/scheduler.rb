@@ -67,9 +67,9 @@ s.every "1h", overlap: false do
   call_worker AddressUnclaimedCompensationGenerator
 end
 
-# s.every "5m", overlap: false do
-#   call_worker PoolTransactionCheckWorker
-# end
+s.every "2m", overlap: false do
+  call_worker PoolTransactionCheckWorker
+end
 
 s.every "1h", overlap: false do
   call_worker CleanUpWorker

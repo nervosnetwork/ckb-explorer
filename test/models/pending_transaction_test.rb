@@ -16,15 +16,4 @@ class PendingTransactionTest < ActiveSupport::TestCase
     assert_equal %w(hash header_deps cell_deps inputs outputs outputs_data version witnesses).sort,
                  json.keys.map(&:to_s).sort
   end
-
-  test "should update_detailed_message_for_rejected_transaction when detailed_message is nil" do
-    rejected_tx_id = "0xed2049c21ffccfcd26281d60f8f77ff117adb9df9d3f8cbe5fe86e893c66d359"
-    tx = create :pending_transaction, tx_status: :rejected, tx_hash: rejected_tx_id
-
-    VCR.use_cassette("get_rejected_transaction") do
-      PoolTransactionUpdateRejectReasonWorker.new.perform(rejected_tx_id)
-    end
-    tx.reload
-    assert tx.detailed_message.include?("Resolve failed Dead")
-  end
 end

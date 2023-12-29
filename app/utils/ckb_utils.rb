@@ -553,9 +553,9 @@ class CkbUtils
     shannon / (10**8)
   end
 
-  def self.hexes_to_bins(hashes)
-    if hashes.is_a?(Array) && hashes.length > 0
-      hashes.map { |h| [h[2..-1]].pack("H*") }
+  def self.hexes_to_bins_sql(hex_strings)
+    if hex_strings.is_a?(Array) && hex_strings.length > 0
+      hex_strings.map { |hex_string| ActiveRecord::Base.sanitize_sql_array(["E'\\\\x%s'::bytea", hex_string.delete_prefix("0x")]) }.join(", ")
     else
       []
     end
