@@ -46,8 +46,7 @@ gem "redis" # , "~> 4.2.0"
 gem "hiredis-client"
 gem "digest-crc"
 
-# Backgroud Jobs
-
+# Background Jobs
 gem "sidekiq"
 gem "rufus-scheduler"
 # bulk insertion of data into database using ActiveRecord
