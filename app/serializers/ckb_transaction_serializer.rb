@@ -11,7 +11,7 @@ class CkbTransactionSerializer
   end
 
   attribute :cell_deps do |o|
-    o.cell_dependencies.explicit.includes(:cell_output).to_a.map(&:to_raw)
+    o.cell_dependencies.explicit.order("id asc").includes(:cell_output).to_a.map(&:to_raw)
   end
 
   attribute :header_deps do |o|
