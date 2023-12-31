@@ -35,9 +35,9 @@ $ bin/setup
 ## Create & Setup database
 
 ```shell
-bundle exec rake db:create                 # (create db for development and test)
-bundle exec rake db:migrate                # (run migration for development db)
-bundle exec rake db:migrate RAILS_ENV=test # (run migration for test db)
+bundle exec rake db:create                     # (create db for development and test)
+bundle exec rake db:schema:load                # (run migration for development db)
+bundle exec rake db:schema:load RAILS_ENV=test # (run migration for test db)
 ```
 
 ## Running Test
