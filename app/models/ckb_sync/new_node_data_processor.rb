@@ -782,7 +782,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
           if contract
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract.id
           else
-            contract = Contract.create code_hash: lock_script.code_hash
+            contract = Contract.create code_hash: lock_script.script_hash
             temp_hash = temp_hash.merge contract_id: contract.id
           end
           script = Script.find_or_create_by temp_hash
@@ -796,7 +796,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
         type_script_ids.each do |type_script_id|
           type_script = TypeScript.find(type_script_id)
           temp_hash = { script_hash: type_script&.script_hash, is_contract: false }
-          contract = Contract.find_by code_hash: type_script.script_hash
+          contract = Contract.find_by code_hash: type_script.code_hash
 
           if contract
             temp_hash = temp_hash.merge is_contract: true, contract_id: contract.id
