@@ -45,6 +45,9 @@ class CkbTransactionSerializer
   end
 
   attribute :display_inputs do |object, params|
+    display_cells = ActiveModel::Type::Boolean.new.cast(params[:display_cells])
+    next [] unless display_cells
+
     cache_key = "display_inputs_previews_#{params[:previews].present?}_#{object.id}_#{object.inputs.cache_version}"
     Rails.cache.fetch(cache_key, expires_in: 1.day) do
       if params && params[:previews]
@@ -56,6 +59,9 @@ class CkbTransactionSerializer
   end
 
   attribute :display_outputs do |object, params|
+    display_cells = ActiveModel::Type::Boolean.new.cast(params[:display_cells])
+    next [] unless display_cells
+
     cache_key = "display_outputs_previews_#{params[:previews].present?}_#{object.id}_#{object.outputs.cache_version}"
     Rails.cache.fetch(cache_key, expires_in: 1.day) do
       if params && params[:previews]

@@ -106,7 +106,9 @@ module Api
       def show
         expires_in 10.seconds, public: true, must_revalidate: true
 
-        render json: CkbTransactionSerializer.new(@ckb_transaction)
+        render json: CkbTransactionSerializer.new(@ckb_transaction, {
+          params: { display_cells: params.fetch(:display_cells, true)
+        }})
       end
 
       private
