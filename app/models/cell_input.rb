@@ -5,12 +5,16 @@ class CellInput < ApplicationRecord
   belongs_to :previous_cell_output, class_name: "CellOutput", optional: true
   belongs_to :block, optional: true
 
-  delegate :lock_script, :type_script, to: :previous_cell_output, allow_nil: true
+  delegate :lock_script, :type_script, to: :previous_cell_output,
+                                       allow_nil: true
 
   enum cell_type: {
     normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4,
     m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9,
-    cota_regular: 10, spore_cluster: 11, spore_cell: 12 }
+    cota_regular: 10, spore_cluster: 11, spore_cell: 12, omiga_inscription_info: 13, omiga_inscription: 14,
+    xudt: 15
+  }
+
   def output
     previous_cell_output
   end
@@ -24,17 +28,17 @@ class CellInput < ApplicationRecord
       {
         previous_output: {
           index: "0x#{(previous_index || previous_cell_output.cell_index).to_s(16)}",
-          tx_hash: previous_tx_hash || previous_cell_output.tx_hash
+          tx_hash: previous_tx_hash || previous_cell_output.tx_hash,
         },
-        since: hex_since
+        since: hex_since,
       }
     else
       {
         previous_output: {
           index: "0xffffffff",
-          tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+          tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
         },
-        since: hex_since
+        since: hex_since,
       }
     end
   end

@@ -436,7 +436,7 @@ udt_address_ids
       new_udt_accounts_attributes = Set.new
       udt_accounts_attributes = Set.new
       local_block.cell_outputs.select(:id, :address_id, :type_hash, :cell_type, :type_script_id).each do |udt_output|
-        next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell))
+        next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell omiga_inscription))
 
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
@@ -463,7 +463,7 @@ udt_address_ids
 
       local_block.ckb_transactions.pluck(:id).each do |tx_id| # iterator over each tx id for better sql performance
         CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id, :type_hash, :cell_type).each do |udt_output|
-          next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell))
+          next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell omiga_inscription))
 
           address = Address.find(udt_output.address_id)
           udt_type = udt_type(udt_output.cell_type)
@@ -482,6 +482,8 @@ udt_address_ids
               udt_account.destroy unless address.cell_outputs.live.nrc_721_token.where(type_hash: udt_output.type_hash).exists?
             when "spore_cell"
               udt_account.destroy unless address.cell_outputs.live.spore_cell.where(type_hash: udt_output.type_hash).exists?
+            when "omiga_inscription"
+              udt_account.destroy unless address.cell_outputs.live.omiga_inscription.where(type_hash: udt_output.type_hash).exists?
             end
           end
         end
@@ -622,7 +624,11 @@ udt_address_ids
       outputs.each do |tx_index, items|
         items.each_with_index do |output, index|
           cell_type = cell_type(output.type, outputs_data[tx_index][index])
-          next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell))
+          if cell_type == "omiga_inscription_info"
+            info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
+            OmigaInscriptionInfo.upsert(info.merge(output.type.to_h), unique_by: :udt_hash)
+          end
+          next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell omiga_inscription))
 
           type_hash = output.type.compute_hash
           unless Udt.where(type_hash: type_hash).exists?
@@ -680,11 +686,18 @@ udt_address_ids
               end
               nft_token_attr[:published] = true
             end
+            if cell_type == "omiga_inscription"
+              info = OmigaInscriptionInfo.find_by!(udt_hash: type_hash)
+              nft_token_attr[:full_name] = info.name
+              nft_token_attr[:symbol] = info.symbol
+              nft_token_attr[:decimal] = info.decimal
+              nft_token_attr[:published] = true
+            end
             # fill issuer_address after publish the token
             # udts_attributes << {
             #   type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
             #   code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
-            Udt.create_or_find_by!({
+            udt = Udt.create_or_find_by!({
               type_hash: type_hash,
               udt_type: udt_type(cell_type),
               block_timestamp: local_block.timestamp,
@@ -692,6 +705,11 @@ udt_address_ids
               code_hash: output.type.code_hash,
               hash_type: output.type.hash_type
             }.merge(nft_token_attr))
+
+            if cell_type == "omiga_inscription"
+              info = OmigaInscriptionInfo.find_by(udt_hash: type_hash, udt_id: nil)
+              info && info.update!(udt_id: udt.id)
+            end
           end
         end
       end
