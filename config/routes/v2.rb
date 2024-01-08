@@ -4,6 +4,8 @@ namespace :api do
     resources :ckb_transactions, only: [:index, :show] do
       member do
         get :details
+        get :display_inputs
+        get :display_outputs
       end
     end
     resources :transactions do

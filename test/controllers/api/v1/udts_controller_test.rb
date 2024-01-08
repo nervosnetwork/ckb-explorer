@@ -549,7 +549,7 @@ module Api
       end
 
       test "should update successfully when update udt" do
-        udt = create(:udt, email: "abc@sudt.com", published: true)
+        udt = create(:udt, email: "abc@sudt.com")
         create(:udt_verification, udt: udt)
         valid_put api_v1_udt_url("#{udt.type_hash}"), params: {
           symbol: "GWK",
@@ -561,6 +561,7 @@ module Api
         assert_equal 200, response.status
         assert_equal "ok", JSON.parse(response.body)
         assert_equal "GWK", udt.reload.symbol
+        assert_equal true, udt.reload.published
       end
     end
   end

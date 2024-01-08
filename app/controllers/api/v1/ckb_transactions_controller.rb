@@ -1,12 +1,9 @@
 module Api
   module V1
     class CkbTransactionsController < ApplicationController
-      before_action :validate_query_params,
-                    only: %i[show display_inputs display_outputs]
-      before_action :find_transaction,
-                    only: %i[show display_inputs display_outputs]
-      before_action :validate_pagination_params, :pagination_params,
-                    only: %i[index display_inputs display_outputs]
+      before_action :validate_query_params, only: %i[show]
+      before_action :find_transaction,only: %i[show]
+      before_action :validate_pagination_params, :pagination_params, only: %i[index]
 
       def index
         if from_home_page?
@@ -109,43 +106,9 @@ module Api
       def show
         expires_in 10.seconds, public: true, must_revalidate: true
 
-        render json: CkbTransactionSerializer.new(@ckb_transaction)
-      end
-
-      def display_inputs
-        expires_in 1.hour, public: true, must_revalidate: true
-
-        if @ckb_transaction.is_cellbase
-          cell_inputs = @ckb_transaction.cellbase_display_inputs
-          total_count = cell_inputs.count
-        else
-          cell_inputs = @ckb_transaction.cell_inputs.order(id: :asc).
-            page(@page).per(@page_size).fast_page
-          total_count = cell_inputs.total_count
-          cell_inputs = @ckb_transaction.normal_tx_display_inputs(cell_inputs)
-        end
-
-        render json: { data: cell_inputs,
-                       meta: { total: total_count,
-                               page_size: @page_size.to_i } }
-      end
-
-      def display_outputs
-        expires_in 1.hour, public: true, must_revalidate: true
-
-        if @ckb_transaction.is_cellbase
-          cell_outputs = @ckb_transaction.cellbase_display_outputs
-          total_count = cell_outputs.count
-        else
-          cell_outputs = @ckb_transaction.outputs.order(id: :asc).
-            page(@page).per(@page_size).fast_page
-          total_count = cell_outputs.total_count
-          cell_outputs = @ckb_transaction.normal_tx_display_outputs(cell_outputs)
-        end
-
-        render json: { data: cell_outputs,
-                       meta: { total: total_count,
-                               page_size: @page_size.to_i } }
+        render json: CkbTransactionSerializer.new(@ckb_transaction, {
+          params: { display_cells: params.fetch(:display_cells, true)
+        }})
       end
 
       private
