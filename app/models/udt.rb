@@ -2,8 +2,8 @@ class Udt < ApplicationRecord
   MAX_PAGINATES_PER = 100
 
   belongs_to :nrc_factory_cell, optional: true
-
   has_one :udt_verification
+  has_one :omiga_inscription_info
 
   enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3,
                    omiga_inscription: 4 }
