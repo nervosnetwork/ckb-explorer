@@ -447,8 +447,6 @@ class CkbUtils
       "spore_cell"
     when CkbSync::Api.instance.omiga_inscription_info_code_hash
       "omiga_inscription_info"
-    when CkbSync::Api.instance.omiga_inscription_info_code_hash
-      "omiga_inscription_info"
     when CkbSync::Api.instance.xudt_code_hash
       if OmigaInscriptionInfo.where(udt_hash: type_script.compute_hash).exists?
         "omiga_inscription"
@@ -638,5 +636,11 @@ class CkbUtils
     mint_status = "0x#{data.slice!(0, 2)}".to_i(16)
     { decimal:, name: name.presence, symbol: symbol.presence, udt_hash:, expected_supply:,
       mint_limit:, mint_status: }
+  end
+
+  def self.parse_omiga_inscription_data(hex_data)
+    data = hex_data.delete_prefix("0x")
+    mint_limit = [data].pack("H*").unpack1("Q<2")
+    { mint_limit: }
   end
 end
