@@ -24,9 +24,11 @@ Rails.application.routes.draw do
       resources :address_dao_transactions, only: :show
       resources :block_transactions, only: :show
       resources :addresses, only: :show
-      get "/transactions/:id", to: "ckb_transactions#show", as: "ckb_transaction"
+      get "/transactions/:id", to: "ckb_transactions#show",
+                               as: "ckb_transaction"
       get "/transactions", to: "ckb_transactions#index", as: "ckb_transactions"
-      post "/transactions/query", to: "ckb_transactions#query", as: "query_ckb_transactions"
+      post "/transactions/query", to: "ckb_transactions#query",
+                                  as: "query_ckb_transactions"
       resources :cell_input_lock_scripts, only: :show
       resources :cell_input_type_scripts, only: :show
       resources :cell_input_data, only: :show
@@ -51,12 +53,13 @@ Rails.application.routes.draw do
       resources :daily_statistics, only: :show
       resources :block_statistics, only: :show ## TODO: unused route
       resources :epoch_statistics, only: :show
-      resources :market_data, only: [:index, :show]
+      resources :market_data, only: %i[index show]
       resources :udts, only: %i(index show update) do
         collection do
           get :download_csv
         end
       end
+      resources :omiga_inscriptions, only: %i(index show)
       resources :udt_transactions, only: :show
       resources :address_udt_transactions, only: :show
       resources :distribution_data, only: :show
@@ -66,5 +69,6 @@ Rails.application.routes.draw do
     end
   end
   draw "v2"
-  match "/:anything" => "errors#routing_error", via: :all, constraints: { anything: /.*/ }
+  match "/:anything" => "errors#routing_error", via: :all,
+        constraints: { anything: /.*/ }
 end

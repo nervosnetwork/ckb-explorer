@@ -1,0 +1,39 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_by_number","params":["0x20","0x2",false]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '2138'
+      Date:
+      - Fri, 04 Oct 2019 15:54:13 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":{"extension":"0x8ff8775a749aeefe169b9c176f690e47153c22ad55cca6694ab83469f5069cd2","header":{"compact_target":"0x1d08cdb1","dao":"0x2c34e8cb67565c4a014fecab67c82700a949185bc912d8050069153ba929cf08","epoch":"0x70803ba001ed5","extra_hash":"0x5fae5826e29a9ab5eeb87c02c2b9407fff2f5c4d6297f62f046160d6f92b9d3f","hash":"0x41800338f56ee284ba01322b3bbab976d791fda1676f56f78362cff317051f81","nonce":"0x8070e69daad54b7cb60d3ed99c57cb48","number":"0x20","parent_hash":"0x65fc1b48bedd9e7467c79a57d7190065161bd471f877eebb8328e679c645af3e","proposals_hash":"0x44206f032b013f233f1c8d9226050b62e444449f15fa0d061c6303ca83269d0f","timestamp":"0x18cba81ecbb","transactions_root":"0x90d3e8dc57f0df60ebca854a0288ce62a5951304e555a499d47e3359ccc1d2f5","version":"0x0"},"proposals":["0x45747e9d861a75cbd540","0xf52c6b5087f1cc42b8d4","0x2ca7a87c2f917551c4fc"],"transactions":[{"cell_deps":[],"hash":"0x9b07c0d38d1c042fa1f73c4948cb94d46db727983af694458d948bc6243f3e6b","header_deps":[],"inputs":[{"previous_output":{"index":"0xffffffff","tx_hash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"since":"0xb3bf13"}],"outputs":[{"capacity":"0x19bf50e587","lock":{"args":"0xed9b7cab5f5143cf4f5471382c40dd5977cbcdef","code_hash":"0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8","hash_type":"type"},"type":null}],"outputs_data":["0x"],"version":"0x0","witnesses":["0x830000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000000450340178ae277261a838c89f9ccb76a190ed4b2a0000000000000020302e3131332e302d72633220283866663030323620323032332d31322d31392920deadbeef"]},{"cell_deps":[],"hash":"0xd5d38a2096c10e5d0d55def7f2b3fe58779aad831fbc9dcd594446b1f0837430","header_deps":[],"inputs":[{"previous_output":{"index":"0x1","tx_hash":"0x3e89753ebca825e1504498eb18b56576d5b7eff59fe033346a10ab9e8ca359a4"},"since":"0x0"}],"outputs":[{"capacity":"0x8bacd36a610","lock":{"args":"0x00016091d93dbab12f16640fb3a0a8f1e77e03fbc51c","code_hash":"0xd23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac","hash_type":"type"},"type":null},{"capacity":"0x360447100","lock":{"args":"0x00016091d93dbab12f16640fb3a0a8f1e77e03fbc51c","code_hash":"0xd23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac","hash_type":"type"},"type":{"args":"0x9709d30fc21348ae1d28a197310a80aec3b8cdb5c93814d5e240f9fba85b76af","code_hash":"0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb","hash_type":"type"}}],"outputs_data":["0x","0x00e87648170000000000000000000000"],"version":"0x0","witnesses":["0x6b010000100000006b0100006b01000057010000014599a5795423d54ab8e1f44f5c6ef5be9b1829beddb787bc732e4469d25f8c93e94afa393617f905bf1765c35dc38501a862b4b2f794a88b4f9010da02411a8575d113300d9d3fec54e24999cb8abda8735e682cb47718bd36da72408a9ebe3a924e8b2b19c3f1b9b055a3e6bebef48e50db67514bf00a4ce7f38845a67a95b049960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630162f9fb777b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a22593256694d6a566a5a5467334d6a6469596a466959574e6c4e546c6c4e7a6c684f544269595745314d5467794e47526c4d4467345a6a426c593249794d7a59795a5451354f574a6b4e7a517a4e6a566b5a54526c4d41222c226f726967696e223a22687474703a2f2f6c6f63616c686f73743a38303030222c2263726f73734f726967696e223a66616c73657d","0x810000001000000010000000100000006d0000006d00000014000000690000006900000069000000550000001000000030000000310000003a241ceceede72a5f55c8fb985652690f09a517d6c9070f0df0d3572fa03fb7001200000005cfcab1fc499de7d33265b04d2de9cf2f91cc7c7a578642993b0912b31b6cf3904000000"]}],"uncles":[]},"id":2}
+        '
+    http_version:
+  recorded_at: Fri, 04 Oct 2019 15:54:13 GMT
+recorded_with: VCR 5.0.0

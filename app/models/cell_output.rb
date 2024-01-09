@@ -16,7 +16,10 @@ class CellOutput < ApplicationRecord
     cota_registry: 9,
     cota_regular: 10,
     spore_cluster: 11,
-    spore_cell: 12
+    spore_cell: 12,
+    omiga_inscription_info: 13,
+    omiga_inscription: 14,
+    xudt: 15
   }
 
   belongs_to :ckb_transaction
@@ -35,10 +38,12 @@ class CellOutput < ApplicationRecord
   belongs_to :lock_script
   belongs_to :type_script, optional: true
 
-  has_many :cell_dependencies, foreign_key: :contract_cell_id, dependent: :delete_all
+  has_many :cell_dependencies, foreign_key: :contract_cell_id,
+                               dependent: :delete_all
   has_one :cell_datum, class_name: "CellDatum", dependent: :destroy_async
   accepts_nested_attributes_for :cell_datum
-  validates :capacity, presence: true, numericality: { greater_than_or_equal_to: 0 }
+  validates :capacity, presence: true,
+                       numericality: { greater_than_or_equal_to: 0 }
 
   # on-chain cell outputs must be included in certain block
   validates :block, presence: true, if: -> { live? or dead? }
@@ -50,7 +55,8 @@ class CellOutput < ApplicationRecord
   validates :consumed_by, presence: true, if: :dead?
 
   # cell output must not have consumed_by_id set when it's live
-  validates :consumed_by_id, :consumed_block_timestamp, must_be_nil: true, if: :live?
+  validates :consumed_by_id, :consumed_block_timestamp, must_be_nil: true,
+                                                        if: :live?
 
   # consumed timestamp must be always greater than committed timestamp
   validates :consumed_block_timestamp, numericality: { greater_than_or_equal_to: :block_timestamp },
@@ -60,22 +66,32 @@ class CellOutput < ApplicationRecord
 
   attr_accessor :raw_address
 
-  scope :consumed_after, ->(block_timestamp) { where("consumed_block_timestamp >= ?", block_timestamp) }
-  scope :consumed_before, ->(block_timestamp) { where("consumed_block_timestamp <= ?", block_timestamp) }
+  scope :consumed_after, ->(block_timestamp) {
+                           where("consumed_block_timestamp >= ?", block_timestamp)
+                         }
+  scope :consumed_before, ->(block_timestamp) {
+                            where("consumed_block_timestamp <= ?", block_timestamp)
+                          }
   scope :consumed_between, ->(start_timestamp, end_timestamp) {
                              consumed_after(start_timestamp).consumed_before(end_timestamp)
                            }
   scope :unconsumed_at, ->(block_timestamp) {
                           where("consumed_block_timestamp > ? or consumed_block_timestamp = 0 or consumed_block_timestamp is null", block_timestamp)
                         }
-  scope :generated_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
-  scope :generated_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
+  scope :generated_after, ->(block_timestamp) {
+                            where("block_timestamp >= ?", block_timestamp)
+                          }
+  scope :generated_before, ->(block_timestamp) {
+                             where("block_timestamp <= ?", block_timestamp)
+                           }
   scope :generated_between, ->(start_timestamp, end_timestamp) {
                               generated_after(start_timestamp).generated_before(end_timestamp)
                             }
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
   scope :free, -> { where(type_hash: nil, data_hash: nil) }
-  scope :occupied, -> { where.not(type_hash: nil).or(where.not(data_hash: nil)) }
+  scope :occupied, -> {
+                     where.not(type_hash: nil).or(where.not(data_hash: nil))
+                   }
 
   before_create :setup_address
 
@@ -102,7 +118,10 @@ class CellOutput < ApplicationRecord
   end
 
   def setup_address
-    self.address = Address.find_or_create_by_address_hash(raw_address, block_timestamp) if raw_address
+    if raw_address
+      self.address = Address.find_or_create_by_address_hash(raw_address,
+                                                            block_timestamp)
+    end
   end
 
   # @return [Boolean]
@@ -133,20 +152,24 @@ class CellOutput < ApplicationRecord
                                                        expires_in: 1.day) do
       tx_id = CkbTransaction.tx_committed.find_by_tx_hash(tx_hash)&.id
       Rails.logger.info("find_by_pointer: tx_hash: #{tx_hash}, index: #{index}, tx_id: #{tx_id}")
-      find_by(ckb_transaction_id: tx_id, cell_index: index.is_a?(String) ? index.hex : index) if tx_id
+      if tx_id
+        find_by(ckb_transaction_id: tx_id,
+                cell_index: index.is_a?(String) ? index.hex : index)
+      end
     end
   end
 
   def node_output
     lock = CKB::Types::Script.new(**lock_script.to_node)
     type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node) : nil
-    CKB::Types::Output.new(capacity: capacity.to_i, lock: lock, type: type)
+    CKB::Types::Output.new(capacity: capacity.to_i, lock:, type:)
   end
 
   # calculate the actual size of the cell output on chain
   # @return [Integer]
   def calculate_bytesize
-    [8, binary_data&.bytesize || 0, lock_script.calculate_bytesize, type_script&.calculate_bytesize || 0].sum
+    [8, binary_data&.bytesize || 0, lock_script.calculate_bytesize,
+     type_script&.calculate_bytesize || 0].sum
   end
 
   def calculate_min_capacity
@@ -157,22 +180,22 @@ class CellOutput < ApplicationRecord
     {
       capacity: "0x#{capacity.to_i.to_s(16)}",
       lock: lock_script&.to_node,
-      type: type_script&.to_node
+      type: type_script&.to_node,
     }
   end
 
   def udt_info
     return unless udt?
 
-    udt_info = Udt.find_by(type_hash: type_hash, published: true)
+    udt_info = Udt.find_by(type_hash:, published: true)
     CkbUtils.hash_value_to_s(
       symbol: udt_info&.symbol,
       amount: udt_amount,
       decimal: udt_info&.decimal,
-      type_hash: type_hash,
+      type_hash:,
       published: !!udt_info&.published,
       display_name: udt_info&.display_name,
-      uan: udt_info&.uan
+      uan: udt_info&.uan,
     )
   end
 
@@ -194,7 +217,8 @@ class CellOutput < ApplicationRecord
         parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
         value = {
           class_name: parsed_class_data.name, token_id: type_script.args[50..-1],
-          total: parsed_class_data.total }
+          total: parsed_class_data.total
+        }
       else
         value = { class_name: "", token_id: nil, total: "" }
       end
@@ -209,32 +233,33 @@ class CellOutput < ApplicationRecord
 
     case cell_type
     when "nrc_721_factory"
-      factory_cell_type_script = self.type_script
+      factory_cell_type_script = type_script
       factory_cell = NrcFactoryCell.find_by(code_hash: factory_cell_type_script.code_hash,
                                             hash_type: factory_cell_type_script.hash_type,
                                             args: factory_cell_type_script.args,
                                             verified: true)
       value = {
         symbol: factory_cell&.symbol,
-        amount: self.udt_amount,
+        amount: udt_amount,
         decimal: "",
-        type_hash: self.type_hash,
+        type_hash:,
         published: factory_cell&.verified,
         display_name: factory_cell&.name,
-        nan: ""
+        nan: "",
       }
     when "nrc_721_token"
-      udt = Udt.find_by(type_hash: type_hash)
-      factory_cell = NrcFactoryCell.where(id: udt.nrc_factory_cell_id, verified: true).first
+      udt = Udt.find_by(type_hash:)
+      factory_cell = NrcFactoryCell.where(id: udt.nrc_factory_cell_id,
+                                          verified: true).first
       udt_account = UdtAccount.where(udt_id: udt.id).first
       value = {
         symbol: factory_cell&.symbol,
         amount: udt_account.nft_token_id,
         decimal: udt_account.decimal,
-        type_hash: type_hash,
+        type_hash:,
         published: true,
         display_name: udt_account.full_name,
-        uan: ""
+        uan: "",
       }
     else
       raise "invalid cell type"
@@ -251,12 +276,12 @@ class CellOutput < ApplicationRecord
         name: parsed_class_data.name,
         cell_id: id,
         icon_url: parsed_class_data.renderer,
-        creator_id: address.id
+        creator_id: address.id,
       )
     when "m_nft_token"
       m_nft_class_type = TypeScript.where(
         code_hash: CkbSync::Api.instance.token_class_script_code_hash,
-        args: type_script.args[0..49]
+        args: type_script.args[0..49],
       ).first
       if m_nft_class_type.present?
         m_nft_class_cell = m_nft_class_type.cell_outputs.last
@@ -266,12 +291,12 @@ class CellOutput < ApplicationRecord
           name: parsed_class_data.name,
           cell_id: m_nft_class_cell.id,
           creator_id: m_nft_class_cell.address_id,
-          icon_url: parsed_class_data.renderer
+          icon_url: parsed_class_data.renderer,
         )
         item = coll.items.find_or_create_by(
           token_id: type_script.args[50..-1].hex,
           owner_id: address_id,
-          cell_id: id
+          cell_id: id,
         )
       end
     end
@@ -340,16 +365,16 @@ class CellOutput < ApplicationRecord
     return unless cota_registry?
 
     code_hash = CkbSync::Api.instance.cota_registry_code_hash
-    CkbUtils.hash_value_to_s(symbol: "", amount: self.udt_amount, decimal: "", type_hash: self.type_hash,
-                             published: "true", display_name: "", uan: "", code_hash: code_hash)
+    CkbUtils.hash_value_to_s(symbol: "", amount: udt_amount, decimal: "", type_hash:,
+                             published: "true", display_name: "", uan: "", code_hash:)
   end
 
   def cota_regular_info
     return unless cota_regular?
 
     code_hash = CkbSync::Api.instance.cota_regular_code_hash
-    CkbUtils.hash_value_to_s(symbol: "", amount: self.udt_amount, decimal: "", type_hash: self.type_hash,
-                             published: "true", display_name: "", uan: "", code_hash: code_hash)
+    CkbUtils.hash_value_to_s(symbol: "", amount: udt_amount, decimal: "", type_hash:,
+                             published: "true", display_name: "", uan: "", code_hash:)
   end
 end
 
