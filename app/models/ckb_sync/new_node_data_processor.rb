@@ -1027,6 +1027,10 @@ input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, con
               tags[tx_index] << "udt"
               udt_address_ids[tx_index] << address_id
               contained_udt_ids[tx_index] << Udt.where(type_hash: type_hash, udt_type: "sudt").pick(:id)
+            when "omiga_inscription"
+              tags[tx_index] << "omiga_inscription"
+              udt_address_ids[tx_index] << address_id
+              contained_udt_ids[tx_index] << Udt.where(type_hash: type_hash, udt_type: "omiga_inscription").pick(:id)
             when "nrc_721_token"
               tags[tx_index] << "nrc_721_token"
               udt_address_ids[tx_index] << address_id
@@ -1082,6 +1086,10 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
             tags[tx_index] << "udt"
             udt_address_ids[tx_index] << address.id
             contained_udt_ids[tx_index] << Udt.where(type_hash: item.type.compute_hash, udt_type: "sudt").pick(:id)
+          elsif attr[:cell_type] == "omiga_inscription"
+             tags[tx_index] << "omiga_inscription"
+            udt_address_ids[tx_index] << address_id
+            contained_udt_ids[tx_index] << Udt.where(type_hash: item.type.compute_hash, udt_type: "omiga_inscription").pick(:id)
           elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token spore_cell))
             TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
           end

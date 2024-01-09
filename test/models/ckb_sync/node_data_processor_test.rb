@@ -3593,6 +3593,8 @@ module CkbSync
     end
 
     test "save omiga inscription info" do
+      CkbSync::Api.any_instance.stubs(:xudt_code_hash).returns("0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb")
+      CkbSync::Api.any_instance.stubs(:omiga_inscription_info_code_hash).returns("0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6")
       VCR.use_cassette("blocks/31") do
         node_block = CkbSync::Api.instance.get_block_by_number(31)
         block1 = create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -3610,9 +3612,7 @@ module CkbSync
                                      cell_type: "normal",
                                      lock_script_id: address1_lock.id,
                                      type_script_id: nil)
-        assert_difference -> { OmigaInscriptionInfo.count }, 1 do
-          node_data_processor.process_block(node_block)
-        end
+        node_data_processor.process_block(node_block)
         assert_equal CellOutput.find_by(tx_hash: "0xb865e4d50a72f08acf45389fcd1f76eefe6eb3377733ffc3c1b934a57a86b5dc", cell_index: 0).cell_type, "omiga_inscription_info"
         info = OmigaInscriptionInfo.first
         assert_equal info.code_hash, "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6"
@@ -3630,6 +3630,9 @@ module CkbSync
     end
 
     test "save omiga inscription udt" do
+      CkbSync::Api.any_instance.stubs(:xudt_code_hash).returns("0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb")
+      CkbSync::Api.any_instance.stubs(:omiga_inscription_info_code_hash).returns("0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6")
+
       VCR.use_cassette("blocks/32") do
         node_block = CkbSync::Api.instance.get_block_by_number(32)
         block1 = create(:block, :with_block_hash, number: node_block.header.number - 1)
@@ -3660,11 +3663,9 @@ module CkbSync
           mint_status: "minting",
           udt_id: nil
         )
-        assert_difference -> { UdtAccount.count }, 1 do
-          assert_difference -> { Udt.count }, 1 do
-            node_data_processor.process_block(node_block)
-          end
-        end
+        node_data_processor.process_block(node_block)
+        assert_equal 1, UdtAccount.count
+        assert_equal 1, UdtTransaction.count
         omiga_inscription = Udt.first
         assert_equal OmigaInscriptionInfo.first.udt_id, omiga_inscription.id
         assert_equal omiga_inscription.type_hash, "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908"

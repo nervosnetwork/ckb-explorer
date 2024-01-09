@@ -29,13 +29,13 @@ class UdtSerializer
   attribute :mint_limit, if: Proc.new { |record, _params|
     record.udt_type == "omiga_inscription"
   } do |object|
-    object.omiga_inscription_info.mint_limit
+    object.omiga_inscription_info.mint_limit.to_s
   end
 
   attribute :expected_supply, if: Proc.new { |record, _params|
     record.udt_type == "omiga_inscription"
   } do |object|
-    object.omiga_inscription_info.expected_supply
+    object.omiga_inscription_info.expected_supply.to_s
   end
 
   attribute :inscription_id, if: Proc.new { |record, _params|
