@@ -636,7 +636,7 @@ class CkbUtils
     expected_supply = [data.slice!(0, 32)].pack("H*").unpack1("Q<2")
     mint_limit = [data.slice!(0, 32)].pack("H*").unpack1("Q<2")
     mint_status = "0x#{data.slice!(0, 2)}".to_i(16)
-    { decimal:, name:, symbol:, udt_hash:, expected_supply:,
+    { decimal:, name: name.presence, symbol: symbol.presence, udt_hash:, expected_supply:,
       mint_limit:, mint_status: }
   end
 end
