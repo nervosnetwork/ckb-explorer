@@ -467,6 +467,12 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal info[:name], nil
   end
 
+  test "parse omiga inscrpition data" do
+    data = "0x00e87648170000000000000000000000"
+    info = CkbUtils.parse_omiga_inscription_data(data)
+    assert_equal info[:mint_limit], 100000000000
+  end
+
   private
 
   def node_data_processor
