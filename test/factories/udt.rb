@@ -38,9 +38,6 @@ FactoryBot.define do
 
     trait :omiga_inscription do
       udt_type { "omiga_inscription" }
-      decimal { 0.8e1 }
-      full_name { "CKB Fist Inscription" }
-      symbol { "CKBI" }
       published { true }
       after(:create) do |udt, _evaluator|
         create(:omiga_inscription_info,
