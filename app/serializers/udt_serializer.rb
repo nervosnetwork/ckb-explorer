@@ -38,7 +38,7 @@ class UdtSerializer
     object.omiga_inscription_info.expected_supply.to_s
   end
 
-  attribute :inscription_id, if: Proc.new { |record, _params|
+  attribute :inscription_info_id, if: Proc.new { |record, _params|
     record.udt_type == "omiga_inscription"
   } do |object|
     object.omiga_inscription_info.args
