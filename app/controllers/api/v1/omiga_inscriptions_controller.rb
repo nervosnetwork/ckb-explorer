@@ -52,15 +52,18 @@ module Api
           case sort
           when "created_time" then "block_timestamp"
           when "transactions" then "h24_ckb_transactions_count"
-          when "addresses_count" then "addresses_count"
-          else "id"
+          else sort
           end
 
         if order.nil? || !order.match?(/^(asc|desc)$/i)
           order = "asc"
         end
 
-        records.order("#{sort} #{order}")
+        if sort == "mint_status"
+          records.joins(:omiga_inscription_info).order("omiga_inscription_infos.mint_status #{order}")
+        else
+          records.order("#{sort} #{order}")
+        end
       end
     end
   end

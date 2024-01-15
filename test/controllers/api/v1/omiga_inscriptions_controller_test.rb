@@ -74,6 +74,23 @@ module Api
 
         assert_equal 2, json["data"].length
       end
+
+      test "should sorted by mint_status asc when sort param is mint_status" do
+        page = 1
+        page_size = 5
+        create_list(:udt, 10, :omiga_inscription)
+        Udt.last.omiga_inscription_info.update(mint_status: :closed)
+        udts = Udt.omiga_inscription.joins(:omiga_inscription_info).order("mint_status desc").page(page).per(page_size)
+
+        valid_get api_v1_omiga_inscriptions_url,
+                  params: { page:, page_size:, sort: "mint_status.desc" }
+
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udts, page:,
+                                                           page_size:).call
+        response_udts = UdtSerializer.new(udts, options).serialized_json
+
+        assert_equal response_udts, response.body
+      end
     end
   end
 end
