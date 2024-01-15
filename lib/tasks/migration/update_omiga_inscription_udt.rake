@@ -77,7 +77,9 @@ namespace :migration do
 
       unless attrs.empty?
         UdtAccount.insert_all(attrs)
-        udt.update(total_amount: results.sum { |_k, v| v })
+        udt.update(total_amount: results.sum do |_k, v|
+                                   v
+                                 end, addresses_count: results.length)
       end
     end
 
