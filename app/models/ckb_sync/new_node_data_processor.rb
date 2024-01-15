@@ -417,6 +417,9 @@ dao_contract)
       local_block.cell_outputs.udt.select(:id, :type_hash).each do |udt_output|
         type_hashes << udt_output.type_hash
       end
+      local_block.cell_outputs.omiga_inscription.select(:id, :type_hash).each do |udt_output|
+        type_hashes << udt_output.type_hash
+      end
       local_block.ckb_transactions.pluck(:id).each do |tx_id|
         CellOutput.where(consumed_by_id: tx_id).udt.select(:id,
                                                            :type_hash).each do |udt_output|
