@@ -1,13 +1,13 @@
 class UdtAccount < ApplicationRecord
-  enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3 }
+  enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3,
+                   omiga_inscription: 4 }
 
   belongs_to :address
   belongs_to :udt
 
   validates_presence_of :amount
-  validates_length_of :symbol, minimum: 1, maximum: 16, allow_nil: true
-  validates_length_of :full_name, minimum: 1, maximum: 100, allow_nil: true
-  validates :decimal, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }, allow_nil: true
+  validates :decimal,
+            numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }, allow_nil: true
   validates :amount, numericality: { greater_than_or_equal_to: 0 }
   delegate :display_name, :uan, to: :udt
 
@@ -16,7 +16,8 @@ class UdtAccount < ApplicationRecord
   scope :published, -> { where(published: true) }
 
   def udt_icon_file
-    Rails.cache.realize([self.class.name, "udt_icon_file", id], race_condition_ttl: 3.seconds, expires_in: 1.day) do
+    Rails.cache.realize([self.class.name, "udt_icon_file", id],
+                        race_condition_ttl: 3.seconds, expires_in: 1.day) do
       udt.icon_file
     end
   end
