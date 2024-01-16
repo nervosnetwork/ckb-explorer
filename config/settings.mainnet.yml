@@ -25,8 +25,8 @@ spore_cluster_code_hash: ""
 spore_cell1_code_hash: ""
 
 # omiga inscription info
-omiga_inscription_info_code_hash: ""
-omiga_inscription_code_hash: ""
+omiga_inscription_info_code_hash: "0x5c33fc69bd72e895a63176147c6ab0bb5758d1c7a32e0914f99f9ec1bed90d41"
+omiga_inscription_code_hash: "0x7490970e6af9b9fe63fc19fc523a12b2ec69027e6ae484edffb97334f74e8c97"
 
 # xudt
 xudt_code_hash: "0x50bd8d6680b8b9cf98b73f3c08faf8b2a21914311954118ad6609be6e78a1b95"
