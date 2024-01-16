@@ -417,7 +417,8 @@ dao_contract)
       local_block.cell_outputs.udt.select(:id, :type_hash).each do |udt_output|
         type_hashes << udt_output.type_hash
       end
-      local_block.cell_outputs.omiga_inscription.select(:id, :type_hash).each do |udt_output|
+      local_block.cell_outputs.omiga_inscription.select(:id,
+                                                        :type_hash).each do |udt_output|
         type_hashes << udt_output.type_hash
       end
       local_block.ckb_transactions.pluck(:id).each do |tx_id|
@@ -666,7 +667,7 @@ dao_contract)
           type_hash = output.type.compute_hash
           unless Udt.where(type_hash:).exists?
             nft_token_attr = { full_name: nil, icon_file: nil,
-                               published: false, symbol: nil }
+                               published: false, symbol: nil, decimal: nil, nrc_factory_cell_id: nil }
             if cell_type == "m_nft_token"
               m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash,
                                                   args: output.type.args[0..49]).first
@@ -718,6 +719,7 @@ dao_contract)
                   nrc_721_factory_cell.symbol.to_s[0, 16]
                 nft_token_attr[:icon_file] =
                   "#{nrc_721_factory_cell.base_token_uri}/#{factory_cell.token_id}"
+                # refactor: remove this attribute then add udt_id to NrcFactoryCell
                 nft_token_attr[:nrc_factory_cell_id] = nrc_721_factory_cell.id
               end
               nft_token_attr[:published] = true
@@ -730,27 +732,28 @@ dao_contract)
               nft_token_attr[:published] = true
             end
             # fill issuer_address after publish the token
-            # udts_attributes << {
-            #   type_hash: type_hash, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
-            #   code_hash: output.type.code_hash, hash_type: output.type.hash_type }.merge(nft_token_attr)
-            udt = Udt.create_or_find_by!({
-              type_hash:,
-              udt_type: udt_type(cell_type),
-              block_timestamp: local_block.timestamp,
-              args: output.type.args,
-              code_hash: output.type.code_hash,
-              hash_type: output.type.hash_type,
-            }.merge(nft_token_attr))
-
-            if cell_type == "omiga_inscription"
-              info = OmigaInscriptionInfo.find_by(udt_hash: type_hash,
-                                                  udt_id: nil)
-              info && info.update!(udt_id: udt.id)
-            end
+            udts_attributes << {
+              type_hash:, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
+              code_hash: output.type.code_hash, hash_type: output.type.hash_type
+            }.merge(nft_token_attr)
           end
         end
       end
-      # Udt.insert_all!(udts_attributes.map! { |attr| attr.merge!(created_at: Time.current, updated_at: Time.current) }) if udts_attributes.present?
+      if udts_attributes.present?
+        returning_attrs = Udt.insert_all!(udts_attributes.map! do |attr|
+                                            attr.merge!(created_at: Time.current, updated_at: Time.current)
+                                          end, returning: %w[id udt_type type_hash])
+        omiga_inscription_info_attrs = returning_attrs.rows.filter do |r|
+                                         r[1] == 4
+                                       end.map do |k|
+          { udt_id: k[0],
+            udt_hash: k[2] }
+        end
+        if omiga_inscription_info_attrs.present?
+          OmigaInscriptionInfo.upsert_all(omiga_inscription_info_attrs,
+                                          unique_by: :udt_hash)
+        end
+      end
     end
 
     def update_ckb_txs_rel_and_fee(
