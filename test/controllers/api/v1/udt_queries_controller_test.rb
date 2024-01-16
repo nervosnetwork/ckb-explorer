@@ -21,10 +21,12 @@ module Api
         response_json = UdtSerializer.new([udt],
                                           {
                                             fields: {
-                                              udt: [
-                                                :full_name, :symbol, :type_hash,
-                                                :icon_file
-                                              ] } }).serialized_json
+                                              udt: %i[
+                                                full_name symbol udt_type type_hash
+                                                icon_file
+                                              ],
+                                            },
+                                          }).serialized_json
 
         assert_response :success
         assert_equal response_json, response.body
@@ -38,10 +40,12 @@ module Api
         response_json = UdtSerializer.new([udt],
                                           {
                                             fields: {
-                                              udt: [
-                                                :full_name, :symbol, :type_hash,
-                                                :icon_file
-                                              ] } }).serialized_json
+                                              udt: %i[
+                                                full_name symbol udt_type type_hash
+                                                icon_file
+                                              ],
+                                            },
+                                          }).serialized_json
 
         assert_response :success
         assert_equal response_json, response.body
@@ -56,10 +60,12 @@ module Api
         response_json = UdtSerializer.new([udt1, udt2],
                                           {
                                             fields: {
-                                              udt: [
-                                                :full_name, :symbol, :type_hash,
-                                                :icon_file
-                                              ] } }).serialized_json
+                                              udt: %i[
+                                                full_name symbol udt_type type_hash
+                                                icon_file
+                                              ],
+                                            },
+                                          }).serialized_json
 
         assert_response :success
         assert_equal response_json, response.body

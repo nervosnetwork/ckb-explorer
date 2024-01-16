@@ -1651,6 +1651,47 @@ ALTER SEQUENCE public.old_ckb_transactions_id_seq OWNED BY public.old_ckb_transa
 
 
 --
+-- Name: omiga_inscription_infos; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.omiga_inscription_infos (
+    id bigint NOT NULL,
+    code_hash bytea,
+    hash_type character varying,
+    args character varying,
+    "decimal" numeric,
+    name character varying,
+    symbol character varying,
+    udt_hash character varying,
+    expected_supply numeric,
+    mint_limit numeric,
+    mint_status integer,
+    udt_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: omiga_inscription_infos_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.omiga_inscription_infos_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: omiga_inscription_infos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.omiga_inscription_infos_id_seq OWNED BY public.omiga_inscription_infos.id;
+
+
+--
 -- Name: pool_transaction_entries; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2582,6 +2623,13 @@ ALTER TABLE ONLY public.old_ckb_transactions ALTER COLUMN id SET DEFAULT nextval
 
 
 --
+-- Name: omiga_inscription_infos id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.omiga_inscription_infos ALTER COLUMN id SET DEFAULT nextval('public.omiga_inscription_infos_id_seq'::regclass);
+
+
+--
 -- Name: pool_transaction_entries id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3009,6 +3057,14 @@ ALTER TABLE ONLY public.nrc_factory_cells
 
 ALTER TABLE ONLY public.old_ckb_transactions
     ADD CONSTRAINT old_ckb_transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: omiga_inscription_infos omiga_inscription_infos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.omiga_inscription_infos
+    ADD CONSTRAINT omiga_inscription_infos_pkey PRIMARY KEY (id);
 
 
 --
@@ -3946,6 +4002,13 @@ CREATE INDEX index_old_ckb_transactions_on_udt_address_ids ON public.old_ckb_tra
 
 
 --
+-- Name: index_omiga_inscription_infos_on_udt_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_omiga_inscription_infos_on_udt_hash ON public.omiga_inscription_infos USING btree (udt_hash);
+
+
+--
 -- Name: index_pool_transaction_entries_on_id_and_tx_status; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4752,6 +4815,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230914120928'),
 ('20230918033957'),
 ('20231017074221'),
-('20231218082938');
+('20231218082938'),
+('20240107100346');
 
 

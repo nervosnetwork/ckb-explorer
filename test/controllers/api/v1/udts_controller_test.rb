@@ -22,7 +22,8 @@ module Api
       test "should respond with 415 Unsupported Media Type when Content-Type is wrong" do
         udt = create(:udt)
 
-        get api_v1_udt_url(udt.type_hash), headers: { "Content-Type": "text/plain" }
+        get api_v1_udt_url(udt.type_hash),
+            headers: { "Content-Type": "text/plain" }
 
         assert_equal 415, response.status
       end
@@ -30,9 +31,11 @@ module Api
       test "should respond with error object when Content-Type is wrong" do
         udt = create(:udt)
         error_object = Api::V1::Exceptions::InvalidContentTypeError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
-        get api_v1_udt_url(udt.type_hash), headers: { "Content-Type": "text/plain" }
+        get api_v1_udt_url(udt.type_hash),
+            headers: { "Content-Type": "text/plain" }
 
         assert_equal response_json, response.body
       end
@@ -41,7 +44,8 @@ module Api
         udt = create(:udt)
 
         get api_v1_udt_url(udt.type_hash),
-            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+            headers: { "Content-Type": "application/vnd.api+json",
+                       "Accept": "application/json" }
 
         assert_equal 406, response.status
       end
@@ -49,17 +53,20 @@ module Api
       test "should respond with error object when Accept is wrong" do
         udt = create(:udt)
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         get api_v1_udt_url(udt.type_hash),
-            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+            headers: { "Content-Type": "application/vnd.api+json",
+                       "Accept": "application/json" }
 
         assert_equal response_json, response.body
       end
 
       test "should return error object when id is not a hex start with 0x" do
         error_object = Api::V1::Exceptions::TypeHashInvalidError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         valid_get api_v1_udt_url("9034fwefwef")
 
@@ -68,7 +75,8 @@ module Api
 
       test "should return error object when id is a hex start with 0x but it's length is wrong" do
         error_object = Api::V1::Exceptions::TypeHashInvalidError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         valid_get api_v1_udt_url("0x9034fwefwef")
 
@@ -77,7 +85,8 @@ module Api
 
       test "should return error object when no records found by id" do
         error_object = Api::V1::Exceptions::UdtNotFoundError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         valid_get api_v1_udt_url("0x3b138b3126d10ec000417b68bc715f17e86293d6cdbcb3fd8a628ad4a0b756f6")
 
@@ -87,7 +96,8 @@ module Api
       test "should return error object when target udt is not published" do
         udt = create(:udt)
         error_object = Api::V1::Exceptions::UdtNotFoundError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         valid_get api_v1_udt_url(udt.type_hash)
 
@@ -111,7 +121,7 @@ module Api
         assert_equal %w(
           symbol full_name display_name uan total_amount addresses_count
           decimal icon_file h24_ckb_transactions_count created_at description
-          published type_hash type_script issuer_address
+          published type_hash type_script issuer_address udt_type
         ).sort,
                      response_tx_transaction["attributes"].keys.sort
       end
@@ -136,7 +146,8 @@ module Api
 
       test "should respond with error object when Content-Type is wrong when call index" do
         error_object = Api::V1::Exceptions::InvalidContentTypeError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         get api_v1_udts_url, headers: { "Content-Type": "text/plain" }
 
@@ -144,16 +155,21 @@ module Api
       end
 
       test "should respond with 406 Not Acceptable when Accept is wrong when call index" do
-        get api_v1_udts_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_udts_url,
+            headers: { "Content-Type": "application/vnd.api+json",
+                       "Accept": "application/json" }
 
         assert_equal 406, response.status
       end
 
       test "should respond with error object when Accept is wrong when call index" do
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
-        get api_v1_udts_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_udts_url,
+            headers: { "Content-Type": "application/vnd.api+json",
+                       "Accept": "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -166,7 +182,8 @@ module Api
 
       test "should return error object when page param is invalid" do
         error_object = Api::V1::Exceptions::PageParamError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         valid_get api_v1_udts_url, params: { page: "aaa" }
 
@@ -175,7 +192,8 @@ module Api
 
       test "should return error object when page size param is invalid" do
         error_object = Api::V1::Exceptions::PageSizeParamError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         valid_get api_v1_udts_url, params: { page_size: "aaa" }
 
@@ -186,7 +204,8 @@ module Api
         errors = []
         errors << Api::V1::Exceptions::PageParamError.new
         errors << Api::V1::Exceptions::PageSizeParamError.new
-        response_json = RequestErrorSerializer.new(errors, message: errors.first.title).serialized_json
+        response_json = RequestErrorSerializer.new(errors,
+                                                   message: errors.first.title).serialized_json
 
         valid_get api_v1_udts_url, params: { page: "bbb", page_size: "aaa" }
 
@@ -207,10 +226,10 @@ module Api
         page_size = 5
         udts = Udt.sudt.order(id: :desc).page(page).per(page_size)
 
-        valid_get api_v1_udts_url, params: { page: page, page_size: page_size }
+        valid_get api_v1_udts_url, params: { page:, page_size: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udts, page:,
+                                                           page_size:).call
         response_udts = UdtSerializer.new(udts, options).serialized_json
 
         assert_equal response_udts, response.body
@@ -222,10 +241,10 @@ module Api
         create_list(:udt, 10)
         udts = Udt.sudt.order(id: :desc).page(page).per(page_size)
 
-        valid_get api_v1_udts_url, params: { page: page, page_size: page_size }
+        valid_get api_v1_udts_url, params: { page:, page_size: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udts, page:,
+                                                           page_size:).call
         response_udts = UdtSerializer.new(udts, options).serialized_json
 
         assert_equal response_udts, response.body
@@ -239,10 +258,11 @@ module Api
         end
         udts = Udt.sudt.order(h24_ckb_transactions_count: :asc).page(page).per(page_size)
 
-        valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "transactions" }
+        valid_get api_v1_udts_url,
+                  params: { page:, page_size:, sort: "transactions" }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udts, page:,
+                                                           page_size:).call
         response_udts = UdtSerializer.new(udts, options).serialized_json
 
         assert_equal response_udts, response.body
@@ -256,10 +276,11 @@ module Api
         end
         udts = Udt.sudt.order(h24_ckb_transactions_count: :asc).page(page).per(page_size)
 
-        valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "transactions.asc" }
+        valid_get api_v1_udts_url,
+                  params: { page:, page_size:, sort: "transactions.asc" }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udts, page:,
+                                                           page_size:).call
         response_udts = UdtSerializer.new(udts, options).serialized_json
 
         assert_equal response_udts, response.body
@@ -273,10 +294,11 @@ module Api
         end
         udts = Udt.sudt.order(h24_ckb_transactions_count: :asc).page(page).per(page_size)
 
-        valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "transactions.abcd" }
+        valid_get api_v1_udts_url,
+                  params: { page:, page_size:, sort: "transactions.abcd" }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udts, page:,
+                                                           page_size:).call
         response_udts = UdtSerializer.new(udts, options).serialized_json
 
         assert_equal response_udts, response.body
@@ -290,10 +312,11 @@ module Api
         end
         udts = Udt.sudt.order(h24_ckb_transactions_count: :desc).page(page).per(page_size)
 
-        valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "transactions.desc" }
+        valid_get api_v1_udts_url,
+                  params: { page:, page_size:, sort: "transactions.desc" }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udts, page:,
+                                                           page_size:).call
         response_udts = UdtSerializer.new(udts, options).serialized_json
 
         assert_equal response_udts, response.body
@@ -308,10 +331,11 @@ module Api
         end
         udts = Udt.sudt.order(block_timestamp: :asc).page(page).per(page_size)
 
-        valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "created_time" }
+        valid_get api_v1_udts_url,
+                  params: { page:, page_size:, sort: "created_time" }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udts, page:,
+                                                           page_size:).call
         response_udts = UdtSerializer.new(udts, options).serialized_json
 
         assert_equal response_udts, response.body
@@ -325,10 +349,11 @@ module Api
         end
         udts = Udt.sudt.order(addresses_count: :asc).page(page).per(page_size)
 
-        valid_get api_v1_udts_url, params: { page: page, page_size: page_size, sort: "addresses_count" }
+        valid_get api_v1_udts_url,
+                  params: { page:, page_size:, sort: "addresses_count" }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udts, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udts, page:,
+                                                           page_size:).call
         response_udts = UdtSerializer.new(udts, options).serialized_json
 
         assert_equal response_udts, response.body
@@ -369,7 +394,7 @@ module Api
         get download_csv_api_v1_udts_url(id: udt.type_hash),
             headers: {
               "Content-Type": "application/vnd.api+json",
-              "Accept": "application/json"
+              "Accept": "application/json",
             }
 
         assert_equal 406, response.status
@@ -384,7 +409,7 @@ module Api
         get download_csv_api_v1_udts_url(id: udt.type_hash),
             headers: {
               "Content-Type": "application/vnd.api+json",
-              "Accept": "application/json"
+              "Accept": "application/json",
             }
 
         assert_equal response_json, response.body
@@ -392,7 +417,8 @@ module Api
 
       test "should return error object when call download csv id is not a type hash" do
         error_object = Api::V1::Exceptions::UdtNotFoundError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
+        response_json = RequestErrorSerializer.new([error_object],
+                                                   message: error_object.title).serialized_json
 
         valid_get download_csv_api_v1_udts_url(id: "9034fwefwef")
 
@@ -428,7 +454,7 @@ module Api
           icon_file: "https://img.udt.img",
           uan: "GWK.gw|gb.ckb",
           display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
-          email: "contact@usdt.com"
+          email: "contact@usdt.com",
         }
 
         assert_response :success
@@ -437,11 +463,13 @@ module Api
         assert_equal udt.full_name, "GodwokenToken on testnet_v1"
         assert_equal udt.decimal, 8
         assert_equal udt.total_amount, 100000000000
-        assert_equal udt.description, "The sUDT_ERC20_Proxy of Godwoken Test Token."
+        assert_equal udt.description,
+                     "The sUDT_ERC20_Proxy of Godwoken Test Token."
         assert_equal udt.operator_website, "https://udt.coin"
         assert_equal udt.icon_file, "https://img.udt.img"
         assert_equal udt.uan, "GWK.gw|gb.ckb"
-        assert_equal udt.display_name, "GodwokenToken (via Godwoken Bridge from CKB)"
+        assert_equal udt.display_name,
+                     "GodwokenToken (via Godwoken Bridge from CKB)"
         assert_equal udt.email, "contact@usdt.com"
       end
 
@@ -456,7 +484,7 @@ module Api
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
           uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)"
+          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
         }
 
         assert_equal 400, response.status
@@ -477,7 +505,7 @@ module Api
           icon_file: "https://img.udt.img",
           uan: "GWK.gw|gb.ckb",
           display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
-          email: "abcdefg"
+          email: "abcdefg",
         }
 
         assert_equal 400, response.status
@@ -497,7 +525,7 @@ module Api
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
           uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)"
+          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
         }
 
         assert_equal 404, response.status
@@ -510,7 +538,7 @@ module Api
         valid_put api_v1_udt_url("#{udt.type_hash}"), params: {
           symbol: "GWK",
           full_name: "GodwokenToken on testnet_v1",
-          token: "123456"
+          token: "123456",
         }
 
         assert_equal 404, response.status
@@ -520,12 +548,12 @@ module Api
 
       test "raise udt_verification expired error when update udt" do
         udt = create(:udt, email: "abc@sudt.com", published: true)
-        create(:udt_verification, sent_at: Time.now - 11.minutes, udt: udt)
+        create(:udt_verification, sent_at: Time.now - 11.minutes, udt:)
         valid_put api_v1_udt_url("#{udt.type_hash}"), params: {
           symbol: "GWK",
           full_name: "GodwokenToken on testnet_v1",
           total_amount: "100000000",
-          token: "123456"
+          token: "123456",
         }
 
         assert_equal 400, response.status
@@ -535,12 +563,12 @@ module Api
 
       test "raise udt_verification token not match error when update udt" do
         udt = create(:udt, email: "abc@sudt.com", published: true)
-        create(:udt_verification, udt: udt)
+        create(:udt_verification, udt:)
         valid_put api_v1_udt_url("#{udt.type_hash}"), params: {
           symbol: "GWK",
           full_name: "GodwokenToken on testnet_v1",
           total_amount: "100000000",
-          token: "123"
+          token: "123",
         }
 
         assert_equal 400, response.status
@@ -549,18 +577,19 @@ module Api
       end
 
       test "should update successfully when update udt" do
-        udt = create(:udt, email: "abc@sudt.com", published: true)
-        create(:udt_verification, udt: udt)
+        udt = create(:udt, email: "abc@sudt.com")
+        create(:udt_verification, udt:)
         valid_put api_v1_udt_url("#{udt.type_hash}"), params: {
           symbol: "GWK",
           full_name: "GodwokenToken on testnet_v1",
           total_amount: "100000000",
-          token: "123456"
+          token: "123456",
         }
 
         assert_equal 200, response.status
         assert_equal "ok", JSON.parse(response.body)
         assert_equal "GWK", udt.reload.symbol
+        assert_equal true, udt.reload.published
       end
     end
   end

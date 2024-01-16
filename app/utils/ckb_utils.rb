@@ -21,7 +21,9 @@ class CkbUtils
   end
 
   def self.total_cell_capacity(transactions)
-    transactions.flat_map(&:outputs).reduce(0) { |memo, output| memo + output.capacity.to_i }
+    transactions.flat_map(&:outputs).reduce(0) do |memo, output|
+      memo + output.capacity.to_i
+    end
   end
 
   def self.miner_hash(cellbase)
@@ -71,8 +73,9 @@ class CkbUtils
     args = "0x#{args_serialization.unpack1('H*')}"
 
     hash_type = hash_type_hex == "0x00" ? "data" : "type"
-    lock = CKB::Types::Script.new(code_hash: code_hash, args: args, hash_type: hash_type)
-    OpenStruct.new(lock: lock, message: "0x#{message}")
+    lock = CKB::Types::Script.new(code_hash:, args:,
+                                  hash_type:)
+    OpenStruct.new(lock:, message: "0x#{message}")
   end
 
   def self.miner_message(cellbase)
@@ -80,7 +83,8 @@ class CkbUtils
   end
 
   def self.generate_address(lock_script, version = CKB::Address::Version::CKB2021)
-    CKB::Address.new(lock_script, mode: ENV["CKB_NET_MODE"], version: version).generate
+    CKB::Address.new(lock_script, mode: ENV["CKB_NET_MODE"],
+                                  version:).generate
   end
 
   def self.parse_address(address_hash)
@@ -88,7 +92,9 @@ class CkbUtils
   end
 
   def self.block_reward(block_number, block_economic_state)
-    primary_reward(block_number, block_economic_state) + secondary_reward(block_number, block_economic_state)
+    primary_reward(block_number,
+                   block_economic_state) + secondary_reward(block_number,
+                                                            block_economic_state)
   end
 
   def self.base_reward(block_number, epoch_number)
@@ -144,7 +150,8 @@ class CkbUtils
     parsed_epoch = parse_epoch(epoch)
     start_number = header.number - parsed_epoch.index
 
-    OpenStruct.new(number: parsed_epoch.number, length: parsed_epoch.length, start_number: start_number)
+    OpenStruct.new(number: parsed_epoch.number, length: parsed_epoch.length,
+                   start_number:)
   end
 
   # This field encodes the epoch number and the fraction position of this block in the epoch.
@@ -159,7 +166,7 @@ class CkbUtils
     OpenStruct.new(
       length: (epoch >> 40) & 0xFFFF,
       index: (epoch >> 24) & 0xFFFF,
-      number: (epoch) & 0xFFFFFF
+      number: epoch & 0xFFFFFF,
     )
   end
 
@@ -180,7 +187,8 @@ class CkbUtils
     else
       return 0 if ckb_transaction["is_cellbase"]
 
-      if CellOutput.where(consumed_by_id: ckb_transaction["id"], cell_type: "nervos_dao_withdrawing").present?
+      if CellOutput.where(consumed_by_id: ckb_transaction["id"],
+                          cell_type: "nervos_dao_withdrawing").present?
         dao_withdraw_tx_fee(ckb_transaction)
       else
         normal_tx_fee(input_capacities, output_capacities)
@@ -206,7 +214,9 @@ class CkbUtils
 
     address_cell_consumed = 0
     get_unspent_cells(address_hash).find_each do |cell_output|
-      address_cell_consumed += calculate_cell_min_capacity(cell_output.node_output, cell_output.data)
+      address_cell_consumed += calculate_cell_min_capacity(
+        cell_output.node_output, cell_output.data
+      )
     end
 
     address_cell_consumed
@@ -221,16 +231,20 @@ class CkbUtils
     return if block_economic_state.blank?
 
     reward = CkbUtils.block_reward(target_block.number, block_economic_state)
-    primary_reward = CkbUtils.primary_reward(target_block.number, block_economic_state)
-    secondary_reward = CkbUtils.secondary_reward(target_block.number, block_economic_state)
-    proposal_reward = CkbUtils.proposal_reward(target_block.number, block_economic_state)
-    commit_reward = CkbUtils.commit_reward(target_block.number, block_economic_state)
+    primary_reward = CkbUtils.primary_reward(target_block.number,
+                                             block_economic_state)
+    secondary_reward = CkbUtils.secondary_reward(target_block.number,
+                                                 block_economic_state)
+    proposal_reward = CkbUtils.proposal_reward(target_block.number,
+                                               block_economic_state)
+    commit_reward = CkbUtils.commit_reward(target_block.number,
+                                           block_economic_state)
     target_block.update!(reward_status: "issued",
-                         reward: reward,
-                         primary_reward: primary_reward,
-                         secondary_reward: secondary_reward,
-                         commit_reward: commit_reward,
-                         proposal_reward: proposal_reward)
+                         reward:,
+                         primary_reward:,
+                         secondary_reward:,
+                         commit_reward:,
+                         proposal_reward:)
     current_block.update!(target_block_reward_status: "issued")
   end
 
@@ -243,15 +257,18 @@ class CkbUtils
     proposal_reward = cellbase.proposal_reward
     commit_reward = cellbase.commit_reward
     received_tx_fee = commit_reward + proposal_reward
-    target_block.update!(received_tx_fee: received_tx_fee, received_tx_fee_status: "calculated")
+    target_block.update!(received_tx_fee:,
+                         received_tx_fee_status: "calculated")
   end
 
   def self.update_current_block_mining_info(block)
     return if block.blank?
 
     miner_address = block.miner_address
-    unless block.mining_infos.exists?(block_number: block.number, address: miner_address)
-      block.mining_infos.create!(block_number: block.number, address: miner_address, status: "mined")
+    unless block.mining_infos.exists?(block_number: block.number,
+                                      address: miner_address)
+      block.mining_infos.create!(block_number: block.number,
+                                 address: miner_address, status: "mined")
       miner_address.increment!(:mined_blocks_count)
     end
   end
@@ -315,7 +332,7 @@ class CkbUtils
     end
     overflow = !mantissa.zero? && exponent > 32
 
-    return ret, overflow
+    [ret, overflow]
   end
 
   def self.target_to_difficulty(target)
@@ -356,7 +373,7 @@ class CkbUtils
     s_i = bin_dao[16..23].unpack("Q<").pack("Q>").unpack1("H*").hex
     u_i = bin_dao[24..].unpack("Q<").pack("Q>").unpack1("H*").hex
 
-    OpenStruct.new(c_i: c_i, ar_i: ar_i, s_i: s_i, u_i: u_i)
+    OpenStruct.new(c_i:, ar_i:, s_i:, u_i:)
   end
 
   def self.parse_udt_cell_data(data)
@@ -377,7 +394,9 @@ class CkbUtils
     end
     array_size = raw_header_deps.unpack1("S!")
     template = "S!#{'H64' * array_size}"
-    raw_header_deps.unpack(template.to_s).drop(1).compact.map { |hash| "#{Settings.default_hash_prefix}#{hash}" }
+    raw_header_deps.unpack(template.to_s).drop(1).compact.map do |hash|
+      "#{Settings.default_hash_prefix}#{hash}"
+    end
   end
 
   # detect cell type from type script and cell data
@@ -389,13 +408,14 @@ class CkbUtils
       Settings.dao_code_hash, Settings.dao_type_hash, Settings.sudt_cell_type_hash, Settings.sudt1_cell_type_hash,
       CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
       CkbSync::Api.instance.token_script_code_hash, CkbSync::Api.instance.cota_registry_code_hash,
-      CkbSync::Api.instance.cota_regular_code_hash
+      CkbSync::Api.instance.cota_regular_code_hash, CkbSync::Api.instance.omiga_inscription_info_code_hash,
+      CkbSync::Api.instance.xudt_code_hash
     ].include?(type_script&.code_hash) && type_script&.hash_type == "type") ||
       is_nrc_721_token_cell?(output_data) ||
       is_nrc_721_factory_cell?(output_data) ||
       [
         CkbSync::Api.instance.spore_cluster_code_hash,
-        *CkbSync::Api.instance.spore_cell_code_hashes
+        *CkbSync::Api.instance.spore_cell_code_hashes,
       ].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
 
     case type_script&.code_hash
@@ -425,6 +445,14 @@ class CkbUtils
       "spore_cluster"
     when *CkbSync::Api.instance.spore_cell_code_hashes
       "spore_cell"
+    when CkbSync::Api.instance.omiga_inscription_info_code_hash
+      "omiga_inscription_info"
+    when CkbSync::Api.instance.xudt_code_hash
+      if OmigaInscriptionInfo.where(udt_hash: type_script.compute_hash).exists?
+        "omiga_inscription"
+      else
+        "xudt"
+      end
     else
       if is_nrc_721_token_cell?(output_data)
         "nrc_721_token"
@@ -447,11 +475,13 @@ class CkbUtils
     info_size = data[18..21].to_i(16)
     info = JSON.parse(
       [data[22..]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace,
-                                                                      undef: :replace).delete("\u0000")
+                                                                      undef: :replace).delete("\u0000"),
     )
-    OpenStruct.new(version: version, class_count: class_count, set_count: set_count, info_size: info_size, info: info)
-  rescue
-    OpenStruct.new(version: 0, class_count: 0, set_count: 0, info_size: 0, info: "")
+    OpenStruct.new(version:, class_count:,
+                   set_count:, info_size:, info:)
+  rescue StandardError
+    OpenStruct.new(version: 0, class_count: 0, set_count: 0, info_size: 0,
+                   info: "")
   end
 
   # Parse mNFT token class data information from cell data
@@ -482,10 +512,11 @@ class CkbUtils
     renderer_end_index = renderer_start_index + renderer_size * 2 - 1
     renderer = [data[renderer_start_index, renderer_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8",
                                                                                                           invalid: :replace, undef: :replace).delete("\u0000")
-    OpenStruct.new(version: version, total: total, issued: issued, configure: configure, name: name,
-                   description: description, renderer: renderer)
-  rescue
-    OpenStruct.new(version: 0, total: 0, issued: 0, configure: 0, name: "", description: "", renderer: "")
+    OpenStruct.new(version:, total:, issued:, configure:, name:,
+                   description:, renderer:)
+  rescue StandardError
+    OpenStruct.new(version: 0, total: 0, issued: 0, configure: 0, name: "",
+                   description: "", renderer: "")
   end
 
   def self.generate_crc32(str)
@@ -518,8 +549,10 @@ class CkbUtils
     factory_name_hex = data[arg_name_length, name_byte_size * 2]
 
     arg_symbol_length = 4
-    symbol_byte_size = data[(factory_name_hex.length + arg_name_length), arg_symbol_length].to_i(16)
-    factory_symbol_hex = data[arg_name_length + factory_name_hex.length + arg_symbol_length, symbol_byte_size * 2]
+    symbol_byte_size = data[(factory_name_hex.length + arg_name_length),
+                            arg_symbol_length].to_i(16)
+    factory_symbol_hex = data[arg_name_length + factory_name_hex.length + arg_symbol_length,
+                              symbol_byte_size * 2]
 
     arg_base_token_uri_length = 4
     base_token_uri_length = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length),
@@ -546,7 +579,7 @@ class CkbUtils
   end
 
   def self.hex_since(int_since_value)
-    return "0x#{int_since_value.to_s(16).rjust(16, '0')}"
+    "0x#{int_since_value.to_s(16).rjust(16, '0')}"
   end
 
   def self.shannon_to_byte(shannon)
@@ -555,7 +588,10 @@ class CkbUtils
 
   def self.hexes_to_bins_sql(hex_strings)
     if hex_strings.is_a?(Array) && hex_strings.length > 0
-      hex_strings.map { |hex_string| ActiveRecord::Base.sanitize_sql_array(["E'\\\\x%s'::bytea", hex_string.delete_prefix("0x")]) }.join(", ")
+      hex_strings.map do |hex_string|
+        ActiveRecord::Base.sanitize_sql_array(["E'\\\\x%s'::bytea",
+                                               hex_string.delete_prefix("0x")])
+      end.join(", ")
     else
       []
     end
@@ -568,8 +604,8 @@ class CkbUtils
     name = [data.slice(name_offset + 8..description_offset - 1)].pack("H*")
     description = [data.slice(description_offset + 8..-1)].pack("H*")
     name = "#{name[0, 97]}..." if name.length > 100
-    { name: name, description: description }
-  rescue => _e
+    { name:, description: }
+  rescue StandardError => _e
     { name: nil, description: nil }
   end
 
@@ -581,8 +617,30 @@ class CkbUtils
     content_type = [data.slice(content_type_offset + 8..content_offset - 1)].pack("H*")
     content = data.slice(content_offset + 8..cluster_id_offset - 1)
     cluster_id = data.slice(cluster_id_offset + 8..-1)
-    { content_type: content_type, content: content, cluster_id: cluster_id.nil? ? nil : "0x#{cluster_id}" }
-  rescue => _e
+    { content_type:, content:,
+      cluster_id: cluster_id.nil? ? nil : "0x#{cluster_id}" }
+  rescue StandardError => _e
     { content_type: nil, content: nil, cluster_id: nil }
+  end
+
+  def self.parse_omiga_inscription_info(hex_data)
+    data = hex_data.delete_prefix("0x")
+    decimal = "0x#{data.slice!(0, 2)}".to_i(16)
+    name_len = "0x#{data.slice!(0, 2)}".to_i(16)
+    name = [data.slice!(0, name_len * 2)].pack("H*")
+    symbol_len = "0x#{data.slice!(0, 2)}".to_i(16)
+    symbol = [data.slice!(0, symbol_len * 2)].pack("H*")
+    udt_hash = "0x#{data.slice!(0, 64)}"
+    expected_supply = [data.slice!(0, 32)].pack("H*").unpack1("Q<2")
+    mint_limit = [data.slice!(0, 32)].pack("H*").unpack1("Q<2")
+    mint_status = "0x#{data.slice!(0, 2)}".to_i(16)
+    { decimal:, name: name.presence, symbol: symbol.presence, udt_hash:, expected_supply:,
+      mint_limit:, mint_status: }
+  end
+
+  def self.parse_omiga_inscription_data(hex_data)
+    data = hex_data.delete_prefix("0x")
+    mint_limit = [data].pack("H*").unpack1("Q<2")
+    { mint_limit: }
   end
 end

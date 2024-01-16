@@ -2,17 +2,18 @@ class Udt < ApplicationRecord
   MAX_PAGINATES_PER = 100
 
   belongs_to :nrc_factory_cell, optional: true
-
   has_one :udt_verification
+  has_one :omiga_inscription_info
 
-  enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3 }
+  enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3,
+                   omiga_inscription: 4 }
 
   validates_presence_of :total_amount
-  validates_length_of :symbol, minimum: 1, maximum: 16, allow_nil: true
-  validates_length_of :full_name, minimum: 1, maximum: 100, allow_nil: true
-  validates :decimal, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }, allow_nil: true
+  validates :decimal,
+            numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }, allow_nil: true
   validates :total_amount, numericality: { greater_than_or_equal_to: 0 }
-  validates :email, format: { with: /\A(.+)@(.+)\z/, message: "Not a valid email" }, allow_nil: true
+  validates :email,
+            format: { with: /\A(.+)@(.+)\z/, message: "Not a valid email" }, allow_nil: true
 
   scope :query_by_name_or_symbl, ->(search) {
                                    where("lower(full_name) LIKE ? or lower(symbol) LIKE ?", "%#{search}%", "%#{search}%")
@@ -23,9 +24,9 @@ class Udt < ApplicationRecord
   has_and_belongs_to_many :ckb_transactions, join_table: :udt_transactions
 
   def update_h24_ckb_transactions_count
-    if self.ckb_transactions.exists?
-      update(h24_ckb_transactions_count: self.ckb_transactions.where("block_timestamp >= ?",
-                                                                     CkbUtils.time_in_milliseconds(24.hours.ago)).count)
+    if ckb_transactions.exists?
+      update(h24_ckb_transactions_count: ckb_transactions.where("block_timestamp >= ?",
+                                                                CkbUtils.time_in_milliseconds(24.hours.ago)).count)
     end
   end
 
@@ -33,9 +34,9 @@ class Udt < ApplicationRecord
     return unless published
 
     {
-      args: args,
-      code_hash: code_hash,
-      hash_type: hash_type
+      args:,
+      code_hash:,
+      hash_type:,
     }
   end
 end

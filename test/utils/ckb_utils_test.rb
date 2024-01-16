@@ -453,6 +453,26 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal info[:cluster_id], nil
   end
 
+  test "parse omiga inscription info data" do
+    data = "0x0814434b42204669737420496e736372697074696f6e04434b4249e0f8e095d975e21e1b451b582c9d0685104471d377c6589339b723f76c035c740040075af0750700000000000000000000e8764817000000000000000000000000"
+    info = CkbUtils.parse_omiga_inscription_info(data)
+    assert_equal info,
+                 { decimal: 8, name: "CKB Fist Inscription", symbol: "CKBI",
+                   udt_hash: "0xe0f8e095d975e21e1b451b582c9d0685104471d377c6589339b723f76c035c74", expected_supply: 2100000000000000, mint_limit: 100000000000, mint_status: 0 }
+  end
+
+  test "parse omiga inscription info data when name is null" do
+    data = "0x08004b42204669737420496e736372697074696f6e04434b4249e0f8e095d975e21e1b451b582c9d0685104471d377c6589339b723f76c035c740040075af0750700000000000000000000e8764817000000000000000000000000"
+    info = CkbUtils.parse_omiga_inscription_info(data)
+    assert_equal info[:name], nil
+  end
+
+  test "parse omiga inscrpition data" do
+    data = "0x00e87648170000000000000000000000"
+    info = CkbUtils.parse_omiga_inscription_data(data)
+    assert_equal info[:mint_limit], 100000000000
+  end
+
   private
 
   def node_data_processor
