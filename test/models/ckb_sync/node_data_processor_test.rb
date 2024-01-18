@@ -4041,7 +4041,7 @@ module CkbSync
         assert_equal info.expected_supply, 0.21e16
         assert_equal info.mint_limit, 0.1e12
         assert_equal info.mint_status, "minting"
-        assert_equal info.udt_id, nil
+        assert_equal info.udt_id, Udt.first.id
         assert_equal "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908",
                      Udt.first.type_hash
       end
