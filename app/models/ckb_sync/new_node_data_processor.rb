@@ -107,27 +107,31 @@ module CkbSync
 
       local_block
     end
+
     add_transaction_tracer :process_block, category: :task
-    add_method_tracer :build_udts!, "Custom/build_udt!"
-    add_method_tracer :process_ckb_txs, "Custom/process_ckb_txs"
-    add_method_tracer :build_cells_and_locks!, "Custom/build_cells_and_locks!"
+    add_method_tracer :build_udts!, "OtherTransaction/build_udt!"
+    add_method_tracer :process_ckb_txs, "OtherTransaction/process_ckb_txs"
+    add_method_tracer :build_cells_and_locks!,
+                      "OtherTransaction/build_cells_and_locks!"
     add_method_tracer :update_ckb_txs_rel_and_fee,
-                      "Custom/update_ckb_txs_rel_and_fee"
-    add_method_tracer :update_block_info!, "Custom/update_block_info!"
+                      "OtherTransaction/update_ckb_txs_rel_and_fee"
+    add_method_tracer :update_block_info!, "OtherTransaction/update_block_info!"
     add_method_tracer :update_block_reward_info!,
-                      "Custom/update_block_reward_info!"
-    add_method_tracer :update_mining_info, "Custom/update_mining_info"
+                      "OtherTransaction/update_block_reward_info!"
+    add_method_tracer :update_mining_info, "OtherTransaction/update_mining_info"
     add_method_tracer :update_table_records_count,
-                      "Custom/update_table_records_count"
+                      "OtherTransaction/update_table_records_count"
     add_method_tracer :update_or_create_udt_accounts!,
-                      "Custom/update_or_create_udt_accounts!"
-    add_method_tracer :update_udt_info, "Custom/update_udt_info"
-    add_method_tracer :process_dao_events!, "Custom/process_dao_events!"
-    add_method_tracer :update_addresses_info, "Custom/update_addresses_info"
+                      "OtherTransaction/update_or_create_udt_accounts!"
+    add_method_tracer :update_udt_info, "OtherTransaction/update_udt_info"
+    add_method_tracer :process_dao_events!,
+                      "OtherTransaction/process_dao_events!"
+    add_method_tracer :update_addresses_info,
+                      "OtherTransaction/update_addresses_info"
     add_method_tracer :generate_statistics_data,
-                      "Custom/generate_statistics_data"
+                      "OtherTransaction/generate_statistics_data"
     add_method_tracer :generate_deployed_cells_and_referring_cells,
-                      "Custom/generate_deployed_cells_and_referring_cells"
+                      "OtherTransaction/generate_deployed_cells_and_referring_cells"
 
     def check_invalid_address(address)
       if (address.balance < 0) || (address.balance_occupied < 0)
