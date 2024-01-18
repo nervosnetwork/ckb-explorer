@@ -70,7 +70,7 @@ module CkbSync
         @tx_cell_deps = {}
         @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs,
                                            outputs, outputs_data).to_a
-        build_udts!(local_block, outputs, outputs_data)
+        benchmark :build_udts!, local_block, outputs, outputs_data
 
         tags = []
         @udt_address_ids = udt_address_ids = []
@@ -78,29 +78,33 @@ module CkbSync
         @contained_udt_ids = contained_udt_ids = []
         @contained_address_ids = contained_address_ids = []
 
-        process_ckb_txs(node_block, ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags,
-                        udt_address_ids)
+        benchmark :process_ckb_txs, node_block, ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids
         addrs_changes = Hash.new { |hash, key| hash[key] = {} }
-        input_capacities, output_capacities = build_cells_and_locks!(local_block, node_block, ckb_txs, inputs, outputs,
-                                                                     tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes)
+
+
+
+        input_capacities, output_capacities = benchmark :build_cells_and_locks!, local_block, node_block, ckb_txs, inputs, outputs,
+                                                                     tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes
 
         # update explorer data
-        update_ckb_txs_rel_and_fee(ckb_txs, tags, input_capacities, output_capacities, udt_address_ids,
-                                   dao_address_ids, contained_udt_ids, contained_address_ids)
-        update_block_info!(local_block)
-        update_block_reward_info!(local_block)
-        update_mining_info(local_block)
-        update_table_records_count(local_block)
-        update_or_create_udt_accounts!(local_block)
+        benchmark :update_ckb_txs_rel_and_fee, ckb_txs, tags, input_capacities, output_capacities, udt_address_ids,
+                                   dao_address_ids, contained_udt_ids, contained_address_ids
+        benchmark :update_block_info!, local_block
+        benchmark :update_block_reward_info!,local_block
+        benchmark :update_mining_info, local_block
+        benchmark :update_table_records_count, local_block
+        benchmark :update_or_create_udt_accounts!, local_block
         # maybe can be changed to asynchronous update
-        update_udt_info(local_block)
-        process_dao_events!(local_block)
-        update_addresses_info(addrs_changes, local_block) if refresh_balance
+        benchmark :update_udt_info, local_block
+        benchmark :process_dao_events!, local_block
+        if refresh_balance
+          benchmark :update_addresses_info, addrs_changes, local_block
+        end
       end
 
-      flush_inputs_outputs_caches(local_block)
-      generate_statistics_data(local_block)
-      generate_deployed_cells_and_referring_cells(local_block)
+      benchmark :flush_inputs_outputs_caches, local_block
+      benchmark :generate_statistics_data, local_block
+      benchmark :generate_deployed_cells_and_referring_cells, local_block
 
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
       local_block.update_counter_for_ckb_node_version
@@ -679,7 +683,7 @@ dao_contract)
       udts_attributes = Set.new
       outputs.each do |tx_index, items|
         items.each_with_index do |output, index|
-          cell_type = cell_type(output.type, outputs_data[tx_index][index])
+          cell_type = benchmark :cell_type, output.type, outputs_data[tx_index][index]
           if cell_type == "omiga_inscription_info"
             info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
             OmigaInscriptionInfo.upsert(info.merge(output.type.to_h),
@@ -1602,6 +1606,12 @@ outputs_data)
         base_token_uri: parsed_factory_data.base_token_uri,
         extra_data: parsed_factory_data.extra_data,
       )
+    end
+
+    def benchmark(method_name = nil, *args)
+      ApplicationRecord.benchmark method_name do
+        send(method_name, *args)
+      end
     end
 
     class LocalCache

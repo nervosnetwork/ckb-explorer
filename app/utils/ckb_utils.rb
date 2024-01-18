@@ -449,10 +449,12 @@ class CkbUtils
     when CkbSync::Api.instance.omiga_inscription_info_code_hash
       "omiga_inscription_info"
     when CkbSync::Api.instance.xudt_code_hash
-      if OmigaInscriptionInfo.where(udt_hash: type_script.compute_hash).exists?
-        "omiga_inscription"
-      else
-        "xudt"
+      Rails.cache.fetch(type_script.compute_hash) do
+        if OmigaInscriptionInfo.exists?(udt_hash: type_script.compute_hash)
+          "omiga_inscription"
+        else
+          "xudt"
+        end
       end
     else
       if is_nrc_721_token_cell?(output_data)
