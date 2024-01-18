@@ -7,7 +7,7 @@ class CkbTransactionSerializer
   attributes :is_cellbase, :tx_status
 
   attribute :witnesses do |o|
-    o.witnesses&.map(&:data) || []
+    o.witnesses.order("index ASC")&.map(&:data) || []
   end
 
   attribute :cell_deps do |o|
