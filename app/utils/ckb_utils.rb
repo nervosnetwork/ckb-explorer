@@ -405,8 +405,8 @@ class CkbUtils
   # @return [String] cell type
   def self.cell_type(type_script, output_data)
     if type_script&.code_hash == CkbSync::Api.instance.xudt_code_hash &&
-      ((CkbSync::Api.instance.mode == CKB::MODE::TESTNET && type_script&.hash_type == "type") ||
-        (CkbSync::Api.instance.mode == CKB::MODE::MAINNET && type_script&.hash_type == "data1"))
+      ((ENV["CKB_NET_MODE"] == CKB::MODE::TESTNET && type_script&.hash_type == "type") ||
+        (ENV["CKB_NET_MODE"] == CKB::MODE::MAINNET && type_script&.hash_type == "data1"))
       str = Kredis.string type_script.compute_hash
       unless str.value
         if OmigaInscriptionInfo.exists?(udt_hash: type_script.compute_hash)
@@ -436,7 +436,7 @@ class CkbUtils
         CkbSync::Api.instance.spore_cluster_code_hash,
         *CkbSync::Api.instance.spore_cell_code_hashes,
       ].include?(type_script&.code_hash) && type_script&.hash_type == "data1" ||
-      CkbSync::Api.instance.mode == CKB::MODE::MAINNET && [CkbSync::Api.instance.xudt_code_hash].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
+      ENV["CKB_NET_MODE"] == CKB::MODE::MAINNET && [CkbSync::Api.instance.xudt_code_hash].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
 
     case type_script&.code_hash
     when Settings.dao_code_hash, Settings.dao_type_hash
