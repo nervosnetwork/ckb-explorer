@@ -22,11 +22,13 @@ module CkbSync
     end
 
     def mode
-      if chain_type == "ckb"
-        CKB::MODE::MAINNET
-      else
-        CKB::MODE::TESTNET
-      end
+      # if chain_type == "ckb"
+      #   CKB::MODE::MAINNET
+      # else
+      #   CKB::MODE::TESTNET
+      # end
+
+      ENV["CKB_NET_MODE"]
     end
 
     def issuer_script_code_hash

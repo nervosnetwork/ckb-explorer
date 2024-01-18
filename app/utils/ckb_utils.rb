@@ -404,25 +404,6 @@ class CkbUtils
   # @param [String] output_data
   # @return [String] cell type
   def self.cell_type(type_script, output_data)
-    if type_script&.code_hash == CkbSync::Api.instance.xudt_code_hash &&
-      ((ENV["CKB_NET_MODE"] == CKB::MODE::TESTNET && type_script&.hash_type == "type") ||
-        (ENV["CKB_NET_MODE"] == CKB::MODE::MAINNET && type_script&.hash_type == "data1"))
-      str = Kredis.string type_script.compute_hash
-      unless str.value
-        if OmigaInscriptionInfo.exists?(udt_hash: type_script.compute_hash)
-          str.value ="omiga_inscription"
-        else
-          str.value = "xudt"
-        end
-      end
-
-      return str.value
-    end
-
-    if type_script&.code_hash == CkbSync::Api.instance.omiga_inscription_info_code_hash
-      return "omiga_inscription_info"
-    end
-
     return "normal" unless ([
       Settings.dao_code_hash, Settings.dao_type_hash, Settings.sudt_cell_type_hash, Settings.sudt1_cell_type_hash,
       CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
@@ -436,7 +417,7 @@ class CkbUtils
         CkbSync::Api.instance.spore_cluster_code_hash,
         *CkbSync::Api.instance.spore_cell_code_hashes,
       ].include?(type_script&.code_hash) && type_script&.hash_type == "data1" ||
-      ENV["CKB_NET_MODE"] == CKB::MODE::MAINNET && [CkbSync::Api.instance.xudt_code_hash].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
+      CkbSync::Api.instance.mode == CKB::MODE::MAINNET && [CkbSync::Api.instance.xudt_code_hash].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
 
     case type_script&.code_hash
     when Settings.dao_code_hash, Settings.dao_type_hash
@@ -468,10 +449,12 @@ class CkbUtils
     when CkbSync::Api.instance.omiga_inscription_info_code_hash
       "omiga_inscription_info"
     when CkbSync::Api.instance.xudt_code_hash
-      if OmigaInscriptionInfo.where(udt_hash: type_script.compute_hash).exists?
-        "omiga_inscription"
-      else
-        "xudt"
+      Rails.cache.fetch(type_script.compute_hash) do
+        if OmigaInscriptionInfo.exists?(udt_hash: type_script.compute_hash)
+          "omiga_inscription"
+        else
+          "xudt"
+        end
       end
     else
       if is_nrc_721_token_cell?(output_data)
