@@ -103,7 +103,7 @@ module CkbSync
 
       benchmark :flush_inputs_outputs_caches, local_block
       benchmark :generate_statistics_data, local_block
-      benchmark :generate_deployed_cells_and_referring_cells, local_block
+      # benchmark :generate_deployed_cells_and_referring_cells, local_block
 
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
       local_block.update_counter_for_ckb_node_version
@@ -659,8 +659,7 @@ dao_contract)
       udts_attributes = Set.new
       outputs.each do |tx_index, items|
         items.each_with_index do |output, index|
-          cell_type = benchmark :cell_type, output.type,
-                                outputs_data[tx_index][index]
+          cell_type = cell_type(output.type,outputs_data[tx_index][index])
           if cell_type == "omiga_inscription_info"
             info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
             OmigaInscriptionInfo.upsert(info.merge(output.type.to_h),
