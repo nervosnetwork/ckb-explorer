@@ -22,10 +22,14 @@ module Api
       end
 
       def show
-        udt = Udt.find_by!(type_hash: params[:id])
-        render json: UdtSerializer.new(udt)
-      rescue ActiveRecord::RecordNotFound
-        raise Api::V1::Exceptions::UdtNotFoundError
+        udt = Udt.joins(:omiga_inscription_info).where(
+          "udts.type_hash = ? or omiga_inscription_infos.type_hash = ?", params[:id], params[:id]
+        ).first
+        if udt.nil?
+          raise Api::V1::Exceptions::UdtNotFoundError
+        else
+          render json: UdtSerializer.new(udt)
+        end
       end
 
       def download_csv

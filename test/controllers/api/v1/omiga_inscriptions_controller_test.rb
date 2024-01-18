@@ -46,7 +46,21 @@ module Api
         assert_equal %w(
           symbol full_name display_name uan total_amount addresses_count
           decimal icon_file h24_ckb_transactions_count created_at description
-          published type_hash type_script issuer_address mint_status mint_limit expected_supply inscription_info_id udt_type
+          published type_hash type_script issuer_address mint_status mint_limit expected_supply inscription_info_id udt_type info_type_hash
+        ).sort,
+                     response_udt["attributes"].keys.sort
+      end
+
+      test "should contain right keys in the serialized object when query info type hash" do
+        udt = create(:udt, :omiga_inscription)
+
+        valid_get api_v1_omiga_inscription_url(udt.omiga_inscription_info.type_hash)
+
+        response_udt = json["data"]
+        assert_equal %w(
+          symbol full_name display_name uan total_amount addresses_count
+          decimal icon_file h24_ckb_transactions_count created_at description
+          published type_hash type_script issuer_address mint_status mint_limit expected_supply inscription_info_id udt_type info_type_hash
         ).sort,
                      response_udt["attributes"].keys.sort
       end
