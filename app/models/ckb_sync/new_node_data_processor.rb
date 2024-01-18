@@ -78,19 +78,18 @@ module CkbSync
         @contained_udt_ids = contained_udt_ids = []
         @contained_address_ids = contained_address_ids = []
 
-        benchmark :process_ckb_txs, node_block, ckb_txs, contained_address_ids, contained_udt_ids, dao_address_ids, tags, udt_address_ids
+        benchmark :process_ckb_txs, node_block, ckb_txs, contained_address_ids,
+                  contained_udt_ids, dao_address_ids, tags, udt_address_ids
         addrs_changes = Hash.new { |hash, key| hash[key] = {} }
 
-
-
         input_capacities, output_capacities = benchmark :build_cells_and_locks!, local_block, node_block, ckb_txs, inputs, outputs,
-                                                                     tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes
+                                                        tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes
 
         # update explorer data
         benchmark :update_ckb_txs_rel_and_fee, ckb_txs, tags, input_capacities, output_capacities, udt_address_ids,
-                                   dao_address_ids, contained_udt_ids, contained_address_ids
+                  dao_address_ids, contained_udt_ids, contained_address_ids
         benchmark :update_block_info!, local_block
-        benchmark :update_block_reward_info!,local_block
+        benchmark :update_block_reward_info!, local_block
         benchmark :update_mining_info, local_block
         benchmark :update_table_records_count, local_block
         benchmark :update_or_create_udt_accounts!, local_block
@@ -113,29 +112,6 @@ module CkbSync
     end
 
     add_transaction_tracer :process_block, category: :task
-    add_method_tracer :build_udts!, "OtherTransaction/build_udt!"
-    add_method_tracer :process_ckb_txs, "OtherTransaction/process_ckb_txs"
-    add_method_tracer :build_cells_and_locks!,
-                      "OtherTransaction/build_cells_and_locks!"
-    add_method_tracer :update_ckb_txs_rel_and_fee,
-                      "OtherTransaction/update_ckb_txs_rel_and_fee"
-    add_method_tracer :update_block_info!, "OtherTransaction/update_block_info!"
-    add_method_tracer :update_block_reward_info!,
-                      "OtherTransaction/update_block_reward_info!"
-    add_method_tracer :update_mining_info, "OtherTransaction/update_mining_info"
-    add_method_tracer :update_table_records_count,
-                      "OtherTransaction/update_table_records_count"
-    add_method_tracer :update_or_create_udt_accounts!,
-                      "OtherTransaction/update_or_create_udt_accounts!"
-    add_method_tracer :update_udt_info, "OtherTransaction/update_udt_info"
-    add_method_tracer :process_dao_events!,
-                      "OtherTransaction/process_dao_events!"
-    add_method_tracer :update_addresses_info,
-                      "OtherTransaction/update_addresses_info"
-    add_method_tracer :generate_statistics_data,
-                      "OtherTransaction/generate_statistics_data"
-    add_method_tracer :generate_deployed_cells_and_referring_cells,
-                      "OtherTransaction/generate_deployed_cells_and_referring_cells"
 
     def check_invalid_address(address)
       if (address.balance < 0) || (address.balance_occupied < 0)
@@ -683,7 +659,8 @@ dao_contract)
       udts_attributes = Set.new
       outputs.each do |tx_index, items|
         items.each_with_index do |output, index|
-          cell_type = benchmark :cell_type, output.type, outputs_data[tx_index][index]
+          cell_type = benchmark :cell_type, output.type,
+                                outputs_data[tx_index][index]
           if cell_type == "omiga_inscription_info"
             info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
             OmigaInscriptionInfo.upsert(info.merge(output.type.to_h),
