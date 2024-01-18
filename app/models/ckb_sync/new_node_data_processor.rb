@@ -653,90 +653,98 @@ dao_contract)
 
     def build_udts!(local_block, outputs, outputs_data)
       udts_attributes = Set.new
-      outputs.each do |tx_index, items|
-        items.each_with_index do |output, index|
-          cell_type = cell_type(output.type, outputs_data[tx_index][index])
-          if cell_type == "omiga_inscription_info"
-            info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
-            OmigaInscriptionInfo.upsert(info.merge(output.type.to_h),
-                                        unique_by: :udt_hash)
-          end
-          next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell
-                                       omiga_inscription))
+      outputs = outputs.values.flatten
+      outputs_data = outputs_data.values.flatten
+      uniq_outputs = outputs.uniq { |output| output.type.to_h }
+      outputs =
+        if uniq_outputs.length == 2 && uniq_outputs.first.lock.code_hash == Settings.secp_cell_type_hash && uniq_outputs.last.type.code_hash == Settings.xudt_code_hash
+          uniq_outputs
+        else
+          outputs
+        end
 
-          type_hash = output.type.compute_hash
-          unless Udt.where(type_hash:).exists?
-            nft_token_attr = { full_name: nil, icon_file: nil,
-                               published: false, symbol: nil, decimal: nil, nrc_factory_cell_id: nil }
-            if cell_type == "m_nft_token"
-              m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash,
-                                                  args: output.type.args[0..49]).first
-              if m_nft_class_type.present?
-                m_nft_class_cell = m_nft_class_type.cell_outputs.last
-                parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+      outputs.each_with_index do |output, index|
+        cell_type = cell_type(output.type, outputs_data[index])
+        if cell_type == "omiga_inscription_info"
+          info = CkbUtils.parse_omiga_inscription_info(outputs_data[index])
+          OmigaInscriptionInfo.upsert(info.merge(output.type.to_h),
+                                      unique_by: :udt_hash)
+        end
+        next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell
+                                     omiga_inscription))
+
+        type_hash = output.type.compute_hash
+        unless Udt.where(type_hash:).exists?
+          nft_token_attr = { full_name: nil, icon_file: nil,
+                             published: false, symbol: nil, decimal: nil, nrc_factory_cell_id: nil }
+          if cell_type == "m_nft_token"
+            m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash,
+                                                args: output.type.args[0..49]).first
+            if m_nft_class_type.present?
+              m_nft_class_cell = m_nft_class_type.cell_outputs.last
+              parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
+              coll = TokenCollection.find_or_create_by(
+                standard: "m_nft",
+                name: parsed_class_data.name,
+                cell_id: m_nft_class_cell.id,
+                icon_url: parsed_class_data.renderer,
+                creator_id: m_nft_class_cell.address_id,
+              )
+
+              nft_token_attr[:full_name] = parsed_class_data.name
+              nft_token_attr[:icon_file] = parsed_class_data.renderer
+              nft_token_attr[:published] = true
+            end
+          end
+          if cell_type == "spore_cell"
+            parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[index])
+            if parsed_spore_cell[:cluster_id].present?
+              spore_cluster_type = TypeScript.where(code_hash: CkbSync::Api.instance.spore_cluster_code_hash,
+                                                    args: parsed_spore_cell[:cluster_id]).first
+              if spore_cluster_type.present?
+                spore_cluster_cell = spore_cluster_type.cell_outputs.last
+                parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
                 coll = TokenCollection.find_or_create_by(
-                  standard: "m_nft",
-                  name: parsed_class_data.name,
-                  cell_id: m_nft_class_cell.id,
-                  icon_url: parsed_class_data.renderer,
-                  creator_id: m_nft_class_cell.address_id,
+                  standard: "spore",
+                  name: parsed_cluster_data[:name],
+                  description: parsed_cluster_data[:description],
+                  cell_id: spore_cluster_cell.id,
+                  creator_id: spore_cluster_cell.address_id,
                 )
 
-                nft_token_attr[:full_name] = parsed_class_data.name
-                nft_token_attr[:icon_file] = parsed_class_data.renderer
+                nft_token_attr[:full_name] = parsed_cluster_data[:name]
                 nft_token_attr[:published] = true
               end
             end
-            if cell_type == "spore_cell"
-              parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[tx_index][index])
-              if parsed_spore_cell[:cluster_id].present?
-                spore_cluster_type = TypeScript.where(code_hash: CkbSync::Api.instance.spore_cluster_code_hash,
-                                                      args: parsed_spore_cell[:cluster_id]).first
-                if spore_cluster_type.present?
-                  spore_cluster_cell = spore_cluster_type.cell_outputs.last
-                  parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
-                  coll = TokenCollection.find_or_create_by(
-                    standard: "spore",
-                    name: parsed_cluster_data[:name],
-                    description: parsed_cluster_data[:description],
-                    cell_id: spore_cluster_cell.id,
-                    creator_id: spore_cluster_cell.address_id,
-                  )
-
-                  nft_token_attr[:full_name] = parsed_cluster_data[:name]
-                  nft_token_attr[:published] = true
-                end
-              end
-            end
-            if cell_type == "nrc_721_token"
-              factory_cell = CkbUtils.parse_nrc_721_args(output.type.args)
-              nrc_721_factory_cell = NrcFactoryCell.create_or_find_by(code_hash: factory_cell.code_hash,
-                                                                      hash_type: factory_cell.hash_type,
-                                                                      args: factory_cell.args)
-              if nrc_721_factory_cell.verified
-                nft_token_attr[:full_name] = nrc_721_factory_cell.name
-                nft_token_attr[:symbol] =
-                  nrc_721_factory_cell.symbol.to_s[0, 16]
-                nft_token_attr[:icon_file] =
-                  "#{nrc_721_factory_cell.base_token_uri}/#{factory_cell.token_id}"
-                # refactor: remove this attribute then add udt_id to NrcFactoryCell
-                nft_token_attr[:nrc_factory_cell_id] = nrc_721_factory_cell.id
-              end
-              nft_token_attr[:published] = true
-            end
-            if cell_type == "omiga_inscription"
-              info = OmigaInscriptionInfo.find_by!(udt_hash: type_hash)
-              nft_token_attr[:full_name] = info.name
-              nft_token_attr[:symbol] = info.symbol
-              nft_token_attr[:decimal] = info.decimal
-              nft_token_attr[:published] = true
-            end
-            # fill issuer_address after publish the token
-            udts_attributes << {
-              type_hash:, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
-              code_hash: output.type.code_hash, hash_type: output.type.hash_type
-            }.merge(nft_token_attr)
           end
+          if cell_type == "nrc_721_token"
+            factory_cell = CkbUtils.parse_nrc_721_args(output.type.args)
+            nrc_721_factory_cell = NrcFactoryCell.create_or_find_by(code_hash: factory_cell.code_hash,
+                                                                    hash_type: factory_cell.hash_type,
+                                                                    args: factory_cell.args)
+            if nrc_721_factory_cell.verified
+              nft_token_attr[:full_name] = nrc_721_factory_cell.name
+              nft_token_attr[:symbol] =
+                nrc_721_factory_cell.symbol.to_s[0, 16]
+              nft_token_attr[:icon_file] =
+                "#{nrc_721_factory_cell.base_token_uri}/#{factory_cell.token_id}"
+              # refactor: remove this attribute then add udt_id to NrcFactoryCell
+              nft_token_attr[:nrc_factory_cell_id] = nrc_721_factory_cell.id
+            end
+            nft_token_attr[:published] = true
+          end
+          if cell_type == "omiga_inscription"
+            info = OmigaInscriptionInfo.find_by!(udt_hash: type_hash)
+            nft_token_attr[:full_name] = info.name
+            nft_token_attr[:symbol] = info.symbol
+            nft_token_attr[:decimal] = info.decimal
+            nft_token_attr[:published] = true
+          end
+          # fill issuer_address after publish the token
+          udts_attributes << {
+            type_hash:, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
+            code_hash: output.type.code_hash, hash_type: output.type.hash_type
+          }.merge(nft_token_attr)
         end
       end
       if udts_attributes.present?
