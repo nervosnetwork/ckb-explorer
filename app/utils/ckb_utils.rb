@@ -404,6 +404,25 @@ class CkbUtils
   # @param [String] output_data
   # @return [String] cell type
   def self.cell_type(type_script, output_data)
+    if type_script&.code_hash == CkbSync::Api.instance.xudt_code_hash &&
+      ((CkbSync::Api.instance.mode == CKB::MODE::TESTNET && type_script&.hash_type == "type") ||
+        (CkbSync::Api.instance.mode == CKB::MODE::MAINNET && type_script&.hash_type == "data1"))
+      str = Kredis.string type_script.compute_hash
+      unless str.value
+        if OmigaInscriptionInfo.exists?(udt_hash: type_script.compute_hash)
+          str.value ="omiga_inscription"
+        else
+          str.value = "xudt"
+        end
+      end
+
+      return str.value
+    end
+
+    if type_script&.code_hash == CkbSync::Api.instance.omiga_inscription_info_code_hash
+      return "omiga_inscription_info"
+    end
+
     return "normal" unless ([
       Settings.dao_code_hash, Settings.dao_type_hash, Settings.sudt_cell_type_hash, Settings.sudt1_cell_type_hash,
       CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
