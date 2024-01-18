@@ -533,7 +533,14 @@ dao_contract)
     end
 
     def udt_type(cell_type)
-      cell_type == "udt" ? "sudt" : cell_type
+      case cell_type
+      when "udt"
+        "sudt"
+      when "omiga_inscription_info"
+        "omiga_inscription"
+      else
+        cell_type
+      end
     end
 
     def udt_account_amount(udt_type, type_hash, address)
@@ -657,18 +664,31 @@ dao_contract)
 
     def build_udts!(local_block, outputs, outputs_data)
       udts_attributes = Set.new
+      omiga_inscription_udt_attributes = Set.new
+
       outputs.each do |tx_index, items|
         items.each_with_index do |output, index|
-          cell_type = cell_type(output.type,outputs_data[tx_index][index])
-          if cell_type == "omiga_inscription_info"
-            info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
-            OmigaInscriptionInfo.upsert(info.merge(output.type.to_h),
-                                        unique_by: :udt_hash)
-          end
+          cell_type = cell_type(output.type, outputs_data[tx_index][index])
           next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell
-                                       omiga_inscription))
+                                       omiga_inscription_info omiga_inscription))
 
-          type_hash = output.type.compute_hash
+          type_hash =
+            if cell_type == "omiga_inscription_info"
+              info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
+              OmigaInscriptionInfo.upsert(
+                info.merge(output.type.to_h,
+                           type_hash: output.type.compute_hash), unique_by: :udt_hash
+              )
+              info[:udt_hash]
+            else
+              output.type.compute_hash
+            end
+
+          if cell_type == "omiga_inscription"
+            omiga_inscription_udt_attributes << { type_hash:,
+                                                  code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args }
+          end
+
           unless Udt.where(type_hash:).exists?
             nft_token_attr = { full_name: nil, icon_file: nil,
                                published: false, symbol: nil, decimal: nil, nrc_factory_cell_id: nil }
@@ -728,11 +748,11 @@ dao_contract)
               end
               nft_token_attr[:published] = true
             end
-            if cell_type == "omiga_inscription"
-              info = OmigaInscriptionInfo.find_by!(udt_hash: type_hash)
-              nft_token_attr[:full_name] = info.name
-              nft_token_attr[:symbol] = info.symbol
-              nft_token_attr[:decimal] = info.decimal
+            if cell_type == "omiga_inscription_info"
+              info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
+              nft_token_attr[:full_name] = info[:name]
+              nft_token_attr[:symbol] = info[:symbol]
+              nft_token_attr[:decimal] = info[:decimal]
               nft_token_attr[:published] = true
             end
             # fill issuer_address after publish the token
@@ -757,6 +777,10 @@ dao_contract)
           OmigaInscriptionInfo.upsert_all(omiga_inscription_info_attrs,
                                           unique_by: :udt_hash)
         end
+      end
+
+      if omiga_inscription_udt_attributes.present?
+        Udt.upsert_all(omiga_inscription_udt_attributes, unique_by: :type_hash)
       end
     end
 

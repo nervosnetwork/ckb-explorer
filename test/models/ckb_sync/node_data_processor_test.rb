@@ -4002,7 +4002,7 @@ module CkbSync
       assert_equal "R+K V1 N1", old_factory_cell.reload.symbol
     end
 
-    test "save omiga inscription info" do
+    test "save omiga inscription info and init udt" do
       CkbSync::Api.any_instance.stubs(:xudt_code_hash).returns("0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb")
       CkbSync::Api.any_instance.stubs(:omiga_inscription_info_code_hash).returns("0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6")
       VCR.use_cassette("blocks/31") do
@@ -4042,10 +4042,13 @@ module CkbSync
         assert_equal info.mint_limit, 0.1e12
         assert_equal info.mint_status, "minting"
         assert_equal info.udt_id, nil
+        assert_equal "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908",
+                     Udt.first.type_hash
       end
     end
 
     test "save omiga inscription udt" do
+      CkbSync::Api.any_instance.stubs(:mode).returns("testnet")
       CkbSync::Api.any_instance.stubs(:xudt_code_hash).returns("0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb")
       CkbSync::Api.any_instance.stubs(:omiga_inscription_info_code_hash).returns("0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6")
 
@@ -4068,6 +4071,8 @@ module CkbSync
                                        cell_type: "normal",
                                        lock_script_id: address1_lock.id,
                                        type_script_id: nil)
+        udt = create(:udt, code_hash: "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6", hash_type: "type", args: "0xcd89d8f36593a9a82501c024c5cdc4877ca11c5b3d5831b3e78334aecb978f0d",
+                           type_hash: "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908", udt_type: "omiga_inscription")
         info = create(:omiga_inscription_info,
                       code_hash: "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6",
                       hash_type: "type",
@@ -4079,17 +4084,19 @@ module CkbSync
                       expected_supply: 0.21e16,
                       mint_limit: 0.1e12,
                       mint_status: "minting",
-                      udt_id: nil)
+                      udt_id: udt.id)
+
         node_data_processor.process_block(node_block)
         assert_equal CellOutput.find_by(type_hash: info.udt_hash).udt_amount,
                      0.1e12
         assert_equal 1, UdtAccount.count
         assert_equal 0.1e12, UdtAccount.first.amount
         assert_equal 1, UdtTransaction.count
-        omiga_inscription = Udt.first
-        assert_equal OmigaInscriptionInfo.first.udt_id, omiga_inscription.id
-        assert_equal omiga_inscription.type_hash,
+        assert_equal OmigaInscriptionInfo.first.udt_id, udt.id
+        assert_equal udt.reload.type_hash,
                      "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908"
+        assert_equal "0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb",
+                     udt.reload.code_hash
       end
     end
 
