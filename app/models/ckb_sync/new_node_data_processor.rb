@@ -533,14 +533,7 @@ dao_contract)
     end
 
     def udt_type(cell_type)
-      case cell_type
-      when "udt"
-        "sudt"
-      when "omiga_inscription_info"
-        "omiga_inscription"
-      else
-        cell_type
-      end
+      cell_type == "udt" ? "sudt" : cell_type
     end
 
     def udt_account_amount(udt_type, type_hash, address)
@@ -672,16 +665,24 @@ dao_contract)
           next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell
                                        omiga_inscription_info omiga_inscription))
 
-          type_hash =
+          type_hash, parsed_udt_type =
             if cell_type == "omiga_inscription_info"
               info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
-              OmigaInscriptionInfo.upsert(
-                info.merge(output.type.to_h,
-                           type_hash: output.type.compute_hash), unique_by: :udt_hash
+              info_type_hash = output.type.compute_hash
+              attrs = info.merge(output.type.to_h, type_hash: info_type_hash)
+              pre_closed_info = OmigaInscriptionInfo.find_by(
+                type_hash: info_type_hash, mint_status: :closed,
               )
-              info[:udt_hash]
+              attrs =
+                if pre_closed_info
+                  attrs.merge(pre_udt_hash: pre_closed_info.udt_hash)
+                else
+                  attrs
+                end
+              OmigaInscriptionInfo.upsert(attrs, unique_by: :udt_hash)
+              [info[:udt_hash], "omiga_inscription"]
             else
-              output.type.compute_hash
+              [output.type.compute_hash, udt_type(cell_type)]
             end
 
           if cell_type == "omiga_inscription"
@@ -757,7 +758,7 @@ dao_contract)
             end
             # fill issuer_address after publish the token
             udts_attributes << {
-              type_hash:, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
+              type_hash:, udt_type: parsed_udt_type, block_timestamp: local_block.timestamp, args: output.type.args,
               code_hash: output.type.code_hash, hash_type: output.type.hash_type
             }.merge(nft_token_attr)
           end
