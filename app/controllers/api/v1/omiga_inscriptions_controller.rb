@@ -6,7 +6,10 @@ module Api
                     only: :index
 
       def index
-        udts = Udt.omiga_inscription
+        pre_udt_hashes = OmigaInscriptionInfo.where.not(pre_udt_hash: nil).pluck(:pre_udt_hash)
+        udts = Udt.joins(:omiga_inscription_info).where.not(
+          "omiga_inscription_infos.mint_status = 1 and omiga_inscription_infos.udt_hash IN (?)", pre_udt_hashes
+        )
 
         if stale?(udts)
           udts = sort_udts(udts).page(@page).per(@page_size).fast_page
@@ -22,9 +25,17 @@ module Api
       end
 
       def show
-        udt = Udt.joins(:omiga_inscription_info).where(
-          "udts.type_hash = ? or omiga_inscription_infos.type_hash = ?", params[:id], params[:id]
-        ).first
+        udt =
+          if params[:status] == "closed"
+            Udt.joins(:omiga_inscription_info).where(
+              "omiga_inscription_infos.type_hash = ? and omiga_inscription_infos.mint_status = 1", params[:id]
+            ).first
+          else
+            Udt.joins(:omiga_inscription_info).where(
+              "udts.type_hash = ? or omiga_inscription_infos.type_hash = ?", params[:id], params[:id]
+            ).order("block_timestamp DESC").first
+          end
+
         if udt.nil?
           raise Api::V1::Exceptions::UdtNotFoundError
         else
