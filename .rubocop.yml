@@ -449,9 +449,9 @@ Layout/InitialIndentation:
   Enabled: false
 
 Layout/LineLength:
-  Description: 'Limit lines to 80 characters.'
+  Description: 'Limit lines to 200 characters.'
   StyleGuide: 'https://github.com/bbatsov/ruby-style-guide#80-character-limits'
-  Max: 80
+  Max: 200
 
 # Lint
 
