@@ -7,9 +7,14 @@ module Api
 
       def index
         pre_udt_hashes = OmigaInscriptionInfo.where.not(pre_udt_hash: nil).pluck(:pre_udt_hash)
-        udts = Udt.joins(:omiga_inscription_info).where.not(
-          "omiga_inscription_infos.mint_status = 1 and omiga_inscription_infos.udt_hash IN (?)", pre_udt_hashes
-        )
+        udts =
+          if pre_udt_hashes.present?
+            Udt.joins(:omiga_inscription_info).where.not(
+              "omiga_inscription_infos.mint_status = 1 and omiga_inscription_infos.udt_hash IN (?)", pre_udt_hashes
+            )
+          else
+            Udt.omiga_inscription
+          end
 
         if stale?(udts)
           udts = sort_udts(udts).page(@page).per(@page_size).fast_page
@@ -33,7 +38,7 @@ module Api
           else
             Udt.joins(:omiga_inscription_info).where(
               "udts.type_hash = ? or omiga_inscription_infos.type_hash = ?", params[:id], params[:id]
-            ).order("block_timestamp DESC").first
+            ).order("id DESC").first
           end
 
         if udt.nil?
@@ -45,7 +50,7 @@ module Api
 
       def download_csv
         args = params.permit(:id, :start_date, :end_date, :start_number,
-                             :end_number, udt: {})
+                             :end_number, :status, udt: {})
         file = CsvExportable::ExportOmigaInscriptionTransactionsJob.perform_now(args.to_h)
 
         send_data file, type: "text/csv; charset=utf-8; header=present",
