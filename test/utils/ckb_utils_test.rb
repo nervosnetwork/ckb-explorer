@@ -19,6 +19,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
       ],
     )
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
+    GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
   end
 
   test ".generate_address should return mainnet address when mode is mainnet" do
