@@ -1,0 +1,39 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: http://localhost:8114/
+    body:
+      encoding: UTF-8
+      string: '{"id":1,"jsonrpc":"2.0","method":"get_block_by_number","params":["0x21","0x2",false]}'
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+      Content-Type:
+      - application/json
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - '30'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '2138'
+      Date:
+      - Fri, 04 Oct 2019 15:54:13 GMT
+    body:
+      encoding: UTF-8
+      string: '{"jsonrpc":"2.0","result":{"extension":"0xa33703945490c0d8eb61dd564dcdce04d6ad80a8ae1aeef671354f9735ec74bb","header":{"compact_target":"0x1d08cdb1","dao":"0x4462198b0e5d5c4aad67c38868c82700749fdc3d3514d80500ec69f6012acf08","epoch":"0x70803ee001ed5","extra_hash":"0x7f28e2900ffc36be0bcbe76253ec558d5c2ce1868ba029438d7a39f514078056","hash":"0x1dcad92e8085f70ed8dc7eb3c105dbae84bd267f4f426cf265f9d959436a1287","nonce":"0x6691cc8bd17283f67f35b2bdf31fad91","number":"0x21","parent_hash":"0x96f44bbc683837c917066f7b610a6709b629604bb4a544293f45e522ae57e4b3","proposals_hash":"0x297d92aff8d62ba05f067085afe1082bc8b080883f27cfcd440be1bea1a5433e","timestamp":"0x18cba8806b7","transactions_root":"0x171dbdcf5572615f2c111f9fd3eef00304f25f482b0f1bf141bb7b742769a136","version":"0x0"},"proposals":["0xe7989e121502a9c906d1","0xb31087bf0881f23574b0"],"transactions":[{"cell_deps":[],"hash":"0xe150a92d7a15f9f85bc0fd806885b012b1c084728ef6c0f1af157fad59814f3c","header_deps":[],"inputs":[{"previous_output":{"index":"0xffffffff","tx_hash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"since":"0xb3bf47"}],"outputs":[{"capacity":"0x19bf50f9db","lock":{"args":"0x0450340178ae277261a838c89f9ccb76a190ed4b","code_hash":"0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8","hash_type":"type"},"type":null}],"outputs_data":["0x"],"version":"0x0","witnesses":["0x830000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000da648442dbb7347e467d1d09da13e5cd3a0ef0e12a0000000000000020302e3131332e302d72633220283866663030323620323032332d31322d31392920deadbeef"]},{"cell_deps":[{"dep_type":"dep_group","out_point":{"index":"0x0","tx_hash":"0x4dcf3f3b09efac8995d6cbee87c5345e812d310094651e0c3d9a730f32dc9263"}},{"dep_type":"code","out_point":{"index":"0x0","tx_hash":"0x7bf3899cf41879ed0319bf5312c9db5bf5620fff9ebe59556c261c48f0369054"}}],"hash":"0x7046d8c5641f0cfa22bf4b2905bd4fb0e619e42bc008130a8dc743d2959fef3b","header_deps":[],"inputs":[{"previous_output":{"index":"0x1","tx_hash":"0x3e89753ebca825e1504498eb18b56576d5b7eff59fe033346a10ab9e8ca359a4"},"since":"0x0"}],"outputs":[{"capacity":"0x525430e20","lock":{"args":"0x00016091d93dbab12f16640fb3a0a8f1e77e03fbc51c","code_hash":"0xd23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac","hash_type":"type"},"type":{"args":"0xcd89d8f36593a9a82501c024c5cdc4877ca11c5b3d5831b3e78334aecb978f0d","code_hash":"0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6","hash_type":"type"}}],"outputs_data":["0x0814434b42204669737420496e736372697074696f6e04434b4249a69f54bf339dd121febe64cb0be3a2cf366a8b13ec1a5ae4bebdccb9039c7efa0040075af0750700000000000000000000e8764817000000000000000000000002"],"version":"0x0","witnesses":["0x6b010000100000006b0100006b01000057010000014599a5795423d54ab8e1f44f5c6ef5be9b1829beddb787bc732e4469d25f8c93e94afa393617f905bf1765c35dc38501a862b4b2f794a88b4f9010da02411a85e201947f9c04ff5ca1b92412f11a28d74c48339e48a192d8327738515469a877475fcd3b47c81e7d026d30b853e12bb250779a999f0aba1057e9add098f713f749960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630162f9fb777b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a22596a56694d7a45325a6d5a694e4749774d3259314e474d795a6d51355a445978595756694f5745774f5455334f444a6b5a6d526a5a544a6c4d545a6d5a4755315a6a45345a4759314d4451354f4459355a6a45785967222c226f726967696e223a22687474703a2f2f6c6f63616c686f73743a38303030222c2263726f73734f726967696e223a66616c73657d"]}],"uncles":[]},"id":2}
+        '
+    http_version:
+  recorded_at: Fri, 04 Oct 2019 15:54:13 GMT
+recorded_with: VCR 5.0.0

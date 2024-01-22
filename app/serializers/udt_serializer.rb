@@ -49,4 +49,10 @@ class UdtSerializer
   } do |object|
     object.omiga_inscription_info.type_hash
   end
+
+  attribute :pre_udt_hash, if: Proc.new { |record, _params|
+    record.udt_type == "omiga_inscription"
+  } do |object|
+    object.omiga_inscription_info.pre_udt_hash
+  end
 end
