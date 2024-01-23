@@ -11,6 +11,32 @@ module Api
         assert_response :success
       end
 
+      test "should return pre udt when call show" do
+        udt = create(:udt, :omiga_inscription)
+        udt.omiga_inscription_info.update(mint_status: :closed)
+        new_udt = create(:udt, udt_type: :omiga_inscription)
+        info = create(:omiga_inscription_info, udt_id: new_udt.id,
+                                               mint_status: :rebase_start, pre_udt_hash: udt.omiga_inscription_info.udt_hash, udt_hash: "0x#{SecureRandom.hex(32)}")
+
+        valid_get api_v1_omiga_inscription_url(info.type_hash, status: "closed")
+        assert_equal udt.type_hash,
+                     JSON.parse(response.body)["data"]["attributes"]["type_hash"]
+      end
+
+      test "should return current rebase_start udt when call show" do
+        udt = create(:udt, :omiga_inscription,
+                     block_timestamp: (Time.now - 10.minutes).to_i * 1000)
+        udt.omiga_inscription_info.update(mint_status: :closed)
+        new_udt = create(:udt, udt_type: :omiga_inscription,
+                               block_timestamp: Time.now.to_i * 1000)
+        info = create(:omiga_inscription_info, udt_id: new_udt.id,
+                                               mint_status: :rebase_start, pre_udt_hash: udt.omiga_inscription_info.udt_hash, udt_hash: "0x#{SecureRandom.hex(32)}")
+
+        valid_get api_v1_omiga_inscription_url(info.type_hash)
+        assert_equal new_udt.type_hash,
+                     JSON.parse(response.body)["data"]["attributes"]["type_hash"]
+      end
+
       test "should set right content type when call show" do
         udt = create(:udt, :omiga_inscription)
 
@@ -46,7 +72,21 @@ module Api
         assert_equal %w(
           symbol full_name display_name uan total_amount addresses_count
           decimal icon_file h24_ckb_transactions_count created_at description
-          published type_hash type_script issuer_address mint_status mint_limit expected_supply inscription_info_id udt_type
+          published type_hash type_script issuer_address mint_status mint_limit expected_supply inscription_info_id udt_type pre_udt_hash info_type_hash
+        ).sort,
+                     response_udt["attributes"].keys.sort
+      end
+
+      test "should contain right keys in the serialized object when query info type hash" do
+        udt = create(:udt, :omiga_inscription)
+
+        valid_get api_v1_omiga_inscription_url(udt.omiga_inscription_info.type_hash)
+
+        response_udt = json["data"]
+        assert_equal %w(
+          symbol full_name display_name uan total_amount addresses_count
+          decimal icon_file h24_ckb_transactions_count created_at description
+          published type_hash type_script issuer_address mint_status mint_limit expected_supply inscription_info_id udt_type pre_udt_hash info_type_hash
         ).sort,
                      response_udt["attributes"].keys.sort
       end
@@ -73,6 +113,18 @@ module Api
         valid_get api_v1_omiga_inscriptions_url
 
         assert_equal 2, json["data"].length
+      end
+
+      test "should return rebase_start omiga_inscription udts" do
+        udt = create(:udt, :omiga_inscription)
+        udt.omiga_inscription_info.update(mint_status: :closed)
+        new_udt = create(:udt, udt_type: :omiga_inscription)
+        create(:omiga_inscription_info, udt_id: new_udt.id,
+                                        mint_status: :rebase_start, pre_udt_hash: udt.omiga_inscription_info.udt_hash, udt_hash: "0x#{SecureRandom.hex(32)}")
+
+        valid_get api_v1_omiga_inscriptions_url
+
+        assert_equal 1, json["data"].length
       end
 
       test "should sorted by mint_status asc when sort param is mint_status" do

@@ -20,6 +20,7 @@ module CkbSync
       create(:table_record_count, :ckb_transactions_counter)
       CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
       GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
+      GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
       CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     end
 
@@ -4002,7 +4003,7 @@ module CkbSync
       assert_equal "R+K V1 N1", old_factory_cell.reload.symbol
     end
 
-    test "save omiga inscription info" do
+    test "save omiga inscription info and init udt" do
       CkbSync::Api.any_instance.stubs(:xudt_code_hash).returns("0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb")
       CkbSync::Api.any_instance.stubs(:omiga_inscription_info_code_hash).returns("0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6")
       VCR.use_cassette("blocks/31") do
@@ -4041,11 +4042,14 @@ module CkbSync
         assert_equal info.expected_supply, 0.21e16
         assert_equal info.mint_limit, 0.1e12
         assert_equal info.mint_status, "minting"
-        assert_equal info.udt_id, nil
+        assert_equal info.udt_id, Udt.first.id
+        assert_equal "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908",
+                     Udt.first.type_hash
       end
     end
 
     test "save omiga inscription udt" do
+      CkbSync::Api.any_instance.stubs(:mode).returns("testnet")
       CkbSync::Api.any_instance.stubs(:xudt_code_hash).returns("0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb")
       CkbSync::Api.any_instance.stubs(:omiga_inscription_info_code_hash).returns("0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6")
 
@@ -4068,6 +4072,8 @@ module CkbSync
                                        cell_type: "normal",
                                        lock_script_id: address1_lock.id,
                                        type_script_id: nil)
+        udt = create(:udt, code_hash: "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6", hash_type: "type", args: "0xcd89d8f36593a9a82501c024c5cdc4877ca11c5b3d5831b3e78334aecb978f0d",
+                           type_hash: "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908", udt_type: "omiga_inscription")
         info = create(:omiga_inscription_info,
                       code_hash: "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6",
                       hash_type: "type",
@@ -4079,17 +4085,66 @@ module CkbSync
                       expected_supply: 0.21e16,
                       mint_limit: 0.1e12,
                       mint_status: "minting",
-                      udt_id: nil)
+                      udt_id: udt.id)
+
         node_data_processor.process_block(node_block)
         assert_equal CellOutput.find_by(type_hash: info.udt_hash).udt_amount,
                      0.1e12
         assert_equal 1, UdtAccount.count
         assert_equal 0.1e12, UdtAccount.first.amount
         assert_equal 1, UdtTransaction.count
-        omiga_inscription = Udt.first
-        assert_equal OmigaInscriptionInfo.first.udt_id, omiga_inscription.id
-        assert_equal omiga_inscription.type_hash,
+        assert_equal OmigaInscriptionInfo.first.udt_id, udt.id
+        assert_equal udt.reload.type_hash,
                      "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908"
+        assert_equal "0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb",
+                     udt.reload.code_hash
+      end
+    end
+
+    test "change omiga inscription to rebase_start" do
+      CkbSync::Api.any_instance.stubs(:mode).returns("testnet")
+      CkbSync::Api.any_instance.stubs(:xudt_code_hash).returns("0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb")
+      CkbSync::Api.any_instance.stubs(:omiga_inscription_info_code_hash).returns("0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6")
+
+      VCR.use_cassette("blocks/33") do
+        node_block = CkbSync::Api.instance.get_block_by_number(33)
+        block1 = create(:block, :with_block_hash,
+                        number: node_block.header.number - 1)
+        tx1 = create(:ckb_transaction, block: block1,
+                                       tx_hash: "0x3e89753ebca825e1504498eb18b56576d5b7eff59fe033346a10ab9e8ca359a4")
+        input_address1 = create(:address)
+        address1_lock = create(:lock_script, address_id: input_address1.id,
+                                             args: "0x#{SecureRandom.hex(20)}",
+                                             code_hash: Settings.secp_cell_type_hash,
+                                             hash_type: "type")
+        output1 = create(:cell_output, ckb_transaction: tx1,
+                                       block: block1, capacity: 50000000 * 10**8,
+                                       tx_hash: tx1.tx_hash,
+                                       cell_index: 1,
+                                       address: input_address1,
+                                       cell_type: "omiga_inscription_info",
+                                       lock_script_id: address1_lock.id,
+                                       type_script_id: nil)
+
+        udt = create(:udt, code_hash: "0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb", hash_type: "type", args: "0x9709d30fc21348ae1d28a197310a80aec3b8cdb5c93814d5e240f9fba85b76af",
+                           type_hash: "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908", udt_type: "omiga_inscription")
+        info = create(:omiga_inscription_info,
+                      code_hash: "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6",
+                      hash_type: "type",
+                      args: "0xcd89d8f36593a9a82501c024c5cdc4877ca11c5b3d5831b3e78334aecb978f0d",
+                      type_hash: "0x5cfcab1fc499de7d33265b04d2de9cf2f91cc7c7a578642993b0912b31b6cf39",
+                      decimal: 0.8e1,
+                      name: "CKB Fist Inscription",
+                      symbol: "CKBI",
+                      udt_hash: "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908",
+                      expected_supply: 0.21e16,
+                      mint_limit: 0.1e12,
+                      mint_status: "closed",
+                      udt_id: udt.id)
+
+        node_data_processor.process_block(node_block)
+        assert_equal 2, Udt.count
+        assert_equal info.udt_hash, OmigaInscriptionInfo.last.pre_udt_hash
       end
     end
 

@@ -1,7 +1,16 @@
 module CsvExportable
   class ExportOmigaInscriptionTransactionsJob < BaseExporter
     def perform(args)
-      udt = Udt.find_by!(type_hash: args[:id], published: true)
+      udt =
+        if args[:status] == "closed"
+          Udt.joins(:omiga_inscription_info).where(
+            "omiga_inscription_infos.type_hash = ? and omiga_inscription_infos.mint_status = 1", args[:id]
+          ).first
+        else
+          Udt.joins(:omiga_inscription_info).where(
+            "udts.type_hash = ? or omiga_inscription_infos.type_hash = ?", args[:id], args[:id]
+          ).order("id DESC").first
+        end
       ckb_transactions = udt.ckb_transactions
 
       if args[:start_date].present?

@@ -1,4 +1,3 @@
-require "benchmark_methods"
 require "newrelic_rpm"
 require "new_relic/agent/method_tracer"
 
@@ -6,25 +5,18 @@ module CkbSync
   class NewNodeDataProcessor
     include ::NewRelic::Agent::Instrumentation::ControllerInstrumentation
     include NewRelic::Agent::MethodTracer
-    # include BenchmarkMethods
     include Redis::Objects
+
     value :reorg_started_at, global: true
-    attr_accessor :enable_cota
-    # benchmark :call, :process_block, :build_block!, :build_uncle_blocks!, :build_ckb_transactions!, :build_udts!, :process_ckb_txs, :build_cells_and_locks!,
-    #           :update_ckb_txs_rel_and_fee, :update_block_info!, :update_block_reward_info!, :update_mining_info, :update_table_records_count,
-    #           :update_or_create_udt_accounts!, :update_udt_info, :process_dao_events!, :update_addresses_info,
-    #           :cache_address_txs, :flush_inputs_outputs_caches, :generate_statistics_data
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
-                  :outputs, :inputs, :outputs_data,
-                  :udt_address_ids, :contained_address_ids, :dao_address_ids, :contained_udt_ids,
-                  :tx_cell_deps, :cell_datas, :cell_data_hashes
+                  :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
+                  :dao_address_ids, :contained_udt_ids, :cell_datas, :enable_cota
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
       @local_cache = LocalCache.new
       @offset = ENV["BLOCK_OFFSET"].to_i
       @cell_datas = {} # data_hash => data
-      @cell_data_hashes = {} # cell_id => data_hash
     end
 
     # returns the remaining block numbers to process
@@ -67,7 +59,6 @@ module CkbSync
         inputs = @inputs = {}
         outputs = @outputs = {}
         outputs_data = @outputs_data = {}
-        @tx_cell_deps = {}
         @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs,
                                            outputs, outputs_data).to_a
         benchmark :build_udts!, local_block, outputs, outputs_data
@@ -96,18 +87,15 @@ module CkbSync
         # maybe can be changed to asynchronous update
         benchmark :update_udt_info, local_block
         benchmark :process_dao_events!, local_block
-        if refresh_balance
-          benchmark :update_addresses_info, addrs_changes, local_block
-        end
+        benchmark :update_addresses_info, addrs_changes, local_block, refresh_balance
       end
 
-      benchmark :flush_inputs_outputs_caches, local_block
-      benchmark :generate_statistics_data, local_block
-      # benchmark :generate_deployed_cells_and_referring_cells, local_block
+      flush_inputs_outputs_caches(local_block)
+      generate_statistics_data(local_block)
+      generate_deployed_cells_and_referring_cells(local_block)
+      detect_cota_infos(local_block)
 
-      FetchCotaWorker.perform_async(local_block.number) if enable_cota
       local_block.update_counter_for_ckb_node_version
-
       local_block
     end
 
@@ -132,15 +120,15 @@ module CkbSync
     private
 
     def generate_deployed_cells_and_referring_cells(local_block)
-      local_block.ckb_transactions.each do |ckb_transaction|
-        DeployedCell.create_initial_data_for_ckb_transaction ckb_transaction,
-                                                             tx_cell_deps[ckb_transaction.tx_hash]
-        ReferringCell.create_initial_data_for_ckb_transaction ckb_transaction
-      end
+      GenerateCellDependenciesWorker.perform_async(local_block.id)
     end
 
     def generate_statistics_data(local_block)
       GenerateStatisticsDataWorker.perform_async(local_block.id)
+    end
+
+    def detect_cota_infos(local_block)
+      FetchCotaWorker.perform_async(local_block.number) if enable_cota
     end
 
     def process_ckb_txs(
@@ -183,11 +171,9 @@ udt_address_ids
       new_dao_depositors = {}
       dao_contract = DaoContract.default_contract
       process_deposit_dao_events!(local_block, new_dao_depositors, dao_contract)
-      process_withdraw_dao_events!(local_block, new_dao_depositors,
-                                   dao_contract)
+      process_withdraw_dao_events!(local_block, new_dao_depositors, dao_contract)
       process_interest_dao_events!(local_block, dao_contract)
-      build_new_dao_depositor_events!(local_block, new_dao_depositors,
-                                      dao_contract)
+      build_new_dao_depositor_events!(local_block, new_dao_depositors, dao_contract)
 
       # update dao contract ckb_transactions_count
       dao_contract.increment!(:ckb_transactions_count,
@@ -196,21 +182,21 @@ udt_address_ids
                               ).count)
     end
 
-    def build_new_dao_depositor_events!(local_block, new_dao_depositors,
-dao_contract)
+    def build_new_dao_depositor_events!(local_block, new_dao_depositors, dao_contract)
       new_dao_events_attributes = []
       new_dao_depositors.each do |address_id, ckb_transaction_id|
         new_dao_events_attributes << {
           block_id: local_block.id, ckb_transaction_id:, address_id:, event_type: "new_dao_depositor",
-          value: 1, status: "processed", contract_id: dao_contract.id, block_timestamp: local_block.timestamp, created_at: Time.current,
-          updated_at: Time.current
+          value: 1, status: "processed", contract_id: dao_contract.id, block_timestamp: local_block.timestamp,
+          created_at: Time.current, updated_at: Time.current
         }
       end
 
       if new_dao_events_attributes.present?
         DaoEvent.insert_all!(new_dao_events_attributes)
         dao_contract.update!(
-          total_depositors_count: dao_contract.total_depositors_count + new_dao_events_attributes.size, depositors_count: dao_contract.depositors_count + new_dao_events_attributes.size,
+          total_depositors_count: dao_contract.total_depositors_count + new_dao_events_attributes.size,
+          depositors_count: dao_contract.depositors_count + new_dao_events_attributes.size,
         )
         address_ids = []
         new_dao_events_attributes.each do |dao_event_attr|
@@ -253,8 +239,7 @@ dao_contract)
             }
           end
           if addrs_withdraw_info[address.id][:dao_deposit] < 0
-            addrs_withdraw_info[address.id][:dao_deposit] =
-              0
+            addrs_withdraw_info[address.id][:dao_deposit] = 0
           end
           dao_events_attributes << {
             ckb_transaction_id: dao_input.ckb_transaction_id,
@@ -339,7 +324,6 @@ dao_contract)
             created_at: Time.current,
             updated_at: Time.current,
           }
-          address_dao_deposit = Address.where(id: previous_cell_output.address_id).pick(:dao_deposit)
           claimed_compensation += interest
         end
         DaoEvent.insert_all!(dao_events_attributes) if dao_events_attributes.present?
@@ -351,8 +335,7 @@ dao_contract)
       update_addresses_dao_info(addrs_withdraw_info)
     end
 
-    def process_deposit_dao_events!(local_block, new_dao_depositors,
-dao_contract)
+    def process_deposit_dao_events!(local_block, new_dao_depositors, dao_contract)
       deposit_amount = 0
       deposit_transaction_ids = Set.new
       addresses_deposit_info = {}
@@ -421,13 +404,11 @@ dao_contract)
       local_block.cell_outputs.udt.select(:id, :type_hash).each do |udt_output|
         type_hashes << udt_output.type_hash
       end
-      local_block.cell_outputs.omiga_inscription.select(:id,
-                                                        :type_hash).each do |udt_output|
+      local_block.cell_outputs.omiga_inscription.select(:id, :type_hash).each do |udt_output|
         type_hashes << udt_output.type_hash
       end
       local_block.ckb_transactions.pluck(:id).each do |tx_id|
-        CellOutput.where(consumed_by_id: tx_id).udt.select(:id,
-                                                           :type_hash).each do |udt_output|
+        CellOutput.where(consumed_by_id: tx_id).udt.select(:id, :type_hash).each do |udt_output|
           type_hashes << udt_output.type_hash
         end
       end
@@ -580,34 +561,8 @@ dao_contract)
       CkbUtils.update_current_block_mining_info(local_block)
     end
 
-    def update_addresses_info(addrs_change, local_block)
-      ### Backup the old upsert code
-      # addrs = []
-      # attributes =
-      #   addrs_change.map do |addr_id, values|
-      #     addr = Address.where(id: addr_id).select(:id, :address_hash, :lock_hash, :balance, :ckb_transactions_count, :dao_transactions_count, :live_cells_count, :created_at, :balance_occupied).take!
-      #     balance_diff = values[:balance_diff]
-      #     balance_occupied_diff = values[:balance_occupied_diff].presence || 0
-      #     live_cells_diff = values[:cells_diff]
-      #     dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
-      #     ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
-      #     addrs << addr
-      #     {
-      #       id: addr.id,
-      #       balance: addr.balance + balance_diff,
-      #       balance_occupied: addr.balance_occupied + balance_occupied_diff,
-      #       ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
-      #       live_cells_count: addr.live_cells_count + live_cells_diff,
-      #       dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
-      #       created_at: addr.created_at,
-      #       updated_at: Time.current
-      #     }
-      #   end
-      # if attributes.present?
-      #   Address.upsert_all(attributes)
-      #   addrs.each(&:touch)
-      # end
-
+    def update_addresses_info(addrs_change, local_block, refresh_balance)
+      return unless refresh_balance
       ### because `upsert` don't validate record, so it may pass invalid data into database.
       ### here we use one by one update (maybe slower)
       addrs_change.each do |addr_id, values|
@@ -649,26 +604,49 @@ dao_contract)
     end
 
     def update_block_info!(local_block)
-      local_block.update!(total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
-                          ckb_transactions_count: local_block.ckb_transactions.count,
-                          live_cell_changes: local_block.ckb_transactions.sum(&:live_cell_changes),
-                          address_ids: local_block.ckb_transactions.map(&:contained_address_ids).flatten.uniq)
+      local_block.update!(
+        total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
+        ckb_transactions_count: local_block.ckb_transactions.count,
+        live_cell_changes: local_block.ckb_transactions.sum(&:live_cell_changes),
+        address_ids: local_block.ckb_transactions.map(&:contained_address_ids).flatten.uniq,
+      )
     end
 
     def build_udts!(local_block, outputs, outputs_data)
       udts_attributes = Set.new
+      omiga_inscription_udt_attributes = Set.new
+
       outputs.each do |tx_index, items|
         items.each_with_index do |output, index|
-          cell_type = cell_type(output.type,outputs_data[tx_index][index])
-          if cell_type == "omiga_inscription_info"
-            info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
-            OmigaInscriptionInfo.upsert(info.merge(output.type.to_h),
-                                        unique_by: :udt_hash)
-          end
+          cell_type = cell_type(output.type, outputs_data[tx_index][index])
           next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell
-                                       omiga_inscription))
+                                       omiga_inscription_info omiga_inscription))
 
-          type_hash = output.type.compute_hash
+          type_hash, parsed_udt_type =
+            if cell_type == "omiga_inscription_info"
+              info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
+              info_type_hash = output.type.compute_hash
+              attrs = info.merge(output.type.to_h, type_hash: info_type_hash)
+              pre_closed_info = OmigaInscriptionInfo.find_by(
+                type_hash: info_type_hash, mint_status: :closed,
+              )
+              attrs =
+                if pre_closed_info
+                  attrs.merge(pre_udt_hash: pre_closed_info.udt_hash)
+                else
+                  attrs
+                end
+              OmigaInscriptionInfo.upsert(attrs, unique_by: :udt_hash)
+              [info[:udt_hash], "omiga_inscription"]
+            else
+              [output.type.compute_hash, udt_type(cell_type)]
+            end
+
+          if cell_type == "omiga_inscription"
+            omiga_inscription_udt_attributes << { type_hash:,
+                                                  code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args }
+          end
+
           unless Udt.where(type_hash:).exists?
             nft_token_attr = { full_name: nil, icon_file: nil,
                                published: false, symbol: nil, decimal: nil, nrc_factory_cell_id: nil }
@@ -728,16 +706,16 @@ dao_contract)
               end
               nft_token_attr[:published] = true
             end
-            if cell_type == "omiga_inscription"
-              info = OmigaInscriptionInfo.find_by!(udt_hash: type_hash)
-              nft_token_attr[:full_name] = info.name
-              nft_token_attr[:symbol] = info.symbol
-              nft_token_attr[:decimal] = info.decimal
+            if cell_type == "omiga_inscription_info"
+              info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
+              nft_token_attr[:full_name] = info[:name]
+              nft_token_attr[:symbol] = info[:symbol]
+              nft_token_attr[:decimal] = info[:decimal]
               nft_token_attr[:published] = true
             end
             # fill issuer_address after publish the token
             udts_attributes << {
-              type_hash:, udt_type: udt_type(cell_type), block_timestamp: local_block.timestamp, args: output.type.args,
+              type_hash:, udt_type: parsed_udt_type, block_timestamp: local_block.timestamp, args: output.type.args,
               code_hash: output.type.code_hash, hash_type: output.type.hash_type
             }.merge(nft_token_attr)
           end
@@ -757,6 +735,10 @@ dao_contract)
           OmigaInscriptionInfo.upsert_all(omiga_inscription_info_attrs,
                                           unique_by: :udt_hash)
         end
+      end
+
+      if omiga_inscription_udt_attributes.present?
+        Udt.upsert_all(omiga_inscription_udt_attributes, unique_by: :type_hash)
       end
     end
 
@@ -855,14 +837,10 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
 
         lock_script_ids.each do |lock_script_id|
           lock_script = LockScript.find lock_script_id
-
           contract = Contract.find_by code_hash: lock_script.code_hash
-
-          temp_hash = { script_hash: lock_script&.script_hash,
-                        is_contract: false }
+          temp_hash = { script_hash: lock_script&.script_hash, is_contract: false }
           if contract
-            temp_hash = temp_hash.merge is_contract: true,
-                                        contract_id: contract.id
+            temp_hash = temp_hash.merge is_contract: true, contract_id: contract.id
           else
             contract = Contract.create code_hash: lock_script.script_hash
             temp_hash = temp_hash.merge contract_id: contract.id
@@ -879,15 +857,13 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
         type_script_ids = TypeScript.insert_all!(type_scripts_attributes).map do |e|
           e["id"]
         end
+
         type_script_ids.each do |type_script_id|
           type_script = TypeScript.find(type_script_id)
-          temp_hash = { script_hash: type_script&.script_hash,
-                        is_contract: false }
+          temp_hash = { script_hash: type_script&.script_hash, is_contract: false }
           contract = Contract.find_by code_hash: type_script.code_hash
-
           if contract
-            temp_hash = temp_hash.merge is_contract: true,
-                                        contract_id: contract.id
+            temp_hash = temp_hash.merge is_contract: true, contract_id: contract.id
           else
             contract = Contract.create code_hash: type_script.script_hash
             temp_hash = temp_hash.merge contract_id: contract.id
@@ -921,7 +897,6 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
         end
       end
 
-      # prev_outputs = prepare_previous_outputs(inputs)
       prev_outputs = nil
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
                         input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids,
@@ -940,50 +915,19 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       [input_capacities, output_capacities]
     end
 
-    # def prepare_previous_outputs(inputs)
-    #   previous_outputs = {}
-    #   outpoints = []
-    #   sql = "select id, tx_hash, cell_index, cell_type, capacity, address_id, type_hash, created_at, data from cell_outputs where "
-    #   inputs.each_value do |items|
-    #     items.each do |item|
-    #       if !from_cell_base?(item)
-    #         outpoints << "(tx_hash = '\\#{item.previous_output.tx_hash.delete_prefix('0')}' and cell_index = #{item.previous_output.index}) or "
-    #       end
-    #     end
-    #   end
-    #   block_number = local_cache.read("BlockNumber")
-    #   # not just cellbase in inputs
-    #   if inputs.size > 1
-    #     outpoints.each_slice(100) do |ops|
-    #       inner_sql = sql.dup
-    #       ops.each do |op|
-    #         inner_sql << op
-    #       end
-    #       inner_sql.delete_suffix!("or ")
-    #       CellOutput.find_by_sql(inner_sql).each do |item|
-    #         previous_outputs["#{item.tx_hash}-#{item.cell_index}"] = item
-    #         local_cache.push("NodeData/#{block_number}/ContainedAddresses", Address.where(id: item.address_id).select(:id, :created_at).first!)
-    #       end
-    #     end
-    #   end
-    #   previous_outputs
-    # end
-
     def build_addresses!(outputs, local_block)
       block_number = local_cache.read("BlockNumber")
       outputs.each_value do |items|
         items.each do |item|
           address =
             local_cache.fetch("NodeData/Address/#{item.lock.code_hash}-#{item.lock.hash_type}-#{item.lock.args}") do
-              # TODO use LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
-              lock_script = LockScript.find_by(code_hash: item.lock.code_hash, hash_type: item.lock.hash_type,
-                                               args: item.lock.args)
-              Address.find_or_create_address(item.lock, local_block.timestamp,
-                                             lock_script.id)
+              lock_script = LockScript.find_by(code_hash: item.lock.code_hash, hash_type: item.lock.hash_type, args: item.lock.args)
+              Address.find_or_create_address(item.lock, local_block.timestamp, lock_script.id)
             end
-          local_cache.push("NodeData/#{block_number}/ContainedAddresses",
-                           Address.new(id: address.id,
-                                       created_at: address.created_at))
+          local_cache.push(
+            "NodeData/#{block_number}/ContainedAddresses",
+             Address.new(id: address.id, created_at: address.created_at)
+          )
         end
       end
     end
@@ -1013,26 +957,23 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       block_number = local_cache.read("BlockNumber")
       outputs.each_value do |items|
         items.each do |output|
-          unless local_cache.read("NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
+          lock_cache_key = "NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}"
+          unless local_cache.read(lock_cache_key)
             script_hash = output.lock.compute_hash
-            # TODO use LockScript.where(script_hash: script_hash).exists? replace search by code_hash, hash_type and args query after script_hash has been filled
-            unless LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type,
-                                    args: output.lock.args).exists?
+            unless LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).exists?
               locks_attributes << script_attributes(output.lock, script_hash)
-              local_cache.write(
-                "NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}", true
-              )
+              local_cache.write(lock_cache_key, true)
             end
           end
-          if output.type.present? && !local_cache.read("NodeData/#{block_number}/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}")
-            script_hash = output.type.compute_hash
-            # TODO use TypeScript.where(script_hash: script_hash).exists? replace search by code_hash, hash_type and args query after script_hash has been filled
-            unless TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type,
-                                    args: output.type.args).exists?
-              types_attributes << script_attributes(output.type, script_hash)
-              local_cache.write(
-                "NodeData/#{block_number}/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}", true
-              )
+
+          if output.type.present?
+            type_cache_key = "NodeData/#{block_number}/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}"
+            if !local_cache.read(type_cache_key)
+              script_hash = output.type.compute_hash
+              unless TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).exists?
+                types_attributes << script_attributes(output.type, script_hash)
+                local_cache.write(type_cache_key, true)
+              end
             end
           end
         end
@@ -1320,7 +1261,6 @@ outputs_data)
         end
         header_deps[tx.hash] = tx.header_deps
         witnesses[tx.hash] = tx.witnesses
-        tx_cell_deps[tx.hash] = tx.cell_deps
         ckb_transactions_attributes << attrs
         hashes << tx.hash
 

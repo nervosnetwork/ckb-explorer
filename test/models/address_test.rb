@@ -8,9 +8,10 @@ class AddressTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
       [
         "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
-      ]
+      ],
     )
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
+    GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
   end
 
   context "associations" do
@@ -25,11 +26,12 @@ class AddressTest < ActiveSupport::TestCase
         compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
-        start_number: "0x0"
-      )
+        start_number: "0x0",
+      ),
     )
 
-    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
+                     record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       tx = node_block.transactions.first
@@ -50,16 +52,18 @@ class AddressTest < ActiveSupport::TestCase
         compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
-        start_number: "0x0"
-      )
+        start_number: "0x0",
+      ),
     )
 
-    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
+                     record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       tx = node_block.transactions.first
       output = tx.outputs.first
-      output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
+      output.lock.instance_variable_set(:@args,
+                                        "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
       output.lock.instance_variable_set(:@code_hash, Settings.code_hash)
 
       CkbSync::NewNodeDataProcessor.new.process_block(node_block)
@@ -78,21 +82,24 @@ class AddressTest < ActiveSupport::TestCase
         compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
-        start_number: "0x0"
-      )
+        start_number: "0x0",
+      ),
     )
-    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
+    VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
+                     record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       tx = node_block.transactions.first
       output = tx.outputs.first
-      output.lock.instance_variable_set(:@args, "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
+      output.lock.instance_variable_set(:@args,
+                                        "0xabcbce98a758f130d34da522623d7e56705bddfe0dc4781bd2331211134a19a6")
       output.lock.instance_variable_set(:@code_hash, Settings.code_hash)
 
       CkbSync::NewNodeDataProcessor.new.process_block(node_block)
 
       lock_script = node_block.transactions.first.outputs.first.lock
-      address = Address.find_or_create_address(lock_script, node_block.header.timestamp)
+      address = Address.find_or_create_address(lock_script,
+                                               node_block.header.timestamp)
 
       assert_equal output.lock.compute_hash, address.lock_hash
     end
@@ -125,21 +132,22 @@ class AddressTest < ActiveSupport::TestCase
                          dao: previous_output_block.dao)
     nervos_dao_withdrawing_block = create(:block, :with_block_hash,
                                           dao: "0x9a7a7ce1f34c6a332d147991f0602400aaf7346eb06bfc0000e2abc108760207", timestamp: CkbUtils.time_in_milliseconds(Time.current))
-    nervos_dao_withdrawing_tx = create(:ckb_transaction, block: nervos_dao_withdrawing_block)
+    nervos_dao_withdrawing_tx = create(:ckb_transaction,
+                                       block: nervos_dao_withdrawing_block)
     create(:cell_input, block: nervos_dao_withdrawing_block,
                         previous_output: {
                           tx_hash: previous_output_tx.tx_hash,
-                          index: 0
+                          index: 0,
                         },
                         ckb_transaction: nervos_dao_withdrawing_tx)
     create(:cell_input, block: nervos_dao_withdrawing_block,
                         previous_output: {
                           tx_hash: previous_output_tx.tx_hash,
-                          index: 1
+                          index: 1,
                         },
                         ckb_transaction: nervos_dao_withdrawing_tx)
     create(:cell_output, block: nervos_dao_withdrawing_block,
-                         address: address,
+                         address:,
                          cell_type: "nervos_dao_withdrawing",
                          ckb_transaction: nervos_dao_withdrawing_tx,
                          capacity: 10000 * 10**8,
@@ -147,7 +155,7 @@ class AddressTest < ActiveSupport::TestCase
                          cell_index: 0,
                          dao: nervos_dao_withdrawing_block.dao)
     create(:cell_output, block: nervos_dao_withdrawing_block,
-                         address: address,
+                         address:,
                          cell_type: "nervos_dao_withdrawing",
                          ckb_transaction: nervos_dao_withdrawing_tx,
                          capacity: 20000 * 10**8,
@@ -156,7 +164,7 @@ class AddressTest < ActiveSupport::TestCase
                          dao: nervos_dao_withdrawing_block.dao)
 
     deposit_cell = create(:cell_output, block: deposit_block,
-                                        address: address, cell_type: "nervos_dao_deposit",
+                                        address:, cell_type: "nervos_dao_deposit",
                                         capacity: 60000 * 10**8,
                                         ckb_transaction: deposit_tx,
                                         cell_index: 0,
@@ -168,22 +176,24 @@ class AddressTest < ActiveSupport::TestCase
     tip_dao_ar_i = 10239685510632493
     expected_unmade_dao_interests = (deposit_cell.capacity - deposit_cell.occupied_capacity).to_i * tip_dao_ar_i / parse_dao_ar_i - (deposit_cell.capacity - deposit_cell.occupied_capacity)
 
-    assert_equal (expected_phase1_dao_interests + expected_unmade_dao_interests), address.cal_unclaimed_compensation
+    assert_equal (expected_phase1_dao_interests + expected_unmade_dao_interests).to_i,
+                 address.cal_unclaimed_compensation
   end
 
   test "#custom_ckb_transactions should return correct ckb transactions" do
     address = create(:address)
     block = create(:block)
-    ckb_transactions = create_list(:ckb_transaction, 30, block: block, address: address,
+    ckb_transactions = create_list(:ckb_transaction, 30, block:, address:,
                                                          contained_address_ids: [address.id])
     ckb_transactions.each do |tx|
-      AccountBook.find_or_create_by(address: address, ckb_transaction: tx)
+      AccountBook.find_or_create_by(address:, ckb_transaction: tx)
     end
 
     ckb_transaction_ids = address.account_books.select(:ckb_transaction_id).distinct
     expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).recent
 
-    assert_equal expected_ckb_transactions.pluck(:id), address.custom_ckb_transactions.recent.pluck(:id)
+    assert_equal expected_ckb_transactions.pluck(:id),
+                 address.custom_ckb_transactions.recent.pluck(:id)
   end
 
   test "#ckb_dao_transactions should return correct ckb transactions with dao cell" do
@@ -192,13 +202,16 @@ class AddressTest < ActiveSupport::TestCase
     30.times do |number|
       block = create(:block, :with_block_hash)
       contained_address_ids = number % 2 == 0 ? [address.id] : [address1.id]
-      tx = create(:ckb_transaction, block: block, tags: ["dao"], contained_dao_address_ids: contained_address_ids,
-                                    contained_address_ids: contained_address_ids)
-      AccountBook.find_or_create_by(address_id: contained_address_ids[0], ckb_transaction: tx)
-      AddressDaoTransaction.insert({ address_id: contained_address_ids[0], ckb_transaction_id: tx.id })
+      tx = create(:ckb_transaction, block:, tags: ["dao"], contained_dao_address_ids: contained_address_ids,
+                                    contained_address_ids:)
+      AccountBook.find_or_create_by(address_id: contained_address_ids[0],
+                                    ckb_transaction: tx)
+      AddressDaoTransaction.insert({ address_id: contained_address_ids[0],
+                                     ckb_transaction_id: tx.id })
       cell_type = number % 2 == 0 ? "nervos_dao_deposit" : "nervos_dao_withdrawing"
       cell_output_address = number % 2 == 0 ? address : address1
-      create(:cell_output, block: block, address: cell_output_address, ckb_transaction: tx, cell_type: cell_type)
+      create(:cell_output, block:, address: cell_output_address,
+                           ckb_transaction: tx, cell_type:)
     end
 
     ckb_transaction_ids = address.cell_outputs.where(cell_type: %w(
@@ -207,7 +220,8 @@ class AddressTest < ActiveSupport::TestCase
                                                      )).select("ckb_transaction_id").distinct
     expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).recent
 
-    assert_equal expected_ckb_transactions.pluck(:id).sort, address.ckb_dao_transactions.recent.pluck(:id).sort
+    assert_equal expected_ckb_transactions.pluck(:id).sort,
+                 address.ckb_dao_transactions.recent.pluck(:id).sort
   end
 
   test "#ckb_dao_transactions should return an empty array when there aren't dao cell" do
@@ -222,19 +236,19 @@ class AddressTest < ActiveSupport::TestCase
     30.times do |number|
       block = create(:block, :with_block_hash)
       if number % 2 == 0
-        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id],
+        tx = create(:ckb_transaction, block:, tags: ["udt"], contained_udt_ids: [udt.id],
                                       udt_address_ids: [address.id], contained_address_ids: [address.id])
-        create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash,
-                             address: address)
+        create(:cell_output, block:, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash,
+                             address:)
       else
-        tx = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id],
+        tx = create(:ckb_transaction, block:, tags: ["udt"], contained_udt_ids: [udt.id],
                                       udt_address_ids: [address.id], contained_address_ids: [address.id])
-        tx1 = create(:ckb_transaction, block: block, tags: ["udt"], contained_udt_ids: [udt.id],
+        tx1 = create(:ckb_transaction, block:, tags: ["udt"], contained_udt_ids: [udt.id],
                                        udt_address_ids: [address.id], contained_address_ids: [address.id])
-        create(:cell_output, block: block, ckb_transaction: tx1, cell_type: "udt", type_hash: udt.type_hash,
-                             address: address)
-        create(:cell_output, block: block, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash,
-                             consumed_by_id: tx1, address: address)
+        create(:cell_output, block:, ckb_transaction: tx1, cell_type: "udt", type_hash: udt.type_hash,
+                             address:)
+        create(:cell_output, block:, ckb_transaction: tx, cell_type: "udt", type_hash: udt.type_hash,
+                             consumed_by_id: tx1, address:)
       end
     end
 
@@ -269,7 +283,8 @@ class AddressTest < ActiveSupport::TestCase
     ckb_transaction_ids = CellOutput.select("ckb_transaction_id").from("(#{sql}) as cell_outputs")
     expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids.distinct).recent
 
-    assert_equal expected_ckb_transactions.pluck(:id), address.ckb_udt_transactions(udt.id).recent.pluck(:id)
+    assert_equal expected_ckb_transactions.pluck(:id),
+                 address.ckb_udt_transactions(udt.id).recent.pluck(:id)
   end
 
   test "#ckb_udt_transactions should return an empty array when there aren't udt cells" do
@@ -290,7 +305,7 @@ class AddressTest < ActiveSupport::TestCase
     Rails.stubs(:cache).returns(redis_cache_store)
     Rails.cache.extend(CacheRealizer)
     lock_script = CKB::Types::Script.new(
-      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99"
+      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99",
     )
     addr = CKB::Address.new(lock_script).generate
     full_addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
@@ -306,7 +321,7 @@ class AddressTest < ActiveSupport::TestCase
     Rails.stubs(:cache).returns(redis_cache_store)
     Rails.cache.extend(CacheRealizer)
     lock_script = CKB::Types::Script.new(
-      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99"
+      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99",
     )
     addr = CKB::Address.new(lock_script).generate
     full_addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
@@ -331,7 +346,7 @@ class AddressTest < ActiveSupport::TestCase
     Rails.stubs(:cache).returns(redis_cache_store)
     Rails.cache.extend(CacheRealizer)
     lock_script = CKB::Types::Script.new(
-      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99"
+      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99",
     )
     addr = CKB::Address.new(lock_script).generate
     address = Address.cached_find(addr)
@@ -344,7 +359,7 @@ class AddressTest < ActiveSupport::TestCase
     Rails.stubs(:cache).returns(redis_cache_store)
     Rails.cache.extend(CacheRealizer)
     lock_script = CKB::Types::Script.new(
-      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99"
+      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99",
     )
     full_addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
     address = Address.find_or_create_address(lock_script, Time.current.to_i)
@@ -355,7 +370,7 @@ class AddressTest < ActiveSupport::TestCase
 
   test "#find_or_create_by_address_hash" do
     lock_script = CKB::Types::Script.new(
-      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99"
+      code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99",
     )
     lock_hash = lock_script.compute_hash
     full_addr = CkbUtils.generate_address(lock_script)
