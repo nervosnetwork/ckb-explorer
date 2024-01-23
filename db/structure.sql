@@ -1668,7 +1668,9 @@ CREATE TABLE public.omiga_inscription_infos (
     mint_status integer,
     udt_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    type_hash bytea,
+    pre_udt_hash bytea
 );
 
 
@@ -4816,6 +4818,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20230918033957'),
 ('20231017074221'),
 ('20231218082938'),
-('20240107100346');
+('20240107100346'),
+('20240118103947'),
+('20240119131328');
 
 

@@ -111,7 +111,6 @@ GEM
     awesome_print (1.9.2)
     backport (1.2.0)
     benchmark (0.2.1)
-    benchmark_methods (0.7)
     bigdecimal (3.1.4)
     bootsnap (1.13.0)
       msgpack (~> 1.2)
@@ -479,7 +478,6 @@ DEPENDENCIES
   annotate
   async-websocket (~> 0.22.1)
   awesome_print
-  benchmark_methods
   bigdecimal
   bootsnap
   ckb-sdk-ruby!
