@@ -38,7 +38,7 @@ module Api
           else
             Udt.joins(:omiga_inscription_info).where(
               "udts.type_hash = ? or omiga_inscription_infos.type_hash = ?", params[:id], params[:id]
-            ).order("id DESC").first
+            ).order("block_timestamp DESC").first
           end
 
         if udt.nil?
