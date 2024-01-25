@@ -6,6 +6,8 @@ module Api
       class SessionsControllerTest < ActionDispatch::IntegrationTest
         setup do
           ENV["CKB_NET_MODE"] = "testnet"
+          ENV["AUTH_ACCESS_EXPIRE"] = "1296000"
+          ENV["SECRET_KEY_BASE"] = SecureRandom.hex(32)
           @message = "0x95e919c41e1ae7593730097e9bb1185787b046ae9f47b4a10ff4e22f9c3e3eab"
           @signature = "0x1e94db61cff452639cf7dd991cf0c856923dcf74af24b6f575b91479ad2c8ef40769812d1cf1fd1a15d2f6cb9ef3d91260ef27e65e1f9be399887e9a5447786301"
           @address = "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfkcv576ccddnn4quf2ga65xee2m26h7nq4sds0r"

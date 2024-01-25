@@ -5,6 +5,7 @@ module Api
     module Portfolio
       class StatisticsControllerTest < ActionDispatch::IntegrationTest
         setup do
+          ENV["AUTH_ACCESS_EXPIRE"] = "1296000"
           ENV["SECRET_KEY_BASE"] = SecureRandom.hex(32)
           @user = create(:user)
           @jwt = PortfolioUtils.generate_jwt({ uuid: @user.uuid })

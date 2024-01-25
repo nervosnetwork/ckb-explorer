@@ -5,6 +5,7 @@ module Api
     module Portfolio
       class UsersControllerTest < ActionDispatch::IntegrationTest
         setup do
+          ENV["AUTH_ACCESS_EXPIRE"] = "1296000"
           ENV["SECRET_KEY_BASE"] = SecureRandom.hex(32)
         end
 
