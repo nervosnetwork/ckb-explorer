@@ -39,6 +39,10 @@ s.cron "0 8 * * *" do
   call_worker Charts::DailyStatistic
 end
 
+s.cron "10 8 * * *" do
+  call_worker Charts::CkbHodlWavesStatistic
+end
+
 s.every "10m", overlap: false do
   call_worker Charts::BlockStatistic
 end
@@ -63,7 +67,7 @@ s.every "1h", overlap: false do
   call_worker AddressUnclaimedCompensationGenerator
 end
 
-s.every "5m", overlap: false do
+s.every "2m", overlap: false do
   call_worker PoolTransactionCheckWorker
 end
 
@@ -95,7 +99,8 @@ end
 
 s.every "4h", overlap: false do
   puts "reset address_balance_ranking, miner_ranking, last_n_days_transaction_fee_rates"
-  StatisticInfo.default.reset! :address_balance_ranking, :miner_ranking, :last_n_days_transaction_fee_rates
+  StatisticInfo.default.reset! :address_balance_ranking, :miner_ranking,
+                               :last_n_days_transaction_fee_rates
 end
 
 s.every "1h", overlap: false do
@@ -108,15 +113,10 @@ s.every "1h", overlap: false do
   call_worker UpdateH24CkbTransactionsCountOnCollectionsWorker
 end
 
-s.every "1h", overlap: false do
-  CkbTransaction.clean_pending
-end
-
 s.cron "30 0 * * *" do
   call_worker Charts::ForkedEventProcessor
 end
 
-# run at every mondy 06:00
 s.cron "0 6 * * 1" do
   call_worker CleanAddressBlockSnapshotWorker
 end

@@ -12,10 +12,10 @@ module Api
 
           udts = sort_udts(udts).page(@page).per(@page_size).fast_page
           options = FastJsonapi::PaginationMetaGenerator.new(
-            request: request,
+            request:,
             records: udts,
             page: @page,
-            page_size: @page_size
+            page_size: @page_size,
           ).call
 
           render json: UdtSerializer.new(udts, options)
@@ -23,7 +23,7 @@ module Api
       end
 
       def update
-        udt = Udt.find_by!(type_hash: params[:id], published: true)
+        udt = Udt.find_by!(type_hash: params[:id])
         attrs = {
           symbol: params[:symbol],
           full_name: params[:full_name],
@@ -34,7 +34,8 @@ module Api
           icon_file: params[:icon_file],
           uan: params[:uan],
           display_name: params[:display_name],
-          email: params[:email]
+          email: params[:email],
+          published: true,
         }
         if udt.email.blank?
           raise Api::V1::Exceptions::UdtInfoInvalidError.new("Email can't be blank") if params[:email].blank?
@@ -44,7 +45,7 @@ module Api
           raise Api::V1::Exceptions::UdtVerificationNotFoundError if udt.udt_verification.nil?
 
           udt.udt_verification.validate_token!(params[:token])
-          udt.update!(attrs)
+          udt.update!(attrs.except(:email))
         end
         render json: :ok
       rescue ActiveRecord::RecordNotFound
@@ -83,7 +84,7 @@ module Api
           errors = validator.error_object[:errors]
           status = validator.error_object[:status]
 
-          render json: errors, status: status
+          render json: errors, status:
         end
       end
 

@@ -13,7 +13,8 @@ module CkbSync
       @api = CKB::API.new(host: ENV["CKB_NODE_URL"],
                           timeout_config: {
                             open_timeout: 1, read_timeout: 3,
-                            write_timeout: 1 })
+                            write_timeout: 1
+                          })
     end
 
     def chain_type
@@ -21,11 +22,13 @@ module CkbSync
     end
 
     def mode
-      if chain_type == "ckb"
-        CKB::MODE::MAINNET
-      else
-        CKB::MODE::TESTNET
-      end
+      # if chain_type == "ckb"
+      #   CKB::MODE::MAINNET
+      # else
+      #   CKB::MODE::TESTNET
+      # end
+
+      ENV["CKB_NET_MODE"]
     end
 
     def issuer_script_code_hash
@@ -80,9 +83,21 @@ module CkbSync
       end
     end
 
+    def omiga_inscription_info_code_hash
+      Settings.omiga_inscription_info_code_hash
+    end
+
+    def omiga_inscription_code_hash
+      Settings.omiga_inscription_code_hash
+    end
+
+    def xudt_code_hash
+      Settings.xudt_code_hash
+    end
+
     METHOD_NAMES.each do |name|
       define_method name do |*params|
-        call_rpc(name, params: params)
+        call_rpc(name, params:)
       end
     end
 
@@ -96,7 +111,7 @@ module CkbSync
 
     def generate_json_rpc_id
       @@latest_json_rpc_id += 1
-      return @@latest_json_rpc_id
+      @@latest_json_rpc_id
     end
 
     # in case that some method you call is not implemented in ruby sdk
@@ -110,7 +125,7 @@ module CkbSync
         "id": generate_json_rpc_id,
         "jsonrpc": "2.0",
         "method": options[:method],
-        "params": options[:params]
+        "params": options[:params],
       }
 
       url = ENV["CKB_NODE_URL"]
@@ -118,10 +133,8 @@ module CkbSync
       # Rails.logger.debug "== in directly_call_rpc, url: #{url}, payload: #{payload}"
 
       res = HTTP.post(url, json: payload)
-      result = JSON.parse res.to_s
+      JSON.parse res.to_s
       # Rails.logger.debug "== in directly_call_rpc result: #{result.inspect}"
-
-      return result
     end
 
     # in case that some method you call is not implemented in ruby sdk
@@ -148,7 +161,7 @@ module CkbSync
       result = JSON.parse res.to_s
       Rails.logger.debug "== in directly_batch_call_rpc result: #{result.inspect}"
 
-      return result
+      result
     end
 
     # this methods calls the ruby-sdk, but not directly from rpc

@@ -102,7 +102,7 @@ module Api
         assert_equal %w(
           block_number block_timestamp display_inputs
           display_inputs_count display_outputs display_outputs_count
-          income is_cellbase transaction_hash
+          income is_cellbase transaction_hash created_at create_timestamp
         ).sort,
                      response_tx_transaction["attributes"].keys.sort
       end
@@ -338,6 +338,19 @@ module Api
 
         assert_equal response_transaction, response.body
         assert_equal 1, json.dig("meta", "total")
+      end
+
+      test "first tx should be cellbase" do
+        page = 1
+        page_size = 10
+        block = create(:block, :with_block_hash)
+        _ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block: block)
+        _cellbase_ckb_transaction = create(:ckb_transaction, block: block, is_cellbase: true)
+
+        valid_get api_v1_block_transaction_url(block.block_hash), params: {
+          page: page, page_size: page_size }
+
+        assert_equal true, json.dig("data").first["attributes"]["is_cellbase"]
       end
     end
   end

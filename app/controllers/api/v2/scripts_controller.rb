@@ -17,21 +17,36 @@ module Api
         head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @ckb_transactions = @contract.ckb_transactions.order(id: :desc).page(@page).per(@page_size)
+        @ckb_transactions =
+          if @contract.ckb_transactions_count.zero?
+            CkbTransaction.none
+          else
+            @contract.ckb_transactions.order(id: :desc).page(@page).per(@page_size)
+          end
       end
 
       def deployed_cells
         head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @deployed_cells = @contract.deployed_cell_outputs.live.page(@page).per(@page_size)
+        @deployed_cells =
+          if @contract.deployed_cells_count.zero?
+            CellOutput.none
+          else
+            @contract.deployed_cell_outputs.live.page(@page).per(@page_size)
+          end
       end
 
       def referring_cells
         head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @referring_cells = @contract.referring_cell_outputs.live.page(@page).per(@page_size)
+        @referring_cells =
+          if @contract.referring_cells_count.zero?
+            CellOutput.none
+          else
+            @contract.referring_cell_outputs.live.page(@page).per(@page_size)
+          end
       end
 
       private
@@ -40,7 +55,7 @@ module Api
         deployed_cells = @contract.deployed_cell_outputs
         if deployed_cells.present?
           deployed_type_script = deployed_cells[0].type_script
-          if deployed_type_script.code_hash == Settings.type_id_code_hash
+          if deployed_type_script && deployed_type_script.code_hash == Settings.type_id_code_hash
             type_id = deployed_type_script.script_hash
           end
         end

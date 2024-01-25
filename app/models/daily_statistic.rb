@@ -12,7 +12,7 @@ class DailyStatistic < ApplicationRecord
 
   attr_accessor :from_scratch
 
-  scope :valid_indicators, -> { select(VALID_INDICATORS - %w(burnt liquidity created_at updated_at) + %w(id)) }
+  scope :valid_indicators, -> { select(VALID_INDICATORS - %w(burnt liquidity created_at) + %w(id updated_at)) }
   scope :recent, -> { order("created_at_unixtimestamp desc nulls last") }
   scope :recent_year, -> {
                         where("created_at_unixtimestamp >= ? and created_at_unixtimestamp < ?", Time.current.beginning_of_year.to_i, Time.current.to_i)

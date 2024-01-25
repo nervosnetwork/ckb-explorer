@@ -7,11 +7,11 @@ class CkbTransactionSerializer
   attributes :is_cellbase, :tx_status
 
   attribute :witnesses do |o|
-    o.witnesses&.map(&:data) || []
+    o.witnesses.order("index ASC")&.map(&:data) || []
   end
 
   attribute :cell_deps do |o|
-    o.cell_dependencies.explicit.includes(:cell_output).to_a.map(&:to_raw)
+    o.cell_dependencies.explicit.order("id asc").includes(:cell_output).to_a.map(&:to_raw)
   end
 
   attribute :header_deps do |o|
@@ -45,7 +45,11 @@ class CkbTransactionSerializer
   end
 
   attribute :display_inputs do |object, params|
-    Rails.cache.fetch("display_inputs_previews_#{params[:previews].present?}_#{object.id}", expires_in: 1.day) do
+    display_cells = ActiveModel::Type::Boolean.new.cast(params[:display_cells])
+    next [] unless display_cells
+
+    cache_key = "display_inputs_previews_#{params[:previews].present?}_#{object.id}_#{object.inputs.cache_version}"
+    Rails.cache.fetch(cache_key, expires_in: 1.day) do
       if params && params[:previews]
         object.display_inputs(previews: true)
       else
@@ -55,7 +59,11 @@ class CkbTransactionSerializer
   end
 
   attribute :display_outputs do |object, params|
-    Rails.cache.fetch("display_outputs_previews_#{params[:previews].present?}_#{object.id}", expires_in: 1.day) do
+    display_cells = ActiveModel::Type::Boolean.new.cast(params[:display_cells])
+    next [] unless display_cells
+
+    cache_key = "display_outputs_previews_#{params[:previews].present?}_#{object.id}_#{object.outputs.cache_version}"
+    Rails.cache.fetch(cache_key, expires_in: 1.day) do
       if params && params[:previews]
         object.display_outputs(previews: true)
       else
