@@ -21,8 +21,8 @@ nrc_721_factory_output_data_header: "0x24ff5a9ab8c38d195ce2b4ea75ca8987"
 nrc_721_token_output_data_header: "0x0ddeff3e8ee03cbf6a2c6920d05c381e"
 
 # spore nft code hash
-spore_cluster_code_hash: ""
-spore_cell1_code_hash: ""
+spore_cluster1_code_hash: "0x7366a61534fa7c7e6225ecc0d828ea3b5366adec2b58206f2ee84995fe030075"
+spore_cell1_code_hash: "0x4a4dce1df3dffff7f8b2cd7dff7303df3b6150c9788cb75dcf6747247132b9f5"
 
 # omiga inscription info
 omiga_inscription_info_code_hash: "0x5c33fc69bd72e895a63176147c6ab0bb5758d1c7a32e0914f99f9ec1bed90d41"

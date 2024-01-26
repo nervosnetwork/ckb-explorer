@@ -71,8 +71,12 @@ module CkbSync
       end
     end
 
-    def spore_cluster_code_hash
-      Settings.spore_cluster_code_hash
+    def spore_cluster_code_hashes
+      if mode == CKB::MODE::MAINNET
+        [Settings.spore_cluster1_code_hash]
+      else
+        [Settings.spore_cluster1_code_hash, Settings.spore_cluster2_code_hash]
+      end
     end
 
     def spore_cell_code_hashes

@@ -24,10 +24,10 @@ class TokenTransferDetectWorker
           type_script = output.type_script
           item = find_or_create_item(output, type_script)
           attrs = {
-            item: item,
+            item:,
             transaction_id: tx.id,
             action: :normal,
-            to_id: output.address_id
+            to_id: output.address_id,
           }
 
           if source_tokens[type_script.id]
@@ -44,7 +44,7 @@ class TokenTransferDetectWorker
       # remaining source token has no correspond output,
       # so they are destruction.
       source_tokens.each do |type_script_id, cell|
-        item = TokenItem.find_by type_script_id: type_script_id
+        item = TokenItem.find_by(type_script_id:)
         TokenTransfer.transaction do
           t = TokenTransfer.
             create_with(action: :destruction, from_id: cell.address_id).
@@ -72,12 +72,12 @@ class TokenTransferDetectWorker
     item.owner_id = item.cell.address_id
     item.token_id =
       case cell.cell_type
-         when "m_nft_token"
-           type_script.args[50..-1].hex
-         when "nrc_721_token"
-           type_script.args[132..-1].hex
-         when "spore_cell"
-           type_script.args.hex
+      when "m_nft_token"
+        type_script.args[50..-1].hex
+      when "nrc_721_token"
+        type_script.args[132..-1].hex
+      when "spore_cell"
+        type_script.args.hex
       end
     item.save!
     item
@@ -94,7 +94,7 @@ class TokenTransferDetectWorker
     end
   end
 
-  def find_or_create_nrc_721_collection(cell, type_script)
+  def find_or_create_nrc_721_collection(_cell, type_script)
     factory_cell = CkbUtils.parse_nrc_721_args(type_script.args)
     nrc_721_factory_cell = NrcFactoryCell.find_or_create_by(code_hash: factory_cell.code_hash,
                                                             hash_type: factory_cell.hash_type, args: factory_cell.args)
@@ -105,7 +105,7 @@ class TokenTransferDetectWorker
 
     coll = TokenCollection.find_or_create_by(
       standard: "nrc721",
-      type_script: nrc_721_factory_cell.type_script
+      type_script: nrc_721_factory_cell.type_script,
     )
 
     if coll.cell_id.blank? || (coll.cell_id < nrc_721_factory_cell.id)
@@ -113,21 +113,21 @@ class TokenTransferDetectWorker
         cell_id: nrc_721_factory_cell.id,
         symbol: nrc_721_factory_cell.symbol.to_s[0, 16],
         name: nrc_721_factory_cell.name,
-        icon_url: nrc_721_factory_cell.base_token_uri
+        icon_url: nrc_721_factory_cell.base_token_uri,
       )
     end
     coll
   end
 
-  def find_or_create_m_nft_collection(cell, type_script)
+  def find_or_create_m_nft_collection(_cell, type_script)
     m_nft_class_type = TypeScript.create_with(hash_type: "type").find_or_create_by!(
       code_hash: CkbSync::Api.instance.token_class_script_code_hash,
-      args: type_script.args[0..49]
+      args: type_script.args[0..49],
     )
     coll = TokenCollection.find_or_create_by(
       standard: "m_nft",
       type_script_id: m_nft_class_type.id,
-      sn: m_nft_class_type.script_hash
+      sn: m_nft_class_type.script_hash,
     )
     m_nft_class_cell = m_nft_class_type.cell_outputs.last
     if m_nft_class_cell.present? && (coll.cell_id.blank? || (coll.cell_id < m_nft_class_cell.id))
@@ -141,17 +141,17 @@ class TokenTransferDetectWorker
     coll
   end
 
-  def find_or_create_spore_collection(cell, type_script)
+  def find_or_create_spore_collection(_cell, type_script)
     spore_cell = type_script.cell_outputs.order("id desc").first
     parsed_spore_cell = CkbUtils.parse_spore_cell_data(spore_cell.data)
-    spore_cluster_type = TypeScript.create_with(hash_type: "data1").find_or_create_by!(
-      code_hash: CkbSync::Api.instance.spore_cluster_code_hash,
-      args: parsed_spore_cell[:cluster_id]
-    )
+    binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
+    spore_cluster_type = TypeScript.where("code_hash IN (#{binary_hashes})").where(
+      args: parsed_spore_cell[:cluster_id],
+    ).first
     coll = TokenCollection.find_or_create_by(
       standard: "spore",
       type_script_id: spore_cluster_type.id,
-      sn: spore_cluster_type.script_hash
+      sn: spore_cluster_type.script_hash,
     )
     spore_cluster_cell = spore_cluster_type.cell_outputs.order("id desc").first
     if spore_cluster_cell.present? && coll.creator_id != spore_cluster_cell.address_id
