@@ -105,11 +105,12 @@ module Api
       end
 
       test "should return corresponding udt with given type hash" do
-        udt = create(:udt, published: true)
+        udt = create(:udt, published: true, email: "abcd@sudt.com")
 
         valid_get api_v1_udt_url(udt.type_hash)
 
         assert_equal UdtSerializer.new(udt).serialized_json, response.body
+        assert_equal JSON.parse(response.body)["data"]["attributes"]["email"], "ab**@******om"
       end
 
       test "should contain right keys in the serialized object when call show" do
@@ -121,7 +122,7 @@ module Api
         assert_equal %w(
           symbol full_name display_name uan total_amount addresses_count
           decimal icon_file h24_ckb_transactions_count created_at description
-          published type_hash type_script issuer_address udt_type
+          published type_hash type_script issuer_address udt_type operator_website email
         ).sort,
                      response_tx_transaction["attributes"].keys.sort
       end
@@ -376,7 +377,7 @@ module Api
         assert_equal 415, response.status
       end
 
-      test "should respond with error object when call download csv Content-Type is wrong" do
+      test "should respond with error object when Call download csv Content-Type is wrong" do
         udt = create(:udt, published: true)
         error_object = Api::V1::Exceptions::InvalidContentTypeError.new
         response_json = RequestErrorSerializer.new([error_object],
@@ -400,7 +401,7 @@ module Api
         assert_equal 406, response.status
       end
 
-      test "should respond with error object when call download csv Accept is wrong" do
+      test "should respond with error object when Call download csv Accept is wrong" do
         udt = create(:udt, published: true)
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object],
@@ -584,12 +585,14 @@ module Api
           full_name: "GodwokenToken on testnet_v1",
           total_amount: "100000000",
           token: "123456",
+          email: "abcd@sudt.com",
         }
 
         assert_equal 200, response.status
         assert_equal "ok", JSON.parse(response.body)
         assert_equal "GWK", udt.reload.symbol
         assert_equal true, udt.reload.published
+        assert_equal "abc@sudt.com", udt.reload.email
       end
     end
   end

@@ -123,3 +123,5 @@ gem "after_commit_everywhere"
 gem "kredis"
 
 gem "async-websocket", "~> 0.22.1", require: false
+gem "ecdsa"
+gem "jwt"

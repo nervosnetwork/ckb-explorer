@@ -563,6 +563,7 @@ dao_contract)
 
     def update_addresses_info(addrs_change, local_block, refresh_balance)
       return unless refresh_balance
+
       ### because `upsert` don't validate record, so it may pass invalid data into database.
       ### here we use one by one update (maybe slower)
       addrs_change.each do |addr_id, values|
@@ -672,8 +673,10 @@ dao_contract)
             if cell_type == "spore_cell"
               parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[tx_index][index])
               if parsed_spore_cell[:cluster_id].present?
-                spore_cluster_type = TypeScript.where(code_hash: CkbSync::Api.instance.spore_cluster_code_hash,
-                                                      args: parsed_spore_cell[:cluster_id]).first
+                binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
+                spore_cluster_type = TypeScript.where("code_hash IN (#{binary_hashes})").where(
+                  args: parsed_spore_cell[:cluster_id],
+                ).first
                 if spore_cluster_type.present?
                   spore_cluster_cell = spore_cluster_type.cell_outputs.last
                   parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
@@ -926,7 +929,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
             end
           local_cache.push(
             "NodeData/#{block_number}/ContainedAddresses",
-             Address.new(id: address.id, created_at: address.created_at)
+            Address.new(id: address.id, created_at: address.created_at),
           )
         end
       end
