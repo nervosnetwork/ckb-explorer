@@ -5,10 +5,8 @@ module Api
 
       rescue_from Api::V2::Exceptions::Error, with: :api_error
 
-      protected
-
       def address_to_lock_hash(address)
-        if address =~ /\A0x/
+        if address.start_with?("0x")
           address
         else
           parsed = CkbUtils.parse_address(address)
@@ -23,6 +21,24 @@ module Api
 
       def api_error(error)
         render json: RequestErrorSerializer.new([error], message: error.title), status: error.status
+      end
+
+      attr_reader :current_user
+
+      def validate_jwt!
+        jwt = request.headers["Authorization"]&.split&.last
+        payload = PortfolioUtils.decode_jwt(jwt)
+
+        user = User.find_by(uuid: payload[0]["uuid"])
+        raise Api::V2::Exceptions::UserNotExistError.new("validate jwt") unless user
+
+        @current_user = user
+      rescue JWT::VerificationError => e
+        raise Api::V2::Exceptions::DecodeJWTFailedError.new(e.message)
+      rescue JWT::ExpiredSignature => e
+        raise Api::V2::Exceptions::DecodeJWTFailedError.new(e.message)
+      rescue JWT::DecodeError => e
+        raise Api::V2::Exceptions::DecodeJWTFailedError.new(e.message)
       end
     end
   end

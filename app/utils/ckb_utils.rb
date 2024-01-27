@@ -58,11 +58,11 @@ class CkbUtils
     args_offset = [script_serialization[12..15].unpack1("H*")].pack("H*").unpack1("V")
     message_bytes = cellbase_witness_serialization[message_offset..]
     message_serialization = message_bytes[4..]
-    if message_serialization.size > 28
-      message = "#{message_serialization[0..28]}#{message_serialization[29..]&.unpack1('H*')}".to_json.unpack1("H*")
-    else
-      message = message_serialization.unpack1("H*")
-    end
+    message = if message_serialization.size > 28
+                "#{message_serialization[0..28]}#{message_serialization[29..]&.unpack1('H*')}".to_json.unpack1("H*")
+              else
+                message_serialization.unpack1("H*")
+              end
     code_hash_serialization = script_serialization[code_hash_offset...hash_type_offset]
     hash_type_serialization = script_serialization[hash_type_offset...args_offset]
     args_serialization = script_serialization[hash_type_offset + 1..]
@@ -414,7 +414,7 @@ class CkbUtils
       is_nrc_721_token_cell?(output_data) ||
       is_nrc_721_factory_cell?(output_data) ||
       [
-        CkbSync::Api.instance.spore_cluster_code_hash,
+        *CkbSync::Api.instance.spore_cluster_code_hashes,
         *CkbSync::Api.instance.spore_cell_code_hashes,
       ].include?(type_script&.code_hash) && type_script&.hash_type == "data1" ||
       CkbSync::Api.instance.mode == CKB::MODE::MAINNET && [CkbSync::Api.instance.xudt_code_hash].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
@@ -442,7 +442,7 @@ class CkbUtils
       "cota_registry"
     when CkbSync::Api.instance.cota_regular_code_hash
       "cota_regular"
-    when CkbSync::Api.instance.spore_cluster_code_hash
+    when *CkbSync::Api.instance.spore_cluster_code_hashes
       "spore_cluster"
     when *CkbSync::Api.instance.spore_cell_code_hashes
       "spore_cell"

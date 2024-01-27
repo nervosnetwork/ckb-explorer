@@ -52,7 +52,6 @@ namespace :api do
           get :download_csv
         end
       end
-
     end
 
     resources :dao_events, only: [:index]
@@ -74,6 +73,19 @@ namespace :api do
     resources :statistics, only: [] do
       collection do
         get :transaction_fees
+      end
+    end
+
+    namespace :portfolio do
+      resources :sessions, only: :create
+      resource :user, only: :update
+      resources :statistics, only: :index
+      resources :addresses, only: :create
+      resources :udt_accounts, only: :index
+      resources :ckb_transactions, only: :index do
+        collection do
+          get :download_csv
+        end
       end
     end
   end
