@@ -34,8 +34,8 @@ module DisplayCells
           occupied_capacity: nil,
           address_hash: nil,
           target_block_number: cellbase.target_block_number,
-          generated_tx_hash: tx_hash
-        )
+          generated_tx_hash: tx_hash,
+        ),
       ]
     end
 
@@ -55,7 +55,7 @@ module DisplayCells
           proposal_reward: cellbase.proposal_reward,
           secondary_reward: cellbase.secondary_reward,
           status: output.status,
-          consumed_tx_hash: consumed_tx_hash
+          consumed_tx_hash:,
         )
       end
     end
@@ -73,8 +73,8 @@ module DisplayCells
             cell_index: cell_input.previous_index,
             since: {
               raw: hex_since(cell_input.since.to_i),
-              median_timestamp: cell_input.block&.median_timestamp.to_i
-            }
+              median_timestamp: cell_input.block&.median_timestamp.to_i,
+            },
           })
         end
 
@@ -89,8 +89,8 @@ module DisplayCells
           cell_type: previous_cell_output.cell_type,
           since: {
             raw: hex_since(cell_input.since.to_i),
-            median_timestamp: cell_input.block&.median_timestamp.to_i
-          }
+            median_timestamp: cell_input.block&.median_timestamp.to_i,
+          },
         }
 
         if previous_cell_output.nervos_dao_withdrawing?
@@ -122,8 +122,8 @@ module DisplayCells
           occupied_capacity: output.occupied_capacity,
           address_hash: output.address_hash,
           status: output.status,
-          consumed_tx_hash: consumed_tx_hash,
-          cell_type: output.cell_type
+          consumed_tx_hash:,
+          cell_type: output.cell_type,
         }
 
         display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
@@ -134,6 +134,9 @@ module DisplayCells
         end
         if output.cell_type.in?(%w(nrc_721_token nrc_721_factory))
           display_output.merge!(attributes_for_nrc_721_cell(output))
+        end
+        if output.cell_type.in?(%w(omiga_inscription_info omiga_inscription))
+          display_output.merge!(attributes_for_omiga_inscription_cell(output))
         end
 
         CkbUtils.hash_value_to_s(display_output)
@@ -165,6 +168,11 @@ module DisplayCells
       { nrc_721_token_info: info, extra_info: info }
     end
 
+    def attributes_for_omiga_inscription_cell(omiga_inscription_cell)
+      info = omiga_inscription_cell.omiga_inscription_info
+      { omiga_inscription_info: info, extra_info: info }
+    end
+
     def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
       nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
       nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.
@@ -181,7 +189,7 @@ module DisplayCells
         compensation_started_timestamp: compensation_started_block.timestamp,
         compensation_ended_block_number: compensation_ended_block.number,
         compensation_ended_timestamp: compensation_ended_block.timestamp,
-        interest: interest
+        interest:,
       }
 
       if is_phase2
@@ -194,7 +202,7 @@ module DisplayCells
     end
 
     def hex_since(int_since_value)
-      return "0x#{int_since_value.to_s(16).rjust(16, '0')}"
+      "0x#{int_since_value.to_s(16).rjust(16, '0')}"
     end
   end
 end
