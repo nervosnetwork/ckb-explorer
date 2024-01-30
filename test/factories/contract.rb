@@ -9,6 +9,8 @@ FactoryBot.define do
     description { "SECP256K1/multisig (Source Code) is a script which allows a group of users to sign a single transaction." }
     verified { false }
     deprecated { false }
+    total_referring_cells_capacity { SecureRandom.random_number(10**10) }
+
     after(:create) do |contract, _eval|
       tx = create :ckb_transaction, :with_single_output
       co = tx.cell_outputs.first

@@ -1,7 +1,7 @@
 namespace :api do
   namespace :v2 do
     post "/das_accounts" => "das_accounts#query", as: :das_accounts
-    resources :ckb_transactions, only: [:index, :show] do
+    resources :ckb_transactions, only: %i[index show] do
       member do
         get :details
         get :display_inputs
@@ -27,7 +27,7 @@ namespace :api do
         resources :holders, only: :index
         resources :transfers, only: :index
         resources :items do
-          resources :transfers, only: [:index, :show]
+          resources :transfers, only: %i[index show]
         end
       end
       namespace :cota do
@@ -47,7 +47,7 @@ namespace :api do
         end
       end
       resources :items, only: :index
-      resources :transfers, only: [:index, :show] do
+      resources :transfers, only: %i[index show] do
         collection do
           get :download_csv
         end
@@ -61,6 +61,7 @@ namespace :api do
         get :deployed_cells
         get :referring_cells
         get :general_info
+        get :referring_capacities
       end
     end
 

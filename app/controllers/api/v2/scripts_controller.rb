@@ -3,8 +3,8 @@ require "jbuilder"
 module Api
   module V2
     class ScriptsController < BaseController
-      before_action :set_page_and_page_size
-      before_action :find_script
+      before_action :set_page_and_page_size, except: :referring_capacities
+      before_action :find_script, except: :referring_capacities
 
       def general_info
         head :not_found and return if @script.blank? || @contract.blank?
@@ -49,6 +49,13 @@ module Api
           end
       end
 
+      def referring_capacities
+        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        data = Contract.all.map { { _1.code_hash => _1.total_referring_cells_capacity.to_s } }
+
+        render json: { data: }
+      end
+
       private
 
       def get_script_content
@@ -69,7 +76,7 @@ module Api
           capacity_of_referring_cells: @contract.total_referring_cells_capacity,
           count_of_transactions: @contract.ckb_transactions_count,
           count_of_deployed_cells: @contract.deployed_cells_count,
-          count_of_referring_cells: @contract.referring_cells_count
+          count_of_referring_cells: @contract.referring_cells_count,
         }
       end
 
