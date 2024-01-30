@@ -1,9 +1,21 @@
 module Api
   module V2
     class BaseController < ActionController::API
+      wrap_parameters false
+
       include Pagy::Backend
 
+      rescue_from ActiveInteraction::InvalidInteractionError, with: :handle_params_error
       rescue_from Api::V2::Exceptions::Error, with: :api_error
+
+      def handle_params_error(error)
+        error = Api::V2::Exceptions::ParamsInvalidError.new(error.message.squish.to_s)
+        api_error(error)
+      end
+
+      def api_error(error)
+        render json: RequestErrorSerializer.new([error], message: error.title), status: error.status
+      end
 
       def address_to_lock_hash(address)
         if address.start_with?("0x")
@@ -17,10 +29,6 @@ module Api
       # this method is a monkey patch for fast_page using with pagy.
       def pagy_get_items(collection, pagy)
         collection.offset(pagy.offset).limit(pagy.items).fast_page
-      end
-
-      def api_error(error)
-        render json: RequestErrorSerializer.new([error], message: error.title), status: error.status
       end
 
       attr_reader :current_user

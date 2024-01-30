@@ -8,10 +8,10 @@ module Validations
     validate :signature_must_be_valid
 
     def initialize(params = {})
-      @address = params[:address]
-      @message = params[:message]
-      @signature = params[:signature]
-      @pub_key = params[:pub_key]
+      @address = params[:address].to_s
+      @message = params[:message].to_s
+      @signature = params[:signature].to_s
+      @pub_key = params[:pub_key].to_s
     end
 
     def error_object

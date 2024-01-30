@@ -5,7 +5,7 @@ module Api
         before_action :validate_jwt!
 
         def update
-          current_user.update(name: params[:name])
+          Users::Update.run!({ user: current_user, name: params[:name] })
 
           head :no_content
         end

@@ -13,6 +13,12 @@ module Api
         end
       end
 
+      class ParamsInvalidError < Error
+        def initialize(detail)
+          super(code: 2000, status: 404, title: "Params are invalid", detail:, href:)
+        end
+      end
+
       class TokenCollectionNotFoundError < Error
         def initialize
           super(code: 2001, status: 404, title: "Token Collection Not Found", detail: "No token collection found by given script hash or id", href: "")
@@ -39,25 +45,31 @@ module Api
 
       class UserNotExistError < Error
         def initialize(detail)
-          super(code: 2005, status: 400, title: "user not exist", detail: detail, href: "")
+          super(code: 2005, status: 400, title: "user not exist", detail:, href: "")
         end
       end
 
       class DecodeJWTFailedError < Error
         def initialize(detail)
-          super(code: 2006, status: 400, title: "decode JWT failed", detail: detail, href: "")
+          super(code: 2006, status: 400, title: "decode JWT failed", detail:, href: "")
         end
       end
 
       class PortfolioLatestDiscrepancyError < Error
         def initialize(detail)
-          super(code: 2007, status: 400, title: "portfolio has not synchronized the latest addresses", detail: "", href: "")
+          super(code: 2007, status: 400, title: "portfolio has not synchronized the latest addresses", detail:, href: "")
         end
       end
 
       class SyncPortfolioAddressesError < Error
         def initialize
           super(code: 2008, status: 400, title: "sync portfolio addresses failed", detail: "", href: "")
+        end
+      end
+
+      class AddressNotFoundError < Error
+        def initialize
+          super code: 2009, status: 404, title: "Address Not Found", detail: "No address found by given address hash or lock hash", href: ""
         end
       end
     end

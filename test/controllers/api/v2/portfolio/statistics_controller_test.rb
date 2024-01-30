@@ -13,7 +13,7 @@ module Api
 
         test "should respond with error object when addresses inconsistencies detected" do
           address = "ckt1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323k5v49yzmvm0q0kfqw0hk0kyal6z32nwjvcqqr7qyzq8yqtec2wj"
-          error_object = Api::V2::Exceptions::PortfolioLatestDiscrepancyError.new(address)
+          error_object = Api::V2::Exceptions::PortfolioLatestDiscrepancyError.new(nil)
           response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
           get api_v2_portfolio_statistics_url(latest_address: address),
@@ -23,8 +23,8 @@ module Api
 
         test "should return statistic when address inconsistencies resolved" do
           address_hash = "ckt1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323k5v49yzmvm0q0kfqw0hk0kyal6z32nwjvcqqr7qyzq8yqtec2wj"
-          address = create(:address, address_hash: address_hash)
-          create(:portfolio, user: @user, address: address)
+          address = create(:address, address_hash:)
+          create(:portfolio, user: @user, address:)
 
           response_json = {
             data: {
@@ -32,8 +32,8 @@ module Api
               balance_occupied: address.balance_occupied.to_s,
               dao_deposit: address.dao_deposit.to_s,
               interest: address.interest.to_s,
-              dao_compensation: (address.interest.to_i + address.unclaimed_compensation.to_i).to_s
-            }
+              dao_compensation: (address.interest.to_i + address.unclaimed_compensation.to_i).to_s,
+            },
           }.as_json
 
           get api_v2_portfolio_statistics_url(latest_address: address_hash), headers: {
