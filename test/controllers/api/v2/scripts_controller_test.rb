@@ -4,8 +4,8 @@ module Api
   module V2
     class ScriptsControllerTest < ActionDispatch::IntegrationTest
       setup do
-        @code_hash = '0x00000000000000000000000000000000000000000000000000545950455f4944'
-        @hash_type = 'type'
+        @code_hash = "0x00000000000000000000000000000000000000000000000000545950455f4944"
+        @hash_type = "type"
         @block = create :block
         @contract = create :contract, code_hash: @code_hash, hash_type: @hash_type
         @script = create :script, contract_id: @contract.id
@@ -34,6 +34,14 @@ module Api
       test "should get referring_cells" do
         valid_get referring_cells_api_v2_scripts_url(code_hash: @code_hash, hash_type: @hash_type)
         assert_response :success
+      end
+
+      test "should get referring_capacities" do
+        create_list(:contract, 10)
+        referring_capacities = Contract.all.map { { _1.code_hash => _1.total_referring_cells_capacity.to_s } }
+
+        valid_get referring_capacities_api_v2_scripts_url
+        assert_equal ({ "data" => referring_capacities }), json
       end
     end
   end
