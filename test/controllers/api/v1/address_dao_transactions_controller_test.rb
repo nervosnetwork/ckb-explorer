@@ -62,7 +62,7 @@ module Api
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash)
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_dao_transactions, page:, page_size:).call
 
         assert_equal CkbTransactionsSerializer.new(ckb_dao_transactions, options.merge(params: { previews: true })).serialized_json, response.body
       end
@@ -76,7 +76,7 @@ module Api
 
         valid_get api_v1_address_dao_transaction_url(address.lock_hash)
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_dao_transactions, page:, page_size:).call
 
         assert_equal CkbTransactionsSerializer.new(ckb_dao_transactions, options.merge(params: { previews: true })).serialized_json, response.body
       end
@@ -89,7 +89,8 @@ module Api
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number block_timestamp display_inputs display_inputs_count display_outputs display_outputs_count income is_cellbase transaction_hash created_at create_timestamp).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number block_timestamp display_inputs display_inputs_count display_outputs display_outputs_count income is_cellbase transaction_hash created_at create_timestamp).sort,
+                     response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return error object when no records found by id" do
@@ -149,9 +150,9 @@ module Api
         fake_dao_deposit_transaction(30, address)
         address_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: page }
+        valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: }
         records_counter = RecordCounters::AddressDaoTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_dao_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:, records_counter:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
@@ -165,10 +166,10 @@ module Api
         fake_dao_deposit_transaction(15, address)
         address_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page_size: page_size }
+        valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page_size: }
 
         records_counter = RecordCounters::AddressDaoTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_dao_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:, records_counter:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
@@ -182,10 +183,10 @@ module Api
         fake_dao_deposit_transaction(30, address)
         address_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
+        valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page:, page_size: }
 
         records_counter = RecordCounters::AddressDaoTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_dao_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:, records_counter:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
@@ -198,10 +199,10 @@ module Api
         fake_dao_deposit_transaction(3, address)
         address_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: page, page_size: page_size }
+        valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page:, page_size: }
 
         records_counter = RecordCounters::AddressDaoTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_dao_transactions, page: page, page_size: page_size, records_counter: records_counter).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:, records_counter:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal [], json["data"]
