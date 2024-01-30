@@ -290,7 +290,7 @@ class CellOutput < ApplicationRecord
       udt = Udt.find_by(type_hash:)
       value = {
         symbol: udt.symbol,
-        name: udt.name,
+        name: udt.full_name,
         decimal: udt.decimal,
         amount: udt_amount,
       }
