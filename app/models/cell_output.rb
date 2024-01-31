@@ -2,6 +2,11 @@ class CellOutput < ApplicationRecord
   SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   MIN_SUDT_AMOUNT_BYTESIZE = 16
+  MAX_PAGINATES_PER = 100
+  DEFAULT_PAGINATES_PER = 10
+  paginates_per DEFAULT_PAGINATES_PER
+  max_paginates_per MAX_PAGINATES_PER
+
   enum status: { live: 0, dead: 1, pending: 2, rejected: 3 }
   enum cell_type: {
     normal: 0,
@@ -19,7 +24,7 @@ class CellOutput < ApplicationRecord
     spore_cell: 12,
     omiga_inscription_info: 13,
     omiga_inscription: 14,
-    xudt: 15
+    xudt: 15,
   }
 
   belongs_to :ckb_transaction
@@ -260,6 +265,34 @@ class CellOutput < ApplicationRecord
         published: true,
         display_name: udt_account.full_name,
         uan: "",
+      }
+    else
+      raise "invalid cell type"
+    end
+    CkbUtils.hash_value_to_s(value)
+  end
+
+  def omiga_inscription_info
+    return unless cell_type.in?(%w(omiga_inscription_info omiga_inscription))
+
+    case cell_type
+    when "omiga_inscription_info"
+      info = OmigaInscriptionInfo.find_by(code_hash: type_script.code_hash,
+                                          hash_type: type_script.hash_type,
+                                          args: type_script.args)
+      value = {
+        symbol: info.symbol,
+        name: info.name,
+        decimal: info.decimal,
+        amount: 0,
+      }
+    when "omiga_inscription"
+      udt = Udt.find_by(type_hash:)
+      value = {
+        symbol: udt.symbol,
+        name: udt.full_name,
+        decimal: udt.decimal,
+        amount: udt_amount,
       }
     else
       raise "invalid cell type"
