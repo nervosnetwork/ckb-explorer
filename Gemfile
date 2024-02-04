@@ -125,3 +125,5 @@ gem "kredis"
 gem "async-websocket", "~> 0.22.1", require: false
 gem "ecdsa"
 gem "jwt"
+
+gem "active_interaction", "~> 5.3"
