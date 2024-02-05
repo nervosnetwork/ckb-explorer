@@ -1118,7 +1118,8 @@ CREATE TABLE public.daily_statistics (
     average_block_time jsonb,
     nodes_distribution jsonb,
     nodes_count integer,
-    locked_capacity numeric(30,0)
+    locked_capacity numeric(30,0),
+    ckb_hodl_wave jsonb
 );
 
 
@@ -4936,6 +4937,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240107100346'),
 ('20240118103947'),
 ('20240119131328'),
-('20240205023511');
+('20240205023511'),
+('20240205024238');
 
 

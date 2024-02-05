@@ -260,9 +260,9 @@ class DailyStatistic < ApplicationRecord
       millisecond_start = range[0] * 1000
       millisecond_end = range[1] * 1000
       block_count = Block.where(
-        number: start_block_number..tip_block_number
+        number: start_block_number..tip_block_number,
       ).where(
-        block_time: (millisecond_start + 1)..millisecond_end
+        block_time: (millisecond_start + 1)..millisecond_end,
       ).count
       [range[1], block_count]
     end
@@ -271,7 +271,7 @@ class DailyStatistic < ApplicationRecord
   define_logic :epoch_time_distribution do
     max_n = 119
     ranges = [[0, 180]] + (180..(180 + max_n)).map { |n| [n, n + 1] }
-    ranges.each_with_index.map { |range, index|
+    ranges.each_with_index.map do |range, index|
       milliseconds_start = range[0] * 60 * 1000
       milliseconds_end = range[1] * 60 * 1000
       condition =
@@ -285,7 +285,7 @@ class DailyStatistic < ApplicationRecord
       epoch_count = ::EpochStatistic.where(epoch_time: condition).count
 
       [range[1], epoch_count]
-    }.compact
+    end.compact
   end
 
   define_logic :epoch_length_distribution do
@@ -295,15 +295,15 @@ class DailyStatistic < ApplicationRecord
     interval = 499
     start_epoch_number = [0, tip_epoch_number - interval].max
 
-    ranges.each_with_index.map { |range, _index|
+    ranges.each_with_index.map do |range, _index|
       epoch_count = ::EpochStatistic.where(
-        epoch_number: start_epoch_number..tip_epoch_number
+        epoch_number: start_epoch_number..tip_epoch_number,
       ).where(
-        epoch_length: (range[0] + 1)..range[1]
+        epoch_length: (range[0] + 1)..range[1],
       ).count
 
       [range[1], epoch_count]
-    }.compact
+    end.compact
   end
 
   define_logic :locked_capacity do
@@ -314,6 +314,9 @@ class DailyStatistic < ApplicationRecord
       market_data.founding_partners_locked +
       market_data.foundation_reserve_locked +
       market_data.bug_bounty_locked
+  end
+
+  define_logic :ckb_hodl_waves do
   end
 
   private
@@ -467,6 +470,7 @@ end
 #  nodes_distribution           :jsonb
 #  nodes_count                  :integer
 #  locked_capacity              :decimal(30, )
+#  ckb_hodl_wave                :jsonb
 #
 # Indexes
 #
