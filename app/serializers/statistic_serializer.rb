@@ -38,8 +38,4 @@ class StatisticSerializer
   attribute :maintenance_info, if: Proc.new { |_record, params|
     params && params[:info_name] == "maintenance_info"
   }
-
-  attribute :ckb_hodl_waves, if: Proc.new { |_record, params|
-    params && params[:info_name] == "ckb_hodl_waves"
-  }
 end

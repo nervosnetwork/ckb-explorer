@@ -1936,8 +1936,7 @@ CREATE TABLE public.statistic_infos (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     pending_transaction_fee_rates jsonb,
-    transaction_fee_rates jsonb,
-    ckb_hodl_waves jsonb
+    transaction_fee_rates jsonb
 );
 
 
@@ -4132,13 +4131,6 @@ CREATE UNIQUE INDEX index_portfolios_on_user_id_and_address_id ON public.portfol
 
 
 --
--- Name: index_referring_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_referring_cells_on_cell_output_id ON public.referring_cells USING btree (cell_output_id);
-
-
---
 -- Name: index_referring_cells_on_contract_id_and_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4943,6 +4935,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20231218082938'),
 ('20240107100346'),
 ('20240118103947'),
-('20240119131328');
+('20240119131328'),
+('20240205023511');
 
 

@@ -215,5 +215,4 @@ end
 #  updated_at                        :datetime         not null
 #  pending_transaction_fee_rates     :jsonb
 #  transaction_fee_rates             :jsonb
-#  ckb_hodl_waves                    :jsonb
 #
