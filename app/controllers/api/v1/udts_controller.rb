@@ -55,6 +55,8 @@ module Api
         raise Api::V1::Exceptions::TokenExpiredError
       rescue UdtVerification::TokenNotMatchError
         raise Api::V1::Exceptions::TokenNotMatchError
+      rescue UdtVerification::TokenNotExistError
+        raise Api::V1::Exceptions::TokenNotExistError
       end
 
       def show
