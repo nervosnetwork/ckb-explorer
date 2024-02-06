@@ -81,7 +81,7 @@ module Api
 
         assert_equal DailyStatisticSerializer.new(
           ::DailyStatistic.order(created_at_unixtimestamp: :asc).valid_indicators,
-          params: { indicator: "total_dao_deposit" }
+          params: { indicator: "total_dao_deposit" },
         ).serialized_json, response.body
       end
 
@@ -130,6 +130,21 @@ module Api
         assert_equal DailyStatisticSerializer.new(daily_statistic_data, params: { indicator: "avg_hash_rate" }).serialized_json,
                      response.body
         assert_equal 100, json.dig("data").size
+      end
+
+      test "should return ckb_hodl_wave" do
+        ckb_hodl_wave = { "over_three_years" => 19531171649.691193,
+                          "one_year_to_three_years" => 23338346194.19826,
+                          "six_months_to_one_year" => 19609620799.532352,
+                          "three_months_to_six_months" => 2236264635.3570275,
+                          "one_month_to_three_months" => 814754775.4523662,
+                          "one_week_to_one_month" => 456541010.49045384,
+                          "day_to_one_week" => 104631888.5063308,
+                          "latest_day" => 22211617.27774267,
+                          "total_supply" => 40845092357.49983 }
+        create(:daily_statistic, created_at_unixtimestamp: 1.day.ago.to_i, ckb_hodl_wave:)
+        valid_get api_v1_daily_statistic_url("ckb_hodl_wave")
+        assert_equal 1, json.dig("data").size
       end
     end
   end

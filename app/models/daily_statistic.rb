@@ -5,10 +5,11 @@ class DailyStatistic < ApplicationRecord
     transactions_count addresses_count total_dao_deposit live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate
     total_depositors_count address_balance_distribution total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count
     circulation_ratio daily_dao_withdraw nodes_count circulating_supply burnt locked_capacity treasury_amount mining_reward
-    deposit_compensation liquidity created_at_unixtimestamp
+    deposit_compensation liquidity created_at_unixtimestamp ckb_hodl_wave
   ).freeze
   MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
   GENESIS_TIMESTAMP = 1573852190812
+  TESTNET_GENESIS_TIMESTAMP = 1589276230000
 
   attr_accessor :from_scratch
 
@@ -260,9 +261,9 @@ class DailyStatistic < ApplicationRecord
       millisecond_start = range[0] * 1000
       millisecond_end = range[1] * 1000
       block_count = Block.where(
-        number: start_block_number..tip_block_number
+        number: start_block_number..tip_block_number,
       ).where(
-        block_time: (millisecond_start + 1)..millisecond_end
+        block_time: (millisecond_start + 1)..millisecond_end,
       ).count
       [range[1], block_count]
     end
@@ -271,7 +272,7 @@ class DailyStatistic < ApplicationRecord
   define_logic :epoch_time_distribution do
     max_n = 119
     ranges = [[0, 180]] + (180..(180 + max_n)).map { |n| [n, n + 1] }
-    ranges.each_with_index.map { |range, index|
+    ranges.each_with_index.map do |range, index|
       milliseconds_start = range[0] * 60 * 1000
       milliseconds_end = range[1] * 60 * 1000
       condition =
@@ -285,7 +286,7 @@ class DailyStatistic < ApplicationRecord
       epoch_count = ::EpochStatistic.where(epoch_time: condition).count
 
       [range[1], epoch_count]
-    }.compact
+    end.compact
   end
 
   define_logic :epoch_length_distribution do
@@ -295,15 +296,15 @@ class DailyStatistic < ApplicationRecord
     interval = 499
     start_epoch_number = [0, tip_epoch_number - interval].max
 
-    ranges.each_with_index.map { |range, _index|
+    ranges.each_with_index.map do |range, _index|
       epoch_count = ::EpochStatistic.where(
-        epoch_number: start_epoch_number..tip_epoch_number
+        epoch_number: start_epoch_number..tip_epoch_number,
       ).where(
-        epoch_length: (range[0] + 1)..range[1]
+        epoch_length: (range[0] + 1)..range[1],
       ).count
 
       [range[1], epoch_count]
-    }.compact
+    end.compact
   end
 
   define_logic :locked_capacity do
@@ -314,6 +315,90 @@ class DailyStatistic < ApplicationRecord
       market_data.founding_partners_locked +
       market_data.foundation_reserve_locked +
       market_data.bug_bounty_locked
+  end
+
+  define_logic :ckb_hodl_wave do
+    over_three_years =
+      if time_range_exceeded?(3.years)
+        CellOutput.live.generated_before(to_be_counted_date.years_ago(3).to_i * 1000).sum(:capacity) +
+          CellOutput.dead.generated_before(to_be_counted_date.years_ago(3).to_i * 1000).consumed_after(to_be_counted_date.years_ago(3).to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    one_year_to_three_years =
+      if time_range_exceeded?(1.year)
+        CellOutput.live.generated_between(
+          to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000
+        ).consumed_after(to_be_counted_date.years_ago(1).to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    six_months_to_one_year =
+      if time_range_exceeded?(6.months)
+        CellOutput.live.generated_between(
+          to_be_counted_date.years_ago(1).to_i * 1000, to_be_counted_date.months_ago(6).to_i * 1000
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.years_ago(1).to_i * 1000, to_be_counted_date.months_ago(6).to_i * 1000
+        ).consumed_after(to_be_counted_date.months_ago(6).to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    three_months_to_six_months =
+      if time_range_exceeded?(3.months)
+        CellOutput.live.generated_between(
+          to_be_counted_date.months_ago(6).to_i * 1000, to_be_counted_date.months_ago(3).to_i * 1000
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.months_ago(6).to_i * 1000, to_be_counted_date.months_ago(3).to_i * 1000
+        ).consumed_after(to_be_counted_date.months_ago(3).to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    one_month_to_three_months =
+      if time_range_exceeded?(1.month)
+        CellOutput.live.generated_between(
+          to_be_counted_date.months_ago(3).to_i * 1000, to_be_counted_date.months_ago(1).to_i * 1000
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.months_ago(3).to_i * 1000, to_be_counted_date.months_ago(1).to_i * 1000
+        ).consumed_after(to_be_counted_date.months_ago(1).to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    one_week_to_one_month = CellOutput.live.generated_between(
+      to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000
+    ).sum(:capacity) + CellOutput.dead.generated_between(
+      to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000
+    ).consumed_after(to_be_counted_date.weeks_ago(1).to_i * 1000).sum(:capacity)
+
+    day_to_one_week = CellOutput.live.generated_between(
+      to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000
+    ).sum(:capacity) + CellOutput.dead.generated_between(
+      to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000
+    ).consumed_after(to_be_counted_date.days_ago(1).to_i * 1000).sum(:capacity)
+
+    latest_day = CellOutput.live.generated_between(
+      to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000
+    ).sum(:capacity) + CellOutput.dead.generated_between(
+      to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000
+    ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+
+    {
+      over_three_years:,
+      one_year_to_three_years:,
+      six_months_to_one_year:,
+      three_months_to_six_months:,
+      one_month_to_three_months:,
+      one_week_to_one_month:,
+      day_to_one_week:,
+      latest_day:,
+      total_supply:,
+    }.transform_values { |value| (value / 10**8).truncate(8) }
   end
 
   private
@@ -337,6 +422,14 @@ class DailyStatistic < ApplicationRecord
       else
         blocks_in_current_period.recent.first || Block.recent.first
       end
+  end
+
+  def time_range_exceeded?(time_range)
+    if CkbSync::Api.instance.mode == CKB::MODE::MAINNET
+      GENESIS_TIMESTAMP + time_range.to_i * 1000 <= started_at
+    else
+      TESTNET_GENESIS_TIMESTAMP + time_range.to_i * 1000 <= started_at
+    end
   end
 
   def phase1_dao_interests
@@ -467,6 +560,7 @@ end
 #  nodes_distribution           :jsonb
 #  nodes_count                  :integer
 #  locked_capacity              :decimal(30, )
+#  ckb_hodl_wave                :jsonb
 #
 # Indexes
 #
