@@ -189,13 +189,13 @@ module Api
 
       class UdtInfoInvalidError < Error
         def initialize(detail)
-          super code: 1030, status: 400, title: "UDT info parameters invalid", detail: detail, href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+          super code: 1030, status: 400, title: "UDT info parameters invalid", detail:, href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
         end
       end
 
       class UdtVerificationInvalidError < Error
         def initialize(detail)
-          super code: 1031, status: 400, title: "UDT verification invalid", detail: detail, href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+          super code: 1031, status: 400, title: "UDT verification invalid", detail:, href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
         end
       end
 
@@ -226,6 +226,12 @@ module Api
       class TokenSentTooFrequentlyError < Error
         def initialize
           super code: 1036, status: 400, title: "Token sent too frequently", detail: "", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
+        end
+      end
+
+      class TokenNotExistError < Error
+        def initialize
+          super code: 1037, status: 400, title: "Token is required when you update udt info", detail: "", href: "https://nervosnetwork.github.io/ckb-explorer/public/api_doc.html"
         end
       end
     end

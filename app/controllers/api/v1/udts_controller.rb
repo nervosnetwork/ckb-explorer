@@ -28,7 +28,6 @@ module Api
           symbol: params[:symbol],
           full_name: params[:full_name],
           decimal: params[:decimal],
-          total_amount: params[:total_amount],
           description: params[:description],
           operator_website: params[:operator_website],
           icon_file: params[:icon_file],
@@ -56,6 +55,8 @@ module Api
         raise Api::V1::Exceptions::TokenExpiredError
       rescue UdtVerification::TokenNotMatchError
         raise Api::V1::Exceptions::TokenNotMatchError
+      rescue UdtVerification::TokenNotExistError
+        raise Api::V1::Exceptions::TokenNotExistError
       end
 
       def show

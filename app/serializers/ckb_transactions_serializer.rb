@@ -16,11 +16,11 @@ class CkbTransactionsSerializer
   end
 
   attribute :display_inputs_count do |object|
-    object.display_inputs.count
+    object.is_cellbase ? 1 : object.cell_inputs.count
   end
 
   attribute :display_outputs_count do |object|
-    object.display_outputs.count
+    object.outputs.count
   end
 
   attribute :display_inputs do |object, params|

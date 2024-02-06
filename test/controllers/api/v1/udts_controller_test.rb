@@ -449,7 +449,6 @@ module Api
           symbol: "GWK",
           full_name: "GodwokenToken on testnet_v1",
           decimal: "8",
-          total_amount: "100000000000",
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
@@ -463,7 +462,6 @@ module Api
         assert_equal udt.symbol, "GWK"
         assert_equal udt.full_name, "GodwokenToken on testnet_v1"
         assert_equal udt.decimal, 8
-        assert_equal udt.total_amount, 100000000000
         assert_equal udt.description,
                      "The sUDT_ERC20_Proxy of Godwoken Test Token."
         assert_equal udt.operator_website, "https://udt.coin"
@@ -500,7 +498,6 @@ module Api
           symbol: "GWK",
           full_name: "GodwokenToken on testnet_v1",
           decimal: "8",
-          total_amount: "100000000000",
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
@@ -521,7 +518,6 @@ module Api
           symbol: "GWK",
           full_name: "GodwokenToken on testnet_v1",
           decimal: "8",
-          total_amount: "100000000",
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
@@ -553,7 +549,6 @@ module Api
         valid_put api_v1_udt_url("#{udt.type_hash}"), params: {
           symbol: "GWK",
           full_name: "GodwokenToken on testnet_v1",
-          total_amount: "100000000",
           token: "123456",
         }
 
@@ -568,7 +563,6 @@ module Api
         valid_put api_v1_udt_url("#{udt.type_hash}"), params: {
           symbol: "GWK",
           full_name: "GodwokenToken on testnet_v1",
-          total_amount: "100000000",
           token: "123",
         }
 
@@ -583,7 +577,6 @@ module Api
         valid_put api_v1_udt_url("#{udt.type_hash}"), params: {
           symbol: "GWK",
           full_name: "GodwokenToken on testnet_v1",
-          total_amount: "100000000",
           token: "123456",
           email: "abcd@sudt.com",
         }
@@ -593,6 +586,19 @@ module Api
         assert_equal "GWK", udt.reload.symbol
         assert_equal true, udt.reload.published
         assert_equal "abc@sudt.com", udt.reload.email
+      end
+
+      test "should raise token not exist error when update udt but token not passed" do
+        udt = create(:udt, email: "abc@sudt.com")
+        create(:udt_verification, udt:)
+        valid_put api_v1_udt_url("#{udt.type_hash}"), params: {
+          symbol: "GWK",
+          full_name: "GodwokenToken on testnet_v1",
+        }
+
+        assert_equal 400, response.status
+        assert_equal [{ "title" => "Token is required when you update udt info", "detail" => "", "code" => 1037, "status" => 400 }],
+                     JSON.parse(response.body)
       end
     end
   end
