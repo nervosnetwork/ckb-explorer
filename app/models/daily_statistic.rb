@@ -5,10 +5,11 @@ class DailyStatistic < ApplicationRecord
     transactions_count addresses_count total_dao_deposit live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate
     total_depositors_count address_balance_distribution total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count
     circulation_ratio daily_dao_withdraw nodes_count circulating_supply burnt locked_capacity treasury_amount mining_reward
-    deposit_compensation liquidity created_at_unixtimestamp
+    deposit_compensation liquidity created_at_unixtimestamp ckb_hodl_wave
   ).freeze
   MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
   GENESIS_TIMESTAMP = 1573852190812
+  TESTNET_GENESIS_TIMESTAMP = 1589276230000
 
   attr_accessor :from_scratch
 
@@ -316,7 +317,88 @@ class DailyStatistic < ApplicationRecord
       market_data.bug_bounty_locked
   end
 
-  define_logic :ckb_hodl_waves do
+  define_logic :ckb_hodl_wave do
+    over_three_years =
+      if time_range_execueed?(3.years)
+        CellOutput.live.generated_before(to_be_counted_date.years_ago(3).to_i * 1000).sum(:capacity) +
+          CellOutput.dead.generated_before(to_be_counted_date.years_ago(3).to_i * 1000).consumed_after(to_be_counted_date.years_ago(3).to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    one_year_to_three_years =
+      if time_range_execueed?(1.year)
+        CellOutput.live.generated_between(
+          to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000
+        ).consumed_after(to_be_counted_date.years_ago(1).to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    six_months_to_one_year =
+      if time_range_exceeded?(6.months)
+        CellOutput.live.generated_between(
+          to_be_counted_date.years_ago(1).to_i * 1000, to_be_counted_date.months_ago(6).to_i * 1000
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.years_ago(1).to_i * 1000, to_be_counted_date.months_ago(6).to_i * 1000
+        ).consumed_after(to_be_counted_date.months_ago(6).to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    three_months_to_six_months =
+      if time_range_exceeded?(3.months)
+        CellOutput.live.generated_between(
+          to_be_counted_date.months_ago(6).to_i * 1000, to_be_counted_date.months_ago(3).to_i * 1000
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.months_ago(6).to_i * 1000, to_be_counted_date.months_ago(3).to_i * 1000
+        ).consumed_after(to_be_counted_date.months_ago(3).to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    one_month_to_three_months =
+      if time_range_exceeded?(1.month)
+        CellOutput.live.generated_between(
+          to_be_counted_date.months_ago(3).to_i * 1000, to_be_counted_date.months_ago(1).to_i * 1000
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.months_ago(3).to_i * 1000, to_be_counted_date.months_ago(1).to_i * 1000
+        ).consumed_after(to_be_counted_date.months_ago(1).to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    one_week_to_one_month = CellOutput.live.generated_between(
+      to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000
+    ).sum(:capacity) + CellOutput.dead.generated_between(
+      to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000
+    ).consumed_after(to_be_counted_date.weeks_ago(1).to_i * 1000).sum(:capacity)
+
+    day_to_one_week = CellOutput.live.generated_between(
+      to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000
+    ).sum(:capacity) + CellOutput.dead.generated_between(
+      to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000
+    ).consumed_after(to_be_counted_date.days_ago(1).to_i * 1000).sum(:capacity)
+
+    latest_day = CellOutput.live.generated_between(
+      to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000
+    ).sum(:capacity) + CellOutput.dead.generated_between(
+      to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000
+    ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+
+    {
+      over_three_years:,
+      one_year_to_three_years:,
+      six_months_to_one_year:,
+      three_months_to_six_months:,
+      one_month_to_three_months:,
+      one_week_to_one_month:,
+      day_to_one_week:,
+      latest_day:,
+      total_supply:,
+    }.transform_values { |value| (value / 10**8).truncate(8) }
   end
 
   private
@@ -340,6 +422,14 @@ class DailyStatistic < ApplicationRecord
       else
         blocks_in_current_period.recent.first || Block.recent.first
       end
+  end
+
+  def time_range_exceeded?(time_range)
+    if CkbSync::Api.instance.mode == CKB::MODE::MAINNET
+      GENESIS_TIMESTAMP + time_range.to_i * 1000 <= started_at
+    else
+      TESTNET_GENESIS_TIMESTAMP + time_range.to_i * 1000 <= started_at
+    end
   end
 
   def phase1_dao_interests

@@ -39,10 +39,6 @@ s.cron "0 8 * * *" do
   call_worker Charts::DailyStatistic
 end
 
-s.cron "10 8 * * *" do
-  call_worker Charts::CkbHodlWavesStatistic
-end
-
 s.every "10m", overlap: false do
   call_worker Charts::BlockStatistic
 end

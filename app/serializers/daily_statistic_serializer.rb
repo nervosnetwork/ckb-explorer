@@ -124,4 +124,8 @@ class DailyStatisticSerializer
   } do |object|
     object.liquidity.to_s
   end
+
+  attribute :ckb_hodl_wave, if: Proc.new { |_record, params|
+    params.present? && params[:indicator].include?("ckb_hodl_wave")
+  }
 end
