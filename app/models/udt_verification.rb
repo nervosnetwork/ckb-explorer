@@ -5,20 +5,22 @@ class UdtVerification < ApplicationRecord
   class TokenExpiredError < StandardError; end
   class TokenNotMatchError < StandardError; end
   class TokenSentTooFrequentlyError < StandardError; end
+  class TokenNotExistError < StandardError; end
 
   belongs_to :udt
 
   def refresh_token!(ip)
-    raise TokenSentTooFrequentlyError if sent_at.present? && self.sent_at + SENT_FREQUENCY_MINUTES.minutes > Time.now
+    raise TokenSentTooFrequentlyError if sent_at.present? && sent_at + SENT_FREQUENCY_MINUTES.minutes > Time.now
 
     self.token = rand(999999).to_s.rjust(6, "0")
     self.sent_at = Time.now
     self.last_ip = ip
-    self.save!
+    save!
   end
 
   def validate_token!(token_params)
-    raise TokenExpiredError if self.sent_at + KEEP_ALIVE_MINUTES.minutes < Time.now
+    raise TokenNotExistError if token_params.blank?
+    raise TokenExpiredError if sent_at + KEEP_ALIVE_MINUTES.minutes < Time.now
     raise TokenNotMatchError if token != token_params.to_i
   end
 end

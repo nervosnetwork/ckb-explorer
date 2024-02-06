@@ -587,6 +587,19 @@ module Api
         assert_equal true, udt.reload.published
         assert_equal "abc@sudt.com", udt.reload.email
       end
+
+      test "should raise token not exist error when update udt but token not passed" do
+        udt = create(:udt, email: "abc@sudt.com")
+        create(:udt_verification, udt:)
+        valid_put api_v1_udt_url("#{udt.type_hash}"), params: {
+          symbol: "GWK",
+          full_name: "GodwokenToken on testnet_v1",
+        }
+
+        assert_equal 400, response.status
+        assert_equal [{ "title" => "Token is required when you update udt info", "detail" => "", "code" => 1037, "status" => 400 }],
+                     JSON.parse(response.body)
+      end
     end
   end
 end
