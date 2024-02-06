@@ -319,7 +319,7 @@ class DailyStatistic < ApplicationRecord
 
   define_logic :ckb_hodl_wave do
     over_three_years =
-      if time_range_execueed?(3.years)
+      if time_range_exceeded?(3.years)
         CellOutput.live.generated_before(to_be_counted_date.years_ago(3).to_i * 1000).sum(:capacity) +
           CellOutput.dead.generated_before(to_be_counted_date.years_ago(3).to_i * 1000).consumed_after(to_be_counted_date.years_ago(3).to_i * 1000).sum(:capacity)
       else
@@ -327,7 +327,7 @@ class DailyStatistic < ApplicationRecord
       end
 
     one_year_to_three_years =
-      if time_range_execueed?(1.year)
+      if time_range_exceeded?(1.year)
         CellOutput.live.generated_between(
           to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000
         ).sum(:capacity) + CellOutput.dead.generated_between(
