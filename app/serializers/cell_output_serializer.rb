@@ -3,6 +3,10 @@ class CellOutputSerializer
 
   attributes :cell_type, :tx_hash, :cell_index, :type_hash, :data
 
+  attribute :block_number do |object|
+    object.block.number.to_s
+  end
+
   attribute :capacity do |object|
     object.capacity.to_s
   end
@@ -25,18 +29,20 @@ class CellOutputSerializer
 
   attribute :extra_info do |object|
     case object.cell_type
+    when "normal"
+      { type: "ckb", capacity: object.capacity.to_s }
     when "udt"
-      object.udt_info
+      object.udt_info.merge!(type: "udt")
     when "cota_registry"
-      object.cota_registry_info
+      object.cota_registry_info.merge!(type: "cota")
     when "cota_regular"
-      object.cota_regular_info
+      object.cota_regular_info.merge!(type: "cota")
     when "m_nft_issuer", "m_nft_class", "m_nft_token"
-      object.m_nft_info
+      object.m_nft_info.merge!(type: "m_nft")
     when "nrc_721_token", "nrc_721_factory"
-      object.nrc_721_nft_info
+      object.nrc_721_nft_info.merge!(type: "nrc_721")
     when "omiga_inscription_info", "omiga_inscription"
-      object.omiga_inscription_info
+      object.omiga_inscription_info.merge!(type: "omiga_inscription")
     end
   end
 end

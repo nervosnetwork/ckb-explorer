@@ -250,7 +250,7 @@ class CellOutput < ApplicationRecord
         type_hash:,
         published: factory_cell&.verified,
         display_name: factory_cell&.name,
-        nan: "",
+        uan: "",
       }
     when "nrc_721_token"
       udt = Udt.find_by(type_hash:)
