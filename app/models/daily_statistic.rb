@@ -398,7 +398,7 @@ class DailyStatistic < ApplicationRecord
       day_to_one_week:,
       latest_day:,
       total_supply:,
-    }.transform_values { |value| (value / 10**8).truncate(8) }
+    }.transform_values { |value| (value.to_f / 10**8).truncate(8) }
   end
 
   private
