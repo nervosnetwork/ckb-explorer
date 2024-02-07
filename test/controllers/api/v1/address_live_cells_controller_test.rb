@@ -55,6 +55,7 @@ module Api
         valid_get api_v1_address_live_cell_url(address.address_hash)
         assert_equal ({ "cell_type" => "omiga_inscription_info",
                         "tx_hash" => transaction.tx_hash,
+                        "block_number" => block.number.to_s,
                         "cell_index" => 0,
                         "type_hash" => info.type_hash,
                         "data" => "0x0814434b42204669737420496e736372697074696f6e04434b4249a69f54bf339dd121febe64cb0be3a2cf366a8b13ec1a5ae4bebdccb9039c7efa0040075af0750700000000000000000000e8764817000000000000000000000002",
@@ -65,7 +66,7 @@ module Api
                                            "hash_type" => "type" },
                         "lock_script" => { "args" => address_lock.args, "code_hash" => address_lock.code_hash,
                                            "hash_type" => "type" },
-                        "extra_info" => { "symbol" => "CKBI", "name" => "CKB Fist Inscription", "decimal" => "8.0", "amount" => "0" } }),
+                        "extra_info" => { "type" => "omiga_inscription", "symbol" => "CKBI", "name" => "CKB Fist Inscription", "decimal" => "8.0", "amount" => "0" } }),
                      json["data"].first["attributes"]
       end
 

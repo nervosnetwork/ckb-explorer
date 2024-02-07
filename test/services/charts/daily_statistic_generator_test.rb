@@ -444,7 +444,6 @@ module Charts
         end
       total_supply_temp = tip_parse_dao.c_i - MarketData::BURN_QUOTA - treasury_amount
       total_supply = Charts::DailyStatisticGenerator.new(@datetime).call.total_supply
-      binding.pry
       assert_equal total_supply_temp, total_supply
     end
 
