@@ -321,7 +321,7 @@ class DailyStatistic < ApplicationRecord
     over_three_years =
       if time_range_exceeded?(3.years)
         CellOutput.live.generated_before(to_be_counted_date.years_ago(3).to_i * 1000).sum(:capacity) +
-          CellOutput.dead.generated_before(to_be_counted_date.years_ago(3).to_i * 1000).consumed_after(to_be_counted_date.years_ago(3).to_i * 1000).sum(:capacity)
+          CellOutput.dead.generated_before(to_be_counted_date.years_ago(3).to_i * 1000).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
       else
         0
       end
@@ -332,7 +332,7 @@ class DailyStatistic < ApplicationRecord
           to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000
         ).sum(:capacity) + CellOutput.dead.generated_between(
           to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000
-        ).consumed_after(to_be_counted_date.years_ago(1).to_i * 1000).sum(:capacity)
+        ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
       else
         0
       end
@@ -343,7 +343,7 @@ class DailyStatistic < ApplicationRecord
           to_be_counted_date.years_ago(1).to_i * 1000, to_be_counted_date.months_ago(6).to_i * 1000
         ).sum(:capacity) + CellOutput.dead.generated_between(
           to_be_counted_date.years_ago(1).to_i * 1000, to_be_counted_date.months_ago(6).to_i * 1000
-        ).consumed_after(to_be_counted_date.months_ago(6).to_i * 1000).sum(:capacity)
+        ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
       else
         0
       end
@@ -354,7 +354,7 @@ class DailyStatistic < ApplicationRecord
           to_be_counted_date.months_ago(6).to_i * 1000, to_be_counted_date.months_ago(3).to_i * 1000
         ).sum(:capacity) + CellOutput.dead.generated_between(
           to_be_counted_date.months_ago(6).to_i * 1000, to_be_counted_date.months_ago(3).to_i * 1000
-        ).consumed_after(to_be_counted_date.months_ago(3).to_i * 1000).sum(:capacity)
+        ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
       else
         0
       end
@@ -365,7 +365,7 @@ class DailyStatistic < ApplicationRecord
           to_be_counted_date.months_ago(3).to_i * 1000, to_be_counted_date.months_ago(1).to_i * 1000
         ).sum(:capacity) + CellOutput.dead.generated_between(
           to_be_counted_date.months_ago(3).to_i * 1000, to_be_counted_date.months_ago(1).to_i * 1000
-        ).consumed_after(to_be_counted_date.months_ago(1).to_i * 1000).sum(:capacity)
+        ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
       else
         0
       end
@@ -374,13 +374,13 @@ class DailyStatistic < ApplicationRecord
       to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000
     ).sum(:capacity) + CellOutput.dead.generated_between(
       to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000
-    ).consumed_after(to_be_counted_date.weeks_ago(1).to_i * 1000).sum(:capacity)
+    ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
 
     day_to_one_week = CellOutput.live.generated_between(
       to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000
     ).sum(:capacity) + CellOutput.dead.generated_between(
       to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000
-    ).consumed_after(to_be_counted_date.days_ago(1).to_i * 1000).sum(:capacity)
+    ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
 
     latest_day = CellOutput.live.generated_between(
       to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000
