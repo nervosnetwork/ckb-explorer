@@ -96,6 +96,12 @@ class ImportTransactionJob < ApplicationJob
         tx_hash:,
         cell_index: index,
       )
+
+      # after the cell is created, create a datum
+      if output_data.present? && output_data != "0x"
+        (cell.cell_datum || cell.build_cell_datum).update(data: [output_data[2..]].pack("H*"))
+      end
+
       cell.lock_script = lock
       cell.type_script = t
       cell.update!(
@@ -105,10 +111,6 @@ class ImportTransactionJob < ApplicationJob
         status: "pending",
       )
       puts "output cell created tx_hash: #{tx_hash}, index: #{index}, cell_id: #{cell.id}"
-      # after the cell is created, create a datum
-      if output_data.present? && output_data != "0x"
-        (cell.cell_datum || cell.build_cell_datum).update(data: [output_data[2..]].pack("H*"))
-      end
 
       process_output cell
       process_deployed_cell(cell.lock_script)
