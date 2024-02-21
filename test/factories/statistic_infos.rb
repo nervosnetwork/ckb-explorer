@@ -8,6 +8,5 @@ FactoryBot.define do
     miner_ranking { "" }
     blockchain_info { "MyString" }
     last_n_days_transaction_fee_rates { "" }
-    ckb_hodl_waves { "" }
   end
 end

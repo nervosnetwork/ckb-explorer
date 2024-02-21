@@ -59,10 +59,10 @@ module Charts
                                        dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
       create(:address,
              address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
-      tx = create(:ckb_transaction, block: block,
+      tx = create(:ckb_transaction, block:,
                                     block_timestamp: block.timestamp)
       create(:cell_output, cell_type: "nervos_dao_deposit",
-                           ckb_transaction: tx, block: block, capacity: 10**8 * 1000, block_timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, occupied_capacity: 6100000000, dao: block.dao)
+                           ckb_transaction: tx, block:, capacity: 10**8 * 1000, block_timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, occupied_capacity: 6100000000, dao: block.dao)
       CkbSync::Api.any_instance.stubs(:get_tip_header).returns(
         CKB::Types::BlockHeader.new(
           compact_target: "0x1a33cadd",
@@ -76,8 +76,8 @@ module Charts
           extra_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
           version: "0x0",
           epoch: "0x70803b9000045",
-          dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007"
-        )
+          dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007",
+        ),
       )
       count = ::DailyStatistic.count
       Charts::DailyStatisticGenerator.new(@datetime).call
@@ -234,7 +234,7 @@ module Charts
         create(:cell_output, :with_full_transaction,
                block_timestamp: @datetime.to_i * 1000, block: @block),
         create(:cell_output, :with_full_transaction,
-               block_timestamp: @datetime.to_i * 1000, block: @block)
+               block_timestamp: @datetime.to_i * 1000, block: @block),
       ]
       CellOutput.where(id: cells.map(&:id)).update_all(consumed_block_timestamp: (@datetime.to_i + 10) * 1000)
       is_from_scratch = true
@@ -412,24 +412,24 @@ module Charts
       max_n = 119
       ranges = [[0, 180]] + (180..(180 + max_n)).map { |n| [n, n + 1] }
       temp_epoch_time_distribution =
-        ranges.each_with_index.map { |range, index|
+        ranges.each_with_index.map do |range, index|
           milliseconds_start = range[0] * 60 * 1000
           milliseconds_end = range[1] * 60 * 1000
-          if index.zero?
-            epoch_count = ::EpochStatistic.where(
-              "epoch_time > 0 and epoch_time <= ?", milliseconds_end
-            ).count
-          elsif index == max_n + 1
-            epoch_count = ::EpochStatistic.where("epoch_time > ?",
+          epoch_count = if index.zero?
+                          ::EpochStatistic.where(
+                            "epoch_time > 0 and epoch_time <= ?", milliseconds_end
+                          ).count
+                        elsif index == max_n + 1
+                          ::EpochStatistic.where("epoch_time > ?",
                                                  milliseconds_start).count
-          else
-            epoch_count = ::EpochStatistic.where(
-              "epoch_time > ? and epoch_time <= ?", milliseconds_start, milliseconds_end
-            ).count
-          end
+                        else
+                          ::EpochStatistic.where(
+                            "epoch_time > ? and epoch_time <= ?", milliseconds_start, milliseconds_end
+                          ).count
+                        end
 
           [range[1], epoch_count]
-        }.compact
+        end.compact
       epoch_time_distribution = Charts::DailyStatisticGenerator.new(@datetime).call.epoch_time_distribution
       assert_equal temp_epoch_time_distribution, epoch_time_distribution
     end
@@ -454,13 +454,13 @@ module Charts
       interval = 499
       start_epoch_number = [0, tip_epoch_number - interval].max
 
-      temp_epoch_length_distribution = ranges.each_with_index.map { |range, _index|
+      temp_epoch_length_distribution = ranges.each_with_index.map do |range, _index|
         epoch_count = ::EpochStatistic.where("epoch_number >= ? and epoch_number <= ?", start_epoch_number, tip_epoch_number).where(
           "epoch_length > ? and epoch_length <= ?", range[0], range[1]
         ).count
 
         [range[1], epoch_count]
-      }.compact
+      end.compact
       epoch_length_distribution = Charts::DailyStatisticGenerator.new.call.epoch_length_distribution
       assert_equal temp_epoch_length_distribution, epoch_length_distribution
     end

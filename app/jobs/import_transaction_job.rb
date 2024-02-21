@@ -14,8 +14,7 @@ class ImportTransactionJob < ApplicationJob
       CkbTransaction.write_raw_hash_cache tx_hash["hash"], tx_hash
       tx_hash = tx_hash["hash"]
     end
-    # raw = CkbTransaction.fetch_raw_hash(tx_hash)
-    @tx = CkbTransaction.unscoped.create_with(tx_status: :pending).find_or_create_by! tx_hash: tx_hash
+    @tx = CkbTransaction.unscoped.create_with(tx_status: :pending).find_or_create_by!(tx_hash:)
     return unless tx.tx_pending?
 
     Rails.logger.info "Importing #{tx.tx_hash}"
@@ -49,23 +48,23 @@ class ImportTransactionJob < ApplicationJob
     sdk_tx.inputs.each_with_index do |input, index|
       if input.previous_output.tx_hash == CellOutput::SYSTEM_TX_HASH
         tx.cell_inputs.create_with(
-          index: index
+          index:,
         ).create_or_find_by(
           previous_cell_output_id: nil,
-          from_cell_base: true
+          from_cell_base: true,
         )
       else
         cell = CellOutput.find_by(
           tx_hash: input.previous_output.tx_hash,
-          cell_index: input.previous_output.index
+          cell_index: input.previous_output.index,
         )
 
         if cell
           process_input tx.cell_inputs.create_with(
-            previous_cell_output_id: cell.id
+            previous_cell_output_id: cell.id,
           ).create_or_find_by!(
             ckb_transaction_id: txid,
-            index: index
+            index:,
           )
           process_deployed_cell(cell.lock_script)
           process_deployed_cell(cell.type_script) if cell.type_script
@@ -74,7 +73,8 @@ class ImportTransactionJob < ApplicationJob
           tx.cell_inputs.create_or_find_by!(
             previous_tx_hash: input.previous_output.tx_hash,
             previous_index: input.previous_output.index,
-            since: input.since
+            since: input.since,
+            index:,
           )
           puts "Missing input #{input.previous_output.to_h} in #{tx_hash}"
           # cannot find corresponding cell output,
@@ -93,22 +93,24 @@ class ImportTransactionJob < ApplicationJob
       lock = LockScript.process(output.lock)
       t = TypeScript.process(output.type) if output.type
       cell = tx.cell_outputs.find_or_create_by(
-        tx_hash: tx_hash,
-        cell_index: index
+        tx_hash:,
+        cell_index: index,
       )
+
+      # after the cell is created, create a datum
+      if output_data.present? && output_data != "0x"
+        (cell.cell_datum || cell.build_cell_datum).update(data: [output_data[2..]].pack("H*"))
+      end
+
       cell.lock_script = lock
       cell.type_script = t
       cell.update!(
         address_id: lock.address_id,
         capacity: output.capacity,
         occupied_capacity: cell.calculate_min_capacity,
-        status: "pending"
+        status: "pending",
       )
       puts "output cell created tx_hash: #{tx_hash}, index: #{index}, cell_id: #{cell.id}"
-      # after the cell is created, create a datum
-      if output_data.present? && output_data != "0x"
-        (cell.cell_datum || cell.build_cell_datum).update(data: [output_data[2..]].pack("H*"))
-      end
 
       process_output cell
       process_deployed_cell(cell.lock_script)
@@ -139,7 +141,7 @@ class ImportTransactionJob < ApplicationJob
       ckb_transaction_id: ckb_transaction.id,
       # check if we already known the relationship between the contract cell and contract
       contract_id: DeployedCell.cell_output_id_to_contract_id(cell_output.id),
-      implicit: cell_dep["implicit"] || false
+      implicit: cell_dep["implicit"] || false,
     }
 
     # we don't know how the cells in transaction may refer to the contract cell
@@ -165,13 +167,13 @@ class ImportTransactionJob < ApplicationJob
     if cell_dependencies_attrs.present?
       CellDependency.upsert_all cell_dependencies_attrs.uniq { |a|
                                   a[:contract_cell_id]
-                                }, unique_by: [:ckb_transaction_id, :contract_cell_id]
+                                }, unique_by: %i[ckb_transaction_id contract_cell_id]
     end
     DeployedCell.upsert_all deployed_cells_attrs, unique_by: [:cell_output_id] if deployed_cells_attrs.present?
     deployed_cells_attrs.each do |deployed_cell_attr|
       DeployedCell.write_cell_output_id_to_contract_id(
         deployed_cell_attr[:cell_output_id],
-        deployed_cell_attr[:contract_id]
+        deployed_cell_attr[:contract_id],
       )
     end
   end
@@ -184,10 +186,10 @@ class ImportTransactionJob < ApplicationJob
 
     dep =
       case lock_script_or_type_script.hash_type
-           when "data"
-             by_data_hash[lock_script_or_type_script.code_hash]
-           when "type"
-             by_type_hash[lock_script_or_type_script.code_hash]
+      when "data"
+        by_data_hash[lock_script_or_type_script.code_hash]
+      when "type"
+        by_type_hash[lock_script_or_type_script.code_hash]
       end
     return unless dep
 
@@ -204,7 +206,7 @@ class ImportTransactionJob < ApplicationJob
 
       deployed_cells_attrs << {
         contract_id: contract.id,
-        cell_output_id: dep[:contract_cell_id]
+        cell_output_id: dep[:contract_cell_id],
       }
     end
   end
@@ -229,7 +231,7 @@ class ImportTransactionJob < ApplicationJob
         dep_type: cell_dep["dep_type"],
         ckb_transaction_id: ckb_transaction.id,
         contract_id: nil,
-        implicit: false
+        implicit: false,
       }
       binary_data = mid_cell.binary_data
       # binary_data = [hex_data[2..-1]].pack("H*")
@@ -244,10 +246,10 @@ class ImportTransactionJob < ApplicationJob
         parse_code_dep(
           "out_point" => {
             "tx_hash" => "0x#{tx_hash}",
-            "index" => cell_index
+            "index" => cell_index,
           },
           "dep_type" => "code",
-          "implicit" => true # this is an implicit dependency
+          "implicit" => true, # this is an implicit dependency
         )
       end
     end
@@ -258,8 +260,8 @@ class ImportTransactionJob < ApplicationJob
     sdk_tx.header_deps.each_with_index do |header_dep, index|
       header_deps_attrs << {
         ckb_transaction_id: txid,
-        index: index,
-        header_hash: header_dep
+        index:,
+        header_hash: header_dep,
       }
     end
     if header_deps_attrs.present?
@@ -274,7 +276,7 @@ class ImportTransactionJob < ApplicationJob
       witnesses_attrs << {
         ckb_transaction_id: txid,
         index: i,
-        data: w
+        data: w,
       }
     end
     if witnesses_attrs.present?
@@ -291,7 +293,7 @@ class ImportTransactionJob < ApplicationJob
     changes = address_changes[address_id] ||=
       {
         balance: 0,
-        balance_occupied: 0
+        balance_occupied: 0,
       }
     changes[:balance] -= cell_output.capacity
     changes[:balance_occupied] -= cell_output.occupied_capacity if cell_output.occupied_capacity
@@ -304,7 +306,7 @@ class ImportTransactionJob < ApplicationJob
     changes = address_changes[address_id] ||=
       {
         balance: 0,
-        balance_occupied: 0
+        balance_occupied: 0,
       }
     changes[:balance] += cell_output.capacity
     changes[:balance_occupied] += cell_output.occupied_capacity
@@ -315,19 +317,19 @@ class ImportTransactionJob < ApplicationJob
       attrs =
         address_changes.map do |address_id, c|
           {
-            address_id: address_id,
+            address_id:,
             ckb_transaction_id: txid,
-            changes: c
+            changes: c,
           }
         end
       TransactionAddressChange.upsert_all(
         attrs,
-        unique_by: [:address_id, :ckb_transaction_id],
+        unique_by: %i[address_id ckb_transaction_id],
         on_duplicate: Arel.sql(
-          "changes = transaction_address_changes.changes || excluded.changes"
-        )
+          "changes = transaction_address_changes.changes || excluded.changes",
+        ),
       )
-      AccountBook.upsert_all address_changes.keys.map{|address_id| {ckb_transaction_id: tx.id, address_id:}}
+      AccountBook.upsert_all address_changes.keys.map { |address_id| { ckb_transaction_id: tx.id, address_id: } }
     end
   end
 end
