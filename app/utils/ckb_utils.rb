@@ -47,6 +47,7 @@ class CkbUtils
   # TODO: find the RPC document url
   # @param [CKB::Types::CellbaseWitness] cellbase
   # @return [OpenStruct(lock, message)]
+  # message struct: versionbit ｜ binary_version ｜ message
   def self.parse_cellbase_witness(cellbase)
     cellbase_witness = cellbase.witnesses.first.delete_prefix("0x")
     cellbase_witness_serialization = [cellbase_witness].pack("H*")
@@ -58,11 +59,7 @@ class CkbUtils
     args_offset = [script_serialization[12..15].unpack1("H*")].pack("H*").unpack1("V")
     message_bytes = cellbase_witness_serialization[message_offset..]
     message_serialization = message_bytes[4..]
-    message = if message_serialization.size > 28
-                "#{message_serialization[0..28]}#{message_serialization[29..]&.unpack1('H*')}".to_json.unpack1("H*")
-              else
-                message_serialization.unpack1("H*")
-              end
+    message = message_serialization.unpack1("H*")
     code_hash_serialization = script_serialization[code_hash_offset...hash_type_offset]
     hash_type_serialization = script_serialization[hash_type_offset...args_offset]
     args_serialization = script_serialization[hash_type_offset + 1..]
