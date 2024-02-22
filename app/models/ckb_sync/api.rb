@@ -87,6 +87,17 @@ module CkbSync
       end
     end
 
+    def spore_code_hash_mapping
+      if mode == CKB::MODE::MAINNET
+        { Settings.spore_cell1_code_hash => Settings.spore_cluster1_code_hash }
+      else
+        {
+          Settings.spore_cell1_code_hash => Settings.spore_cluster1_code_hash,
+          Settings.spore_cell2_code_hash => Settings.spore_cluster2_code_hash,
+        }
+      end
+    end
+
     def omiga_inscription_info_code_hash
       Settings.omiga_inscription_info_code_hash
     end

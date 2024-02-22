@@ -144,8 +144,8 @@ class TokenTransferDetectWorker
   def find_or_create_spore_collection(_cell, type_script)
     spore_cell = type_script.cell_outputs.order("id desc").first
     parsed_spore_cell = CkbUtils.parse_spore_cell_data(spore_cell.data)
-    binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
-    spore_cluster_type = TypeScript.where("code_hash IN (#{binary_hashes})").where(
+    cluster_code_hash = CkbSync::Api.instance.spore_code_hash_mapping[type_script.code_hash]
+    spore_cluster_type = TypeScript.where(code_hash: cluster_code_hash).where(
       args: parsed_spore_cell[:cluster_id],
     ).first
     coll = TokenCollection.find_or_create_by(
