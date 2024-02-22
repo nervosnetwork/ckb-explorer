@@ -673,8 +673,8 @@ dao_contract)
             if cell_type == "spore_cell"
               parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[tx_index][index])
               if parsed_spore_cell[:cluster_id].present?
-                binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
-                spore_cluster_type = TypeScript.where("code_hash IN (#{binary_hashes})").where(
+                cluster_code_hash = CkbSync::Api.instance.spore_code_hash_mapping[output.type.code_hash]
+                spore_cluster_type = TypeScript.where(code_hash: cluster_code_hash).where(
                   args: parsed_spore_cell[:cluster_id],
                 ).first
                 if spore_cluster_type.present?
