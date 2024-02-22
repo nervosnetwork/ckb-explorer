@@ -16,7 +16,7 @@ module Api
       end
 
       def display_inputs
-        expires_in 1.hour, public: true, must_revalidate: true
+        expires_in 15.seconds, public: true, must_revalidate: true
 
         ckb_transaction = CkbTransaction.find_by(tx_hash: params[:id])
         head :not_found and return if ckb_transaction.blank?
@@ -41,7 +41,7 @@ module Api
       end
 
       def display_outputs
-        expires_in 1.hour, public: true, must_revalidate: true
+        expires_in 15.seconds, public: true, must_revalidate: true
 
         ckb_transaction = CkbTransaction.find_by(tx_hash: params[:id])
         head :not_found and return if ckb_transaction.blank?
