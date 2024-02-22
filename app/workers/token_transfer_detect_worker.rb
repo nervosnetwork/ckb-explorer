@@ -145,23 +145,32 @@ class TokenTransferDetectWorker
     spore_cell = type_script.cell_outputs.order("id desc").first
     parsed_spore_cell = CkbUtils.parse_spore_cell_data(spore_cell.data)
     cluster_code_hash = CkbSync::Api.instance.spore_code_hash_mapping[type_script.code_hash]
-    spore_cluster_type = TypeScript.where(code_hash: cluster_code_hash).where(
-      args: parsed_spore_cell[:cluster_id],
-    ).first
-    coll = TokenCollection.find_or_create_by(
-      standard: "spore",
-      type_script_id: spore_cluster_type.id,
-      sn: spore_cluster_type.script_hash,
-    )
-    spore_cluster_cell = spore_cluster_type.cell_outputs.order("id desc").first
-    if spore_cluster_cell.present? && coll.creator_id != spore_cluster_cell.address_id
-      parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
-      coll.creator_id = spore_cluster_cell.address_id
-      coll.cell_id = spore_cluster_cell.id
-      coll.name = parsed_cluster_data[:name]
-      coll.description = parsed_cluster_data[:description]
-      coll.save
+    if parsed_spore_cell[:cluster_id].nil?
+      spore_cluster_type = TypeScript.find_or_create_by(code_hash: cluster_code_hash, hash_type: "data1",
+                                                        args: parsed_spore_cell[:cluster_id])
+      TokenCollection.find_or_create_by(
+        standard: "spore",
+        sn: spore_cluster_type.script_hash,
+        description: "Only for no cluster spore cell",
+      )
+    else
+      spore_cluster_type_ids = TypeScript.where(code_hash: cluster_code_hash, hash_type: "data1",
+                                                args: parsed_spore_cell[:cluster_id]).pluck(:id)
+      spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
+      coll = TokenCollection.find_or_create_by(
+        standard: "spore",
+        sn: spore_cluster_cell.type_hash,
+      )
+      if spore_cluster_cell.present? && coll.creator_id != spore_cluster_cell.address_id
+        parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
+        coll.type_script_id = spore_cluster_cell.type_script_id
+        coll.creator_id = spore_cluster_cell.address_id
+        coll.cell_id = spore_cluster_cell.id
+        coll.name = parsed_cluster_data[:name]
+        coll.description = parsed_cluster_data[:description]
+        coll.save
+      end
+      coll
     end
-    coll
   end
 end
