@@ -674,23 +674,12 @@ dao_contract)
               parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[tx_index][index])
               if parsed_spore_cell[:cluster_id].present?
                 cluster_code_hash = CkbSync::Api.instance.spore_code_hash_mapping[output.type.code_hash]
-                spore_cluster_type = TypeScript.where(code_hash: cluster_code_hash).where(
-                  args: parsed_spore_cell[:cluster_id],
-                ).first
-                if spore_cluster_type.present?
-                  spore_cluster_cell = spore_cluster_type.cell_outputs.last
-                  parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
-                  coll = TokenCollection.find_or_create_by(
-                    standard: "spore",
-                    name: parsed_cluster_data[:name],
-                    description: parsed_cluster_data[:description],
-                    cell_id: spore_cluster_cell.id,
-                    creator_id: spore_cluster_cell.address_id,
-                  )
-
-                  nft_token_attr[:full_name] = parsed_cluster_data[:name]
-                  nft_token_attr[:published] = true
-                end
+                spore_cluster_type_ids = TypeScript.where(code_hash: cluster_code_hash, hash_type: "data1",
+                                                          args: parsed_spore_cell[:cluster_id]).pluck(:id)
+                spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
+                parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
+                nft_token_attr[:full_name] = parsed_cluster_data[:name]
+                nft_token_attr[:published] = true
               end
             end
             if cell_type == "nrc_721_token"
