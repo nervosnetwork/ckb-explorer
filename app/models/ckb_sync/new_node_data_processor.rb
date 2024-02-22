@@ -818,6 +818,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
       lock_script_ids = []
       type_script_ids = []
+      token_transfer_ckb_tx_ids = Set.new
 
       if lock_scripts_attributes.present?
         lock_scripts_attributes.map! do |attr|
@@ -868,7 +869,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       # prepare script ids for insert cell_outputs
       prepare_script_ids(outputs)
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
-                          udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
+                          udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids)
       if cell_outputs_attributes.present?
         id_hashes = CellOutput.upsert_all(cell_outputs_attributes, unique_by: %i[tx_hash cell_index],
                                                                    returning: %i[id data_hash])
@@ -892,13 +893,17 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       prev_outputs = nil
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
                         input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids,
-                        prev_outputs, addrs_changes)
+                        prev_outputs, addrs_changes, token_transfer_ckb_tx_ids)
 
       CellInput.upsert_all(cell_inputs_attributes,
                            unique_by: %i[ckb_transaction_id index])
       if prev_cell_outputs_attributes.present?
         CellOutput.upsert_all(prev_cell_outputs_attributes,
                               unique_by: %i[tx_hash cell_index])
+      end
+
+      token_transfer_ckb_tx_ids.each do |tx_id|
+        TokenTransferDetectWorker.perform_async(tx_id)
       end
 
       ScriptTransaction.create_from_scripts TypeScript.where(id: type_script_ids)
@@ -985,7 +990,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
 
     def build_cell_inputs(
       inputs, ckb_txs, local_block_id, cell_inputs_attributes, prev_cell_outputs_attributes,
-input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes
+input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes, token_transfer_ckb_tx_ids
     )
       tx_index = 0
 
@@ -1030,7 +1035,7 @@ input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, con
               change_rec[:dao_txs] ||= Set.new
               change_rec[:dao_txs] << ckb_txs[tx_index]["tx_hash"]
             elsif cell_type.in?(%w(m_nft_token nrc_721_token spore_cell))
-              TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
+              token_transfer_ckb_tx_ids << ckb_txs[tx_index]["id"]
             end
 
             case previous_output[:cell_type]
@@ -1058,7 +1063,7 @@ input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, con
 
     def build_cell_outputs!(
       node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities,
-tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes
+tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids
     )
       outputs.each do |tx_index, items|
         cell_index = 0
@@ -1111,7 +1116,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
               type_hash: item.type.compute_hash, udt_type: "omiga_inscription",
             ).pick(:id)
           elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token spore_cell))
-            TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
+            token_transfer_ckb_tx_ids << ckb_txs[tx_index]["id"]
           end
 
           output_capacities[tx_index] += item.capacity if tx_index != 0
