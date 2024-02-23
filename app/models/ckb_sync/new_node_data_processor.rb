@@ -10,7 +10,7 @@ module CkbSync
     value :reorg_started_at, global: true
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
-                  :dao_address_ids, :contained_udt_ids, :cell_datas, :enable_cota
+                  :dao_address_ids, :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -68,13 +68,14 @@ module CkbSync
         @dao_address_ids = dao_address_ids = []
         @contained_udt_ids = contained_udt_ids = []
         @contained_address_ids = contained_address_ids = []
+        @token_transfer_ckb_tx_ids = token_transfer_ckb_tx_ids = Set.new
 
         benchmark :process_ckb_txs, node_block, ckb_txs, contained_address_ids,
                   contained_udt_ids, dao_address_ids, tags, udt_address_ids
         addrs_changes = Hash.new { |hash, key| hash[key] = {} }
 
         input_capacities, output_capacities = benchmark :build_cells_and_locks!, local_block, node_block, ckb_txs, inputs, outputs,
-                                                        tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes
+                                                        tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes, token_transfer_ckb_tx_ids
 
         # update explorer data
         benchmark :update_ckb_txs_rel_and_fee, ckb_txs, tags, input_capacities, output_capacities, udt_address_ids,
@@ -94,6 +95,7 @@ module CkbSync
       generate_statistics_data(local_block)
       generate_deployed_cells_and_referring_cells(local_block)
       detect_cota_infos(local_block)
+      invoke_token_transfer_detect_worker(token_transfer_ckb_tx_ids)
 
       local_block.update_counter_for_ckb_node_version
       local_block
@@ -129,6 +131,12 @@ module CkbSync
 
     def detect_cota_infos(local_block)
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
+    end
+
+    def invoke_token_transfer_detect_worker(token_transfer_ckb_tx_ids)
+      token_transfer_ckb_tx_ids.each do |tx_id|
+        TokenTransferDetectWorker.perform_async(tx_id)
+      end
     end
 
     def process_ckb_txs(
@@ -673,24 +681,14 @@ dao_contract)
             if cell_type == "spore_cell"
               parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[tx_index][index])
               if parsed_spore_cell[:cluster_id].present?
-                cluster_code_hash = CkbSync::Api.instance.spore_code_hash_mapping[output.type.code_hash]
-                spore_cluster_type = TypeScript.where(code_hash: cluster_code_hash).where(
-                  args: parsed_spore_cell[:cluster_id],
-                ).first
-                if spore_cluster_type.present?
-                  spore_cluster_cell = spore_cluster_type.cell_outputs.last
-                  parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
-                  coll = TokenCollection.find_or_create_by(
-                    standard: "spore",
-                    name: parsed_cluster_data[:name],
-                    description: parsed_cluster_data[:description],
-                    cell_id: spore_cluster_cell.id,
-                    creator_id: spore_cluster_cell.address_id,
-                  )
+                binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
+                spore_cluster_type_ids = TypeScript.where("code_hash IN (#{binary_hashes})").where(hash_type: "data1",
+                                                                                               args: parsed_spore_cell[:cluster_id]).pluck(:id)
 
-                  nft_token_attr[:full_name] = parsed_cluster_data[:name]
-                  nft_token_attr[:published] = true
-                end
+                spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
+                parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
+                nft_token_attr[:full_name] = parsed_cluster_data[:name]
+                nft_token_attr[:published] = true
               end
             end
             if cell_type == "nrc_721_token"
@@ -819,7 +817,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
 
     def build_cells_and_locks!(
       local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids,
-      dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes
+      dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids
     )
       cell_outputs_attributes = []
       cell_inputs_attributes = []
@@ -879,7 +877,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       # prepare script ids for insert cell_outputs
       prepare_script_ids(outputs)
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
-                          udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes)
+                          udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids)
       if cell_outputs_attributes.present?
         id_hashes = CellOutput.upsert_all(cell_outputs_attributes, unique_by: %i[tx_hash cell_index],
                                                                    returning: %i[id data_hash])
@@ -903,7 +901,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       prev_outputs = nil
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
                         input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids,
-                        prev_outputs, addrs_changes)
+                        prev_outputs, addrs_changes, token_transfer_ckb_tx_ids)
 
       CellInput.upsert_all(cell_inputs_attributes,
                            unique_by: %i[ckb_transaction_id index])
@@ -996,7 +994,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
 
     def build_cell_inputs(
       inputs, ckb_txs, local_block_id, cell_inputs_attributes, prev_cell_outputs_attributes,
-input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes
+input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes, token_transfer_ckb_tx_ids
     )
       tx_index = 0
 
@@ -1041,7 +1039,7 @@ input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, con
               change_rec[:dao_txs] ||= Set.new
               change_rec[:dao_txs] << ckb_txs[tx_index]["tx_hash"]
             elsif cell_type.in?(%w(m_nft_token nrc_721_token spore_cell))
-              TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
+              token_transfer_ckb_tx_ids << ckb_txs[tx_index]["id"]
             end
 
             case previous_output[:cell_type]
@@ -1069,7 +1067,7 @@ input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, con
 
     def build_cell_outputs!(
       node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities,
-tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes
+tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids
     )
       outputs.each do |tx_index, items|
         cell_index = 0
@@ -1122,7 +1120,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
               type_hash: item.type.compute_hash, udt_type: "omiga_inscription",
             ).pick(:id)
           elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token spore_cell))
-            TokenTransferDetectWorker.perform_async(ckb_txs[tx_index]["id"])
+            token_transfer_ckb_tx_ids << ckb_txs[tx_index]["id"]
           end
 
           output_capacities[tx_index] += item.capacity if tx_index != 0
