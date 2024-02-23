@@ -3,7 +3,6 @@ class TokenTransferDetectWorker
 
   def perform(tx_id)
     tx = CkbTransaction.includes(:cell_outputs, cell_inputs: :previous_cell_output).find tx_id
-    puts "==================#{tx.inspect}"
     return unless tx
 
     @lock = Redis::Lock.new("token_transfer_#{tx_id}", expiration: 180, timeout: 30)
@@ -12,7 +11,6 @@ class TokenTransferDetectWorker
       source_collections = []
 
       tx.cell_inputs.each do |input|
-        puts input.cell_type
         if input.cell_type.in?(%w(m_nft_token nrc_721_token spore_cell))
           cell = input.previous_cell_output
           type_script = input.type_script
@@ -22,9 +20,7 @@ class TokenTransferDetectWorker
       end
 
       tx.cell_outputs.each do |output|
-        puts output.cell_type
         if output.cell_type.in?(%w(m_nft_token nrc_721_token spore_cell))
-          puts "========================#{output.id}"
           type_script = output.type_script
           item = find_or_create_item(output, type_script)
           attrs = {

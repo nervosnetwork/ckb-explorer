@@ -10,7 +10,7 @@ module CkbSync
     value :reorg_started_at, global: true
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
-                  :dao_address_ids, :contained_udt_ids, :cell_datas, :enable_cota
+                  :dao_address_ids, :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -68,13 +68,14 @@ module CkbSync
         @dao_address_ids = dao_address_ids = []
         @contained_udt_ids = contained_udt_ids = []
         @contained_address_ids = contained_address_ids = []
+        @token_transfer_ckb_tx_ids = token_transfer_ckb_tx_ids = Set.new
 
         benchmark :process_ckb_txs, node_block, ckb_txs, contained_address_ids,
                   contained_udt_ids, dao_address_ids, tags, udt_address_ids
         addrs_changes = Hash.new { |hash, key| hash[key] = {} }
 
         input_capacities, output_capacities = benchmark :build_cells_and_locks!, local_block, node_block, ckb_txs, inputs, outputs,
-                                                        tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes
+                                                        tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes, token_transfer_ckb_tx_ids
 
         # update explorer data
         benchmark :update_ckb_txs_rel_and_fee, ckb_txs, tags, input_capacities, output_capacities, udt_address_ids,
@@ -94,6 +95,7 @@ module CkbSync
       generate_statistics_data(local_block)
       generate_deployed_cells_and_referring_cells(local_block)
       detect_cota_infos(local_block)
+      invoke_token_transfer_detect_worker(token_transfer_ckb_tx_ids)
 
       local_block.update_counter_for_ckb_node_version
       local_block
@@ -129,6 +131,12 @@ module CkbSync
 
     def detect_cota_infos(local_block)
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
+    end
+
+    def invoke_token_transfer_detect_worker(token_transfer_ckb_tx_ids)
+      token_transfer_ckb_tx_ids.each do |tx_id|
+        TokenTransferDetectWorker.perform_async(tx_id)
+      end
     end
 
     def process_ckb_txs(
@@ -808,7 +816,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
 
     def build_cells_and_locks!(
       local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids,
-      dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes
+      dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids
     )
       cell_outputs_attributes = []
       cell_inputs_attributes = []
@@ -818,7 +826,6 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
       lock_script_ids = []
       type_script_ids = []
-      token_transfer_ckb_tx_ids = Set.new
 
       if lock_scripts_attributes.present?
         lock_scripts_attributes.map! do |attr|
@@ -900,10 +907,6 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       if prev_cell_outputs_attributes.present?
         CellOutput.upsert_all(prev_cell_outputs_attributes,
                               unique_by: %i[tx_hash cell_index])
-      end
-
-      token_transfer_ckb_tx_ids.each do |tx_id|
-        TokenTransferDetectWorker.perform_async(tx_id)
       end
 
       ScriptTransaction.create_from_scripts TypeScript.where(id: type_script_ids)
