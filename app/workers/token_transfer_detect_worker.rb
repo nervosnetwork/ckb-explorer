@@ -144,9 +144,8 @@ class TokenTransferDetectWorker
   def find_or_create_spore_collection(_cell, type_script)
     spore_cell = type_script.cell_outputs.order("id desc").first
     parsed_spore_cell = CkbUtils.parse_spore_cell_data(spore_cell.data)
-    cluster_code_hash = CkbSync::Api.instance.spore_code_hash_mapping[type_script.code_hash]
     if parsed_spore_cell[:cluster_id].nil?
-      spore_cluster_type = TypeScript.find_or_create_by(code_hash: cluster_code_hash, hash_type: "data1",
+      spore_cluster_type = TypeScript.find_or_create_by(code_hash: CkbSync::Api.instance.spore_cluster_code_hashes.first, hash_type: "data1",
                                                         args: parsed_spore_cell[:cluster_id])
       TokenCollection.find_or_create_by(
         standard: "spore",
@@ -154,8 +153,9 @@ class TokenTransferDetectWorker
         description: "Only for no cluster spore cell",
       )
     else
-      spore_cluster_type_ids = TypeScript.where(code_hash: cluster_code_hash, hash_type: "data1",
-                                                args: parsed_spore_cell[:cluster_id]).pluck(:id)
+      binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
+      spore_cluster_type_ids = TypeScript.where("code_hash IN (#{binary_hashes})").where(hash_type: "data1",
+                                                                                         args: parsed_spore_cell[:cluster_id]).pluck(:id)
       spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
       coll = TokenCollection.find_or_create_by(
         standard: "spore",
