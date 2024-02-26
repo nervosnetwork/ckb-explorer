@@ -683,7 +683,7 @@ dao_contract)
               if parsed_spore_cell[:cluster_id].present?
                 binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
                 spore_cluster_type_ids = TypeScript.where("code_hash IN (#{binary_hashes})").where(hash_type: "data1",
-                                                                                               args: parsed_spore_cell[:cluster_id]).pluck(:id)
+                                                                                                   args: parsed_spore_cell[:cluster_id]).pluck(:id)
 
                 spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
                 parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
@@ -712,7 +712,9 @@ dao_contract)
               nft_token_attr[:full_name] = info[:name]
               nft_token_attr[:symbol] = info[:symbol]
               nft_token_attr[:decimal] = info[:decimal]
-              nft_token_attr[:published] = true
+              unless Udt.where(symbol: info[:symbol].strip, udt_type: :omiga_inscription).exists?
+                nft_token_attr[:published] = true
+              end
             end
             # fill issuer_address after publish the token
             udts_attributes << {
