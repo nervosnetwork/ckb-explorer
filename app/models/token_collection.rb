@@ -8,7 +8,7 @@ class TokenCollection < ApplicationRecord
   validates :sn, uniqueness: true, presence: true
 
   def self.find_by_sn(sn)
-    c = find_by sn: sn
+    c = find_by(sn:)
     return c if c
 
     c = find_by_type_hash(sn)
@@ -24,18 +24,19 @@ class TokenCollection < ApplicationRecord
     TokenCollection.find_by! type_script_id: ts.id
   end
 
-  def as_json(options = {})
+  def as_json(_options = {})
     {
-      id: id,
-      standard: standard,
-      name: name,
-      description: description,
-      icon_url: icon_url,
+      id:,
+      standard:,
+      name:,
+      description:,
+      icon_url:,
       creator: creator&.address_hash || "",
-      items_count: items_count,
-      holders_count: holders_count,
-      h24_ckb_transactions_count: h24_ckb_transactions_count,
-      type_script: type_script&.as_json
+      items_count:,
+      holders_count:,
+      h24_ckb_transactions_count:,
+      type_script: type_script&.as_json,
+      sn:,
     }
   end
 
@@ -75,12 +76,12 @@ class TokenCollection < ApplicationRecord
       Udt.where(
         code_hash: ts.code_hash,
         hash_type: ts.hash_type,
-        args: ts.args
+        args: ts.args,
       ).update_all(
-        symbol: symbol,
+        symbol:,
         full_name: name,
-        description: description,
-        icon_file: icon_url
+        description:,
+        icon_file: icon_url,
       )
     end
   end
@@ -94,7 +95,11 @@ class TokenCollection < ApplicationRecord
   # removed the wrong token collections
   def self.remove_corrupted
     where(standard: "nrc721").where(type_script_id: nil).or(where(creator_id: nil)).find_each do |tc|
-      tc.update_info rescue nil
+      begin
+        tc.update_info
+      rescue StandardError
+        nil
+      end
 
       if tc.cell.blank?
         tc.destroy
@@ -113,7 +118,7 @@ class TokenCollection < ApplicationRecord
 
       begin
         tc2.items.update_all collection_id: tc.id
-      rescue
+      rescue StandardError
         puts "destroy all items"
       end
       tc2.destroy!
