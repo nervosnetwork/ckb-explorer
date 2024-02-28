@@ -4147,6 +4147,7 @@ module CkbSync
         node_data_processor.process_block(node_block)
         assert_equal 2, Udt.count
         assert_equal info.udt_hash, OmigaInscriptionInfo.last.pre_udt_hash
+        assert_equal true, Udt.last.published
       end
     end
 
