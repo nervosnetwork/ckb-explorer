@@ -149,6 +149,7 @@ class TokenTransferDetectWorker
                                                         args: parsed_spore_cell[:cluster_id])
       TokenCollection.find_or_create_by(
         standard: "spore",
+        type_script_id: spore_cluster_type.id,
         sn: spore_cluster_type.script_hash,
         description: "Only for no cluster spore cell",
       )

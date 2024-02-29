@@ -1034,15 +1034,15 @@ module CkbSync
         Address.find_or_create_address(lock1, node_block.header.timestamp)
         Address.find_or_create_address(lock2, node_block.header.timestamp)
         300.times do |i|
-          if i % 2 == 0
-            node_block.transactions.first.outputs << CKB::Types::Output.new(
-              capacity: 30000 * 10**8, lock: lock1,
-            )
-          else
-            node_block.transactions.first.outputs << CKB::Types::Output.new(
-              capacity: 40000 * 10**8, lock: lock2,
-            )
-          end
+          node_block.transactions.first.outputs << if i % 2 == 0
+                                                     CKB::Types::Output.new(
+                                                       capacity: 30000 * 10**8, lock: lock1,
+                                                     )
+                                                   else
+                                                     CKB::Types::Output.new(
+                                                       capacity: 40000 * 10**8, lock: lock2,
+                                                     )
+                                                   end
           node_block.transactions.first.outputs_data << "0x"
         end
         new_local_block = node_data_processor.process_block(node_block)
@@ -4043,8 +4043,10 @@ module CkbSync
         assert_equal info.mint_limit, 0.1e12
         assert_equal info.mint_status, "minting"
         assert_equal info.udt_id, Udt.first.id
+        udt = Udt.first
         assert_equal "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908",
-                     Udt.first.type_hash
+                     udt.type_hash
+        assert_equal true, udt.published
       end
     end
 
@@ -4145,6 +4147,7 @@ module CkbSync
         node_data_processor.process_block(node_block)
         assert_equal 2, Udt.count
         assert_equal info.udt_hash, OmigaInscriptionInfo.last.pre_udt_hash
+        assert_equal true, Udt.last.published
       end
     end
 
