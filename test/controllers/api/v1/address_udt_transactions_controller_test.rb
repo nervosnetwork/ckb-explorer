@@ -76,25 +76,26 @@ module Api
         page = 1
         page_size = 10
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, udt: udt)
+        address = create(:address, :with_udt_transactions, udt:)
         ckb_udt_transactions = address.ckb_udt_transactions(udt.id).recent.page(page).per(page_size)
 
         valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash)
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_udt_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_udt_transactions, page:, page_size:).call
 
         assert_equal CkbTransactionsSerializer.new(ckb_udt_transactions, options.merge(params: { previews: true })).serialized_json, response.body
       end
 
       test "should contain right keys in the serialized object when call show" do
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, udt: udt)
+        address = create(:address, :with_udt_transactions, udt:)
 
         valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash)
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number block_timestamp display_inputs display_inputs_count display_outputs display_outputs_count income is_cellbase transaction_hash created_at create_timestamp).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number block_timestamp display_inputs display_inputs_count display_outputs display_outputs_count income is_cellbase transaction_hash created_at create_timestamp).sort,
+                     response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return error object when no records found by id" do
@@ -120,7 +121,7 @@ module Api
 
       test "should return error object when page param is invalid" do
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, udt: udt)
+        address = create(:address, :with_udt_transactions, udt:)
         error_object = Api::V1::Exceptions::PageParamError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
@@ -131,7 +132,7 @@ module Api
 
       test "should return error object when page size param is invalid" do
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, udt: udt)
+        address = create(:address, :with_udt_transactions, udt:)
         error_object = Api::V1::Exceptions::PageSizeParamError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
@@ -143,7 +144,7 @@ module Api
       test "should return error object when page and page size param are invalid" do
         errors = []
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, udt: udt)
+        address = create(:address, :with_udt_transactions, udt:)
         errors << Api::V1::Exceptions::PageParamError.new
         errors << Api::V1::Exceptions::PageSizeParamError.new
         response_json = RequestErrorSerializer.new(errors, message: errors.first.title).serialized_json
@@ -155,7 +156,7 @@ module Api
 
       test "should return 10 records when page and page_size are not set" do
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, transactions_count: 15, udt: udt)
+        address = create(:address, :with_udt_transactions, transactions_count: 15, udt:)
 
         valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash)
 
@@ -166,13 +167,13 @@ module Api
         page = 2
         page_size = 10
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, transactions_count: 30, udt: udt)
+        address = create(:address, :with_udt_transactions, transactions_count: 30, udt:)
 
         address_udt_transactions = address.ckb_udt_transactions(udt.id).recent.recent.page(page).per(page_size)
 
-        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash), params: { page: page }
+        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash), params: { page: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_udt_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_udt_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_udt_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
@@ -183,12 +184,12 @@ module Api
         page = 1
         page_size = 12
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, transactions_count: 15, udt: udt)
+        address = create(:address, :with_udt_transactions, transactions_count: 15, udt:)
         address_udt_transactions = address.ckb_udt_transactions(udt.id).recent.page(page).per(page_size)
 
-        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash), params: { page_size: page_size }
+        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash), params: { page_size: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_udt_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_udt_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_udt_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
@@ -199,11 +200,11 @@ module Api
         page = 2
         page_size = 5
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, transactions_count: 30, udt: udt)
+        address = create(:address, :with_udt_transactions, transactions_count: 30, udt:)
         address_udt_transactions = address.ckb_udt_transactions(udt.id).order("block_timestamp desc nulls last, id desc").page(page).per(page_size)
 
-        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash), params: { page: page, page_size: page_size }
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_udt_transactions, page: page, page_size: page_size).call
+        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash), params: { page:, page_size: }
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_udt_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_udt_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
@@ -213,13 +214,13 @@ module Api
         page = 20
         page_size = 5
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, udt: udt)
+        address = create(:address, :with_udt_transactions, udt:)
 
         address_udt_transactions = address.ckb_udt_transactions(udt.id).recent.page(page).per(page_size)
 
-        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash), params: { page: page, page_size: page_size }
+        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash), params: { page:, page_size: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: address_udt_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_udt_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_udt_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal [], json["data"]
@@ -228,7 +229,16 @@ module Api
 
       test "should return meta that contained total in response body" do
         udt = create(:udt, published: true)
-        address = create(:address, :with_udt_transactions, transactions_count: 3, udt: udt)
+        address = create(:address, :with_udt_transactions, transactions_count: 3, udt:)
+
+        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash)
+
+        assert_equal 6, json.dig("meta", "total")
+      end
+
+      test "should return meta if udt is omiga_inscription" do
+        udt = create(:udt, udt_type: :omiga_inscription, published: false)
+        address = create(:address, :with_udt_transactions, transactions_count: 3, udt:)
 
         valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash)
 
