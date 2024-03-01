@@ -9,8 +9,8 @@ module Api
         raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
         raise Api::V1::Exceptions::TypeHashInvalidError if params[:type_hash].blank?
 
-        udt = Udt.find_by(type_hash: params[:type_hash], published: true)
-        raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
+        udt = Udt.find_by(type_hash: params[:type_hash])
+        raise Api::V1::Exceptions::UdtNotFoundError if udt.blank? || (udt.udt_type != "omiga_inscription" && !udt.published)
 
         ckb_dao_transactions = address.ckb_udt_transactions(udt.id).
           select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at).
@@ -18,11 +18,11 @@ module Api
         json =
           Rails.cache.realize(ckb_dao_transactions.cache_key, version: ckb_dao_transactions.cache_version) do
             records_counter = RecordCounters::AddressUdtTransactions.new(address, udt.id)
-            options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
+            options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_dao_transactions, page: @page, page_size: @page_size, records_counter:).call
             CkbTransactionsSerializer.new(ckb_dao_transactions, options.merge(params: { previews: true })).serialized_json
           end
 
-        render json: json
+        render json:
       end
 
       private
@@ -34,7 +34,7 @@ module Api
           errors = validator.error_object[:errors]
           status = validator.error_object[:status]
 
-          render json: errors, status: status
+          render json: errors, status:
         end
       end
 

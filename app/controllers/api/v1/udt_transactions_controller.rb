@@ -4,8 +4,8 @@ module Api
       before_action :validate_query_params, :validate_pagination_params, :pagination_params
 
       def show
-        udt = Udt.find_by(type_hash: params[:id], published: true)
-        raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
+        udt = Udt.find_by(type_hash: params[:id])
+        raise Api::V1::Exceptions::UdtNotFoundError if udt.blank? || (udt.udt_type != "omiga_inscription" && !udt.published)
 
         ckb_transactions = udt.ckb_transactions.tx_committed.
           select(:id, :tx_hash, :block_id, :block_number,
@@ -29,16 +29,16 @@ module Api
 
           ckb_transactions = ckb_transactions.page(@page).per(@page_size).fast_page
           options = FastJsonapi::PaginationMetaGenerator.new(
-            request: request,
+            request:,
             records: ckb_transactions,
             page: @page,
-            page_size: @page_size
+            page_size: @page_size,
           ).call
           json = CkbTransactionsSerializer.new(
             ckb_transactions, options.merge(params: { previews: true })
           ).serialized_json
 
-          render json: json
+          render json:
         end
       end
 
@@ -51,7 +51,7 @@ module Api
           errors = validator.error_object[:errors]
           status = validator.error_object[:status]
 
-          render json: errors, status: status
+          render json: errors, status:
         end
       end
 
