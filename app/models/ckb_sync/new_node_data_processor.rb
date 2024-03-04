@@ -59,8 +59,7 @@ module CkbSync
         inputs = @inputs = {}
         outputs = @outputs = {}
         outputs_data = @outputs_data = {}
-        @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs,
-                                           outputs, outputs_data).to_a
+        @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
         benchmark :build_udts!, local_block, outputs, outputs_data
 
         tags = []
@@ -1135,8 +1134,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       cell_data.present? && cell_data != "0x" || type_hash.present?
     end
 
-    def cell_output_attributes(output, address, ckb_transaction, local_block,
-cell_index, output_data)
+    def cell_output_attributes(output, address, ckb_transaction, local_block, cell_index, output_data)
       lock_script = local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
       type_script =
         if output.type.present?
@@ -1249,8 +1247,7 @@ _prev_outputs, index = nil)
       end
     end
 
-    def build_ckb_transactions!(node_block, local_block, inputs, outputs,
-outputs_data)
+    def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
       cycles = CkbSync::Api.instance.get_block_cycles node_block.header.hash
       ckb_transactions_attributes = []
       tx_index = 0

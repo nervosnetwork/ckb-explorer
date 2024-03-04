@@ -113,8 +113,28 @@ GEM
       protocol-websocket (~> 0.9.1)
     awesome_print (1.9.2)
     backport (1.2.0)
+    base32 (0.3.4)
+    bech32 (1.4.2)
+      thor (>= 1.1.0)
     benchmark (0.2.1)
     bigdecimal (3.1.4)
+    bip-schnorr (0.7.0)
+      ecdsa_ext (~> 0.5.0)
+    bitcoinrb (1.4.0)
+      base32 (>= 0.3.4)
+      bech32 (>= 1.3.0)
+      bip-schnorr (>= 0.5.0)
+      daemon-spawn
+      ecdsa_ext (~> 0.5.0)
+      eventmachine
+      eventmachine_httpserver
+      ffi
+      iniparse
+      json_pure (>= 2.3.1)
+      leb128 (~> 1.0.0)
+      murmurhash3 (~> 0.1.7)
+      siphash
+      thor
     bootsnap (1.13.0)
       msgpack (~> 1.2)
     builder (3.2.4)
@@ -132,6 +152,7 @@ GEM
     crack (0.4.5)
       rexml
     crass (1.0.6)
+    daemon-spawn (0.4.2)
     dalli (3.2.3)
     database_cleaner (2.0.1)
       database_cleaner-active_record (~> 2.0.0)
@@ -184,9 +205,13 @@ GEM
       zeitwerk (~> 2.6)
     e2mmap (0.1.0)
     ecdsa (1.2.0)
+    ecdsa_ext (0.5.1)
+      ecdsa (~> 1.2.0)
     erubi (1.11.0)
     et-orbi (1.2.7)
       tzinfo
+    eventmachine (1.2.7)
+    eventmachine_httpserver (0.2.1)
     factory_bot (6.2.1)
       activesupport (>= 5.0.0)
     factory_bot_rails (6.2.0)
@@ -223,12 +248,14 @@ GEM
     http-form_data (2.3.0)
     i18n (1.12.0)
       concurrent-ruby (~> 1.0)
+    iniparse (1.5.0)
     io-event (1.1.6)
     jaro_winkler (1.5.4)
     jbuilder (2.11.5)
       actionview (>= 5.0.0)
       activesupport (>= 5.0.0)
     json (2.6.3)
+    json_pure (2.7.1)
     jwt (2.7.1)
     kaminari (1.2.2)
       activesupport (>= 4.1.0)
@@ -249,6 +276,7 @@ GEM
     kredis (1.3.0.1)
       activesupport (>= 6.0.0)
       redis (>= 4.2, < 6)
+    leb128 (1.0.0)
     listen (3.7.1)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
@@ -273,6 +301,7 @@ GEM
     mocha (2.0.2)
       ruby2_keywords (>= 0.0.5)
     msgpack (1.6.0)
+    murmurhash3 (0.1.7)
     net-http-persistent (4.0.2)
       connection_pool (~> 2.2)
     net-imap (0.3.1)
@@ -428,6 +457,7 @@ GEM
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.12.3)
     simplecov_json_formatter (0.1.4)
+    siphash (0.0.1)
     solargraph (0.49.0)
       backport (~> 1.2)
       benchmark
@@ -485,6 +515,7 @@ DEPENDENCIES
   async-websocket (~> 0.22.1)
   awesome_print
   bigdecimal
+  bitcoinrb
   bootsnap
   ckb-sdk-ruby!
   codecov

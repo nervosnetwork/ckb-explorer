@@ -25,6 +25,8 @@ class CellOutput < ApplicationRecord
     omiga_inscription_info: 13,
     omiga_inscription: 14,
     xudt: 15,
+    rgb: 16,
+    rgb_time: 17,
   }
 
   belongs_to :ckb_transaction
@@ -46,6 +48,8 @@ class CellOutput < ApplicationRecord
   has_many :cell_dependencies, foreign_key: :contract_cell_id,
                                dependent: :delete_all
   has_one :cell_datum, class_name: "CellDatum", dependent: :destroy_async
+  has_one :bitcoin_vout, dependent: :destroy_async
+
   accepts_nested_attributes_for :cell_datum
   validates :capacity, presence: true,
                        numericality: { greater_than_or_equal_to: 0 }

@@ -64,11 +64,11 @@ class CkbTransaction < ApplicationRecord
 
   def self.largest_in_epoch(epoch_number)
     Rails.cache.fetch(["epoch", epoch_number, "largest_tx"]) do
-      tx = CkbTransaction.where(block: { epoch_number: epoch_number }).order(bytes: :desc).first
+      tx = CkbTransaction.where(block: { epoch_number: }).order(bytes: :desc).first
       if tx.bytes
         {
           tx_hash: tx.tx_hash,
-          bytes: tx.bytes
+          bytes: tx.bytes,
         }
       end
     end
@@ -190,9 +190,9 @@ class CkbTransaction < ApplicationRecord
 
   def income(address)
     if tx_pending?
-      cell_outputs.where(address: address).sum(:capacity) - input_cells.where(address: address).sum(:capacity)
+      cell_outputs.where(address:).sum(:capacity) - input_cells.where(address:).sum(:capacity)
     else
-      outputs.where(address: address).sum(:capacity) - inputs.where(address: address).sum(:capacity)
+      outputs.where(address:).sum(:capacity) - inputs.where(address:).sum(:capacity)
     end
   end
 
@@ -224,7 +224,7 @@ class CkbTransaction < ApplicationRecord
         outputs: _outputs.map(&:to_raw),
         outputs_data: _outputs.map(&:data),
         version: "0x#{version.to_s(16)}",
-        witnesses: witnesses.map(&:data)
+        witnesses: witnesses.map(&:data),
       }
     end
   end
@@ -236,7 +236,7 @@ class CkbTransaction < ApplicationRecord
       group("(block_timestamp / 86400000)::integer").
       pluck(Arel.sql("(block_timestamp / 86400000)::integer as date"),
             Arel.sql("sum(transaction_fee / bytes) / count(*) as fee_rate")).
-      map { |date, fee_rate| { date: Time.at(date * 86400).utc.strftime("%Y-%m-%d"), fee_rate: fee_rate } }
+      map { |date, fee_rate| { date: Time.at(date * 86400).utc.strftime("%Y-%m-%d"), fee_rate: } }
   end
 
   private

@@ -1,7 +1,14 @@
 class BitcoinVout < ApplicationRecord
-  belongs_to :cell_output_id
-  belongs_to :bitcoin_transaction
+  belongs_to :cell_output_id, optional: true
+  belongs_to :bitcoin_transaction, dependent: :delete
   belongs_to :bitcoin_address, optional: true
+
+  def commitment
+    script_pubkey = Bitcoin::Script.parse_from_payload(hex.htb)
+    return unless script_pubkey.op_return?
+
+    script_pubkey.op_return_data.bth
+  end
 end
 
 # == Schema Information
