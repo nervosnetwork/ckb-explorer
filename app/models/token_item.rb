@@ -1,7 +1,7 @@
 class TokenItem < ApplicationRecord
   enum status: { normal: 1, burnt: 0 }
 
-  belongs_to :collection, class_name: "TokenCollection", counter_cache: :items_count
+  belongs_to :collection, class_name: "TokenCollection"
   belongs_to :owner, class_name: "Address"
   belongs_to :cell, class_name: "CellOutput", optional: true
   belongs_to :type_script, optional: true
@@ -10,7 +10,7 @@ class TokenItem < ApplicationRecord
   validates :token_id, uniqueness: { scope: :collection_id }
 
   before_save :update_type_script
-  after_save :update_collection_holders
+  after_save :update_collection_holders, :update_items_count
 
   def update_type_script
     self.type_script_id = cell&.type_script_id
@@ -18,12 +18,18 @@ class TokenItem < ApplicationRecord
 
   def update_collection_holders
     holders_count = collection.items.normal.distinct.count(:owner_id)
-    collection.update(holders_count: holders_count)
+    collection.update(holders_count:)
   end
 
-  def as_json(options = {})
+  # except burnt items
+  def update_items_count
+    items_count = collection.items.normal.count
+    collection.update(items_count:)
+  end
+
+  def as_json(_options = {})
     {
-      id: id,
+      id:,
       token_id: token_id.to_s,
       owner: owner.address_hash,
       standard: collection.standard,
@@ -31,14 +37,14 @@ class TokenItem < ApplicationRecord
         status: cell&.status,
         tx_hash: cell&.tx_hash,
         cell_index: cell&.cell_index,
-        data: cell&.data
+        data: cell&.data,
       },
       type_script: type_script&.as_json,
-      name: name,
-      metadata_url: metadata_url,
-      icon_url: icon_url,
-      created_at: created_at,
-      updated_at: updated_at
+      name:,
+      metadata_url:,
+      icon_url:,
+      created_at:,
+      updated_at:,
     }
   end
 
