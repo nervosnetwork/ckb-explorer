@@ -236,7 +236,7 @@ module Charts
         create(:cell_output, :with_full_transaction,
                block_timestamp: @datetime.to_i * 1000, block: @block),
       ]
-      CellOutput.where(id: cells.map(&:id)).update_all(consumed_block_timestamp: (@datetime.to_i + 10) * 1000)
+      CellOutput.where(id: cells.map(&:id)).update_all(consumed_block_timestamp: (@datetime.to_i + 1) * 1000)
       is_from_scratch = true
       assert_equal "3",
                    Charts::DailyStatisticGenerator.new(@datetime,
