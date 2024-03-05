@@ -6,9 +6,8 @@ namespace :migration do
 
     TokenCollection.find_each do |collection|
       items_count = collection.items.normal.count
-      TokenCollection.update_counters(collection.id, items_count:)
       holders_count = collection.items.normal.distinct.count(:owner_id)
-      collection.update_column(:holders_count, holders_count)
+      collection.update(holders_count:, items_count:)
       progress_bar.increment
     end
   end
