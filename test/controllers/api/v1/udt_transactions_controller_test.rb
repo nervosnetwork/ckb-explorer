@@ -74,8 +74,8 @@ module Api
 
         valid_get api_v1_udt_transaction_url(udt.type_hash)
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions,
-                                                           page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_transactions,
+                                                           page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(ckb_transactions,
                                                              options.merge(params: { previews: true })).serialized_json
 
@@ -91,7 +91,7 @@ module Api
 
         assert_equal %w(
           block_number block_timestamp display_inputs display_inputs_count created_at create_timestamp
-          display_outputs display_outputs_count income is_cellbase transaction_hash
+          display_outputs display_outputs_count income is_cellbase rgb_transaction transaction_hash
         ).sort,
                      response_tx_transaction["attributes"].keys.sort
       end
@@ -161,10 +161,10 @@ module Api
         udt = create(:udt, :with_transactions, published: true)
         udt_ckb_transactions = udt.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page: page }
+        valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udt_ckb_transactions, page:,
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions,
                                                              options.merge(params: { previews: true })).serialized_json
 
@@ -178,10 +178,10 @@ module Api
         udt = create(:udt, :with_transactions, published: true)
         udt_ckb_transactions = udt.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page_size: page_size }
+        valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page_size: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udt_ckb_transactions, page:,
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions,
                                                              options.merge(params: { previews: true })).serialized_json
 
@@ -195,9 +195,9 @@ module Api
         udt = create(:udt, :with_transactions, published: true)
         udt_ckb_transactions = udt.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page: page, page_size: page_size }
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page,
-                                                           page_size: page_size).call
+        valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page:, page_size: }
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udt_ckb_transactions, page:,
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions,
                                                              options.merge(params: { previews: true })).serialized_json
         assert_equal response_transaction, response.body
@@ -209,10 +209,10 @@ module Api
         udt = create(:udt, :with_transactions, published: true)
         udt_ckb_transactions = udt.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page: page, page_size: page_size }
+        valid_get api_v1_udt_transaction_url(udt.type_hash), params: { page:, page_size: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udt_ckb_transactions, page:,
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions,
                                                              options.merge(params: { previews: true })).serialized_json
 
@@ -245,13 +245,13 @@ module Api
         page_size = 10
         udt = create(:udt, :with_transactions, published: true)
         tx_hash = udt.ckb_transactions.pick(:tx_hash)
-        udt_ckb_transactions = udt.ckb_transactions.where(tx_hash: tx_hash).page(page).per(page_size).fast_page
+        udt_ckb_transactions = udt.ckb_transactions.where(tx_hash:).page(page).per(page_size).fast_page
 
         valid_get api_v1_udt_transaction_url(udt.type_hash),
-                  params: { page: page, page_size: page_size, tx_hash: tx_hash }
+                  params: { page:, page_size:, tx_hash: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udt_ckb_transactions, page:,
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions,
                                                              options.merge(params: { previews: true })).serialized_json
 
@@ -268,10 +268,10 @@ module Api
           where(address_udt_transactions: { address_id: address.id }).page(page).per(page_size).fast_page
 
         valid_get api_v1_udt_transaction_url(udt.type_hash),
-                  params: { page: page, page_size: page_size, address_hash: address.address_hash }
+                  params: { page:, page_size:, address_hash: address.address_hash }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: udt_ckb_transactions, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: udt_ckb_transactions, page:,
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(udt_ckb_transactions,
                                                              options.merge(params: { previews: true })).serialized_json
 

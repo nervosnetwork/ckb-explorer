@@ -597,6 +597,39 @@ ALTER SEQUENCE public.bitcoin_transactions_id_seq OWNED BY public.bitcoin_transa
 
 
 --
+-- Name: bitcoin_vins; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bitcoin_vins (
+    id bigint NOT NULL,
+    previous_bitcoin_vout_id bigint,
+    bitcoin_transaction_id bigint,
+    ckb_transaction_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: bitcoin_vins_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.bitcoin_vins_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: bitcoin_vins_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.bitcoin_vins_id_seq OWNED BY public.bitcoin_vins.id;
+
+
+--
 -- Name: bitcoin_vouts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -608,6 +641,8 @@ CREATE TABLE public.bitcoin_vouts (
     index integer,
     asm text,
     cell_output_id bigint,
+    op_return boolean DEFAULT false,
+    ckb_transaction_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -2636,6 +2671,13 @@ ALTER TABLE ONLY public.bitcoin_transactions ALTER COLUMN id SET DEFAULT nextval
 
 
 --
+-- Name: bitcoin_vins id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_vins ALTER COLUMN id SET DEFAULT nextval('public.bitcoin_vins_id_seq'::regclass);
+
+
+--
 -- Name: bitcoin_vouts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3003,6 +3045,14 @@ ALTER TABLE ONLY public.bitcoin_addresses
 
 ALTER TABLE ONLY public.bitcoin_transactions
     ADD CONSTRAINT bitcoin_transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: bitcoin_vins bitcoin_vins_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_vins
+    ADD CONSTRAINT bitcoin_vins_pkey PRIMARY KEY (id);
 
 
 --
@@ -3779,6 +3829,13 @@ CREATE UNIQUE INDEX index_average_block_time_by_hour_on_hour ON public.average_b
 --
 
 CREATE UNIQUE INDEX index_bitcoin_transactions_on_txid ON public.bitcoin_transactions USING btree (txid);
+
+
+--
+-- Name: index_bitcoin_vins_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_bitcoin_vins_on_ckb_transaction_id ON public.bitcoin_vins USING btree (ckb_transaction_id);
 
 
 --
@@ -4587,6 +4644,13 @@ CREATE UNIQUE INDEX pk ON public.udt_transactions USING btree (udt_id, ckb_trans
 
 
 --
+-- Name: prev_bitcoin_vout; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX prev_bitcoin_vout ON public.bitcoin_vins USING btree (bitcoin_transaction_id, previous_bitcoin_vout_id);
+
+
+--
 -- Name: tx_address_changes_alt_pk; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5116,6 +5180,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240205024238'),
 ('20240228072407'),
 ('20240228102716'),
-('20240301025505');
+('20240301025505'),
+('20240305100337');
 
 

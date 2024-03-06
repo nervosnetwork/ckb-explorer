@@ -1,7 +1,8 @@
 # A transaction in CKB is composed by several inputs and several outputs
 # the inputs are the previous generated outputs
 class CkbTransaction < ApplicationRecord
-  include DisplayCells
+  include CkbTransactions::DisplayCells
+  include CkbTransactions::Bitcoin
 
   self.primary_key = :id
   MAX_PAGINATES_PER = 100

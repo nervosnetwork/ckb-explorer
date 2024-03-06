@@ -7,6 +7,8 @@ class CreateBitcoinVouts < ActiveRecord::Migration[7.0]
       t.integer :index
       t.text :asm
       t.bigint :cell_output_id
+      t.boolean :op_return, default: false
+      t.bigint :ckb_transaction_id
 
       t.timestamps
     end
