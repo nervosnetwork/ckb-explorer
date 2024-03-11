@@ -21,7 +21,13 @@ module QueryKeyUtils
     end
 
     def valid_address?(query_key)
-      CkbUtils.parse_address(query_key) rescue nil
+      CkbUtils.parse_address(query_key)
+    rescue StandardError
+      nil
+    end
+
+    def valid_bitcoin_txid?(query_key)
+      BitcoinTransaction.exists?(txid: query_key)
     end
   end
 end

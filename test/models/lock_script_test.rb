@@ -7,10 +7,11 @@ class LockScriptTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
     GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
+    BitcoinTransactionDetectWorker.any_instance.stubs(:perform).returns(true)
     CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
       [
         "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
-      ]
+      ],
     )
   end
 
@@ -25,8 +26,8 @@ class LockScriptTest < ActiveSupport::TestCase
           compact_target: "0x1000",
           length: "0x07d0",
           number: "0x0",
-          start_number: "0x0"
-        )
+          start_number: "0x0",
+        ),
       )
 
       node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
@@ -55,11 +56,11 @@ class LockScriptTest < ActiveSupport::TestCase
         extra_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
         version: "0x0",
         epoch: "0x5eb00a3000089",
-        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007"
-      )
+        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007",
+      ),
     )
     address = create(:address)
-    lock_script = create(:lock_script, address: address, args: "0xda648442dbb7347e467d1d09da13e5cd3a0ef0e1", code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8")
+    lock_script = create(:lock_script, address:, args: "0xda648442dbb7347e467d1d09da13e5cd3a0ef0e1", code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8")
 
     assert_nil lock_script.lock_info
   end
@@ -78,11 +79,11 @@ class LockScriptTest < ActiveSupport::TestCase
         extra_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
         version: "0x0",
         epoch: "0x317025a000077",
-        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007"
-      )
+        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007",
+      ),
     )
     address = create(:address)
-    lock_script = create(:lock_script, address: address, args: "0xda648442dbb7347e467d1d09da13e5cd3a0ef0e1", code_hash: Settings.secp_multisig_cell_type_hash)
+    lock_script = create(:lock_script, address:, args: "0xda648442dbb7347e467d1d09da13e5cd3a0ef0e1", code_hash: Settings.secp_multisig_cell_type_hash)
 
     assert_nil lock_script.lock_info
   end
@@ -101,12 +102,12 @@ class LockScriptTest < ActiveSupport::TestCase
         extra_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
         version: "0x0",
         epoch: "0x317025a000077",
-        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007"
-      )
+        dao: "0x39375e92e46d1c2faf11706ba29d2300aca3fbd5ca6d1900004fe04913440007",
+      ),
     )
     address = create(:address)
     create(:block, number: 107036, start_number: 106327, epoch: 118, timestamp: 1576648516881, length: 796)
-    lock_script = create(:lock_script, address: address, args: "0x691fdcdc80ca82a4cb15826dcb7f0cf04cd821367600004506080720", code_hash: Settings.secp_multisig_cell_type_hash)
+    lock_script = create(:lock_script, address:, args: "0x691fdcdc80ca82a4cb15826dcb7f0cf04cd821367600004506080720", code_hash: Settings.secp_multisig_cell_type_hash)
     expected_lock_info = { status: "locked", epoch_number: "118", epoch_index: "1605", estimated_unlock_time: "1576648532881" }
 
     assert_equal expected_lock_info, lock_script.lock_info

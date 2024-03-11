@@ -94,8 +94,9 @@ module Api
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number block_timestamp display_inputs display_inputs_count display_outputs display_outputs_count income is_cellbase transaction_hash created_at create_timestamp).sort,
-                     response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number block_timestamp display_inputs display_inputs_count
+                        display_outputs display_outputs_count income is_cellbase transaction_hash
+                        created_at create_timestamp rgb_transaction).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return error object when no records found by id" do

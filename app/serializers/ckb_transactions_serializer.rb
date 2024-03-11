@@ -51,6 +51,10 @@ class CkbTransactionsSerializer
     end
   end
 
+  attribute :rgb_transaction do |object|
+    object.rgb_transaction?.to_s
+  end
+
   attribute :created_at do |object|
     object.created_at.to_s
   end

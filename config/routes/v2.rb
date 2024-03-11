@@ -6,6 +6,7 @@ namespace :api do
         get :details
         get :display_inputs
         get :display_outputs
+        get :rgb_digest
       end
     end
     resources :transactions do

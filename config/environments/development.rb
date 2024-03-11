@@ -25,10 +25,10 @@ Rails.application.configure do
       :redis_cache_store, {
         url: ENV["REDIS_URL"],
         driver: :hiredis,
-        namespace: ENV["CACHE_NAMESPACE"]
+        namespace: ENV["CACHE_NAMESPACE"],
       }
     config.public_file_server.headers = {
-      "Cache-Control" => "public, max-age=#{2.days.to_i}"
+      "Cache-Control" => "public, max-age=#{2.days.to_i}",
     }
   else
     config.action_controller.perform_caching = false
@@ -54,7 +54,7 @@ Rails.application.configure do
   config.active_support.disallowed_deprecation_warnings = []
 
   # Raise an error on page load if there are pending migrations.
-  config.active_record.migration_error = :page_load
+  config.active_record.migration_error = false
 
   # Highlight code that triggered database queries in logs.
   config.active_record.verbose_query_logs = true

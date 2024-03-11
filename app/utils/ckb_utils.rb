@@ -643,4 +643,9 @@ class CkbUtils
     mint_limit = [data].pack("H*").unpack1("Q<2")
     { mint_limit: }
   end
+
+  def self.parse_rgb_args(_args)
+    # TODO
+    ["15dede3b31ed87bb6b1d668222127a7b308c1beb6fe99bf4a3f076bcae8e93fe", 4]
+  end
 end
