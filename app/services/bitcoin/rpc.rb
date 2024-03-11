@@ -2,7 +2,7 @@ module Bitcoin
   class Rpc
     include Singleton
 
-    METHOD_NAMES = %w(getchaintips getblockheader getrawtransaction)
+    METHOD_NAMES = %w(getchaintips getrawtransaction getblock getblockhash getblockheader)
     def initialize(endpoint = ENV["BITCOIN_NODE_URL"])
       @endpoint = endpoint
       @id = 0

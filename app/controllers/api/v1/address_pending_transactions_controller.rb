@@ -27,7 +27,7 @@ module Api
           errors = validator.error_object[:errors]
           status = validator.error_object[:status]
 
-          render json: errors, status: status
+          render json: errors, status:
         end
       end
 
@@ -37,7 +37,13 @@ module Api
       end
 
       def find_address
-        @address = Address.find_address!(params[:id])
+        if BitcoinUtils.valid_address?(params[:id])
+          bitcoin_address = BitcoinAddress.find_by(address_hash: params[:id])
+          @address = bitcoin_address&.ckb_address
+        else
+          @address = Address.find_address!(params[:id])
+        end
+
         raise Api::V1::Exceptions::AddressNotFoundError if @address.is_a?(NullAddress)
       end
 
@@ -55,14 +61,14 @@ module Api
 
       def serialized_ckb_transactions
         options = FastJsonapi::PaginationMetaGenerator.new(
-          request: request,
+          request:,
           records: @ckb_transactions,
           page: @page,
-          page_size: @page_size
+          page_size: @page_size,
         ).call
         ckb_transaction_serializer = CkbTransactionsSerializer.new(
           @ckb_transactions,
-          options.merge(params: { previews: true, address: @address })
+          options.merge(params: { previews: true, address: @address }),
         )
 
         if QueryKeyUtils.valid_address?(params[:id])

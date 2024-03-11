@@ -109,6 +109,9 @@ module CkbTransactions
           if previous_cell_output.cell_type.in?(%w(nrc_721_token nrc_721_factory))
             display_input.merge!(attributes_for_nrc_721_cell(previous_cell_output))
           end
+          if previous_cell_output.bitcoin_vout
+            display_input.merge!(attributes_for_rgb_cell(previous_cell_output))
+          end
 
           CkbUtils.hash_value_to_s(display_input)
         end
@@ -138,6 +141,9 @@ module CkbTransactions
           end
           if output.cell_type.in?(%w(omiga_inscription_info omiga_inscription))
             display_output.merge!(attributes_for_omiga_inscription_cell(output))
+          end
+          if output.bitcoin_vout
+            display_output.merge!(attributes_for_rgb_cell(output))
           end
 
           CkbUtils.hash_value_to_s(display_output)
@@ -200,6 +206,11 @@ module CkbTransactions
         end
 
         CkbUtils.hash_value_to_s(attributes)
+      end
+
+      def attributes_for_rgb_cell(rgb_cell)
+        info = rgb_cell.rgb_info
+        { rgb_info: info, extra_info: info }
       end
 
       def hex_since(int_since_value)

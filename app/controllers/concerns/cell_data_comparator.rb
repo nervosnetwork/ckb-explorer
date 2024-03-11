@@ -4,6 +4,13 @@ module CellDataComparator
   private
 
   def compare_cells(transaction)
+    combine_transfers(transaction).map do |address_id, transfers|
+      address = Address.find_by(id: address_id)
+      { address: address.address_hash, transfers: }
+    end
+  end
+
+  def combine_transfers(transaction)
     inputs = transaction.input_cells
     outputs = transaction.cell_outputs
     normal_transfers = diff_normal_cells(inputs, outputs)
@@ -12,14 +19,8 @@ module CellDataComparator
     normal_nft_transfers = diff_normal_nft_cells(inputs, outputs)
     dao_transfers = diff_dao_capacities(inputs, outputs)
 
-    merged_transfers =
-      [normal_transfers, udt_transfers, cota_nft_transfers, normal_nft_transfers, dao_transfers].reduce do |acc, h|
-        acc.merge(h) { |_, ov, nv| ov + nv }
-      end
-
-    merged_transfers.map do |address_id, transfers|
-      address = Address.find_by(id: address_id)
-      { address: address.address_hash, transfers: }
+    [normal_transfers, udt_transfers, cota_nft_transfers, normal_nft_transfers, dao_transfers].reduce do |acc, h|
+      acc.merge(h) { |_, ov, nv| ov + nv }
     end
   end
 
@@ -130,6 +131,14 @@ module CellDataComparator
     end
 
     transfers
+  end
+
+  def diff_rgb_cells(inputs, _outputs)
+    transfers = Hash.new { |h, k| h[k] = Array.new }
+    inputs = inputs.rgb.map do |input|
+      prev_vout = input.previous_cell_output.bitcoin_vout
+      {}
+    end
   end
 
   def nft_info(cell)

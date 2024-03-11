@@ -94,7 +94,8 @@ module CkbSync
       generate_statistics_data(local_block)
       generate_deployed_cells_and_referring_cells(local_block)
       detect_cota_infos(local_block)
-      invoke_token_transfer_detect_worker(token_transfer_ckb_tx_ids)
+      detect_token_transfer(token_transfer_ckb_tx_ids)
+      detect_bitcoin_transactions(local_block)
 
       local_block.update_counter_for_ckb_node_version
       local_block
@@ -132,10 +133,12 @@ module CkbSync
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
     end
 
-    def invoke_token_transfer_detect_worker(token_transfer_ckb_tx_ids)
-      token_transfer_ckb_tx_ids.each do |tx_id|
-        TokenTransferDetectWorker.perform_async(tx_id)
-      end
+    def detect_token_transfer(token_transfer_ckb_tx_ids)
+      token_transfer_ckb_tx_ids.each { TokenTransferDetectWorker.perform_async(_1) }
+    end
+
+    def detect_bitcoin_transactions(local_block)
+      BitcoinTransactionDetectWorker.perform_async(local_block.id)
     end
 
     def process_ckb_txs(

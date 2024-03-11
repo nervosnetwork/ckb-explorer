@@ -603,8 +603,8 @@ ALTER SEQUENCE public.bitcoin_transactions_id_seq OWNED BY public.bitcoin_transa
 CREATE TABLE public.bitcoin_vins (
     id bigint NOT NULL,
     previous_bitcoin_vout_id bigint,
-    bitcoin_transaction_id bigint,
     ckb_transaction_id bigint,
+    cell_input_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -640,9 +640,10 @@ CREATE TABLE public.bitcoin_vouts (
     hex bytea,
     index integer,
     asm text,
-    cell_output_id bigint,
     op_return boolean DEFAULT false,
     ckb_transaction_id bigint,
+    cell_output_id bigint,
+    address_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -3839,6 +3840,13 @@ CREATE INDEX index_bitcoin_vins_on_ckb_transaction_id ON public.bitcoin_vins USI
 
 
 --
+-- Name: index_bitcoin_vins_on_ckb_transaction_id_and_cell_input_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_bitcoin_vins_on_ckb_transaction_id_and_cell_input_id ON public.bitcoin_vins USING btree (ckb_transaction_id, cell_input_id);
+
+
+--
 -- Name: index_bitcoin_vouts_on_bitcoin_address_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3850,6 +3858,13 @@ CREATE INDEX index_bitcoin_vouts_on_bitcoin_address_id ON public.bitcoin_vouts U
 --
 
 CREATE UNIQUE INDEX index_bitcoin_vouts_on_bitcoin_transaction_id_and_index ON public.bitcoin_vouts USING btree (bitcoin_transaction_id, index);
+
+
+--
+-- Name: index_bitcoin_vouts_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_bitcoin_vouts_on_ckb_transaction_id ON public.bitcoin_vouts USING btree (ckb_transaction_id);
 
 
 --
@@ -4641,13 +4656,6 @@ CREATE UNIQUE INDEX index_witnesses_on_ckb_transaction_id_and_index ON public.wi
 --
 
 CREATE UNIQUE INDEX pk ON public.udt_transactions USING btree (udt_id, ckb_transaction_id);
-
-
---
--- Name: prev_bitcoin_vout; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX prev_bitcoin_vout ON public.bitcoin_vins USING btree (bitcoin_transaction_id, previous_bitcoin_vout_id);
 
 
 --

@@ -19,6 +19,8 @@ class SuggestQuery
         find_by_hex
       elsif QueryKeyUtils.valid_address?(query_key)
         find_cached_address
+      elsif QueryKeyUtils.valid_bitcoin_txid?(query_key)
+        find_bitcoin_transaction_by_txid
       end
 
     raise ActiveRecord::RecordNotFound if result.blank?
@@ -66,5 +68,10 @@ class SuggestQuery
       find_address_by_lock_hash ||
       find_udt_by_type_hash ||
       find_type_script_by_type_id
+  end
+
+  def find_bitcoin_transaction_by_txid
+    bitcoin_transaction = BitcoinTransaction.find_by(txid: query_key)
+    BitcoinTransactionSerializer.new(bitcoin_transaction) if bitcoin_transaction
   end
 end

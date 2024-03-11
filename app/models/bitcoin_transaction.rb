@@ -11,6 +11,11 @@ class BitcoinTransaction < ApplicationRecord
       0
     end
   end
+
+  def ckb_transaction_hash
+    ckb_transaction = bitcoin_vouts&.take&.ckb_transaction
+    return ckb_transaction.tx_hash if ckb_transaction
+  end
 end
 
 # == Schema Information

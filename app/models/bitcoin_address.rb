@@ -1,5 +1,9 @@
 class BitcoinAddress < ApplicationRecord
   has_many :bitcoin_vouts
+
+  def ckb_address
+    bitcoin_vouts.take.ckb_address
+  end
 end
 
 # == Schema Information

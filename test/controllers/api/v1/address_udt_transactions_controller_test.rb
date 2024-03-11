@@ -236,6 +236,15 @@ module Api
 
         assert_equal 6, json.dig("meta", "total")
       end
+
+      test "should return meta if udt is omiga_inscription" do
+        udt = create(:udt, udt_type: :omiga_inscription, published: false)
+        address = create(:address, :with_udt_transactions, transactions_count: 3, udt:)
+
+        valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash)
+
+        assert_equal 6, json.dig("meta", "total")
+      end
     end
   end
 end
