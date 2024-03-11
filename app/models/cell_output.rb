@@ -27,8 +27,6 @@ class CellOutput < ApplicationRecord
     omiga_inscription_info: 13,
     omiga_inscription: 14,
     xudt: 15,
-    rgb: 16,
-    btc_time: 17,
   }
 
   belongs_to :ckb_transaction

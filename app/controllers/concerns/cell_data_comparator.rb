@@ -133,14 +133,6 @@ module CellDataComparator
     transfers
   end
 
-  def diff_rgb_cells(inputs, _outputs)
-    transfers = Hash.new { |h, k| h[k] = Array.new }
-    inputs = inputs.rgb.map do |input|
-      prev_vout = input.previous_cell_output.bitcoin_vout
-      {}
-    end
-  end
-
   def nft_info(cell)
     case cell.cell_type
     when "m_nft_token", "nrc_721_token", "spore_cell"
