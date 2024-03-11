@@ -8,7 +8,7 @@ class BitcoinVout < ApplicationRecord
   def commitment
     return unless op_return?
 
-    script_pubkey = Bitcoin::Script.parse_from_payload(hex.htb)
+    script_pubkey = Bitcoin::Script.parse_from_payload(data.htb)
     script_pubkey.op_return_data.bth
   end
 end
@@ -20,7 +20,7 @@ end
 #  id                     :bigint           not null, primary key
 #  bitcoin_transaction_id :bigint
 #  bitcoin_address_id     :bigint
-#  hex                    :binary
+#  data                   :binary
 #  index                  :integer
 #  asm                    :text
 #  op_return              :boolean          default(FALSE)
