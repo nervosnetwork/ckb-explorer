@@ -9,7 +9,7 @@ class BitcoinTransactionDetectWorker
     return unless @block
 
     ApplicationRecord.transaction do
-      build_vins!
+      # build_vins!
       build_vouts!
     end
   end
@@ -87,7 +87,7 @@ class BitcoinTransactionDetectWorker
     block_header = rpc.getblockheader(raw_tx["blockhash"])
     BitcoinTransaction.create!(
       txid: raw_tx["txid"],
-      hash: raw_tx["hash"],
+      tx_hash: raw_tx["hash"],
       time: raw_tx["time"],
       block_hash: raw_tx["blockhash"],
       block_height: block_header["height"],
@@ -99,15 +99,15 @@ class BitcoinTransactionDetectWorker
       address_hash = v.dig("scriptPubKey", "address")
       address = BitcoinAddress.find_or_create_by(address_hash:) if address_hash.present?
 
-      hex = v.dig("scriptPubKey", "hex")
-      script_pubkey = Bitcoin::Script.parse_from_payload(hex.htb)
+      data = v.dig("scriptPubKey", "hex")
+      script_pubkey = Bitcoin::Script.parse_from_payload(data.htb)
       op_return = script_pubkey.op_return?
 
       {
         txid: tx.txid,
         bitcoin_transaction_id: tx.id,
         bitcoin_address_id: address&.id,
-        hex:,
+        data:,
         index: v.dig("n"),
         asm: v.dig("scriptPubKey", "asm"),
         op_return:,

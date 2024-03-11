@@ -24,7 +24,7 @@ end
 #
 #  id           :bigint           not null, primary key
 #  txid         :binary
-#  hash         :binary
+#  tx_hash      :binary
 #  time         :bigint
 #  block_hash   :binary
 #  block_height :bigint

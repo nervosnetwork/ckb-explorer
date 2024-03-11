@@ -568,7 +568,7 @@ ALTER SEQUENCE public.bitcoin_addresses_id_seq OWNED BY public.bitcoin_addresses
 CREATE TABLE public.bitcoin_transactions (
     id bigint NOT NULL,
     txid bytea,
-    hash bytea,
+    tx_hash bytea,
     "time" bigint,
     block_hash bytea,
     block_height bigint,
@@ -637,7 +637,7 @@ CREATE TABLE public.bitcoin_vouts (
     id bigint NOT NULL,
     bitcoin_transaction_id bigint,
     bitcoin_address_id bigint,
-    hex bytea,
+    data bytea,
     index integer,
     asm text,
     op_return boolean DEFAULT false,
@@ -5189,6 +5189,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240228072407'),
 ('20240228102716'),
 ('20240301025505'),
-('20240305100337');
+('20240305100337'),
+('20240311143030');
 
 
