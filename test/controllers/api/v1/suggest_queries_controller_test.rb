@@ -11,7 +11,7 @@ module Api
       end
 
       test "should set right content type when call show" do
-        valid_get api_v1_suggest_queries_url("0x3b238b3326d10ec000417b68bc715f17e86293d6cdbcb3fd8a628ad4a0b756f6")
+        valid_get api_v1_suggest_queries_url, params: { q: "0x3b238b3326d10ec000417b68bc715f17e86293d6cdbcb3fd8a628ad4a0b756f6" }
 
         assert_equal "application/vnd.api+json", response.media_type
       end
@@ -191,7 +191,7 @@ module Api
           :type_script,
           code_hash: Settings.type_id_code_hash,
           args: "0x8536c9d5d908bd89fc70099e4284870708b6632356aad98734fcf43f6f71c304",
-          script_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
+          script_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
         )
         response_json = TypeScriptSerializer.new(type_script).serialized_json
 
