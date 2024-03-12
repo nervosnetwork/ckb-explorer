@@ -76,7 +76,7 @@ class BitcoinTransactionDetectWorker
 
     return if vout_attributes.blank?
 
-    `BitcoinVout`.upsert_all(vout_attributes, unique_by: %i[bitcoin_transaction_id index])
+    BitcoinVout.upsert_all(vout_attributes, unique_by: %i[bitcoin_transaction_id index])
   end
 
   def build_tx!(raw_tx)

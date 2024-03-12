@@ -54,19 +54,19 @@ module Api
       def rgb_digest
         expires_in 10.seconds, public: true, must_revalidate: true
 
-        transfers = combine_transfers(@transaction).map do |address_id, transfers|
-          vout = BitcoinVout.include(:bitcoin_address).find_by(address_id:)
+        transfers = combine_transfers(@ckb_transaction).map do |address_id, transfers|
+          vout = BitcoinVout.includes(:bitcoin_address).find_by(address_id:)
           next unless vout
 
           { address: vout.bitcoin_address.address_hash, transfers: }
         end
-        vout = @transaction.bitcoin_vouts.find_by(op_return: true)
+        vout = @ckb_transaction.bitcoin_vouts.find_by(op_return: true)
 
         render json: {
           data: {
-            txid: vout.bitcoin_transaction.txid,
-            confirmations: vout.bitcoin_transaction.confirmations,
-            commitment: vout.bitcoin_transaction.commitment,
+            txid: vout&.bitcoin_transaction&.txid,
+            confirmations: vout&.bitcoin_transaction&.confirmations,
+            commitment: vout&.commitment,
             transfers:,
           },
         }
