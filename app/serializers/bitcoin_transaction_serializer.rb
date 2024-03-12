@@ -5,7 +5,7 @@ class BitcoinTransactionSerializer
   attributes :txid
 
   attribute :transaction_hash do |object|
-    object.hash
+    object.tx_hash
   end
 
   attribute :ckb_transaction_hash do |object|
