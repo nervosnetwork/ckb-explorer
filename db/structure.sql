@@ -1191,7 +1191,8 @@ CREATE TABLE public.contracts (
     deployed_cells_count numeric(30,0) DEFAULT 0.0,
     referring_cells_count numeric(30,0) DEFAULT 0.0,
     total_deployed_cells_capacity numeric(30,0) DEFAULT 0.0,
-    total_referring_cells_capacity numeric(30,0) DEFAULT 0.0
+    total_referring_cells_capacity numeric(30,0) DEFAULT 0.0,
+    addresses_count integer
 );
 
 
@@ -4372,13 +4373,6 @@ CREATE UNIQUE INDEX index_portfolios_on_user_id_and_address_id ON public.portfol
 
 
 --
--- Name: index_referring_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_referring_cells_on_cell_output_id ON public.referring_cells USING btree (cell_output_id);
-
-
---
 -- Name: index_referring_cells_on_contract_id_and_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5190,6 +5184,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240228102716'),
 ('20240301025505'),
 ('20240305100337'),
-('20240311143030');
+('20240311143030'),
+('20240312050057');
 
 

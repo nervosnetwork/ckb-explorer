@@ -74,6 +74,7 @@ namespace :api do
     resources :statistics, only: [] do
       collection do
         get :transaction_fees
+        get :contract_resource_distributed
       end
     end
 
