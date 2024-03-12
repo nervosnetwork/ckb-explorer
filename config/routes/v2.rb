@@ -62,7 +62,6 @@ namespace :api do
         get :deployed_cells
         get :referring_cells
         get :general_info
-        get :referring_capacities
       end
     end
 
@@ -75,6 +74,7 @@ namespace :api do
     resources :statistics, only: [] do
       collection do
         get :transaction_fees
+        get :contract_resource_distributed
       end
     end
 

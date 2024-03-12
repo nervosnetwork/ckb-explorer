@@ -10,6 +10,8 @@ FactoryBot.define do
     verified { false }
     deprecated { false }
     total_referring_cells_capacity { SecureRandom.random_number(10**10) }
+    ckb_transactions_count { SecureRandom.random_number(10**10) }
+    addresses_count { SecureRandom.random_number(100_000_000) }
 
     after(:create) do |contract, _eval|
       tx = create :ckb_transaction, :with_single_output

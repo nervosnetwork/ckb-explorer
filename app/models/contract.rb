@@ -42,6 +42,7 @@ end
 #  referring_cells_count          :decimal(30, )    default(0)
 #  total_deployed_cells_capacity  :decimal(30, )    default(0)
 #  total_referring_cells_capacity :decimal(30, )    default(0)
+#  addresses_count                :integer
 #
 # Indexes
 #

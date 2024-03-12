@@ -35,14 +35,6 @@ module Api
         valid_get referring_cells_api_v2_scripts_url(code_hash: @code_hash, hash_type: @hash_type)
         assert_response :success
       end
-
-      test "should get referring_capacities" do
-        create_list(:contract, 10)
-        referring_capacities = Contract.all.map { { _1.code_hash => _1.total_referring_cells_capacity.to_s } }
-
-        valid_get referring_capacities_api_v2_scripts_url
-        assert_equal ({ "data" => referring_capacities }), json
-      end
     end
   end
 end

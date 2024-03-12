@@ -49,13 +49,6 @@ module Api
           end
       end
 
-      def referring_capacities
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        data = Contract.all.map { { _1.code_hash => _1.total_referring_cells_capacity.to_s } }
-
-        render json: { data: }
-      end
-
       private
 
       def get_script_content
