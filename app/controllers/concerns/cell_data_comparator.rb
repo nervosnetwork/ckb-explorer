@@ -137,7 +137,7 @@ module CellDataComparator
     case cell.cell_type
     when "m_nft_token", "nrc_721_token", "spore_cell"
       item = TokenItem.joins(:type_script).where(type_script: { script_hash: cell.type_hash }).take
-      { toekn_id: item&.token_id, name: item&.collection&.name }
+      { token_id: item&.token_id, name: item&.collection&.name }
     when "m_nft_issuer"
       { name: CkbUtils.parse_issuer_data(cell.data).info["name"] }
     when "m_nft_class"
