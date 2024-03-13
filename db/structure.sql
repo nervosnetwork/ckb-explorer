@@ -1810,7 +1810,8 @@ CREATE TABLE public.omiga_inscription_infos (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     type_hash bytea,
-    pre_udt_hash bytea
+    pre_udt_hash bytea,
+    is_repeated_symbol boolean DEFAULT false
 );
 
 
@@ -5185,6 +5186,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240301025505'),
 ('20240305100337'),
 ('20240311143030'),
-('20240312050057');
+('20240312050057'),
+('20240313075641');
 
 
