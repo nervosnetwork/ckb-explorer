@@ -117,7 +117,7 @@ class BitcoinTransactionDetectWorker
 
   def get_txid(cell)
     number = cell.ckb_transaction.block_number
-    txids = Kredis.unique_list "bitcoin_#{number}"
+    txids = Kredis.unique_list "bitcoin_#{number / 20}"
     txid = txids.elements[0]
 
     raise ArgumentError, "Get rgb cell txid error" unless txid
