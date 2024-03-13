@@ -238,7 +238,7 @@ module Api
       end
 
       test "should return meta if udt is omiga_inscription" do
-        udt = create(:udt, udt_type: :omiga_inscription, published: false)
+        udt = create(:udt, udt_type: :omiga_inscription, published: true)
         address = create(:address, :with_udt_transactions, transactions_count: 3, udt:)
 
         valid_get api_v1_address_udt_transaction_url(address.address_hash, type_hash: udt.type_hash)

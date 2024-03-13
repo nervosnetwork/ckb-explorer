@@ -4,8 +4,8 @@ module Api
       before_action :validate_query_params, :validate_pagination_params, :pagination_params
 
       def show
-        udt = Udt.find_by(type_hash: params[:id])
-        raise Api::V1::Exceptions::UdtNotFoundError if udt.blank? || (udt.udt_type != "omiga_inscription" && !udt.published)
+        udt = Udt.find_by(type_hash: params[:id], published: true)
+        raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
 
         ckb_transactions = udt.ckb_transactions.tx_committed.
           select(:id, :tx_hash, :block_id, :block_number,

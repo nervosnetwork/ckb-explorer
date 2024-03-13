@@ -61,4 +61,10 @@ class UdtSerializer
   } do |object|
     object.omiga_inscription_info.pre_udt_hash
   end
+
+  attribute :is_repeated_symbol, if: Proc.new { |record, _params|
+    record.udt_type == "omiga_inscription"
+  } do |object|
+    object.omiga_inscription_info.is_repeated_symbol
+  end
 end
