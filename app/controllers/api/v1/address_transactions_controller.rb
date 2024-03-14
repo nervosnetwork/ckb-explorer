@@ -78,13 +78,7 @@ module Api
       end
 
       def find_address
-        if BitcoinUtils.valid_address?(params[:id])
-          bitcoin_address = BitcoinAddress.find_by(address_hash: params[:id])
-          @address = bitcoin_address&.ckb_address
-        else
-          @address = Address.find_address!(params[:id])
-        end
-
+        @address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if @address.is_a?(NullAddress)
       end
 
