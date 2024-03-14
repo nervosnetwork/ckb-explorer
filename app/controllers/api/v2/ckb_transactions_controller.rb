@@ -58,7 +58,7 @@ module Api
           vout = BitcoinVout.includes(:bitcoin_address).find_by(address_id:)
           next unless vout
 
-          { address: vout.bitcoin_address.address_hash, transfers: }
+          { address: vout&.bitcoin_address&.address_hash, transfers: }
         end
         vout = @ckb_transaction.bitcoin_vouts.find_by(op_return: true)
 

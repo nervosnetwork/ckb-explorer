@@ -125,7 +125,12 @@ class Address < ApplicationRecord
   end
 
   def self.find_address!(query_key)
-    cached_find(query_key) || raise(Api::V1::Exceptions::AddressNotFoundError)
+    if BitcoinUtils.valid_address?(query_key)
+      bitcoin_address = BitcoinAddress.find_by(address_hash: query_key)
+      bitcoin_address ? bitcoin_address.ckb_address : NullAddress.new(query_key)
+    else
+      cached_find(query_key) || raise(Api::V1::Exceptions::AddressNotFoundError)
+    end
   end
 
   def self.cached_find(query_key)
