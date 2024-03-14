@@ -121,8 +121,4 @@ s.every "1h", overlap: false do
   call_worker ContractStatisticWorker
 end
 
-s.every "4m", overlap: false do
-  call_worker SyncBitcoinTransactionTxidsWorker
-end
-
 s.join
