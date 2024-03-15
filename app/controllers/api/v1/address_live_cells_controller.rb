@@ -4,6 +4,8 @@ module Api
       before_action :validate_pagination_params, :pagination_params
 
       def show
+        expires_in 1.minutes, public: true, must_revalidate: true, stale_while_revalidate: 10.seconds
+
         address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
 
