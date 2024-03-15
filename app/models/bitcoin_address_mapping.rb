@@ -1,5 +1,5 @@
 class BitcoinAddressMapping < ApplicationRecord
-  belongs_to :ckb_address, class_name: "Address", optional: true
+  belongs_to :ckb_address, class_name: "Address"
   belongs_to :bitcoin_address
 end
 

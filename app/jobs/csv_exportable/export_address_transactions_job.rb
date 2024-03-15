@@ -1,6 +1,9 @@
 module CsvExportable
   class ExportAddressTransactionsJob < BaseExporter
     def perform(args)
+      address = Addresses::Explore.run!(key: args[:id])
+      raise AddressNotFoundError if address.is_a?(NullAddress)
+
       tx_ids = AccountBook.joins(:ckb_transaction).
         where(address_id: args[:address_id]).
         order(ckb_transaction_id: :asc).
@@ -61,11 +64,12 @@ module CsvExportable
       rows = []
       units = input_info.keys | output_info.keys
       units.each_with_index do |unit, index|
-        if unit == "CKB"
-          data = build_ckb_data(input_info[unit], output_info[unit])
-        else
-          data = build_udt_data(input_info[unit], output_info[unit])
-        end
+        data =
+          if unit == "CKB"
+            build_ckb_data(input_info[unit], output_info[unit])
+          else
+            build_udt_data(input_info[unit], output_info[unit])
+          end
 
         display_fee =
           if units.include?("CKB")
@@ -85,7 +89,7 @@ module CsvExportable
           data[:token_out],
           data[:balance_diff],
           (display_fee ? fee : "/"),
-          datetime
+          datetime,
         ]
       end
 
