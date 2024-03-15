@@ -14,13 +14,13 @@ module Api::V2
     def contract_resource_distributed
       expires_in 30.minutes, public: true
 
-      json = Contract.all.map do |contract|
+      json = Contract.filter_nil_hash_type.map do |contract|
         {
           name: contract.name,
           code_hash: contract.code_hash,
           hash_type: contract.hash_type,
           tx_count: contract.ckb_transactions_count,
-          capacity_amount: (contract.total_referring_cells_capacity / 10**8).truncate(8),
+          ckb_amount: (contract.total_referring_cells_capacity / 10**8).truncate(8),
           address_count: contract.addresses_count,
         }
       end

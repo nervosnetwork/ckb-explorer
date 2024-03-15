@@ -7,6 +7,8 @@ class Contract < ApplicationRecord
   has_many :cell_dependencies
   has_many :ckb_transactions, through: :cell_dependencies
 
+  scope :filter_nil_hash_type, -> { where("hash_type IS NOT null and addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
+
   def self.create_initial_data
     Contract.transaction do
       Script.find_each do |script|
@@ -18,7 +20,6 @@ class Contract < ApplicationRecord
       end
     end
   end
-
 end
 
 # == Schema Information
