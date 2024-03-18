@@ -26,7 +26,7 @@ module Addresses
 
     def find_by_bitcoin_address_hash(key)
       address_ids = BitcoinAddressMapping.includes(:bitcoin_address).
-        where(bitcoin_address: { address_hash: key }).pluck(:address_id)
+        where(bitcoin_address: { address_hash: key }).pluck(:ckb_address_id)
       Address.where(id: address_ids)
     end
 
