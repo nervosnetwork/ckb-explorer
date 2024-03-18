@@ -531,6 +531,38 @@ CREATE MATERIALIZED VIEW public.average_block_time_by_hour AS
 
 
 --
+-- Name: bitcoin_address_mappings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bitcoin_address_mappings (
+    id bigint NOT NULL,
+    bitcoin_address_id bigint,
+    ckb_address_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: bitcoin_address_mappings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.bitcoin_address_mappings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: bitcoin_address_mappings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.bitcoin_address_mappings_id_seq OWNED BY public.bitcoin_address_mappings.id;
+
+
+--
 -- Name: bitcoin_addresses; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2660,6 +2692,13 @@ ALTER TABLE ONLY public.addresses ALTER COLUMN id SET DEFAULT nextval('public.ad
 
 
 --
+-- Name: bitcoin_address_mappings id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_address_mappings ALTER COLUMN id SET DEFAULT nextval('public.bitcoin_address_mappings_id_seq'::regclass);
+
+
+--
 -- Name: bitcoin_addresses id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3032,6 +3071,14 @@ ALTER TABLE ONLY public.addresses
 
 ALTER TABLE ONLY public.ar_internal_metadata
     ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: bitcoin_address_mappings bitcoin_address_mappings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_address_mappings
+    ADD CONSTRAINT bitcoin_address_mappings_pkey PRIMARY KEY (id);
 
 
 --
@@ -3727,6 +3774,13 @@ CREATE INDEX ckb_transactions_rejected_tags_idx ON public.ckb_transactions_rejec
 --
 
 CREATE INDEX ckb_transactions_rejected_tx_hash_idx ON public.ckb_transactions_rejected USING hash (tx_hash);
+
+
+--
+-- Name: idex_bitcon_addresses_on_mapping; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idex_bitcon_addresses_on_mapping ON public.bitcoin_address_mappings USING btree (bitcoin_address_id, ckb_address_id);
 
 
 --
@@ -5187,6 +5241,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240305100337'),
 ('20240311143030'),
 ('20240312050057'),
-('20240313075641');
+('20240313075641'),
+('20240315015432');
 
 

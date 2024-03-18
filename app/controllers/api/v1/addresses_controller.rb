@@ -4,12 +4,7 @@ module Api
       before_action :validate_query_params
 
       def show
-        if BitcoinUtils.valid_address?(params[:id])
-          bitcoin_address = BitcoinAddress.find_by(address_hash: params[:id])
-          address = bitcoin_address ? bitcoin_address.ckb_address : NullAddress.new(params[:id])
-        else
-          address = Address.find_address!(params[:id])
-        end
+        address = Address.find_address!(params[:id])
 
         render json: json_response(address)
       end

@@ -1,9 +1,6 @@
 class BitcoinAddress < ApplicationRecord
-  has_many :bitcoin_vouts
-
-  def ckb_address
-    bitcoin_vouts.take.ckb_address
-  end
+  has_many :bitcoin_address_mappings
+  has_many :ckb_addresses, class_name: "Address", through: :bitcoin_address_mappings
 end
 
 # == Schema Information

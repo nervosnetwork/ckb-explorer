@@ -76,7 +76,7 @@ class BitcoinTransactionDetectWorker
     address_hash = vout.dig("scriptPubKey", "address")
     return unless address_hash
 
-    bitcoin_address = BitcoinAddress.find_or_create_by(address_hash:)
+    bitcoin_address = build_address!(address_hash, cell_output)
 
     {
       bitcoin_transaction_id: tx.id,
@@ -89,6 +89,15 @@ class BitcoinTransactionDetectWorker
       cell_output_id: cell_output.id,
       address_id: cell_output.address_id,
     }
+  end
+
+  def build_address!(address_hash, cell_output)
+    bitcoin_address = BitcoinAddress.find_or_create_by(address_hash:)
+    BitcoinAddressMapping.
+      create_with(bitcoin_address_id: bitcoin_address.id).
+      find_or_create_by!(ckb_address_id: cell_output.address_id)
+
+    bitcoin_address
   end
 
   def rpc
