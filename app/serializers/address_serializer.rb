@@ -131,4 +131,7 @@ class AddressSerializer
   attribute :balance_occupied do |object|
     object.balance_occupied.to_s
   end
+  attribute :bitcoin_address_hash do |object|
+    object.bitcoin_address&.address_hash
+  end
 end

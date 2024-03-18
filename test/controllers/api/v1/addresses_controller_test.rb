@@ -64,7 +64,7 @@ module Api
       end
 
       test "should return error object when id is not a address hash" do
-        error_object = Api::V1::Exceptions::AddressHashInvalidError.new
+        error_object = Api::V1::Exceptions::AddressNotFoundError.new
         response_json = RequestErrorSerializer.new([error_object],
                                                    message: error_object.title).serialized_json
 
@@ -74,12 +74,18 @@ module Api
       end
 
       test "should return corresponding data with given address hash" do
+        page = 1
+        page_size = 100
         address = create(:address, :with_lock_script)
         address.query_address = address.address_hash
 
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal AddressSerializer.new(address).serialized_json,
+        options = FastJsonapi::PaginationMetaGenerator.new(
+          request:, records: [address], page:, page_size:, total_count: 1,
+        ).call
+
+        assert_equal AddressSerializer.new([address], options).serialized_json,
                      response.body
       end
 
@@ -97,19 +103,11 @@ module Api
 
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_equal %w(address_hash balance transactions_count lock_script dao_deposit interest lock_info is_special live_cells_count mined_blocks_count average_deposit_time udt_accounts dao_compensation balance_occupied).sort,
-                     json["data"]["attributes"].keys.sort
-      end
-
-      test "should return NullAddress when address no found by id" do
-        ENV["CKB_NET_MODE"] = "testnet"
-        address = NullAddress.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
-        response_json = AddressSerializer.new(address).serialized_json
-
-        valid_get api_v1_address_url("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
-
-        assert_equal response_json, response.body
-        ENV["CKB_NET_MODE"] = "mainnet"
+        assert_equal %w(address_hash balance transactions_count lock_script dao_deposit
+                        interest lock_info is_special live_cells_count mined_blocks_count
+                        average_deposit_time udt_accounts dao_compensation balance_occupied
+                        bitcoin_address_hash).sort,
+                     json["data"][0]["attributes"].keys.sort
       end
 
       test "should return special address when query address is special" do
@@ -118,7 +116,7 @@ module Api
 
         valid_get api_v1_address_url(address.address_hash)
         assert_equal Settings.special_addresses[address.address_hash],
-                     json.dig("data", "attributes", "special_address")
+                     json.dig("data", 0, "attributes", "special_address")
       end
 
       test "should not return special address when query address is not special" do
@@ -126,7 +124,7 @@ module Api
                          address_hash: "ckb1qyqdmeuqrsrnm7e5vnrmruzmsp4m9wacf6vsxasryq")
 
         valid_get api_v1_address_url(address.address_hash)
-        assert_nil json.dig("data", "attributes", "special_address")
+        assert_nil json.dig("data", 0, "attributes", "special_address")
       end
 
       test "should support full address query when short address's lock script exists" do
@@ -136,7 +134,11 @@ module Api
         address.query_address = query_key
         valid_get api_v1_address_url(query_key)
 
-        assert_equal AddressSerializer.new(address).serialized_json,
+        options = FastJsonapi::PaginationMetaGenerator.new(
+          request:, records: [address], page: 1, page_size: 100, total_count: 1,
+        ).call
+
+        assert_equal AddressSerializer.new([address], options).serialized_json,
                      response.body
       end
 
@@ -147,7 +149,11 @@ module Api
         address.query_address = query_key
         valid_get api_v1_address_url(query_key)
 
-        assert_equal AddressSerializer.new(address).serialized_json,
+        options = FastJsonapi::PaginationMetaGenerator.new(
+          request:, records: [address], page: 1, page_size: 100, total_count: 1,
+        ).call
+
+        assert_equal AddressSerializer.new([address], options).serialized_json,
                      response.body
       end
 
@@ -168,7 +174,7 @@ module Api
             "display_name" => nil,
             "uan" => nil,
           },
-        ], json.dig("data", "attributes", "udt_accounts")
+        ], json.dig("data", 0, "attributes", "udt_accounts")
       end
 
       test "should not return unpublished udt accounts with given address hash" do
@@ -178,7 +184,7 @@ module Api
 
         valid_get api_v1_address_url(address.address_hash)
 
-        assert_empty json.dig("data", "attributes", "udt_accounts")
+        assert_empty json.dig("data", 0, "attributes", "udt_accounts")
       end
 
       test "should return balance occupied" do
@@ -186,7 +192,7 @@ module Api
                          address_hash: "ckb1qyq0hcfpff4h8w8zvy44uurvlgdrr09tefwqx266dl")
 
         valid_get api_v1_address_url(address.address_hash)
-        assert_equal "0", json.dig("data", "attributes", "balance_occupied")
+        assert_equal "0", json.dig("data", 0, "attributes", "balance_occupied")
       end
 
       test "should return nrc 721 udt accounts with given address hash" do
@@ -216,7 +222,7 @@ module Api
             "udt_type" => udt_account.udt_type,
             "collection" => { "type_hash" => type_script.script_hash },
           },
-        ], json.dig("data", "attributes", "udt_accounts")
+        ], json.dig("data", 0, "attributes", "udt_accounts")
       end
 
       test "should return spore cell udt accounts with given address hash" do
@@ -242,7 +248,7 @@ module Api
             "udt_type" => udt_account.udt_type,
             "collection" => { "type_hash" => cluster_type.script_hash },
           },
-        ], json.dig("data", "attributes", "udt_accounts")
+        ], json.dig("data", 0, "attributes", "udt_accounts")
       end
 
       test "should return omiga inscription udt accounts with given address hash" do
@@ -265,7 +271,7 @@ module Api
             "expected_supply" => info.expected_supply.to_s,
             "mint_status" => info.mint_status,
           },
-        ], json.dig("data", "attributes", "udt_accounts")
+        ], json.dig("data", 0, "attributes", "udt_accounts")
       end
     end
   end

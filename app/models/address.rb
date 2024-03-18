@@ -1,6 +1,10 @@
 class Address < ApplicationRecord
   PREFIX_MAINNET = "ckb".freeze
   PREFIX_TESTNET = "ckt".freeze
+  MAX_PAGINATES_PER = 1000
+  DEFAULT_PAGINATES_PER = 100
+  paginates_per DEFAULT_PAGINATES_PER
+  max_paginates_per MAX_PAGINATES_PER
 
   has_many :cell_outputs, dependent: :destroy
   has_many :account_books, dependent: :destroy
@@ -9,7 +13,7 @@ class Address < ApplicationRecord
   has_many :udt_accounts
   has_many :dao_events
 
-  has_one :bitcoin_address_mapping
+  has_one :bitcoin_address_mapping, foreign_key: "ckb_address_id"
   has_one :bitcoin_address, through: :bitcoin_address_mapping
 
   validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit,
