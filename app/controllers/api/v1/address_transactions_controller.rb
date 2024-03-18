@@ -5,6 +5,7 @@ module Api
 
       def show
         expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+
         json = Addresses::CkbTransactions.run!(
           { request:,
             key: params[:id], sort: params[:sort],

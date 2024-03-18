@@ -162,7 +162,7 @@ module Api
         address = create(:address, :with_lock_script, address_hash: "ckb1qjda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xw3vumhs9nvu786dj9p0q5elx66t24n3kxgj53qks")
         query_key = "ckb1qyqt8xaupvm8837nv3gtc9x0ekkj64vud3jqfwyw5v"
         address.query_address = query_key
-        valid_get api_v1_address_url(query_key)
+        valid_get api_v1_suggest_queries_url, params: { q: query_key }
 
         assert_equal AddressSerializer.new(address).serialized_json, response.body
       end
