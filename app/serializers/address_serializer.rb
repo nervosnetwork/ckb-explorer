@@ -4,7 +4,7 @@ class AddressSerializer
   attributes :lock_info
 
   attribute :address_hash do |object|
-    object.query_address
+    object.query_address || object.address_hash
   end
   attribute :balance do |object|
     object.balance.to_s
