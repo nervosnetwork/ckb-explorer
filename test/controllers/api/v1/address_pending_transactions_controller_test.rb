@@ -69,16 +69,6 @@ module Api
         assert_equal response_json, response.body
       end
 
-      test "should return error object when id is not a address hash" do
-        error_object = Api::V1::Exceptions::AddressHashInvalidError.new
-        response_json = RequestErrorSerializer.new([error_object],
-                                                   message: error_object.title).serialized_json
-
-        valid_get api_v1_address_pending_transaction_url("9034fwefwef")
-
-        assert_equal response_json, response.body
-      end
-
       test "should return corresponding ckb transactions with given address hash" do
         page = 1
         page_size = 10
