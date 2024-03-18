@@ -31,7 +31,7 @@ module Addresses
     end
 
     def wrap_result(result)
-      result.is_a?(Array) ? result : [result]
+      result.is_a?(Address) ? [result] : result
     end
   end
 end
