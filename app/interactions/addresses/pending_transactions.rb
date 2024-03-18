@@ -12,25 +12,24 @@ module Addresses
       address = Explore.run!(key:)
       raise AddressNotFoundError if address.is_a?(NullAddress)
 
-      address_id = address.map(&:id)
-
-      order_by, asc_or_desc = account_books_ordering
       account_books =
-        AccountBook.joins(:ckb_transaction).
-          where(account_books: { address_id: },
-                ckb_transactions: { tx_status: "pending" }).
-          order(order_by => asc_or_desc).
-          page(page).per(page_size).fast_page
+        AccountBook.joins(:ckb_transaction).where(
+          account_books: { address_id: address.map(&:id) },
+          ckb_transactions: { tx_status: "pending" },
+        )
+      ckb_transaction_ids =
+        CellInput.where(ckb_transaction_id: account_books.map(&:ckb_transaction_id)).
+          where.not(previous_cell_output_id: nil, from_cell_base: false).
+          distinct.pluck(:ckb_transaction_id)
+      records =
+        CkbTransaction.where(id: ckb_transaction_ids).
+          select(select_fields).
+          order(transactions_ordering).
+          page(page).per(page_size)
 
-      ckb_transaction_ids = account_books.map(&:ckb_transaction_id)
-      ckb_transaction_ids = CellInput.where(ckb_transaction_id: ckb_transaction_ids).
-        where.not(previous_cell_output_id: nil, from_cell_base: false).
-        distinct.pluck(:ckb_transaction_id)
-      records = CkbTransaction.where(id: ckb_transaction_ids).
-        select(select_fields).
-        order(order_by => asc_or_desc)
-
-      options = paginate_options(records, address_id)
+      options = FastJsonapi::PaginationMetaGenerator.new(
+        request:, records:, page:, page_size:,
+      ).call
       options.merge!(params: { previews: true, address: })
 
       result = CkbTransactionsSerializer.new(records, options)
@@ -39,26 +38,19 @@ module Addresses
 
     private
 
-    def account_books_ordering
+    def transactions_ordering
       sort_by, sort_order = sort.split(".", 2)
       sort_by =
         case sort_by
-        when "time" then "ckb_transactions.block_timestamp"
-        else "ckb_transactions.id"
+        when "time" then "block_timestamp"
+        else "id"
         end
 
       if sort_order.nil? || !sort_order.match?(/^(asc|desc)$/i)
         sort_order = "asc"
       end
 
-      [sort_by, sort_order]
-    end
-
-    def paginate_options(records, address_id)
-      total_count = AccountBook.where(address_id:).count
-      FastJsonapi::PaginationMetaGenerator.new(
-        request:, records:, page:, page_size:, total_count:,
-      ).call
+      "#{sort_by} #{sort_order} NULLS LAST"
     end
 
     def select_fields
