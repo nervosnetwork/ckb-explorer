@@ -209,8 +209,7 @@ module CkbTransactions
       end
 
       def attributes_for_rgb_cell(rgb_cell)
-        info = rgb_cell.rgb_info
-        { rgb_info: info, extra_info: info }
+        { rgb_info: rgb_cell.rgb_info }
       end
 
       def hex_since(int_since_value)
