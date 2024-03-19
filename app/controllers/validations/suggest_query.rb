@@ -28,8 +28,7 @@ module Validations
       query_key_invalid =
         !QueryKeyUtils.integer_string?(query_key) &&
         !QueryKeyUtils.valid_hex?(query_key) &&
-        !QueryKeyUtils.valid_address?(query_key) &&
-        !QueryKeyUtils.valid_bitcoin_txid?(query_key)
+        !QueryKeyUtils.valid_address?(query_key)
 
       if query_key.blank? || query_key_invalid
         errors.add(:query_key, "query key is invalid")

@@ -25,9 +25,5 @@ module QueryKeyUtils
     rescue StandardError
       nil
     end
-
-    def valid_bitcoin_txid?(query_key)
-      BitcoinTransaction.exists?(txid: query_key)
-    end
   end
 end
