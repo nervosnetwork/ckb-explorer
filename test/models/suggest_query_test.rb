@@ -63,4 +63,14 @@ class SuggestQueryTest < ActiveSupport::TestCase
       SuggestQuery.new(udt.type_hash).find!
     end
   end
+
+  test "should return lock script by code_hash" do
+    ls = create(:lock_script)
+    assert_equal LockScriptSerializer.new(ls).serialized_json, SuggestQuery.new(ls.code_hash).find!.serialized_json
+  end
+
+  test "should return type script by code_hash" do
+    ts = create(:type_script)
+    assert_equal TypeScriptSerializer.new(ts).serialized_json, SuggestQuery.new(ts.code_hash).find!.serialized_json
+  end
 end
