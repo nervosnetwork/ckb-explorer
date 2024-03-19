@@ -140,7 +140,7 @@ module Api
           income
           is_cellbase
           transaction_hash
-          rgb_transaction
+          is_rgb_transaction
           created_at
           create_timestamp
         ).sort, response_tx_transaction["attributes"].keys.sort
