@@ -51,7 +51,7 @@ class CkbTransactionsSerializer
     end
   end
 
-  attribute :rgb_transaction do |object|
+  attribute :is_rgb_transaction do |object|
     object.rgb_transaction?
   end
 

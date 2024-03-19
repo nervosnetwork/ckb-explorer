@@ -91,7 +91,7 @@ module Api
 
         assert_equal %w(
           block_number block_timestamp display_inputs display_inputs_count created_at create_timestamp
-          display_outputs display_outputs_count income is_cellbase rgb_transaction transaction_hash
+          display_outputs display_outputs_count income is_cellbase is_rgb_transaction transaction_hash
         ).sort,
                      response_tx_transaction["attributes"].keys.sort
       end
