@@ -100,4 +100,8 @@ class CkbTransactionSerializer
   attribute :max_cycles do
     EpochStatistic.max_tx_cycles
   end
+
+  attribute :is_rgb_transaction do |object|
+    object.rgb_transaction?
+  end
 end
