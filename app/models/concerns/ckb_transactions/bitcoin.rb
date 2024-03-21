@@ -16,14 +16,14 @@ module CkbTransactions
 
         # In the outputs, there is exactly one OP_RETURN containing a commitment.
         op_return_vout = bitcoin_vouts.find_by(op_return: true)
-        op_return_vout.commitment
+        op_return_vout&.commitment
       end
 
       def rgb_txid
         return unless rgb_transaction?
 
         op_return_vout = bitcoin_vouts.find_by(op_return: true)
-        op_return_vout.bitcoin_transaction.txid
+        op_return_vout&.bitcoin_transaction&.txid
       end
     end
   end
