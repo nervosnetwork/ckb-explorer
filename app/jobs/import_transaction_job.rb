@@ -186,7 +186,7 @@ class ImportTransactionJob < ApplicationJob
 
     dep =
       case lock_script_or_type_script.hash_type
-      when "data"
+      when "data", "data1"
         by_data_hash[lock_script_or_type_script.code_hash]
       when "type"
         by_type_hash[lock_script_or_type_script.code_hash]
