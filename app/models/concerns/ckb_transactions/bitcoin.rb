@@ -11,12 +11,19 @@ module CkbTransactions
         bitcoin_vins.exists? || bitcoin_vouts.exists?
       end
 
-      def commitment
+      def rgb_commitment
         return unless rgb_transaction?
 
         # In the outputs, there is exactly one OP_RETURN containing a commitment.
         op_return_vout = bitcoin_vouts.find_by(op_return: true)
         op_return_vout.commitment
+      end
+
+      def rgb_txid
+        return unless rgb_transaction?
+
+        op_return_vout = bitcoin_vouts.find_by(op_return: true)
+        op_return_vout.bitcoin_transaction.txid
       end
     end
   end

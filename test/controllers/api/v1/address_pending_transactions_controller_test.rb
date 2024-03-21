@@ -141,6 +141,7 @@ module Api
           is_rgb_transaction
           created_at
           create_timestamp
+          rgb_txid
         ).sort, response_tx_transaction["attributes"].keys.sort
       end
 
