@@ -1,24 +1,37 @@
 module Api
   module V2
     class BitcoinTransactionsController < BaseController
-      def raw
-        expires_in 1.minute, public: true, must_revalidate: true, stale_while_revalidate: 10.seconds
+      def query
+        cache_keys = params[:txids]
+        res = Rails.cache.read_multi(*cache_keys)
 
-        raw_transaction = rpc.getrawtransaction(params[:id], 2)
-        if raw_transaction.dig("error").present?
-          head :not_found
-        else
-          render json: raw_transaction
+        not_cached = cache_keys - res.keys
+        to_cache = {}
+
+        get_raw_transactions(not_cached).each do |tx|
+          next if tx.dig("error").present?
+
+          txid = tx.dig("result", "txid")
+          res[txid] = tx
+          to_cache[txid] = tx
         end
+
+        Rails.cache.write_multi(to_cache, expires_in: 10.minutes) unless to_cache.empty?
+
+        render json: res
       rescue StandardError => e
-        Rails.logger.error "get raw transaction(#{params[:id]}) faild: #{e.message}"
-        head :not_found
+        Rails.logger.error "get raw transaction(#{params[:txids]}) failed: #{e.message}"
+        render json: {}, status: :not_found
       end
 
       private
 
-      def rpc
-        @rpc ||= Bitcoin::Rpc.instance
+      def get_raw_transactions(txids)
+        payload = txids.map.with_index do |txid, index|
+          { jsonrpc: "1.0", id: index + 1, method: "getrawtransaction", params: [txid, 2] }
+        end
+        response = HTTP.timeout(10).post(ENV["BITCOIN_NODE_URL"], json: payload)
+        JSON.parse(response.to_s)
       end
     end
   end
