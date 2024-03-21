@@ -222,11 +222,11 @@ module Api
       end
 
       test "should return error object when address_hash param is invalid" do
-        block = create(:block, :with_ckb_transactions)
-        error_object = Api::V1::Exceptions::AddressHashInvalidError.new
+        udt = create(:udt, :with_transactions, published: true)
+        error_object = Api::V1::Exceptions::AddressNotFoundError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        valid_get api_v1_udt_transaction_url(block.block_hash), params: { address_hash: "aaa" }
+        valid_get api_v1_udt_transaction_url(udt.type_hash), params: { address_hash: "aaa" }
 
         assert_equal response_json, response.body
       end
