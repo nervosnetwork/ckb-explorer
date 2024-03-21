@@ -141,6 +141,7 @@ module Api
           is_cellbase
           transaction_hash
           is_rgb_transaction
+          rgb_txid
           created_at
           create_timestamp
         ).sort, response_tx_transaction["attributes"].keys.sort

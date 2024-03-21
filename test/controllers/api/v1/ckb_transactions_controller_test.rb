@@ -6,7 +6,7 @@ module Api
       TransactionKeys = %w(
         block_number transaction_hash block_timestamp transaction_fee bytes version display_inputs
         display_outputs is_cellbase income witnesses cell_deps header_deps tx_status detailed_message
-        largest_tx largest_tx_in_epoch cycles max_cycles_in_epoch max_cycles is_rgb_transaction
+        largest_tx largest_tx_in_epoch cycles max_cycles_in_epoch max_cycles is_rgb_transaction rgb_txid
       ).sort
       setup do
         CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))

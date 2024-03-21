@@ -90,5 +90,8 @@ namespace :api do
         end
       end
     end
+    resources :bitcoin_transactions do
+      get :raw, on: :member
+    end
   end
 end

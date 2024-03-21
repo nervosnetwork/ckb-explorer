@@ -2,7 +2,7 @@ class BitcoinTransaction < ApplicationRecord
   has_many :bitcoin_vouts
 
   def confirmations
-    Rails.cache.fetch([self.class.name, "tip_block"], expires_in: 1.minute) do
+    Rails.cache.fetch([self.class.name, "#{block_height}_confirmations"], expires_in: 1.minute) do
       blocks = Bitcoin::Rpc.instance.getchaintips
       tip_block = blocks.find { |h| h["status"] == "active" }
       tip_block["height"] - block_height

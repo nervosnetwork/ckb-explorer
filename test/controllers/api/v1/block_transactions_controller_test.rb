@@ -105,7 +105,7 @@ module Api
           block_number block_timestamp display_inputs
           display_inputs_count display_outputs display_outputs_count
           income is_cellbase transaction_hash is_rgb_transaction
-          created_at create_timestamp
+          created_at create_timestamp rgb_txid
         ).sort, response_tx_transaction["attributes"].keys.sort
       end
 
