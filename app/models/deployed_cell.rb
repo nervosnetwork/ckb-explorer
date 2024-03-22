@@ -8,7 +8,7 @@ class DeployedCell < ApplicationRecord
   # @param cell_output_id [Integer] deployed cell output id
   def self.cell_output_id_to_contract_id(cell_output_id)
     Rails.cache.fetch(["cell_output_id_to_contract_id", cell_output_id], expires_in: 1.day) do
-      DeployedCell.where(cell_output_id: cell_output_id).pick(:contract_id)
+      DeployedCell.where(cell_output_id:).pick(:contract_id)
     end
   end
 
@@ -73,7 +73,7 @@ class DeployedCell < ApplicationRecord
           dep_type: cell_dep["dep_type"],
           ckb_transaction_id: ckb_transaction.id,
           contract_id: DeployedCell.cell_output_id_to_contract_id(cell_output.id), # check if we already known the relationship between the contract cell and contract
-          implicit: cell_dep["implicit"] || false
+          implicit: cell_dep["implicit"] || false,
         }
 
         # we don't know how the cells in transaction may refer to the contract cell
@@ -106,7 +106,7 @@ class DeployedCell < ApplicationRecord
           dep_type: cell_dep["dep_type"],
           ckb_transaction_id: ckb_transaction.id,
           contract_id: nil,
-          implicit: false
+          implicit: false,
         }
         binary_data = mid_cell.binary_data
         # binary_data = [hex_data[2..-1]].pack("H*")
@@ -121,10 +121,10 @@ class DeployedCell < ApplicationRecord
           co = parse_code_dep[{
             "out_point" => {
               "tx_hash" => "0x#{tx_hash}",
-              "index" => cell_index
+              "index" => cell_index,
             },
             "dep_type" => "code",
-            "implicit" => true # this is an implicit dependency
+            "implicit" => true, # this is an implicit dependency
           }]
         end
       end
@@ -138,10 +138,10 @@ class DeployedCell < ApplicationRecord
     scripts.each do |lock_script_or_type_script|
       dep =
         case lock_script_or_type_script.hash_type
-             when "data"
-               by_data_hash[lock_script_or_type_script.code_hash]
-             when "type"
-               by_type_hash[lock_script_or_type_script.code_hash]
+        when "data", "data1"
+          by_data_hash[lock_script_or_type_script.code_hash]
+        when "type"
+          by_type_hash[lock_script_or_type_script.code_hash]
         end
       next unless dep
 
@@ -158,7 +158,7 @@ class DeployedCell < ApplicationRecord
 
         deployed_cells_attrs << {
           contract_id: contract.id,
-          cell_output_id: dep[:contract_cell_id]
+          cell_output_id: dep[:contract_cell_id],
         }
       end
     end
@@ -168,7 +168,7 @@ class DeployedCell < ApplicationRecord
     if cell_dependencies_attrs.present?
       CellDependency.upsert_all cell_dependencies_attrs.uniq { |a|
                                   a[:contract_cell_id]
-                                }, unique_by: [:ckb_transaction_id, :contract_cell_id]
+                                }, unique_by: %i[ckb_transaction_id contract_cell_id]
     end
     DeployedCell.upsert_all deployed_cells_attrs, unique_by: [:cell_output_id] if deployed_cells_attrs.present?
     deployed_cells_attrs.each do |deployed_cell_attr|
