@@ -1,18 +1,24 @@
 class ImportBitcoinUtxoJob < ApplicationJob
   queue_as :bitcoin
 
-  def perform(txid, out_index, cell_id)
+  def perform(cell_id)
     ApplicationRecord.transaction do
       cell_output = CellOutput.find_by(id: cell_id)
       unless cell_output
-        raise ArgumentError, "Missing cell_output(#{cell_id}), txid(#{txid}), out_index(#{out_index})"
+        raise ArgumentError, "Missing cell_output(#{cell_id})"
       end
+
+      lock_script = cell_output.lock_script
+      return unless CkbUtils.is_rgbpp_lock_cell?(lock_script)
+
+      txid, out_index = CkbUtils.parse_rgbpp_args(lock_script.args)
+      Rails.logger.info("Importing bitcoin utxo #{txid} out_index #{out_index}")
 
       vout_attributes = []
 
       # build bitcoin transaction
       raw_tx = fetch_raw_transaction(txid)
-      tx = build_tranaction!(raw_tx)
+      tx = build_transaction!(raw_tx)
 
       # build op_returns
       op_returns = build_op_returns!(raw_tx, tx, cell_output.ckb_transaction, vout_attributes)
@@ -25,7 +31,7 @@ class ImportBitcoinUtxoJob < ApplicationJob
     end
   end
 
-  def build_tranaction!(raw_tx)
+  def build_transaction!(raw_tx)
     tx = BitcoinTransaction.find_by(txid: raw_tx["txid"])
     return tx if tx
 
