@@ -62,13 +62,15 @@ module Api
             res << { address: vout&.bitcoin_address&.address_hash, transfers: }
           end
         end
-        vout = @ckb_transaction.bitcoin_vouts.find_by(op_return: true)
+
+        op_return = @ckb_transaction.bitcoin_vouts.find_by(op_return: true)
+        bitcoin_transaction = BitcoinTransaction.includes(:bitcoin_vouts).find_by(bitcoin_vouts: { ckb_transaction_id: tx.id })
 
         render json: {
           data: {
-            txid: vout&.bitcoin_transaction&.txid,
-            confirmations: vout&.bitcoin_transaction&.confirmations,
-            commitment: vout&.commitment,
+            txid: bitcoin_transaction&.txid,
+            confirmations: bitcoin_transaction&.confirmations,
+            commitment: op_return&.commitment,
             transfers:,
           },
         }
