@@ -64,7 +64,7 @@ module Api
         end
 
         op_return = @ckb_transaction.bitcoin_vouts.find_by(op_return: true)
-        bitcoin_transaction = BitcoinTransaction.includes(:bitcoin_vouts).find_by(bitcoin_vouts: { ckb_transaction_id: tx.id })
+        bitcoin_transaction = BitcoinTransaction.includes(:bitcoin_vouts).find_by(bitcoin_vouts: { ckb_transaction_id: @ckb_transaction.id })
 
         render json: {
           data: {

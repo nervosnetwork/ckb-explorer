@@ -8,12 +8,14 @@ module Api
         not_cached = cache_keys - res.keys
         to_cache = {}
 
-        get_raw_transactions(not_cached).each do |tx|
-          next if tx.dig("error").present?
+        if not_cached.present?
+          get_raw_transactions(not_cached).each do |tx|
+            next if tx.dig("error").present?
 
-          txid = tx.dig("result", "txid")
-          res[txid] = tx
-          to_cache[txid] = tx
+            txid = tx.dig("result", "txid")
+            res[txid] = tx
+            to_cache[txid] = tx
+          end
         end
 
         Rails.cache.write_multi(to_cache, expires_in: 10.minutes) unless to_cache.empty?
