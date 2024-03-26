@@ -644,8 +644,18 @@ class CkbUtils
     { mint_limit: }
   end
 
-  def self.parse_rgb_args(_args)
-    # TODO
-    ["15dede3b31ed87bb6b1d668222127a7b308c1beb6fe99bf4a3f076bcae8e93fe", 4]
+  def self.is_rgbpp_lock_cell?(lock_script)
+    lock_script.code_hash == CkbSync::Api.instance.rgbpp_code_hash && lock_script.hash_type == "type"
+  end
+
+  # * https://learnmeabitcoin.com/technical/general/byte-order/
+  # Whenever you're working with transaction/block hashes internally (e.g. inside raw bitcoin data), you use the natural byte order.
+  # Whenever you're displaying or searching for transaction/block hashes, you use the reverse byte order.
+  def self.parse_rgbpp_args(args)
+    args = args.delete_prefix("0x")
+    out_index = [args[0..7]].pack("H*").unpack1("v")
+    txid = args[8..-1].scan(/../).reverse.join
+
+    [txid, out_index]
   end
 end

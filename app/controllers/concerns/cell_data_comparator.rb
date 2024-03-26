@@ -104,7 +104,9 @@ module CellDataComparator
   def diff_normal_nft_cells(inputs, outputs)
     transfers = Hash.new { |h, k| h[k] = Array.new }
     nft_infos = Hash.new { |h, k| h[k] = nil }
-    cell_types = %w(m_nft_token nrc_721_token spore_cell m_nft_issuer m_nft_class nrc_721_factory cota_registry spore_cluster)
+    cell_types = %w(m_nft_token nrc_721_token spore_cell m_nft_issuer
+                    m_nft_class nrc_721_factory cota_registry spore_cluster
+                    omiga_inscription omiga_inscription_info)
 
     process_nft = ->(c, h, o) {
       k = [c.address_id, c.cell_type, c.type_hash]
@@ -161,6 +163,9 @@ module CellDataComparator
         args: type_script.args,
       )
       { name: info&.name }
+    when "omiga_inscription"
+      udt = Udt.find_by(type_hash: cell.type_hash)
+      { name: udt.full_name }
     end
   end
 
