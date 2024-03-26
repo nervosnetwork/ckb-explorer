@@ -1,4 +1,4 @@
-class BitcoinUtxoDetectWorker
+class BitcoinTransactionDetectWorker
   include Sidekiq::Worker
   sidekiq_options queue: "bitcoin"
 
