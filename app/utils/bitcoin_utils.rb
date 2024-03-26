@@ -7,6 +7,8 @@ module BitcoinUtils
   end
 
   def self.parse_from_addr(addr)
+    Bitcoin.chain_params = ENV["CKB_NET_MODE"]
+
     segwit_addr = Bitcoin::SegwitAddr.new(addr)
     raise ArgumentError, "Invalid address." unless Bitcoin.chain_params.bech32_hrp == segwit_addr.hrp
 
