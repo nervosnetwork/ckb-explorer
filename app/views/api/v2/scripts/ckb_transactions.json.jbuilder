@@ -21,6 +21,8 @@ json.data do
     json.tx_status tx.tx_status
     json.display_inputs tx.display_inputs
     json.display_outputs tx.display_outputs
+    json.is_rgb_transaction tx.rgb_transaction?
+    json.rgb_txid tx.rgb_txid
   end
   json.meta do
     json.total @contract.ckb_transactions_count
