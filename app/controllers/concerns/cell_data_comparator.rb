@@ -53,13 +53,15 @@ module CellDataComparator
         }
       end
 
-      k = [c.address_id, c.type_hash]
+      k = [c.address_id, c.type_hash, c.cell_type]
       h[k] ||= { capacity: 0.0, amount: 0.0 }
       h[k][:capacity] += c.capacity
       h[k][:amount] += c.udt_amount
     }
-    inputs = inputs.udt.each_with_object({}) { |c, h| process_udt.call(c, h) }
-    outputs = outputs.udt.each_with_object({}) { |c, h| process_udt.call(c, h) }
+
+    cell_types = %w(udt omiga_inscription xudt)
+    inputs = inputs.where(cell_type: cell_types).each_with_object({}) { |c, h| process_udt.call(c, h) }
+    outputs = outputs.where(cell_type: cell_types).each_with_object({}) { |c, h| process_udt.call(c, h) }
 
     (inputs.keys | outputs.keys).each do |k|
       input = inputs[k]
@@ -68,7 +70,7 @@ module CellDataComparator
       amount = output&.dig(:amount).to_f - input&.dig(:amount).to_f
       capacity = output&.dig(:capacity).to_f - input&.dig(:capacity).to_f
       udt_info = udt_infos[k[1]].merge(amount:)
-      transfers[k[0]] << CkbUtils.hash_value_to_s({ capacity:, cell_type: "udt", udt_info: })
+      transfers[k[0]] << CkbUtils.hash_value_to_s({ capacity:, cell_type: k[2], udt_info: })
     end
 
     transfers
@@ -105,8 +107,7 @@ module CellDataComparator
     transfers = Hash.new { |h, k| h[k] = Array.new }
     nft_infos = Hash.new { |h, k| h[k] = nil }
     cell_types = %w(m_nft_token nrc_721_token spore_cell m_nft_issuer
-                    m_nft_class nrc_721_factory cota_registry spore_cluster
-                    omiga_inscription omiga_inscription_info)
+                    m_nft_class nrc_721_factory cota_registry spore_cluster)
 
     process_nft = ->(c, h, o) {
       k = [c.address_id, c.cell_type, c.type_hash]
@@ -155,17 +156,6 @@ module CellDataComparator
       { name: factory_cell&.name }
     when "spore_cluster"
       { name: CkbUtils.parse_spore_cluster_data(cell.data)[:name] }
-    when "omiga_inscription_info"
-      type_script = cell.type_script
-      info = OmigaInscriptionInfo.find_by(
-        code_hash: type_script.code_hash,
-        hash_type: type_script.hash_type,
-        args: type_script.args,
-      )
-      { name: info&.name }
-    when "omiga_inscription"
-      udt = Udt.find_by(type_hash: cell.type_hash)
-      { name: udt.full_name }
     end
   end
 

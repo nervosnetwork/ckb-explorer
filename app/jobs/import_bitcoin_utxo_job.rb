@@ -104,7 +104,7 @@ class ImportBitcoinUtxoJob < ApplicationJob
 
   def fetch_raw_transaction(txid)
     tx_json = Kredis.json txid, expires_in: 1.hour
-    if tx_json.value.blank?
+    unless tx_json.value
       tx_json.value = rpc.getrawtransaction(txid, 2)
     end
     tx_json.value
