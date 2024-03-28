@@ -103,11 +103,11 @@ class ImportBitcoinUtxoJob < ApplicationJob
   end
 
   def fetch_raw_transaction(txid)
-    tx_json = Kredis.json txid, expires_in: 1.hour
-    unless tx_json.value
-      tx_json.value = rpc.getrawtransaction(txid, 2)
+    Rails.cache.fetch("bitcoin_transactions/#{txid}", expires_in: 1.hour) do
+      rpc.getrawtransaction(txid, 2)
+    rescue StandardError => e
+      raise ArgumentError, "get bitcoin raw transaction #{txid} failed: #{e}"
     end
-    tx_json.value
   end
 
   def rpc
