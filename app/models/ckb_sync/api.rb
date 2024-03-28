@@ -99,6 +99,10 @@ module CkbSync
       Settings.xudt_code_hash
     end
 
+    def rgbpp_code_hash
+      Settings.rgbpp_code_hash
+    end
+
     METHOD_NAMES.each do |name|
       define_method name do |*params|
         call_rpc(name, params:)

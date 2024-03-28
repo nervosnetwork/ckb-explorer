@@ -59,8 +59,7 @@ module CkbSync
         inputs = @inputs = {}
         outputs = @outputs = {}
         outputs_data = @outputs_data = {}
-        @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs,
-                                           outputs, outputs_data).to_a
+        @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
         benchmark :build_udts!, local_block, outputs, outputs_data
 
         tags = []
@@ -95,7 +94,8 @@ module CkbSync
       generate_statistics_data(local_block)
       generate_deployed_cells_and_referring_cells(local_block)
       detect_cota_infos(local_block)
-      invoke_token_transfer_detect_worker(token_transfer_ckb_tx_ids)
+      detect_token_transfer(token_transfer_ckb_tx_ids)
+      detect_bitcoin_transactions(local_block)
 
       local_block.update_counter_for_ckb_node_version
       local_block
@@ -133,10 +133,12 @@ module CkbSync
       FetchCotaWorker.perform_async(local_block.number) if enable_cota
     end
 
-    def invoke_token_transfer_detect_worker(token_transfer_ckb_tx_ids)
-      token_transfer_ckb_tx_ids.each do |tx_id|
-        TokenTransferDetectWorker.perform_async(tx_id)
-      end
+    def detect_token_transfer(token_transfer_ckb_tx_ids)
+      token_transfer_ckb_tx_ids.each { TokenTransferDetectWorker.perform_async(_1) }
+    end
+
+    def detect_bitcoin_transactions(local_block)
+      BitcoinTransactionDetectWorker.perform_async(local_block.id)
     end
 
     def process_ckb_txs(
@@ -631,24 +633,24 @@ dao_contract)
           next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell
                                        omiga_inscription_info omiga_inscription))
 
-          type_hash, parsed_udt_type, published =
+          type_hash, parsed_udt_type =
             if cell_type == "omiga_inscription_info"
               info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
               info_type_hash = output.type.compute_hash
-              attrs = info.merge(output.type.to_h, type_hash: info_type_hash)
               pre_closed_info = OmigaInscriptionInfo.includes(:udt).find_by(
                 type_hash: info_type_hash, mint_status: :closed,
               )
-              attrs, published =
-                if pre_closed_info
-                  [attrs.merge(pre_udt_hash: pre_closed_info.udt_hash), pre_closed_info.udt&.published == true]
-                else
-                  [attrs, false]
-                end
+              attrs = info.merge(output.type.to_h, type_hash: info_type_hash)
+              if pre_closed_info
+                attrs[:pre_udt_hash] = pre_closed_info.udt_hash
+                attrs[:is_repeated_symbol] = pre_closed_info.is_repeated_symbol
+              else
+                attrs[:is_repeated_symbol] = OmigaInscriptionInfo.where(symbol: info[:symbol].strip).exists?
+              end
               OmigaInscriptionInfo.upsert(attrs, unique_by: :udt_hash)
-              [info[:udt_hash], "omiga_inscription", published]
+              [info[:udt_hash], "omiga_inscription"]
             else
-              [output.type.compute_hash, udt_type(cell_type), false]
+              [output.type.compute_hash, udt_type(cell_type)]
             end
 
           if cell_type == "omiga_inscription"
@@ -712,9 +714,7 @@ dao_contract)
               nft_token_attr[:full_name] = info[:name]
               nft_token_attr[:symbol] = info[:symbol]
               nft_token_attr[:decimal] = info[:decimal]
-              if published || !Udt.where(symbol: info[:symbol].strip, udt_type: :omiga_inscription).exists?
-                nft_token_attr[:published] = true
-              end
+              nft_token_attr[:published] = true
             end
             # fill issuer_address after publish the token
             udts_attributes << {
@@ -1135,8 +1135,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       cell_data.present? && cell_data != "0x" || type_hash.present?
     end
 
-    def cell_output_attributes(output, address, ckb_transaction, local_block,
-cell_index, output_data)
+    def cell_output_attributes(output, address, ckb_transaction, local_block, cell_index, output_data)
       lock_script = local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
       type_script =
         if output.type.present?
@@ -1249,8 +1248,7 @@ _prev_outputs, index = nil)
       end
     end
 
-    def build_ckb_transactions!(node_block, local_block, inputs, outputs,
-outputs_data)
+    def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
       cycles = CkbSync::Api.instance.get_block_cycles node_block.header.hash
       ckb_transactions_attributes = []
       tx_index = 0

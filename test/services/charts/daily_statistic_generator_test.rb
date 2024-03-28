@@ -236,7 +236,7 @@ module Charts
         create(:cell_output, :with_full_transaction,
                block_timestamp: @datetime.to_i * 1000, block: @block),
       ]
-      CellOutput.where(id: cells.map(&:id)).update_all(consumed_block_timestamp: (@datetime.to_i + 1) * 1000)
+      CellOutput.where(id: cells.map(&:id)).update_all(consumed_block_timestamp: (@datetime.to_i + 10) * 1000)
       is_from_scratch = true
       assert_equal "3",
                    Charts::DailyStatisticGenerator.new(@datetime,
@@ -246,7 +246,7 @@ module Charts
       # dead_cells_count = dead_cells_count_today + yesterday_daily_statistic.dead_cells_count.to_i
       # dead_cells_count_today = CellOutput.consumed_after(started_at).consumed_before(ended_at).count
       #
-      create :daily_statistic, created_at_unixtimestamp: @datetime.yesterday.to_i, dead_cells_count: 888
+      create :daily_statistic, created_at_unixtimestamp: @datetime.yesterday.yesterday.to_i, dead_cells_count: 888
 
       assert_equal (3 + 888).to_s,
                    Charts::DailyStatisticGenerator.new(@datetime).call.dead_cells_count

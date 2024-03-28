@@ -20,7 +20,7 @@ module Api
           errors = validator.error_object[:errors]
           status = validator.error_object[:status]
 
-          render json: errors, status: status
+          render json: errors, status:
         end
       end
     end

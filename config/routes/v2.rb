@@ -1,11 +1,13 @@
 namespace :api do
   namespace :v2 do
     post "/das_accounts" => "das_accounts#query", as: :das_accounts
+    post "/bitcoin_transactions" => "bitcoin_transactions#query", as: :bitcoin_transactions
     resources :ckb_transactions, only: %i[index show] do
       member do
         get :details
         get :display_inputs
         get :display_outputs
+        get :rgb_digest
       end
     end
     resources :transactions do
@@ -61,7 +63,6 @@ namespace :api do
         get :deployed_cells
         get :referring_cells
         get :general_info
-        get :referring_capacities
       end
     end
 
@@ -74,6 +75,7 @@ namespace :api do
     resources :statistics, only: [] do
       collection do
         get :transaction_fees
+        get :contract_resource_distributed
       end
     end
 

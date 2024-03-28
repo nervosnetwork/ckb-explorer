@@ -4,7 +4,7 @@ class AddressSerializer
   attributes :lock_info
 
   attribute :address_hash do |object|
-    object.query_address
+    object.query_address || object.address_hash
   end
   attribute :balance do |object|
     object.balance.to_s
@@ -130,5 +130,8 @@ class AddressSerializer
   end
   attribute :balance_occupied do |object|
     object.balance_occupied.to_s
+  end
+  attribute :bitcoin_address_hash do |object|
+    object.bitcoin_address&.address_hash
   end
 end

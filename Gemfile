@@ -3,9 +3,9 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby "3.1.2"
 
-gem "net-smtp"
 gem "net-imap"
 gem "net-pop"
+gem "net-smtp"
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem "rails", "~> 7.0.4"
 # Use postgresql as the database for Active Record
@@ -41,14 +41,14 @@ gem "config"
 gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb"
 
 # Redis
-gem "hiredis" # , "~> 0.6.3"
-gem "redis" # , "~> 4.2.0"
-gem "hiredis-client"
 gem "digest-crc"
+gem "hiredis" # , "~> 0.6.3"
+gem "hiredis-client"
+gem "redis" # , "~> 4.2.0"
 
 # Background Jobs
-gem "sidekiq"
 gem "rufus-scheduler"
+gem "sidekiq"
 # bulk insertion of data into database using ActiveRecord
 gem "activerecord-import"
 
@@ -66,10 +66,10 @@ gem "with_advisory_lock"
 
 gem "nokogiri", ">= 1.11.0.rc4"
 
-gem "sentry-ruby"
-gem "sentry-rails"
-gem "sentry-sidekiq"
 gem "newrelic_rpm"
+gem "sentry-rails"
+gem "sentry-ruby"
+gem "sentry-sidekiq"
 
 gem "bigdecimal"
 
@@ -78,52 +78,53 @@ gem "rack-attack"
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
-  gem "pry"
-  gem "pry-rails"
-  gem "pry-byebug"
   gem "factory_bot_rails"
   gem "faker"
+  gem "pry"
+  gem "pry-byebug"
+  gem "pry-rails"
   # gem "pry-nav"
 end
 
 group :test do
-  gem "simplecov", require: false
-  gem "minitest-reporters"
-  gem "shoulda-context"
-  gem "shoulda-matchers"
-  gem "vcr"
-  gem "webmock"
+  gem "codecov", require: false
   gem "database_cleaner"
   gem "database_cleaner-active_record"
+  gem "minitest-reporters"
   gem "mocha"
-  gem "codecov", require: false
+  gem "shoulda-context"
+  gem "shoulda-matchers"
+  gem "simplecov", require: false
+  gem "vcr"
+  gem "webmock"
 end
 
 group :development do
   gem "listen", ">= 3.0.5"
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
+  gem "annotate"
+  gem "awesome_print", require: false
+  gem "rubocop", require: false
+  gem "rubocop-performance", require: false
+  gem "rubocop-rails", require: false
+  gem "solargraph"
   gem "spring"
   gem "spring-watcher-listen"
-  gem "rubocop", require: false
-  gem "rubocop-rails", require: false
-  gem "rubocop-performance", require: false
-  gem "awesome_print", require: false
-  gem "annotate"
-  gem "solargraph"
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem "tzinfo-data", platforms: [:mingw, :mswin, :x64_mingw, :jruby]
-gem "redis-objects", ">= 2.0.0.beta"
-gem "pagy"
-gem "http"
-gem "rack-cache"
-gem "dalli"
 gem "after_commit_everywhere"
+gem "dalli"
+gem "http"
 gem "kredis"
+gem "pagy"
+gem "rack-cache"
+gem "redis-objects", ">= 2.0.0.beta"
+gem "tzinfo-data", platforms: %i[mingw mswin x64_mingw jruby]
 
 gem "async-websocket", "~> 0.22.1", require: false
 gem "ecdsa"
 gem "jwt"
 
 gem "active_interaction", "~> 5.3"
+gem "bitcoinrb", require: "bitcoin"

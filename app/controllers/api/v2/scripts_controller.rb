@@ -21,7 +21,7 @@ module Api
           if @contract.ckb_transactions_count.zero?
             CkbTransaction.none
           else
-            @contract.ckb_transactions.order(id: :desc).page(@page).per(@page_size)
+            @contract.ckb_transactions.order(block_number: :desc).page(@page).per(@page_size)
           end
       end
 
@@ -47,13 +47,6 @@ module Api
           else
             @contract.referring_cell_outputs.live.page(@page).per(@page_size)
           end
-      end
-
-      def referring_capacities
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        data = Contract.all.map { { _1.code_hash => _1.total_referring_cells_capacity.to_s } }
-
-        render json: { data: }
       end
 
       private

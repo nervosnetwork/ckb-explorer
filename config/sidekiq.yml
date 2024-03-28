@@ -3,6 +3,7 @@
 :queues:
   - critical
   - default
+  - bitcoin
   - low
 
 production:

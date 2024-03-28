@@ -14,9 +14,9 @@ module Api
         tx_hash1 = "0x497277029e6335c6d5f916574dc4475ee229f3c1cce3658e7dad017a8ed580d4"
         tx_hash2 = "0xe9772bae467924e0feee85e9b7087993d38713bd8c19c954c4b68da69b4f4644"
         create :ckb_transaction, created_at: Time.at(tx_created_at),
-                                 transaction_fee: 30000, bytes: 20, confirmation_time: confirmation_time, block: block, tx_hash: tx_hash1
+                                 transaction_fee: 30000, bytes: 20, confirmation_time:, block:, tx_hash: tx_hash1
         create :ckb_transaction, created_at: Time.at(tx_created_at),
-                                 transaction_fee: 30000, bytes: 20, confirmation_time: confirmation_time, block: block, tx_hash: tx_hash2
+                                 transaction_fee: 30000, bytes: 20, confirmation_time:, block:, tx_hash: tx_hash2
         create :pending_transaction, transaction_fee: 30000, bytes: 20,
                                      tx_hash: tx_hash1
         create :pending_transaction, transaction_fee: 13000, bytes: 15,
@@ -29,7 +29,8 @@ module Api
           get transaction_fees_api_v2_statistics_url,
               headers: {
                 "Content-Type": "application/vnd.api+json",
-                "Accept": "application/json" }
+                "Accept": "application/json",
+              }
           data = JSON.parse(response.body)
           assert_equal CkbTransaction.tx_pending.count,
                        data["transaction_fee_rates"].size
@@ -45,7 +46,8 @@ module Api
           get transaction_fees_api_v2_statistics_url,
               headers: {
                 "Content-Type": "application/vnd.api+json",
-                "Accept": "application/json" }
+                "Accept": "application/json",
+              }
           data = JSON.parse(response.body)
           assert_equal CkbTransaction.tx_pending.count,
                        data["transaction_fee_rates"].size
@@ -76,7 +78,8 @@ module Api
           get transaction_fees_api_v2_statistics_url,
               headers: {
                 "Content-Type": "application/vnd.api+json",
-                "Accept": "application/json" }
+                "Accept": "application/json",
+              }
           data = JSON.parse(response.body)
 
           assert_equal 3, data["last_n_days_transaction_fee_rates"].size
@@ -85,6 +88,14 @@ module Api
                  data["last_n_days_transaction_fee_rates"].first["date"]
           assert_response :success
         end
+      end
+
+      test "return contracts resource distributed" do
+        create_list(:contract, 3)
+        get contract_resource_distributed_api_v2_statistics_url
+        data = JSON.parse(response.body)
+
+        assert_equal 3, data.size
       end
     end
   end

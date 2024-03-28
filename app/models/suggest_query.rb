@@ -60,11 +60,30 @@ class SuggestQuery
     TypeScriptSerializer.new(type_script) if type_script.present?
   end
 
+  def find_lock_script_by_code_hash
+    lock_script = LockScript.find_by(code_hash: query_key)
+    LockScriptSerializer.new(lock_script) if lock_script.present?
+  end
+
+  def find_type_script_by_code_hash
+    type_script = TypeScript.find_by(code_hash: query_key)
+    TypeScriptSerializer.new(type_script) if type_script.present?
+  end
+
   def find_by_hex
     Block.cached_find(query_key) ||
       find_ckb_transaction_by_hash ||
       find_address_by_lock_hash ||
       find_udt_by_type_hash ||
-      find_type_script_by_type_id
+      find_type_script_by_type_id ||
+      find_type_script_by_code_hash ||
+      find_lock_script_by_code_hash ||
+      find_bitcoin_transaction_by_txid
+  end
+
+  def find_bitcoin_transaction_by_txid
+    txid = query_key.delete_prefix(Settings.default_hash_prefix)
+    bitcoin_transaction = BitcoinTransaction.find_by(txid:)
+    BitcoinTransactionSerializer.new(bitcoin_transaction) if bitcoin_transaction
   end
 end

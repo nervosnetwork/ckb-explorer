@@ -8,8 +8,8 @@ module CkbSync
           compact_target: "0x1000",
           length: "0x07d0",
           number: "0x0",
-          start_number: "0x0"
-        )
+          start_number: "0x0",
+        ),
       )
       ::CKB::Types::Transaction.any_instance.stubs(:serialized_size_in_block).returns(0)
       create(:table_record_count, :block_counter)
@@ -17,10 +17,11 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
       GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
       GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
+      BitcoinTransactionDetectWorker.any_instance.stubs(:perform).returns(true)
       CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
         [
           "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
-        ]
+        ],
       )
     end
 
@@ -190,11 +191,11 @@ module CkbSync
       inputs = [
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx1.tx_hash, index: 0)),
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx2.tx_hash, index: 1)),
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx3.tx_hash, index: 2))
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx3.tx_hash, index: 2)),
       ]
       inputs1 = [
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx4.tx_hash, index: 0)),
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx5.tx_hash, index: 0))
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx5.tx_hash, index: 0)),
       ]
       lock1 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
                                      args: "0x#{SecureRandom.hex(20)}")
@@ -205,34 +206,34 @@ module CkbSync
       outputs = [
         CKB::Types::Output.new(capacity: 50000 * 10**8, lock: lock1),
         CKB::Types::Output.new(capacity: 60000 * 10**8, lock: lock2),
-        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3),
       ]
       outputs1 = [
         CKB::Types::Output.new(capacity: 50000 * 10**8, lock: lock1),
         CKB::Types::Output.new(capacity: 60000 * 10**8, lock: lock2),
-        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3),
       ]
       miner_lock = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
                                           args: "0x#{SecureRandom.hex(20)}")
       cellbase_inputs = [
         CKB::Types::Input.new(
           previous_output: CKB::Types::OutPoint.new(
-            tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295
+            tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295,
           ), since: 3000
-        )
+        ),
       ]
       cellbase_outputs = [
-        CKB::Types::Output.new(capacity: 200986682127, lock: miner_lock)
+        CKB::Types::Output.new(capacity: 200986682127, lock: miner_lock),
       ]
       transactions = [
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [],
                                     inputs: cellbase_inputs, outputs: cellbase_outputs, outputs_data: %w[0x], witnesses: ["0x590000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd800000000"]),
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [block1.block_hash],
-                                    inputs: inputs, outputs: outputs, outputs_data: %w[0x 0x 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
+                                    inputs:, outputs:, outputs_data: %w[0x 0x 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [block1.block_hash],
-                                    inputs: inputs1, outputs: outputs1, outputs_data: %w[0x 0x 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"])
+                                    inputs: inputs1, outputs: outputs1, outputs_data: %w[0x 0x 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
       ]
-      node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions: transactions, header: header)
+      node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions:, header:)
       block = node_data_processor.process_block(node_block)
 
       tx = block.ckb_transactions.where(is_cellbase: false).first
@@ -751,13 +752,13 @@ module CkbSync
       address.update(dao_deposit: 100000 * 10**8)
       block = create(:block, :with_block_hash)
       ckb_transaction1 = create(:ckb_transaction,
-                                tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+                                tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:)
       ckb_transaction2 = create(:ckb_transaction,
-                                tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+                                tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:)
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1,
-                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block, capacity: 10**8 * 1000, address: address)
+                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, capacity: 10**8 * 1000, address:)
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2,
-                           tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block, capacity: 10**8 * 1000, address: address)
+                           tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, capacity: 10**8 * 1000, address:)
       tx1 = node_block.transactions.first
       output1 = tx1.outputs.first
       output1.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type",
@@ -778,13 +779,13 @@ module CkbSync
       address = create(:address)
       block = create(:block, :with_block_hash)
       ckb_transaction1 = create(:ckb_transaction,
-                                tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+                                tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:)
       ckb_transaction2 = create(:ckb_transaction,
-                                tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+                                tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:)
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1,
-                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block, capacity: 10**8 * 1000, address: address)
+                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, capacity: 10**8 * 1000, address:)
       create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2,
-                           tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block, capacity: 10**8 * 1000, address: address)
+                           tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, capacity: 10**8 * 1000, address:)
       tx1 = node_block.transactions.first
       output1 = tx1.outputs.first
       output1.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type",
@@ -827,11 +828,11 @@ module CkbSync
       inputs = [
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx1.tx_hash, index: 0)),
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx2.tx_hash, index: 1)),
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx3.tx_hash, index: 2))
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx3.tx_hash, index: 2)),
       ]
       inputs1 = [
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx4.tx_hash, index: 0)),
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx5.tx_hash, index: 0))
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx5.tx_hash, index: 0)),
       ]
       lock1 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
                                      args: "0x#{SecureRandom.hex(20)}")
@@ -843,35 +844,35 @@ module CkbSync
       outputs = [
         CKB::Types::Output.new(capacity: 50000 * 10**8, lock: lock1, type: dao_type),
         CKB::Types::Output.new(capacity: 60000 * 10**8, lock: lock2, type: dao_type),
-        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3),
       ]
       outputs1 = [
         CKB::Types::Output.new(capacity: 50000 * 10**8, lock: lock1, type: dao_type),
         CKB::Types::Output.new(capacity: 60000 * 10**8, lock: lock2, type: dao_type),
-        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3)
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3),
       ]
       miner_lock = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
                                           args: "0x#{SecureRandom.hex(20)}")
       cellbase_inputs = [
         CKB::Types::Input.new(
           previous_output: CKB::Types::OutPoint.new(
-            tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295
+            tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295,
           ), since: 3000
-        )
+        ),
       ]
       cellbase_outputs = [
-        CKB::Types::Output.new(capacity: 200986682127, lock: miner_lock)
+        CKB::Types::Output.new(capacity: 200986682127, lock: miner_lock),
       ]
       deposit_block_number = CKB::Utils.bin_to_hex([block1.number].pack("Q<"))
       transactions = [
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [],
                                     inputs: cellbase_inputs, outputs: cellbase_outputs, outputs_data: %w[0x], witnesses: ["0x590000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd800000000"]),
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [block1.block_hash],
-                                    inputs: inputs, outputs: outputs, outputs_data: %W[#{deposit_block_number} #{deposit_block_number} 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
+                                    inputs:, outputs:, outputs_data: %W[#{deposit_block_number} #{deposit_block_number} 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [block1.block_hash],
-                                    inputs: inputs1, outputs: outputs1, outputs_data: %W[#{deposit_block_number} #{deposit_block_number} 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"])
+                                    inputs: inputs1, outputs: outputs1, outputs_data: %W[#{deposit_block_number} #{deposit_block_number} 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
       ]
-      node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions: transactions, header: header)
+      node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions:, header:)
 
       block = node_data_processor.process_block(node_block)
 
@@ -903,7 +904,7 @@ module CkbSync
       inputs = [
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx1.tx_hash, index: 0)),
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx2.tx_hash, index: 1)),
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx3.tx_hash, index: 2))
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx3.tx_hash, index: 2)),
       ]
       lock1 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
                                      args: "0x#{SecureRandom.hex(20)}")
@@ -918,28 +919,28 @@ module CkbSync
       outputs = [
         CKB::Types::Output.new(capacity: 50000 * 10**8, lock: lock1, type: dao_type),
         CKB::Types::Output.new(capacity: 60000 * 10**8, lock: lock2, type: dao_type),
-        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3, type: udt_script)
+        CKB::Types::Output.new(capacity: 40000 * 10**8, lock: lock3, type: udt_script),
       ]
       miner_lock = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
                                           args: "0x#{SecureRandom.hex(20)}")
       cellbase_inputs = [
         CKB::Types::Input.new(
           previous_output: CKB::Types::OutPoint.new(
-            tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295
+            tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295,
           ), since: 3000
-        )
+        ),
       ]
       cellbase_outputs = [
-        CKB::Types::Output.new(capacity: 200986682127, lock: miner_lock)
+        CKB::Types::Output.new(capacity: 200986682127, lock: miner_lock),
       ]
       deposit_block_number = CKB::Utils.bin_to_hex([block1.number].pack("Q<"))
       transactions = [
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [],
                                     inputs: cellbase_inputs, outputs: cellbase_outputs, outputs_data: %w[0x], witnesses: ["0x590000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd800000000"]),
         CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [block1.block_hash],
-                                    inputs: inputs, outputs: outputs, outputs_data: %W[#{deposit_block_number} #{deposit_block_number} #{CKB::Utils.generate_sudt_amount(1000)}], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"])
+                                    inputs:, outputs:, outputs_data: %W[#{deposit_block_number} #{deposit_block_number} #{CKB::Utils.generate_sudt_amount(1000)}], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
       ]
-      node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions: transactions, header: header)
+      node_block = CKB::Types::Block.new(uncles: [], proposals: [], transactions:, header:)
       block = node_data_processor.process_block(node_block)
 
       tx = block.ckb_transactions.where(is_cellbase: false).first
@@ -957,14 +958,14 @@ module CkbSync
       block = create(:block, :with_block_hash, timestamp: 1557382351075)
       lock = create(:lock_script)
       ckb_transaction1 = create(:ckb_transaction,
-                                tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+                                tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:)
       ckb_transaction2 = create(:ckb_transaction,
-                                tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block: block)
+                                tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:)
       cell_output1 = create(:cell_output,
                             ckb_transaction: ckb_transaction1,
                             cell_index: 1,
                             tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                            block: block,
+                            block:,
                             cell_type: "nervos_dao_deposit",
                             capacity: 10**8 * 1000,
                             data: CKB::Utils.bin_to_hex("\x00" * 8),
@@ -973,7 +974,7 @@ module CkbSync
                             ckb_transaction: ckb_transaction2,
                             cell_index: 2,
                             tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                            block: block, capacity: 10**8 * 1000,
+                            block:, capacity: 10**8 * 1000,
                             lock_script_id: lock.id)
       cell_output1.address.update(balance: 10**8 * 1000)
       cell_output2.address.update(balance: 10**8 * 1000)
@@ -992,15 +993,15 @@ module CkbSync
       block = create(:block, :with_block_hash, timestamp: 1557382351075)
       ckb_transaction1 = create(:ckb_transaction,
                                 tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                                block: block)
+                                block:)
       ckb_transaction2 = create(:ckb_transaction,
                                 tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                                block: block)
+                                block:)
       lock = create(:lock_script)
       cell_output1 = create(:cell_output, ckb_transaction: ckb_transaction1,
                                           cell_index: 1,
                                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                                          block: block,
+                                          block:,
                                           cell_type: "nervos_dao_withdrawing",
                                           capacity: 10**8 * 1000,
                                           data: CKB::Utils.bin_to_hex("\x02" * 8),
@@ -1008,7 +1009,7 @@ module CkbSync
       cell_output2 = create(:cell_output, ckb_transaction: ckb_transaction2,
                                           cell_index: 1,
                                           tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2",
-                                          block: block,
+                                          block:,
                                           consumed_by: ckb_transaction2,
                                           status: "dead",
                                           cell_type: "nervos_dao_deposit",
@@ -1018,7 +1019,7 @@ module CkbSync
       cell_output3 = create(:cell_output, ckb_transaction: ckb_transaction2,
                                           cell_index: 2,
                                           tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                                          block: block,
+                                          block:,
                                           lock_script_id: lock.id)
       cell_output1.address.update(balance: 10**8 * 1000)
       cell_output2.address.update(balance: 10**8 * 1000)
@@ -1027,30 +1028,30 @@ module CkbSync
                           ckb_transaction: ckb_transaction2,
                           previous_output: {
                             "tx_hash": "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2",
-                            "index": 1
+                            "index": 1,
                           })
       create(:cell_input, block: ckb_transaction2.block,
                           ckb_transaction: ckb_transaction2,
                           previous_output: {
                             "tx_hash": "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                            "index": 2
+                            "index": 2,
                           })
       create(:cell_input, block: ckb_transaction1.block,
                           ckb_transaction: ckb_transaction1,
                           previous_output: {
                             "tx_hash": "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                            "index": 1
+                            "index": 1,
                           })
       create(:cell_input, block: ckb_transaction1.block,
                           ckb_transaction: ckb_transaction1,
                           previous_output: {
                             "tx_hash": "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                            "index": 1
+                            "index": 1,
                           })
 
       tx = node_block.transactions.last
       tx.header_deps = [
-        "0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61"
+        "0x0b3e980e4e5e59b7d478287e21cd89ffdc3ff5916ee26cf2aa87910c6a504d61",
       ]
       tx.witnesses = %w(
         0x8ae8061ec879d66c0f3996ab60d7c2a21094b8739817beddaea1e28d3620a70a21497a692581ca352631a67f3f6659a7c47d9a0c6c2def79d3e39440918a66fef 0x4e52933358ae2f26863b8c1c71bf20f17489328820f8f2cd84a070069f10ceef784bc3693c3c51b93475a7b5dbf652ba6532d0580ecc1faf909f9fd53c5f6405000000000000000000
@@ -1064,20 +1065,20 @@ module CkbSync
       lock = create(:lock_script)
       ckb_transaction1 = create(:ckb_transaction,
                                 tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                                block: block)
+                                block:)
       ckb_transaction2 = create(:ckb_transaction,
                                 tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                                block: block)
+                                block:)
       cell_output1 = create(:cell_output, ckb_transaction: ckb_transaction1,
                                           cell_index: 1,
                                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                                          block: block,
+                                          block:,
                                           capacity: 10**8 * 1000,
                                           lock_script_id: lock.id)
       cell_output2 = create(:cell_output, ckb_transaction: ckb_transaction2,
                                           cell_index: 2,
                                           tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                                          block: block,
+                                          block:,
                                           capacity: 10**8 * 1000,
                                           lock_script_id: lock.id)
       cell_output1.address.update(balance: 10**8 * 1000)

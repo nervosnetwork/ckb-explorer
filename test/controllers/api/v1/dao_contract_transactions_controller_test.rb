@@ -82,7 +82,7 @@ module Api
 
       test "should return corresponding ckb transaction with given transaction hash and the tx's input is dao cell" do
         ckb_transaction = create(:ckb_transaction)
-        create(:cell_output, ckb_transaction: ckb_transaction,
+        create(:cell_output, ckb_transaction:,
                              cell_index: 0,
                              tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
                              consumed_by: ckb_transaction,
@@ -98,7 +98,7 @@ module Api
 
       test "should return corresponding ckb transaction with given transaction hash and the tx's output is dao cell" do
         ckb_transaction = create(:ckb_transaction)
-        create(:cell_output, ckb_transaction: ckb_transaction,
+        create(:cell_output, ckb_transaction:,
                              cell_index: 0,
                              tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
                              consumed_by: ckb_transaction,
@@ -114,7 +114,7 @@ module Api
       test "should contain right keys in the serialized object when call show" do
         prepare_node_data(8)
         ckb_transaction = create(:ckb_transaction)
-        create(:cell_output, ckb_transaction: ckb_transaction,
+        create(:cell_output, ckb_transaction:,
                              cell_index: 0,
                              tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
                              consumed_by: ckb_transaction,
@@ -126,7 +126,9 @@ module Api
         valid_get api_v1_dao_contract_transaction_url(ckb_transaction.tx_hash)
 
         response_tx_transaction = json["data"]
-        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version bytes display_inputs display_outputs is_cellbase income witnesses cell_deps header_deps tx_status detailed_message largest_tx largest_tx_in_epoch cycles max_cycles_in_epoch max_cycles).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version bytes display_inputs
+                        display_outputs is_cellbase income witnesses cell_deps header_deps tx_status detailed_message
+                        largest_tx largest_tx_in_epoch cycles max_cycles_in_epoch max_cycles is_rgb_transaction rgb_txid).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return error object when given tx hash corresponds to a normal transaction" do
