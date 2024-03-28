@@ -2,14 +2,17 @@ class BitcoinTransaction < ApplicationRecord
   has_many :bitcoin_vouts
 
   def confirmations
-    Rails.cache.fetch([self.class.name, "#{block_height}_confirmations"], expires_in: 1.minute) do
-      blocks = Bitcoin::Rpc.instance.getchaintips
-      tip_block = blocks.find { |h| h["status"] == "active" }
-      tip_block["height"] - block_height
-    rescue StandardError => e
-      Rails.logger.error "get tip block faild: #{e.message}"
-      0
-    end
+    tip_block_height =
+      Rails.cache.fetch("tip_block_height", expires_in: 5.minutes) do
+        blocks = Bitcoin::Rpc.instance.getchaintips
+        tip_block = blocks.find { |h| h["status"] == "active" }
+        tip_block["height"]
+      rescue StandardError => e
+        Rails.logger.error "get tip block faild: #{e.message}"
+        nil
+      end
+
+    tip_block_height ? tip_block_height - block_height : 0
   end
 
   def ckb_transaction_hash
