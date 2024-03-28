@@ -18,9 +18,8 @@ module Addresses
       records = CkbTransaction.includes(:account_books).where(
         account_books: { address_id: },
         ckb_transactions: { tx_status: "committed" },
-      ).select(select_fields).
-        order(order_by => asc_or_desc).
-        page(page).per(page_size).fast_page
+      ).order(order_by => asc_or_desc).
+        page(page).per(page_size)
 
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address: })
