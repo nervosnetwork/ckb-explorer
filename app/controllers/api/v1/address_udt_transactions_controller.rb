@@ -9,8 +9,8 @@ module Api
         raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
         raise Api::V1::Exceptions::TypeHashInvalidError if params[:type_hash].blank?
 
-        udt = Udt.find_by(type_hash: params[:type_hash])
-        raise Api::V1::Exceptions::UdtNotFoundError if udt.blank? || (udt.udt_type != "omiga_inscription" && !udt.published)
+        udt = Udt.find_by(type_hash: params[:type_hash], published: true)
+        raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
 
         ckb_dao_transactions = address.ckb_udt_transactions(udt.id).
           select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at).

@@ -1,6 +1,10 @@
 class Address < ApplicationRecord
   PREFIX_MAINNET = "ckb".freeze
   PREFIX_TESTNET = "ckt".freeze
+  MAX_PAGINATES_PER = 1000
+  DEFAULT_PAGINATES_PER = 100
+  paginates_per DEFAULT_PAGINATES_PER
+  max_paginates_per MAX_PAGINATES_PER
 
   has_many :cell_outputs, dependent: :destroy
   has_many :account_books, dependent: :destroy
@@ -8,6 +12,10 @@ class Address < ApplicationRecord
   has_many :mining_infos
   has_many :udt_accounts
   has_many :dao_events
+
+  has_one :bitcoin_address_mapping, foreign_key: "ckb_address_id"
+  has_one :bitcoin_address, through: :bitcoin_address_mapping
+
   validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit,
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :lock_hash, presence: true, uniqueness: true
@@ -49,15 +57,15 @@ class Address < ApplicationRecord
     addr = CkbUtils.parse_address address_hash
     script = addr.script
     ls = LockScript.find_or_create_by code_hash: script.code_hash, hash_type: script.hash_type, args: script.args
-    ls.update address_id: self.id
-    self.update lock_script_id: ls.id
+    ls.update address_id: id
+    update lock_script_id: ls.id
     ls
   end
 
-  def self.find_by_address_hash(address_hash, *args, **kargs)
+  def self.find_by_address_hash(address_hash, *_args, **_kargs)
     parsed = CkbUtils.parse_address(address_hash)
     lock_hash = parsed.script.compute_hash
-    find_by lock_hash: lock_hash
+    find_by lock_hash:
   end
 
   def self.find_or_create_by_address_hash(address_hash, block_timestamp = 0)
@@ -66,20 +74,20 @@ class Address < ApplicationRecord
     lock_script = LockScript.find_by(
       code_hash: parsed.code_hash,
       hash_type: parsed.hash_type,
-      args: parsed.args
+      args: parsed.args,
     )
 
     create_with(
       address_hash: CkbUtils.generate_address(parsed.script),
-      block_timestamp: block_timestamp,
-      lock_script_id: lock_script&.id
-    ).find_or_create_by lock_hash: lock_hash
+      block_timestamp:,
+      lock_script_id: lock_script&.id,
+    ).find_or_create_by lock_hash:
   end
 
   def self.find_or_create_by_lock(lock_script)
     lock_hash = lock_script.compute_hash
     address_hash = CkbUtils.generate_address(lock_script)
-    address = Address.find_or_initialize_by(lock_hash: lock_hash)
+    address = Address.find_or_initialize_by(lock_hash:)
     # force use new version address
     address.address_hash = address_hash
     address.lock_script = LockScript
@@ -96,9 +104,9 @@ class Address < ApplicationRecord
     address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     address_hash_2021 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
 
-    address = Address.find_by(lock_hash: lock_hash)
+    address = Address.find_by(lock_hash:)
     if address.blank?
-      address = Address.new lock_hash: lock_hash
+      address = Address.new lock_hash:
     end
 
     # force use new version address
@@ -114,10 +122,10 @@ class Address < ApplicationRecord
         "Reset balance",
         extra: {
           address: address.address_hash,
-          wrong_balance: wrong_balance,
+          wrong_balance:,
           calced_balance: address.balance,
-          calced_occupied_balance: address.balance_occupied
-        }
+          calced_occupied_balance: address.balance_occupied,
+        },
       )
     end
     address.save!
@@ -134,7 +142,7 @@ class Address < ApplicationRecord
         find_by(lock_hash: query_key)
       else
         lock_hash = CkbUtils.parse_address(query_key).script.compute_hash
-        find_by(lock_hash: lock_hash)
+        find_by(lock_hash:)
       end
 
     unless QueryKeyUtils.valid_hex?(query_key)
@@ -159,7 +167,7 @@ class Address < ApplicationRecord
       {
         code_hash: script.code_hash,
         args: script.args,
-        hash_type: script.hash_type
+        hash_type: script.hash_type,
       }
     end
   end
@@ -207,19 +215,19 @@ class Address < ApplicationRecord
   end
 
   def cal_balance_occupied
-    cell_outputs.live.find_each.map { |cell|
+    cell_outputs.live.find_each.map do |cell|
       next if cell.type_hash.blank? && (cell.data.present? && cell.data == "0x")
 
       cell.capacity
-    }.compact.sum
+    end.compact.sum
   end
 
   def cal_balance_occupied_inner_block(block_id)
-    cell_outputs.inner_block(block_id).live.find_each.map { |cell|
+    cell_outputs.inner_block(block_id).live.find_each.map do |cell|
       next if cell.type_hash.blank? && (cell.data.present? && cell.data == "0x")
 
       cell.capacity
-    }.compact.sum
+    end.compact.sum
   end
 
   private

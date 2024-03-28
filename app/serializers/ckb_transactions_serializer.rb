@@ -51,6 +51,14 @@ class CkbTransactionsSerializer
     end
   end
 
+  attribute :is_rgb_transaction do |object|
+    object.rgb_transaction?
+  end
+
+  attribute :rgb_txid do |object|
+    object.rgb_txid
+  end
+
   attribute :created_at do |object|
     object.created_at.to_s
   end

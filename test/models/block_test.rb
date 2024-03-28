@@ -7,10 +7,11 @@ class BlockTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
     GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
+    BitcoinTransactionDetectWorker.any_instance.stubs(:perform).returns(true)
     CkbSync::Api.any_instance.stubs(:get_block_cycles).returns(
       [
         "0x100", "0x200", "0x300", "0x400", "0x500", "0x600", "0x700", "0x800", "0x900"
-      ]
+      ],
     )
   end
 
@@ -215,8 +216,8 @@ class BlockTest < ActiveSupport::TestCase
         compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
-        start_number: "0x0"
-      )
+        start_number: "0x0",
+      ),
     )
     VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(HAS_UNCLES_BLOCK_NUMBER)
@@ -244,8 +245,8 @@ class BlockTest < ActiveSupport::TestCase
         compact_target: "0x1000",
         length: "0x07d0",
         number: "0x0",
-        start_number: "0x0"
-      )
+        start_number: "0x0",
+      ),
     )
     VCR.use_cassette("blocks/#{HAS_UNCLES_BLOCK_NUMBER}", record: :new_episodes) do
       node_block = CkbSync::Api.instance.get_block_by_number(HAS_UNCLES_BLOCK_NUMBER)

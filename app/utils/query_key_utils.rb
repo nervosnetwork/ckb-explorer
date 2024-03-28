@@ -21,7 +21,9 @@ module QueryKeyUtils
     end
 
     def valid_address?(query_key)
-      CkbUtils.parse_address(query_key) rescue nil
+      CkbUtils.parse_address(query_key)
+    rescue StandardError
+      nil
     end
   end
 end

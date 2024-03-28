@@ -1,5 +1,8 @@
 name: Request to deploy mainnet
 
+permissions:
+  pull-requests: write
+
 on:
   push:
     branches: [testnet]
@@ -13,9 +16,9 @@ jobs:
       - name: Request PR
         uses: repo-sync/pull-request@v2
         with:
-          source_branch: 'testnet'
-          destination_branch: 'master'
-          pr_title: 'Deploy to mainnet'
-          pr_reviewer: 'rabbitz,zmcNotafraid,keith-cy'
-          pr_label: 'auto-pr'
+          source_branch: "testnet"
+          destination_branch: "master"
+          pr_title: "Deploy to mainnet"
+          pr_reviewer: "rabbitz,zmcNotafraid,keith-cy"
+          pr_label: "auto-pr"
           github_token: ${{ secrets.GITHUB_TOKEN }}
