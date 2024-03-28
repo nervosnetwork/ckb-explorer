@@ -15,17 +15,12 @@ module Addresses
       address_id = address.map(&:id)
 
       order_by, asc_or_desc = account_books_ordering
-      account_books =
-        AccountBook.joins(:ckb_transaction).
-          where(account_books: { address_id: },
-                ckb_transactions: { tx_status: "committed" }).
-          order(order_by => asc_or_desc).
-          page(page).per(page_size).fast_page
-
-      ckb_transaction_ids = account_books.map(&:ckb_transaction_id)
-      records = CkbTransaction.where(id: ckb_transaction_ids).
-        select(select_fields).
-        order(order_by => asc_or_desc)
+      records = CkbTransaction.includes(:account_books).where(
+        account_books: { address_id: },
+        ckb_transactions: { tx_status: "committed" },
+      ).select(select_fields).
+        order(order_by => asc_or_desc).
+        page(page).per(page_size).fast_page
 
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address: })
@@ -52,7 +47,7 @@ module Addresses
     end
 
     def paginate_options(records, address_id)
-      total_count = AccountBook.where(address_id:).count
+      total_count = AccountBook.where(address_id:).distinct.count(:ckb_transaction_id)
       FastJsonapi::PaginationMetaGenerator.new(
         request:, records:, page:, page_size:, total_count:,
       ).call
