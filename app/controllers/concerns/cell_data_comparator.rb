@@ -56,7 +56,7 @@ module CellDataComparator
       k = [c.address_id, c.type_hash, c.cell_type]
       h[k] ||= { capacity: 0.0, amount: 0.0 }
       h[k][:capacity] += c.capacity
-      h[k][:amount] += c.udt_amount
+      h[k][:amount] += c.udt_amount.to_f
     }
 
     cell_types = %w(udt omiga_inscription xudt)
