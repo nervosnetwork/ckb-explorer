@@ -109,6 +109,9 @@ module CkbTransactions
           if previous_cell_output.cell_type.in?(%w(nrc_721_token nrc_721_factory))
             display_input.merge!(attributes_for_nrc_721_cell(previous_cell_output))
           end
+          if previous_cell_output.cell_type.in?(%w(omiga_inscription_info omiga_inscription))
+            display_input.merge!(attributes_for_omiga_inscription_cell(previous_cell_output))
+          end
           if previous_cell_output.bitcoin_vout
             display_input.merge!(attributes_for_rgb_cell(previous_cell_output))
           end
