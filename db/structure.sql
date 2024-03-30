@@ -3910,13 +3910,6 @@ CREATE INDEX index_bitcoin_vouts_on_bitcoin_address_id ON public.bitcoin_vouts U
 
 
 --
--- Name: index_bitcoin_vouts_on_bitcoin_transaction_id_and_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_bitcoin_vouts_on_bitcoin_transaction_id_and_index ON public.bitcoin_vouts USING btree (bitcoin_transaction_id, index);
-
-
---
 -- Name: index_bitcoin_vouts_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4428,6 +4421,13 @@ CREATE UNIQUE INDEX index_portfolios_on_user_id_and_address_id ON public.portfol
 
 
 --
+-- Name: index_referring_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_referring_cells_on_cell_output_id ON public.referring_cells USING btree (cell_output_id);
+
+
+--
 -- Name: index_referring_cells_on_contract_id_and_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4684,6 +4684,13 @@ CREATE UNIQUE INDEX index_users_on_identifier ON public.users USING btree (ident
 --
 
 CREATE UNIQUE INDEX index_users_on_uuid ON public.users USING btree (uuid);
+
+
+--
+-- Name: index_vouts_uniqueness; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_vouts_uniqueness ON public.bitcoin_vouts USING btree (bitcoin_transaction_id, index, cell_output_id);
 
 
 --
@@ -5242,6 +5249,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240311143030'),
 ('20240312050057'),
 ('20240313075641'),
-('20240315015432');
+('20240315015432'),
+('20240330023445');
 
 
