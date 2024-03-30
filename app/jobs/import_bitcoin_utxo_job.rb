@@ -13,21 +13,22 @@ class ImportBitcoinUtxoJob < ApplicationJob
 
       txid, out_index = CkbUtils.parse_rgbpp_args(lock_script.args)
       Rails.logger.info("Importing bitcoin utxo #{txid} out_index #{out_index}")
-
       vout_attributes = []
-
       # build bitcoin transaction
       raw_tx = fetch_raw_transaction(txid)
       tx = build_transaction!(raw_tx)
-
       # build op_returns
       op_returns = build_op_returns!(raw_tx, tx, cell_output.ckb_transaction, vout_attributes)
       vout_attributes.concat(op_returns) if op_returns.present?
-
       # build vout
       vout_attributes << build_vout!(raw_tx, tx, out_index, cell_output)
 
-      BitcoinVout.upsert_all(vout_attributes, unique_by: %i[bitcoin_transaction_id index]) if vout_attributes.present?
+      if vout_attributes.present?
+        BitcoinVout.upsert_all(
+          vout_attributes,
+          unique_by: %i[bitcoin_transaction_id index cell_output_id],
+        )
+      end
     end
   end
 
