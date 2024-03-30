@@ -32,7 +32,7 @@ end
 #
 # Indexes
 #
-#  index_bitcoin_vouts_on_bitcoin_address_id                (bitcoin_address_id)
-#  index_bitcoin_vouts_on_bitcoin_transaction_id_and_index  (bitcoin_transaction_id,index) UNIQUE
-#  index_bitcoin_vouts_on_ckb_transaction_id                (ckb_transaction_id)
+#  index_bitcoin_vouts_on_bitcoin_address_id  (bitcoin_address_id)
+#  index_bitcoin_vouts_on_ckb_transaction_id  (ckb_transaction_id)
+#  index_vouts_uniqueness                     (bitcoin_transaction_id,index,cell_output_id) UNIQUE
 #
