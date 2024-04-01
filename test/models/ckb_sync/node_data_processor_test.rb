@@ -4152,6 +4152,39 @@ module CkbSync
       end
     end
 
+    test "create xudt with unique cell" do
+      CkbSync::Api.any_instance.stubs(:mode).returns("testnet")
+      CkbSync::Api.any_instance.stubs(:xudt_code_hash).returns("0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb")
+      CkbSync::Api.any_instance.stubs(:unique_cell_code_hash).returns("0x8e341bcfec6393dcd41e635733ff2dca00a6af546949f70c57a706c0f344df8b")
+
+      VCR.use_cassette("blocks/34") do
+        node_block = CkbSync::Api.instance.get_block_by_number(34)
+        block1 = create(:block, :with_block_hash,
+                        number: node_block.header.number - 1)
+        tx1 = create(:ckb_transaction, block: block1,
+                                       tx_hash: "0x3e89753ebca825e1504498eb18b56576d5b7eff59fe033346a10ab9e8ca359a4")
+        input_address1 = create(:address)
+        address1_lock = create(:lock_script, address_id: input_address1.id,
+                                             args: "0x#{SecureRandom.hex(20)}",
+                                             code_hash: Settings.secp_cell_type_hash,
+                                             hash_type: "type")
+        output1 = create(:cell_output, ckb_transaction: tx1,
+                                       block: block1, capacity: 50000000 * 10**8,
+                                       tx_hash: tx1.tx_hash,
+                                       cell_index: 0,
+                                       address: input_address1,
+                                       cell_type: "normal",
+                                       lock_script_id: address1_lock.id,
+                                       type_script_id: nil)
+        node_data_processor.process_block(node_block)
+        xudt = Udt.first
+        assert_equal 1, Udt.count
+        assert_equal "Unique BBQ", xudt.full_name
+        assert_equal 8, xudt.decimal
+        assert_equal "xudt", xudt.udt_type
+      end
+    end
+
     private
 
     def node_data_processor
