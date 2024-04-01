@@ -55,5 +55,11 @@ FactoryBot.define do
                udt_id: udt.id)
       end
     end
+
+    trait :xudt do
+      udt_type { "xudt" }
+      symbol { "Unique BBQ" }
+      decimal { 8 }
+    end
   end
 end
