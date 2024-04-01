@@ -21,6 +21,7 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
       GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
       GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
+      BitcoinTransactionDetectWorker.any_instance.stubs(:perform).returns(true)
       CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     end
 
@@ -4046,7 +4047,7 @@ module CkbSync
         udt = Udt.first
         assert_equal "0x5fa66c8d5f43914f85d3083e0529931883a5b0a14282f891201069f1b5067908",
                      udt.type_hash
-        assert_equal true, udt.published
+        assert_equal false, info.is_repeated_symbol
       end
     end
 
@@ -4147,7 +4148,7 @@ module CkbSync
         node_data_processor.process_block(node_block)
         assert_equal 2, Udt.count
         assert_equal info.udt_hash, OmigaInscriptionInfo.last.pre_udt_hash
-        assert_equal true, Udt.last.published
+        assert_equal false, OmigaInscriptionInfo.last.is_repeated_symbol
       end
     end
 

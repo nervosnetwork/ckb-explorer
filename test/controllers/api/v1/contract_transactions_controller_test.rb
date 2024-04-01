@@ -47,7 +47,7 @@ module Api
 
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME)
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_transactions, page:, page_size:).call
 
         assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge({ params: { previews: true } })).serialized_json, response.body
       end
@@ -59,7 +59,9 @@ module Api
 
         response_tx_transaction = json["data"].first
 
-        assert_equal %w(block_number block_timestamp display_inputs display_inputs_count display_outputs display_outputs_count income is_cellbase transaction_hash created_at create_timestamp).sort, response_tx_transaction["attributes"].keys.sort
+        assert_equal %w(block_number block_timestamp display_inputs display_inputs_count
+                        display_outputs display_outputs_count income is_cellbase transaction_hash
+                        created_at create_timestamp is_rgb_transaction rgb_txid).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return error object when no records found by give contract name" do
@@ -116,9 +118,9 @@ module Api
         dao_contract = DaoContract.default_contract
         contract_ckb_transactions = dao_contract.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: page }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: contract_ckb_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions, options).serialized_json
 
         assert_equal response_transaction, response.body
@@ -133,9 +135,9 @@ module Api
         dao_contract = DaoContract.default_contract
         contract_ckb_transactions = dao_contract.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page_size: page_size }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page_size: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: contract_ckb_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions, options).serialized_json
 
         assert_equal response_transaction, response.body
@@ -150,9 +152,9 @@ module Api
         dao_contract = DaoContract.default_contract
         contract_ckb_transactions = dao_contract.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: page, page_size: page_size }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page:, page_size: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: contract_ckb_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions, options).serialized_json
 
         assert_equal response_transaction, response.body
@@ -164,9 +166,9 @@ module Api
         dao_contract = DaoContract.default_contract
         contract_ckb_transactions = dao_contract.ckb_transactions.recent.page(page).per(page_size)
 
-        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page: page, page_size: page_size }
+        valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME), params: { page:, page_size: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page, page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: contract_ckb_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions, options).serialized_json
 
         assert_equal [], json["data"]
@@ -189,13 +191,13 @@ module Api
         fake_dao_deposit_transaction(15, address)
 
         tx_hash = address.ckb_dao_transactions.pick(:tx_hash)
-        contract_ckb_transactions = address.ckb_dao_transactions.where(tx_hash: tx_hash).page(page).per(page_size).fast_page
+        contract_ckb_transactions = address.ckb_dao_transactions.where(tx_hash:).page(page).per(page_size).fast_page
 
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME),
-                  params: { page: page, page_size: page_size, tx_hash: tx_hash }
+                  params: { page:, page_size:, tx_hash: }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: contract_ckb_transactions, page:,
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions,
                                                              options.merge(params: { previews: true })).serialized_json
 
@@ -214,10 +216,10 @@ module Api
           order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc").page(page).per(page_size).fast_page
 
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME),
-                  params: { page: page, page_size: page_size, address_hash: address.address_hash }
+                  params: { page:, page_size:, address_hash: address.address_hash }
 
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: contract_ckb_transactions, page: page,
-                                                           page_size: page_size).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: contract_ckb_transactions, page:,
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(contract_ckb_transactions,
                                                              options.merge(params: { previews: true })).serialized_json
 
