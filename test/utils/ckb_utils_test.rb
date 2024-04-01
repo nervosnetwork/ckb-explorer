@@ -456,6 +456,14 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal info[:mint_limit], 100000000000
   end
 
+  test "parse unique cell" do
+    data = "0x080a556e697175652042425100"
+    info = CkbUtils.parse_unique_cell(data)
+    assert_equal info[:decimal], 8
+    assert_equal info[:name], "Unique BBQ"
+    assert_nil info[:sybol]
+  end
+
   private
 
   def node_data_processor

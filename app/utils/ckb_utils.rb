@@ -658,4 +658,14 @@ class CkbUtils
 
     [txid, out_index]
   end
+
+  def self.parse_unique_cell(hex_data)
+    data = hex_data.delete_prefix("0x")
+    decimal = "0x#{data.slice!(0, 2)}".to_i(16)
+    name_len = "0x#{data.slice!(0, 2)}".to_i(16)
+    name = [data.slice!(0, name_len * 2)].pack("H*")
+    symbol_len = "0x#{data.slice!(0, 2)}".to_i(16)
+    symbol = [data.slice!(0, symbol_len * 2)].pack("H*")
+    { decimal:, name: name.presence, symbol: symbol.presence }
+  end
 end
