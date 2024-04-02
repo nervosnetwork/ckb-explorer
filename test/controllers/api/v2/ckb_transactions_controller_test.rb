@@ -36,13 +36,13 @@ module Api
                             block: block2,
                             previous_output: {
                               tx_hash: tx1.tx_hash,
-                              index: 0
+                              index: 0,
                             })
         create(:cell_input, ckb_transaction: tx2,
                             block: block2,
                             previous_output: {
                               tx_hash: tx1.tx_hash,
-                              index: 1
+                              index: 1,
                             })
         # create outputs
         create(:cell_output, ckb_transaction: tx2,
@@ -107,13 +107,13 @@ module Api
                             block: block2,
                             previous_output: {
                               tx_hash: tx1.tx_hash,
-                              index: 0
+                              index: 0,
                             })
         create(:cell_input, ckb_transaction: tx2,
                             block: block2,
                             previous_output: {
                               tx_hash: tx1.tx_hash,
-                              index: 1
+                              index: 1,
                             })
         # create outputs
         create(:cell_output, ckb_transaction: tx2,
@@ -141,8 +141,8 @@ module Api
         transfers2 = data2[0]["transfers"]
 
         assert_equal 2, json["data"].size
-        assert_equal "-2000000000000.0", transfers1[0]["udt_info"]["amount"]
-        assert_equal "2000000000000.0", transfers2[0]["udt_info"]["amount"]
+        assert_equal "-2000000000000.000000", transfers1[0]["udt_info"]["amount"]
+        assert_equal "2000000000000.000000", transfers2[0]["udt_info"]["amount"]
       end
     end
   end
