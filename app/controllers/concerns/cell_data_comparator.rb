@@ -69,7 +69,7 @@ module CellDataComparator
 
       amount = output&.dig(:amount).to_f - input&.dig(:amount).to_f
       capacity = output&.dig(:capacity).to_f - input&.dig(:capacity).to_f
-      udt_info = udt_infos[k[1]].merge(amount:)
+      udt_info = udt_infos[k[1]].merge(amount: "%f" % amount)
       transfers[k[0]] << CkbUtils.hash_value_to_s({ capacity:, cell_type: k[2], udt_info: })
     end
 
