@@ -456,6 +456,12 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal info[:mint_limit], 100000000000
   end
 
+  test "parse another omiga inscrpition data" do
+    data = "0x000000357ecff647ec5e110000000000 "
+    info = CkbUtils.parse_omiga_inscription_data(data)
+    assert_equal info[:mint_limit], 21000000000000000000000000
+  end
+
   test "parse unique cell" do
     data = "0x080a556e697175652042425100"
     info = CkbUtils.parse_unique_cell(data)

@@ -634,8 +634,8 @@ class CkbUtils
     symbol_len = "0x#{data.slice!(0, 2)}".to_i(16)
     symbol = [data.slice!(0, symbol_len * 2)].pack("H*")
     udt_hash = "0x#{data.slice!(0, 64)}"
-    expected_supply = [data.slice!(0, 32)].pack("H*").unpack1("Q<2")
-    mint_limit = [data.slice!(0, 32)].pack("H*").unpack1("Q<2")
+    expected_supply = [data.slice!(0, 32)].pack("H*").bytes.reverse.pack("C*").unpack1("H*").hex
+    mint_limit = [data.slice!(0, 32)].pack("H*").bytes.reverse.pack("C*").unpack1("H*").hex
     mint_status = "0x#{data.slice!(0, 2)}".to_i(16)
     { decimal:, name: name.presence, symbol: symbol.presence, udt_hash:, expected_supply:,
       mint_limit:, mint_status: }
@@ -643,7 +643,7 @@ class CkbUtils
 
   def self.parse_omiga_inscription_data(hex_data)
     data = hex_data.delete_prefix("0x")
-    mint_limit = [data].pack("H*").unpack1("Q<2")
+    mint_limit = [data].pack("H*").bytes.reverse.pack("C*").unpack1("H*").hex
     { mint_limit: }
   end
 
