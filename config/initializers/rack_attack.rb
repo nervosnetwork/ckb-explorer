@@ -23,8 +23,8 @@ class Rack::Attack
   # Throttle all requests by IP (60rpm)
   #
   # Key: "rack::attack:#{Time.now.to_i/:period}:req/ip:#{req.ip}"
-  throttle("req/ip", limit: 1500, period: 5.minutes) do |req|
-    req.env['HTTP_CF_CONNECTING_IP'] || req.ip # unless req.path.start_with?('/assets')
+  throttle("req/ip", limit: 3000, period: 5.minutes) do |req|
+    req.env["HTTP_CF_CONNECTING_IP"] || req.ip # unless req.path.start_with?('/assets')
   end
 
   ### Custom Throttle Response ###
@@ -49,7 +49,7 @@ class Rack::Attack
       headers = {
         "RateLimit-Limit" => match_data[:limit].to_s,
         "RateLimit-Remaining" => "0",
-        "RateLimit-Reset" => (now + (match_data[:period] - now % match_data[:period])).to_s
+        "RateLimit-Reset" => (now + (match_data[:period] - now % match_data[:period])).to_s,
       }
 
       [429, headers, ["Throttled\n"]]
