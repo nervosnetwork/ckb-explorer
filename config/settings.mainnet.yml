@@ -31,6 +31,8 @@ omiga_inscription_code_hash: "0x7490970e6af9b9fe63fc19fc523a12b2ec69027e6ae484ed
 # xudt
 xudt_code_hash: "0x50bd8d6680b8b9cf98b73f3c08faf8b2a21914311954118ad6609be6e78a1b95"
 
+unique_cell_code_hash: "0xcc2518c2c1384f2473c96f63c4e74074984296f358512ee7f54c848d4c135040"
+
 # hash length of an attribute(especially which comes from bytea column),
 # e.g. Block.uncle_block_hashes: "0x587f354162afd133b4a4f7a4b621d11e043c3c08b0af2801f1686b5403b14953", which has a length of 66 ( 2 + 64)
 default_hash_length: "64"
@@ -52,7 +54,7 @@ secp_multisig_cell_type_hash: "0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876
 dao_code_hash: "0x516be0333273bbe12a723f3be583c524f0b6089326f89c49fc61e24d1f56be21"
 dao_type_hash: "0x82d76d1b75fe2fd9a27dfbaa65a039221a380d76c926f378d3f81cf3e7e13f2e"
 sudt_cell_type_hash: "0x5e7a36a77e68eecc013dfa2fe6a23f3b6c344b04005808694ae6dd45eea4cfd5"
-sudt1_cell_type_hash: ''
+sudt1_cell_type_hash: ""
 
 # epoch reward
 default_epoch_reward: "1_917_808_21917808"
