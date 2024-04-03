@@ -33,6 +33,8 @@ class CellOutputSerializer
       { type: "ckb", capacity: object.capacity.to_s }
     when "udt"
       object.udt_info.merge!(type: "udt")
+    when "xudt"
+      object.udt_info.merge!(type: "xudt")
     when "cota_registry"
       object.cota_registry_info.merge!(type: "cota")
     when "cota_regular"
