@@ -535,7 +535,7 @@ dao_contract)
       when "sudt"
         address.cell_outputs.live.udt.where(type_hash:).sum(:udt_amount)
       when "xudt"
-        address.cell_outputs.live.udt.where(type_hash:).sum(:udt_amount)
+        address.cell_outputs.live.xudt.where(type_hash:).sum(:udt_amount)
       when "omiga_inscription"
         address.cell_outputs.live.omiga_inscription.where(type_hash:).sum(:udt_amount)
       when "m_nft_token"
