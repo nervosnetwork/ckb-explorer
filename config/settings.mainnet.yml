@@ -31,7 +31,7 @@ omiga_inscription_code_hash: "0x7490970e6af9b9fe63fc19fc523a12b2ec69027e6ae484ed
 # xudt
 xudt_code_hash: "0x50bd8d6680b8b9cf98b73f3c08faf8b2a21914311954118ad6609be6e78a1b95"
 
-unique_cell_code_hash: "0xcc2518c2c1384f2473c96f63c4e74074984296f358512ee7f54c848d4c135040"
+unique_cell_code_hash: "0x2c8c11c985da60b0a330c61a85507416d6382c130ba67f0c47ab071e00aec628"
 
 # hash length of an attribute(especially which comes from bytea column),
 # e.g. Block.uncle_block_hashes: "0x587f354162afd133b4a4f7a4b621d11e043c3c08b0af2801f1686b5403b14953", which has a length of 66 ( 2 + 64)
