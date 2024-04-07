@@ -101,7 +101,6 @@ class Address < ApplicationRecord
   # @return [Address]
   def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
     lock_hash = lock_script.compute_hash
-    address_hash = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2019)
     address_hash_2021 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
 
     address = Address.find_by(lock_hash:)

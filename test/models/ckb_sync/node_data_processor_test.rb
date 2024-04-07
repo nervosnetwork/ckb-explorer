@@ -2651,6 +2651,7 @@ module CkbSync
                                      args: "0x#{SecureRandom.hex(20)}")
       udt_script = CKB::Types::Script.new(code_hash: Settings.sudt_cell_type_hash, hash_type: "type",
                                           args: "0x#{SecureRandom.hex(32)}")
+      create(:udt, type_hash: udt_script.compute_hash)
       Address.create(lock_hash: udt_script.args,
                      address_hash: "0x#{SecureRandom.hex(32)}")
       outputs = [
@@ -4154,6 +4155,7 @@ module CkbSync
 
     test "create xudt with unique cell" do
       CkbSync::Api.any_instance.stubs(:mode).returns("testnet")
+      ENV["CKB_NET_MODE"] = "testnet"
       CkbSync::Api.any_instance.stubs(:xudt_code_hash).returns("0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb")
       CkbSync::Api.any_instance.stubs(:unique_cell_code_hash).returns("0x8e341bcfec6393dcd41e635733ff2dca00a6af546949f70c57a706c0f344df8b")
 
@@ -4182,6 +4184,7 @@ module CkbSync
         assert_equal "Unique BBQ", xudt.full_name
         assert_equal 8, xudt.decimal
         assert_equal "xudt", xudt.udt_type
+        assert_equal "ckt1qrfrwcdnvssswdwpn3s9v8fp87emat306ctjwsm3nmlkjg8qyza2cqgqqxsg5hs8ag0uv4rsmtr0940kl850pkuxuugetsnt", xudt.issuer_address
       end
     end
 
