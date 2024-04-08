@@ -3928,6 +3928,13 @@ CREATE UNIQUE INDEX index_average_block_time_by_hour_on_hour ON public.average_b
 
 
 --
+-- Name: index_bitcoin_statistics_on_timestamp; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_bitcoin_statistics_on_timestamp ON public.bitcoin_statistics USING btree ("timestamp");
+
+
+--
 -- Name: index_bitcoin_transactions_on_txid; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5297,6 +5304,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240313075641'),
 ('20240315015432'),
 ('20240330023445'),
-('20240407100517');
+('20240407100517'),
+('20240408024145');
 
 
