@@ -6,12 +6,12 @@ module RgbTransactions
     integer :page_size, default: CkbTransaction.default_per_page
 
     def execute
-      order_by, asc_or_desc = transaciton_ordering
+      order_by, asc_or_desc = transaction_ordering
       transactions = CkbTransaction.where("tags @> array[?]::varchar[]", ["rgbpp"]).
         order(order_by => asc_or_desc)
 
-      if leap_direction.presnet?
-        transacitons = transactions.where(
+      if leap_direction.present?
+        transactions = transactions.where(
           "CASE
            WHEN (SELECT COUNT(*) FROM bitcoin_vins WHERE ckb_transaction_id = ckb_transactions.id) >
                 (SELECT COUNT(*) FROM bitcoin_vouts WHERE ckb_transaction_id = ckb_transactions.id)
@@ -24,12 +24,12 @@ module RgbTransactions
         )
       end
 
-      transactions = transactions.page(page).per(page_size)
+      transactions.page(page).per(page_size)
     end
 
     private
 
-    def transaciton_ordering
+    def transaction_ordering
       sort_by, sort_order = sort.split(".", 2)
       sort_by =
         case sort_by
