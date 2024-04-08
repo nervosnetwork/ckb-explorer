@@ -980,17 +980,17 @@ ALTER SEQUENCE public.cell_dependencies_id_seq OWNED BY public.cell_dependencies
 
 
 --
--- Name: cell_inputs_old; Type: TABLE; Schema: public; Owner: -
+-- Name: cell_inputs; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.cell_inputs_old (
+CREATE TABLE public.cell_inputs (
     id bigint NOT NULL,
     ckb_transaction_id bigint,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     previous_cell_output_id bigint,
     from_cell_base boolean DEFAULT false,
-    block_id numeric(30,0),
+    block_id bigint,
     since numeric(30,0) DEFAULT 0.0,
     cell_type integer DEFAULT 0,
     index integer,
@@ -1015,27 +1015,7 @@ CREATE SEQUENCE public.cell_inputs_id_seq
 -- Name: cell_inputs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE public.cell_inputs_id_seq OWNED BY public.cell_inputs_old.id;
-
-
---
--- Name: cell_inputs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.cell_inputs (
-    id bigint DEFAULT nextval('public.cell_inputs_id_seq'::regclass) NOT NULL,
-    ckb_transaction_id bigint,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL,
-    previous_cell_output_id bigint,
-    from_cell_base boolean DEFAULT false,
-    block_id bigint,
-    since numeric(30,0) DEFAULT 0.0,
-    cell_type integer DEFAULT 0,
-    index integer,
-    previous_tx_hash bytea,
-    previous_index integer
-);
+ALTER SEQUENCE public.cell_inputs_id_seq OWNED BY public.cell_inputs.id;
 
 
 --
@@ -1796,64 +1776,6 @@ ALTER SEQUENCE public.nrc_factory_cells_id_seq OWNED BY public.nrc_factory_cells
 
 
 --
--- Name: old_ckb_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.old_ckb_transactions (
-    id bigint NOT NULL,
-    tx_hash bytea,
-    block_id bigint,
-    block_number numeric(30,0),
-    block_timestamp numeric(30,0),
-    transaction_fee numeric(30,0),
-    version integer,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL,
-    is_cellbase boolean DEFAULT false,
-    header_deps bytea,
-    cell_deps jsonb,
-    witnesses jsonb,
-    live_cell_changes integer,
-    capacity_involved numeric(30,0),
-    contained_address_ids bigint[] DEFAULT '{}'::bigint[],
-    tags character varying[] DEFAULT '{}'::character varying[],
-    contained_udt_ids bigint[] DEFAULT '{}'::bigint[],
-    dao_address_ids bigint[] DEFAULT '{}'::bigint[],
-    udt_address_ids bigint[] DEFAULT '{}'::bigint[],
-    bytes integer DEFAULT 0,
-    cycles integer,
-    confirmation_time integer,
-    tx_status integer DEFAULT 2 NOT NULL
-);
-
-
---
--- Name: COLUMN old_ckb_transactions.confirmation_time; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.old_ckb_transactions.confirmation_time IS 'it cost how many seconds to confirm this transaction';
-
-
---
--- Name: old_ckb_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.old_ckb_transactions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: old_ckb_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.old_ckb_transactions_id_seq OWNED BY public.old_ckb_transactions.id;
-
-
---
 -- Name: omiga_inscription_infos; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1895,54 +1817,6 @@ CREATE SEQUENCE public.omiga_inscription_infos_id_seq
 --
 
 ALTER SEQUENCE public.omiga_inscription_infos_id_seq OWNED BY public.omiga_inscription_infos.id;
-
-
---
--- Name: pool_transaction_entries; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.pool_transaction_entries (
-    id bigint NOT NULL,
-    cell_deps jsonb,
-    tx_hash bytea,
-    header_deps jsonb,
-    inputs jsonb,
-    outputs jsonb,
-    outputs_data jsonb,
-    version integer,
-    witnesses jsonb,
-    transaction_fee numeric(30,0),
-    block_number numeric(30,0),
-    block_timestamp numeric(30,0),
-    cycles numeric(30,0),
-    tx_size numeric(30,0),
-    display_inputs jsonb,
-    display_outputs jsonb,
-    tx_status integer DEFAULT 0,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    detailed_message text,
-    bytes integer DEFAULT 0
-);
-
-
---
--- Name: pool_transaction_entries_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.pool_transaction_entries_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: pool_transaction_entries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.pool_transaction_entries_id_seq OWNED BY public.pool_transaction_entries.id;
 
 
 --
@@ -2377,20 +2251,6 @@ ALTER SEQUENCE public.transaction_propagation_delays_id_seq OWNED BY public.tran
 
 
 --
--- Name: tx_display_infos; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.tx_display_infos (
-    ckb_transaction_id bigint NOT NULL,
-    inputs jsonb,
-    outputs jsonb,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    income jsonb
-);
-
-
---
 -- Name: type_scripts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2814,10 +2674,10 @@ ALTER TABLE ONLY public.cell_dependencies ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
--- Name: cell_inputs_old id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: cell_inputs id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.cell_inputs_old ALTER COLUMN id SET DEFAULT nextval('public.cell_inputs_id_seq'::regclass);
+ALTER TABLE ONLY public.cell_inputs ALTER COLUMN id SET DEFAULT nextval('public.cell_inputs_id_seq'::regclass);
 
 
 --
@@ -2926,24 +2786,10 @@ ALTER TABLE ONLY public.nrc_factory_cells ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
--- Name: old_ckb_transactions id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.old_ckb_transactions ALTER COLUMN id SET DEFAULT nextval('public.old_ckb_transactions_id_seq'::regclass);
-
-
---
 -- Name: omiga_inscription_infos id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.omiga_inscription_infos ALTER COLUMN id SET DEFAULT nextval('public.omiga_inscription_infos_id_seq'::regclass);
-
-
---
--- Name: pool_transaction_entries id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.pool_transaction_entries ALTER COLUMN id SET DEFAULT nextval('public.pool_transaction_entries_id_seq'::regclass);
 
 
 --
@@ -3216,14 +3062,6 @@ ALTER TABLE ONLY public.cell_dependencies
 
 
 --
--- Name: cell_inputs_old cell_inputs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.cell_inputs_old
-    ADD CONSTRAINT cell_inputs_pkey PRIMARY KEY (id);
-
-
---
 -- Name: cell_inputs cell_inputs_pkey_new; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3424,27 +3262,11 @@ ALTER TABLE ONLY public.nrc_factory_cells
 
 
 --
--- Name: old_ckb_transactions old_ckb_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.old_ckb_transactions
-    ADD CONSTRAINT old_ckb_transactions_pkey PRIMARY KEY (id);
-
-
---
 -- Name: omiga_inscription_infos omiga_inscription_infos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.omiga_inscription_infos
     ADD CONSTRAINT omiga_inscription_infos_pkey PRIMARY KEY (id);
-
-
---
--- Name: pool_transaction_entries pool_transaction_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.pool_transaction_entries
-    ADD CONSTRAINT pool_transaction_entries_pkey PRIMARY KEY (id);
 
 
 --
@@ -3552,14 +3374,6 @@ ALTER TABLE ONLY public.transaction_propagation_delays
 
 
 --
--- Name: tx_display_infos tx_display_infos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.tx_display_infos
-    ADD CONSTRAINT tx_display_infos_pkey PRIMARY KEY (ckb_transaction_id);
-
-
---
 -- Name: type_scripts type_scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3613,14 +3427,6 @@ ALTER TABLE ONLY public.addresses
 
 ALTER TABLE ONLY public.token_collections
     ADD CONSTRAINT unique_sn UNIQUE (sn);
-
-
---
--- Name: pool_transaction_entries unique_tx_hash; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.pool_transaction_entries
-    ADD CONSTRAINT unique_tx_hash UNIQUE (tx_hash);
 
 
 --
@@ -4068,38 +3874,10 @@ CREATE INDEX index_cell_dependencies_on_script_id ON public.cell_dependencies US
 
 
 --
--- Name: index_cell_inputs_on_block_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_inputs_on_block_id ON public.cell_inputs_old USING btree (block_id);
-
-
---
--- Name: index_cell_inputs_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_inputs_on_ckb_transaction_id ON public.cell_inputs_old USING btree (ckb_transaction_id);
-
-
---
 -- Name: index_cell_inputs_on_ckb_transaction_id_and_index; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_cell_inputs_on_ckb_transaction_id_and_index ON public.cell_inputs USING btree (ckb_transaction_id, index);
-
-
---
--- Name: index_cell_inputs_on_previous_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_inputs_on_previous_cell_output_id ON public.cell_inputs_old USING btree (previous_cell_output_id);
-
-
---
--- Name: index_cell_inputs_on_previous_tx_hash_and_previous_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_inputs_on_previous_tx_hash_and_previous_index ON public.cell_inputs_old USING btree (previous_tx_hash, previous_index);
 
 
 --
@@ -4376,94 +4154,10 @@ CREATE UNIQUE INDEX index_nrc_factory_cells_on_code_hash_and_hash_type_and_args 
 
 
 --
--- Name: index_old_ckb_transactions_on_block_id_and_block_timestamp; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_old_ckb_transactions_on_block_id_and_block_timestamp ON public.old_ckb_transactions USING btree (block_id, block_timestamp);
-
-
---
--- Name: index_old_ckb_transactions_on_block_timestamp_and_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_old_ckb_transactions_on_block_timestamp_and_id ON public.old_ckb_transactions USING btree (block_timestamp DESC NULLS LAST, id DESC);
-
-
---
--- Name: index_old_ckb_transactions_on_contained_address_ids_and_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_old_ckb_transactions_on_contained_address_ids_and_id ON public.old_ckb_transactions USING gin (contained_address_ids, id);
-
-
---
--- Name: index_old_ckb_transactions_on_contained_udt_ids; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_old_ckb_transactions_on_contained_udt_ids ON public.old_ckb_transactions USING gin (contained_udt_ids);
-
-
---
--- Name: index_old_ckb_transactions_on_dao_address_ids; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_old_ckb_transactions_on_dao_address_ids ON public.old_ckb_transactions USING gin (dao_address_ids);
-
-
---
--- Name: index_old_ckb_transactions_on_is_cellbase; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_old_ckb_transactions_on_is_cellbase ON public.old_ckb_transactions USING btree (is_cellbase);
-
-
---
--- Name: index_old_ckb_transactions_on_tags; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_old_ckb_transactions_on_tags ON public.old_ckb_transactions USING gin (tags);
-
-
---
--- Name: index_old_ckb_transactions_on_tx_hash_and_block_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_old_ckb_transactions_on_tx_hash_and_block_id ON public.old_ckb_transactions USING btree (tx_hash, block_id);
-
-
---
--- Name: index_old_ckb_transactions_on_udt_address_ids; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_old_ckb_transactions_on_udt_address_ids ON public.old_ckb_transactions USING gin (udt_address_ids);
-
-
---
 -- Name: index_omiga_inscription_infos_on_udt_hash; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_omiga_inscription_infos_on_udt_hash ON public.omiga_inscription_infos USING btree (udt_hash);
-
-
---
--- Name: index_pool_transaction_entries_on_id_and_tx_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_pool_transaction_entries_on_id_and_tx_status ON public.pool_transaction_entries USING btree (id, tx_status);
-
-
---
--- Name: index_pool_transaction_entries_on_tx_hash; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_pool_transaction_entries_on_tx_hash ON public.pool_transaction_entries USING hash (tx_hash);
-
-
---
--- Name: index_pool_transaction_entries_on_tx_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_pool_transaction_entries_on_tx_status ON public.pool_transaction_entries USING btree (tx_status);
 
 
 --
@@ -4950,13 +4644,6 @@ CREATE TRIGGER after_delete_update_ckb_transactions_count AFTER DELETE ON public
 
 
 --
--- Name: old_ckb_transactions after_delete_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER after_delete_update_ckb_transactions_count AFTER DELETE ON public.old_ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.decrease_ckb_transactions_count();
-
-
---
 -- Name: ckb_transactions after_insert_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -4964,31 +4651,10 @@ CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public
 
 
 --
--- Name: old_ckb_transactions after_insert_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER after_insert_update_ckb_transactions_count AFTER INSERT ON public.old_ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.increase_ckb_transactions_count();
-
-
---
 -- Name: ckb_transactions after_update_ckb_transactions_count; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER after_update_ckb_transactions_count AFTER UPDATE ON public.ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.update_ckb_transactions_count();
-
-
---
--- Name: pool_transaction_entries insert_ckb_transactions; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER insert_ckb_transactions AFTER INSERT ON public.pool_transaction_entries FOR EACH ROW EXECUTE FUNCTION public.insert_into_ckb_transactions();
-
-
---
--- Name: old_ckb_transactions sync_to_account_book; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER sync_to_account_book AFTER INSERT OR UPDATE ON public.old_ckb_transactions FOR EACH ROW EXECUTE FUNCTION public.synx_tx_to_account_book();
 
 
 --
@@ -5305,6 +4971,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240315015432'),
 ('20240330023445'),
 ('20240407100517'),
-('20240408024145');
+('20240408024145'),
+('20240408065818'),
+('20240408075718'),
+('20240408082159');
 
 
