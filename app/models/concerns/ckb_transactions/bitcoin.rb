@@ -22,8 +22,24 @@ module CkbTransactions
       def rgb_txid
         return unless rgb_transaction?
 
-        bitcoin_transaction = BitcoinTransaction.includes(:bitcoin_vouts).find_by(bitcoin_vouts: { ckb_transaction_id: id })
         bitcoin_transaction&.txid
+      end
+
+      def leap_direction
+        return unless rgb_transaction?
+
+        bitcoin_vins.count > bitcoin_vouts.count ? "in" : "out"
+      end
+
+      def rgb_cell_changes
+        return 0 unless rgb_transaction?
+
+        bitcoin_vouts.count - bitcoin_vins.count
+      end
+
+      def bitcoin_transaction
+        BitcoinTransaction.includes(:bitcoin_vouts).
+          find_by(bitcoin_vouts: { ckb_transaction_id: id })
       end
     end
   end

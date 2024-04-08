@@ -594,6 +594,37 @@ ALTER SEQUENCE public.bitcoin_addresses_id_seq OWNED BY public.bitcoin_addresses
 
 
 --
+-- Name: bitcoin_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bitcoin_statistics (
+    id bigint NOT NULL,
+    "timestamp" bigint,
+    transactions_count integer DEFAULT 0,
+    addresses_count integer DEFAULT 0
+);
+
+
+--
+-- Name: bitcoin_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.bitcoin_statistics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: bitcoin_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.bitcoin_statistics_id_seq OWNED BY public.bitcoin_statistics.id;
+
+
+--
 -- Name: bitcoin_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2706,6 +2737,13 @@ ALTER TABLE ONLY public.bitcoin_addresses ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
+-- Name: bitcoin_statistics id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_statistics ALTER COLUMN id SET DEFAULT nextval('public.bitcoin_statistics_id_seq'::regclass);
+
+
+--
 -- Name: bitcoin_transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3087,6 +3125,14 @@ ALTER TABLE ONLY public.bitcoin_address_mappings
 
 ALTER TABLE ONLY public.bitcoin_addresses
     ADD CONSTRAINT bitcoin_addresses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: bitcoin_statistics bitcoin_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_statistics
+    ADD CONSTRAINT bitcoin_statistics_pkey PRIMARY KEY (id);
 
 
 --
@@ -5250,6 +5296,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240312050057'),
 ('20240313075641'),
 ('20240315015432'),
-('20240330023445');
+('20240330023445'),
+('20240407100517');
 
 
