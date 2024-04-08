@@ -11,7 +11,7 @@ class BitcoinStatistic < ApplicationRecord
       addresses_count = BitcoinAddress.where(created_at: start_time..end_time).count
       # Count the number of newly generated transactions within half an hour before the current time point
       transactions_count = BitcoinTransaction.where(created_at: start_time..end_time).count
-      create!(timestamp: end_time.utc.to_i, addresses_count:, transactions_count:)
+      create!(timestamp: end_time.utc.to_i * 1000, addresses_count:, transactions_count:)
     end
   end
 end
