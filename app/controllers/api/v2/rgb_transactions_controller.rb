@@ -8,7 +8,7 @@ module Api
       private
 
       def transaction_params
-        params.permit(:sort, :leap_direction)
+        params.permit(:sort, :leap_direction, :page, :page_size)
       end
     end
   end

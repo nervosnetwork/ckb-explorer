@@ -9,8 +9,8 @@ json.data do
     json.rgb_cell_changes tx.rgb_cell_changes
     json.tgb_txid tx.rgb_txid
   end
-  json.meta do
-    json.total @ckb_transactions.total_count.to_i
-    json.page_size @page_size.to_i
-  end
+end
+json.meta do
+  json.total @ckb_transactions.total_count
+  json.page_size @ckb_transactions.current_per_page
 end
