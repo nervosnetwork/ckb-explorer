@@ -7,7 +7,7 @@ json.data do
     json.block_timestamp tx.block_timestamp
     json.leap_direction tx.leap_direction
     json.rgb_cell_changes tx.rgb_cell_changes
-    json.tgb_txid tx.rgb_txid
+    json.rgb_txid tx.rgb_txid
   end
 end
 json.meta do
