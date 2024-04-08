@@ -1,0 +1,27 @@
+class BitcoinStatistic < ApplicationRecord
+  default_scope { order(timestamp: :asc) }
+
+  def self.refresh
+    transaction do
+      current_time = Time.current
+      start_time = Time.new(current_time.year, current_time.month, current_time.day, current_time.hour, current_time.min < 30 ? 0 : 30)
+      end_time = start_time + 30.minutes
+
+      # Count the number of newly generated addresses within half an hour before the current time point
+      address_count = BitcoinAddress.where(created_at: start_time..end_time).count
+      # Count the number of newly generated transactions within half an hour before the current time point
+      transaction_count = BitcoinTransaction.where(created_at: start_time..end_time).count
+      create!(timestamp: end_time.utc.to_i, address_count:, transaction_count:)
+    end
+  end
+end
+
+# == Schema Information
+#
+# Table name: bitcoin_statistics
+#
+#  id                 :bigint           not null, primary key
+#  timestamp          :bigint
+#  transactions_count :integer          default(0)
+#  addresses_count    :integer          default(0)
+#
