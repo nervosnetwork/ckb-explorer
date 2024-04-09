@@ -19,8 +19,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      image-name: '${{ steps.docker_build.outputs.imageFullName }}'
-      image-tag: '${{ steps.docker_build.outputs.tags }}'
+      image-name: "${{ steps.docker_build.outputs.imageFullName }}"
+      image-tag: "${{ steps.docker_build.outputs.tags }}"
     steps:
       - name: Update Package List and Remove Dotnet
         run: |
@@ -56,3 +56,5 @@ jobs:
           githubOrg: magickbase # optional
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
+      - name: check
+        run: docker images && df -hT
