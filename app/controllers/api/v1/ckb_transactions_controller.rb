@@ -2,13 +2,13 @@ module Api
   module V1
     class CkbTransactionsController < ApplicationController
       before_action :validate_query_params, only: %i[show]
-      before_action :find_transaction,only: %i[show]
+      before_action :find_transaction, only: %i[show]
       before_action :validate_pagination_params, :pagination_params, only: %i[index]
 
       def index
         if from_home_page?
           ckb_transactions = CkbTransaction.tx_committed.recent.normal.select(
-            :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at, :created_at
+            :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at, :created_at, :tags
           ).limit((Settings.homepage_transactions_records_count || 15).to_i)
           json =
             Rails.cache.realize(ckb_transactions.cache_key,
@@ -18,7 +18,7 @@ module Api
           render json:
         else
           ckb_transactions = CkbTransaction.tx_committed.normal.select(
-            :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at, :created_at
+            :id, :tx_hash, :block_number, :block_timestamp, :live_cell_changes, :capacity_involved, :updated_at, :created_at, :tags
           )
 
           params[:sort] ||= "id.desc"
@@ -83,7 +83,7 @@ module Api
             records_counter = RecordCounters::Transactions.new
             CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
           end
-        ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id,
+        ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id, :tags,
                                                    :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at)
         json =
           Rails.cache.realize(ckb_transactions.cache_key,
@@ -107,8 +107,8 @@ module Api
         expires_in 10.seconds, public: true, must_revalidate: true
 
         render json: CkbTransactionSerializer.new(@ckb_transaction, {
-          params: { display_cells: params.fetch(:display_cells, true)
-        }})
+                                                    params: { display_cells: params.fetch(:display_cells, true) },
+                                                  })
       end
 
       private

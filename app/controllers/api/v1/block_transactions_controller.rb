@@ -6,7 +6,7 @@ module Api
       def show
         block = Block.find_by!(block_hash: params[:id])
         ckb_transactions = block.ckb_transactions.
-          select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at).
+          select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at, :tags).
           order(is_cellbase: :desc, id: :asc)
 
         if params[:tx_hash].present?
@@ -24,16 +24,16 @@ module Api
           records_counter = RecordCounters::BlockTransactions.new(ckb_transactions)
           ckb_transactions = ckb_transactions.page(@page).per(@page_size).fast_page
           options = FastJsonapi::PaginationMetaGenerator.new(
-            request: request,
+            request:,
             records: ckb_transactions,
             page: @page,
             page_size: @page_size,
-            records_counter: records_counter
+            records_counter:,
           ).call
           json = CkbTransactionsSerializer.new(ckb_transactions,
                                                options.merge(params: { previews: true })).serialized_json
 
-          render json: json
+          render json:
         end
       rescue ActiveRecord::RecordNotFound
         raise Api::V1::Exceptions::BlockTransactionsNotFoundError
@@ -48,7 +48,7 @@ module Api
           errors = validator.error_object[:errors]
           status = validator.error_object[:status]
 
-          render json: errors, status: status
+          render json: errors, status:
         end
       end
 

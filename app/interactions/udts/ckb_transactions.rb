@@ -53,7 +53,7 @@ module Udts
 
     def select_fields
       %i[id tx_hash block_id block_number block_timestamp
-         is_cellbase updated_at created_at]
+         is_cellbase updated_at created_at tags]
     end
   end
 end
