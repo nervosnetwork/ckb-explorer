@@ -57,4 +57,4 @@ jobs:
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
       - name: check
-        run: docker images && df -hT
+        run: docker images && df -hT && df -ih
