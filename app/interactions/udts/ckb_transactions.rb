@@ -26,7 +26,8 @@ module Udts
         address = Addresses::Explore.run!(key: address_hash)
         raise AddressNotFoundError if address.is_a?(NullAddress)
 
-        ckb_transactions = ckb_transactions.joins(:account_books).where(account_books: { address_id: address.map(&:id) })
+        ckb_transactions = ckb_transactions.joins(:account_books).
+          where(account_books: { address_id: address.map(&:id) }).distinct
       end
 
       records = ckb_transactions.page(page).per(page_size).fast_page
