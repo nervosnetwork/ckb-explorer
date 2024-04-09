@@ -87,7 +87,6 @@ group :development, :test do
 end
 
 group :test do
-  gem "codecov", require: false
   gem "database_cleaner"
   gem "database_cleaner-active_record"
   gem "minitest-reporters"
@@ -95,6 +94,7 @@ group :test do
   gem "shoulda-context"
   gem "shoulda-matchers"
   gem "simplecov", require: false
+  gem "simplecov-cobertura"
   gem "vcr"
   gem "webmock"
 end
