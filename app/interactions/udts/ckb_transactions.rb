@@ -30,7 +30,7 @@ module Udts
           where(account_books: { address_id: address.map(&:id) }).distinct
       end
 
-      records = ckb_transactions.page(page).per(page_size).fast_page
+      records = ckb_transactions.page(page).per(page_size)
       options = FastJsonapi::PaginationMetaGenerator.new(
         request:, records:, page:, page_size:,
       ).call
