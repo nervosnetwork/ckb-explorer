@@ -26,10 +26,11 @@ module Udts
         address = Addresses::Explore.run!(key: address_hash)
         raise AddressNotFoundError if address.is_a?(NullAddress)
 
-        ckb_transactions = ckb_transactions.joins(:account_books).where(account_books: { address_id: address.map(&:id) })
+        ckb_transactions = ckb_transactions.joins(:account_books).
+          where(account_books: { address_id: address.map(&:id) }).distinct
       end
 
-      records = ckb_transactions.page(page).per(page_size).fast_page
+      records = ckb_transactions.page(page).per(page_size)
       options = FastJsonapi::PaginationMetaGenerator.new(
         request:, records:, page:, page_size:,
       ).call
@@ -53,7 +54,7 @@ module Udts
 
     def select_fields
       %i[id tx_hash block_id block_number block_timestamp
-         is_cellbase updated_at created_at]
+         is_cellbase updated_at created_at tags]
     end
   end
 end
