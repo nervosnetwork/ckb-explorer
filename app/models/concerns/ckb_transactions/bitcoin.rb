@@ -28,8 +28,8 @@ module CkbTransactions
       def leap_direction
         return unless rgb_transaction?
 
-        return "in" if bitcoin_vins.count > bitcoin_vouts.without_op_return.count
-        return "out" if bitcoin_vins.count < bitcoin_vouts.without_op_return.count
+        return "in" if bitcoin_vins.count < bitcoin_vouts.without_op_return.count
+        return "out" if bitcoin_vins.count > bitcoin_vouts.without_op_return.count
 
         nil
       end
