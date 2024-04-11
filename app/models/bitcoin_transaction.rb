@@ -12,12 +12,22 @@ class BitcoinTransaction < ApplicationRecord
         nil
       end
 
+    refresh_block_height! if block_hash.blank?
     tip_block_height ? tip_block_height - block_height : 0
   end
 
   def ckb_transaction_hash
     ckb_transaction = bitcoin_vouts&.take&.ckb_transaction
     return ckb_transaction.tx_hash if ckb_transaction
+  end
+
+  def refresh_block_height!
+    rpc = Bitcoin::Rpc.instance
+    raw_transaction = rpc.getrawtransaction(txid, 2)
+    block_header = rpc.getblockheader(raw_transaction["blockhash"])
+    update(block_hash: raw_transaction["blockhash"], block_height: block_header["height"])
+  rescue StandardError => e
+    Rails.logger.error "refresh block height error: #{e.message}"
   end
 end
 
