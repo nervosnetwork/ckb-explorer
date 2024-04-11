@@ -4,7 +4,7 @@ class BitcoinStatistic < ApplicationRecord
   def self.refresh
     transaction do
       current_time = Time.current
-      start_time = Time.new(current_time.year, current_time.month, current_time.day, current_time.hour, current_time.min < 30 ? 0 : 30)
+      start_time = Time.zone.local(current_time.year, current_time.month, current_time.day, current_time.hour, current_time.min < 30 ? 0 : 30)
       end_time = start_time + 30.minutes
 
       # Count the number of newly generated addresses within half an hour before the current time point
