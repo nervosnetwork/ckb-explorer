@@ -12,7 +12,7 @@ class BitcoinStatistic < ApplicationRecord
       # Count the number of newly generated transactions within half an hour before the current time point
       transactions_count = BitcoinTransaction.where(created_at: start_time..end_time).count
       Rails.logger.info "update bitcoin_statistics start_time (#{start_time}) to end_time (#{end_time}) addresses_count(#{addresses_count}) transactions_count(#{transactions_count})"
-      create!(timestamp: end_time.utc.to_i * 1000, addresses_count:, transactions_count:)
+      BitcoinStatistic.upsert({ timestamp: end_time.utc.to_i * 1000, addresses_count:, transactions_count: }, unique_by: %i[timestamp])
     end
   end
 end
