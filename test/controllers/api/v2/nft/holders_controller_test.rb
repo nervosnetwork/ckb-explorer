@@ -49,17 +49,29 @@ module Api
           assert_equal item.owner.address_hash, json["data"].keys[0]
         end
 
+        test "should not return mint items" do
+          collection = create(:token_collection, :with_items)
+          item = collection.items.sample
+          create(:token_item, collection_id: collection.id, status: :burnt, owner_id: item.owner.id)
+
+          get api_v2_nft_collection_holders_url(collection_id: collection.id),
+              params: { address_hash: item.owner.address_hash }
+
+          assert_equal 1, json["data"].size
+          assert_equal item.owner.address_hash, json["data"].keys[0]
+        end
+
         test "should sorted by quantity asc when sort param is quantity" do
           collection = create(:token_collection, items_count: 6, holders_count: 2)
 
           owner = create(:address)
           4.times do |i|
-            create(:token_item, token_id: i, collection: collection, owner: owner)
+            create(:token_item, token_id: i, collection:, owner:)
           end
 
           owner = create(:address)
           3.times do |i|
-            create(:token_item, token_id: i + 4, collection: collection, owner: owner)
+            create(:token_item, token_id: i + 4, collection:, owner:)
           end
 
           get api_v2_nft_collection_holders_url(collection_id: collection.id),
@@ -67,7 +79,8 @@ module Api
 
           response_json = {
             data: collection.items.joins(:owner).
-              order("count_all asc").group(:address_hash).count }.as_json
+              order("count_all asc").group(:address_hash).count,
+          }.as_json
 
           assert_equal response_json, json
         end
