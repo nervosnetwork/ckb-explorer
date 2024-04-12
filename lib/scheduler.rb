@@ -122,7 +122,6 @@ s.every "1h", overlap: false do
 end
 
 s.cron "0,30 * * * *" do
-  puts "update bitcoin statistics (#{Time.current})"
   BitcoinStatistic.refresh
 end
 
