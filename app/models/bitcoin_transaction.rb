@@ -12,8 +12,10 @@ class BitcoinTransaction < ApplicationRecord
         nil
       end
 
+    return 0 unless tip_block_height
+
     refresh_block_height! if block_hash.blank?
-    tip_block_height ? tip_block_height - block_height : 0
+    block_height == 0 ? 0 : tip_block_height - block_height
   end
 
   def ckb_transaction_hash
