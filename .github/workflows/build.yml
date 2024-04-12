@@ -38,6 +38,6 @@ jobs:
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
       - name: DeleteUselessImages
-        run: docker images && docker images | grep -v "IMAGE ID" | awk 'NR>1 {print $3}' | xargs -I {}  docker rmi {}
+        run: docker images && docker images| grep "ckb-explorer-api" | grep -v "IMAGE ID" | awk 'NR>1 {print $3}' | xargs -I {}  docker rmi {}
       - name: CheckImage
         run: docker images && df -hT && df -ih
