@@ -22,25 +22,6 @@ jobs:
       image-name: "${{ steps.docker_build.outputs.imageFullName }}"
       image-tag: "${{ steps.docker_build.outputs.tags }}"
     steps:
-      - name: Update Package List and Remove Dotnet
-        run: |
-          sudo apt-get update
-          sudo apt-get remove -y '^dotnet-.*'
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-          tool-cache: false
-
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -56,7 +37,7 @@ jobs:
           githubOrg: magickbase # optional
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
-      # - name: cleanImages
-      #   run: for i in `docker images | grep -v "IMAGE ID" | grep "ckb-explorer-api" | tail -n 70 | awk '{print $3}'`; do docker rmi $i ;done
-      - name: check
+      - name: DeleteUselessImages
+        run: docker images && docker images | grep -v "IMAGE ID" | awk 'NR>1 {print $3}' | xargs -I {}  docker rmi {}
+      - name: CheckImage
         run: docker images && df -hT && df -ih
