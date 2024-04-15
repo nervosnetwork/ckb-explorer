@@ -59,6 +59,7 @@ module Api
           jwt = PortfolioUtils.generate_jwt(payload)
 
           assert_equal jwt, json["jwt"]
+          ENV["CKB_NET_MODE"] = "mainnet"
         end
       end
     end
