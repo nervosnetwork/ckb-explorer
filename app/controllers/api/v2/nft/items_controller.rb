@@ -3,7 +3,7 @@ module Api
     class NFT::ItemsController < BaseController
       before_action :find_collection
       def index
-        scope = TokenItem.includes(:collection)
+        scope = TokenItem.normal.includes(:collection)
         if params[:owner]
           @owner = Address.find_address!(params[:owner])
           scope = scope.where(owner_id: @owner.id)
