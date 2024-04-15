@@ -4185,6 +4185,7 @@ module CkbSync
         assert_equal 8, xudt.decimal
         assert_equal "xudt", xudt.udt_type
         assert_equal "ckt1qrfrwcdnvssswdwpn3s9v8fp87emat306ctjwsm3nmlkjg8qyza2cqgqqxsg5hs8ag0uv4rsmtr0940kl850pkuxuugetsnt", xudt.issuer_address
+        ENV["CKB_NET_MODE"] = "mainnet"
       end
     end
 
