@@ -67,4 +67,10 @@ class UdtSerializer
   } do |object|
     object.omiga_inscription_info.is_repeated_symbol
   end
+
+  attribute :xudt_tags, if: Proc.new { |record, _params|
+    record.udt_type == "xudt" && record.published
+  } do |object|
+    object.xudt_tag&.tags
+  end
 end
