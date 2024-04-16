@@ -7,7 +7,11 @@ class SuggestQuery
   end
 
   def find!
-    filter_by.to_i.zero? ? aggregate_query! : single_query!
+    if filter_by.present? && filter_by.to_i.zero?
+      aggregate_query!
+    else
+      single_query!
+    end
   end
 
   def single_query!
