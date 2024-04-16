@@ -121,7 +121,7 @@ module Api
       end
 
       test "should return error object when no records found by a integer query key" do
-        error_object = Api::V1::Exceptions::BlockNotFoundError.new
+        error_object = Api::V1::Exceptions::SuggestQueryResultNotFoundError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         valid_get api_v1_suggest_queries_url, params: { q: 1 }

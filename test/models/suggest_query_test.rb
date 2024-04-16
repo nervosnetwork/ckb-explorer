@@ -35,9 +35,9 @@ class SuggestQueryTest < ActiveSupport::TestCase
                  SuggestQuery.new(address.address_hash).find!.serialized_json
   end
 
-  test "should raise BlockNotFoundError when query key is a block number that doesn't exist" do
+  test "should raise RecordNotFound when query key is a block number that doesn't exist" do
     create(:block, number: 12)
-    assert_raises Api::V1::Exceptions::BlockNotFoundError do
+    assert_raises ActiveRecord::RecordNotFound do
       SuggestQuery.new("11").find!
     end
   end
