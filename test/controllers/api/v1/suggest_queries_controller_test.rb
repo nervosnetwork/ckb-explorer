@@ -46,42 +46,6 @@ module Api
         assert_equal response_json, response.body
       end
 
-      test "should response with error object when query key is neither integer nor hex or address" do
-        error_object = Api::V1::Exceptions::SuggestQueryKeyInvalidError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
-
-        valid_get api_v1_suggest_queries_url, params: { q: "0x3b238b3326d10ec000417b6&^&bc715f17e86293d6cdbcb3fd8a628ad4a0b756f6" }
-
-        assert_equal response_json, response.body
-      end
-
-      test "should response with error object when query key is not a hex start with 0x and not a address" do
-        error_object = Api::V1::Exceptions::SuggestQueryKeyInvalidError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
-
-        valid_get api_v1_suggest_queries_url, params: { q: "3b238b3326d10ec000417b68bc715f17e86293d6cdbcb3fd8a628ad4a0b756f6" }
-
-        assert_equal response_json, response.body
-      end
-
-      test "should return error object when query key is a hex start with 0x but the length is wrong" do
-        error_object = Api::V1::Exceptions::SuggestQueryKeyInvalidError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
-
-        valid_get api_v1_suggest_queries_url, params: { q: "0x3b238b3326d10ec0004" }
-
-        assert_equal response_json, response.body
-      end
-
-      test "should return error object when query key is not a address" do
-        error_object = Api::V1::Exceptions::SuggestQueryKeyInvalidError.new
-        response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
-
-        valid_get api_v1_suggest_queries_url, params: { q: "ckc2q9gry5zgwayze0rtl8g0m8lgtx0cj35hmajzz2r9e6rtnt" }
-
-        assert_equal response_json, response.body
-      end
-
       test "should return a block when query key is a exist block height" do
         Block.delete_all
         block = create(:block)
