@@ -4,6 +4,7 @@ class Udt < ApplicationRecord
   belongs_to :nrc_factory_cell, optional: true
   has_one :udt_verification
   has_one :omiga_inscription_info
+  has_one :xudt_tag
 
   enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3,
                    omiga_inscription: 4, xudt: 5 }
@@ -18,6 +19,7 @@ class Udt < ApplicationRecord
   scope :query_by_name_or_symbl, ->(search) {
                                    where("lower(full_name) LIKE ? or lower(symbol) LIKE ?", "%#{search}%", "%#{search}%")
                                  }
+  scope :published_xudt, -> { where(udt_type: :xudt, published: true) }
 
   attribute :code_hash, :ckb_hash
 
