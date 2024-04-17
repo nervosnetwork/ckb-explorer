@@ -716,7 +716,6 @@ dao_contract)
               nft_token_attr[:published] = true
             end
             if cell_type == "omiga_inscription_info"
-              issuer_address = Address.find_by(lock_hash: output.type.args[0..65])&.address_hash
               info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
               nft_token_attr[:full_name] = info[:name]
               nft_token_attr[:symbol] = info[:symbol]
