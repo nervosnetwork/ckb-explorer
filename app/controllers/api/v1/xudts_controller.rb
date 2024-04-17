@@ -12,7 +12,8 @@ module Api
         end
 
         if params[:tags].present?
-          scope = scope.joins(:xudt_tag).where("xudt_tags.tags @> array[?]::varchar[]", params[:tags]).select("udts.*")
+          tags = parse_tags
+          scope = scope.joins(:xudt_tag).where("xudt_tags.tags @> array[?]::varchar[]", tags).select("udts.*") unless tags.empty?
         end
 
         if stale?(scope)
@@ -80,6 +81,11 @@ module Api
         end
 
         records.order("#{sort} #{order}")
+      end
+
+      def parse_tags
+        tags = params[:tags].split(",")
+        tags & XudtTag::VALID_TAGS
       end
     end
   end
