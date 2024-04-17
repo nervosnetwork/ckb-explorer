@@ -666,7 +666,6 @@ dao_contract)
           unless Udt.where(type_hash:).exists?
             nft_token_attr = { full_name: nil, icon_file: nil,
                                published: false, symbol: nil, decimal: nil, nrc_factory_cell_id: nil }
-            issuer_address = CkbUtils.generate_address(output.lock, CKB::Address::Version::CKB2021)
             if cell_type == "m_nft_token"
               m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash,
                                                   args: output.type.args[0..49]).first
@@ -735,7 +734,7 @@ dao_contract)
             end
             udts_attributes << {
               type_hash:, udt_type: parsed_udt_type, block_timestamp: local_block.timestamp, args: output.type.args,
-              code_hash: output.type.code_hash, hash_type: output.type.hash_type, issuer_address:
+              code_hash: output.type.code_hash, hash_type: output.type.hash_type
             }.merge(nft_token_attr)
           end
         end
