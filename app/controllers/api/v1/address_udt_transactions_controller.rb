@@ -13,7 +13,7 @@ module Api
         raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
 
         ckb_dao_transactions = address.ckb_udt_transactions(udt.id).
-          select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at).
+          select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at, :tags).
           recent.page(@page).per(@page_size).fast_page
         json =
           Rails.cache.realize(ckb_dao_transactions.cache_key, version: ckb_dao_transactions.cache_version) do

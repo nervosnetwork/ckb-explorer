@@ -8,7 +8,7 @@ module CkbTransactions
       has_many :bitcoin_vins
 
       def rgb_transaction?
-        bitcoin_vins.exists? || bitcoin_vouts.exists?
+        !!tags&.include?("rgbpp")
       end
 
       def rgb_commitment
@@ -22,8 +22,27 @@ module CkbTransactions
       def rgb_txid
         return unless rgb_transaction?
 
-        bitcoin_transaction = BitcoinTransaction.includes(:bitcoin_vouts).find_by(bitcoin_vouts: { ckb_transaction_id: id })
         bitcoin_transaction&.txid
+      end
+
+      def leap_direction
+        return unless rgb_transaction?
+
+        return "in" if bitcoin_vins.count < bitcoin_vouts.without_op_return.count
+        return "out" if bitcoin_vins.count > bitcoin_vouts.without_op_return.count
+
+        nil
+      end
+
+      def rgb_cell_changes
+        return 0 unless rgb_transaction?
+
+        bitcoin_vouts.without_op_return.count - bitcoin_vins.count
+      end
+
+      def bitcoin_transaction
+        BitcoinTransaction.includes(:bitcoin_vouts).
+          find_by(bitcoin_vouts: { ckb_transaction_id: id })
       end
     end
   end

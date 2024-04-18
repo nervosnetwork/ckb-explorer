@@ -8,15 +8,16 @@ module Api
         address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
 
-        ckb_dao_transactions = address.ckb_dao_transactions.select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at).recent.page(@page).per(@page_size).fast_page
+        ckb_dao_transactions = address.ckb_dao_transactions.select(:id, :tx_hash, :block_id, :block_number, :tags, :block_timestamp, :is_cellbase, :updated_at, :created_at).
+          recent.page(@page).per(@page_size).fast_page
         json =
           Rails.cache.realize(ckb_dao_transactions.cache_key, version: ckb_dao_transactions.cache_version) do
             records_counter = RecordCounters::AddressDaoTransactions.new(address)
-            options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: ckb_dao_transactions, page: @page, page_size: @page_size, records_counter: records_counter).call
+            options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_dao_transactions, page: @page, page_size: @page_size, records_counter:).call
             CkbTransactionsSerializer.new(ckb_dao_transactions, options.merge(params: { previews: true })).serialized_json
           end
 
-        render json: json
+        render json:
       end
 
       private
@@ -28,7 +29,7 @@ module Api
           errors = validator.error_object[:errors]
           status = validator.error_object[:status]
 
-          render json: errors, status: status
+          render json: errors, status:
         end
       end
 

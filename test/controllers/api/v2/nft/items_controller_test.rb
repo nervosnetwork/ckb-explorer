@@ -7,12 +7,13 @@ module Api
         super
       end
 
-      test "should get index with collection id" do
+      test "should get index with collection id without burnt item" do
         token_collection = create :token_collection, name: "token1"
         address = create :address, is_depositor: true
 
         create :token_item, name: "item1", collection_id: token_collection.id, owner_id: address.id
         create :token_item, name: "item2", collection_id: token_collection.id, owner_id: address.id
+        create :token_item, name: "item3", collection_id: token_collection.id, owner_id: address.id, status: :burnt
 
         get api_v2_nft_collection_items_url(collection_id: token_collection.id)
         assert_response :success

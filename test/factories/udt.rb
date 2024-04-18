@@ -58,7 +58,9 @@ FactoryBot.define do
 
     trait :xudt do
       udt_type { "xudt" }
-      symbol { "Unique BBQ" }
+      published { true }
+      full_name { "UniqueBBQ" }
+      symbol { "BBQ" }
       decimal { 8 }
     end
   end

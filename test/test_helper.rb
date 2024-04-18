@@ -1,4 +1,8 @@
 require "simplecov"
+require "simplecov-cobertura"
+if ENV["CI"]
+  SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
+end
 SimpleCov.start "rails" do
   add_filter "/app/channels/"
   add_filter "/app/jobs/"
@@ -39,11 +43,6 @@ Shoulda::Matchers.configure do |config|
 
     with.library :rails
   end
-end
-
-if ENV["CI"] == "true"
-  require "codecov"
-  SimpleCov.formatter = SimpleCov::Formatter::Codecov
 end
 
 def prepare_node_data(node_tip_block_number = 30)

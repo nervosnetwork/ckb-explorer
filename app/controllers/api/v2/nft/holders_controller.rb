@@ -3,7 +3,7 @@ module Api
     module NFT
       class HoldersController < BaseController
         def index
-          token_items = find_collection.items.joins(:owner)
+          token_items = find_collection.items.normal.joins(:owner)
 
           if params[:address_hash].present?
             owner = Address.find_address!(params[:address_hash])

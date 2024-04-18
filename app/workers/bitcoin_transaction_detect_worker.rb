@@ -40,6 +40,9 @@ class BitcoinTransactionDetectWorker
 
           import_utxo!(lock_script.args, cell.id)
         end
+
+        # update transaction rgbpp tags
+        update_rgbpp_tags!(transaction)
       end
     end
   end
@@ -52,6 +55,12 @@ class BitcoinTransactionDetectWorker
       bitcoin_vouts: { index: out_index, cell_output_id: cell_id },
     ).exists?
       ImportBitcoinUtxoJob.perform_now(cell_id)
+    end
+  end
+
+  def update_rgbpp_tags!(transaction)
+    if transaction.bitcoin_vins.exists? || transaction.bitcoin_vouts.exists?
+      transaction.update!(tags: transaction.tags.to_a + ["rgbpp"])
     end
   end
 end

@@ -18,7 +18,7 @@ jobs:
           - 5432:5432
       redis:
         image: redis
-        ports: ['6379:6379']
+        ports: ["6379:6379"]
         options: --entrypoint redis-server
     steps:
       - uses: actions/checkout@v3
@@ -32,3 +32,9 @@ jobs:
           bundle exec rails db:setup RAILS_ENV=test
           cp .env.test.local.travis .env.test.local
           bundle exec rails test RAILS_ENV=test
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage/coverage.xml
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}

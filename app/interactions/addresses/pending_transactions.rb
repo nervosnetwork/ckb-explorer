@@ -54,7 +54,7 @@ module Addresses
     end
 
     def select_fields
-      %i[id tx_hash block_id block_number block_timestamp
+      %i[id tx_hash block_id block_number block_timestamp tags
          is_cellbase updated_at capacity_involved created_at]
     end
 

@@ -248,6 +248,7 @@ module Charts
       #
       create :daily_statistic, created_at_unixtimestamp: @datetime.yesterday.yesterday.to_i, dead_cells_count: 888
 
+      assert_equal "888", ::DailyStatistic.last.dead_cells_count
       assert_equal (3 + 888).to_s,
                    Charts::DailyStatisticGenerator.new(@datetime).call.dead_cells_count
     end

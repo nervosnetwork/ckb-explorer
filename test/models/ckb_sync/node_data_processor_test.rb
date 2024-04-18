@@ -2651,6 +2651,7 @@ module CkbSync
                                      args: "0x#{SecureRandom.hex(20)}")
       udt_script = CKB::Types::Script.new(code_hash: Settings.sudt_cell_type_hash, hash_type: "type",
                                           args: "0x#{SecureRandom.hex(32)}")
+      create(:udt, type_hash: udt_script.compute_hash)
       Address.create(lock_hash: udt_script.args,
                      address_hash: "0x#{SecureRandom.hex(32)}")
       outputs = [
@@ -4154,6 +4155,7 @@ module CkbSync
 
     test "create xudt with unique cell" do
       CkbSync::Api.any_instance.stubs(:mode).returns("testnet")
+      ENV["CKB_NET_MODE"] = "testnet"
       CkbSync::Api.any_instance.stubs(:xudt_code_hash).returns("0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb")
       CkbSync::Api.any_instance.stubs(:unique_cell_code_hash).returns("0x8e341bcfec6393dcd41e635733ff2dca00a6af546949f70c57a706c0f344df8b")
 
@@ -4176,12 +4178,18 @@ module CkbSync
                                        cell_type: "normal",
                                        lock_script_id: address1_lock.id,
                                        type_script_id: nil)
+        owner_lock_script = create(:lock_script, code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type",
+                                                 args: "0x1df67837213ba46b6cba2f2a88a3c031dbbe0083", script_hash: "0x30d3fbec9ceba691770d57c6d06bdb98cf0f82bef0ca6e87687a118d6ce1e7b7")
+        create(:address, address_hash: "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqga7eurwgfm534kew3092y28sp3mwlqpqcptqy24", lock_hash: owner_lock_script.script_hash,
+                         lock_script_id: owner_lock_script.id)
         node_data_processor.process_block(node_block)
         xudt = Udt.first
         assert_equal 1, Udt.count
         assert_equal "Unique BBQ", xudt.full_name
         assert_equal 8, xudt.decimal
         assert_equal "xudt", xudt.udt_type
+        assert_equal "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqga7eurwgfm534kew3092y28sp3mwlqpqcptqy24", xudt.issuer_address
+        ENV["CKB_NET_MODE"] = "mainnet"
       end
     end
 

@@ -121,4 +121,12 @@ s.every "1h", overlap: false do
   call_worker ContractStatisticWorker
 end
 
+s.cron "0,30 * * * *" do
+  BitcoinStatistic.refresh
+end
+
+s.every "2m", overlap: false do
+  call_worker XudtTagWorker
+end
+
 s.join
