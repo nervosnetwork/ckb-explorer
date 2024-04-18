@@ -55,7 +55,7 @@ Rails.application.configure do
     :redis_cache_store, {
       url: ENV["REDIS_URL"],
       driver: :hiredis,
-      namespace: ENV["CACHE_NAMESPACE"],
+      namespace: ENV["CACHE_NAMESPACE"]
     }
 
   # Use a real queuing backend for Active Job (and separate queues per environment).
@@ -77,7 +77,7 @@ Rails.application.configure do
     authentication: "plain",
     enable_starttls_auto: true,
     open_timeout: 5,
-    read_timeout: 5,
+    read_timeout: 5
   }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
@@ -102,4 +102,10 @@ Rails.application.configure do
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
+
+  config.action_dispatch.rack_cache = {
+    verbose: true,
+    metastore: File.join(ENV["MEMCACHED_URL"], "meta"),
+    entitystore: File.join(ENV["MEMCACHED_URL"], "body")
+  }
 end
