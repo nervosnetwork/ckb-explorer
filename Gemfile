@@ -114,11 +114,9 @@ end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "after_commit_everywhere"
-gem "dalli"
 gem "http"
 gem "kredis"
 gem "pagy"
-gem "rack-cache"
 gem "redis-objects", ">= 2.0.0.beta"
 gem "tzinfo-data", platforms: %i[mingw mswin x64_mingw jruby]
 
