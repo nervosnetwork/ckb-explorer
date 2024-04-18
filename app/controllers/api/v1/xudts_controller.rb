@@ -16,7 +16,6 @@ module Api
           scope = scope.joins(:xudt_tag).where("xudt_tags.tags @> array[?]::varchar[]", tags).select("udts.*") unless tags.empty?
         end
 
-        Rails.logger.info("stale?: #{stale?(scope)}")
         if stale?(scope)
           expires_in 30.minutes, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 10.minutes
 
