@@ -57,6 +57,11 @@ class ImportBitcoinUtxoJob < ApplicationJob
       script_pubkey = Bitcoin::Script.parse_from_payload(data.htb)
       next unless script_pubkey.op_return?
 
+      commiment = script_pubkey.op_return_data.bth
+      unless commiment == CkbUtils.calculate_commitment(ckb_tx.tx_hash)
+        raise ArgumentError, "Invalid commitment found in the CKB VirtualTx"
+      end
+
       op_return = {
         bitcoin_transaction_id: tx.id,
         bitcoin_address_id: nil,
