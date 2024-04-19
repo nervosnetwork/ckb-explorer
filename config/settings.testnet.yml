@@ -80,3 +80,6 @@ proposal_window: 10
 
 # rgbpp code hash
 rgbpp_code_hash: "0x61ca7a4796a4eb19ca4f0d065cb9b10ddcf002f10f7cbb810c706cb6bb5c3248"
+# btc time code hash
+btc_time_code_hash: "0x00cdf8fab0f8ac638758ebf5ea5e4052b1d71e8a77b9f43139718621f6849326"
+

@@ -22,6 +22,7 @@ json.data do
     json.display_inputs tx.display_inputs
     json.display_outputs tx.display_outputs
     json.is_rgb_transaction tx.rgb_transaction?
+    json.is_btc_time_lock tx.btc_time_transaction?
     json.rgb_txid tx.rgb_txid
   end
   json.meta do

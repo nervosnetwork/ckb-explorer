@@ -652,6 +652,10 @@ class CkbUtils
     lock_script.code_hash == CkbSync::Api.instance.rgbpp_code_hash && lock_script.hash_type == "type"
   end
 
+  def self.is_btc_time_lock_cell?(lock_script)
+    lock_script.code_hash == CkbSync::Api.instance.btc_time_code_hash && lock_script.hash_type == "type"
+  end
+
   # * https://learnmeabitcoin.com/technical/general/byte-order/
   # Whenever you're working with transaction/block hashes internally (e.g. inside raw bitcoin data), you use the natural byte order.
   # Whenever you're displaying or searching for transaction/block hashes, you use the reverse byte order.

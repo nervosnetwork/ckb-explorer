@@ -107,6 +107,10 @@ module CkbSync
       Settings.rgbpp_code_hash
     end
 
+    def btc_time_code_hash
+      Settings.btc_time_code_hash
+    end
+
     METHOD_NAMES.each do |name|
       define_method name do |*params|
         call_rpc(name, params:)

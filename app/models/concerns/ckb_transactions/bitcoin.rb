@@ -11,6 +11,12 @@ module CkbTransactions
         !!tags&.include?("rgbpp")
       end
 
+      def btc_time_transaction?
+        is_btc_time_lock_cell = ->(lock_script) { CkbUtils.is_btc_time_lock_cell?(lock_script) }
+        inputs.includes(:lock_script).any? { is_btc_time_lock_cell.call(_1.lock_script) } ||
+          outputs.includes(:lock_script).any? { is_btc_time_lock_cell.call(_1.lock_script) }
+      end
+
       def rgb_commitment
         return unless rgb_transaction?
 

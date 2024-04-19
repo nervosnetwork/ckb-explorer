@@ -92,7 +92,7 @@ module Api
         assert_equal %w(
           block_number block_timestamp display_inputs display_inputs_count created_at create_timestamp
           display_outputs display_outputs_count income is_cellbase is_rgb_transaction transaction_hash
-          rgb_txid
+          rgb_txid is_btc_time_lock
         ).sort,
                      response_tx_transaction["attributes"].keys.sort
       end
