@@ -73,6 +73,8 @@ gem "sentry-sidekiq"
 
 gem "bigdecimal"
 
+gem "nio4r", "> 2.5.8"
+
 # Deployment
 gem "rack-attack"
 
@@ -107,7 +109,6 @@ group :development do
   gem "rubocop", require: false
   gem "rubocop-performance", require: false
   gem "rubocop-rails", require: false
-  gem "solargraph"
   gem "spring"
   gem "spring-watcher-listen"
 end
