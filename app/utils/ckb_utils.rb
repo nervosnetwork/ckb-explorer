@@ -656,6 +656,34 @@ class CkbUtils
     lock_script.code_hash == CkbSync::Api.instance.btc_time_code_hash && lock_script.hash_type == "type"
   end
 
+  def self.parse_btc_time_lock_cell(args)
+    args_serialization = [args.delete_prefix("0x")].pack("H*")
+    script_offset = [args_serialization[4..7].unpack1("H*")].pack("H*").unpack1("V")
+    after_offset = [args_serialization[8..11].unpack1("H*")].pack("H*").unpack1("V")
+    txid_offset = [args_serialization[12..15].unpack1("H*")].pack("H*").unpack1("V")
+
+    script_serialization = args_serialization[script_offset...after_offset]
+    code_hash_offset = [script_serialization[4..7].unpack1("H*")].pack("H*").unpack1("V")
+    hash_type_offset = [script_serialization[8..11].unpack1("H*")].pack("H*").unpack1("V")
+    args_offset = [script_serialization[12..15].unpack1("H*")].pack("H*").unpack1("V")
+    script_code_hash_serialization = script_serialization[code_hash_offset...hash_type_offset]
+    script_hash_type_serialization = script_serialization[hash_type_offset...args_offset]
+    script_args_serialization = script_serialization[hash_type_offset + 1..]
+    code_hash = "0x#{script_code_hash_serialization.unpack1('H*')}"
+    hash_type_hex = "0x#{script_hash_type_serialization.unpack1('H*')}"
+    hash_type = hash_type_hex == "0x00" ? "data" : "type"
+    args = "0x#{script_args_serialization.unpack1('H*')}"
+    lock = CKB::Types::Script.new(code_hash:, args:, hash_type:)
+
+    after_serialization = args_serialization[after_offset...txid_offset]
+    after = [after_serialization.unpack1("H*")].pack("H*").unpack1("V")
+
+    txid_serialization = args_serialization[txid_offset..]
+    txid = txid_serialization.unpack1("H*").scan(/../).reverse.join
+
+    OpenStruct.new(lock:, after:, txid:)
+  end
+
   # * https://learnmeabitcoin.com/technical/general/byte-order/
   # Whenever you're working with transaction/block hashes internally (e.g. inside raw bitcoin data), you use the natural byte order.
   # Whenever you're displaying or searching for transaction/block hashes, you use the reverse byte order.

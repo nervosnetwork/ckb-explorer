@@ -479,6 +479,17 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_equal commitment, "7cdecc8cc293d491a0cbf44e92feabfc29e79408c1d2f7547b334c42efe13131"
   end
 
+  test "parse btc time lock args" do
+    args = "0x7d00000010000000590000005d000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000000ba4ece3bd6d00fc9f3d828a909c3c6384c9c5130600000001e1a7d37d4580db85942b3a3771189635fba2bffd6e65aaa31c3411a8248236"
+    parsed_args = CkbUtils.parse_btc_time_lock_cell(args)
+
+    assert_equal "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", parsed_args.lock.code_hash
+    assert_equal "type", parsed_args.lock.hash_type
+    assert_equal "0x140000000ba4ece3bd6d00fc9f3d828a909c3c6384c9c513", parsed_args.lock.args
+    assert_equal 6, parsed_args.after
+    assert_equal "368224a811341ca3aa656efdbfa2fb35961871373a2b9485db80457dd3a7e101", parsed_args.txid
+  end
+
   private
 
   def node_data_processor
