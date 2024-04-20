@@ -470,6 +470,26 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_nil info[:sybol]
   end
 
+  test "calculate commitment" do
+    data = JSON.parse('{"inputs":[{"previous_output":{"tx_hash":"0x047b6894a0b7a4d7a73b1503d1ae35c51fc5fa6306776dcf22b1fb3daaa32a29","index":"0x0"},"since":"0x0"}],"outputs":[{"lock":{"code_hash":"0xd5a4e241104041f6f12f11bddcf30bd7b2f818722f78353fde019f5081cd6b49","hash_type":"type","args":"0x010000000000000000000000000000000000000000000000000000000000000000000000"},"capacity":"0x0000000000000000","type":{"code_hash":"0xc4957f239eb3db9f5c5fb949e9dd99adbb8068b8ac7fe7ae49495486d5e5d235","hash_type":"type","args":"0x43094caf2f2bcdf6f5ab02c2de744936897278d558a2b6924db98a4f27d629e2"}},{"lock":{"code_hash":"0xd5a4e241104041f6f12f11bddcf30bd7b2f818722f78353fde019f5081cd6b49","hash_type":"type","args":"0x010000000000000000000000000000000000000000000000000000000000000000000000"},"capacity":"0x0000000000000000","type":{"code_hash":"0xc4957f239eb3db9f5c5fb949e9dd99adbb8068b8ac7fe7ae49495486d5e5d235","hash_type":"type","args":"0x43094caf2f2bcdf6f5ab02c2de744936897278d558a2b6924db98a4f27d629e2"}}],"outputs_data":["0x2c010000000000000000000000000000","0xbc020000000000000000000000000000"],"cell_deps":[]}')
+    transaction = CKB::Types::Transaction.from_h(data.with_indifferent_access)
+    CkbTransaction.stubs(:fetch_sdk_transaction).returns(transaction)
+
+    commitment = CkbUtils.calculate_commitment("0x")
+    assert_equal commitment, "7cdecc8cc293d491a0cbf44e92feabfc29e79408c1d2f7547b334c42efe13131"
+  end
+
+  test "parse btc time lock args" do
+    args = "0x7d00000010000000590000005d000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000000ba4ece3bd6d00fc9f3d828a909c3c6384c9c5130600000001e1a7d37d4580db85942b3a3771189635fba2bffd6e65aaa31c3411a8248236"
+    parsed_args = CkbUtils.parse_btc_time_lock_cell(args)
+
+    assert_equal "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", parsed_args.lock.code_hash
+    assert_equal "type", parsed_args.lock.hash_type
+    assert_equal "0x140000000ba4ece3bd6d00fc9f3d828a909c3c6384c9c513", parsed_args.lock.args
+    assert_equal 6, parsed_args.after
+    assert_equal "368224a811341ca3aa656efdbfa2fb35961871373a2b9485db80457dd3a7e101", parsed_args.txid
+  end
+
   private
 
   def node_data_processor
