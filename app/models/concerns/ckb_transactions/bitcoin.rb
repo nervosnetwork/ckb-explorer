@@ -27,14 +27,19 @@ module CkbTransactions
 
       def rgb_txid
         if rgb_transaction?
-          bitcoin_transaction&.txid
-        elsif btc_time_transaction?
+          txid = bitcoin_transaction&.txid
+          return txid if txid.present?
+        end
+
+        if btc_time_transaction?
           btc_time_lock_cell =
             inputs.includes(:lock_script).find_by(lock_scripts: { code_hash: CkbSync::Api.instance.btc_time_code_hash }) ||
             outputs.includes(:lock_script).find_by(lock_scripts: { code_hash: CkbSync::Api.instance.btc_time_code_hash })
           parsed_args = CkbUtils.parse_btc_time_lock_cell(btc_time_lock_cell.lock_script.args)
-          parsed_args.txid
+          return parsed_args.txid
         end
+
+        nil
       end
 
       def leap_direction
