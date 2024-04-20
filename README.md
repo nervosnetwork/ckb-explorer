@@ -1,13 +1,16 @@
 ## About CKB
+
 CKB is the layer 1 of Nervos Network, a public/permissionless blockchain. CKB uses [Proof of Work](https://en.wikipedia.org/wiki/Proof-of-work_system) and [improved Nakamoto concensus](https://medium.com/nervosnetwork/breaking-the-throughput-limit-of-nakamoto-consensus-ccdf65fe0832) to achieve maximized performance on average hardware and internet condition, without sacrificing decentralization and security which are the core value of blockchain.
 
 # CKB Explorer
+
 CKB Explorer is a [Nervos CKB](https://github.com/nervosnetwork/ckb) blockchain explorer built with React and Ruby on Rails.
 
 It supports searching block, transaction, address and includes two parts: [frontend](https://github.com/nervosnetwork/ckb-explorer-frontend)
 and [backend server](https://github.com/nervosnetwork/ckb-explorer) (this project).
 
 # CKB Explorer Server
+
 [![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/nervosnetwork/ckb-explorer/blob/develop/COPYING)
 [![TravisCI](https://travis-ci.com/nervosnetwork/ckb-explorer.svg?branch=develop)](https://travis-ci.com/nervosnetwork/ckb-explorer)
 [![Codecov](https://codecov.io/gh/nervosnetwork/ckb-explorer/branch/master/graph/badge.svg)](https://codecov.io/gh/nervosnetwork/ckb-explorer/branch/master)
@@ -19,16 +22,15 @@ A blockchain explorer service of [Nervos CKB](https://github.com/nervosnetwork/c
 
 - [PostgreSQL](https://www.postgresql.org/) 14.3
 - [Redis](https://redis.io/) 6+
-- [libsodium](https://libsodium.gitbook.io/doc/installation)
-- [secp256k1](https://github.com/bitcoin-core/secp256k1.git)
+- [libsodium](https://github.com/nervosnetwork/ckb-sdk-ruby?tab=readme-ov-file#prerequisites)
+- [secp256k1](https://github.com/nervosnetwork/ckb-sdk-ruby?tab=readme-ov-file#prerequisites)
 
 ## Initial Project
 
 ```shell
 $ cd ckb-explorer/
 $ cp .env.example .env # (in this config file, please modify the items according to your local environment)
-$ touch .env.local # (overwrite `.env` config if you need in `.env.local`, such as DB_USERNAME, DB_PASSWORD...)
-$ touch config/settings.local.yml # (overwrite `config/settings.yml` to config available hosts)
+$ touch .env.local # (overwrite `.env` config if you need in `.env.local`, such as DATABASE_URL,CKB_NODE_URL...)
 $ bin/setup
 ```
 
@@ -83,6 +85,7 @@ $ docker compose up -d
 ```
 
 ## How to Contribute
+
 CKB Explorer Server is an open source project and your contribution is very much appreciated. Please check out
 [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines about how to proceed.
 
@@ -96,4 +99,3 @@ API reference has been migrated to [CKB Explorer on ReadMe](https://ckb-explorer
 
 CKB Explorer is released under the terms of the MIT license. See [COPYING](COPYING) for more information or see
 [https://opensource.org/licenses/MIT](https://opensource.org/licenses/MIT).
-

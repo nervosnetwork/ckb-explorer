@@ -139,6 +139,7 @@ module Api
           is_cellbase
           transaction_hash
           is_rgb_transaction
+          is_btc_time_lock
           created_at
           create_timestamp
           rgb_txid

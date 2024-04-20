@@ -11,6 +11,12 @@ module CkbTransactions
         !!tags&.include?("rgbpp")
       end
 
+      def btc_time_transaction?
+        is_btc_time_lock_cell = ->(lock_script) { CkbUtils.is_btc_time_lock_cell?(lock_script) }
+        inputs.includes(:lock_script).any? { is_btc_time_lock_cell.call(_1.lock_script) } ||
+          outputs.includes(:lock_script).any? { is_btc_time_lock_cell.call(_1.lock_script) }
+      end
+
       def rgb_commitment
         return unless rgb_transaction?
 
@@ -20,9 +26,20 @@ module CkbTransactions
       end
 
       def rgb_txid
-        return unless rgb_transaction?
+        if rgb_transaction?
+          txid = bitcoin_transaction&.txid
+          return txid if txid.present?
+        end
 
-        bitcoin_transaction&.txid
+        if btc_time_transaction?
+          btc_time_lock_cell =
+            inputs.includes(:lock_script).find_by(lock_scripts: { code_hash: CkbSync::Api.instance.btc_time_code_hash }) ||
+            outputs.includes(:lock_script).find_by(lock_scripts: { code_hash: CkbSync::Api.instance.btc_time_code_hash })
+          parsed_args = CkbUtils.parse_btc_time_lock_cell(btc_time_lock_cell.lock_script.args)
+          return parsed_args.txid
+        end
+
+        nil
       end
 
       def leap_direction
