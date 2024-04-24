@@ -13,11 +13,11 @@ module RgbTransactions
       if leap_direction.present?
         transactions = transactions.where(
           "CASE
-           WHEN (SELECT COUNT(*) FROM bitcoin_vins WHERE ckb_transaction_id = ckb_transactions.id) >
-                (SELECT COUNT(*) FROM bitcoin_vouts WHERE ckb_transaction_id = ckb_transactions.id)
-           THEN 'in'
            WHEN (SELECT COUNT(*) FROM bitcoin_vins WHERE ckb_transaction_id = ckb_transactions.id) <
-                (SELECT COUNT(*) FROM bitcoin_vouts WHERE ckb_transaction_id = ckb_transactions.id)
+                (SELECT COUNT(*) FROM bitcoin_vouts WHERE ckb_transaction_id = ckb_transactions.id AND op_return = false)
+           THEN 'in'
+           WHEN (SELECT COUNT(*) FROM bitcoin_vins WHERE ckb_transaction_id = ckb_transactions.id) >
+                (SELECT COUNT(*) FROM bitcoin_vouts WHERE ckb_transaction_id = ckb_transactions.id AND op_return = false)
            THEN 'out'
            ELSE 'equal'
            END = ?", leap_direction

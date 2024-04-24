@@ -106,6 +106,10 @@ class CkbTransactionSerializer
     object.rgb_transaction?
   end
 
+  attribute :is_btc_time_lock do |object|
+    object.btc_time_transaction?
+  end
+
   attribute :rgb_txid do |object|
     object.rgb_txid
   end

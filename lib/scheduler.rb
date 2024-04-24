@@ -125,4 +125,8 @@ s.cron "0,30 * * * *" do
   BitcoinStatistic.refresh
 end
 
+s.every "2m", overlap: false do
+  call_worker XudtTagWorker
+end
+
 s.join

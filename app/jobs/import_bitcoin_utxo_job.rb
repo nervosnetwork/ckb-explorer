@@ -15,7 +15,7 @@ class ImportBitcoinUtxoJob < ApplicationJob
       Rails.logger.info("Importing bitcoin utxo #{txid} out_index #{out_index}")
       vout_attributes = []
       # build bitcoin transaction
-      raw_tx = fetch_raw_transaction(txid)
+      raw_tx = rpc.getrawtransaction(txid, 2)
       tx = build_transaction!(raw_tx)
       # build op_returns
       op_returns = build_op_returns!(raw_tx, tx, cell_output.ckb_transaction, vout_attributes)
@@ -36,14 +36,16 @@ class ImportBitcoinUtxoJob < ApplicationJob
     tx = BitcoinTransaction.find_by(txid: raw_tx["txid"])
     return tx if tx
 
-    # avoid making multiple RPC requests
-    block_header = rpc.getblockheader(raw_tx["blockhash"])
+    # raw transactions may not include the block hash
+    if raw_tx["blockhash"].present?
+      block_header = rpc.getblockheader(raw_tx["blockhash"])
+    end
     BitcoinTransaction.create!(
       txid: raw_tx["txid"],
       tx_hash: raw_tx["hash"],
       time: raw_tx["time"],
       block_hash: raw_tx["blockhash"],
-      block_height: block_header["height"],
+      block_height: block_header&.dig("height") || 0,
     )
   end
 
@@ -54,6 +56,11 @@ class ImportBitcoinUtxoJob < ApplicationJob
       data = vout.dig("scriptPubKey", "hex")
       script_pubkey = Bitcoin::Script.parse_from_payload(data.htb)
       next unless script_pubkey.op_return?
+
+        # commiment = script_pubkey.op_return_data.bth
+        # unless commiment == CkbUtils.calculate_commitment(ckb_tx.tx_hash)
+        #   raise ArgumentError, "Invalid commitment found in the CKB VirtualTx"
+        # end
 
       op_return = {
         bitcoin_transaction_id: tx.id,
@@ -101,14 +108,6 @@ class ImportBitcoinUtxoJob < ApplicationJob
       find_or_create_by!(ckb_address_id: cell_output.address_id)
 
     bitcoin_address
-  end
-
-  def fetch_raw_transaction(txid)
-    Rails.cache.fetch("bitcoin_transactions/#{txid}", expires_in: 1.hour) do
-      rpc.getrawtransaction(txid, 2)
-    rescue StandardError => e
-      raise ArgumentError, "get bitcoin raw transaction #{txid} failed: #{e}"
-    end
   end
 
   def rpc

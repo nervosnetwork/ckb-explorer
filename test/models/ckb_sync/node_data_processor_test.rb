@@ -4178,13 +4178,18 @@ module CkbSync
                                        cell_type: "normal",
                                        lock_script_id: address1_lock.id,
                                        type_script_id: nil)
+        owner_lock_script = create(:lock_script, code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type",
+                                                 args: "0x1df67837213ba46b6cba2f2a88a3c031dbbe0083", script_hash: "0x30d3fbec9ceba691770d57c6d06bdb98cf0f82bef0ca6e87687a118d6ce1e7b7")
+        create(:address, address_hash: "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqga7eurwgfm534kew3092y28sp3mwlqpqcptqy24", lock_hash: owner_lock_script.script_hash,
+                         lock_script_id: owner_lock_script.id)
         node_data_processor.process_block(node_block)
         xudt = Udt.first
         assert_equal 1, Udt.count
         assert_equal "Unique BBQ", xudt.full_name
         assert_equal 8, xudt.decimal
         assert_equal "xudt", xudt.udt_type
-        assert_equal "ckt1qrfrwcdnvssswdwpn3s9v8fp87emat306ctjwsm3nmlkjg8qyza2cqgqqxsg5hs8ag0uv4rsmtr0940kl850pkuxuugetsnt", xudt.issuer_address
+        assert_equal "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqga7eurwgfm534kew3092y28sp3mwlqpqcptqy24", xudt.issuer_address
+        ENV["CKB_NET_MODE"] = "mainnet"
       end
     end
 

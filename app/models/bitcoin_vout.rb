@@ -3,7 +3,9 @@ class BitcoinVout < ApplicationRecord
   belongs_to :bitcoin_address, optional: true
   belongs_to :ckb_transaction, optional: true
   belongs_to :cell_output, optional: true
-  belongs_to :ckb_address, class_name: "Address", optional: true
+  belongs_to :ckb_address, class_name: "Address", foreign_key: "address_id", optional: true
+
+  scope :without_op_return, -> { where(op_return: false) }
 
   def commitment
     return unless op_return?

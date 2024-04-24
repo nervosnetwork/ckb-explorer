@@ -2534,6 +2534,39 @@ ALTER SEQUENCE public.witnesses_id_seq OWNED BY public.witnesses.id;
 
 
 --
+-- Name: xudt_tags; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.xudt_tags (
+    id bigint NOT NULL,
+    udt_id integer,
+    udt_type_hash character varying,
+    tags character varying[] DEFAULT '{}'::character varying[],
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: xudt_tags_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.xudt_tags_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: xudt_tags_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.xudt_tags_id_seq OWNED BY public.xudt_tags.id;
+
+
+--
 -- Name: ckb_transactions_committed; Type: TABLE ATTACH; Schema: public; Owner: -
 --
 
@@ -2923,6 +2956,13 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 ALTER TABLE ONLY public.witnesses ALTER COLUMN id SET DEFAULT nextval('public.witnesses_id_seq'::regclass);
+
+
+--
+-- Name: xudt_tags id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.xudt_tags ALTER COLUMN id SET DEFAULT nextval('public.xudt_tags_id_seq'::regclass);
 
 
 --
@@ -3451,6 +3491,14 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.witnesses
     ADD CONSTRAINT witnesses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: xudt_tags xudt_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.xudt_tags
+    ADD CONSTRAINT xudt_tags_pkey PRIMARY KEY (id);
 
 
 --
@@ -4455,6 +4503,13 @@ CREATE UNIQUE INDEX index_witnesses_on_ckb_transaction_id_and_index ON public.wi
 
 
 --
+-- Name: index_xudt_tags_on_udt_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_xudt_tags_on_udt_id ON public.xudt_tags USING btree (udt_id);
+
+
+--
 -- Name: pk; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4974,6 +5029,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240408024145'),
 ('20240408065818'),
 ('20240408075718'),
-('20240408082159');
+('20240408082159'),
+('20240415080556');
 
 

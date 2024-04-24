@@ -23,8 +23,10 @@ nrc_721_token_output_data_header: "0x0ddeff3e8ee03cbf6a2c6920d05c381e"
 # spore nft code hash
 spore_cluster1_code_hash: "0x7366a61534fa7c7e6225ecc0d828ea3b5366adec2b58206f2ee84995fe030075" # tag: v2 preview
 spore_cluster2_code_hash: "0x598d793defef36e2eeba54a9b45130e4ca92822e1d193671f490950c3b856080" # tag: v1 latest
+spore_cluster3_code_hash: "0x0bbe768b519d8ea7b96d58f1182eb7e6ef96c541fbd9526975077ee09f049058" # tag: 0.2.2-beta.2
 spore_cell1_code_hash: "0x5e063b4c0e7abeaa6a428df3b693521a3050934cf3b0ae97a800d1bc31449398" # tag: v2 preview
 spore_cell2_code_hash: "0xbbad126377d45f90a8ee120da988a2d7332c78ba8fd679aab478a19d6c133494" # tag: v1 latest
+spore_cell3_code_hash: "0x685a60219309029d01310311dba953d67029170ca4848a4ff638e57002130a0d" # tag: 0.2.2-beta.2
 
 # omiga inscription info
 omiga_inscription_info_code_hash: "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6"
@@ -78,3 +80,6 @@ proposal_window: 10
 
 # rgbpp code hash
 rgbpp_code_hash: "0x61ca7a4796a4eb19ca4f0d065cb9b10ddcf002f10f7cbb810c706cb6bb5c3248"
+# btc time code hash
+btc_time_code_hash: "0x00cdf8fab0f8ac638758ebf5ea5e4052b1d71e8a77b9f43139718621f6849326"
+
