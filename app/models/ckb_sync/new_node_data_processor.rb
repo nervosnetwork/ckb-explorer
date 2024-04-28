@@ -687,6 +687,7 @@ dao_contract)
               end
             end
             if cell_type == "spore_cell"
+              nft_token_attr[:published] = true
               parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[tx_index][index])
               if parsed_spore_cell[:cluster_id].present?
                 binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
@@ -696,7 +697,6 @@ dao_contract)
                 spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
                 parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
                 nft_token_attr[:full_name] = parsed_cluster_data[:name]
-                nft_token_attr[:published] = true
               end
             end
             if cell_type == "nrc_721_token"
