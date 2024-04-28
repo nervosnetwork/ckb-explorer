@@ -64,16 +64,12 @@ gem "ruby-progressbar", require: false
 
 gem "with_advisory_lock"
 
-gem "nokogiri", ">= 1.11.0.rc4"
-
 gem "newrelic_rpm"
 gem "sentry-rails"
 gem "sentry-ruby"
 gem "sentry-sidekiq"
 
 gem "bigdecimal"
-
-gem "nio4r", "> 2.5.8"
 
 # Deployment
 gem "rack-attack"
