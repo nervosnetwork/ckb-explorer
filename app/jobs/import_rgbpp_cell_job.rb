@@ -1,34 +1,53 @@
-class ImportBitcoinUtxoJob < ApplicationJob
+class ImportRgbppCellJob < ApplicationJob
   queue_as :bitcoin
 
   def perform(cell_id)
     ApplicationRecord.transaction do
       cell_output = CellOutput.find_by(id: cell_id)
-      unless cell_output
-        raise ArgumentError, "Missing cell_output(#{cell_id})"
-      end
+      return unless cell_output
 
       lock_script = cell_output.lock_script
       return unless CkbUtils.is_rgbpp_lock_cell?(lock_script)
 
       txid, out_index = CkbUtils.parse_rgbpp_args(lock_script.args)
-      Rails.logger.info("Importing bitcoin utxo #{txid} out_index #{out_index}")
-      vout_attributes = []
+      Rails.logger.info("Importing rgbpp cell txid #{txid} out_index #{out_index}")
+
       # build bitcoin transaction
-      raw_tx = rpc.getrawtransaction(txid, 2)
+      raw_tx = fetch_raw_transaction(txid)
+      return unless raw_tx
+
       tx = build_transaction!(raw_tx)
       # build op_returns
-      op_returns = build_op_returns!(raw_tx, tx, cell_output.ckb_transaction, vout_attributes)
+      vout_attributes = []
+      op_returns = build_op_returns!(raw_tx, tx, cell_output.ckb_transaction)
       vout_attributes.concat(op_returns) if op_returns.present?
-      # build vout
+      # build vouts
       vout_attributes << build_vout!(raw_tx, tx, out_index, cell_output)
-
       if vout_attributes.present?
         BitcoinVout.upsert_all(
           vout_attributes,
           unique_by: %i[bitcoin_transaction_id index cell_output_id],
         )
       end
+      # build vin
+      cell_input = CellInput.find_by(previous_cell_output_id: cell_id)
+      previous_vout = BitcoinVout.find_by(cell_output_id: cell_id)
+      if cell_input && previous_vout
+        BitcoinVin.create_with(
+          previous_bitcoin_vout_id: previous_vout.id,
+        ).find_or_create_by!(
+          ckb_transaction_id: cell_input.ckb_transaction_id,
+          cell_input_id: cell_input.id,
+        )
+      end
+      # build transfer
+      BitcoinTransfer.create_with(
+        bitcoin_transaction_id: tx.id,
+        ckb_transaction_id: cell_output.ckb_transaction_id,
+        lock_type: "rgbpp",
+      ).find_or_create_by!(
+        cell_output_id: cell_id,
+      )
     end
   end
 
@@ -49,7 +68,7 @@ class ImportBitcoinUtxoJob < ApplicationJob
     )
   end
 
-  def build_op_returns!(raw_tx, tx, ckb_tx, v_attributes)
+  def build_op_returns!(raw_tx, tx, ckb_tx)
     op_returns = []
 
     raw_tx["vout"].each do |vout|
@@ -57,10 +76,10 @@ class ImportBitcoinUtxoJob < ApplicationJob
       script_pubkey = Bitcoin::Script.parse_from_payload(data.htb)
       next unless script_pubkey.op_return?
 
-        # commiment = script_pubkey.op_return_data.bth
-        # unless commiment == CkbUtils.calculate_commitment(ckb_tx.tx_hash)
-        #   raise ArgumentError, "Invalid commitment found in the CKB VirtualTx"
-        # end
+      # commiment = script_pubkey.op_return_data.bth
+      # unless commiment == CkbUtils.calculate_commitment(ckb_tx.tx_hash)
+      #   raise ArgumentError, "Invalid commitment found in the CKB VirtualTx"
+      # end
 
       op_return = {
         bitcoin_transaction_id: tx.id,
@@ -74,7 +93,7 @@ class ImportBitcoinUtxoJob < ApplicationJob
         address_id: nil,
       }
 
-      op_returns << op_return if v_attributes.exclude?(op_return)
+      op_returns << op_return if op_returns.exclude?(op_return)
     end
 
     op_returns
@@ -108,6 +127,18 @@ class ImportBitcoinUtxoJob < ApplicationJob
       find_or_create_by!(ckb_address_id: cell_output.address_id)
 
     bitcoin_address
+  end
+
+  def fetch_raw_transaction(txid)
+    data = Rails.cache.read(txid)
+    data ||= rpc.getrawtransaction(txid, 2)
+
+    return if data && data["error"].present?
+
+    Rails.cache.write(txid, data, expires_in: 10.minutes) unless Rails.cache.exist?(txid)
+    data
+  rescue StandardError => e
+    raise ArgumentError, "get bitcoin raw transaction #{txid} failed: #{e}"
   end
 
   def rpc

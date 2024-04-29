@@ -15,5 +15,5 @@ end
 #
 # Indexes
 #
-#  idex_bitcon_addresses_on_mapping  (bitcoin_address_id,ckb_address_id) UNIQUE
+#  index_bitcoin_addresses_on_mapping  (bitcoin_address_id,ckb_address_id) UNIQUE
 #
