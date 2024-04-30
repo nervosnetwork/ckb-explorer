@@ -10,7 +10,7 @@ class ImportRgbppCellJob < ApplicationJob
       return unless CkbUtils.is_rgbpp_lock_cell?(lock_script)
 
       txid, out_index = CkbUtils.parse_rgbpp_args(lock_script.args)
-      Rails.logger.info("Importing rgbpp cell txid #{txid} out_index #{out_index}")
+      Rails.logger.info("Importing rgbpp cell #{cell_id} txid #{txid} out_index #{out_index}")
 
       # build bitcoin transaction
       raw_tx = fetch_raw_transaction(txid)
@@ -138,7 +138,7 @@ class ImportRgbppCellJob < ApplicationJob
     data = Rails.cache.read(txid)
     data ||= rpc.getrawtransaction(txid, 2)
     Rails.cache.write(txid, data, expires_in: 10.minutes) unless Rails.cache.exist?(txid)
-    data
+    data["result"]
   rescue StandardError => e
     Rails.logger.error "get bitcoin raw transaction #{txid} failed: #{e}"
     nil

@@ -25,11 +25,9 @@ namespace :migration do
       },
     )
     block_numbers.sort.each do |block_number|
-      begin
-        BitcoinTransactionDetectWorker.new.perform(block_number)
-      rescue StandardError => e
-        Rails.logger.error "Failed to process block number #{block_number}: #{e}"
-      end
+      BitcoinTransactionDetectWorker.new.perform(block_number)
+    rescue StandardError => e
+      Rails.logger.error "Failed to process block number #{block_number}: #{e}"
 
       progress_bar.increment
     end

@@ -4,11 +4,11 @@ class BitcoinTransactionDetectWorker
 
   BITCOIN_RPC_BATCH_SIZE = 30
 
-  attr_accessor :txids, :rgbpp_cell_ids, :btc_time_cell_ids
+  attr_accessor :block, :txids, :rgbpp_cell_ids, :btc_time_cell_ids
 
   def perform(number)
-    block = Block.find_by(number:)
-    return unless block
+    @block = Block.find_by(number:)
+    return unless @block
 
     @txids = [] # bitcoin txids
     @rgbpp_cell_ids = [] # rgbpp cells
@@ -24,11 +24,11 @@ class BitcoinTransactionDetectWorker
       # batch fetch bitcoin raw transactions
       cache_raw_transactions!
       # import rgbpp cells
-      @rgbpp_cell_ids.each { |cell_id| ImportRgbppCellJob.perform_now(cell_id) }
+      @rgbpp_cell_ids.each { |cell_id| ImportRgbppCellJob2.perform_now(cell_id) }
       # import btc time cells
-      @btc_time_cell_ids.each { |cell_id| ImportBtcTimeCellJob.perform_now(cell_id) }
+      @btc_time_cell_ids.each { |cell_id| ImportBtcTimeCellJob2.perform_now(cell_id) }
       # update tags
-      update_transaction_tags!(transaction)
+      update_transaction_tags!
     end
   end
 
@@ -88,13 +88,15 @@ class BitcoinTransactionDetectWorker
     Rails.logger.error "cache raw transactions(#{@txids.uniq}) failed: #{e.message}"
   end
 
-  def update_transaction_tags!(transaction)
-    transaction.tags ||= []
+  def update_transaction_tags!
+    @block.ckb_transactions.each do |transaction|
+      transaction.tags ||= []
 
-    cell_output_ids = transaction.input_cell_ids + transaction.cell_output_ids
-    lock_types = BitcoinTransfer.where(cell_output_id: cell_output_ids).pluck(:lock_type)
-    transaction.tags += lock_types.compact.uniq
+      cell_output_ids = transaction.input_cell_ids + transaction.cell_output_ids
+      lock_types = BitcoinTransfer.where(cell_output_id: cell_output_ids).pluck(:lock_type)
+      transaction.tags += lock_types.compact.uniq
 
-    transaction.update!(tags: transaction.tags.uniq)
+      transaction.update!(tags: transaction.tags.uniq)
+    end
   end
 end
