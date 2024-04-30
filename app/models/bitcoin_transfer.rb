@@ -1,6 +1,7 @@
 class BitcoinTransfer < ApplicationRecord
   belongs_to :bitcoin_transaction
   belongs_to :ckb_transaction
+  belongs_to :cell_output
 
   enum lock_type: { rgbpp: 0, btc_time: 1 }
 end

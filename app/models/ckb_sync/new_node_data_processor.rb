@@ -138,7 +138,7 @@ module CkbSync
     end
 
     def detect_bitcoin_transactions(local_block)
-      BitcoinTransactionDetectWorker.perform_async(local_block.id)
+      BitcoinTransactionDetectWorker.perform_async(local_block.number)
     end
 
     def process_ckb_txs(

@@ -6,8 +6,8 @@ class BitcoinTransactionDetectWorker
 
   attr_accessor :txids, :rgbpp_cell_ids, :btc_time_cell_ids
 
-  def perform(block_id)
-    block = Block.find_by(id: block_id)
+  def perform(number)
+    block = Block.find_by(number:)
     return unless block
 
     @txids = [] # bitcoin txids
