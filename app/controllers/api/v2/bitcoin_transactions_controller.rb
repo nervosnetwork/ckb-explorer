@@ -22,7 +22,7 @@ module Api
 
         render json: res
       rescue StandardError => e
-        Rails.logger.error "get raw transaction(#{params[:txids]}) failed: #{e.message}"
+        Rails.logger.error "get raw transactions(#{params[:txids]}) failed: #{e.message}"
         render json: {}, status: :not_found
       end
 

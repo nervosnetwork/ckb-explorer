@@ -2,65 +2,99 @@ class BitcoinTransactionDetectWorker
   include Sidekiq::Worker
   sidekiq_options queue: "bitcoin"
 
-  def perform(block_id)
-    block = Block.find_by(id: block_id)
+  BITCOIN_RPC_BATCH_SIZE = 30
+
+  attr_accessor :txids, :rgbpp_cell_ids, :btc_time_cell_ids
+
+  def perform(number)
+    block = Block.find_by(number:)
     return unless block
+
+    @txids = [] # bitcoin txids
+    @rgbpp_cell_ids = [] # rgbpp cells
+    @btc_time_cell_ids = [] # btc time cells
 
     ApplicationRecord.transaction do
       block.ckb_transactions.each do |transaction|
-        vin_attributes = []
+        inputs = transaction.input_cells
+        outputs = transaction.cell_outputs
+        (inputs + outputs).each { |cell| collect_rgb_ids(cell) }
+      end
 
-        # import cell_inputs utxo
-        transaction.cell_inputs.each do |cell|
-          previous_cell_output = cell.previous_cell_output
-          next unless previous_cell_output
+      # batch fetch bitcoin raw transactions
+      cache_raw_transactions!
+      # import rgbpp cells
+      @rgbpp_cell_ids.each { |cell_id| ImportRgbppCellJob.perform_now(cell_id) }
+      # import btc time cells
+      @btc_time_cell_ids.each { |cell_id| ImportBtcTimeCellJob.perform_now(cell_id) }
+      # update tags
+      update_transaction_tags!(transaction)
+    end
+  end
 
-          lock_script = previous_cell_output.lock_script
-          next unless CkbUtils.is_rgbpp_lock_cell?(lock_script)
+  def collect_rgb_ids(cell_output)
+    lock_script = cell_output.lock_script
+    cell_output_id = cell_output.id
 
-          # import previous bitcoin transaction if prev vout is missing
-          import_utxo!(lock_script.args, previous_cell_output.id)
+    if CkbUtils.is_rgbpp_lock_cell?(lock_script)
+      txid, _out_index = CkbUtils.parse_rgbpp_args(lock_script.args)
+      unless BitcoinTransfer.includes(:bitcoin_transaction).where(
+        bitcoin_transactions: { txid: },
+        bitcoin_transfers: { cell_output_id:, lock_type: "rgbpp" },
+      ).exists?
+        @rgbpp_cell_ids << cell_output_id
+        @txids << txid
+      end
+    end
 
-          previous_vout = BitcoinVout.find_by(cell_output_id: previous_cell_output.id)
-          vin_attributes << {
-            previous_bitcoin_vout_id: previous_vout.id,
-            ckb_transaction_id: transaction.id,
-            cell_input_id: cell.id,
-          }
-        end
-
-        if vin_attributes.present?
-          BitcoinVin.upsert_all(vin_attributes, unique_by: %i[ckb_transaction_id cell_input_id])
-        end
-
-        # import cell_outputs utxo
-        transaction.cell_outputs.each do |cell|
-          lock_script = cell.lock_script
-          next unless CkbUtils.is_rgbpp_lock_cell?(lock_script)
-
-          import_utxo!(lock_script.args, cell.id)
-        end
-
-        # update transaction rgbpp tags
-        update_rgbpp_tags!(transaction)
+    if CkbUtils.is_btc_time_lock_cell?(lock_script)
+      parsed_args = CkbUtils.parse_btc_time_lock_cell(lock_script.args)
+      txid = parsed_args.txid
+      unless BitcoinTransfer.includes(:bitcoin_transaction).where(
+        bitcoin_transactions: { txid: },
+        bitcoin_transfers: { cell_output_id:, lock_type: "btc_time" },
+      ).exists?
+        @btc_time_cell_ids << cell_output_id
+        @txids << txid
       end
     end
   end
 
-  def import_utxo!(args, cell_id)
-    txid, out_index = CkbUtils.parse_rgbpp_args(args)
+  def cache_raw_transactions!
+    return if @txids.empty?
 
-    unless BitcoinTransaction.includes(:bitcoin_vouts).where(
-      bitcoin_transactions: { txid: },
-      bitcoin_vouts: { index: out_index, cell_output_id: cell_id },
-    ).exists?
-      ImportBitcoinUtxoJob.perform_now(cell_id)
+    get_raw_transactions = ->(txids) do
+      payload = txids.map.with_index do |txid, index|
+        { jsonrpc: "1.0", id: index + 1, method: "getrawtransaction", params: [txid, 2] }
+      end
+      response = HTTP.timeout(10).post(ENV["BITCOIN_NODE_URL"], json: payload)
+      JSON.parse(response.to_s)
     end
+
+    to_cache = {}
+    not_cached = @txids.uniq.reject { Rails.cache.exist?(_1) }
+
+    not_cached.each_slice(BITCOIN_RPC_BATCH_SIZE).each do |txids|
+      get_raw_transactions.call(txids).each do |data|
+        next if data && data["error"].present?
+
+        txid = data.dig("result", "txid")
+        to_cache[txid] = data
+      end
+    end
+
+    Rails.cache.write_multi(to_cache, expires_in: 10.minutes) if to_cache.present?
+  rescue StandardError => e
+    Rails.logger.error "cache raw transactions(#{@txids.uniq}) failed: #{e.message}"
   end
 
-  def update_rgbpp_tags!(transaction)
-    if transaction.bitcoin_vins.exists? || transaction.bitcoin_vouts.exists?
-      transaction.update!(tags: transaction.tags.to_a + ["rgbpp"])
-    end
+  def update_transaction_tags!(transaction)
+    transaction.tags ||= []
+
+    cell_output_ids = transaction.input_cell_ids + transaction.cell_output_ids
+    lock_types = BitcoinTransfer.where(cell_output_id: cell_output_ids).pluck(:lock_type)
+    transaction.tags += lock_types.compact.uniq
+
+    transaction.update!(tags: transaction.tags.uniq)
   end
 end

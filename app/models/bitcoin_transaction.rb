@@ -1,5 +1,6 @@
 class BitcoinTransaction < ApplicationRecord
   has_many :bitcoin_vouts
+  has_many :bitcoin_transfers
 
   def confirmations
     tip_block_height =

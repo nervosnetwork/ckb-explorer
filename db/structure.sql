@@ -625,6 +625,39 @@ ALTER SEQUENCE public.bitcoin_statistics_id_seq OWNED BY public.bitcoin_statisti
 
 
 --
+-- Name: bitcoin_time_locks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bitcoin_time_locks (
+    id bigint NOT NULL,
+    bitcoin_transaction_id bigint,
+    ckb_transaction_id bigint,
+    cell_output_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: bitcoin_time_locks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.bitcoin_time_locks_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: bitcoin_time_locks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.bitcoin_time_locks_id_seq OWNED BY public.bitcoin_time_locks.id;
+
+
+--
 -- Name: bitcoin_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -657,6 +690,40 @@ CREATE SEQUENCE public.bitcoin_transactions_id_seq
 --
 
 ALTER SEQUENCE public.bitcoin_transactions_id_seq OWNED BY public.bitcoin_transactions.id;
+
+
+--
+-- Name: bitcoin_transfers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bitcoin_transfers (
+    id bigint NOT NULL,
+    bitcoin_transaction_id bigint,
+    ckb_transaction_id bigint,
+    cell_output_id bigint,
+    lock_type integer DEFAULT 0,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: bitcoin_transfers_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.bitcoin_transfers_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: bitcoin_transfers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.bitcoin_transfers_id_seq OWNED BY public.bitcoin_transfers.id;
 
 
 --
@@ -2637,10 +2704,24 @@ ALTER TABLE ONLY public.bitcoin_statistics ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
+-- Name: bitcoin_time_locks id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_time_locks ALTER COLUMN id SET DEFAULT nextval('public.bitcoin_time_locks_id_seq'::regclass);
+
+
+--
 -- Name: bitcoin_transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bitcoin_transactions ALTER COLUMN id SET DEFAULT nextval('public.bitcoin_transactions_id_seq'::regclass);
+
+
+--
+-- Name: bitcoin_transfers id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_transfers ALTER COLUMN id SET DEFAULT nextval('public.bitcoin_transfers_id_seq'::regclass);
 
 
 --
@@ -3022,11 +3103,27 @@ ALTER TABLE ONLY public.bitcoin_statistics
 
 
 --
+-- Name: bitcoin_time_locks bitcoin_time_locks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_time_locks
+    ADD CONSTRAINT bitcoin_time_locks_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: bitcoin_transactions bitcoin_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bitcoin_transactions
     ADD CONSTRAINT bitcoin_transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: bitcoin_transfers bitcoin_transfers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_transfers
+    ADD CONSTRAINT bitcoin_transfers_pkey PRIMARY KEY (id);
 
 
 --
@@ -3677,13 +3774,6 @@ CREATE INDEX ckb_transactions_rejected_tx_hash_idx ON public.ckb_transactions_re
 
 
 --
--- Name: idex_bitcon_addresses_on_mapping; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX idex_bitcon_addresses_on_mapping ON public.bitcoin_address_mappings USING btree (bitcoin_address_id, ckb_address_id);
-
-
---
 -- Name: idx_cell_inputs_on_block_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3782,6 +3872,13 @@ CREATE UNIQUE INDEX index_average_block_time_by_hour_on_hour ON public.average_b
 
 
 --
+-- Name: index_bitcoin_addresses_on_mapping; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_bitcoin_addresses_on_mapping ON public.bitcoin_address_mappings USING btree (bitcoin_address_id, ckb_address_id);
+
+
+--
 -- Name: index_bitcoin_statistics_on_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3789,10 +3886,38 @@ CREATE UNIQUE INDEX index_bitcoin_statistics_on_timestamp ON public.bitcoin_stat
 
 
 --
+-- Name: index_bitcoin_time_locks_on_cell; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_bitcoin_time_locks_on_cell ON public.bitcoin_time_locks USING btree (bitcoin_transaction_id, cell_output_id);
+
+
+--
 -- Name: index_bitcoin_transactions_on_txid; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_bitcoin_transactions_on_txid ON public.bitcoin_transactions USING btree (txid);
+
+
+--
+-- Name: index_bitcoin_transfers_on_bitcoin_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_bitcoin_transfers_on_bitcoin_transaction_id ON public.bitcoin_transfers USING btree (bitcoin_transaction_id);
+
+
+--
+-- Name: index_bitcoin_transfers_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_bitcoin_transfers_on_cell_output_id ON public.bitcoin_transfers USING btree (cell_output_id);
+
+
+--
+-- Name: index_bitcoin_transfers_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_bitcoin_transfers_on_ckb_transaction_id ON public.bitcoin_transfers USING btree (ckb_transaction_id);
 
 
 --
@@ -5030,6 +5155,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240408065818'),
 ('20240408075718'),
 ('20240408082159'),
-('20240415080556');
+('20240415080556'),
+('20240428085020'),
+('20240429102325');
 
 
