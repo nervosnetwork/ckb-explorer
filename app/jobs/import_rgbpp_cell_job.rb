@@ -93,7 +93,12 @@ class ImportRgbppCellJob < ApplicationJob
         address_id: nil,
       }
 
-      op_returns << op_return if op_returns.exclude?(op_return)
+      next if BitcoinVout.exists?(
+        bitcoin_transaction_id: op_return[:bitcoin_transaction_id],
+        index: op_return[:index],
+      )
+
+      op_returns << op_return
     end
 
     op_returns

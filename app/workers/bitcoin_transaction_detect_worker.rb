@@ -16,24 +16,17 @@ class BitcoinTransactionDetectWorker
 
     ApplicationRecord.transaction do
       block.ckb_transactions.each do |transaction|
-        transaction.cell_inputs.each do |cell_input|
-          previous_cell_output = cell_input.previous_cell_output
-          next unless previous_cell_output
-
-          collect_rgb_ids(previous_cell_output)
-        end
-
-        transaction.cell_outputs.each do |cell_output|
-          collect_rgb_ids(cell_output)
-        end
+        inputs = transaction.input_cells
+        outputs = transaction.cell_outputs
+        (inputs + outputs).each { |cell| collect_rgb_ids(cell) }
       end
 
       # batch fetch bitcoin raw transactions
       cache_raw_transactions!
       # import rgbpp cells
-      @rgbpp_cell_ids.uniq.each { ImportRgbppCellJob.perform_now(_1) }
+      @rgbpp_cell_ids.each { |cell_id| ImportRgbppCellJob.perform_now(cell_id) }
       # import btc time cells
-      @btc_time_cell_ids.uniq.each { ImportBtcTimeCellJob.perform_now(_1) }
+      @btc_time_cell_ids.each { |cell_id| ImportBtcTimeCellJob.perform_now(cell_id) }
       # update tags
       update_transaction_tags!(transaction)
     end
@@ -98,7 +91,7 @@ class BitcoinTransactionDetectWorker
   def update_transaction_tags!(transaction)
     transaction.tags ||= []
 
-    cell_output_ids = transaction.input_ids + transaction.output_ids
+    cell_output_ids = transaction.input_cell_ids + transaction.cell_output_ids
     lock_types = BitcoinTransfer.where(cell_output_id: cell_output_ids).pluck(:lock_type)
     transaction.tags += lock_types.compact.uniq
 
