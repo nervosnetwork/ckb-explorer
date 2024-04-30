@@ -44,13 +44,11 @@ class ImportBtcTimeCellJob < ApplicationJob
   def fetch_raw_transaction(txid)
     data = Rails.cache.read(txid)
     data ||= rpc.getrawtransaction(txid, 2)
-
-    return if data && data["error"].present?
-
     Rails.cache.write(txid, data, expires_in: 10.minutes) unless Rails.cache.exist?(txid)
     data
   rescue StandardError => e
-    raise ArgumentError, "get bitcoin raw transaction #{txid} failed: #{e}"
+    Rails.logger.error "get bitcoin raw transaction #{txid} failed: #{e}"
+    nil
   end
 
   def rpc
