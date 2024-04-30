@@ -10,7 +10,8 @@ class ImportBtcTimeCellJob < ApplicationJob
       return unless CkbUtils.is_btc_time_lock_cell?(lock_script)
 
       parsed_args = CkbUtils.parse_btc_time_lock_cell(lock_script.args)
-      Rails.logger.info("Importing btc time cell txid #{parsed_args.txid}")
+      txid = parsed_args.txid
+      Rails.logger.info("Importing btc time cell #{cell_id} txid #{txid}")
 
       # build bitcoin transaction
       raw_tx = fetch_raw_transaction(txid)
@@ -45,7 +46,7 @@ class ImportBtcTimeCellJob < ApplicationJob
     data = Rails.cache.read(txid)
     data ||= rpc.getrawtransaction(txid, 2)
     Rails.cache.write(txid, data, expires_in: 10.minutes) unless Rails.cache.exist?(txid)
-    data
+    data["result"]
   rescue StandardError => e
     Rails.logger.error "get bitcoin raw transaction #{txid} failed: #{e}"
     nil
