@@ -9,7 +9,7 @@ namespace :migration do
     LockScript.where("code_hash IN (#{binary_hashes})").find_in_batches(batch_size: 50) do |lock_scripts|
       CellOutput.where(lock_script_id: lock_scripts.map(&:id)).find_each do |cell_output|
         ckb_transaction = cell_output.ckb_transaction
-        # next if BitcoinTransfer.exists?(ckb_transaction:, cell_output:)
+        next if BitcoinTransfer.exists?(ckb_transaction:, cell_output:)
 
         block_number = ckb_transaction.block_number
         next if block_numbers.include?(block_number)

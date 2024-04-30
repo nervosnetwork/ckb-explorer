@@ -18,15 +18,15 @@ class BitcoinTransactionDetectWorker
       block.ckb_transactions.each do |transaction|
         inputs = transaction.input_cells
         outputs = transaction.cell_outputs
-        (inputs + outputs).each { |cell| collect_rgb_ids(cell) }
+        (inputs + outputs).each { collect_rgb_ids(_1) }
       end
 
       # batch fetch bitcoin raw transactions
       cache_raw_transactions!
       # import rgbpp cells
-      @rgbpp_cell_ids.each { |cell_id| ImportRgbppCellJob2.perform_now(cell_id) }
+      @rgbpp_cell_ids.each { ImportRgbppCellJob.perform_now(_1) }
       # import btc time cells
-      @btc_time_cell_ids.each { |cell_id| ImportBtcTimeCellJob2.perform_now(cell_id) }
+      @btc_time_cell_ids.each { ImportBtcTimeCellJob.perform_now(_1) }
       # update tags
       update_transaction_tags!
     end
