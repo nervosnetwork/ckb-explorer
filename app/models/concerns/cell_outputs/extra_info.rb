@@ -63,20 +63,19 @@ module CellOutputs
             code_hash: factory_cell_type_script.code_hash,
             hash_type: factory_cell_type_script.hash_type,
             args: factory_cell_type_script.args,
-            verified: true,
           )
           value = {
             symbol: factory_cell&.symbol,
             amount: udt_amount,
             decimal: "",
             type_hash:,
-            published: factory_cell&.verified,
+            published: true,
             display_name: factory_cell&.name,
             uan: "",
           }
         when "nrc_721_token"
           udt = Udt.find_by(type_hash:)
-          factory_cell = NrcFactoryCell.where(id: udt.nrc_factory_cell_id, verified: true).first
+          factory_cell = NrcFactoryCell.where(id: udt.nrc_factory_cell_id).first
           udt_account = UdtAccount.where(udt_id: udt.id).first
           value = {
             symbol: factory_cell&.symbol,
