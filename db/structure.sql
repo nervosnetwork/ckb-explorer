@@ -660,6 +660,40 @@ ALTER SEQUENCE public.bitcoin_transactions_id_seq OWNED BY public.bitcoin_transa
 
 
 --
+-- Name: bitcoin_transfers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bitcoin_transfers (
+    id bigint NOT NULL,
+    bitcoin_transaction_id bigint,
+    ckb_transaction_id bigint,
+    cell_output_id bigint,
+    lock_type integer DEFAULT 0,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: bitcoin_transfers_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.bitcoin_transfers_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: bitcoin_transfers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.bitcoin_transfers_id_seq OWNED BY public.bitcoin_transfers.id;
+
+
+--
 -- Name: bitcoin_vins; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1235,7 +1269,8 @@ CREATE TABLE public.contracts (
     referring_cells_count numeric(30,0) DEFAULT 0.0,
     total_deployed_cells_capacity numeric(30,0) DEFAULT 0.0,
     total_referring_cells_capacity numeric(30,0) DEFAULT 0.0,
-    addresses_count integer
+    addresses_count integer,
+    h24_ckb_transactions_count integer
 );
 
 
@@ -2644,6 +2679,13 @@ ALTER TABLE ONLY public.bitcoin_transactions ALTER COLUMN id SET DEFAULT nextval
 
 
 --
+-- Name: bitcoin_transfers id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_transfers ALTER COLUMN id SET DEFAULT nextval('public.bitcoin_transfers_id_seq'::regclass);
+
+
+--
 -- Name: bitcoin_vins id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3027,6 +3069,14 @@ ALTER TABLE ONLY public.bitcoin_statistics
 
 ALTER TABLE ONLY public.bitcoin_transactions
     ADD CONSTRAINT bitcoin_transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: bitcoin_transfers bitcoin_transfers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_transfers
+    ADD CONSTRAINT bitcoin_transfers_pkey PRIMARY KEY (id);
 
 
 --
@@ -3677,13 +3727,6 @@ CREATE INDEX ckb_transactions_rejected_tx_hash_idx ON public.ckb_transactions_re
 
 
 --
--- Name: idex_bitcon_addresses_on_mapping; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX idex_bitcon_addresses_on_mapping ON public.bitcoin_address_mappings USING btree (bitcoin_address_id, ckb_address_id);
-
-
---
 -- Name: idx_cell_inputs_on_block_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3782,6 +3825,13 @@ CREATE UNIQUE INDEX index_average_block_time_by_hour_on_hour ON public.average_b
 
 
 --
+-- Name: index_bitcoin_addresses_on_mapping; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_bitcoin_addresses_on_mapping ON public.bitcoin_address_mappings USING btree (bitcoin_address_id, ckb_address_id);
+
+
+--
 -- Name: index_bitcoin_statistics_on_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3793,6 +3843,27 @@ CREATE UNIQUE INDEX index_bitcoin_statistics_on_timestamp ON public.bitcoin_stat
 --
 
 CREATE UNIQUE INDEX index_bitcoin_transactions_on_txid ON public.bitcoin_transactions USING btree (txid);
+
+
+--
+-- Name: index_bitcoin_transfers_on_bitcoin_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_bitcoin_transfers_on_bitcoin_transaction_id ON public.bitcoin_transfers USING btree (bitcoin_transaction_id);
+
+
+--
+-- Name: index_bitcoin_transfers_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_bitcoin_transfers_on_cell_output_id ON public.bitcoin_transfers USING btree (cell_output_id);
+
+
+--
+-- Name: index_bitcoin_transfers_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_bitcoin_transfers_on_ckb_transaction_id ON public.bitcoin_transfers USING btree (ckb_transaction_id);
 
 
 --
@@ -5030,6 +5101,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240408065818'),
 ('20240408075718'),
 ('20240408082159'),
-('20240415080556');
+('20240415080556'),
+('20240428085020'),
+('20240429102325'),
+('20240507041552');
 
 

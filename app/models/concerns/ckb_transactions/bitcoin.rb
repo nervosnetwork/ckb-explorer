@@ -12,17 +12,7 @@ module CkbTransactions
       end
 
       def btc_time_transaction?
-        is_btc_time_lock_cell = ->(lock_script) { CkbUtils.is_btc_time_lock_cell?(lock_script) }
-        inputs.includes(:lock_script).any? { is_btc_time_lock_cell.call(_1.lock_script) } ||
-          outputs.includes(:lock_script).any? { is_btc_time_lock_cell.call(_1.lock_script) }
-      end
-
-      def rgb_commitment
-        return unless rgb_transaction?
-
-        # In the outputs, there is exactly one OP_RETURN containing a commitment.
-        op_return = bitcoin_vouts.find_by(op_return: true)
-        op_return&.commitment
+        !!tags&.include?("btc_time")
       end
 
       def rgb_txid

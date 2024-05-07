@@ -1,12 +1,12 @@
 class BitcoinTransaction < ApplicationRecord
   has_many :bitcoin_vouts
+  has_many :bitcoin_transfers
 
   def confirmations
     tip_block_height =
       Rails.cache.fetch("tip_block_height", expires_in: 5.minutes) do
-        blocks = Bitcoin::Rpc.instance.getchaintips
-        tip_block = blocks.find { |h| h["status"] == "active" }
-        tip_block["height"]
+        chain_info = Bitcoin::Rpc.instance.getblockchaininfo
+        chain_info["headers"]
       rescue StandardError => e
         Rails.logger.error "get tip block faild: #{e.message}"
         nil

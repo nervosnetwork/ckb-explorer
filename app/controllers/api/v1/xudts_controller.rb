@@ -48,6 +48,16 @@ module Api
         raise Api::V1::Exceptions::UdtNotFoundError
       end
 
+      def snapshot
+        args = params.permit(:id, :number)
+        file = CsvExportable::ExportUdtSnapshotJob.perform_now(args.to_h)
+
+        send_data file, type: "text/csv; charset=utf-8; header=present",
+                        disposition: "attachment;filename=xudt_snapshot.csv"
+      rescue ActiveRecord::RecordNotFound
+        raise Api::V1::Exceptions::UdtNotFoundError
+      end
+
       private
 
       def validate_query_params
