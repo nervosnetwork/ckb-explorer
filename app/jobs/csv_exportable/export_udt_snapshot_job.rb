@@ -23,7 +23,7 @@ module CsvExportable
         rows << row
       end
 
-      header = ["Token Symbol", "Block Height", "UnixTimestamp", "date(UTC)", "Address", "Amount"]
+      header = ["Token Symbol", "Block Height", "UnixTimestamp", "date(UTC)", "Owner", "CKB Address", "Amount"]
       generate_csv(header, rows)
     end
 
@@ -31,7 +31,7 @@ module CsvExportable
       address = Address.find_by(id: address_id)
       return unless address
 
-      address_hash = address.bitcoin_address&.address_hash || address.address_hash
+      owner = address.bitcoin_address&.address_hash || address.address_hash
       datetime = datetime_utc(@block.timestamp)
 
       if (decimal = @udt.decimal)
@@ -40,7 +40,8 @@ module CsvExportable
           @block.number,
           @block.timestamp,
           datetime,
-          address_hash,
+          owner,
+          address.address_hash,
           parse_udt_amount(udt_amount.to_d, decimal),
         ]
       else
@@ -49,7 +50,8 @@ module CsvExportable
           @block.number,
           @block.timestamp,
           datetime,
-          address_hash,
+          owner,
+          address.address_hash,
           "#{udt_amount} (raw)",
         ]
       end
