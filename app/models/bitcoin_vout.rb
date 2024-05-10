@@ -1,5 +1,8 @@
 class BitcoinVout < ApplicationRecord
+  enum status: { bound: 0, unbound: 1, binding: 2, normal: 3 }
+
   belongs_to :bitcoin_transaction, dependent: :delete
+  belongs_to :consumed_by, class_name: "BitcoinTransaction", optional: true
   belongs_to :bitcoin_address, optional: true
   belongs_to :ckb_transaction, optional: true
   belongs_to :cell_output, optional: true
@@ -31,10 +34,14 @@ end
 #  address_id             :bigint
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
+#  status                 :integer          default(0)
+#  consumed_by_id         :bigint
 #
 # Indexes
 #
 #  index_bitcoin_vouts_on_bitcoin_address_id  (bitcoin_address_id)
 #  index_bitcoin_vouts_on_ckb_transaction_id  (ckb_transaction_id)
+#  index_bitcoin_vouts_on_consumed_by_id      (consumed_by_id)
+#  index_bitcoin_vouts_on_status              (status)
 #  index_vouts_uniqueness                     (bitcoin_transaction_id,index,cell_output_id) UNIQUE
 #
