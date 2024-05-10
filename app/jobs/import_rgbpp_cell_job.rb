@@ -30,16 +30,7 @@ class ImportRgbppCellJob < ApplicationJob
         )
       end
       # build vin
-      cell_input = CellInput.find_by(previous_cell_output_id: cell_id)
-      previous_vout = BitcoinVout.find_by(cell_output_id: cell_id)
-      if cell_input && previous_vout
-        BitcoinVin.create_with(
-          previous_bitcoin_vout_id: previous_vout.id,
-        ).find_or_create_by!(
-          ckb_transaction_id: cell_input.ckb_transaction_id,
-          cell_input_id: cell_input.id,
-        )
-      end
+      build_vin!(cell_id, tx)
       # build transfer
       BitcoinTransfer.create_with(
         bitcoin_transaction_id: tx.id,
@@ -123,6 +114,25 @@ class ImportRgbppCellJob < ApplicationJob
       cell_output_id: cell_output.id,
       address_id: cell_output.address_id,
     }
+  end
+
+  def build_vin!(cell_id, tx)
+    cell_input = CellInput.find_by(previous_cell_output_id: cell_id)
+    previous_vout = BitcoinVout.find_by(cell_output_id: cell_id)
+    if cell_input && previous_vout
+      BitcoinVin.create_with(
+        previous_bitcoin_vout_id: previous_vout.id,
+      ).find_or_create_by!(
+        ckb_transaction_id: cell_input.ckb_transaction_id,
+        cell_input_id: cell_input.id,
+      )
+
+      previous_cell_output = cell_input.output
+      # check whether previous_cell_output utxo consumed
+      if previous_cell_output.dead? && previous_vout.binding?
+        previous_vout.update!(status: "normal", consumed_by_id: tx.id)
+      end
+    end
   end
 
   def build_address!(address_hash, cell_output)
