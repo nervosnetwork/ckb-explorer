@@ -52,6 +52,7 @@ class CkbTransaction < ApplicationRecord
                             created_after(start_block_timestamp).created_before(end_block_timestamp)
                           }
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
+  scope :h24, -> { where("block_timestamp >= ?", 24.hours.ago.to_i * 1000) }
 
   after_commit :flush_cache
   before_destroy :recover_dead_cell

@@ -138,7 +138,7 @@ module CkbSync
     end
 
     def detect_bitcoin_transactions(local_block)
-      BitcoinTransactionDetectWorker.perform_async(local_block.id)
+      BitcoinTransactionDetectWorker.perform_async(local_block.number)
     end
 
     def process_ckb_txs(
@@ -667,7 +667,8 @@ dao_contract)
             nft_token_attr = { full_name: nil, icon_file: nil,
                                published: false, symbol: nil, decimal: nil, nrc_factory_cell_id: nil }
             issuer_address = CkbUtils.generate_address(output.lock, CKB::Address::Version::CKB2021)
-            if cell_type == "m_nft_token"
+            case cell_type
+            when "m_nft_token"
               m_nft_class_type = TypeScript.where(code_hash: CkbSync::Api.instance.token_class_script_code_hash,
                                                   args: output.type.args[0..49]).first
               if m_nft_class_type.present?
@@ -685,8 +686,8 @@ dao_contract)
                 nft_token_attr[:icon_file] = parsed_class_data.renderer
                 nft_token_attr[:published] = true
               end
-            end
-            if cell_type == "spore_cell"
+            when "spore_cell"
+              nft_token_attr[:published] = true
               parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[tx_index][index])
               if parsed_spore_cell[:cluster_id].present?
                 binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
@@ -696,33 +697,27 @@ dao_contract)
                 spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
                 parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
                 nft_token_attr[:full_name] = parsed_cluster_data[:name]
-                nft_token_attr[:published] = true
               end
-            end
-            if cell_type == "nrc_721_token"
+            when "nrc_721_token"
               factory_cell = CkbUtils.parse_nrc_721_args(output.type.args)
               nrc_721_factory_cell = NrcFactoryCell.create_or_find_by(code_hash: factory_cell.code_hash,
                                                                       hash_type: factory_cell.hash_type,
                                                                       args: factory_cell.args)
-              if nrc_721_factory_cell.verified
-                nft_token_attr[:full_name] = nrc_721_factory_cell.name
-                nft_token_attr[:symbol] =
-                  nrc_721_factory_cell.symbol.to_s[0, 16]
-                nft_token_attr[:icon_file] =
-                  "#{nrc_721_factory_cell.base_token_uri}/#{factory_cell.token_id}"
-                # refactor: remove this attribute then add udt_id to NrcFactoryCell
-                nft_token_attr[:nrc_factory_cell_id] = nrc_721_factory_cell.id
-              end
+              nft_token_attr[:full_name] = nrc_721_factory_cell.name
+              nft_token_attr[:symbol] =
+                nrc_721_factory_cell.symbol.to_s[0, 16]
+              nft_token_attr[:icon_file] =
+                "#{nrc_721_factory_cell.base_token_uri}/#{factory_cell.token_id}"
+              # refactor: remove this attribute then add udt_id to NrcFactoryCell
+              nft_token_attr[:nrc_factory_cell_id] = nrc_721_factory_cell.id
               nft_token_attr[:published] = true
-            end
-            if cell_type == "omiga_inscription_info"
+            when "omiga_inscription_info"
               info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
               nft_token_attr[:full_name] = info[:name]
               nft_token_attr[:symbol] = info[:symbol]
               nft_token_attr[:decimal] = info[:decimal]
               nft_token_attr[:published] = true
-            end
-            if cell_type == "xudt"
+            when "xudt"
               issuer_address = Address.find_by(lock_hash: output.type.args[0..65])&.address_hash
               items.each_with_index do |output, index|
                 if output.type&.code_hash == CkbSync::Api.instance.unique_cell_code_hash

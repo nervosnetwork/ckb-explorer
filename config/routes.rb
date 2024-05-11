@@ -62,6 +62,7 @@ Rails.application.routes.draw do
       resources :xudts, only: %i(index show) do
         collection do
           get :download_csv
+          get :snapshot
         end
       end
       resources :omiga_inscriptions, only: %i(index show) do
