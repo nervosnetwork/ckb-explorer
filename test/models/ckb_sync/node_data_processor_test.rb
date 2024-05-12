@@ -2100,12 +2100,14 @@ module CkbSync
         create(:udt_account, code_hash: Settings.sudt_cell_type_hash, address:,
                              type_hash: node_output.type.compute_hash, published: true)
 
-        node_data_processor.process_block(node_block)
+        Sidekiq::Testing.inline! do
+          node_data_processor.process_block(node_block)
 
-        expected_total_amount = CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000") + CkbUtils.parse_udt_cell_data("0x0000909dceda82370000000000000000")
+          expected_total_amount = CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000") + CkbUtils.parse_udt_cell_data("0x0000909dceda82370000000000000000")
 
-        assert_equal expected_total_amount, udt.reload.total_amount
-        assert_equal 2, udt.addresses_count
+          assert_equal expected_total_amount, udt.reload.total_amount
+          assert_equal 2, udt.addresses_count
+        end
       end
     end
 
@@ -2135,15 +2137,16 @@ module CkbSync
                              type_hash: node_output.type.compute_hash)
         create(:udt_account, code_hash: Settings.sudt_cell_type_hash, address:,
                              type_hash: new_node_output.type.compute_hash)
+        Sidekiq::Testing.inline! do
+          node_data_processor.process_block(node_block)
 
-        node_data_processor.process_block(node_block)
-
-        assert_equal CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000"),
-                     udt1.reload.total_amount
-        assert_equal 1, udt1.addresses_count
-        assert_equal CkbUtils.parse_udt_cell_data("0x0000909dceda82370000000000000000"),
-                     udt2.reload.total_amount
-        assert_equal 1, udt2.addresses_count
+          assert_equal CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000"),
+                       udt1.reload.total_amount
+          assert_equal 1, udt1.addresses_count
+          assert_equal CkbUtils.parse_udt_cell_data("0x0000909dceda82370000000000000000"),
+                       udt2.reload.total_amount
+          assert_equal 1, udt2.addresses_count
+        end
       end
     end
 
@@ -3344,16 +3347,18 @@ module CkbSync
       ]
       node_block = CKB::Types::Block.new(uncles: [], proposals: [],
                                          transactions:, header:)
-      block = node_data_processor.process_block(node_block)
-      udt1 = Udt.find_by(args: udt_script1.args)
-      udt2 = Udt.find_by(args: udt_script2.args)
-      tx = block.ckb_transactions.where(is_cellbase: false).first
-      tx1 = block.ckb_transactions.where(is_cellbase: false).second
+      Sidekiq::Testing.inline! do
+        block = node_data_processor.process_block(node_block)
+        udt1 = Udt.find_by(args: udt_script1.args)
+        udt2 = Udt.find_by(args: udt_script2.args)
+        tx = block.ckb_transactions.where(is_cellbase: false).first
+        tx1 = block.ckb_transactions.where(is_cellbase: false).second
 
-      assert_equal [udt1.id, udt2.id], tx.contained_udt_ids.sort
-      assert_equal [udt1.id, udt2.id], tx1.contained_udt_ids
-      assert_equal 2, udt1.ckb_transactions_count
-      assert_equal 2, udt2.ckb_transactions_count
+        assert_equal [udt1.id, udt2.id], tx.contained_udt_ids.sort
+        assert_equal [udt1.id, udt2.id], tx1.contained_udt_ids
+        assert_equal 2, udt1.ckb_transactions_count
+        assert_equal 2, udt2.ckb_transactions_count
+      end
     end
 
     test "#process_block should update tx's contained_udt_ids when there are udt cells in inputs" do
@@ -3480,17 +3485,19 @@ module CkbSync
       ]
       node_block = CKB::Types::Block.new(uncles: [], proposals: [],
                                          transactions:, header:)
-      block = node_data_processor.process_block(node_block)
-      udt1 = Udt.find_by(args: udt_script1.args)
-      udt2 = Udt.find_by(args: udt_script2.args)
+      Sidekiq::Testing.inline! do
+        block = node_data_processor.process_block(node_block)
+        udt1 = Udt.find_by(args: udt_script1.args)
+        udt2 = Udt.find_by(args: udt_script2.args)
 
-      tx = block.ckb_transactions.where(is_cellbase: false).first
-      tx1 = block.ckb_transactions.where(is_cellbase: false).second
+        tx = block.ckb_transactions.where(is_cellbase: false).first
+        tx1 = block.ckb_transactions.where(is_cellbase: false).second
 
-      assert_equal [udt1.id, udt2.id], tx.contained_udt_ids
-      assert_equal [udt1.id, udt2.id], tx1.contained_udt_ids
-      assert_equal 5, udt1.ckb_transactions_count
-      assert_equal 4, udt2.ckb_transactions_count
+        assert_equal [udt1.id, udt2.id], tx.contained_udt_ids
+        assert_equal [udt1.id, udt2.id], tx1.contained_udt_ids
+        assert_equal 5, udt1.ckb_transactions_count
+        assert_equal 4, udt2.ckb_transactions_count
+      end
     end
 
     test "should recalculate udts ckb transactions count when block is invalid and outputs has udt cell" do
@@ -3593,16 +3600,18 @@ module CkbSync
                                          transactions:, header:)
       block = node_data_processor.process_block(node_block)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
-                       record: :new_episodes) do
-        node_data_processor.call
+      Sidekiq::Testing.inline! do
+        VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
+                         record: :new_episodes) do
+          node_data_processor.call
+        end
+
+        udt1 = Udt.find_by(args: udt_script1.args)
+        udt2 = Udt.find_by(args: udt_script2.args)
+
+        assert_equal 0, udt1.reload.ckb_transactions_count
+        assert_equal 0, udt2.reload.ckb_transactions_count
       end
-
-      udt1 = Udt.find_by(args: udt_script1.args)
-      udt2 = Udt.find_by(args: udt_script2.args)
-
-      assert_equal 0, udt1.reload.ckb_transactions_count
-      assert_equal 0, udt2.reload.ckb_transactions_count
     end
 
     test "should recalculate udts ckb transactions count when block is invalid and inputs has udt cell" do
@@ -3733,12 +3742,14 @@ module CkbSync
       udt1 = Udt.find_by(args: udt_script1.args)
       udt2 = Udt.find_by(args: udt_script2.args)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
-                       record: :new_episodes) do
-        node_data_processor.call
+      Sidekiq::Testing.inline! do
+        VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
+                         record: :new_episodes) do
+          node_data_processor.call
+        end
+        assert_equal 3, udt1.reload.ckb_transactions_count
+        assert_equal 2, udt2.reload.ckb_transactions_count
       end
-      assert_equal 3, udt1.reload.ckb_transactions_count
-      assert_equal 2, udt2.reload.ckb_transactions_count
     end
 
     test "should remove block's contained address's tx cache when block is invalid" do
