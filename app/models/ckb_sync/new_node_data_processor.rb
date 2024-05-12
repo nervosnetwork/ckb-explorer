@@ -85,11 +85,11 @@ module CkbSync
         benchmark :update_table_records_count, local_block
         benchmark :update_or_create_udt_accounts!, local_block
         # maybe can be changed to asynchronous update
-        benchmark :update_udt_info, local_block
         benchmark :process_dao_events!, local_block
         benchmark :update_addresses_info, addrs_changes, local_block, refresh_balance
       end
 
+      async_update_udt_infos(local_block)
       flush_inputs_outputs_caches(local_block)
       generate_statistics_data(local_block)
       generate_deployed_cells_and_referring_cells(local_block)
@@ -139,6 +139,10 @@ module CkbSync
 
     def detect_bitcoin_transactions(local_block)
       BitcoinTransactionDetectWorker.perform_async(local_block.number)
+    end
+
+    def async_update_udt_infos(local_block)
+      UpdateUdtInfoWorker.perform_async(local_block.number)
     end
 
     def process_ckb_txs(
@@ -407,48 +411,6 @@ dao_contract)
         }
       end
       Address.upsert_all(addresses_deposit_attributes) if addresses_deposit_attributes.present?
-    end
-
-    def update_udt_info(local_block)
-      type_hashes = []
-      local_block.cell_outputs.udt.select(:id, :type_hash).each do |udt_output|
-        type_hashes << udt_output.type_hash
-      end
-      local_block.cell_outputs.omiga_inscription.select(:id, :type_hash).each do |udt_output|
-        type_hashes << udt_output.type_hash
-      end
-      local_block.cell_outputs.xudt.select(:id, :type_hash).each do |udt_output|
-        type_hashes << udt_output.type_hash
-      end
-      local_block.ckb_transactions.pluck(:id).each do |tx_id|
-        CellOutput.where(consumed_by_id: tx_id).udt.select(:id, :type_hash).each do |udt_output|
-          type_hashes << udt_output.type_hash
-        end
-      end
-      return if type_hashes.blank?
-
-      amount_info = UdtAccount.where(type_hash: type_hashes).group(:type_hash).sum(:amount)
-      addresses_count_info = UdtAccount.where(type_hash: type_hashes).group(:type_hash).count(:address_id)
-      udts_attributes = Set.new
-      type_hashes.each do |type_hash|
-        udt = Udt.where(type_hash:).select(:id).take!
-        ckb_transactions_count =
-          Rails.cache.fetch("udt_txs_count_#{udt.id}", expires_in: 3600) do
-            UdtTransaction.where(udt_id: udt.id).count
-          end
-        udts_attributes << {
-          type_hash:,
-          total_amount: amount_info[type_hash],
-          addresses_count: addresses_count_info[type_hash],
-          ckb_transactions_count:,
-        }
-      end
-
-      if udts_attributes.present?
-        Udt.upsert_all(udts_attributes.map! do |attr|
-                         attr.merge!(created_at: Time.current, updated_at: Time.current)
-                       end, unique_by: :type_hash)
-      end
     end
 
     def update_or_create_udt_accounts!(local_block)

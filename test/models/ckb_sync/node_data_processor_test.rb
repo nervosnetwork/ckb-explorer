@@ -22,6 +22,7 @@ module CkbSync
       GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
       GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
       BitcoinTransactionDetectWorker.any_instance.stubs(:perform).returns(true)
+      UpdateUdtInfoWorker.any_instance.stubs(:perform).returns(true)
       CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     end
 
