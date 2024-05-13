@@ -34,7 +34,7 @@ end
 #  address_id             :bigint
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
-#  status                 :integer          default(0)
+#  status                 :integer          default("bound")
 #  consumed_by_id         :bigint
 #
 # Indexes

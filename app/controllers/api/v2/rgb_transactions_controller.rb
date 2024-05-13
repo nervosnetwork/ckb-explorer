@@ -2,7 +2,7 @@ module Api
   module V2
     class RgbTransactionsController < BaseController
       def index
-        @ckb_transactions = RgbTransactions::Index.run!(transaction_params)
+        @bitcoin_annotations = RgbTransactions::Index.run!(transaction_params)
       end
 
       private

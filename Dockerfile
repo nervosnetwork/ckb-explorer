@@ -28,7 +28,7 @@ FROM ruby:${RUBY_VERSION}-slim
 # RUN sed --in-place --regexp-extended "s/(\/\/)(deb|security).debian.org/\1mirrors.ustc.edu.cn/" /etc/apt/sources.list && \
 #   apt-get update && apt-get upgrade --yes
 RUN apt-get update && apt-get install -y \
-  libpq5 libsodium23 \
+  libpq5 libsodium23 curl \
   libcurl4 libjemalloc2 \
   && rm -rf /var/lib/apt/lists/*
 ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
