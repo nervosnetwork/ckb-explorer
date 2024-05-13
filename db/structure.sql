@@ -594,6 +594,40 @@ ALTER SEQUENCE public.bitcoin_addresses_id_seq OWNED BY public.bitcoin_addresses
 
 
 --
+-- Name: bitcoin_annotations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bitcoin_annotations (
+    id bigint NOT NULL,
+    ckb_transaction_id bigint,
+    leap_direction integer,
+    transfer_step integer,
+    tags character varying[] DEFAULT '{}'::character varying[],
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: bitcoin_annotations_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.bitcoin_annotations_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: bitcoin_annotations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.bitcoin_annotations_id_seq OWNED BY public.bitcoin_annotations.id;
+
+
+--
 -- Name: bitcoin_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2700,6 +2734,13 @@ ALTER TABLE ONLY public.bitcoin_addresses ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
+-- Name: bitcoin_annotations id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_annotations ALTER COLUMN id SET DEFAULT nextval('public.bitcoin_annotations_id_seq'::regclass);
+
+
+--
 -- Name: bitcoin_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3095,6 +3136,14 @@ ALTER TABLE ONLY public.bitcoin_address_mappings
 
 ALTER TABLE ONLY public.bitcoin_addresses
     ADD CONSTRAINT bitcoin_addresses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: bitcoin_annotations bitcoin_annotations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_annotations
+    ADD CONSTRAINT bitcoin_annotations_pkey PRIMARY KEY (id);
 
 
 --
@@ -3879,6 +3928,13 @@ CREATE UNIQUE INDEX index_average_block_time_by_hour_on_hour ON public.average_b
 --
 
 CREATE UNIQUE INDEX index_bitcoin_addresses_on_mapping ON public.bitcoin_address_mappings USING btree (bitcoin_address_id, ckb_address_id);
+
+
+--
+-- Name: index_bitcoin_annotations_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_bitcoin_annotations_on_ckb_transaction_id ON public.bitcoin_annotations USING btree (ckb_transaction_id);
 
 
 --
@@ -5176,6 +5232,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240428085020'),
 ('20240429102325'),
 ('20240507041552'),
-('20240509074313');
+('20240509074313'),
+('20240513055849');
 
 

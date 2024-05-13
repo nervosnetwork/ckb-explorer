@@ -7,24 +7,14 @@ module RgbTransactions
 
     def execute
       order_by, asc_or_desc = transaction_ordering
-      transactions = CkbTransaction.where("tags @> array[?]::varchar[]", ["rgbpp"]).
-        order(order_by => asc_or_desc)
+      annotations = BitcoinAnnotation.includes(:ckb_transaction).
+        where("bitcoin_annotations.tags @> array[?]::varchar[]", ["rgbpp"])
 
       if leap_direction.present?
-        transactions = transactions.where(
-          "CASE
-           WHEN (SELECT COUNT(*) FROM bitcoin_vins WHERE ckb_transaction_id = ckb_transactions.id) <
-                (SELECT COUNT(*) FROM bitcoin_vouts WHERE ckb_transaction_id = ckb_transactions.id AND op_return = false)
-           THEN 'in'
-           WHEN (SELECT COUNT(*) FROM bitcoin_vins WHERE ckb_transaction_id = ckb_transactions.id) >
-                (SELECT COUNT(*) FROM bitcoin_vouts WHERE ckb_transaction_id = ckb_transactions.id AND op_return = false)
-           THEN 'out'
-           ELSE 'equal'
-           END = ?", leap_direction
-        )
+        annotations = annotations.where("bitcoin_annotations.leap_direction = ?", leap_direction)
       end
 
-      transactions.page(page).per(page_size)
+      annotations.page(page).per(page_size)
     end
 
     private
@@ -34,9 +24,9 @@ module RgbTransactions
       sort_by =
         case sort_by
         when "confirmation", "number"
-          "block_number"
+          "ckb_transactions.block_number"
         when "time"
-          "block_timestamp"
+          "ckb_transactions.block_timestamp"
         end
 
       if sort_order.nil? || !sort_order.match?(/^(asc|desc)$/i)

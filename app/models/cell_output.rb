@@ -50,6 +50,7 @@ class CellOutput < ApplicationRecord
                                dependent: :delete_all
   has_one :cell_datum, class_name: "CellDatum", dependent: :destroy_async
   has_one :bitcoin_vout
+  has_one :bitcoin_transfer
 
   accepts_nested_attributes_for :cell_datum
   validates :capacity, presence: true,
