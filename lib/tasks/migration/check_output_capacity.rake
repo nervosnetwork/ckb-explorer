@@ -1,5 +1,5 @@
 namespace :migration do
-  desc "Usage: RAILS_ENV=production bundle exec rake migration:check_output_capacity[0, 10000]"
+  desc "Usage: RAILS_ENV=production bundle exec rake migration:check_output_capacity[0,10000]"
   task :check_output_capacity, %i[start_block end_block] => :environment do |_, args|
     (args[:start_block].to_i..args[:end_block].to_i).to_a.each do |number|
       check_capacity(number, 0)
@@ -16,14 +16,14 @@ namespace :migration do
         unless input.previous_output.tx_hash == "0x0000000000000000000000000000000000000000000000000000000000000000"
           result = CellOutput.where(tx_hash: input.previous_output.tx_hash, cell_index: input.previous_output.index, status: :dead).exists?
           unless result
-            puts "#{input.previous_output.tx_hash}-#{input.index}"
+            puts number
           end
         end
       end
       tx.outputs.each_with_index do |output, index|
         db_output = CellOutput.find_by(tx_hash: tx.hash, cell_index: index)
-        if db_output.capacity != output.capacity
-          puts "#{tx.hash}-#{index}"
+        if db_output.nil? || db_output.capacity != output.capacity
+          puts number
         end
       end
     end; nil
@@ -32,7 +32,7 @@ namespace :migration do
     if retry_count > 2
       puts number
     else
-      check_capacity(number, retry_count)
+      check_capacity(number, retry_count, error_numbers)
     end
   end
 end
