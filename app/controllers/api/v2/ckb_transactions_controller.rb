@@ -71,10 +71,12 @@ module Api
           txid = bitcoin_transaction.txid
           commitment = op_return.commitment
           confirmations = bitcoin_transaction.confirmations
+          leap_direction = @ckb_transaction.leap_direction
+          transfer_step = @ckb_transaction.transfer_step
         end
 
         render json: {
-          data: { txid:, confirmations:, commitment:, transfers: },
+          data: { txid:, confirmations:, commitment:, leap_direction:, transfer_step:, transfers: },
         }
       end
 

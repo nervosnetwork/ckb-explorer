@@ -63,6 +63,10 @@ class CkbTransactionsSerializer
     object.rgb_txid
   end
 
+  attribute :rgb_transfer_step do |object|
+    object.transfer_step
+  end
+
   attribute :created_at do |object|
     object.created_at.to_s
   end

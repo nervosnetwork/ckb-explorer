@@ -113,4 +113,8 @@ class CkbTransactionSerializer
   attribute :rgb_txid do |object|
     object.rgb_txid
   end
+
+  attribute :rgb_transfer_step do |object|
+    object.transfer_step
+  end
 end

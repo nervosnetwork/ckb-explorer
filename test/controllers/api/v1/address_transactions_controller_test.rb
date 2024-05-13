@@ -143,6 +143,7 @@ module Api
           is_rgb_transaction
           is_btc_time_lock
           rgb_txid
+          rgb_transfer_step
           created_at
           create_timestamp
         ).sort, response_tx_transaction["attributes"].keys.sort

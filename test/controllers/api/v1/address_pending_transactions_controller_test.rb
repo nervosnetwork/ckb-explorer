@@ -143,6 +143,7 @@ module Api
           created_at
           create_timestamp
           rgb_txid
+          rgb_transfer_step
         ).sort, response_tx_transaction["attributes"].keys.sort
       end
 
