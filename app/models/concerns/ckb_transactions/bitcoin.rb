@@ -9,8 +9,8 @@ module CkbTransactions
       has_many :bitcoin_transfers
       has_one :bitcoin_annotation
 
-      delegate :leap_direction, to: :bitcoin_annotation
-      delegate :transfer_step, to: :bitcoin_annotation
+      delegate :leap_direction, to: :bitcoin_annotation, allow_nil: true
+      delegate :transfer_step, to: :bitcoin_annotation, allow_nil: true
 
       def rgb_transaction?
         !!bitcoin_annotation&.tags&.include?("rgbpp")

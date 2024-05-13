@@ -8,7 +8,8 @@ module RgbTransactions
     def execute
       order_by, asc_or_desc = transaction_ordering
       annotations = BitcoinAnnotation.includes(:ckb_transaction).
-        where("bitcoin_annotations.tags @> array[?]::varchar[]", ["rgbpp"])
+        where("bitcoin_annotations.tags @> array[?]::varchar[]", ["rgbpp"]).
+        order(order_by => asc_or_desc)
 
       if leap_direction.present?
         annotations = annotations.where("bitcoin_annotations.leap_direction = ?", leap_direction)
