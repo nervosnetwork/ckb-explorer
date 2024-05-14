@@ -22,7 +22,7 @@ module Charts
           yesterday_statistic = ::DailyStatistic.where(
             "created_at_unixtimestamp < ?", to_be_counted_date.beginning_of_day.to_i
           ).recent.first
-          if to_be_counted_date.beginning_of_day.to_i == Time.at(GENESIS_TIMESTAMP / 1000).in_time_zone.beginning_of_day.to_i ||  yesterday_statistic.blank?
+          if to_be_counted_date.beginning_of_day.to_i == Time.at(GENESIS_TIMESTAMP / 1000).in_time_zone.beginning_of_day.to_i || yesterday_statistic.blank?
             OpenStruct.new(addresses_count: 0, total_dao_deposit: 0,
                            dao_depositors_count: 0, unclaimed_compensation: 0, claimed_compensation: 0, average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0, treasury_amount: 0, total_depositors_count: 0, live_cells_count: 0, dead_cells_count: 0, occupied_capacity: 0)
           else
@@ -221,6 +221,7 @@ module Charts
     end
 
     test "it should get dead_cells_count" do
+      ENV["CKB_NET_MODE"] = "mainnet"
       # 1. from scratch
       # CellOutput.generated_before(ended_at).consumed_before(ended_at).count
       cells = [
