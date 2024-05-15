@@ -1,4 +1,8 @@
 class ImportRgbppCellJob < ApplicationJob
+  class UnmatchedCommitmentError < StandardError; end
+  class MissingVoutError < StandardError; end
+  class MissingAddressError < StandardError; end
+
   queue_as :bitcoin
 
   def perform(cell_id)
@@ -40,6 +44,8 @@ class ImportRgbppCellJob < ApplicationJob
         cell_output_id: cell_id,
       )
     end
+  rescue StandardError => e
+    Rails.logger.error(e.message)
   end
 
   def build_transaction!(raw_tx)
@@ -67,10 +73,11 @@ class ImportRgbppCellJob < ApplicationJob
       script_pubkey = Bitcoin::Script.parse_from_payload(data.htb)
       next unless script_pubkey.op_return?
 
-      # commiment = script_pubkey.op_return_data.bth
-      # unless commiment == CkbUtils.calculate_commitment(ckb_tx.tx_hash)
-      #   raise ArgumentError, "Invalid commitment found in the CKB VirtualTx"
-      # end
+      commitment = script_pubkey.op_return_data.bth
+      calculated_commitment = CkbUtils.calculate_commitment(ckb_tx)
+      unless commitment == calculated_commitment
+        raise UnmatchedCommitmentError, "Invalid commitment expected: #{calculated_commitment} actual: #{commitment}"
+      end
 
       op_return = {
         bitcoin_transaction_id: tx.id,
@@ -97,10 +104,10 @@ class ImportRgbppCellJob < ApplicationJob
 
   def build_vout!(raw_tx, tx, out_index, cell_output)
     vout = raw_tx["vout"].find { _1["n"] == out_index }
-    raise ArgumentError, "Missing vout txid: #{raw_tx['txid']} index: #{out_index}" unless vout
+    raise MissingVoutError, "Missing vout txid: #{raw_tx['txid']} index: #{out_index}" unless vout
 
     address_hash = vout.dig("scriptPubKey", "address")
-    raise ArgumentError, "Missing vout address: #{raw_tx['txid']} index: #{out_index}" unless address_hash
+    raise MissingAddressError, "Missing vout address: #{raw_tx['txid']} index: #{out_index}" unless address_hash
 
     address = build_address!(address_hash, cell_output)
     {

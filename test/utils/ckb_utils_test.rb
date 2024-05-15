@@ -470,13 +470,24 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_nil info[:sybol]
   end
 
-  test "calculate commitment" do
-    data = JSON.parse('{"inputs":[{"previous_output":{"tx_hash":"0x047b6894a0b7a4d7a73b1503d1ae35c51fc5fa6306776dcf22b1fb3daaa32a29","index":"0x0"},"since":"0x0"}],"outputs":[{"lock":{"code_hash":"0xd5a4e241104041f6f12f11bddcf30bd7b2f818722f78353fde019f5081cd6b49","hash_type":"type","args":"0x010000000000000000000000000000000000000000000000000000000000000000000000"},"capacity":"0x0000000000000000","type":{"code_hash":"0xc4957f239eb3db9f5c5fb949e9dd99adbb8068b8ac7fe7ae49495486d5e5d235","hash_type":"type","args":"0x43094caf2f2bcdf6f5ab02c2de744936897278d558a2b6924db98a4f27d629e2"}},{"lock":{"code_hash":"0xd5a4e241104041f6f12f11bddcf30bd7b2f818722f78353fde019f5081cd6b49","hash_type":"type","args":"0x010000000000000000000000000000000000000000000000000000000000000000000000"},"capacity":"0x0000000000000000","type":{"code_hash":"0xc4957f239eb3db9f5c5fb949e9dd99adbb8068b8ac7fe7ae49495486d5e5d235","hash_type":"type","args":"0x43094caf2f2bcdf6f5ab02c2de744936897278d558a2b6924db98a4f27d629e2"}}],"outputs_data":["0x2c010000000000000000000000000000","0xbc020000000000000000000000000000"],"cell_deps":[]}')
-    transaction = CKB::Types::Transaction.from_h(data.with_indifferent_access)
-    CkbTransaction.stubs(:fetch_sdk_transaction).returns(transaction)
+  test "calculate commitment with single input and output including typescript" do
+    previous_cell_output = create(:cell_output,
+                                  tx_hash: "0xac2d42181b5dd221d50646f18a732c7777c6412d53ff5deec74dd83d9cf795ec",
+                                  cell_index: 0, ckb_transaction: create(:ckb_transaction),
+                                  lock_script: create(:lock_script), type_script: create(:type_script))
+    ckb_transaction = create(:ckb_transaction, tx_hash: "0x943d1fa105b305444b0ecc591fb582b5dc6c7d305d0cfdba728258f736a0c3db")
+    create(:cell_input, ckb_transaction:, previous_cell_output:)
+    lock_script = create(:lock_script,
+                         args: "0x010000009938f6302cb56668d968907fdba15a1a565c5d3ac7cddfb767dabaa8492f392c",
+                         code_hash: "0xbc6c568a1a0d0a09f6844dc9d74ddb4343c32143ff25f727c59edf4fb72d6936", hash_type: "type")
+    type_script = create(:type_script,
+                         args: "0x2ae639d6233f9b15545573b8e78f38ff7aa6c7bf8ef6460bf1f12d0a76c09c4e",
+                         code_hash: "0x50bd8d6680b8b9cf98b73f3c08faf8b2a21914311954118ad6609be6e78a1b95", hash_type: "data1")
+    cell_output = create(:cell_output, capacity: 25397999937, ckb_transaction:, lock_script:, type_script:)
+    cell_output.data = "0x00e87648170000000000000000000000"
 
-    commitment = CkbUtils.calculate_commitment("0x")
-    assert_equal commitment, "7cdecc8cc293d491a0cbf44e92feabfc29e79408c1d2f7547b334c42efe13131"
+    commitment = CkbUtils.calculate_commitment(ckb_transaction)
+    assert_equal commitment, "65dfd8e22a6d4aca3ba88fc2bcd6796baf73eb2cd5d45405cbbf43cf626c9e61"
   end
 
   test "parse btc time lock args" do
