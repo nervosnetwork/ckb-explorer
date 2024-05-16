@@ -13,7 +13,9 @@ module Api
 
         # utxo may be bound by multiple cells
         previous_vout = params.dig("consumed_by", "vin")
-        bitcoin_vouts = BitcoinVout.where(bitcoin_transaction_id: previous_vout["txid"], index: previous_vout["index"])
+        bitcoin_vouts = BitcoinVout.includes(:bitcoin_transaction).
+          where(bitcoin_transactions: { txid: previous_vout["txid"] },
+                bitcoin_vouts: { index: previous_vout["index"], op_return: false })
         bitcoin_vouts.each do |vout|
           next if vout.unbound? || vout.normal?
 
