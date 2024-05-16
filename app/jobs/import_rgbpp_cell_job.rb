@@ -60,7 +60,7 @@ class ImportRgbppCellJob < ApplicationJob
       tx_hash: raw_tx["hash"],
       time: raw_tx["time"],
       block_hash: raw_tx["blockhash"],
-      block_height: block_header&.dig("height") || 0,
+      block_height: block_header&.dig("result", "height") || 0,
     )
   end
 
