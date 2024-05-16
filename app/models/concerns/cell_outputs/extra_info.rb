@@ -152,7 +152,7 @@ module CellOutputs
           index: bitcoin_vout.index,
           address: bitcoin_vout.bitcoin_address&.address_hash,
           status: bitcoin_vout.status,
-          consumed_by_txid: bitcoin_vout.consumed_by&.txid,
+          consumed_txid: bitcoin_vout.consumed_by&.txid,
         )
       end
     end
