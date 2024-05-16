@@ -13,10 +13,12 @@ namespace :migration do
       compare_output(range, 0)
     end; nil
 
-    puts "redundant output txs"
+    puts "redundant output txs:"
     puts $redundant_output_txs.join(",")
+    puts "=============="
     puts "error IDS:"
     puts $error_ids.join(",")
+    puts "=============="
     puts "retry IDS:"
     puts $retry_ids.join(",")
     puts "done"
@@ -45,14 +47,14 @@ namespace :migration do
           unless input[:previous_output][:tx_hash] == "0x0000000000000000000000000000000000000000000000000000000000000000"
             result = CellOutput.where(tx_hash: input[:previous_output][:tx_hash], cell_index: input[:previous_output][:index].to_i(16), status: :dead).exists?
             unless result
-              $error_ids << number
+              $error_ids << r[:header][:number].to_i(16)
             end
           end
         end
         tx[:outputs].each_with_index do |output, index|
           db_output = CellOutput.find_by(tx_hash: tx[:hash], cell_index: index)
-          if db_output.nil? || db_output.capacity != output.capacity
-            $error_ids << number
+          if db_output.nil? || db_output.capacity != output[:capacity]
+            $error_ids << r[:header][:number].to_i(16)
           end
         end; nil
       end; nil
