@@ -1,5 +1,4 @@
 class ImportRgbppCellJob < ApplicationJob
-  class UnmatchedCommitmentError < StandardError; end
   class MissingVoutError < StandardError; end
   class MissingAddressError < StandardError; end
 
@@ -72,12 +71,6 @@ class ImportRgbppCellJob < ApplicationJob
       data = vout.dig("scriptPubKey", "hex")
       script_pubkey = Bitcoin::Script.parse_from_payload(data.htb)
       next unless script_pubkey.op_return?
-
-      commitment = script_pubkey.op_return_data.bth
-      calculated_commitment = CkbUtils.calculate_commitment(ckb_tx)
-      unless commitment == calculated_commitment
-        raise UnmatchedCommitmentError, "Invalid commitment expected: #{calculated_commitment} actual: #{commitment}"
-      end
 
       op_return = {
         bitcoin_transaction_id: tx.id,
