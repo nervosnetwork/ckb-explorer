@@ -24,7 +24,7 @@ module Bitcoin
       if (err = data["error"]).present?
         raise ArgumentError, err["message"]
       else
-        data["result"]
+        data
       end
     end
   end

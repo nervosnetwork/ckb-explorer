@@ -6,7 +6,7 @@ class BitcoinTransaction < ApplicationRecord
     tip_block_height =
       Rails.cache.fetch("tip_block_height", expires_in: 5.minutes) do
         chain_info = Bitcoin::Rpc.instance.getblockchaininfo
-        chain_info["headers"]
+        chain_info.dig("result", "headers")
       rescue StandardError => e
         Rails.logger.error "get tip block faild: #{e.message}"
         nil
@@ -26,8 +26,10 @@ class BitcoinTransaction < ApplicationRecord
   def refresh_block_height!
     rpc = Bitcoin::Rpc.instance
     raw_transaction = rpc.getrawtransaction(txid, 2)
-    block_header = rpc.getblockheader(raw_transaction["blockhash"])
-    update(block_hash: raw_transaction["blockhash"], block_height: block_header["height"])
+    block_hash = raw_transaction.dig("result", "blockhash")
+    block_header = rpc.getblockheader(block_hash)
+    block_height = block_header.dig("result", "height")
+    update(block_hash:, block_height:)
   rescue StandardError => e
     Rails.logger.error "refresh block height error: #{e.message}"
   end
