@@ -48,6 +48,9 @@ class SuggestQuery
     if QueryKeyUtils.valid_address?(query_key) && (address = find_cached_address).present?
       results[:data] << address.serializable_hash[:data]
     end
+    if (address = find_bitcoin_address).present?
+      results[:data] << address.serializable_hash[:data]
+    end
     if (udts = find_udts_by_name_or_symbol).present?
       results[:data].concat(udts.serializable_hash[:data])
     end
@@ -127,5 +130,10 @@ class SuggestQuery
   def find_nft_collections_by_name
     token_collections = TokenCollection.where("name LIKE :query_key", query_key: "%#{query_key}%")
     TokenCollectionSerializer.new(token_collections) if token_collections.present?
+  end
+
+  def find_bitcoin_address
+    bitcoin_address = BitcoinAddress.find_by(address_hash: query_key)
+    BitcoinAddressSerializer.new(bitcoin_address) if bitcoin_address.present?
   end
 end
