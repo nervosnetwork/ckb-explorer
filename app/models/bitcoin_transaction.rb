@@ -19,7 +19,7 @@ class BitcoinTransaction < ApplicationRecord
   end
 
   def ckb_transaction_hash
-    ckb_transaction = bitcoin_vouts&.take&.ckb_transaction
+    ckb_transaction = bitcoin_transfers&.take&.ckb_transaction
     return ckb_transaction.tx_hash if ckb_transaction
   end
 
