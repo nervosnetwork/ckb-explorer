@@ -8,8 +8,8 @@ module Api
         )
         head :not_found and return unless cell_output
 
-        consumed_by_txid = params.dig("consumed_by", "txid")
-        consumed_by = find_consumed_by_transaction(consumed_by_txid)
+        consumed_txid = params.dig("consumed_by", "txid")
+        consumed_by = find_consumed_by_transaction(consumed_txid)
 
         # utxo may be bound by multiple cells
         previous_vout = params.dig("consumed_by", "vin")
