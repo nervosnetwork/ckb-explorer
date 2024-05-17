@@ -1,4 +1,7 @@
 class ImportRgbppCellJob < ApplicationJob
+  class MissingVoutError < StandardError; end
+  class MissingAddressError < StandardError; end
+
   queue_as :bitcoin
 
   def perform(cell_id)
@@ -30,16 +33,7 @@ class ImportRgbppCellJob < ApplicationJob
         )
       end
       # build vin
-      cell_input = CellInput.find_by(previous_cell_output_id: cell_id)
-      previous_vout = BitcoinVout.find_by(cell_output_id: cell_id)
-      if cell_input && previous_vout
-        BitcoinVin.create_with(
-          previous_bitcoin_vout_id: previous_vout.id,
-        ).find_or_create_by!(
-          ckb_transaction_id: cell_input.ckb_transaction_id,
-          cell_input_id: cell_input.id,
-        )
-      end
+      build_vin!(cell_id, tx)
       # build transfer
       BitcoinTransfer.create_with(
         bitcoin_transaction_id: tx.id,
@@ -49,6 +43,8 @@ class ImportRgbppCellJob < ApplicationJob
         cell_output_id: cell_id,
       )
     end
+  rescue StandardError => e
+    Rails.logger.error(e.message)
   end
 
   def build_transaction!(raw_tx)
@@ -64,7 +60,7 @@ class ImportRgbppCellJob < ApplicationJob
       tx_hash: raw_tx["hash"],
       time: raw_tx["time"],
       block_hash: raw_tx["blockhash"],
-      block_height: block_header&.dig("height") || 0,
+      block_height: block_header&.dig("result", "height") || 0,
     )
   end
 
@@ -75,11 +71,6 @@ class ImportRgbppCellJob < ApplicationJob
       data = vout.dig("scriptPubKey", "hex")
       script_pubkey = Bitcoin::Script.parse_from_payload(data.htb)
       next unless script_pubkey.op_return?
-
-      # commiment = script_pubkey.op_return_data.bth
-      # unless commiment == CkbUtils.calculate_commitment(ckb_tx.tx_hash)
-      #   raise ArgumentError, "Invalid commitment found in the CKB VirtualTx"
-      # end
 
       op_return = {
         bitcoin_transaction_id: tx.id,
@@ -106,10 +97,10 @@ class ImportRgbppCellJob < ApplicationJob
 
   def build_vout!(raw_tx, tx, out_index, cell_output)
     vout = raw_tx["vout"].find { _1["n"] == out_index }
-    raise ArgumentError, "Missing vout txid: #{raw_tx['txid']} index: #{out_index}" unless vout
+    raise MissingVoutError, "Missing vout txid: #{raw_tx['txid']} index: #{out_index}" unless vout
 
     address_hash = vout.dig("scriptPubKey", "address")
-    raise ArgumentError, "Missing vout address: #{raw_tx['txid']} index: #{out_index}" unless address_hash
+    raise MissingAddressError, "Missing vout address: #{raw_tx['txid']} index: #{out_index}" unless address_hash
 
     address = build_address!(address_hash, cell_output)
     {
@@ -123,6 +114,25 @@ class ImportRgbppCellJob < ApplicationJob
       cell_output_id: cell_output.id,
       address_id: cell_output.address_id,
     }
+  end
+
+  def build_vin!(cell_id, tx)
+    cell_input = CellInput.find_by(previous_cell_output_id: cell_id)
+    previous_vout = BitcoinVout.find_by(cell_output_id: cell_id)
+    if cell_input && previous_vout
+      BitcoinVin.create_with(
+        previous_bitcoin_vout_id: previous_vout.id,
+      ).find_or_create_by!(
+        ckb_transaction_id: cell_input.ckb_transaction_id,
+        cell_input_id: cell_input.id,
+      )
+
+      previous_cell_output = cell_input.output
+      # check whether previous_cell_output utxo consumed
+      if previous_cell_output.dead? && previous_vout.binding?
+        previous_vout.update!(status: "normal", consumed_by_id: tx.id)
+      end
+    end
   end
 
   def build_address!(address_hash, cell_output)

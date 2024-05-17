@@ -27,8 +27,8 @@ class BitcoinTransactionDetectWorker
       @rgbpp_cell_ids.each { ImportRgbppCellJob.perform_now(_1) }
       # import btc time cells
       @btc_time_cell_ids.each { ImportBtcTimeCellJob.perform_now(_1) }
-      # update tags
-      update_transaction_tags!
+      # update bitcoin annotation
+      build_bitcoin_annotations!
     end
   end
 
@@ -88,15 +88,50 @@ class BitcoinTransactionDetectWorker
     Rails.logger.error "cache raw transactions(#{@txids.uniq}) failed: #{e.message}"
   end
 
-  def update_transaction_tags!
+  def build_bitcoin_annotations!
+    annotations = []
+
     @block.ckb_transactions.each do |transaction|
-      transaction.tags ||= []
+      next unless BitcoinTransfer.exists?(ckb_transaction_id: transaction.id)
 
-      cell_output_ids = transaction.input_cell_ids + transaction.cell_output_ids
-      lock_types = BitcoinTransfer.where(cell_output_id: cell_output_ids).pluck(:lock_type)
-      transaction.tags += lock_types.compact.uniq
-
-      transaction.update!(tags: transaction.tags.uniq)
+      leap_direction, transfer_step = annotation_workflow_attributes(transaction)
+      tags = annotation_tags(transaction)
+      annotations << { ckb_transaction_id: transaction.id, leap_direction:, transfer_step:, tags: }
+      BitcoinAnnotation.upsert_all(annotations, unique_by: [:ckb_transaction_id]) if annotations.present?
     end
+  end
+
+  def annotation_workflow_attributes(transaction)
+    sort_types = ->(lock_types) {
+      lock_types.sort! do |a, b|
+        if a && b
+          a <=> b
+        else
+          a ? -1 : 1
+        end
+      end
+    }
+
+    input_lock_types = transaction.input_cells.map { _1.bitcoin_transfer&.lock_type }.uniq
+    sort_types.call(input_lock_types)
+
+    output_lock_types = transaction.cell_outputs.map { _1.bitcoin_transfer&.lock_type }.uniq
+    sort_types.call(output_lock_types)
+
+    if input_lock_types == ["rgbpp"]
+      if output_lock_types == ["rgbpp"]
+        ["withinBTC", "isomorphic"]
+      elsif [["btc_time", "rgbpp"], ["btc_time"]].include?(output_lock_types)
+        ["in", "isomorphic"]
+      end
+    elsif input_lock_types == ["btc_time"]
+      ["in", "unlock"]
+    end
+  end
+
+  def annotation_tags(transaction)
+    cell_output_ids = transaction.input_cell_ids + transaction.cell_output_ids
+    lock_types = BitcoinTransfer.where(cell_output_id: cell_output_ids).pluck(:lock_type)
+    lock_types.compact.uniq
   end
 end

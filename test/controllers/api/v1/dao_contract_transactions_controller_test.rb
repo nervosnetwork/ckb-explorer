@@ -129,7 +129,7 @@ module Api
         assert_equal %w(block_number transaction_hash block_timestamp transaction_fee version bytes display_inputs
                         display_outputs is_cellbase income witnesses cell_deps header_deps tx_status detailed_message
                         largest_tx largest_tx_in_epoch cycles max_cycles_in_epoch max_cycles is_rgb_transaction rgb_txid
-                        is_btc_time_lock).sort, response_tx_transaction["attributes"].keys.sort
+                        is_btc_time_lock rgb_transfer_step).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return error object when given tx hash corresponds to a normal transaction" do

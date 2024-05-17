@@ -695,36 +695,38 @@ class CkbUtils
     [txid, out_index]
   end
 
-  # https://github.com/ckb-cell/rgbpp-sdk/blob/develop/packages/ckb/src/utils/rgbpp.ts#L58-L87
-  def self.calculate_commitment(tx_hash)
-    transaction = CkbTransaction.fetch_sdk_transaction(tx_hash)
+  # https://github.com/ckb-cell/rgbpp-sdk/blob/develop/packages/ckb/src/utils/rgbpp.ts
+  def self.calculate_commitment(transaction)
+    inputs = transaction.input_cells.select { _1.type_script.present? }
+    outputs = transaction.cell_outputs.select { _1.type_script.present? }
 
     hash = Digest::SHA256.new
     hash.update("RGB++")
     version = [0, 0].pack("C*")
     hash.update(version)
 
-    if transaction.inputs.length > MAX_RGBPP_CELL_NUM || transaction.outputs.length > MAX_RGBPP_CELL_NUM
+    if inputs.length > MAX_RGBPP_CELL_NUM || outputs.length > MAX_RGBPP_CELL_NUM
       raise ArgumentError, "The inputs or outputs length of RGB++ CKB virtual tx cannot be greater than 255"
     end
 
-    hash.update([transaction.inputs.length, transaction.outputs.length].pack("C*"))
+    hash.update([inputs.length, outputs.length].pack("C*"))
 
-    transaction.inputs.each do |input|
-      out_point = input.previous_output
+    inputs.each do |input|
+      out_point = CKB::Types::OutPoint.new(tx_hash: input.tx_hash, index: input.cell_index)
       binary_out_point = CKB::Utils.hex_to_bin(CKB::Serializers::OutPointSerializer.new(out_point).serialize)
       hash.update(binary_out_point.bytes.pack("C*"))
     end
 
-    transaction.outputs.each_with_index do |output, index|
+    outputs.each do |output|
       # Before a Bitcoin transaction is confirmed on the blockchain, its transaction ID (txid) is uncertain.
       # Therefore, when passing parameters to `calculateCommitment`, manually replace the txid part in the lock args with "0x01000....0000".
-      output.lock.args = "0x010000000000000000000000000000000000000000000000000000000000000000000000"
+      new_output = CKB::Types::Output.from_h(output.to_raw)
+      new_output.lock.args = new_output.lock.args.slice(0, 10) + "0" * 64
 
-      binary_output = CKB::Utils.hex_to_bin(CKB::Serializers::OutputSerializer.new(output).serialize)
+      binary_output = CKB::Utils.hex_to_bin(CKB::Serializers::OutputSerializer.new(new_output).serialize)
       hash.update(binary_output.bytes.pack("C*"))
 
-      output_data = transaction.outputs_data[index]
+      output_data = output.data
       output_data_serializer = CKB::Serializers::OutputDataSerializer.new(output_data)
       output_data_length = output_data_serializer.as_json["items_count"]
       binary_output_data_length = CKB::Utils.hex_to_bin("0x#{[output_data_length].pack('V').unpack1('H*')}")

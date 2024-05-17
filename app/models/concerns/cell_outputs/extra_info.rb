@@ -151,6 +151,8 @@ module CellOutputs
           txid: bitcoin_vout.bitcoin_transaction.txid,
           index: bitcoin_vout.index,
           address: bitcoin_vout.bitcoin_address&.address_hash,
+          status: bitcoin_vout.status,
+          consumed_txid: bitcoin_vout.consumed_by&.txid,
         )
       end
     end
