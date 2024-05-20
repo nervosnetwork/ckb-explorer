@@ -36,6 +36,7 @@ class TokenCollection < ApplicationRecord
       holders_count:,
       h24_ckb_transactions_count:,
       type_script: type_script&.as_json,
+      created_timestamp: cell&.block_timestamp,
       sn:,
     }
   end
