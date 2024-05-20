@@ -123,12 +123,12 @@ class SuggestQuery
 
   def find_udts_by_name_or_symbol
     udts = Udt.where(udt_type: %i[sudt xudt omiga_inscription], published: true).
-      where("full_name LIKE :query_key OR symbol LIKE :query_key", query_key: "%#{query_key}%")
+      where("LOWER(full_name) LIKE LOWER(:query_key) OR LOWER(symbol) LIKE LOWER(:query_key)", query_key: "%#{query_key}%")
     UdtSerializer.new(udts) if udts.present?
   end
 
   def find_nft_collections_by_name
-    token_collections = TokenCollection.where("name LIKE :query_key", query_key: "%#{query_key}%")
+    token_collections = TokenCollection.where("LOWER(name) LIKE LOWER(:query_key)", query_key: "%#{query_key}%")
     TokenCollectionSerializer.new(token_collections) if token_collections.present?
   end
 
