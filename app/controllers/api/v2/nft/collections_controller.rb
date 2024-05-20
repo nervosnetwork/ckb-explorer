@@ -11,16 +11,16 @@ module Api
 
           render json: {
             data: collections,
-            pagination: pagy_metadata(pagy)
+            pagination: pagy_metadata(pagy),
           }
         end
 
         def show
-          if /\A\d+\z/.match?(params[:id])
-            collection = TokenCollection.find params[:id]
-          else
-            collection = TokenCollection.find_by_sn params[:id]
-          end
+          collection = if /\A\d+\z/.match?(params[:id])
+                         TokenCollection.find params[:id]
+                       else
+                         TokenCollection.find_by_sn params[:id]
+                       end
 
           if collection
             render json: collection
@@ -38,14 +38,18 @@ module Api
             when "transactions" then "h24_ckb_transactions_count"
             when "holder" then "holders_count"
             when "minted" then "items_count"
+            when "created_time" then "block_timestamp"
             else "id"
             end
 
           if order.nil? || !order.match?(/^(asc|desc)$/i)
             order = "asc"
           end
-
-          records.order("#{sort} #{order}")
+          if sort == "block_timestamp"
+            TokenCollection.left_joins(:cell).order("cell_outputs.#{sort} #{order}")
+          else
+            records.order("#{sort} #{order}")
+          end
         end
       end
     end
