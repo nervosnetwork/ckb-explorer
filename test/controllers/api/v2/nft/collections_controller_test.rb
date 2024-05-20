@@ -22,7 +22,7 @@ module Api
         tc1 = create :token_collection, name: "token1", cell_id: cell1.id
         tc2 = create :token_collection, name: "token2"
         _tc3 = create :token_collection, name: "token3", cell_id: cell3.id
-        get api_v2_nft_collections_url, params: { sort: "created_time.asc" }
+        get api_v2_nft_collections_url, params: { sort: "timestamp.asc" }
         assert_response :success
         assert_equal tc1.id, json["data"].first["id"]
         assert_equal tc2.id, json["data"].last["id"]
@@ -40,11 +40,11 @@ module Api
         tc2 = create :token_collection, name: "token2"
         _tc3 = create :token_collection, name: "token3", cell_id: cell3.id
 
-        get api_v2_nft_collections_url, params: { sort: "created_time.desc" }
+        get api_v2_nft_collections_url, params: { sort: "timestamp.desc" }
         assert_response :success
         assert_equal tc2.id, json["data"].first["id"]
         assert_equal tc1.id, json["data"].last["id"]
-        assert_equal timestamp, json["data"].last["created_timestamp"]
+        assert_equal timestamp, json["data"].last["timestamp"]
       end
 
       test "should get show" do
