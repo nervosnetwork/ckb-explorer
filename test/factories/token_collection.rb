@@ -13,11 +13,11 @@ FactoryBot.define do
     trait :with_items do
       after(:create) do |collection, _evaluator|
         10.times do |i|
-          create(:token_item, token_id: i, collection: collection)
+          create(:token_item, token_id: i, collection:)
         end
 
         holders_count = collection.items.normal.count("distinct owner_id")
-        collection.update(items_count: 10, holders_count: holders_count)
+        collection.update(items_count: 10, holders_count:)
       end
     end
   end
