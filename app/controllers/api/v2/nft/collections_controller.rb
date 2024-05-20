@@ -38,7 +38,7 @@ module Api
             when "transactions" then "h24_ckb_transactions_count"
             when "holder" then "holders_count"
             when "minted" then "items_count"
-            when "created_time" then "block_timestamp"
+            when "timestamp" then "block_timestamp"
             else "id"
             end
 
