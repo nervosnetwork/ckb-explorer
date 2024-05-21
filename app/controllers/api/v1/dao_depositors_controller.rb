@@ -6,6 +6,14 @@ module Api
 
         render json: DaoDepositorSerializer.new(addresses)
       end
+
+      def download_csv
+        args = params.permit(:start_date, :end_date, :start_number, :end_number)
+        file = CsvExportable::ExportDaoDepositorsJob.perform_now(args.to_h)
+
+        send_data file, type: "text/csv; charset=utf-8; header=present",
+                        disposition: "attachment;filename=dao_depositors.csv"
+      end
     end
   end
 end

@@ -17,18 +17,14 @@ Rails.application.routes.draw do
         resources :stats, only: :show
       end
       resources :blocks, only: %i(index show) do
-        collection do
-          get :download_csv
-        end
+        get :download_csv, on: :collection
       end
       resources :address_dao_transactions, only: :show
       resources :block_transactions, only: :show
       resources :addresses, only: :show
-      get "/transactions/:id", to: "ckb_transactions#show",
-                               as: "ckb_transaction"
+      get "/transactions/:id", to: "ckb_transactions#show", as: "ckb_transaction"
       get "/transactions", to: "ckb_transactions#index", as: "ckb_transactions"
-      post "/transactions/query", to: "ckb_transactions#query",
-                                  as: "query_ckb_transactions"
+      post "/transactions/query", to: "ckb_transactions#query", as: "query_ckb_transactions"
       resources :cell_input_lock_scripts, only: :show
       resources :cell_input_type_scripts, only: :show
       resources :cell_input_data, only: :show
@@ -41,34 +37,30 @@ Rails.application.routes.draw do
       resources :statistics, only: %i(index show)
       resources :nets, only: %i(index show)
       resources :statistic_info_charts, only: :index
-      resources :contract_transactions, only: :show
+      resources :contract_transactions, only: :show do
+        get :download_csv, on: :collection
+      end
       resources :contracts, only: :show
       resources :dao_contract_transactions, only: :show
       resources :address_transactions, only: :show do
-        collection do
-          get :download_csv
-        end
+        get :download_csv, on: :collection
       end
-      resources :dao_depositors, only: :index
+      resources :dao_depositors, only: :index do
+        get :download_csv, on: :collection
+      end
       resources :daily_statistics, only: :show
       resources :block_statistics, only: :show ## TODO: unused route
       resources :epoch_statistics, only: :show
       resources :market_data, only: %i[index show]
       resources :udts, only: %i(index show update) do
-        collection do
-          get :download_csv
-        end
+        get :download_csv, on: :collection
       end
       resources :xudts, only: %i(index show) do
-        collection do
-          get :download_csv
-          get :snapshot
-        end
+        get :download_csv, on: :collection
+        get :snapshot, on: :collection
       end
       resources :omiga_inscriptions, only: %i(index show) do
-        collection do
-          get :download_csv
-        end
+        get :download_csv, on: :collection
       end
       resources :udt_transactions, only: :show
       resources :address_udt_transactions, only: :show
@@ -80,6 +72,5 @@ Rails.application.routes.draw do
     end
   end
   draw "v2"
-  match "/:anything" => "errors#routing_error", via: :all,
-        constraints: { anything: /.*/ }
+  match "/:anything" => "errors#routing_error", via: :all, constraints: { anything: /.*/ }
 end
