@@ -75,7 +75,7 @@ class FetchCotaWorker
 
         page += 1
       end
-    CellOutput.where(tx_hash: mint_tx["tx_hash"]).first&.id
+    CellOutput.where(tx_hash: mint_tx.first.fetch("tx_hash")).first&.id
   rescue StandardError => e
     Rails.logger.error "cota_id: #{cota_id}, detail: #{e.inspect}"
     nil
