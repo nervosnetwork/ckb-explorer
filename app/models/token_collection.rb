@@ -1,4 +1,6 @@
 class TokenCollection < ApplicationRecord
+  enum standard: { cota: "cota", spore: "spore", m_nft: "m_nft", nrc721: "nrc721" }
+
   has_many :items, class_name: "TokenItem", foreign_key: :collection_id
   belongs_to :creator, class_name: "Address", optional: true
   belongs_to :cell, class_name: "CellOutput", optional: true
