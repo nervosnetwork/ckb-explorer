@@ -62,19 +62,26 @@ class FetchCotaWorker
     i
   end
 
-  private
-
   def fetch_mint_first_nft_cell_id(cota_id)
-    res = CotaAggregator.instance.get_history_transactions(cota_id:, index: 0, page: 0, page_size: 10)
+    page = 0
     mint_tx =
-      res["transactions"].filter do |tx|
-        tx["tx_type"] == "mint"
-      end.first
+      loop do
+        res = CotaAggregator.instance.get_history_transactions(cota_id:, token_index: 0, page:, page_size: 20)
+        mint_tx =
+          res["transactions"].filter do |tx|
+            tx["tx_type"] == "mint"
+          end
+        break mint_tx if mint_tx.length == 1
+
+        page += 1
+      end
     CellOutput.where(tx_hash: mint_tx["tx_hash"]).first&.id
   rescue StandardError => e
     Rails.logger.error "cota_id: #{cota_id}, detail: #{e.inspect}"
     nil
   end
+
+  private
 
   def cota_syning?
     res = CotaAggregator.instance.get_aggregator_info
