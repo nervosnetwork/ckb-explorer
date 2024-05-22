@@ -3,11 +3,10 @@ name: Deploy to staging
 on:
   push:
     branches:
-      - develop
       - staging
     tags:
       - staging
-      - '*-rc*'
+      - "*-rc*"
 jobs:
   build:
     uses: ./.github/workflows/build.yml
@@ -16,7 +15,14 @@ jobs:
     needs: build
     strategy:
       matrix:
-        workload: [ckb-explorer-api, ckb-explorer-poolsyncer, ckb-explorer-scheduler, ckb-explorer-blocksyncer, ckb-explorer-worker]
+        workload:
+          [
+            ckb-explorer-api,
+            ckb-explorer-poolsyncer,
+            ckb-explorer-scheduler,
+            ckb-explorer-blocksyncer,
+            ckb-explorer-worker,
+          ]
     uses: ./.github/workflows/update-image.yml
     with:
       k8s-namespace: staging
