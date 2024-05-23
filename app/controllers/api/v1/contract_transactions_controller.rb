@@ -37,6 +37,14 @@ module Api
         end
       end
 
+      def download_csv
+        args = params.permit(:start_date, :end_date, :start_number, :end_number)
+        file = CsvExportable::ExportContractTransactionsJob.perform_now(args.to_h)
+
+        send_data file, type: "text/csv; charset=utf-8; header=present",
+                        disposition: "attachment;filename=contract_transactions.csv"
+      end
+
       private
 
       def pagination_params

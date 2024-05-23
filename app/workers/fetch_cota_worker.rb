@@ -1,6 +1,6 @@
 class FetchCotaWorker
   include Sidekiq::Worker
-  def perform(block_number, check_aggregator_info=true)
+  def perform(block_number, check_aggregator_info = true)
     # synchronize historical data, ignore cota aggregator info check
     if check_aggregator_info && !cota_syning?
       raise "COTA Sync Failed!!!"
@@ -17,17 +17,17 @@ class FetchCotaWorker
       item = find_or_create_item(collection, t)
       action =
         case (t["type"] || t["tx_type"]) # compatible with old field name
-             when "mint"
-               "mint"
-             when "transfer"
-               "normal"
+        when "mint"
+          "mint"
+        when "transfer"
+          "normal"
         end
       tx = CkbTransaction.find_by tx_hash: t["tx_hash"]
       tt = TokenTransfer.find_or_initialize_by item_id: item.id, transaction_id: tx.id
       unless tt.persisted?
         from = Address.find_or_create_by_address_hash(t["from"])
         to = Address.find_or_create_by_address_hash(t["to"])
-        tt.update!(from: from, to: to, action: action)
+        tt.update!(from:, to:, action:)
       end
     end
   end
@@ -39,7 +39,7 @@ class FetchCotaWorker
     unless c.persisted?
       info = CotaAggregator.instance.get_define_info(cota_id)
       issuer = CotaAggregator.instance.get_issuer_info_by_cota_id(cota_id)
-      block = Block.find_by number: t["block_number"]
+      cell_id = fetch_mint_first_nft_cell_id(cota_id)
 
       addr = Address.cached_find issuer["lock_hash"]
       c.update(
@@ -47,7 +47,8 @@ class FetchCotaWorker
         symbol: info["symbol"],
         description: info["description"],
         creator_id: addr.id,
-        icon_url: info["image"]
+        icon_url: info["image"],
+        cell_id:,
       )
       c.save!
     end
@@ -59,6 +60,25 @@ class FetchCotaWorker
     i = collection.items.find_or_initialize_by(token_id: t["token_index"].hex)
     i.update! owner: to
     i
+  end
+
+  def fetch_mint_first_nft_cell_id(cota_id)
+    page = 0
+    mint_tx =
+      loop do
+        res = CotaAggregator.instance.get_history_transactions(cota_id:, token_index: 0, page:, page_size: 20)
+        mint_tx =
+          res["transactions"].filter do |tx|
+            tx["tx_type"] == "mint"
+          end
+        break mint_tx if mint_tx.length == 1
+
+        page += 1
+      end
+    CellOutput.where(tx_hash: mint_tx.first.fetch("tx_hash")).first&.id
+  rescue StandardError => e
+    Rails.logger.error "cota_id: #{cota_id}, detail: #{e.inspect}"
+    nil
   end
 
   private

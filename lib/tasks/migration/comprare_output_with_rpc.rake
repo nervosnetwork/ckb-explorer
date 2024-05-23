@@ -53,7 +53,7 @@ namespace :migration do
         end
         tx[:outputs].each_with_index do |output, index|
           db_output = CellOutput.find_by(tx_hash: tx[:hash], cell_index: index)
-          if db_output.nil? || db_output.capacity != output[:capacity]
+          if db_output.nil? || db_output.capacity != output[:capacity].to_i(16)
             $error_ids << r[:header][:number].to_i(16)
           end
         end; nil
