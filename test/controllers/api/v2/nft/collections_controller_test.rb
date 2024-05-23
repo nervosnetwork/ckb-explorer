@@ -37,12 +37,12 @@ module Api
         cell1 = create(:cell_output, block_timestamp: timestamp, block: block1, ckb_transaction: transaction1)
         cell3 = create(:cell_output, block_timestamp: 1.day.ago.to_i * 1000, block: block3, ckb_transaction: transaction3)
         tc1 = create :token_collection, name: "token1", cell_id: cell1.id
-        tc2 = create :token_collection, name: "token2"
-        _tc3 = create :token_collection, name: "token3", cell_id: cell3.id
+        _tc2 = create :token_collection, name: "token2", standard: "cota"
+        tc3 = create :token_collection, name: "token3", cell_id: cell3.id
 
-        get api_v2_nft_collections_url, params: { sort: "timestamp.desc" }
+        get api_v2_nft_collections_url, params: { sort: "timestamp.desc", type: "nrc721" }
         assert_response :success
-        assert_equal tc2.id, json["data"].first["id"]
+        assert_equal tc3.id, json["data"].first["id"]
         assert_equal tc1.id, json["data"].last["id"]
         assert_equal timestamp, json["data"].last["timestamp"]
       end
