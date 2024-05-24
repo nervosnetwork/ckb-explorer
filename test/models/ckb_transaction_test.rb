@@ -106,7 +106,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                              :with_multiple_inputs_and_outputs)
     expected_attributes = %i(
       id capacity occupied_capacity address_hash status consumed_tx_hash
-      cell_type
+      cell_type generated_tx_hash cell_index
     ).sort
 
     assert_equal [expected_attributes],
@@ -120,7 +120,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
                              is_cellbase: true, block:)
     expected_attributes = %i(
       id capacity occupied_capacity address_hash target_block_number
-      base_reward commit_reward proposal_reward secondary_reward status consumed_tx_hash
+      base_reward commit_reward proposal_reward secondary_reward status
+      consumed_tx_hash generated_tx_hash cell_index
     )
 
     assert_equal [expected_attributes],
@@ -309,8 +310,17 @@ class CkbTransactionTest < ActiveSupport::TestCase
       cell_type
     ).sort
     consumed_tx_hash = dao_output.live? ? nil : dao_output.consumed_by.tx_hash
-    expected_display_output = CkbUtils.hash_value_to_s(id: dao_output.id,
-                                                       capacity: dao_output.capacity, occupied_capacity: dao_output.occupied_capacity, address_hash: dao_output.address_hash, status: dao_output.status, consumed_tx_hash:, cell_type: dao_output.cell_type).sort
+    expected_display_output = CkbUtils.hash_value_to_s(
+      id: dao_output.id,
+      capacity: dao_output.capacity,
+      occupied_capacity: dao_output.occupied_capacity,
+      address_hash: dao_output.address_hash,
+      status: dao_output.status,
+      consumed_tx_hash:,
+      cell_type: dao_output.cell_type,
+      generated_tx_hash: dao_output.tx_hash,
+      cell_index: dao_output.cell_index,
+    ).sort
     display_outputs = ckb_transaction.display_outputs
     assert_equal expected_attributes - display_outputs.first.keys, []
     assert_equal expected_display_output, display_outputs.first.sort
@@ -393,6 +403,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
       status: udt_cell_output.status,
       consumed_tx_hash: nil,
       cell_type: udt_cell_output.cell_type,
+      generated_tx_hash: udt_cell_output.tx_hash,
+      cell_index: udt_cell_output.cell_index,
       extra_info: udt_cell_output.udt_info,
     )
     o = udt_output_transaction.display_outputs.first
@@ -573,6 +585,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
       consumed_tx_hash: nil,
       cell_type: m_nft_cell_output.cell_type,
       extra_info: m_nft_cell_output.m_nft_info,
+      generated_tx_hash: m_nft_cell_output.tx_hash,
+      cell_index: m_nft_cell_output.cell_index,
     )
     o = m_nft_output_transaction.display_outputs.first
     assert_equal expected_attributes - o.keys, []
@@ -601,6 +615,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
       status: m_nft_cell_output.status,
       consumed_tx_hash: nil,
       cell_type: m_nft_cell_output.cell_type,
+      generated_tx_hash: m_nft_cell_output.tx_hash,
+      cell_index: m_nft_cell_output.cell_index,
       extra_info: m_nft_cell_output.m_nft_info,
     )
     o = m_nft_output_transaction.display_outputs.first
@@ -655,6 +671,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
       status: m_nft_cell_output.status,
       consumed_tx_hash: nil,
       cell_type: m_nft_cell_output.cell_type,
+      generated_tx_hash: m_nft_cell_output.tx_hash,
+      cell_index: m_nft_cell_output.cell_index,
       extra_info: m_nft_cell_output.m_nft_info,
     )
     display_outputs = m_nft_output_transaction.display_outputs
