@@ -57,6 +57,8 @@ module CkbTransactions
             secondary_reward: cellbase.secondary_reward,
             status: output.status,
             consumed_tx_hash:,
+            generated_tx_hash: output.tx_hash,
+            cell_index: output.cell_index,
           )
         end
       end
@@ -134,6 +136,8 @@ module CkbTransactions
             status: output.status,
             consumed_tx_hash:,
             cell_type: output.cell_type,
+            generated_tx_hash: output.tx_hash,
+            cell_index: output.cell_index,
           }
 
           display_output.merge!(attributes_for_udt_cell(output)) if output.udt?

@@ -1489,8 +1489,21 @@ module CkbSync
         output = local_ckb_transactions.first.outputs.order(:id).first
         cellbase = Cellbase.new(local_block)
         expected_display_outputs = [
-          CkbUtils.hash_value_to_s(id: output.id, capacity: output.capacity, occupied_capacity: output.occupied_capacity,
-                                   address_hash: output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: "live", consumed_tx_hash: nil),
+          CkbUtils.hash_value_to_s(
+            id: output.id,
+            capacity: output.capacity,
+            occupied_capacity: output.occupied_capacity,
+            address_hash: output.address_hash,
+            target_block_number: cellbase.target_block_number,
+            base_reward: cellbase.base_reward,
+            commit_reward: cellbase.commit_reward,
+            proposal_reward: cellbase.proposal_reward,
+            secondary_reward: cellbase.secondary_reward,
+            status: "live",
+            consumed_tx_hash: nil,
+            generated_tx_hash: output.tx_hash,
+            cell_index: output.cell_index,
+          ),
         ]
 
         assert_equal expected_display_outputs, local_block_cell_outputs
@@ -1533,7 +1546,10 @@ module CkbSync
           block.cellbase.cell_outputs.order(:id).map do |cell_output|
             consumed_tx_hash = cell_output.live? ? nil : cell_output.consumed_by.tx_hash
             CkbUtils.hash_value_to_s(id: cell_output.id, capacity: cell_output.capacity, occupied_capacity: cell_output.occupied_capacity,
-                                     address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: cell_output.status, consumed_tx_hash:)
+                                     address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number,
+                                     base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward,
+                                     secondary_reward: cellbase.secondary_reward, status: cell_output.status, consumed_tx_hash:, generated_tx_hash: cell_output.tx_hash,
+                                     cell_index: cell_output.cell_index)
           end
         assert_equal expected_cellbase_display_outputs,
                      block.cellbase.display_outputs
@@ -1577,7 +1593,11 @@ module CkbSync
           cell_output = block.cellbase.cell_outputs.first
           expected_cellbase_display_outputs = [
             CkbUtils.hash_value_to_s(id: cell_output.id,
-                                     capacity: cell_output.capacity, occupied_capacity: cell_output.occupied_capacity, address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number, base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward, secondary_reward: cellbase.secondary_reward, status: "live", consumed_tx_hash: nil),
+                                     capacity: cell_output.capacity, occupied_capacity: cell_output.occupied_capacity,
+                                     address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number,
+                                     base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward,
+                                     secondary_reward: cellbase.secondary_reward, status: "live", consumed_tx_hash: nil, generated_tx_hash: cell_output.tx_hash,
+                                     cell_index: cell_output.cell_index),
           ]
 
           assert_equal expected_cellbase_display_outputs,
