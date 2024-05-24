@@ -67,16 +67,25 @@ module Api
           bitcoin_vouts: { ckb_transaction_id: @ckb_transaction.id },
         )
         op_return = @ckb_transaction.bitcoin_vouts.find_by(op_return: true)
+
         if op_return && bitcoin_transaction
           txid = bitcoin_transaction.txid
           commitment = op_return.commitment
           confirmations = bitcoin_transaction.confirmations
           leap_direction = @ckb_transaction.leap_direction
           transfer_step = @ckb_transaction.transfer_step
+
+          calculated_commitment = begin
+            CkbUtils.calculate_commitment(@ckb_transaction)
+          rescue StandardError
+            nil
+          end
+          commitment_verified = calculated_commitment == commitment
         end
 
         render json: {
-          data: { txid:, confirmations:, commitment:, leap_direction:, transfer_step:, transfers: },
+          data: { txid:, confirmations:, commitment:, leap_direction:,
+                  transfer_step:, transfers:, commitment_verified: },
         }
       end
 

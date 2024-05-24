@@ -173,6 +173,7 @@ module Api
             "udt_type" => udt_account.udt_type,
             "display_name" => nil,
             "uan" => nil,
+            "udt_type_script" => nil,
           },
         ], json.dig("data", 0, "attributes", "udt_accounts")
       end
@@ -221,6 +222,7 @@ module Api
             "udt_icon_file" => "https://dev.nrc.com/1a2b3c",
             "udt_type" => udt_account.udt_type,
             "collection" => { "type_hash" => type_script.script_hash },
+            "udt_type_script" => nil,
           },
         ], json.dig("data", 0, "attributes", "udt_accounts")
       end
@@ -247,6 +249,7 @@ module Api
             "udt_icon_file" => cell_data.hex_data,
             "udt_type" => udt_account.udt_type,
             "collection" => { "type_hash" => cluster_type.script_hash },
+            "udt_type_script" => nil,
           },
         ], json.dig("data", 0, "attributes", "udt_accounts")
       end
@@ -270,6 +273,7 @@ module Api
             "udt_amount" => udt_account.udt.total_amount.to_s,
             "expected_supply" => info.expected_supply.to_s,
             "mint_status" => info.mint_status,
+            "udt_type_script" => udt.type_script&.transform_keys(&:to_s),
           },
         ], json.dig("data", 0, "attributes", "udt_accounts")
       end

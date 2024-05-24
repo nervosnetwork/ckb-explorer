@@ -97,8 +97,9 @@ class BitcoinTransactionDetectWorker
       leap_direction, transfer_step = annotation_workflow_attributes(transaction)
       tags = annotation_tags(transaction)
       annotations << { ckb_transaction_id: transaction.id, leap_direction:, transfer_step:, tags: }
-      BitcoinAnnotation.upsert_all(annotations, unique_by: [:ckb_transaction_id]) if annotations.present?
     end
+
+    BitcoinAnnotation.upsert_all(annotations, unique_by: [:ckb_transaction_id]) if annotations.present?
   end
 
   def annotation_workflow_attributes(transaction)
