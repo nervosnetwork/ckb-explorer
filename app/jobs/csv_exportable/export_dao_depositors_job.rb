@@ -3,7 +3,7 @@
 module CsvExportable
   class ExportDaoDepositorsJob < BaseExporter
     def perform(args)
-      sql = ""
+      sql = "".dup
 
       if args[:start_date].present?
         sql << "ckb_transactions.block_timestamp >= #{BigDecimal(args[:start_date])}"

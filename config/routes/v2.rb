@@ -95,5 +95,6 @@ namespace :api do
 
     resources :rgb_transactions, only: :index
     resources :bitcoin_statistics, only: :index
+    resources :bitcoin_addresses, only: :show
   end
 end
