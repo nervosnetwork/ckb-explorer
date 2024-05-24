@@ -96,7 +96,7 @@ module Api
 
         assert_equal %w(block_number block_timestamp display_inputs display_inputs_count
                         display_outputs display_outputs_count income is_cellbase transaction_hash
-                        created_at create_timestamp is_rgb_transaction rgb_txid is_btc_time_lock).sort, response_tx_transaction["attributes"].keys.sort
+                        created_at create_timestamp is_rgb_transaction rgb_txid rgb_transfer_step is_btc_time_lock).sort, response_tx_transaction["attributes"].keys.sort
       end
 
       test "should return error object when no records found by id" do

@@ -1,4 +1,6 @@
 class TokenCollection < ApplicationRecord
+  enum standard: { cota: "cota", spore: "spore", m_nft: "m_nft", nrc721: "nrc721" }
+
   has_many :items, class_name: "TokenItem", foreign_key: :collection_id
   belongs_to :creator, class_name: "Address", optional: true
   belongs_to :cell, class_name: "CellOutput", optional: true
@@ -36,6 +38,7 @@ class TokenCollection < ApplicationRecord
       holders_count:,
       h24_ckb_transactions_count:,
       type_script: type_script&.as_json,
+      timestamp: cell&.block_timestamp,
       sn:,
     }
   end

@@ -37,7 +37,7 @@ module CsvExportable
         rows << row
       end
 
-      header = ["Token Symbol", "Block Height", "UnixTimestamp", "date(UTC)", "Address", "Amount"]
+      header = ["Token Symbol", "Block Height", "UnixTimestamp", "date(UTC)", "Owner", "CKB Address", "Amount"]
       generate_csv(header, rows)
     end
 
