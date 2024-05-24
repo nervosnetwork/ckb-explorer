@@ -46,7 +46,7 @@ module Api
             order = "asc"
           end
           if sort == "block_timestamp"
-            TokenCollection.left_joins(:cell).order("cell_outputs.#{sort} #{order}")
+            records.left_joins(:cell).order("cell_outputs.#{sort} #{order}")
           else
             records.order("#{sort} #{order}")
           end
