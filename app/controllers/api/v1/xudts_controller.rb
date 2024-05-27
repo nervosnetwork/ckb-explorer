@@ -1,3 +1,5 @@
+require "csv"
+
 module Api
   module V1
     class XudtsController < ApplicationController
@@ -52,8 +54,16 @@ module Api
         args = params.permit(:id, :number)
         file = CsvExportable::ExportUdtSnapshotJob.perform_now(args.to_h)
 
-        send_data file, type: "text/csv; charset=utf-8; header=present",
-                        disposition: "attachment;filename=xudt_snapshot.csv"
+        if params[:format] == "json"
+          csv_parsed = CSV.parse(file, headers: true)
+          file = csv_parsed.map(&:to_h).to_json
+
+          send_data file, type: "application/json; charset=utf-8",
+                          disposition: "attachment; filename=xudt_snapshot.json"
+        else
+          send_data file, type: "text/csv; charset=utf-8; header=present",
+                          disposition: "attachment;filename=xudt_snapshot.csv"
+        end
       rescue ActiveRecord::RecordNotFound
         raise Api::V1::Exceptions::UdtNotFoundError
       end
