@@ -36,4 +36,4 @@ jobs:
           data: '{"kind":"deployments","namespace":"${{ inputs.k8s-namespace }}","name":"${{ inputs.k8s-workload }}","images":{"${{ inputs.image-name }}":"${{ inputs.image-name }}:${{ inputs.image-tag }}"}}'
       - name: Display Response
         run: |
-            echo "Response response: ${{ steps.http-request.outputs.response }}"
+            echo "Response headers: ${{ steps.http-request.outputs.headers }}"
