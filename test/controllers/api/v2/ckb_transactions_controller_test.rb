@@ -144,6 +144,15 @@ module Api
         assert_equal "-2000000000000.000000", transfers1[0]["udt_info"]["amount"]
         assert_equal "2000000000000.000000", transfers2[0]["udt_info"]["amount"]
       end
+
+      test "cellbase should can paginate either" do
+        block = create(:block, number: 0)
+        tx = create(:ckb_transaction, :with_cell_base, is_cellbase: true, block:)
+        get display_outputs_api_v2_ckb_transaction_url(tx.tx_hash), params: { page: 1, page_size: 5 }
+        assert_equal 5, json["data"].size
+        assert_equal 15, json["meta"]["total"]
+        assert_equal "5", json["meta"]["page_size"]
+      end
     end
   end
 end
