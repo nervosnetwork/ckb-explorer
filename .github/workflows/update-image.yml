@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Update image on K8S
         id: http-request
-        uses: fjogeleit/http-request-action@v1
+        uses: fjogeleit/http-request-action@main
         with:
           url: ${{ secrets.KUBOARD_API_URL }}/cluster/ckb/kind/CICDApi/ops/resource/updateImageTag
           method: 'PUT'
