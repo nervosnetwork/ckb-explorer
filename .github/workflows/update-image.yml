@@ -30,10 +30,10 @@ jobs:
         id: http-request
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ secrets.KUBOARD_API_URL }}/cluster/ckb/kind/CICDApi/ops/resource/updateImageTag
+          url: ${{ secrets.KUBOARD_API_URL }}/cluster/ckb/kind/CICDApi/${{ secrets.KUBOARD_USERNAME }}/resource/updateImageTag
           method: 'PUT'
           customHeaders: '{"Content-Type": "application/json", "Cookie": "KuboardUsername=${{ secrets.KUBOARD_USERNAME }}; KuboardAccessKey=${{ secrets.KUBOARD_ACCESS_KEY }}"}'
           data: '{"kind":"deployments","namespace":"${{ inputs.k8s-namespace }}","name":"${{ inputs.k8s-workload }}","images":{"${{ inputs.image-name }}":"${{ inputs.image-name }}:${{ inputs.image-tag }}"}}'
       - name: Display Response
         run: |
-            echo "Response headers: ${{ steps.http-request.outputs.headers }}"
+            echo "Response response: ${{ steps.http-request.outputs.response }}"
