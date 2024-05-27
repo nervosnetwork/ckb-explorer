@@ -59,15 +59,15 @@ FactoryBot.define do
 
     trait :with_cell_output_and_lock_script do
       after(:create) do |ckb_transaction, _evaluator|
-        output1 = create(:cell_output, ckb_transaction: ckb_transaction,
+        output1 = create(:cell_output, ckb_transaction:,
                                        block: ckb_transaction.block,
                                        tx_hash: ckb_transaction.tx_hash,
                                        cell_index: 0)
-        output2 = create(:cell_output, ckb_transaction: ckb_transaction,
+        output2 = create(:cell_output, ckb_transaction:,
                                        block: ckb_transaction.block,
                                        tx_hash: ckb_transaction.tx_hash,
                                        cell_index: 1)
-        output3 = create(:cell_output, ckb_transaction: ckb_transaction,
+        output3 = create(:cell_output, ckb_transaction:,
                                        block: ckb_transaction.block,
                                        tx_hash: ckb_transaction.tx_hash,
                                        cell_index: 2)
@@ -84,17 +84,17 @@ FactoryBot.define do
     trait :with_cell_output_and_lock_and_type_script do
       after(:create) do |ckb_transaction, _evaluator|
         output1 = create(:cell_output, capacity: 10**8 * 8,
-                                       ckb_transaction: ckb_transaction,
+                                       ckb_transaction:,
                                        block: ckb_transaction.block,
                                        tx_hash: ckb_transaction.tx_hash,
                                        cell_index: 0)
         output2 = create(:cell_output, capacity: 10**8 * 8,
-                                       ckb_transaction: ckb_transaction,
+                                       ckb_transaction:,
                                        block: ckb_transaction.block,
                                        tx_hash: ckb_transaction.tx_hash,
                                        cell_index: 1)
         output3 = create(:cell_output, capacity: 10**8 * 8,
-                                       ckb_transaction: ckb_transaction,
+                                       ckb_transaction:,
                                        block: ckb_transaction.block,
                                        tx_hash: ckb_transaction.tx_hash,
                                        cell_index: 2)
@@ -115,14 +115,14 @@ FactoryBot.define do
         15.times do |index|
           block = create(:block, :with_block_hash, number: 12)
           tx = create(:ckb_transaction, :with_cell_output_and_lock_script,
-                      block: block)
+                      block:)
           create(:cell_output, capacity: 10**8 * 8,
-                               ckb_transaction: ckb_transaction, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index)
+                               ckb_transaction:, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index)
           previous_output = { tx_hash: tx.tx_hash, index: 0 }
-          create(:cell_input, previous_output: previous_output,
-                              ckb_transaction: ckb_transaction, block: ckb_transaction.block)
+          create(:cell_input, previous_output:,
+                              ckb_transaction:, block: ckb_transaction.block)
 
-          ckb_transaction.witnesses.create index: index,
+          ckb_transaction.witnesses.create index:,
                                            data: "0x4e52933358ae2f26863b8c1c71bf20f17489328820f8f2cd84a070069f10ceef784bc3693c3c51b93475a7b5dbf652ba6532d0580ecc1faf909f9fd53c5f6405000000000000000000"
         end
       end
@@ -131,7 +131,7 @@ FactoryBot.define do
     trait :with_single_output do
       after(:create) do |ckb_transaction|
         create(:cell_output, capacity: 10**8 * 8,
-                             ckb_transaction: ckb_transaction,
+                             ckb_transaction:,
                              block: ckb_transaction.block,
                              tx_hash: ckb_transaction.tx_hash,
                              cell_index: 0)
@@ -142,18 +142,29 @@ FactoryBot.define do
       after(:create) do |ckb_transaction|
         15.times do |index|
           create(:cell_output, capacity: 10**8 * 8,
-                               ckb_transaction: ckb_transaction,
+                               ckb_transaction:,
                                block: ckb_transaction.block,
                                tx_hash: ckb_transaction.tx_hash,
                                cell_index: index)
           previous_output = { tx_hash: ckb_transaction.tx_hash, index: 1 }
-          create(:cell_input, previous_output: previous_output,
-                              ckb_transaction: ckb_transaction,
+          create(:cell_input, previous_output:,
+                              ckb_transaction:,
                               block: ckb_transaction.block)
         end
       end
     end
-    factory :cell_base_transaction do
+
+    trait :with_cell_base do
+      after(:create) do |ckb_transaction|
+        15.times do |index|
+          create(:cell_output, capacity: 10**8 * 8,
+                               ckb_transaction:,
+                               block: ckb_transaction.block,
+                               tx_hash: ckb_transaction.tx_hash,
+                               cell_index: index,
+                               status: :live)
+        end
+      end
     end
   end
 end
