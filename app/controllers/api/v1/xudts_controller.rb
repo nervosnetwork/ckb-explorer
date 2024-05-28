@@ -1,3 +1,5 @@
+require "csv"
+
 module Api
   module V1
     class XudtsController < ApplicationController
@@ -17,7 +19,7 @@ module Api
         end
 
         if stale?(scope)
-          expires_in 30.minutes, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 10.minutes
+          expires_in 1.minute, public: true
 
           udts = sort_udts(scope).page(@page).per(@page_size).fast_page
           options = FastJsonapi::PaginationMetaGenerator.new(
@@ -52,8 +54,13 @@ module Api
         args = params.permit(:id, :number)
         file = CsvExportable::ExportUdtSnapshotJob.perform_now(args.to_h)
 
-        send_data file, type: "text/csv; charset=utf-8; header=present",
-                        disposition: "attachment;filename=xudt_snapshot.csv"
+        if params[:format] == "json"
+          csv_parsed = CSV.parse(file, headers: true)
+          render json: csv_parsed.map(&:to_h)
+        else
+          send_data file, type: "text/csv; charset=utf-8; header=present",
+                          disposition: "attachment;filename=xudt_snapshot.csv"
+        end
       rescue ActiveRecord::RecordNotFound
         raise Api::V1::Exceptions::UdtNotFoundError
       end
