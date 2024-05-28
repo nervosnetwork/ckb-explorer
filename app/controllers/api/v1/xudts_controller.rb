@@ -17,7 +17,7 @@ module Api
         end
 
         if stale?(scope)
-          expires_in 30.minutes, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 10.minutes
+          expires_in 1.minute, public: true
 
           udts = sort_udts(scope).page(@page).per(@page_size).fast_page
           options = FastJsonapi::PaginationMetaGenerator.new(
