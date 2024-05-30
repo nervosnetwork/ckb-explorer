@@ -27,7 +27,7 @@ module CsvExportable
       ckb_transactions = ckb_transactions.order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc").limit(5000)
 
       rows = []
-      ckb_transactions.find_in_batches(batch_size: 1000) do |transactions|
+      ckb_transactions.find_in_batches(batch_size: 1000, order: :desc) do |transactions|
         transactions.each do |transaction|
           row = generate_row(transaction)
           next if row.blank?
@@ -45,13 +45,13 @@ module CsvExportable
     end
 
     def generate_row(transaction)
-      dao_events = transaction.dao_events
+      dao_events = transaction.dao_events.where(event_type: ["deposit_to_dao", "withdraw_from_dao", "issue_interest"])
 
       rows = []
       dao_events.each do |dao_event|
         datetime = datetime_utc(transaction.block_timestamp)
         fee = parse_transaction_fee(transaction.transaction_fee)
-        amount = CkbUtils.shannon_to_byte(BigDecimal(dao_event.value))
+        amount = parse_udt_amount(dao_event.value.to_d, 8)
         method = {
           "deposit_to_dao" => "Deposit",
           "withdraw_from_dao" => "Withdraw Request",
