@@ -51,7 +51,7 @@ module CsvExportable
       dao_events.each do |dao_event|
         datetime = datetime_utc(transaction.block_timestamp)
         fee = parse_transaction_fee(transaction.transaction_fee)
-        amount = parse_udt_amount(dao_event.value.to_d, 8)
+        amount = CkbUtils.shannon_to_byte(BigDecimal(dao_event.value))
         method = {
           "deposit_to_dao" => "Deposit",
           "withdraw_from_dao" => "Withdraw Request",
