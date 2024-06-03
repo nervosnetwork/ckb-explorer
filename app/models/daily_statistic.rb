@@ -383,17 +383,19 @@ class DailyStatistic < ApplicationRecord
       to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000 - 1
     ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
 
-    {
-      over_three_years:,
-      one_year_to_three_years:,
-      six_months_to_one_year:,
-      three_months_to_six_months:,
-      one_month_to_three_months:,
-      one_week_to_one_month:,
-      day_to_one_week:,
-      latest_day:,
-      total_supply: total_supply + burnt,
-    }.transform_values { |value| (value.to_f / 10**8).truncate(8) }
+    base_attrs =
+      {
+        over_three_years:,
+        one_year_to_three_years:,
+        six_months_to_one_year:,
+        three_months_to_six_months:,
+        one_month_to_three_months:,
+        one_week_to_one_month:,
+        day_to_one_week:,
+        latest_day:,
+      }
+    total_live_capacities = base_attrs.values.sum
+    base_attrs.merge(total_supply: total_live_capacities).transform_values { |value| (value.to_f / 10**8).truncate(8) }
   end
 
   private
