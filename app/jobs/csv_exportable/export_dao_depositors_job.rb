@@ -10,7 +10,7 @@ module CsvExportable
       end
 
       if args[:end_date].present?
-        sql << " AND ckb_transactions.block_timestamp <= #{BigDecimal(args[:start_date])}"
+        sql << " AND ckb_transactions.block_timestamp <= #{BigDecimal(args[:end_date])}"
       end
 
       if args[:start_number].present?
