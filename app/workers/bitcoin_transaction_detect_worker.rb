@@ -113,10 +113,10 @@ class BitcoinTransactionDetectWorker
       end
     }
 
-    input_lock_types = transaction.input_cells.map { _1.bitcoin_transfer&.lock_type }.uniq
+    input_lock_types = transaction.input_cells.where.not(type_script_id: nil).map { _1.bitcoin_transfer&.lock_type }.uniq
     sort_types.call(input_lock_types)
 
-    output_lock_types = transaction.cell_outputs.map { _1.bitcoin_transfer&.lock_type }.uniq
+    output_lock_types = transaction.cell_outputs.where.not(type_script_id: nil).map { _1.bitcoin_transfer&.lock_type }.uniq
     sort_types.call(output_lock_types)
 
     if input_lock_types == ["rgbpp"]
