@@ -15,7 +15,7 @@ module Addresses
       address_id = address.map(&:id)
 
       order_by, asc_or_desc = account_books_ordering
-      records = CkbTransaction.includes(:account_books).where(
+      records = CkbTransaction.joins(:account_books).where(
         account_books: { address_id: },
         ckb_transactions: { tx_status: "committed" },
       ).order(order_by => asc_or_desc).
