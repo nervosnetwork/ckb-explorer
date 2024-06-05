@@ -4,10 +4,10 @@ module CkbTransactions
   module Bitcoin
     extend ActiveSupport::Concern
     included do
-      has_many :bitcoin_vouts
-      has_many :bitcoin_vins
-      has_many :bitcoin_transfers
-      has_one :bitcoin_annotation
+      has_many :bitcoin_vouts, dependent: :delete_all
+      has_many :bitcoin_vins, dependent: :delete_all
+      has_many :bitcoin_transfers, dependent: :delete_all
+      has_one :bitcoin_annotation, dependent: :delete
 
       delegate :leap_direction, to: :bitcoin_annotation, allow_nil: true
       delegate :transfer_step, to: :bitcoin_annotation, allow_nil: true
