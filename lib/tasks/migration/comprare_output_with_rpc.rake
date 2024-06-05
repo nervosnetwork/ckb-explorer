@@ -47,7 +47,12 @@ namespace :migration do
           unless input[:previous_output][:tx_hash] == "0x0000000000000000000000000000000000000000000000000000000000000000"
             result = CellOutput.where(tx_hash: input[:previous_output][:tx_hash], cell_index: input[:previous_output][:index].to_i(16), status: :dead).exists?
             unless result
-              $error_ids << r[:header][:number].to_i(16)
+              output = CellOutput.find_by(tx_hash: input[:previous_output][:tx_hash], cell_index: input[:previous_output][:index].to_i(16), status: :live)
+              if output.present?
+                output.update(status: :dead)
+              else
+                $error_ids << r[:header][:number].to_i(16)
+              end
             end
           end
         end
