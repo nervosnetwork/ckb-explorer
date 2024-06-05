@@ -48,7 +48,7 @@ class AddressSerializer
             udt_type: udt_account.udt_type,
             display_name: udt_account.display_name,
             uan: udt_account.uan,
-            udt_type_script: udt_account.udt.type_script,
+            udt_type_script: udt_account.udt&.type_script,
           }
         elsif udt_account.udt_type == "xudt"
           {
@@ -57,7 +57,7 @@ class AddressSerializer
             amount: udt_account.amount.to_s,
             type_hash: udt_account.type_hash,
             udt_type: udt_account.udt_type,
-            udt_type_script: udt_account.udt.type_script,
+            udt_type_script: udt_account.udt&.type_script,
           }
         elsif udt_account.udt_type == "omiga_inscription"
           info = udt_account.udt.omiga_inscription_info
@@ -70,7 +70,7 @@ class AddressSerializer
             udt_amount: udt_account.udt.total_amount.to_s,
             expected_supply: info.expected_supply.to_s,
             mint_status: info.mint_status,
-            udt_type_script: udt_account.udt.type_script,
+            udt_type_script: udt_account.udt&.type_script,
           }
         elsif udt_account.udt_type == "m_nft_token"
           ts = TypeScript.find_by script_hash: udt_account.type_hash
@@ -88,7 +88,7 @@ class AddressSerializer
             },
             udt_icon_file: udt_account.udt_icon_file,
             udt_type: udt_account.udt_type,
-            udt_type_script: udt_account.udt.type_script,
+            udt_type_script: udt_account.udt&.type_script,
           }
         elsif udt_account.udt_type == "nrc_721_token"
           udt = udt_account.udt
@@ -110,7 +110,7 @@ class AddressSerializer
             },
             udt_icon_file: "#{udt_account.udt.nrc_factory_cell&.base_token_uri}/#{udt_account.nft_token_id}",
             udt_type: udt_account.udt_type,
-            udt_type_script: udt.type_script,
+            udt_type_script: udt&.type_script,
           }
         elsif udt_account.udt_type == "spore_cell"
           ts = TypeScript.where(script_hash: udt_account.type_hash).first
@@ -128,7 +128,7 @@ class AddressSerializer
             },
             udt_icon_file: data,
             udt_type: udt_account.udt_type,
-            udt_type_script: udt_account.udt.type_script,
+            udt_type_script: udt_account.udt&.type_script,
           }
         end
       end
