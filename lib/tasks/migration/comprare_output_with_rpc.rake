@@ -52,7 +52,7 @@ namespace :migration do
                 output.update(status: :dead)
               else
                 $error_ids << r[:header][:number].to_i(16)
-              ed
+              end
             end
           end
         end
