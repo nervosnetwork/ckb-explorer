@@ -2,12 +2,12 @@ class RevertBlockJob < ApplicationJob
   def perform(local_tip_block = nil)
     local_tip_block =
       case local_tip_block
-         when nil
-           Block.recent.first
-         when Integer
-           Block.find(local_tip_block)
-         else
-           local_tip_block
+      when nil
+        Block.recent.first
+      when Integer
+        Block.find(local_tip_block)
+      else
+        local_tip_block
       end
 
     ApplicationRecord.transaction do
@@ -79,7 +79,7 @@ class RevertBlockJob < ApplicationJob
           id: udt_id,
           ckb_transactions_count: udt.ckb_transactions_count - count,
           created_at: udt.created_at,
-          updated_at: Time.current
+          updated_at: Time.current,
         }
       end
 
@@ -101,16 +101,21 @@ class RevertBlockJob < ApplicationJob
 
     local_tip_block.contained_addresses.find_each do |address|
       udt_type_hashes.each do |type_hash|
-        udt_account = address.udt_accounts.find_by(type_hash: type_hash)
+        udt_account = address.udt_accounts.find_by(type_hash:)
         next if udt_account.blank?
 
         case udt_account.udt_type
         when "sudt"
-          amount = address.cell_outputs.live.udt.where(type_hash: type_hash).sum(:udt_amount)
-          udt_account.update!(amount: amount)
+          amount = address.cell_outputs.live.udt.where(type_hash:).sum(:udt_amount)
+          udt_account.update!(amount:)
+        when "xudt", "omiga_inscription"
+          amount = address.cell_outputs.live.where(cell_type: udt_account.udt_type).where(type_hash:).sum(:udt_amount)
+          udt_account.update!(amount:)
         when "m_nft_token"
           udt_account.destroy
         when "nrc_721_token"
+          udt_account.destroy
+        when "spore_cell"
           udt_account.destroy
         end
       end
