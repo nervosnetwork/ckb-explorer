@@ -19,7 +19,7 @@ class ImportRgbppCellJob < ApplicationJob
       raw_tx = fetch_raw_transaction(txid)
       return unless raw_tx
 
-      tx = build_transaction!(raw_tx)
+      tx = build_transaction!(raw_tx, cell_output.ckb_transaction)
       # build op_returns
       vout_attributes = []
       op_returns = build_op_returns!(raw_tx, tx, cell_output.ckb_transaction)
@@ -47,7 +47,7 @@ class ImportRgbppCellJob < ApplicationJob
     Rails.logger.error(e.message)
   end
 
-  def build_transaction!(raw_tx)
+  def build_transaction!(raw_tx, ckb_tx)
     tx = BitcoinTransaction.find_by(txid: raw_tx["txid"])
     return tx if tx
 
@@ -55,12 +55,15 @@ class ImportRgbppCellJob < ApplicationJob
     if raw_tx["blockhash"].present?
       block_header = rpc.getblockheader(raw_tx["blockhash"])
     end
+
+    created_at = Time.at((ckb_tx.block_timestamp / 1000).to_i).in_time_zone
     BitcoinTransaction.create!(
       txid: raw_tx["txid"],
       tx_hash: raw_tx["hash"],
       time: raw_tx["time"],
       block_hash: raw_tx["blockhash"],
       block_height: block_header&.dig("result", "height") || 0,
+      created_at:,
     )
   end
 
@@ -136,7 +139,8 @@ class ImportRgbppCellJob < ApplicationJob
   end
 
   def build_address!(address_hash, cell_output)
-    bitcoin_address = BitcoinAddress.find_or_create_by!(address_hash:)
+    created_at = Time.at((cell_output.block_timestamp / 1000).to_i).in_time_zone
+    bitcoin_address = BitcoinAddress.create_with(created_at:).find_or_create_by!(address_hash:)
     BitcoinAddressMapping.
       create_with(bitcoin_address_id: bitcoin_address.id).
       find_or_create_by!(ckb_address_id: cell_output.address_id)
