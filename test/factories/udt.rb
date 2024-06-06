@@ -63,5 +63,14 @@ FactoryBot.define do
       symbol { "BBQ" }
       decimal { 8 }
     end
+
+    trait :xudt_compatible do
+      udt_type { "xudt_compatible" }
+      published { true }
+      full_name { "XUDTCompatible" }
+      symbol { "XC" }
+      decimal { 8 }
+    end
+
   end
 end
