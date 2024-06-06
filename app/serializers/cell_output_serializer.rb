@@ -35,6 +35,8 @@ class CellOutputSerializer
       object.udt_info.merge!(type: "udt")
     when "xudt"
       object.udt_info.merge!(type: "xudt")
+    when "xudt_compatible"
+      object.udt_info.merge!(type: "xudt_compatible")
     when "cota_registry"
       object.cota_registry_info.merge!(type: "cota")
     when "cota_regular"

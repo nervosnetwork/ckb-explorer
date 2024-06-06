@@ -5,7 +5,7 @@ module CellOutputs
     extend ActiveSupport::Concern
     included do
       def udt_info
-        return unless cell_type.in?(%w(udt xudt))
+        return unless cell_type.in?(%w(udt xudt xudt_compatible))
 
         udt_info = Udt.find_by(type_hash:, published: true)
         CkbUtils.hash_value_to_s(
