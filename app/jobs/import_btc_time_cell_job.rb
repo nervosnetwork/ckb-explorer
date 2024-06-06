@@ -17,7 +17,7 @@ class ImportBtcTimeCellJob < ApplicationJob
       raw_tx = fetch_raw_transaction(txid)
       return unless raw_tx
 
-      tx = build_transaction!(raw_tx)
+      tx = build_transaction!(raw_tx, cell_output.ckb_transaction)
       # build transfer
       BitcoinTransfer.create_with(
         bitcoin_transaction_id: tx.id,
@@ -29,16 +29,18 @@ class ImportBtcTimeCellJob < ApplicationJob
     end
   end
 
-  def build_transaction!(raw_tx)
+  def build_transaction!(raw_tx, ckb_tx)
     tx = BitcoinTransaction.find_by(txid: raw_tx["txid"])
     return tx if tx
 
+    created_at = Time.at((ckb_tx.block_timestamp / 1000).to_i).in_time_zone
     BitcoinTransaction.create!(
       txid: raw_tx["txid"],
       tx_hash: raw_tx["hash"],
       time: raw_tx["time"],
       block_hash: raw_tx["blockhash"],
       block_height: 0,
+      created_at:,
     )
   end
 
