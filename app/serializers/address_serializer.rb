@@ -50,7 +50,7 @@ class AddressSerializer
             uan: udt_account.uan,
             udt_type_script: udt_account.udt&.type_script,
           }
-        elsif udt_account.udt_type == "xudt"
+        elsif udt_account.udt_type.in?(["xudt", "xudt_compatible"])
           {
             symbol: udt_account.symbol,
             decimal: udt_account.decimal.to_s,
