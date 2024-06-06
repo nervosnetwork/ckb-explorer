@@ -447,7 +447,7 @@ class CkbUtils
       "spore_cell"
     when CkbSync::Api.instance.omiga_inscription_info_code_hash
       "omiga_inscription_info"
-    when CkbSync::Api.instance.xudt_compatiblecode_hash
+    when CkbSync::Api.instance.xudt_compatible_code_hash
       "xudt_compatible"
     when CkbSync::Api.instance.xudt_code_hash
       Rails.cache.fetch(type_script.compute_hash) do
