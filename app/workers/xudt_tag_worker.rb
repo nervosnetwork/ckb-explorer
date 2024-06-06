@@ -13,7 +13,9 @@ class XudtTagWorker
   end
 
   def mark_tags(udt)
-    if invalid_char?(udt.symbol)
+    if udt.symbol.blank?
+      ["unnamed"]
+    elsif invalid_char?(udt.symbol)
       ["invalid"]
     elsif invisible_char?(udt.symbol)
       ["suspicious"]
