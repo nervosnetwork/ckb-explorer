@@ -19,6 +19,16 @@ module Api
         assert_response :success
       end
 
+      test "should get success code when call xudt_compatible index " do
+        create(:udt, :xudt_compatible, published: true)
+
+        valid_get api_v1_xudts_url, params: {type: "xudt_compatible"}
+
+        assert_response :success
+        assert_equal 1, json["data"].length
+      end
+
+
       test "filter xudt by symbol and tags" do
         udt = create(:udt, :xudt, symbol: "CKBB")
         create(:xudt_tag, udt:, tags: ["duplicate", "layer-1-asset", "supply-limited"])
