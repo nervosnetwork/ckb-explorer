@@ -447,6 +447,8 @@ class CkbUtils
       "spore_cell"
     when CkbSync::Api.instance.omiga_inscription_info_code_hash
       "omiga_inscription_info"
+    when CkbSync::Api.instance.xudt_compatiblecode_hash
+      "xudt_compatible"
     when CkbSync::Api.instance.xudt_code_hash
       Rails.cache.fetch(type_script.compute_hash) do
         if OmigaInscriptionInfo.exists?(udt_hash: type_script.compute_hash)
@@ -455,7 +457,7 @@ class CkbUtils
           "xudt"
         end
       end
-    when Settings.unique_cell_code_hash
+    when CkbSync::Api.instance.unique_cell_code_hash
       "unique_cell"
     else
       if is_nrc_721_token_cell?(output_data)

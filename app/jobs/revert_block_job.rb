@@ -108,7 +108,7 @@ class RevertBlockJob < ApplicationJob
         when "sudt"
           amount = address.cell_outputs.live.udt.where(type_hash:).sum(:udt_amount)
           udt_account.update!(amount:)
-        when "xudt", "omiga_inscription"
+        when "xudt", "omiga_inscription", "xudt_compatible"
           amount = address.cell_outputs.live.where(cell_type: udt_account.udt_type).where(type_hash:).sum(:udt_amount)
           udt_account.update!(amount:)
         when "m_nft_token"
