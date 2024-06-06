@@ -92,11 +92,12 @@ class BitcoinTransactionDetectWorker
     annotations = []
 
     @block.ckb_transactions.each do |transaction|
-      next unless BitcoinTransfer.exists?(ckb_transaction_id: transaction.id)
-
       leap_direction, transfer_step = annotation_workflow_attributes(transaction)
       tags = annotation_tags(transaction)
-      annotations << { ckb_transaction_id: transaction.id, leap_direction:, transfer_step:, tags: }
+
+      if tags.present?
+        annotations << { ckb_transaction_id: transaction.id, leap_direction:, transfer_step:, tags: }
+      end
     end
 
     BitcoinAnnotation.upsert_all(annotations, unique_by: [:ckb_transaction_id]) if annotations.present?

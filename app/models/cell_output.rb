@@ -28,6 +28,7 @@ class CellOutput < ApplicationRecord
     omiga_inscription: 14,
     xudt: 15,
     unique_cell: 16,
+    xudt_compatible: 17,
   }
 
   belongs_to :ckb_transaction
