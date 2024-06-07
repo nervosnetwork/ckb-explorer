@@ -108,6 +108,9 @@ module CkbTransactions
           if previous_cell_output.xudt?
             display_input.merge!(attributes_for_xudt_cell(previous_cell_output))
           end
+          if previous_cell_output.xudt_compatible?
+            display_input.merge!(attributes_for_xudt_compatible_cell(previous_cell_output))
+          end
           if previous_cell_output.cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
             display_input.merge!(attributes_for_m_nft_cell(previous_cell_output))
           end
@@ -142,6 +145,7 @@ module CkbTransactions
 
           display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
           display_output.merge!(attributes_for_xudt_cell(output)) if output.xudt?
+          display_output.merge!(attributes_for_xudt_compatible_cell(output)) if output.xudt_compatible?
           display_output.merge!(attributes_for_cota_registry_cell(output)) if output.cota_registry?
           display_output.merge!(attributes_for_cota_regular_cell(output)) if output.cota_regular?
           if output.cell_type.in?(%w(m_nft_issuer m_nft_class m_nft_token))
@@ -226,6 +230,11 @@ module CkbTransactions
       def attributes_for_xudt_cell(xudt_cell)
         info = CkbUtils.hash_value_to_s(xudt_cell.udt_info)
         { xudt_info: info, extra_info: info }
+      end
+
+      def attributes_for_xudt_compatible_cell(xudt_compatible_cell)
+        info = CkbUtils.hash_value_to_s(xudt_compatible_cell.udt_info)
+        { xudt_compatible_info: info, extra_info: info }
       end
 
       def hex_since(int_since_value)
