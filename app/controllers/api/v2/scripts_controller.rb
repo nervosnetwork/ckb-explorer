@@ -41,12 +41,26 @@ module Api
         head :not_found and return if @contract.blank?
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @referring_cells =
-          if @contract.referring_cells_count.zero?
-            CellOutput.none
-          else
-            @contract.referring_cell_outputs.live.page(@page).per(@page_size)
+
+        if @contract.referring_cells_count.zero?
+          @referring_cells = CellOutput.none
+        else
+          scope = @contract.referring_cell_outputs.live
+          if params[:args].present?
+            type_script = TypeScript.find_by(args: params[:args])
+            scope = scope.where(cell_outputs: { type_script_id: type_script.id })
           end
+          if params[:address_hash].present?
+            address = Addresses::Explore.run!(key: params[:address_hash])
+            scope = if address.is_a?(NullAddress)
+                      CellOutput.none
+                    else
+                      scope.where(cell_outputs: { address_id: address.map(&:id) })
+                    end
+          end
+
+          @referring_cells = sort_referring_cells(scope).page(@page).per(@page_size)
+        end
       end
 
       private
@@ -87,6 +101,13 @@ module Api
         end
         @contract = Contract.find_by(code_hash: params[:code_hash],
                                      hash_type: params[:hash_type])
+      end
+
+      def sort_referring_cells(records)
+        sort, order = params.fetch(:sort, "block_timestamp.desc").split(".", 2)
+        sort = "block_timestamp" unless sort == "created_time"
+        order = "asc" unless order&.match?(/^(asc|desc)$/i)
+        records.order("#{sort} #{order}")
       end
     end
   end
