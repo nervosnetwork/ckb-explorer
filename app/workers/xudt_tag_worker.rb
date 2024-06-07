@@ -49,7 +49,7 @@ class XudtTagWorker
   end
 
   def first_xudt?(symbol, block_timestamp)
-    !Udt.xudt.where("LOWER(symbol) = ?", symbol.downcase).where("block_timestamp < ?", block_timestamp).exists?
+    !Udt.published_xudt.where("LOWER(symbol) = ?", symbol.downcase).where("block_timestamp < ?", block_timestamp).exists?
   end
 
   def rgbpp_lock?(issuer_address)
