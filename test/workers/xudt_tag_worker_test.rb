@@ -5,6 +5,14 @@ class XudtTagWorkerTest < ActiveJob::TestCase
     @address = create(:address, address_hash: "ckb1qz7xc452rgxs5z0ks3xun46dmdp58sepg0ljtae8ck0d7nah945nvqgqqqqqqx3l3v4")
   end
 
+  test "add tag to xudt compatible" do
+    create(:udt, :xudt_compatible, symbol: nil)
+    assert_changes -> { XudtTag.count }, from: 0, to: 1 do
+      XudtTagWorker.new.perform
+    end
+    assert_equal ["unnamed"], XudtTag.last.tags
+  end
+
   test "when xudt with no symbol" do
     create(:udt, :xudt, symbol: nil)
     assert_changes -> { XudtTag.count }, from: 0, to: 1 do
