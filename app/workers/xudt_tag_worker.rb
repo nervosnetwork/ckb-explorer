@@ -3,17 +3,21 @@ class XudtTagWorker
 
   def perform
     udts = Udt.published_xudt.left_joins(:xudt_tag).where(xudt_tag: { id: nil }).limit(100)
-    attrs =
-      udts.map do |udt|
-        tags = mark_tags(udt)
-        { udt_id: udt.id, udt_type_hash: udt.type_hash, tags: }
-      end
+    if !udts.empty?
+      attrs =
+        udts.map do |udt|
+          tags = mark_tags(udt)
+          { udt_id: udt.id, udt_type_hash: udt.type_hash, tags: }
+        end
 
-    XudtTag.upsert_all(attrs, unique_by: :udt_id, on_duplicate: :update, update_only: :tags)
+      XudtTag.upsert_all(attrs, unique_by: :udt_id, on_duplicate: :update, update_only: :tags)
+    end
   end
 
   def mark_tags(udt)
-    if invalid_char?(udt.symbol)
+    if udt.symbol.blank?
+      ["unnamed"]
+    elsif invalid_char?(udt.symbol)
       ["invalid"]
     elsif invisible_char?(udt.symbol)
       ["suspicious"]
