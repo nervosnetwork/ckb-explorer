@@ -59,7 +59,7 @@ module CellDataComparator
       h[k][:amount] += c.udt_amount.to_f
     }
 
-    cell_types = %w(udt omiga_inscription xudt)
+    cell_types = %w(udt omiga_inscription xudt xudt_compatible)
     inputs = inputs.where(cell_type: cell_types).each_with_object({}) { |c, h| process_udt.call(c, h) }
     outputs = outputs.where(cell_type: cell_types).each_with_object({}) { |c, h| process_udt.call(c, h) }
 

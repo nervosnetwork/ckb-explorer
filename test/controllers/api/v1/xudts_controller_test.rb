@@ -21,13 +21,13 @@ module Api
 
       test "should get success code when call xudt_compatible index " do
         create(:udt, :xudt_compatible, published: true)
+        create(:udt, :xudt, published: true)
 
-        valid_get api_v1_xudts_url, params: {type: "xudt_compatible"}
+        valid_get api_v1_xudts_url, params: { type: "xudt_compatible" }
 
         assert_response :success
         assert_equal 1, json["data"].length
       end
-
 
       test "filter xudt by symbol and tags" do
         udt = create(:udt, :xudt, symbol: "CKBB")
