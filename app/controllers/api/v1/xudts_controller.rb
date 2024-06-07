@@ -7,7 +7,7 @@ module Api
       before_action :validate_pagination_params, :pagination_params, only: :index
 
       def index
-        scope = Udt.xudt.includes(:xudt_tag)
+        scope = Udt.includes(:xudt_tag).where(udt_type: xudt_type_params)
 
         if params[:symbol].present?
           scope = scope.where("LOWER(symbol) = ?", params[:symbol].downcase)
@@ -103,6 +103,10 @@ module Api
       def parse_tags
         tags = params[:tags].split(",")
         tags & XudtTag::VALID_TAGS
+      end
+
+      def xudt_type_params
+        params[:type].blank? ? ["xudt", "xudt_compatible"] : "xudt_compatible"
       end
     end
   end

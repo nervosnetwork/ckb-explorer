@@ -7,7 +7,7 @@ class Udt < ApplicationRecord
   has_one :xudt_tag
 
   enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3,
-                   omiga_inscription: 4, xudt: 5 }
+                   omiga_inscription: 4, xudt: 5, xudt_compatible: 6 }
 
   validates_presence_of :total_amount
   validates :decimal,
@@ -19,7 +19,7 @@ class Udt < ApplicationRecord
   scope :query_by_name_or_symbl, ->(search) {
                                    where("lower(full_name) LIKE ? or lower(symbol) LIKE ?", "%#{search}%", "%#{search}%")
                                  }
-  scope :published_xudt, -> { where(udt_type: :xudt, published: true) }
+  scope :published_xudt, -> { where(udt_type: %i[xudt xudt_compatible], published: true) }
 
   attribute :code_hash, :ckb_hash
 

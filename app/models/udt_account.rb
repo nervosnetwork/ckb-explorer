@@ -1,6 +1,6 @@
 class UdtAccount < ApplicationRecord
   enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3,
-                   omiga_inscription: 4, xudt: 5 }
+                   omiga_inscription: 4, xudt: 5, xudt_compatible: 6 }
 
   belongs_to :address
   belongs_to :udt

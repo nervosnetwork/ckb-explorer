@@ -3,17 +3,21 @@ class XudtTagWorker
 
   def perform
     udts = Udt.published_xudt.left_joins(:xudt_tag).where(xudt_tag: { id: nil }).limit(100)
-    attrs =
-      udts.map do |udt|
-        tags = mark_tags(udt)
-        { udt_id: udt.id, udt_type_hash: udt.type_hash, tags: }
-      end
+    if !udts.empty?
+      attrs =
+        udts.map do |udt|
+          tags = mark_tags(udt)
+          { udt_id: udt.id, udt_type_hash: udt.type_hash, tags: }
+        end
 
-    XudtTag.upsert_all(attrs, unique_by: :udt_id, on_duplicate: :update, update_only: :tags)
+      XudtTag.upsert_all(attrs, unique_by: :udt_id, on_duplicate: :update, update_only: :tags)
+    end
   end
 
   def mark_tags(udt)
-    if invalid_char?(udt.symbol)
+    if udt.symbol.blank?
+      ["unnamed"]
+    elsif invalid_char?(udt.symbol)
       ["invalid"]
     elsif invisible_char?(udt.symbol)
       ["suspicious"]
@@ -45,11 +49,11 @@ class XudtTagWorker
   end
 
   def first_xudt?(symbol, block_timestamp)
-    !Udt.xudt.where("LOWER(symbol) = ?", symbol.downcase).where("block_timestamp < ?", block_timestamp).exists?
+    !Udt.published_xudt.where("LOWER(symbol) = ?", symbol.downcase).where("block_timestamp < ?", block_timestamp).exists?
   end
 
   def rgbpp_lock?(issuer_address)
-    CkbUtils.parse_address(issuer_address).script.code_hash == Settings.rgbpp_code_hash
+    issuer_address.present? && CkbUtils.parse_address(issuer_address).script.code_hash == Settings.rgbpp_code_hash
   end
 
   ## TODO: current no this condition

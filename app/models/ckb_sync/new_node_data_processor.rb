@@ -419,7 +419,7 @@ dao_contract)
       local_block.cell_outputs.select(:id, :address_id, :type_hash, :cell_type,
                                       :type_script_id).each do |udt_output|
         next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
-                                                spore_cell omiga_inscription xudt))
+                                                spore_cell omiga_inscription xudt xudt_compatible))
 
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
@@ -450,7 +450,7 @@ dao_contract)
         CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id,
                                                        :type_hash, :cell_type).each do |udt_output|
           next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
-                                                  spore_cell omiga_inscription xudt))
+                                                  spore_cell omiga_inscription xudt xudt_compatible))
 
           address = Address.find(udt_output.address_id)
           udt_type = udt_type(udt_output.cell_type)
@@ -461,7 +461,7 @@ dao_contract)
                                                                              :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
           if udt_account.present?
             case udt_type
-            when "sudt", "omiga_inscription", "xudt"
+            when "sudt", "omiga_inscription", "xudt", "xudt_compatible"
               udt_accounts_attributes << { id: udt_account.id, amount:,
                                            created_at: udt.created_at }
             when "m_nft_token"
@@ -496,14 +496,8 @@ dao_contract)
       case udt_type
       when "sudt"
         address.cell_outputs.live.udt.where(type_hash:).sum(:udt_amount)
-      when "xudt"
-        address.cell_outputs.live.xudt.where(type_hash:).sum(:udt_amount)
-      when "omiga_inscription"
-        address.cell_outputs.live.omiga_inscription.where(type_hash:).sum(:udt_amount)
-      when "m_nft_token"
-        address.cell_outputs.live.m_nft_token.where(type_hash:).sum(:udt_amount)
-      when "spore_cell"
-        address.cell_outputs.live.spore_cell.where(type_hash:).sum(:udt_amount)
+      when "xudt", "xudt_compatible", "omiga_inscription", "m_nft_token", "spore_cell"
+        address.cell_outputs.live.where(cell_type: udt_type).where(type_hash:).sum(:udt_amount)
       else
         0
       end
@@ -598,7 +592,7 @@ dao_contract)
         items.each_with_index do |output, index|
           cell_type = cell_type(output.type, outputs_data[tx_index][index])
           next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell
-                                       omiga_inscription_info omiga_inscription xudt))
+                                       omiga_inscription_info omiga_inscription xudt xudt_compatible))
 
           type_hash, parsed_udt_type =
             if cell_type == "omiga_inscription_info"
@@ -679,7 +673,7 @@ dao_contract)
               nft_token_attr[:symbol] = info[:symbol]
               nft_token_attr[:decimal] = info[:decimal]
               nft_token_attr[:published] = true
-            when "xudt"
+            when "xudt", "xudt_compatible"
               issuer_address = Address.find_by(lock_hash: output.type.args[0..65])&.address_hash
               items.each_with_index do |output, index|
                 if output.type&.code_hash == CkbSync::Api.instance.unique_cell_code_hash
@@ -1035,6 +1029,12 @@ input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, con
               contained_udt_ids[tx_index] << Udt.where(type_hash:,
                                                        udt_type: "xudt").pick(:id)
 
+            when "xudt_compatible"
+              tags[tx_index] << "xudt_compatible"
+              udt_address_ids[tx_index] << address_id
+              contained_udt_ids[tx_index] << Udt.where(type_hash:,
+                                                       udt_type: "xudt_compatible").pick(:id)
+
             when "nrc_721_token"
               tags[tx_index] << "nrc_721_token"
               udt_address_ids[tx_index] << address_id
@@ -1107,7 +1107,12 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
             contained_udt_ids[tx_index] << Udt.where(
               type_hash: item.type.compute_hash, udt_type: "xudt",
             ).pick(:id)
-
+          elsif attr[:cell_type] == "xudt_compatible"
+            tags[tx_index] << "xudt_compatible"
+            udt_address_ids[tx_index] << address_id
+            contained_udt_ids[tx_index] << Udt.where(
+              type_hash: item.type.compute_hash, udt_type: "xudt_compatible",
+            ).pick(:id)
           elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token spore_cell))
             token_transfer_ckb_tx_ids << ckb_txs[tx_index]["id"]
           end
@@ -1170,9 +1175,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
 
     def udt_amount(cell_type, output_data, type_script_args)
       case cell_type
-      when "udt"
-        CkbUtils.parse_udt_cell_data(output_data)
-      when "xudt"
+      when "udt", "xudt", "xudt_compatible"
         CkbUtils.parse_udt_cell_data(output_data)
       when "omiga_inscription"
         CkbUtils.parse_omiga_inscription_data(output_data)[:mint_limit]
