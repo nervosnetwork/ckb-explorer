@@ -69,7 +69,7 @@ class UdtSerializer
   end
 
   attribute :xudt_tags, if: Proc.new { |record, _params|
-    record.udt_type == "xudt" && record.published
+    record.udt_type.in?(["xudt", "xudt_compatible"]) && record.published
   } do |object|
     object.xudt_tag&.tags
   end

@@ -19,7 +19,7 @@ class Udt < ApplicationRecord
   scope :query_by_name_or_symbl, ->(search) {
                                    where("lower(full_name) LIKE ? or lower(symbol) LIKE ?", "%#{search}%", "%#{search}%")
                                  }
-  scope :published_xudt, -> { where(udt_type: :xudt, published: true) }
+  scope :published_xudt, -> { where(udt_type: %i[xudt xudt_compatible], published: true) }
 
   attribute :code_hash, :ckb_hash
 
