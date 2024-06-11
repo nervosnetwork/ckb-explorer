@@ -105,7 +105,11 @@ module Api
 
       def sort_referring_cells(records)
         sort, order = params.fetch(:sort, "block_timestamp.desc").split(".", 2)
-        sort = "block_timestamp" unless sort == "created_time"
+        sort =
+          case sort
+          when "created_time" then "block_timestamp"
+          else "block_timestamp"
+          end
         order = "asc" unless order&.match?(/^(asc|desc)$/i)
         records.order("#{sort} #{order}")
       end
