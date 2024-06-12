@@ -36,7 +36,7 @@ module Api
         expires_in 15.seconds, public: true, must_revalidate: true
 
         if @ckb_transaction.is_cellbase
-          cell_outputs = @ckb_transaction.cellbase_display_outputs.sort_by { |output| output[:id] }
+          cell_outputs = @ckb_transaction.cellbase_display_outputs.sort_by { |output| output[:id].to_i }
           cell_outputs = Kaminari.paginate_array(cell_outputs).page(@page).per(@page_size)
           total_count = cell_outputs.total_count
         else
