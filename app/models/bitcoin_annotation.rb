@@ -1,7 +1,7 @@
 class BitcoinAnnotation < ApplicationRecord
   belongs_to :ckb_transaction
 
-  enum :leap_direction, %i[in withinBTC]
+  enum :leap_direction, %i[in withinBTC leapoutBTC]
   enum :transfer_step, %i[isomorphic unlock]
 end
 
