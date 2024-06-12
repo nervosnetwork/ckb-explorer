@@ -56,6 +56,7 @@ class AddressSerializer
             decimal: udt_account.decimal.to_s,
             amount: udt_account.amount.to_s,
             type_hash: udt_account.type_hash,
+            udt_icon_file: udt_account.udt_icon_file,
             udt_type: udt_account.udt_type,
             udt_type_script: udt_account.udt&.type_script,
           }

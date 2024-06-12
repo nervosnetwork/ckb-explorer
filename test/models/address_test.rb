@@ -110,10 +110,10 @@ class AddressTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x48e7b453400")
     address = create(:address, is_depositor: true)
     deposit_block = create(:block, :with_block_hash,
-                           dao: "0xea43d76640436a33337e7de7ee60240035099074a869fc0000165f8ab3750207")
+                           dao: "0xea43d76640436a33337e7de7ee60240035099074a869fc0000165f8ab3750207", number: 100)
     deposit_tx = create(:ckb_transaction, block: deposit_block)
     previous_output_block = create(:block, :with_block_hash,
-                                   dao: "0x28fbce93e82cbd2ff345ba74f2ba2300b0cd2c97f2953a000060983e29c50007")
+                                   dao: "0x28fbce93e82cbd2ff345ba74f2ba2300b0cd2c97f2953a000060983e29c50007", number: 101)
     previous_output_tx = create(:ckb_transaction, block: previous_output_block)
     create(:cell_output, block: previous_output_block,
                          capacity: 50000 * 10**8,
@@ -132,7 +132,7 @@ class AddressTest < ActiveSupport::TestCase
                          occupied_capacity: 6100000000,
                          dao: previous_output_block.dao)
     nervos_dao_withdrawing_block = create(:block, :with_block_hash,
-                                          dao: "0x9a7a7ce1f34c6a332d147991f0602400aaf7346eb06bfc0000e2abc108760207", timestamp: CkbUtils.time_in_milliseconds(Time.current))
+                                          dao: "0x9a7a7ce1f34c6a332d147991f0602400aaf7346eb06bfc0000e2abc108760207", timestamp: CkbUtils.time_in_milliseconds(Time.current), number: 102)
     nervos_dao_withdrawing_tx = create(:ckb_transaction,
                                        block: nervos_dao_withdrawing_block)
     create(:cell_input, block: nervos_dao_withdrawing_block,
