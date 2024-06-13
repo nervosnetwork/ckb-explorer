@@ -101,7 +101,7 @@ class SuggestQuery
     return unless udt.present?
 
     if udt.spore_cell?
-      type_script = TypeScript.find_by(scirpt_hash: query_key)
+      type_script = TypeScript.find_by(script_hash: query_key)
       return unless type_script
 
       token_item = TokenItem.find_by(type_script:)
