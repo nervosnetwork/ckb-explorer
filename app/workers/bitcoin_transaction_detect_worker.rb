@@ -128,7 +128,7 @@ class BitcoinTransactionDetectWorker
       end
     elsif input_lock_types == ["btc_time"]
       ["in", "unlock"]
-    elsif [["btc_time", "rgbpp"], ["btc_time"]].include?(output_lock_types)
+    elsif [["btc_time", "rgbpp"], ["rgbpp"]].include?(output_lock_types)
       ["leapoutBTC", "isomorphic"]
     end
   end
