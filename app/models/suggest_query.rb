@@ -73,6 +73,7 @@ class SuggestQuery
       method(:find_type_script_by_code_hash),
       method(:find_lock_script_by_code_hash),
       method(:find_bitcoin_transaction_by_txid),
+      method(:find_nft_collections_by_sn),
     ]
   end
 
@@ -97,7 +98,17 @@ class SuggestQuery
 
   def find_udt_by_type_hash
     udt = Udt.find_by(type_hash: query_key, published: true)
-    UdtSerializer.new(udt) if udt.present?
+    return unless udt.present?
+
+    if udt.spore_cell?
+      type_script = TypeScript.find_by(scirpt_hash: query_key)
+      return unless type_script
+
+      token_item = TokenItem.find_by(type_script:)
+      TokenItemSerializer.new(token_item) if token_item.present?
+    else
+      UdtSerializer.new(udt)
+    end
   end
 
   def find_type_script_by_type_id
@@ -125,6 +136,11 @@ class SuggestQuery
     udts = Udt.where(udt_type: %i[sudt xudt omiga_inscription], published: true).
       where("LOWER(full_name) LIKE LOWER(:query_key) OR LOWER(symbol) LIKE LOWER(:query_key)", query_key: "%#{query_key}%")
     UdtSerializer.new(udts) if udts.present?
+  end
+
+  def find_nft_collections_by_sn
+    token_collections = TokenCollection.where(sn: query_key)
+    TokenCollectionSerializer.new(token_collections) if token_collections.present?
   end
 
   def find_nft_collections_by_name
