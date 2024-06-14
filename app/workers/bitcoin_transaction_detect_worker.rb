@@ -120,15 +120,19 @@ class BitcoinTransactionDetectWorker
     output_lock_types = transaction.cell_outputs.where.not(type_script_id: nil).map { _1.bitcoin_transfer&.lock_type }.uniq
     sort_types.call(output_lock_types)
 
-    if input_lock_types == ["rgbpp"]
-      if output_lock_types == ["rgbpp"]
-        ["withinBTC", "isomorphic"]
-      elsif [["btc_time", "rgbpp"], ["btc_time"]].include?(output_lock_types)
-        ["in", "isomorphic"]
-      end
-    elsif input_lock_types == ["btc_time"]
-      ["in", "unlock"]
-    elsif [["btc_time", "rgbpp"], ["btc_time"]].include?(output_lock_types)
+    if input_lock_types == ["rgbpp"] && output_lock_types == ["rgbpp"]
+      return ["withinBTC", "isomorphic"]
+    end
+
+    if input_lock_types == ["rgbpp"] && [["btc_time", "rgbpp"], ["btc_time"]].include?(output_lock_types)
+      return ["in", "isomorphic"]
+    end
+
+    if input_lock_types == ["btc_time"]
+      return ["in", "unlock"]
+    end
+
+    if input_lock_types.exclude?("rgbpp") && output_lock_types.include?("rgbpp")
       ["leapoutBTC", "isomorphic"]
     end
   end
