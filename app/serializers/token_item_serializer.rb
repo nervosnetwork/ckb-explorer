@@ -1,7 +1,11 @@
 class TokenItemSerializer
   include FastJsonapi::ObjectSerializer
 
-  attributes :name, :icon_url, :metadata_url, :icon_url, :status, :token_id
+  attributes :name, :icon_url, :metadata_url, :icon_url, :status
+
+  attribute :token_id do |object|
+    object.token_id.to_s
+  end
 
   attribute :token_collection do |object|
     {
