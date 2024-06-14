@@ -19,6 +19,20 @@ module Bitcoin
       end
     end
 
+    def batch_get_raw_transactions(txids)
+      payload_generator = Proc.new { |txid, index| { jsonrpc: "1.0", id: index + 1, method: "getrawtransaction", params: [txid, 2] } }
+      payload = txids.map.with_index(&payload_generator)
+
+      if mainnet_mode?
+        make_request(@endpoint, payload)
+      else
+        signet_response = make_signet_request(payload, "getrawtransaction")
+        return make_request(@endpoint, payload) if signet_response.blank?
+
+        consolidate_responses(signet_response, txids, payload_generator)
+      end
+    end
+
     private
 
     def call_rpc(method, params: [])
@@ -55,9 +69,37 @@ module Bitcoin
 
     def parse_response(response)
       data = JSON.parse(response.to_s)
-      raise ArgumentError, data["error"]["message"] if data["error"].present?
+
+      return data if data.is_a?(Array)
+
+      if data.is_a?(Hash)
+        raise ArgumentError, data["error"]["message"] if data["error"].present?
+      else
+        raise ArgumentError, "Unexpected response format: #{data.class}"
+      end
 
       data
+    end
+
+    def consolidate_responses(signet_response, txids, payload_generator)
+      consolidated_response = []
+      fetched_txids = []
+
+      signet_response.each do |response|
+        if response["result"].present?
+          fetched_txids << response["result"]["txid"]
+          consolidated_response << response
+        end
+      end
+
+      unfetched_txids = txids - fetched_txids
+
+      if unfetched_txids.present?
+        unfetched_payload = unfetched_txids.map.with_index(&payload_generator)
+        consolidated_response.concat(make_request(@endpoint, unfetched_payload))
+      end
+
+      consolidated_response
     end
   end
 end
