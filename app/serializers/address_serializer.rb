@@ -46,8 +46,6 @@ class AddressSerializer
             type_hash: udt_account.type_hash,
             udt_icon_file: udt_account.udt_icon_file,
             udt_type: udt_account.udt_type,
-            display_name: udt_account.display_name,
-            uan: udt_account.uan,
             udt_type_script: udt_account.udt&.type_script,
           }
         elsif udt_account.udt_type.in?(["xudt", "xudt_compatible"])

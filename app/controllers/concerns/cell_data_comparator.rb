@@ -47,9 +47,7 @@ module CellDataComparator
         udt_infos[c.type_hash] = {
           symbol: info&.symbol,
           decimal: info&.decimal,
-          display_name: info&.display_name,
           type_hash: c.type_hash,
-          uan: info&.uan,
         }
       end
 

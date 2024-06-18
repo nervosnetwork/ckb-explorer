@@ -25,11 +25,9 @@ module CsvExportable
         decimal: udt_info&.decimal,
         type_hash: udt_cell.type_hash,
         published: !!udt_info&.published,
-        display_name: udt_info&.display_name,
-        uan: udt_info&.uan
       }
 
-      return { udt_info: info }
+      { udt_info: info }
     end
 
     def token_unit(cell)
@@ -64,10 +62,10 @@ module CsvExportable
         return result.round(decimal_int).to_s("F")
       end
 
-      return result.to_s("F")
+      result.to_s("F")
     rescue StandardError => e
       puts "udt amount parse failed: #{e.message}"
-      return "0"
+      "0"
     end
 
     def transfer_method(amount_in, amount_out)
@@ -91,10 +89,18 @@ module CsvExportable
       capacity_diff = (capacity_out.to_d - capacity_in.to_d).abs
 
       {
-        token_in: (CkbUtils.shannon_to_byte(capacity_in) rescue "/"),
-        token_out: (CkbUtils.shannon_to_byte(capacity_out) rescue "/"),
+        token_in: begin
+          CkbUtils.shannon_to_byte(capacity_in)
+        rescue StandardError
+          "/"
+        end,
+        token_out: begin
+          CkbUtils.shannon_to_byte(capacity_out)
+        rescue StandardError
+          "/"
+        end,
         balance_diff: CkbUtils.shannon_to_byte(capacity_diff),
-        method: method
+        method:,
       }
     end
 
@@ -111,14 +117,14 @@ module CsvExportable
           token_in: amount_in.nil? ? "/" : parse_udt_amount(amount_in, decimal),
           token_out: amount_out.nil? ? "/" : parse_udt_amount(amount_out, decimal),
           balance_diff: parse_udt_amount(amount_diff, decimal),
-          method: method
+          method:,
         }
       else
         {
           token_in: amount_in.nil? ? "/" : "#{amount_in} (raw)",
           token_out: amount_out.nil? ? "/" : "#{amount_out} (raw)",
           balance_diff: "#{amount_diff} (raw)",
-          method: method
+          method:,
         }
       end
     end
@@ -126,7 +132,7 @@ module CsvExportable
     def parse_udt_token(input, output)
       udt_info = output&.dig(:udt_info) || input&.dig(:udt_info)
       if udt_info[:published]
-        udt_info[:uan].presence || udt_info[:symbol]
+        udt_info[:symbol]
       else
         type_hash = udt_info[:type_hash]
         "Unknown Token ##{type_hash[-4..]}"
