@@ -63,19 +63,15 @@ class BitcoinTransactionDetectWorker
   def cache_raw_transactions!
     return if @txids.empty?
 
-    get_raw_transactions = ->(txids) do
-      payload = txids.map.with_index do |txid, index|
-        { jsonrpc: "1.0", id: index + 1, method: "getrawtransaction", params: [txid, 2] }
-      end
-      response = HTTP.timeout(10).post(ENV["BITCOIN_NODE_URL"], json: payload)
-      JSON.parse(response.to_s)
+    raw_transactions = ->(txids) do
+      Bitcoin::Rpc.instance.batch_get_raw_transactions(txids)
     end
 
     to_cache = {}
     not_cached = @txids.uniq.reject { Rails.cache.exist?(_1) }
 
     not_cached.each_slice(BITCOIN_RPC_BATCH_SIZE).each do |txids|
-      get_raw_transactions.call(txids).each do |data|
+      raw_transactions.call(txids).each do |data|
         next if data && data["error"].present?
 
         txid = data.dig("result", "txid")
