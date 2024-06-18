@@ -31,8 +31,6 @@ module Api
           description: params[:description],
           operator_website: params[:operator_website],
           icon_file: params[:icon_file],
-          uan: params[:uan],
-          display_name: params[:display_name],
           email: params[:email],
           published: true,
         }

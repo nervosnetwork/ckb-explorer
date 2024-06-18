@@ -9,7 +9,6 @@ class UdtAccount < ApplicationRecord
   validates :decimal,
             numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 39 }, allow_nil: true
   validates :amount, numericality: { greater_than_or_equal_to: 0 }
-  delegate :display_name, :uan, to: :udt
 
   attribute :code_hash, :ckb_hash
 
