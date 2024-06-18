@@ -351,7 +351,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ).sort
     expected_udt_attributes = %i(
       symbol amount decimal type_hash published
-      display_name uan
     ).sort
     expected_display_input = CkbUtils.hash_value_to_s(
       id: udt_cell_output.id,
@@ -393,7 +392,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ).sort
     expected_udt_attributes = %i(
       symbol amount decimal type_hash published
-      display_name uan
     ).sort
     expected_display_input = CkbUtils.hash_value_to_s(
       id: udt_cell_output.id,
@@ -728,12 +726,10 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                        nft_token_id: "22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8")
 
     factory_info = {
-      symbol: "TTF", amount: "", decimal: "", type_hash: "0x", published: true,
-      display_name: "Test token factory", uan: ""
+      symbol: "TTF", amount: "", decimal: "", type_hash: "0x", published: true
     }
     token_info = {
-      symbol: "TTF", amount: udt_account.nft_token_id, decimal: "6", type_hash: "0x", published: true,
-      display_name: "kingdom fat coin", uan: ""
+      symbol: "TTF", amount: udt_account.nft_token_id, decimal: "6", type_hash: "0x", published: true
     }
     display_outputs = nrc_721_token_output_transaction.display_outputs
     assert_equal factory_info.to_a,

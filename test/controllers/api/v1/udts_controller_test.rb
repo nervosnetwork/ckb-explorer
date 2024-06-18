@@ -120,7 +120,7 @@ module Api
 
         response_tx_transaction = json["data"]
         assert_equal %w(
-          symbol full_name display_name uan total_amount addresses_count
+          symbol full_name total_amount addresses_count
           decimal icon_file h24_ckb_transactions_count created_at description
           published type_hash type_script issuer_address udt_type operator_website email
         ).sort,
@@ -452,8 +452,6 @@ module Api
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
           email: "contact@usdt.com",
         }
 
@@ -466,9 +464,6 @@ module Api
                      "The sUDT_ERC20_Proxy of Godwoken Test Token."
         assert_equal udt.operator_website, "https://udt.coin"
         assert_equal udt.icon_file, "https://img.udt.img"
-        assert_equal udt.uan, "GWK.gw|gb.ckb"
-        assert_equal udt.display_name,
-                     "GodwokenToken (via Godwoken Bridge from CKB)"
         assert_equal udt.email, "contact@usdt.com"
       end
 
@@ -482,8 +477,6 @@ module Api
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
         }
 
         assert_equal 400, response.status
@@ -501,8 +494,6 @@ module Api
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
           email: "abcdefg",
         }
 
@@ -521,8 +512,6 @@ module Api
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
         }
 
         assert_equal 404, response.status
