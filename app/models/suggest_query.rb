@@ -42,11 +42,11 @@ class SuggestQuery
     # If the string length is less than 2, the query result will be empty
     raise ActiveRecord::RecordNotFound if query_key.length < 2
 
-    if QueryKeyUtils.valid_hex?(query_key)
-      query_methods.each { results[:data] << _1.call.serializable_hash[:data] if _1.call.present? }
-    end
     if QueryKeyUtils.valid_address?(query_key) && (address = find_cached_address).present?
       results[:data] << address.serializable_hash[:data]
+    end
+    if QueryKeyUtils.valid_hex?(query_key)
+      query_methods.each { results[:data] << _1.call.serializable_hash[:data] if _1.call.present? }
     end
     if (address = find_bitcoin_address).present?
       results[:data] << address.serializable_hash[:data]
