@@ -2,9 +2,9 @@ namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:generate_bitcoin_transfers"
   task generate_bitcoin_transfers: :environment do
     block_numbers = []
-    binary_hashes = CkbUtils.hexes_to_bins_sql(
-      [CkbSync::Api.instance.rgbpp_code_hash, CkbSync::Api.instance.btc_time_code_hash],
-    )
+    rgbpp_code_hash = CkbSync::Api.instance.rgbpp_code_hash
+    btc_time_code_hash = CkbSync::Api.instance.btc_time_code_hash
+    binary_hashes = CkbUtils.hexes_to_bins_sql(rgbpp_code_hash.concat(btc_time_code_hash))
 
     LockScript.where("code_hash IN (#{binary_hashes})").find_in_batches(batch_size: 50) do |lock_scripts|
       CellOutput.where(lock_script_id: lock_scripts.map(&:id)).find_each do |cell_output|
