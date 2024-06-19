@@ -78,6 +78,8 @@ homepage_block_records_count: 15
 proposal_window: 10
 
 # rgbpp code hash
-rgbpp_code_hash: "0xbc6c568a1a0d0a09f6844dc9d74ddb4343c32143ff25f727c59edf4fb72d6936"
+rgbpp_code_hash:
+  - "0xbc6c568a1a0d0a09f6844dc9d74ddb4343c32143ff25f727c59edf4fb72d6936"
 # btc time code hash
-btc_time_code_hash: "0x70d64497a075bd651e98ac030455ea200637ee325a12ad08aff03f1a117e5a62"
+btc_time_code_hash:
+  - "0x70d64497a075bd651e98ac030455ea200637ee325a12ad08aff03f1a117e5a62"

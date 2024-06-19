@@ -651,11 +651,11 @@ class CkbUtils
   end
 
   def self.is_rgbpp_lock_cell?(lock_script)
-    lock_script.code_hash == CkbSync::Api.instance.rgbpp_code_hash && lock_script.hash_type == "type"
+    CkbSync::Api.instance.rgbpp_code_hash.include?(lock_script.code_hash) && lock_script.hash_type == "type"
   end
 
   def self.is_btc_time_lock_cell?(lock_script)
-    lock_script.code_hash == CkbSync::Api.instance.btc_time_code_hash && lock_script.hash_type == "type"
+    CkbSync::Api.instance.btc_time_code_hash.include?(lock_script.code_hash) && lock_script.hash_type == "type"
   end
 
   def self.parse_btc_time_lock_cell(args)
