@@ -51,18 +51,13 @@ class ImportRgbppCellJob < ApplicationJob
     tx = BitcoinTransaction.find_by(txid: raw_tx["txid"])
     return tx if tx
 
-    # raw transactions may not include the block hash
-    if raw_tx["blockhash"].present?
-      block_header = rpc.getblockheader(raw_tx["blockhash"])
-    end
-
     created_at = Time.at((ckb_tx.block_timestamp / 1000).to_i).in_time_zone
     BitcoinTransaction.create!(
       txid: raw_tx["txid"],
       tx_hash: raw_tx["hash"],
       time: raw_tx["time"],
       block_hash: raw_tx["blockhash"],
-      block_height: block_header&.dig("result", "height") || 0,
+      block_height: 0,
       created_at:,
     )
   end
