@@ -88,7 +88,7 @@ class SuggestQuery
 
   def find_address_by_lock_hash
     address = Address.cached_find(query_key)
-    LockHashSerializer.new(address) if address.present?
+    AddressSerializer.new(address) if address.present?
   end
 
   def find_cached_address

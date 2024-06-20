@@ -20,7 +20,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     origins ["https://explorer.nervos.org",
              "https://pudge.explorer.nervos.org",
              "http://localhost:3000",
-             /\Ahttps:\/\/ckb-explorer-.*-magickbase.vercel.app\z/] +
+             /\Ahttps:\/\/ckb-explorer-.*.magickbase.vercel.app\z/] +
       ENV["PARTNER_DOMAINS"].to_s.split(",").map(&:strip).map { |x| x.start_with?("/") ? Regexp.new(x[1..-2]) : x }
     resource "*", headers: :any, methods: %i[get post put head options]
   end

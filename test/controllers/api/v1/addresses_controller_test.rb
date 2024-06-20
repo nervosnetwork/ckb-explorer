@@ -171,8 +171,6 @@ module Api
             "type_hash" => udt_account.type_hash,
             "udt_icon_file" => udt_account.udt_icon_file,
             "udt_type" => udt_account.udt_type,
-            "display_name" => nil,
-            "uan" => nil,
             "udt_type_script" => nil,
           },
         ], json.dig("data", 0, "attributes", "udt_accounts")
