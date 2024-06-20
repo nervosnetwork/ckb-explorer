@@ -16,6 +16,9 @@ class UdtSerializer
   attribute :addresses_count do |object|
     object.addresses_count.to_s
   end
+  attribute :holder_allocation do |object|
+    object.holder_allocation
+  end
   attribute :decimal do |object|
     object.decimal.to_s
   end

@@ -123,6 +123,7 @@ module Api
           symbol full_name total_amount addresses_count
           decimal icon_file h24_ckb_transactions_count created_at description
           published type_hash type_script issuer_address udt_type operator_website email
+          holder_allocation
         ).sort,
                      response_tx_transaction["attributes"].keys.sort
       end

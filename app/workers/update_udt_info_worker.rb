@@ -38,9 +38,13 @@ class UpdateUdtInfoWorker
     end
 
     if udts_attributes.present?
-      Udt.upsert_all(udts_attributes.map! do |attr|
-                       attr.merge!(created_at: Time.current, updated_at: Time.current)
-                     end, unique_by: :type_hash)
+      Udt.upsert_all(
+        udts_attributes.map! do |attr|
+          attr.merge!(created_at: Time.current, updated_at: Time.current)
+        end, unique_by: :type_hash
+      )
+
+      type_hashes.each { GenerateUdtHoldersWorker.perform_async(_1) }
     end
   end
 end
