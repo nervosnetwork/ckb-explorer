@@ -24,16 +24,26 @@ module Api
 
       def update
         udt = Udt.find_by!(type_hash: params[:id])
-        attrs = {
-          symbol: params[:symbol],
-          full_name: params[:full_name],
-          decimal: params[:decimal],
-          description: params[:description],
-          operator_website: params[:operator_website],
-          icon_file: params[:icon_file],
-          email: params[:email],
-          published: true,
-        }
+        attrs =
+          if udt.udt_type == "xudt"
+            {
+              description: params[:description],
+              operator_website: params[:operator_website],
+              icon_file: params[:icon_file],
+              email: params[:email],
+            }
+          else
+            {
+              symbol: params[:symbol],
+              full_name: params[:full_name],
+              decimal: params[:decimal],
+              description: params[:description],
+              operator_website: params[:operator_website],
+              icon_file: params[:icon_file],
+              email: params[:email],
+              published: true,
+            }
+          end
         if udt.email.blank?
           raise Api::V1::Exceptions::UdtInfoInvalidError.new("Email can't be blank") if params[:email].blank?
 
