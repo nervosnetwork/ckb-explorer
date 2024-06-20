@@ -63,19 +63,15 @@ class BitcoinTransactionDetectWorker
   def cache_raw_transactions!
     return if @txids.empty?
 
-    get_raw_transactions = ->(txids) do
-      payload = txids.map.with_index do |txid, index|
-        { jsonrpc: "1.0", id: index + 1, method: "getrawtransaction", params: [txid, 2] }
-      end
-      response = HTTP.timeout(10).post(ENV["BITCOIN_NODE_URL"], json: payload)
-      JSON.parse(response.to_s)
+    raw_transactions = ->(txids) do
+      Bitcoin::Rpc.instance.batch_get_raw_transactions(txids)
     end
 
     to_cache = {}
     not_cached = @txids.uniq.reject { Rails.cache.exist?(_1) }
 
     not_cached.each_slice(BITCOIN_RPC_BATCH_SIZE).each do |txids|
-      get_raw_transactions.call(txids).each do |data|
+      raw_transactions.call(txids).each do |data|
         next if data && data["error"].present?
 
         txid = data.dig("result", "txid")
@@ -120,15 +116,19 @@ class BitcoinTransactionDetectWorker
     output_lock_types = transaction.cell_outputs.where.not(type_script_id: nil).map { _1.bitcoin_transfer&.lock_type }.uniq
     sort_types.call(output_lock_types)
 
-    if input_lock_types == ["rgbpp"]
-      if output_lock_types == ["rgbpp"]
-        ["withinBTC", "isomorphic"]
-      elsif [["btc_time", "rgbpp"], ["btc_time"]].include?(output_lock_types)
-        ["in", "isomorphic"]
-      end
-    elsif input_lock_types == ["btc_time"]
-      ["in", "unlock"]
-    elsif [["btc_time", "rgbpp"], ["btc_time"]].include?(output_lock_types)
+    if input_lock_types == ["rgbpp"] && output_lock_types == ["rgbpp"]
+      return ["withinBTC", "isomorphic"]
+    end
+
+    if input_lock_types == ["rgbpp"] && [["btc_time", "rgbpp"], ["btc_time"]].include?(output_lock_types)
+      return ["in", "isomorphic"]
+    end
+
+    if input_lock_types == ["btc_time"]
+      return ["in", "unlock"]
+    end
+
+    if input_lock_types.exclude?("rgbpp") && output_lock_types.include?("rgbpp")
       ["leapoutBTC", "isomorphic"]
     end
   end

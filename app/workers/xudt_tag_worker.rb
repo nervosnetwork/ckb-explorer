@@ -53,7 +53,8 @@ class XudtTagWorker
   end
 
   def rgbpp_lock?(issuer_address)
-    issuer_address.present? && CkbUtils.parse_address(issuer_address).script.code_hash == Settings.rgbpp_code_hash
+    address_code_hash = CkbUtils.parse_address(issuer_address).script.code_hash
+    issuer_address.present? && CkbSync::Api.instance.rgbpp_code_hash.include?(address_code_hash)
   end
 
   ## TODO: current no this condition

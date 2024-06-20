@@ -54,7 +54,7 @@ module CsvExportable
       rows = []
       unit =
         if udt.published
-          udt.uan.presence || udt.symbol
+          udt.symbol
         else
           type_hash = udt.type_hash
           "Unknown Token ##{type_hash[-4..]}"
@@ -71,7 +71,7 @@ module CsvExportable
           unit,
           data[:balance_diff],
           address_hash,
-          datetime
+          datetime,
         ]
       end
 

@@ -14,8 +14,6 @@ module CellOutputs
           decimal: udt_info&.decimal,
           type_hash:,
           published: !!udt_info&.published,
-          display_name: udt_info&.display_name,
-          uan: udt_info&.uan,
         )
       end
 
@@ -70,8 +68,6 @@ module CellOutputs
             decimal: "",
             type_hash:,
             published: true,
-            display_name: factory_cell&.name,
-            uan: "",
           }
         when "nrc_721_token"
           udt = Udt.find_by(type_hash:)
@@ -83,8 +79,6 @@ module CellOutputs
             decimal: udt_account.decimal,
             type_hash:,
             published: true,
-            display_name: udt_account.full_name,
-            uan: "",
           }
         else
           raise "invalid cell type"
@@ -130,7 +124,7 @@ module CellOutputs
         code_hash = CkbSync::Api.instance.cota_registry_code_hash
         CkbUtils.hash_value_to_s(
           symbol: "", amount: udt_amount, decimal: "", type_hash:,
-          published: "true", display_name: "", uan: "", code_hash:
+          published: "true", code_hash:
         )
       end
 
@@ -140,7 +134,7 @@ module CellOutputs
         code_hash = CkbSync::Api.instance.cota_regular_code_hash
         CkbUtils.hash_value_to_s(
           symbol: "", amount: udt_amount, decimal: "", type_hash:,
-          published: "true", display_name: "", uan: "", code_hash:
+          published: "true", code_hash:
         )
       end
 

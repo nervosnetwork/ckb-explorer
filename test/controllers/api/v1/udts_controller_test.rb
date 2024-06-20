@@ -120,9 +120,10 @@ module Api
 
         response_tx_transaction = json["data"]
         assert_equal %w(
-          symbol full_name display_name uan total_amount addresses_count
+          symbol full_name total_amount addresses_count
           decimal icon_file h24_ckb_transactions_count created_at description
           published type_hash type_script issuer_address udt_type operator_website email
+          holder_allocation
         ).sort,
                      response_tx_transaction["attributes"].keys.sort
       end
@@ -452,8 +453,6 @@ module Api
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
           email: "contact@usdt.com",
         }
 
@@ -466,9 +465,6 @@ module Api
                      "The sUDT_ERC20_Proxy of Godwoken Test Token."
         assert_equal udt.operator_website, "https://udt.coin"
         assert_equal udt.icon_file, "https://img.udt.img"
-        assert_equal udt.uan, "GWK.gw|gb.ckb"
-        assert_equal udt.display_name,
-                     "GodwokenToken (via Godwoken Bridge from CKB)"
         assert_equal udt.email, "contact@usdt.com"
       end
 
@@ -482,8 +478,6 @@ module Api
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
         }
 
         assert_equal 400, response.status
@@ -501,8 +495,6 @@ module Api
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
           email: "abcdefg",
         }
 
@@ -521,8 +513,6 @@ module Api
           description: "The sUDT_ERC20_Proxy of Godwoken Test Token.",
           operator_website: "https://udt.coin",
           icon_file: "https://img.udt.img",
-          uan: "GWK.gw|gb.ckb",
-          display_name: "GodwokenToken (via Godwoken Bridge from CKB)",
         }
 
         assert_equal 404, response.status
@@ -586,6 +576,21 @@ module Api
         assert_equal "GWK", udt.reload.symbol
         assert_equal true, udt.reload.published
         assert_equal "abc@sudt.com", udt.reload.email
+      end
+
+      test "should not update symbol when is xudt" do
+        xudt = create(:udt, :xudt)
+        create(:udt_verification, udt: xudt)
+        valid_put api_v1_udt_url("#{xudt.type_hash}"), params: {
+          operator_website: "www.testxudt.com",
+          email: "abcd@xudt.com",
+
+        }
+
+        assert_equal 200, response.status
+        assert_equal "ok", JSON.parse(response.body)
+        assert_equal "BBQ", xudt.reload.symbol
+        assert_equal "www.testxudt.com", xudt.reload.operator_website
       end
 
       test "should raise token not exist error when update udt but token not passed" do

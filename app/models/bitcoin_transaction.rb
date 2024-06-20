@@ -3,35 +3,19 @@ class BitcoinTransaction < ApplicationRecord
   has_many :bitcoin_transfers
 
   def confirmations
-    tip_block_height =
-      Rails.cache.fetch("tip_block_height", expires_in: 5.minutes) do
-        chain_info = Bitcoin::Rpc.instance.getblockchaininfo
-        chain_info.dig("result", "headers")
-      rescue StandardError => e
-        Rails.logger.error "get tip block faild: #{e.message}"
-        nil
-      end
-
-    return 0 unless tip_block_height
-
-    refresh_block_height! if block_hash.blank?
-    block_height == 0 ? 0 : tip_block_height - block_height
+    Rails.cache.fetch("#{txid}/confirmations", expires_in: 30.seconds) do
+      rpc = Bitcoin::Rpc.instance
+      raw_transaction = rpc.getrawtransaction(txid, 2)
+      raw_transaction.dig("result", "confirmations")
+    rescue StandardError => e
+      Rails.logger.error "get #{txid} confirmations  faild: #{e.message}"
+      0
+    end
   end
 
   def ckb_transaction_hash
     ckb_transaction = bitcoin_transfers&.take&.ckb_transaction
     return ckb_transaction.tx_hash if ckb_transaction
-  end
-
-  def refresh_block_height!
-    rpc = Bitcoin::Rpc.instance
-    raw_transaction = rpc.getrawtransaction(txid, 2)
-    block_hash = raw_transaction.dig("result", "blockhash")
-    block_header = rpc.getblockheader(block_hash)
-    block_height = block_header.dig("result", "height")
-    update(block_hash:, block_height:)
-  rescue StandardError => e
-    Rails.logger.error "refresh block height error: #{e.message}"
   end
 end
 
