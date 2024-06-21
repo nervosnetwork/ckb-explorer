@@ -659,39 +659,6 @@ ALTER SEQUENCE public.bitcoin_statistics_id_seq OWNED BY public.bitcoin_statisti
 
 
 --
--- Name: bitcoin_time_locks; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.bitcoin_time_locks (
-    id bigint NOT NULL,
-    bitcoin_transaction_id bigint,
-    ckb_transaction_id bigint,
-    cell_output_id bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: bitcoin_time_locks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.bitcoin_time_locks_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: bitcoin_time_locks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.bitcoin_time_locks_id_seq OWNED BY public.bitcoin_time_locks.id;
-
-
---
 -- Name: bitcoin_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2193,7 +2160,9 @@ CREATE TABLE public.token_collections (
     verified boolean DEFAULT false,
     type_script_id integer,
     sn character varying,
-    h24_ckb_transactions_count bigint DEFAULT 0
+    h24_ckb_transactions_count bigint DEFAULT 0,
+    tags character varying[] DEFAULT '{}'::character varying[],
+    block_timestamp bigint
 );
 
 
@@ -2748,13 +2717,6 @@ ALTER TABLE ONLY public.bitcoin_statistics ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
--- Name: bitcoin_time_locks id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.bitcoin_time_locks ALTER COLUMN id SET DEFAULT nextval('public.bitcoin_time_locks_id_seq'::regclass);
-
-
---
 -- Name: bitcoin_transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3152,14 +3114,6 @@ ALTER TABLE ONLY public.bitcoin_annotations
 
 ALTER TABLE ONLY public.bitcoin_statistics
     ADD CONSTRAINT bitcoin_statistics_pkey PRIMARY KEY (id);
-
-
---
--- Name: bitcoin_time_locks bitcoin_time_locks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.bitcoin_time_locks
-    ADD CONSTRAINT bitcoin_time_locks_pkey PRIMARY KEY (id);
 
 
 --
@@ -3942,13 +3896,6 @@ CREATE UNIQUE INDEX index_bitcoin_annotations_on_ckb_transaction_id ON public.bi
 --
 
 CREATE UNIQUE INDEX index_bitcoin_statistics_on_timestamp ON public.bitcoin_statistics USING btree ("timestamp");
-
-
---
--- Name: index_bitcoin_time_locks_on_cell; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_bitcoin_time_locks_on_cell ON public.bitcoin_time_locks USING btree (bitcoin_transaction_id, cell_output_id);
 
 
 --
@@ -5233,6 +5180,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240429102325'),
 ('20240507041552'),
 ('20240509074313'),
-('20240513055849');
+('20240513055849'),
+('20240620083123');
 
 
