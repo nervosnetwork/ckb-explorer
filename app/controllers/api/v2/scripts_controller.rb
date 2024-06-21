@@ -45,7 +45,7 @@ module Api
         if @contract.referring_cells_count.zero?
           @referring_cells = CellOutput.none
         else
-          scope = @contract.referring_cell_outputs.live
+          scope = @contract.referring_cell_outputs.live.where.not(block_id: nil)
           if params[:args].present?
             type_script = TypeScript.find_by(args: params[:args])
             scope = scope.where(cell_outputs: { type_script_id: type_script.id })

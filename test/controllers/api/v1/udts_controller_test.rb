@@ -593,6 +593,20 @@ module Api
         assert_equal "www.testxudt.com", xudt.reload.operator_website
       end
 
+      test "should not update symbol when is xudt_compatible" do
+        xudt = create(:udt, udt_type: "xudt_compatible", symbol: "BBQ")
+        create(:udt_verification, udt: xudt)
+        valid_put api_v1_udt_url("#{xudt.type_hash}"), params: {
+          operator_website: "www.testxudt.com",
+          email: "abcd@xudt.com",
+        }
+
+        assert_equal 200, response.status
+        assert_equal "ok", JSON.parse(response.body)
+        assert_equal "BBQ", xudt.reload.symbol
+        assert_equal "www.testxudt.com", xudt.reload.operator_website
+      end
+
       test "should raise token not exist error when update udt but token not passed" do
         udt = create(:udt, email: "abc@sudt.com")
         create(:udt_verification, udt:)

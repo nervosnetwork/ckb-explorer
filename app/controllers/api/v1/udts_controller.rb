@@ -25,7 +25,7 @@ module Api
       def update
         udt = Udt.find_by!(type_hash: params[:id])
         attrs =
-          if udt.udt_type == "xudt"
+          if udt.udt_type.in?(["xudt", "xudt_compatible"])
             {
               description: params[:description],
               operator_website: params[:operator_website],

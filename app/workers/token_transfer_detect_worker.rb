@@ -111,6 +111,7 @@ class TokenTransferDetectWorker
     if coll.cell_id.blank? || (coll.cell_id < nrc_721_factory_cell.id)
       coll.update(
         cell_id: nrc_721_factory_cell.id,
+        block_timestamp: nrc_721_factory_cell.block_timestamp,
         symbol: nrc_721_factory_cell.symbol.to_s[0, 16],
         name: nrc_721_factory_cell.name,
         icon_url: nrc_721_factory_cell.base_token_uri,
@@ -133,6 +134,7 @@ class TokenTransferDetectWorker
     if m_nft_class_cell.present? && (coll.cell_id.blank? || (coll.cell_id < m_nft_class_cell.id))
       parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
       coll.cell_id = m_nft_class_cell.id
+      coll.block_timestamp = m_nft_class_cell.block_timestamp
       coll.icon_url = parsed_class_data.renderer
       coll.name = parsed_class_data.name
       coll.description = parsed_class_data.description
@@ -167,6 +169,7 @@ class TokenTransferDetectWorker
         coll.type_script_id = spore_cluster_cell.type_script_id
         coll.creator_id = spore_cluster_cell.address_id
         coll.cell_id = spore_cluster_cell.id
+        coll.block_timestamp = spore_cluster_cell.block_timestamp
         coll.name = parsed_cluster_data[:name]
         coll.description = parsed_cluster_data[:description]
         coll.save
