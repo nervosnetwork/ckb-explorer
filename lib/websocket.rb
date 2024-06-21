@@ -22,11 +22,11 @@ $message_id = 0
 def subscribe(connection, topic)
   $message_id += 1
   message = Protocol::WebSocket::JSONMessage.generate({
-    "id": $message_id,
-    "jsonrpc": "2.0",
-    "method": "subscribe",
-    "params": [topic]
-  })
+                                                        "id": $message_id,
+                                                        "jsonrpc": "2.0",
+                                                        "method": "subscribe",
+                                                        "params": [topic],
+                                                      })
   message.send(connection)
   connection.flush
 end
@@ -41,11 +41,11 @@ persister =
 
         begin
           ImportTransactionJob.new.perform(data["transaction"], {
-            cycles: data["cycles"].hex,
-            fee: data["fee"].hex,
-            size: data["size"].hex,
-            timestamp: data["timestamp"].hex
-          })
+                                             cycles: data["cycles"].hex,
+                                             fee: data["fee"].hex,
+                                             size: data["size"].hex,
+                                             timestamp: data["timestamp"].hex,
+                                           })
         rescue StandardError => e
           Rails.logger.error "Error occurred during ImportTransactionJob data: #{data}, error: #{e.message}"
         end
@@ -60,14 +60,15 @@ Async do |_task|
     subscribe connection, "new_transaction"
 
     while message = connection.read
-      message = Protocol::WebSocket::JSONMessage.wrap(message)
-      res = message.to_h
-      if res[:method] == "subscribe"
-        data = JSON.parse res[:params][:result]
-        # binding.pry
-        puts data["transaction"]["hash"]
-        queue.push(data)
-      end
+      Rails.logger.info "#{Time.now.to_i}:#{message}"
+      # message = Protocol::WebSocket::JSONMessage.wrap(message)
+      # res = message.to_h
+      # if res[:method] == "subscribe"
+      #   data = JSON.parse res[:params][:result]
+      #   # binding.pry
+      #   puts data["transaction"]["hash"]
+      #   queue.push(data)
+      # end
     end
   end
 end
