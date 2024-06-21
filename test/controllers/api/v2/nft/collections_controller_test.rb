@@ -4,12 +4,13 @@ module Api
   module V2
     class NFT::CollectionsControllerTest < ActionDispatch::IntegrationTest
       test "should get index" do
-        create :token_collection, name: "token1"
+        create :token_collection, name: "token1", tags: ["invalid"]
         create :token_collection, name: "token2"
 
         get api_v2_nft_collections_url
         assert_response :success
         assert_equal JSON.parse(response.body)["data"].size, 2
+        assert_equal ["invalid"], JSON.parse(response.body)["data"].last["tags"]
       end
 
       test "sort by block_timestamp asc" do

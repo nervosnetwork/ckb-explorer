@@ -1,4 +1,6 @@
 class TokenCollection < ApplicationRecord
+  VALID_TAGS = ["invalid", "suspicious", "out-of-length-range", "rgbpp-compatible", "layer-1-asset", "duplicate", "layer-2-asset"]
+
   enum standard: { cota: "cota", spore: "spore", m_nft: "m_nft", nrc721: "nrc721" }
 
   has_many :items, class_name: "TokenItem", foreign_key: :collection_id
@@ -40,6 +42,7 @@ class TokenCollection < ApplicationRecord
       type_script: type_script&.as_json,
       timestamp: cell&.block_timestamp,
       sn:,
+      tags:,
     }
   end
 
@@ -184,6 +187,8 @@ end
 #  type_script_id             :integer
 #  sn                         :string
 #  h24_ckb_transactions_count :bigint           default(0)
+#  tags                       :string           default([]), is an Array
+#  block_timestamp            :bigint
 #
 # Indexes
 #
