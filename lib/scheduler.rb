@@ -129,4 +129,8 @@ s.every "2m", overlap: false do
   call_worker XudtTagWorker
 end
 
+s.every "5m", overlap: false do
+  call_worker TokenCollectionTagWorker
+end
+
 s.join

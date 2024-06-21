@@ -630,10 +630,11 @@ dao_contract)
               if m_nft_class_type.present?
                 m_nft_class_cell = m_nft_class_type.cell_outputs.last
                 parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
-                coll = TokenCollection.find_or_create_by(
+                TokenCollection.find_or_create_by(
                   standard: "m_nft",
                   name: parsed_class_data.name,
                   cell_id: m_nft_class_cell.id,
+                  block_timestamp: m_nft_class_cell.block_timestamp,
                   icon_url: parsed_class_data.renderer,
                   creator_id: m_nft_class_cell.address_id,
                 )
