@@ -3,14 +3,12 @@ class BitcoinTransaction < ApplicationRecord
   has_many :bitcoin_transfers
 
   def confirmations
-    Rails.cache.fetch("#{txid}/confirmations", expires_in: 30.seconds) do
-      rpc = Bitcoin::Rpc.instance
-      raw_transaction = rpc.getrawtransaction(txid, 2)
-      raw_transaction.dig("result", "confirmations")
-    rescue StandardError => e
-      Rails.logger.error "get #{txid} confirmations  faild: #{e.message}"
-      0
-    end
+    rpc = Bitcoin::Rpc.instance
+    raw_transaction = rpc.getrawtransaction(txid, 2)
+    raw_transaction.dig("result", "confirmations")
+  rescue StandardError => e
+    Rails.logger.error "get #{txid} confirmations  faild: #{e.message}"
+    0
   end
 
   def ckb_transaction_hash
