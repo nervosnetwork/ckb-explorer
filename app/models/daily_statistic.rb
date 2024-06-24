@@ -312,6 +312,94 @@ class DailyStatistic < ApplicationRecord
       market_data.bug_bounty_locked
   end
 
+  def refresh_ckb_hodl_wave
+    pust Time.now.to_i
+    over_three_years =
+      if time_range_exceeded?(3.years)
+        CellOutput.live.generated_before(to_be_counted_date.years_ago(3).to_i * 1000 - 1).sum(:capacity) +
+          CellOutput.dead.generated_before(to_be_counted_date.years_ago(3).to_i * 1000 - 1).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    one_year_to_three_years =
+      if time_range_exceeded?(1.year)
+        CellOutput.live.generated_between(
+          to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000 - 1
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000 - 1
+        ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    six_months_to_one_year =
+      if time_range_exceeded?(6.months)
+        CellOutput.live.generated_between(
+          to_be_counted_date.years_ago(1).to_i * 1000, to_be_counted_date.months_ago(6).to_i * 1000 - 1
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.years_ago(1).to_i * 1000, to_be_counted_date.months_ago(6).to_i * 1000 - 1
+        ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    three_months_to_six_months =
+      if time_range_exceeded?(3.months)
+        CellOutput.live.generated_between(
+          to_be_counted_date.months_ago(6).to_i * 1000, to_be_counted_date.months_ago(3).to_i * 1000 - 1
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.months_ago(6).to_i * 1000, to_be_counted_date.months_ago(3).to_i * 1000 - 1
+        ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    one_month_to_three_months =
+      if time_range_exceeded?(1.month)
+        CellOutput.live.generated_between(
+          to_be_counted_date.months_ago(3).to_i * 1000, to_be_counted_date.months_ago(1).to_i * 1000 - 1
+        ).sum(:capacity) + CellOutput.dead.generated_between(
+          to_be_counted_date.months_ago(3).to_i * 1000, to_be_counted_date.months_ago(1).to_i * 1000 - 1
+        ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+      else
+        0
+      end
+
+    one_week_to_one_month = CellOutput.live.generated_between(
+      to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000 - 1
+    ).sum(:capacity) + CellOutput.dead.generated_between(
+      to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000 - 1
+    ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+
+    day_to_one_week = CellOutput.live.generated_between(
+      to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000 - 1
+    ).sum(:capacity) + CellOutput.dead.generated_between(
+      to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000 - 1
+    ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+
+    latest_day = CellOutput.live.generated_between(
+      to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000 - 1
+    ).sum(:capacity) + CellOutput.dead.generated_between(
+      to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000 - 1
+    ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+
+    base_attrs =
+      {
+        over_three_years:,
+        one_year_to_three_years:,
+        six_months_to_one_year:,
+        three_months_to_six_months:,
+        one_month_to_three_months:,
+        one_week_to_one_month:,
+        day_to_one_week:,
+        latest_day:,
+      }
+    total_live_capacities = base_attrs.values.sum
+    attrs = base_attrs.merge(total_supply: total_live_capacities).transform_values { |value| (value.to_f / 10**8).truncate(8) }
+    update!(ckb_hodl_wave: attrs)
+  end
+
   define_logic :ckb_hodl_wave do
     over_three_years =
       if time_range_exceeded?(3.years)
