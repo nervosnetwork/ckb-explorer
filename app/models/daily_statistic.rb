@@ -313,7 +313,6 @@ class DailyStatistic < ApplicationRecord
   end
 
   def refresh_ckb_hodl_wave
-    pust Time.now.to_i
     over_three_years =
       if time_range_exceeded?(3.years)
         CellOutput.live.generated_before(to_be_counted_date.years_ago(3).to_i * 1000 - 1).sum(:capacity) +
