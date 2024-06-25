@@ -50,7 +50,7 @@ class GenerateUdtHolderAllocationWorker
       end
     end
 
-    allocation_data.each do |code_hash, _count|
+    allocation_data.each do |code_hash, count|
       contract = Contract.find_by(code_hash:, role: ["LockScript", "lock_script"])
       next unless contract
 
