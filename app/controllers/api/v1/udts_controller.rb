@@ -87,8 +87,6 @@ module Api
       def holder_allocation
         udt = Udt.find_by!(type_hash: params[:id], published: true)
         holder_allocation = udt.udt_holder_allocations.find_by(contract_id: nil)
-
-        ckb_holder_count = holder_allocation&.ckb_holder_count || 0
         btc_holder_count = holder_allocation&.btc_holder_count || 0
 
         lock_hashes = udt.udt_holder_allocations.includes(:contract).where.not(contract_id: nil).map do |allocation|
@@ -99,7 +97,7 @@ module Api
           }
         end
 
-        render json: { ckb_holder_count:, btc_holder_count:, lock_hashes: }
+        render json: { btc_holder_count:, lock_hashes: }
       rescue ActiveRecord::RecordNotFound
         raise Api::V1::Exceptions::UdtNotFoundError
       end

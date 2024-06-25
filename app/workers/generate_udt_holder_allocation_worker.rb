@@ -22,7 +22,7 @@ class GenerateUdtHolderAllocationWorker
       btc_address_ids.concat(ids).uniq!
     end
 
-    holder_allocation.update!(ckb_holder_count: ckb_address_ids.count, btc_holder_count: btc_address_ids.count)
+    holder_allocation.update!(btc_holder_count: btc_address_ids.count)
   end
 
   def update_contract_holder_allocation(udt)
