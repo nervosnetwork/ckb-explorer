@@ -1,5 +1,6 @@
 require_relative "../config/environment"
 require "new_relic/agent"
+
 NewRelic::Agent.manual_start(sync_startup: true)
 
 Rails.logger = Logger.new(STDERR)
@@ -11,25 +12,11 @@ at_exit do
 end
 
 check_environments if Rails.env.production?
-
-require "async"
-require "async/http"
-require "async/websocket"
-require "protocol/websocket/json_message"
+require "faye/websocket"
+require "eventmachine"
 URL = ENV.fetch("CKB_WS_URL", "http://localhost:28114")
 $message_id = 0
-
-def subscribe(connection, topic)
-  $message_id += 1
-  message = Protocol::WebSocket::JSONMessage.generate({
-    "id": $message_id,
-    "jsonrpc": "2.0",
-    "method": "subscribe",
-    "params": [topic]
-  })
-  message.send(connection)
-  connection.flush
-end
+$count = 0
 
 queue = Queue.new
 
@@ -41,11 +28,11 @@ persister =
 
         begin
           ImportTransactionJob.new.perform(data["transaction"], {
-            cycles: data["cycles"].hex,
-            fee: data["fee"].hex,
-            size: data["size"].hex,
-            timestamp: data["timestamp"].hex
-          })
+                                             cycles: data["cycles"].hex,
+                                             fee: data["fee"].hex,
+                                             size: data["size"].hex,
+                                             timestamp: data["timestamp"].hex,
+                                           })
         rescue StandardError => e
           Rails.logger.error "Error occurred during ImportTransactionJob data: #{data}, error: #{e.message}"
         end
@@ -53,21 +40,22 @@ persister =
     end
   end
 
-Async do |_task|
-  endpoint = Async::HTTP::Endpoint.parse(URL, alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
+EM.run do
+  ws = Faye::WebSocket::Client.new(URL)
 
-  Async::WebSocket::Client.connect(endpoint) do |connection|
-    subscribe connection, "new_transaction"
+  ws.on :open do |_event|
+    p [:open]
+    response = ws.send('{ "id": 2, "jsonrpc": "2.0", "method": "subscribe", "params": ["new_transaction"] }')
+  end
 
-    while message = connection.read
-      message = Protocol::WebSocket::JSONMessage.wrap(message)
-      res = message.to_h
-      if res[:method] == "subscribe"
-        data = JSON.parse res[:params][:result]
-        # binding.pry
-        puts data["transaction"]["hash"]
-        queue.push(data)
-      end
-    end
+  ws.on :message do |_event|
+    $count += 1
+    p Time.now.to_i
+  end
+
+  ws.on :close do |event|
+    p $count
+    p [:close, event.code, event.reason]
+    ws = nil
   end
 end
