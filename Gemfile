@@ -119,9 +119,12 @@ gem "rack-cache"
 gem "redis-objects", ">= 2.0.0.beta"
 gem "tzinfo-data", platforms: %i[mingw mswin x64_mingw jruby]
 
-gem "async-websocket", "~> 0.22.1", require: false
 gem "ecdsa"
 gem "jwt"
 
 gem "active_interaction", "~> 5.3"
 gem "bitcoinrb", require: "bitcoin"
+
+# websocket
+gem "eventmachine"
+gem "faye-websocket"
