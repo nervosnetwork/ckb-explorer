@@ -15,11 +15,9 @@ module Addresses
       address_id = address.map(&:id)
 
       order_by, asc_or_desc = account_books_ordering
-      records = CkbTransaction.joins(:account_books).where(
+      records = CkbTransaction.tx_committed.joins(:account_books).where(
         account_books: { address_id: },
-        ckb_transactions: { tx_status: "committed" },
-      ).order(order_by => asc_or_desc).
-        page(page).per(page_size)
+      ).order(order_by => asc_or_desc).distinct.page(page).per(page_size)
 
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address: })
