@@ -10,11 +10,7 @@ module RgbTransactions
       annotations = BitcoinAnnotation.includes(:ckb_transaction).
         where("bitcoin_annotations.tags @> array[?]::varchar[]", ["rgbpp"]).
         order(order_by => asc_or_desc)
-
-      if leap_direction.present?
-        annotations = annotations.where("bitcoin_annotations.leap_direction = ?", leap_direction)
-      end
-
+      annotations = annotations.where(leap_direction:) if leap_direction.present?
       annotations.page(page).per(page_size)
     end
 
