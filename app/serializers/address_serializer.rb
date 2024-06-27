@@ -111,7 +111,7 @@ class AddressSerializer
             udt_type: udt_account.udt_type,
             udt_type_script: udt&.type_script,
           }
-        elsif udt_account.udt_type == "spore_cell"
+        elsif udt_account.udt_type.in?(["spore_cell", "did_cell"])
           ts = TypeScript.where(script_hash: udt_account.type_hash).first
           if ts
             data = ts.cell_outputs.order("id desc").first.data

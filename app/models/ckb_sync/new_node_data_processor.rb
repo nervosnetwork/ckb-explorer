@@ -419,7 +419,7 @@ dao_contract)
       local_block.cell_outputs.select(:id, :address_id, :type_hash, :cell_type,
                                       :type_script_id).each do |udt_output|
         next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
-                                                spore_cell omiga_inscription xudt xudt_compatible))
+                                                spore_cell did_cell omiga_inscription xudt xudt_compatible))
 
         address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
@@ -430,7 +430,7 @@ dao_contract)
           case udt_type
           when "nrc_721_token"
             CkbUtils.parse_nrc_721_args(udt_output.type_script.args).token_id
-          when "spore_cell"
+          when "spore_cell", "did_cell"
             udt_output.type_script.args.hex
           end
         udt = Udt.where(type_hash: udt_output.type_hash, udt_type:).select(:id, :udt_type, :full_name,
@@ -450,7 +450,7 @@ dao_contract)
         CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id,
                                                        :type_hash, :cell_type).each do |udt_output|
           next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
-                                                  spore_cell omiga_inscription xudt xudt_compatible))
+                                                  spore_cell did_cell omiga_inscription xudt xudt_compatible))
 
           address = Address.find(udt_output.address_id)
           udt_type = udt_type(udt_output.cell_type)
@@ -464,12 +464,8 @@ dao_contract)
             when "sudt", "omiga_inscription", "xudt", "xudt_compatible"
               udt_accounts_attributes << { id: udt_account.id, amount:,
                                            created_at: udt.created_at }
-            when "m_nft_token"
-              udt_account.destroy unless address.cell_outputs.live.m_nft_token.where(type_hash: udt_output.type_hash).exists?
-            when "nrc_721_token"
-              udt_account.destroy unless address.cell_outputs.live.nrc_721_token.where(type_hash: udt_output.type_hash).exists?
-            when "spore_cell"
-              udt_account.destroy unless address.cell_outputs.live.spore_cell.where(type_hash: udt_output.type_hash).exists?
+            when "m_nft_token", "nrc_721_token", "spore_cell", "did_cell"
+              udt_account.destroy unless address.cell_outputs.live.where(cell_type: udt_type).where(type_hash: udt_output.type_hash).exists?
             end
           end
         end
@@ -496,7 +492,7 @@ dao_contract)
       case udt_type
       when "sudt"
         address.cell_outputs.live.udt.where(type_hash:).sum(:udt_amount)
-      when "xudt", "xudt_compatible", "omiga_inscription", "m_nft_token", "spore_cell"
+      when "xudt", "xudt_compatible", "omiga_inscription", "m_nft_token", "spore_cell", "did_cell"
         address.cell_outputs.live.where(cell_type: udt_type).where(type_hash:).sum(:udt_amount)
       else
         0
@@ -591,7 +587,7 @@ dao_contract)
       outputs.each do |tx_index, items|
         items.each_with_index do |output, index|
           cell_type = cell_type(output.type, outputs_data[tx_index][index])
-          next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell
+          next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell did_cell
                                        omiga_inscription_info omiga_inscription xudt xudt_compatible))
 
           type_hash, parsed_udt_type =
@@ -643,17 +639,17 @@ dao_contract)
                 nft_token_attr[:icon_file] = parsed_class_data.renderer
                 nft_token_attr[:published] = true
               end
-            when "spore_cell"
+            when "spore_cell", "did_cell"
               nft_token_attr[:published] = true
               parsed_spore_cell = CkbUtils.parse_spore_cell_data(outputs_data[tx_index][index])
               if parsed_spore_cell[:cluster_id].present?
                 binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
-                spore_cluster_type_ids = TypeScript.where("code_hash IN (#{binary_hashes})").where(hash_type: "data1",
-                                                                                                   args: parsed_spore_cell[:cluster_id]).pluck(:id)
-
-                spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
-                parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
-                nft_token_attr[:full_name] = parsed_cluster_data[:name]
+                spore_cluster_type_ids = TypeScript.where("code_hash IN (#{binary_hashes})").where(hash_type: "data1", args: parsed_spore_cell[:cluster_id]).pluck(:id)
+                if spore_cluster_type_ids.present?
+                  spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
+                  parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
+                  nft_token_attr[:full_name] = parsed_cluster_data[:name]
+                end
               end
             when "nrc_721_token"
               factory_cell = CkbUtils.parse_nrc_721_args(output.type.args)
@@ -1009,7 +1005,7 @@ input_capacities, tags, udt_address_ids, dao_address_ids, contained_udt_ids, con
               dao_address_ids[tx_index] << address_id
               change_rec[:dao_txs] ||= Set.new
               change_rec[:dao_txs] << ckb_txs[tx_index]["tx_hash"]
-            elsif cell_type.in?(%w(m_nft_token nrc_721_token spore_cell))
+            elsif cell_type.in?(%w(m_nft_token nrc_721_token spore_cell did_cell))
               token_transfer_ckb_tx_ids << ckb_txs[tx_index]["id"]
             end
 
@@ -1114,7 +1110,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
             contained_udt_ids[tx_index] << Udt.where(
               type_hash: item.type.compute_hash, udt_type: "xudt_compatible",
             ).pick(:id)
-          elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token spore_cell))
+          elsif attr[:cell_type].in?(%w(m_nft_token nrc_721_token spore_cell did_cell))
             token_transfer_ckb_tx_ids << ckb_txs[tx_index]["id"]
           end
 
