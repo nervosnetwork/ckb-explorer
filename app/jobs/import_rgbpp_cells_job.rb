@@ -32,10 +32,12 @@ class ImportRgbppCellsJob < ApplicationJob
         op_returns_attributes.concat(op_returns) if op_returns.present?
 
         # build vouts
-        vout_attributes << build_vout!(raw_tx, tx, out_index, cell_output)
+        vout = build_vout!(raw_tx, tx, out_index, cell_output)
+        vout_attributes << vout if vout.present?
 
         # build vin
-        vin_attributes << build_vin!(cell_output.id, tx)
+        vin = build_vin!(cell_output.id, tx)
+        vin_attributes << vin if vin.present?
 
         # build transfer
         bitcoin_transfers_attributes << {
