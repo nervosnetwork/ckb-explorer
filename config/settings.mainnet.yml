@@ -24,6 +24,9 @@ nrc_721_token_output_data_header: "0x0ddeff3e8ee03cbf6a2c6920d05c381e"
 spore_cluster1_code_hash: "0x7366a61534fa7c7e6225ecc0d828ea3b5366adec2b58206f2ee84995fe030075"
 spore_cell1_code_hash: "0x4a4dce1df3dffff7f8b2cd7dff7303df3b6150c9788cb75dcf6747247132b9f5"
 
+# did cell
+did_cell_code_hash: "0xcfba73b58b6f30e70caed8a999748781b164ef9a1e218424a6fb55ebf641cb33"
+
 # omiga inscription info
 omiga_inscription_info_code_hash: "0x5c33fc69bd72e895a63176147c6ab0bb5758d1c7a32e0914f99f9ec1bed90d41"
 omiga_inscription_code_hash: "0x7490970e6af9b9fe63fc19fc523a12b2ec69027e6ae484edffb97334f74e8c97"

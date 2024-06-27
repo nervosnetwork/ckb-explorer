@@ -1,7 +1,7 @@
 module Api
   module V1
     class UdtsController < ApplicationController
-      before_action :validate_query_params, only: :show
+      before_action :validate_query_params, only: %i[show holder_allocation]
       before_action :validate_pagination_params, :pagination_params, only: :index
 
       def index
@@ -80,6 +80,24 @@ module Api
 
         send_data file, type: "text/csv; charset=utf-8; header=present",
                         disposition: "attachment;filename=udt_transactions.csv"
+      rescue ActiveRecord::RecordNotFound
+        raise Api::V1::Exceptions::UdtNotFoundError
+      end
+
+      def holder_allocation
+        udt = Udt.find_by!(type_hash: params[:id], published: true)
+        holder_allocation = udt.udt_holder_allocations.find_by(contract_id: nil)
+        btc_holder_count = holder_allocation&.btc_holder_count || 0
+
+        lock_hashes = udt.udt_holder_allocations.includes(:contract).where.not(contract_id: nil).map do |allocation|
+          {
+            name: allocation.contract.name,
+            code_hash: allocation.contract.code_hash,
+            holder_count: allocation.ckb_holder_count,
+          }
+        end
+
+        render json: { btc_holder_count:, lock_hashes: }
       rescue ActiveRecord::RecordNotFound
         raise Api::V1::Exceptions::UdtNotFoundError
       end

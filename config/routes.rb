@@ -54,6 +54,7 @@ Rails.application.routes.draw do
       resources :market_data, only: %i[index show]
       resources :udts, only: %i(index show update) do
         get :download_csv, on: :collection
+        get :holder_allocation, on: :member
       end
       resources :xudts, only: %i(index show) do
         get :download_csv, on: :collection

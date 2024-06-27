@@ -2401,6 +2401,40 @@ ALTER SEQUENCE public.udt_accounts_id_seq OWNED BY public.udt_accounts.id;
 
 
 --
+-- Name: udt_holder_allocations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.udt_holder_allocations (
+    id bigint NOT NULL,
+    udt_id bigint NOT NULL,
+    contract_id bigint,
+    ckb_holder_count integer DEFAULT 0 NOT NULL,
+    btc_holder_count integer DEFAULT 0 NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: udt_holder_allocations_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.udt_holder_allocations_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: udt_holder_allocations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.udt_holder_allocations_id_seq OWNED BY public.udt_holder_allocations.id;
+
+
+--
 -- Name: udt_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3011,6 +3045,13 @@ ALTER TABLE ONLY public.udt_accounts ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
+-- Name: udt_holder_allocations id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udt_holder_allocations ALTER COLUMN id SET DEFAULT nextval('public.udt_holder_allocations_id_seq'::regclass);
+
+
+--
 -- Name: udt_verifications id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3530,6 +3571,14 @@ ALTER TABLE ONLY public.type_scripts
 
 ALTER TABLE ONLY public.udt_accounts
     ADD CONSTRAINT udt_accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: udt_holder_allocations udt_holder_allocations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udt_holder_allocations
+    ADD CONSTRAINT udt_holder_allocations_pkey PRIMARY KEY (id);
 
 
 --
@@ -4564,6 +4613,13 @@ CREATE INDEX index_udt_accounts_on_udt_id ON public.udt_accounts USING btree (ud
 
 
 --
+-- Name: index_udt_holder_allocations_on_udt_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_udt_holder_allocations_on_udt_id ON public.udt_holder_allocations USING btree (udt_id);
+
+
+--
 -- Name: index_udt_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5181,6 +5237,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240507041552'),
 ('20240509074313'),
 ('20240513055849'),
-('20240620083123');
+('20240620083123'),
+('20240625032839');
 
 
