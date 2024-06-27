@@ -62,7 +62,7 @@ module Portfolios
             udt_icon_file: "#{udt_account.udt.nrc_factory_cell&.base_token_uri}/#{udt_account.nft_token_id}",
             udt_type: udt_account.udt_type,
           }
-        when "spore_cell"
+        when "spore_cell", "did_cell"
           ts = TypeScript.where(script_hash: udt_account.type_hash).first
           if ts
             data = ts.cell_outputs.order(id: :desc).first.data

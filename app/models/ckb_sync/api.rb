@@ -87,6 +87,10 @@ module CkbSync
       end
     end
 
+    def did_cell_code_hash
+      Settings.did_cell_code_hash
+    end
+
     def omiga_inscription_info_code_hash
       Settings.omiga_inscription_info_code_hash
     end

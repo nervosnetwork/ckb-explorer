@@ -104,7 +104,7 @@ module CellDataComparator
   def diff_normal_nft_cells(inputs, outputs)
     transfers = Hash.new { |h, k| h[k] = Array.new }
     nft_infos = Hash.new { |h, k| h[k] = nil }
-    cell_types = %w(m_nft_token nrc_721_token spore_cell m_nft_issuer
+    cell_types = %w(m_nft_token nrc_721_token spore_cell did_cell m_nft_issuer
                     m_nft_class nrc_721_factory cota_registry spore_cluster)
 
     process_nft = ->(c, h, o) {
@@ -136,7 +136,7 @@ module CellDataComparator
 
   def nft_info(cell)
     case cell.cell_type
-    when "m_nft_token", "nrc_721_token", "spore_cell"
+    when "m_nft_token", "nrc_721_token", "spore_cell", "did_cell"
       item = TokenItem.joins(:type_script).where(type_script: { script_hash: cell.type_hash }).take
       { token_id: item&.token_id, name: item&.collection&.name }
     when "m_nft_issuer"
