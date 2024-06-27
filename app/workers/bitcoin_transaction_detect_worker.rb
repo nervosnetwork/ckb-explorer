@@ -2,7 +2,7 @@ class BitcoinTransactionDetectWorker
   include Sidekiq::Worker
   sidekiq_options queue: "bitcoin"
 
-  BITCOIN_RPC_BATCH_SIZE = 30
+  BITCOIN_RPC_BATCH_SIZE = 200
 
   attr_accessor :block, :txids, :rgbpp_cell_ids, :btc_time_cell_ids
 
@@ -24,9 +24,13 @@ class BitcoinTransactionDetectWorker
       # batch fetch bitcoin raw transactions
       cache_raw_transactions!
       # import rgbpp cells
-      @rgbpp_cell_ids.each { ImportRgbppCellJob.perform_now(_1) }
+      @rgbpp_cell_ids.each_slice(BITCOIN_RPC_BATCH_SIZE) do
+        ImportRgbppCellsJob.perform_now(_1)
+      end
       # import btc time cells
-      @btc_time_cell_ids.each { ImportBtcTimeCellJob.perform_now(_1) }
+      @btc_time_cell_ids.each_slice(BITCOIN_RPC_BATCH_SIZE) do
+        ImportBtcTimeCellsJob.perform_now(_1)
+      end
       # update bitcoin annotation
       build_bitcoin_annotations!
     end
@@ -79,7 +83,7 @@ class BitcoinTransactionDetectWorker
       end
     end
 
-    Rails.cache.write_multi(to_cache, expires_in: 10.minutes) if to_cache.present?
+    Rails.cache.write_multi(to_cache, expires_in: 30.minutes) if to_cache.present?
   rescue StandardError => e
     Rails.logger.error "cache raw transactions(#{@txids.uniq}) failed: #{e.message}"
   end

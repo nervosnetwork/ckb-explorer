@@ -100,7 +100,7 @@ class SuggestQuery
     udt = Udt.find_by(type_hash: query_key, published: true)
     return unless udt.present?
 
-    if udt.spore_cell?
+    if udt.spore_cell? || udt.did_cell?
       type_script = TypeScript.find_by(script_hash: query_key)
       return unless type_script
 

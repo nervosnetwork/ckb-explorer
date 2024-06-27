@@ -5,9 +5,10 @@ class Udt < ApplicationRecord
   has_one :udt_verification
   has_one :omiga_inscription_info
   has_one :xudt_tag
+  has_many :udt_holder_allocations
 
   enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3,
-                   omiga_inscription: 4, xudt: 5, xudt_compatible: 6 }
+                   omiga_inscription: 4, xudt: 5, xudt_compatible: 6, did_cell: 7 }
 
   validates_presence_of :total_amount
   validates :decimal,

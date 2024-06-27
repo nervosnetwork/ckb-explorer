@@ -111,11 +111,7 @@ class RevertBlockJob < ApplicationJob
         when "xudt", "omiga_inscription", "xudt_compatible"
           amount = address.cell_outputs.live.where(cell_type: udt_account.udt_type).where(type_hash:).sum(:udt_amount)
           udt_account.update!(amount:)
-        when "m_nft_token"
-          udt_account.destroy
-        when "nrc_721_token"
-          udt_account.destroy
-        when "spore_cell"
+        when "m_nft_token", "nrc_721_token", "spore_cell", "did_cell"
           udt_account.destroy
         end
       end

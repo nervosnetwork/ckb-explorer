@@ -7,6 +7,10 @@ module Api
           if params[:type].present?
             scope = scope.where(standard: params[:type])
           end
+          if params[:tags].present?
+            tags = parse_tags
+            scope = scope.where("tags @> array[?]::varchar[]", tags) unless tags.empty?
+          end
           pagy, collections = pagy(sort_collections(scope))
 
           render json: {
@@ -50,6 +54,11 @@ module Api
           else
             records.order("#{sort} #{order}")
           end
+        end
+
+        def parse_tags
+          tags = params[:tags].split(",")
+          tags & TokenCollection::VALID_TAGS
         end
       end
     end

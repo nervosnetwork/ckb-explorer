@@ -11,7 +11,7 @@ class TokenTransferDetectWorker
       source_collections = []
 
       tx.cell_inputs.each do |input|
-        if input.cell_type.in?(%w(m_nft_token nrc_721_token spore_cell))
+        if input.cell_type.in?(%w(m_nft_token nrc_721_token spore_cell did_cell))
           cell = input.previous_cell_output
           type_script = input.type_script
 
@@ -20,7 +20,7 @@ class TokenTransferDetectWorker
       end
 
       tx.cell_outputs.each do |output|
-        if output.cell_type.in?(%w(m_nft_token nrc_721_token spore_cell))
+        if output.cell_type.in?(%w(m_nft_token nrc_721_token spore_cell did_cell))
           type_script = output.type_script
           item = find_or_create_item(output, type_script)
           attrs = {
@@ -76,7 +76,7 @@ class TokenTransferDetectWorker
         type_script.args[50..-1].hex
       when "nrc_721_token"
         type_script.args[132..-1].hex
-      when "spore_cell"
+      when "spore_cell", "did_cell"
         type_script.args.hex
       end
     item.save!
@@ -89,7 +89,7 @@ class TokenTransferDetectWorker
       find_or_create_nrc_721_collection(cell, type_script)
     when "m_nft_token"
       find_or_create_m_nft_collection(cell, type_script)
-    when "spore_cell"
+    when "spore_cell", "did_cell"
       find_or_create_spore_collection(cell, type_script)
     end
   end
