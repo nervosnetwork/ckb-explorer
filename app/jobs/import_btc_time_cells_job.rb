@@ -33,6 +33,7 @@ class ImportBtcTimeCellsJob < ApplicationJob
     end
   rescue StandardError => e
     Rails.logger.error("ImportBtcTimeCells failed: #{e.message}")
+    Rails.logger.error("Backtrace:\n#{e.backtrace.join("\n")}")
   end
 
   def build_utxo_map(cell_outputs)
@@ -61,7 +62,7 @@ class ImportBtcTimeCellsJob < ApplicationJob
   end
 
   def build_transactions!(cell_outputs, raw_tx_data, utxo_map)
-    transaction_attributes = []
+    transaction_attributes = {}
 
     cell_outputs.each do |cell_output|
       txid = utxo_map[cell_output.id]
@@ -70,7 +71,7 @@ class ImportBtcTimeCellsJob < ApplicationJob
       next unless raw_tx
 
       created_at = Time.at((cell_output.block_timestamp / 1000).to_i).in_time_zone
-      transaction_attributes << {
+      transaction_attributes[txid] = {
         txid: raw_tx["txid"],
         tx_hash: raw_tx["hash"],
         time: raw_tx["time"],
@@ -80,8 +81,9 @@ class ImportBtcTimeCellsJob < ApplicationJob
       }
     end
 
-    BitcoinTransaction.upsert_all(transaction_attributes, unique_by: :txid)
-    BitcoinTransaction.where(txid: transaction_attributes.map { _1[:txid] }).index_by(&:txid)
+    unique_transaction_attributes = transaction_attributes.values
+    BitcoinTransaction.upsert_all(unique_transaction_attributes, unique_by: :txid)
+    BitcoinTransaction.where(txid: unique_transaction_attributes.map { |tx| tx[:txid] }).index_by(&:txid)
   end
 
   def rpc
