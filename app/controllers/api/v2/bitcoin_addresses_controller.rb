@@ -29,7 +29,7 @@ module Api
           where(cell_outputs: { status: "live" }, bitcoin_vouts: { address_id: address_ids }).
           select(:bitcoin_transaction_id, :index).
           group(:bitcoin_transaction_id, :index).
-          page(1).per(10)
+          page(@page).per(@page_size)
 
         transaction_ids = bitcoin_vouts.map(&:bitcoin_transaction_id).uniq
         transactions = BitcoinTransaction.where(id: transaction_ids).index_by(&:id)
@@ -37,7 +37,7 @@ module Api
         cells = bitcoin_vouts.each_with_object({}) do |vout, hash|
           tx = transactions[vout.bitcoin_transaction_id]
           vouts = BitcoinVout.where(bitcoin_transaction_id: vout.bitcoin_transaction_id, index: vout.index).includes(:cell_output)
-          hash[[tx.tx_hash, vout.index]] = vouts.map { |v| CellOutputSerializer.new(v.cell_output).serialized_json }
+          hash[[tx.tx_hash, vout.index]] = vouts.map { |v| CellOutputSerializer.new(v.cell_output).serializable_hash }
         end
 
         render json: { data: { rgb_cells: cells }, meta: { total: bitcoin_vouts.total_count, page_size: @page_size } }
