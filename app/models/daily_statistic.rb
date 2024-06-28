@@ -313,6 +313,8 @@ class DailyStatistic < ApplicationRecord
   end
 
   define_logic :ckb_hodl_wave do
+    p "over_three_years"
+
     over_three_years =
       if time_range_exceeded?(3.years)
         CellOutput.live.generated_before(to_be_counted_date.years_ago(3).to_i * 1000 - 1).sum(:capacity) +
@@ -320,6 +322,7 @@ class DailyStatistic < ApplicationRecord
       else
         0
       end
+    p "one_year_to_three_years"
 
     one_year_to_three_years =
       if time_range_exceeded?(1.year)
@@ -332,6 +335,7 @@ class DailyStatistic < ApplicationRecord
         0
       end
 
+    p "six_months_to_one_year"
     six_months_to_one_year =
       if time_range_exceeded?(6.months)
         CellOutput.live.generated_between(
@@ -343,6 +347,7 @@ class DailyStatistic < ApplicationRecord
         0
       end
 
+    p "three_months_to_six_months"
     three_months_to_six_months =
       if time_range_exceeded?(3.months)
         CellOutput.live.generated_between(
@@ -354,6 +359,7 @@ class DailyStatistic < ApplicationRecord
         0
       end
 
+    p "one_month_to_three_months"
     one_month_to_three_months =
       if time_range_exceeded?(1.month)
         CellOutput.live.generated_between(
@@ -365,18 +371,21 @@ class DailyStatistic < ApplicationRecord
         0
       end
 
+    p "one_week_to_one_month"
     one_week_to_one_month = CellOutput.live.generated_between(
       to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000 - 1
     ).sum(:capacity) + CellOutput.dead.generated_between(
       to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000 - 1
     ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
 
+    p "day_to_one_week"
     day_to_one_week = CellOutput.live.generated_between(
       to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000 - 1
     ).sum(:capacity) + CellOutput.dead.generated_between(
       to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000 - 1
     ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
 
+    p "latest_day"
     latest_day = CellOutput.live.generated_between(
       to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000 - 1
     ).sum(:capacity) + CellOutput.dead.generated_between(
