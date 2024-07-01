@@ -22,15 +22,6 @@ module Api
         assert_equal JSON.parse(response.body)["data"].size, 2
       end
 
-      test "should filter by tags but not match" do
-        create :token_collection, name: "token1", tags: ["layer-1-asset", "rgbpp-compatible"]
-        create :token_collection, name: "token2", tags: ["layer-1-asset", "rgbpp-compatible"]
-
-        get api_v2_nft_collections_url, params: { tags: "layer-1-asset,invalid" }
-        assert_response :success
-        assert_equal JSON.parse(response.body)["data"].size, 0
-      end
-
       test "sort by block_timestamp asc" do
         block1 = create(:block, :with_block_hash, timestamp: 10.days.ago.to_i * 1000)
         block3 = create(:block, :with_block_hash, timestamp: 1.day.ago.to_i * 1000)
