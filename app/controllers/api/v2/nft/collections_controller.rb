@@ -9,7 +9,7 @@ module Api
           end
           if params[:tags].present?
             tags = parse_tags
-            scope = scope.where("tags @> array[?]::varchar[]", tags) unless tags.empty?
+            scope = scope.where("tags && ARRAY[?]::varchar[]", tags) unless tags.empty?
           end
           pagy, collections = pagy(sort_collections(scope))
 
