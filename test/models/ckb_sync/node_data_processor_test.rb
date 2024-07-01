@@ -3758,11 +3758,11 @@ module CkbSync
       ]
       node_block = CKB::Types::Block.new(uncles: [], proposals: [],
                                          transactions:, header:)
-      block = node_data_processor.process_block(node_block)
-      udt1 = Udt.find_by(args: udt_script1.args)
-      udt2 = Udt.find_by(args: udt_script2.args)
-      CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
       Sidekiq::Testing.inline! do
+        block = node_data_processor.process_block(node_block)
+        udt1 = Udt.find_by(args: udt_script1.args)
+        udt2 = Udt.find_by(args: udt_script2.args)
+        CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
         VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                          record: :new_episodes) do
           node_data_processor.call
