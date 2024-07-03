@@ -14,14 +14,8 @@ class GenerateUdtHolderAllocationWorker
     type_script = TypeScript.find_by(udt.type_script)
     return unless type_script
 
+    btc_address_ids = fetch_btc_address_ids(type_script)
     holder_allocation = UdtHolderAllocation.find_or_initialize_by(udt:, contract_id: nil)
-    ckb_address_ids = CellOutput.live.where(type_script:).distinct.pluck(:address_id)
-    btc_address_ids = []
-    ckb_address_ids.each_slice(1000) do |address_ids|
-      ids = BitcoinAddressMapping.where(ckb_address_id: address_ids).pluck(:bitcoin_address_id)
-      btc_address_ids.concat(ids).uniq!
-    end
-
     holder_allocation.update!(btc_holder_count: btc_address_ids.count)
   end
 
@@ -57,5 +51,25 @@ class GenerateUdtHolderAllocationWorker
       allocation = UdtHolderAllocation.find_or_initialize_by(udt:, contract:)
       allocation.update!(ckb_holder_count: count)
     end
+  end
+
+  private
+
+  def fetch_btc_address_ids(type_script)
+    btc_address_ids = Concurrent::Set.new
+    futures = []
+
+    CellOutput.live.where(type_script:).find_in_batches(batch_size: 1000) do |batch|
+      futures << Concurrent::Promises.future do
+        batch_ckb_address_ids = batch.pluck(:address_id)
+        ids = BitcoinAddressMapping.where(ckb_address_id: batch_ckb_address_ids).pluck(:bitcoin_address_id)
+        btc_address_ids.merge(ids)
+      end
+    end
+
+    # 等待所有的 Future 完成
+    Concurrent::Promises.zip(*futures).value!
+
+    btc_address_ids
   end
 end
