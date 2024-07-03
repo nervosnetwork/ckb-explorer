@@ -10,6 +10,10 @@ class PoolTransactionCheckWorker
       response_string = CkbSync::Api.instance.directly_single_call_rpc method: "get_transaction",
                                                                        params: [tx.tx_hash]
       reason = response_string["result"]["tx_status"]
+      if reason["status"] == "committed" && CkbTransaction.where(tx_hash: tx.tx_hash, tx_status: :committed).exists?
+        tx.destroy
+      end
+
       if reason["status"] == "rejected"
         ApplicationRecord.transaction do
           tx.update! tx_status: "rejected"

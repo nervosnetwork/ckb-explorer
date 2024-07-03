@@ -117,7 +117,7 @@ s.cron "0 6 * * 1" do
   call_worker CleanAddressBlockSnapshotWorker
 end
 
-s.every "1h", overlap: false do
+s.every "6h", overlap: false do
   call_worker ContractStatisticWorker
 end
 
