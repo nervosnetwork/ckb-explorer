@@ -44,7 +44,7 @@ class UpdateUdtInfoWorker
         end, unique_by: :type_hash
       )
 
-      type_hashes.each { GenerateUdtHolderAllocationWorker.perform_async(_1) }
+      # type_hashes.each { GenerateUdtHolderAllocationWorker.perform_async(_1) }
     end
   end
 end
