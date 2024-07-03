@@ -15,7 +15,11 @@ module Api
 
         if params[:tags].present?
           tags = parse_tags
-          scope = scope.joins(:xudt_tag).where("xudt_tags.tags && ARRAY[?]::varchar[]", tags).select("udts.*") unless tags.empty?
+          if params[:union].present?
+            scope = scope.joins(:xudt_tag).where("xudt_tags.tags && ARRAY[?]::varchar[]", tags).select("udts.*") unless tags.empty?
+          else
+            scope = scope.joins(:xudt_tag).where("xudt_tags.tags @> array[?]::varchar[]", tags).select("udts.*") unless tags.empty?
+          end
         end
 
         if stale?(scope)
