@@ -14,7 +14,7 @@ class GenerateUdtHolderAllocationWorker
 
       $redis.srem("udt_holder_allocation", type_hash)
     rescue StandardError => e
-      Rails.logger.error("Generate #{type_hash} holder allocation falied: #{e.message}")
+      Rails.logger.error("Generate #{type_hash} holder allocation failed: #{e.message}")
     end
   end
 
