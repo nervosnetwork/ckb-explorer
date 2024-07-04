@@ -44,7 +44,8 @@ class UpdateUdtInfoWorker
         end, unique_by: :type_hash
       )
 
-      # type_hashes.each { GenerateUdtHolderAllocationWorker.perform_async(_1) }
+      # generate udt holder allocation
+      type_hashes.each { $redis.sadd("udt_holder_allocation", _1) }
     end
   end
 end
