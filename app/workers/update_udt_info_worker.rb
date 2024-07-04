@@ -27,7 +27,7 @@ class UpdateUdtInfoWorker
     addresses_count_info = UdtAccount.where(type_hash: type_hashes).group(:type_hash).count(:address_id)
     udts_attributes = Set.new
     type_hashes.each do |type_hash|
-      udt = Udt.where(type_hash:).select(:id).take!
+      udt = Udt.where(type_hash:).select(:id, :udt_type).take!
       ckb_transactions_count = UdtTransaction.where(udt_id: udt.id).count
       udts_attributes << {
         type_hash:,
@@ -35,6 +35,11 @@ class UpdateUdtInfoWorker
         addresses_count: addresses_count_info[type_hash],
         ckb_transactions_count:,
       }
+
+      # generate udt holder allocation
+      if udt.xudt_compatible? || udt.xudt?
+        $redis.sadd("udt_holder_allocation", type_hash)
+      end
     end
 
     if udts_attributes.present?
@@ -43,8 +48,6 @@ class UpdateUdtInfoWorker
           attr.merge!(updated_at: Time.current)
         end, unique_by: :type_hash
       )
-
-      # type_hashes.each { GenerateUdtHolderAllocationWorker.perform_async(_1) }
     end
   end
 end
