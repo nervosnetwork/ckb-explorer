@@ -129,7 +129,7 @@ s.every "5m", overlap: false do
   call_worker TokenCollectionTagWorker
 end
 
-s.every "1h", overlap: false do
+s.every "10m", overlap: false do
   call_worker GenerateUdtHolderAllocationWorker
 end
 
