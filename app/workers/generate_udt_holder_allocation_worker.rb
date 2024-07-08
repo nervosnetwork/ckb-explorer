@@ -1,6 +1,5 @@
 class GenerateUdtHolderAllocationWorker
-  include Sidekiq::Worker
-  sidekiq_options retry: 3
+  include Sidekiq::Job
 
   def perform(type_hashes = nil)
     type_hashes ||= $redis.smembers("udt_holder_allocation")
