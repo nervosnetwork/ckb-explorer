@@ -29,6 +29,13 @@ class GenerateUdtHolderAllocationWorker
     unique_ckb_address_ids = fetch_unique_ckb_address_ids(udt)
     allocation_data = calculate_holder_allocation_data(unique_ckb_address_ids)
 
+    existing_allocations = udt.udt_holder_allocations.where.not(contract_id: nil)
+    existing_allocations.each do |allocation|
+      unless allocation_data.key?(allocation.contract.code_hash)
+        allocation.destroy!
+      end
+    end
+
     allocation_data.each do |code_hash, count|
       contract = Contract.find_by(code_hash:, role: ["LockScript", "lock_script"])
       next unless contract
