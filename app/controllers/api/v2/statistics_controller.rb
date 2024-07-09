@@ -15,6 +15,10 @@ module Api::V2
 
     def contract_resource_distributed
       contracts = Contract.filter_nil_hash_type
+      if params[:code_hashes].present?
+        hashes =  params[:code_hashes].split(",")
+        contracts = contracts.where(code_hash: hashes)
+      end
       if stale?(contracts)
         expires_in 30.minutes, public: true
         json = contracts.map do |contract|
