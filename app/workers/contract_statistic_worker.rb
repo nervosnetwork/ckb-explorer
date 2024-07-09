@@ -16,7 +16,7 @@ class ContractStatisticWorker
         referring_cells_count: contract.referring_cell_outputs.live.size,
         total_deployed_cells_capacity: contract.deployed_cell_outputs&.live&.sum(:capacity),
         total_referring_cells_capacity: contract.referring_cell_outputs.live.sum(:capacity),
-        # addresses_count: ckb_address_ids.count,
+        addresses_count: ckb_address_ids.count,
       )
     end
 
