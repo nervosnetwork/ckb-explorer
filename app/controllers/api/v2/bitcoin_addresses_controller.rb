@@ -36,7 +36,9 @@ module Api
 
         cells = bitcoin_vouts.each_with_object({}) do |vout, hash|
           tx = transactions[vout.bitcoin_transaction_id]
-          vouts = BitcoinVout.where(bitcoin_transaction_id: vout.bitcoin_transaction_id, index: vout.index).includes(:cell_output)
+          vouts = BitcoinVout.where(bitcoin_transaction_id: vout.bitcoin_transaction_id, index: vout.index).includes(:cell_output).where(
+            cell_outputs: { status: "live" },
+          )
           hash[[tx.tx_hash, vout.index]] = vouts.map { |v| CellOutputSerializer.new(v.cell_output).serializable_hash }
         end
 
