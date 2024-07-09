@@ -323,13 +323,11 @@ end
 #
 # Indexes
 #
-#  index_cell_outputs_on_address_id                         (address_id)
-#  index_cell_outputs_on_block_id                           (block_id)
-#  index_cell_outputs_on_block_timestamp                    (block_timestamp)
-#  index_cell_outputs_on_consumed_block_timestamp           (consumed_block_timestamp)
-#  index_cell_outputs_on_consumed_by_id                     (consumed_by_id)
-#  index_cell_outputs_on_lock_script_id                     (lock_script_id)
-#  index_cell_outputs_on_tx_hash_and_cell_index_and_status  (tx_hash,cell_index,status) UNIQUE
-#  index_cell_outputs_on_tx_id_and_cell_index_and_status    (ckb_transaction_id,cell_index,status) UNIQUE
-#  index_cell_outputs_on_type_script_id                     (type_script_id)
+#  index_cell_outputs_on_address_id                (address_id)
+#  index_cell_outputs_on_block_id                  (block_id)
+#  index_cell_outputs_on_block_timestamp           (block_timestamp)
+#  index_cell_outputs_on_consumed_block_timestamp  (consumed_block_timestamp)
+#  index_cell_outputs_on_consumed_by_id            (consumed_by_id)
+#  index_cell_outputs_on_lock_script_id            (lock_script_id)
+#  index_cell_outputs_on_type_script_id            (type_script_id)
 #

@@ -2,7 +2,7 @@ class CreateCellOutputs < ActiveRecord::Migration[7.0]
   def up
     execute <<-SQL
       CREATE TABLE cell_outputs (
-        id bigint NOT NULL,
+        id bigserial NOT NULL,
         capacity numeric(64,2),
         ckb_transaction_id bigint,
         created_at timestamp without time zone NOT NULL,
@@ -23,10 +23,9 @@ class CreateCellOutputs < ActiveRecord::Migration[7.0]
         dao character varying,
         lock_script_id bigint,
         type_script_id bigint,
-        data_hash bytea
+        data_hash bytea,
+        primary key (id, status)
       )  PARTITION BY LIST (status);
-
-      ALTER TABLE cell_outputs ADD PRIMARY KEY (id, status);
 
       CREATE TABLE cell_outputs_live PARTITION OF cell_outputs
       FOR VALUES IN (0);
