@@ -67,10 +67,6 @@ s.every "2m", overlap: false do
   call_worker PoolTransactionCheckWorker
 end
 
-s.every "1h", overlap: false do
-  call_worker CleanUpWorker
-end
-
 s.interval "10s", overlap: false do
   puts "reset transactions_count_per_minute, average_block_time, transaction_fee_rates"
   StatisticInfo.default.reset! :transactions_count_per_minute,
@@ -117,7 +113,7 @@ s.cron "0 6 * * 1" do
   call_worker CleanAddressBlockSnapshotWorker
 end
 
-s.every "1h", overlap: false do
+s.every "6h", overlap: false do
   call_worker ContractStatisticWorker
 end
 
@@ -131,6 +127,10 @@ end
 
 s.every "5m", overlap: false do
   call_worker TokenCollectionTagWorker
+end
+
+s.every "10m", overlap: false do
+  call_worker GenerateUdtHolderAllocationWorker
 end
 
 s.join

@@ -42,13 +42,6 @@ class Udt < ApplicationRecord
       hash_type:,
     }
   end
-
-  def holder_allocation
-    allocation = Rails.cache.read("udt_holders/#{type_hash}")
-    return unless allocation
-
-    CkbUtils.hash_value_to_s(allocation)
-  end
 end
 
 # == Schema Information
