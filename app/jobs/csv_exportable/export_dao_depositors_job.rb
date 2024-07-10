@@ -58,13 +58,11 @@ module CsvExportable
       sql = build_sql_query(start_date, end_date)
       rows = {}
 
-      CellOutput.includes(:address).live.nervos_dao_withdrawing.where(sql).find_in_batches(batch_size: 500) do |cells|
+      ckb_transaction_ids = CellOutput.live.nervos_dao_withdrawing.where(sql).distinct.pluck(:ckb_transaction_id)
+      CellOutput.nervos_dao_deposit.includes(:address).where(consumed_by_id: ckb_transaction_ids).find_in_batches(batch_size: 500) do |cells|
         cells.each do |cell|
-          previous_cell_output = cell.ckb_transaction.input_cells.nervos_dao_deposit&.first
-          next unless previous_cell_output
-
-          address_hash = previous_cell_output.address_hash
-          amount = CkbUtils.shannon_to_byte(BigDecimal(previous_cell_output.capacity))
+          address_hash = cell.address_hash
+          amount = CkbUtils.shannon_to_byte(BigDecimal(cell.capacity))
           rows[address_hash] = rows.fetch(address_hash, 0) + amount
         end
       end
