@@ -8,7 +8,7 @@ class ContractStatisticWorker
     pool = Concurrent::FixedThreadPool.new(pool_size)
 
     Contract.find_each do |contract|
-      # ckb_address_ids = fetch_ckb_address_ids(contract, pool)
+      ckb_address_ids = fetch_ckb_address_ids(contract, pool)
       contract.update(
         ckb_transactions_count: contract.cell_dependencies.count,
         h24_ckb_transactions_count: contract.cell_dependencies.where(ckb_transaction_id: h24_tx_ids).count,
