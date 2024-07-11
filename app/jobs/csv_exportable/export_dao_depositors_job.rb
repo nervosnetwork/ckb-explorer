@@ -4,11 +4,12 @@ module CsvExportable
   class ExportDaoDepositorsJob < BaseExporter
     def perform(args)
       start_date, end_date = extract_dates(args)
+      deposit_rows = fetch_deposit_rows(start_date, end_date)
+      withdrawing_rows = fetch_withdrawing_rows(start_date, end_date)
+      combined_rows = combine_rows(deposit_rows, withdrawing_rows)
 
-      rows = fetch_deposit_rows(start_date, end_date) + fetch_withdrawing_rows(start_date, end_date)
-
-      header = ["Address", "Capacity", "Txn hash", "Previous Txn hash", "UnixTimestamp", "date(UTC)"]
-      generate_csv(header, rows)
+      header = ["Address", "Capacity"]
+      generate_csv(header, combined_rows)
     end
 
     private
@@ -40,13 +41,13 @@ module CsvExportable
 
     def fetch_deposit_rows(start_date, end_date)
       sql = build_sql_query(start_date, end_date)
-      rows = []
+      rows = {}
 
       CellOutput.includes(:address).live.nervos_dao_deposit.where(sql).find_in_batches(batch_size: 500) do |cells|
         cells.each do |cell|
+          address_hash = cell.address_hash
           amount = CkbUtils.shannon_to_byte(BigDecimal(cell.capacity))
-          datetime = datetime_utc(cell.block_timestamp)
-          rows << [cell.address_hash, amount, cell.tx_hash, nil, cell.block_timestamp, datetime]
+          rows[address_hash] = rows.fetch(address_hash, 0) + amount
         end
       end
 
@@ -55,20 +56,23 @@ module CsvExportable
 
     def fetch_withdrawing_rows(start_date, end_date)
       sql = build_sql_query(start_date, end_date)
-      rows = []
+      rows = {}
 
-      CellOutput.includes(:address).live.nervos_dao_withdrawing.where(sql).find_in_batches(batch_size: 500) do |cells|
+      ckb_transaction_ids = CellOutput.live.nervos_dao_withdrawing.where(sql).distinct.pluck(:ckb_transaction_id)
+      CellOutput.nervos_dao_deposit.includes(:address).where(consumed_by_id: ckb_transaction_ids).find_in_batches(batch_size: 500) do |cells|
         cells.each do |cell|
-          cell_input = cell.ckb_transaction.cell_inputs.nervos_dao_deposit.first
-          previous_cell_output = cell_input.previous_cell_output
-          previous_tx_hash = previous_cell_output.tx_hash
-          amount = CkbUtils.shannon_to_byte(BigDecimal(previous_cell_output.capacity))
-          datetime = datetime_utc(previous_cell_output.block_timestamp)
-          rows << [previous_cell_output.address_hash, amount, cell.tx_hash, previous_tx_hash, previous_cell_output.block_timestamp, datetime]
+          address_hash = cell.address_hash
+          amount = CkbUtils.shannon_to_byte(BigDecimal(cell.capacity))
+          rows[address_hash] = rows.fetch(address_hash, 0) + amount
         end
       end
 
       rows
+    end
+
+    def combine_rows(deposit_rows, withdrawing_rows)
+      combined = deposit_rows.merge(withdrawing_rows) { |_key, old_val, new_val| old_val + new_val }
+      combined.map { |address, amount| [address, amount] }
     end
   end
 end
