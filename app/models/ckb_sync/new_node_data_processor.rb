@@ -874,7 +874,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
                            unique_by: %i[ckb_transaction_id index])
       if prev_cell_outputs_attributes.present?
         cell_ouput_ids = prev_cell_outputs_attributes.map { |attr| attr[:id] }
-        CellOutput.where(id: cell_ouput_ids).update_all(status: :dead)
+        CellOutput.live.where(id: cell_ouput_ids).update_all(status: :dead)
         CellOutput.upsert_all(prev_cell_outputs_attributes,
                               unique_by: %i[tx_hash cell_index status],
                               record_timestamps: true)
