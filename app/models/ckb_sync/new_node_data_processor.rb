@@ -846,7 +846,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
                           udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids)
       if cell_outputs_attributes.present?
-        id_hashes = CellOutput.upsert_all(cell_outputs_attributes, unique_by: %i[tx_hash cell_index],
+        id_hashes = CellOutput.upsert_all(cell_outputs_attributes, unique_by: %i[tx_hash cell_index status],
                                                                    returning: %i[id data_hash])
         cell_data_attrs = []
 
@@ -873,8 +873,11 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       CellInput.upsert_all(cell_inputs_attributes,
                            unique_by: %i[ckb_transaction_id index])
       if prev_cell_outputs_attributes.present?
+        cell_ouput_ids = prev_cell_outputs_attributes.map { |attr| attr[:id] }
+        CellOutput.where(id: cell_ouput_ids).update_all(status: :dead)
         CellOutput.upsert_all(prev_cell_outputs_attributes,
-                              unique_by: %i[tx_hash cell_index])
+                              unique_by: %i[tx_hash cell_index status],
+                              record_timestamps: true)
       end
 
       ScriptTransaction.create_from_scripts TypeScript.where(id: type_script_ids)
@@ -1221,11 +1224,9 @@ _prev_outputs, index = nil)
           previous_output: {
             id: previous_output.id,
             cell_type: previous_output.cell_type,
-            created_at: previous_output.created_at,
             tx_hash: input.previous_output.tx_hash,
             cell_index: input.previous_output.index,
             status: "dead",
-            updated_at: Time.current,
             consumed_by_id: ckb_transaction_id,
             consumed_block_timestamp: CkbTransaction.find(ckb_transaction_id).block_timestamp,
           },
