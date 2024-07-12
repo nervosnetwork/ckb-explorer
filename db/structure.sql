@@ -10,6 +10,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
 -- Name: btree_gin; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -21,6 +28,20 @@ CREATE EXTENSION IF NOT EXISTS btree_gin WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION btree_gin IS 'support for indexing common datatypes in GIN';
+
+
+--
+-- Name: pg_buffercache; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_buffercache WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_buffercache; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_buffercache IS 'examine the shared buffer cache';
 
 
 --
@@ -415,9 +436,9 @@ CREATE TABLE public.addresses (
     dao_deposit numeric(30,0) DEFAULT 0.0,
     interest numeric(30,0) DEFAULT 0.0,
     block_timestamp bigint,
+    visible boolean DEFAULT true,
     live_cells_count bigint DEFAULT 0.0,
     mined_blocks_count integer DEFAULT 0,
-    visible boolean DEFAULT true,
     average_deposit_time bigint,
     unclaimed_compensation numeric(30,0),
     is_depositor boolean DEFAULT false,
@@ -470,7 +491,6 @@ CREATE TABLE public.blocks (
     "timestamp" bigint,
     transactions_root bytea,
     proposals_hash bytea,
-    uncles_count integer,
     extra_hash bytea,
     uncle_block_hashes bytea,
     version integer,
@@ -497,6 +517,7 @@ CREATE TABLE public.blocks (
     nonce numeric(50,0) DEFAULT 0.0,
     start_number numeric(30,0) DEFAULT 0.0,
     length numeric(30,0) DEFAULT 0.0,
+    uncles_count integer,
     compact_target numeric(20,0),
     live_cell_changes integer,
     block_time bigint,
@@ -506,8 +527,8 @@ CREATE TABLE public.blocks (
     miner_message character varying,
     extension jsonb,
     median_timestamp bigint DEFAULT 0.0,
-    ckb_node_version character varying,
-    cycles bigint
+    cycles bigint,
+    ckb_node_version character varying
 );
 
 
@@ -1505,9 +1526,9 @@ ALTER SEQUENCE public.contracts_id_seq OWNED BY public.contracts.id;
 
 CREATE TABLE public.daily_statistics (
     id bigint NOT NULL,
-    transactions_count character varying DEFAULT 0,
-    addresses_count character varying DEFAULT 0,
-    total_dao_deposit character varying DEFAULT 0.0,
+    transactions_count character varying DEFAULT '0'::character varying,
+    addresses_count character varying DEFAULT '0'::character varying,
+    total_dao_deposit character varying DEFAULT '0.0'::character varying,
     block_timestamp numeric(30,0),
     created_at_unixtimestamp integer,
     created_at timestamp(6) without time zone NOT NULL,
@@ -1526,8 +1547,8 @@ CREATE TABLE public.daily_statistics (
     avg_difficulty character varying DEFAULT '0'::character varying,
     uncle_rate character varying DEFAULT '0'::character varying,
     total_depositors_count character varying DEFAULT '0'::character varying,
-    total_tx_fee numeric(30,0),
     address_balance_distribution jsonb,
+    total_tx_fee numeric(30,0),
     occupied_capacity numeric(30,0),
     daily_dao_deposit numeric(30,0),
     daily_dao_depositors_count integer,
@@ -1727,7 +1748,6 @@ CREATE TABLE public.forked_blocks (
     "timestamp" bigint,
     transactions_root bytea,
     proposals_hash bytea,
-    uncles_count integer,
     extra_hash bytea,
     uncle_block_hashes bytea,
     version integer,
@@ -1754,6 +1774,7 @@ CREATE TABLE public.forked_blocks (
     nonce numeric(50,0) DEFAULT 0.0,
     start_number numeric(30,0) DEFAULT 0.0,
     length numeric(30,0) DEFAULT 0.0,
+    uncles_count integer,
     compact_target numeric(20,0),
     live_cell_changes integer,
     block_time numeric(13,0),
@@ -1763,8 +1784,8 @@ CREATE TABLE public.forked_blocks (
     miner_message character varying,
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
-    ckb_node_version character varying,
-    cycles bigint
+    cycles bigint,
+    ckb_node_version character varying
 );
 
 
@@ -3976,6 +3997,20 @@ CREATE INDEX cell_outputs_dead_block_timestamp_idx ON public.cell_outputs_dead U
 
 
 --
+-- Name: index_cell_outputs_on_tx_id_and_cell_index_and_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_cell_outputs_on_tx_id_and_cell_index_and_status ON ONLY public.cell_outputs USING btree (ckb_transaction_id, cell_index, status);
+
+
+--
+-- Name: cell_outputs_dead_ckb_transaction_id_cell_index_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX cell_outputs_dead_ckb_transaction_id_cell_index_status_idx ON public.cell_outputs_dead USING btree (ckb_transaction_id, cell_index, status);
+
+
+--
 -- Name: index_cell_outputs_on_consumed_block_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4018,6 +4053,20 @@ CREATE INDEX cell_outputs_dead_lock_script_id_idx ON public.cell_outputs_dead US
 
 
 --
+-- Name: index_cell_outputs_on_tx_hash_and_cell_index_and_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_cell_outputs_on_tx_hash_and_cell_index_and_status ON ONLY public.cell_outputs USING btree (tx_hash, cell_index, status);
+
+
+--
+-- Name: cell_outputs_dead_tx_hash_cell_index_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX cell_outputs_dead_tx_hash_cell_index_status_idx ON public.cell_outputs_dead USING btree (tx_hash, cell_index, status);
+
+
+--
 -- Name: index_cell_outputs_on_type_script_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4053,6 +4102,13 @@ CREATE INDEX cell_outputs_live_block_timestamp_idx ON public.cell_outputs_live U
 
 
 --
+-- Name: cell_outputs_live_ckb_transaction_id_cell_index_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX cell_outputs_live_ckb_transaction_id_cell_index_status_idx ON public.cell_outputs_live USING btree (ckb_transaction_id, cell_index, status);
+
+
+--
 -- Name: cell_outputs_live_consumed_block_timestamp_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4071,6 +4127,13 @@ CREATE INDEX cell_outputs_live_consumed_by_id_idx ON public.cell_outputs_live US
 --
 
 CREATE INDEX cell_outputs_live_lock_script_id_idx ON public.cell_outputs_live USING btree (lock_script_id);
+
+
+--
+-- Name: cell_outputs_live_tx_hash_cell_index_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX cell_outputs_live_tx_hash_cell_index_status_idx ON public.cell_outputs_live USING btree (tx_hash, cell_index, status);
 
 
 --
@@ -4102,6 +4165,13 @@ CREATE INDEX cell_outputs_pending_block_timestamp_idx ON public.cell_outputs_pen
 
 
 --
+-- Name: cell_outputs_pending_ckb_transaction_id_cell_index_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX cell_outputs_pending_ckb_transaction_id_cell_index_status_idx ON public.cell_outputs_pending USING btree (ckb_transaction_id, cell_index, status);
+
+
+--
 -- Name: cell_outputs_pending_consumed_block_timestamp_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4120,6 +4190,13 @@ CREATE INDEX cell_outputs_pending_consumed_by_id_idx ON public.cell_outputs_pend
 --
 
 CREATE INDEX cell_outputs_pending_lock_script_id_idx ON public.cell_outputs_pending USING btree (lock_script_id);
+
+
+--
+-- Name: cell_outputs_pending_tx_hash_cell_index_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX cell_outputs_pending_tx_hash_cell_index_status_idx ON public.cell_outputs_pending USING btree (tx_hash, cell_index, status);
 
 
 --
@@ -4151,6 +4228,13 @@ CREATE INDEX cell_outputs_rejected_block_timestamp_idx ON public.cell_outputs_re
 
 
 --
+-- Name: cell_outputs_rejected_ckb_transaction_id_cell_index_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX cell_outputs_rejected_ckb_transaction_id_cell_index_status_idx ON public.cell_outputs_rejected USING btree (ckb_transaction_id, cell_index, status);
+
+
+--
 -- Name: cell_outputs_rejected_consumed_block_timestamp_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4169,6 +4253,13 @@ CREATE INDEX cell_outputs_rejected_consumed_by_id_idx ON public.cell_outputs_rej
 --
 
 CREATE INDEX cell_outputs_rejected_lock_script_id_idx ON public.cell_outputs_rejected USING btree (lock_script_id);
+
+
+--
+-- Name: cell_outputs_rejected_tx_hash_cell_index_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX cell_outputs_rejected_tx_hash_cell_index_status_idx ON public.cell_outputs_rejected USING btree (tx_hash, cell_index, status);
 
 
 --
@@ -4613,34 +4704,6 @@ CREATE UNIQUE INDEX index_cell_inputs_on_ckb_transaction_id_and_index ON public.
 
 
 --
--- Name: index_cell_outputs_dead_on_tx_hash_and_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_cell_outputs_dead_on_tx_hash_and_cell_index ON public.cell_outputs_dead USING btree (tx_hash, cell_index);
-
-
---
--- Name: index_cell_outputs_dead_on_tx_id_and_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_cell_outputs_dead_on_tx_id_and_cell_index ON public.cell_outputs_dead USING btree (ckb_transaction_id, cell_index);
-
-
---
--- Name: index_cell_outputs_live_on_tx_hash_and_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_cell_outputs_live_on_tx_hash_and_cell_index ON public.cell_outputs_live USING btree (tx_hash, cell_index);
-
-
---
--- Name: index_cell_outputs_live_on_tx_id_and_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_cell_outputs_live_on_tx_id_and_cell_index ON public.cell_outputs_live USING btree (ckb_transaction_id, cell_index);
-
-
---
 -- Name: index_cell_outputs_old_on_address_id_and_status; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4729,34 +4792,6 @@ CREATE INDEX index_cell_outputs_old_on_type_script_id ON public.cell_outputs_old
 --
 
 CREATE INDEX index_cell_outputs_old_on_type_script_id_and_id ON public.cell_outputs_old USING btree (type_script_id, id);
-
-
---
--- Name: index_cell_outputs_pending_on_tx_hash_and_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_cell_outputs_pending_on_tx_hash_and_cell_index ON public.cell_outputs_pending USING btree (tx_hash, cell_index);
-
-
---
--- Name: index_cell_outputs_pending_on_tx_id_and_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_cell_outputs_pending_on_tx_id_and_cell_index ON public.cell_outputs_pending USING btree (ckb_transaction_id, cell_index);
-
-
---
--- Name: index_cell_outputs_rejected_on_tx_hash_and_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_cell_outputs_rejected_on_tx_hash_and_cell_index ON public.cell_outputs_rejected USING btree (tx_hash, cell_index);
-
-
---
--- Name: index_cell_outputs_rejected_on_tx_id_and_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_cell_outputs_rejected_on_tx_id_and_cell_index ON public.cell_outputs_rejected USING btree (ckb_transaction_id, cell_index);
 
 
 --
@@ -4953,13 +4988,6 @@ CREATE UNIQUE INDEX index_omiga_inscription_infos_on_udt_hash ON public.omiga_in
 --
 
 CREATE UNIQUE INDEX index_portfolios_on_user_id_and_address_id ON public.portfolios USING btree (user_id, address_id);
-
-
---
--- Name: index_referring_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_referring_cells_on_cell_output_id ON public.referring_cells USING btree (cell_output_id);
 
 
 --
@@ -5292,6 +5320,13 @@ ALTER INDEX public.index_cell_outputs_on_block_timestamp ATTACH PARTITION public
 
 
 --
+-- Name: cell_outputs_dead_ckb_transaction_id_cell_index_status_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_cell_outputs_on_tx_id_and_cell_index_and_status ATTACH PARTITION public.cell_outputs_dead_ckb_transaction_id_cell_index_status_idx;
+
+
+--
 -- Name: cell_outputs_dead_consumed_block_timestamp_idx; Type: INDEX ATTACH; Schema: public; Owner: -
 --
 
@@ -5317,6 +5352,13 @@ ALTER INDEX public.index_cell_outputs_on_lock_script_id ATTACH PARTITION public.
 --
 
 ALTER INDEX public.cell_outputs_pkey ATTACH PARTITION public.cell_outputs_dead_pkey;
+
+
+--
+-- Name: cell_outputs_dead_tx_hash_cell_index_status_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_cell_outputs_on_tx_hash_and_cell_index_and_status ATTACH PARTITION public.cell_outputs_dead_tx_hash_cell_index_status_idx;
 
 
 --
@@ -5348,6 +5390,13 @@ ALTER INDEX public.index_cell_outputs_on_block_timestamp ATTACH PARTITION public
 
 
 --
+-- Name: cell_outputs_live_ckb_transaction_id_cell_index_status_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_cell_outputs_on_tx_id_and_cell_index_and_status ATTACH PARTITION public.cell_outputs_live_ckb_transaction_id_cell_index_status_idx;
+
+
+--
 -- Name: cell_outputs_live_consumed_block_timestamp_idx; Type: INDEX ATTACH; Schema: public; Owner: -
 --
 
@@ -5373,6 +5422,13 @@ ALTER INDEX public.index_cell_outputs_on_lock_script_id ATTACH PARTITION public.
 --
 
 ALTER INDEX public.cell_outputs_pkey ATTACH PARTITION public.cell_outputs_live_pkey;
+
+
+--
+-- Name: cell_outputs_live_tx_hash_cell_index_status_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_cell_outputs_on_tx_hash_and_cell_index_and_status ATTACH PARTITION public.cell_outputs_live_tx_hash_cell_index_status_idx;
 
 
 --
@@ -5404,6 +5460,13 @@ ALTER INDEX public.index_cell_outputs_on_block_timestamp ATTACH PARTITION public
 
 
 --
+-- Name: cell_outputs_pending_ckb_transaction_id_cell_index_status_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_cell_outputs_on_tx_id_and_cell_index_and_status ATTACH PARTITION public.cell_outputs_pending_ckb_transaction_id_cell_index_status_idx;
+
+
+--
 -- Name: cell_outputs_pending_consumed_block_timestamp_idx; Type: INDEX ATTACH; Schema: public; Owner: -
 --
 
@@ -5429,6 +5492,13 @@ ALTER INDEX public.index_cell_outputs_on_lock_script_id ATTACH PARTITION public.
 --
 
 ALTER INDEX public.cell_outputs_pkey ATTACH PARTITION public.cell_outputs_pending_pkey;
+
+
+--
+-- Name: cell_outputs_pending_tx_hash_cell_index_status_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_cell_outputs_on_tx_hash_and_cell_index_and_status ATTACH PARTITION public.cell_outputs_pending_tx_hash_cell_index_status_idx;
 
 
 --
@@ -5460,6 +5530,13 @@ ALTER INDEX public.index_cell_outputs_on_block_timestamp ATTACH PARTITION public
 
 
 --
+-- Name: cell_outputs_rejected_ckb_transaction_id_cell_index_status_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_cell_outputs_on_tx_id_and_cell_index_and_status ATTACH PARTITION public.cell_outputs_rejected_ckb_transaction_id_cell_index_status_idx;
+
+
+--
 -- Name: cell_outputs_rejected_consumed_block_timestamp_idx; Type: INDEX ATTACH; Schema: public; Owner: -
 --
 
@@ -5485,6 +5562,13 @@ ALTER INDEX public.index_cell_outputs_on_lock_script_id ATTACH PARTITION public.
 --
 
 ALTER INDEX public.cell_outputs_pkey ATTACH PARTITION public.cell_outputs_rejected_pkey;
+
+
+--
+-- Name: cell_outputs_rejected_tx_hash_cell_index_status_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_cell_outputs_on_tx_hash_and_cell_index_and_status ATTACH PARTITION public.cell_outputs_rejected_tx_hash_cell_index_status_idx;
 
 
 --
