@@ -1,6 +1,8 @@
 class CellOutput < ApplicationRecord
   include CellOutputs::ExtraInfo
 
+  self.primary_key = :id
+
   SYSTEM_TX_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
   MAXIMUM_DOWNLOADABLE_SIZE = 64000
   MIN_SUDT_AMOUNT_BYTESIZE = 16
@@ -298,11 +300,10 @@ end
 #
 #  id                       :bigint           not null, primary key
 #  capacity                 :decimal(64, 2)
-#  data                     :binary
 #  ckb_transaction_id       :bigint
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
-#  status                   :integer          default("live")
+#  status                   :integer          default("live"), not null
 #  address_id               :decimal(30, )
 #  block_id                 :decimal(30, )
 #  tx_hash                  :binary
@@ -322,17 +323,13 @@ end
 #
 # Indexes
 #
-#  index_cell_outputs_on_address_id_and_status              (address_id,status)
+#  index_cell_outputs_on_address_id                         (address_id)
 #  index_cell_outputs_on_block_id                           (block_id)
 #  index_cell_outputs_on_block_timestamp                    (block_timestamp)
-#  index_cell_outputs_on_cell_type                          (cell_type)
-#  index_cell_outputs_on_ckb_transaction_id_and_cell_index  (ckb_transaction_id,cell_index) UNIQUE
 #  index_cell_outputs_on_consumed_block_timestamp           (consumed_block_timestamp)
 #  index_cell_outputs_on_consumed_by_id                     (consumed_by_id)
-#  index_cell_outputs_on_data_hash                          (data_hash) USING hash
 #  index_cell_outputs_on_lock_script_id                     (lock_script_id)
-#  index_cell_outputs_on_status                             (status)
-#  index_cell_outputs_on_tx_hash_and_cell_index             (tx_hash,cell_index) UNIQUE
+#  index_cell_outputs_on_tx_hash_and_cell_index_and_status  (tx_hash,cell_index,status) UNIQUE
+#  index_cell_outputs_on_tx_id_and_cell_index_and_status    (ckb_transaction_id,cell_index,status) UNIQUE
 #  index_cell_outputs_on_type_script_id                     (type_script_id)
-#  index_cell_outputs_on_type_script_id_and_id              (type_script_id,id)
 #
