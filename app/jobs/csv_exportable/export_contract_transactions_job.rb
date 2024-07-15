@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module CsvExportable
-  class ExportContractTransactionsJob2 < BaseExporter
+  class ExportContractTransactionsJob < BaseExporter
     def perform(args)
       start_date, end_date = extract_dates(args)
       transaction_rows = fetch_transaction_rows(start_date, end_date)
