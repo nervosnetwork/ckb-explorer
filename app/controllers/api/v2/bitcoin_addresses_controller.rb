@@ -39,7 +39,7 @@ module Api
           vouts = BitcoinVout.where(bitcoin_transaction_id: vout.bitcoin_transaction_id, index: vout.index).includes(:cell_output).where(
             cell_outputs: { status: "live" },
           )
-          hash[[tx.tx_hash, vout.index]] = vouts.map { |v| CellOutputSerializer.new(v.cell_output).serializable_hash }
+          hash[[tx.txid, vout.index]] = vouts.map { |v| CellOutputSerializer.new(v.cell_output).serializable_hash }
         end
 
         render json: { data: { rgb_cells: cells }, meta: { total: bitcoin_vouts.total_count, page_size: @page_size } }
