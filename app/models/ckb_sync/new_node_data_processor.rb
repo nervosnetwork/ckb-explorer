@@ -846,6 +846,8 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
                           udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids)
       if cell_outputs_attributes.present?
+        tx_ids = cell_outputs_attributes.map { |attr| attr[:ckb_transaction_id] }
+        CellOutput.pending.where(ckb_transaction_id: tx_ids).update_all(status: :live)
         id_hashes = CellOutput.upsert_all(cell_outputs_attributes, unique_by: %i[tx_hash cell_index status],
                                                                    returning: %i[id data_hash])
         cell_data_attrs = []
