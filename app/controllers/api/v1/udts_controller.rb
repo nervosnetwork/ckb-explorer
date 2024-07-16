@@ -93,6 +93,7 @@ module Api
           {
             name: allocation.contract.name,
             code_hash: allocation.contract.code_hash,
+            hash_type: allocation.contract.hash_type,
             holder_count: allocation.ckb_holder_count,
           }
         end
