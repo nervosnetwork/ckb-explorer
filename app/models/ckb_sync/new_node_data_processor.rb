@@ -850,6 +850,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
         CellOutput.pending.where(ckb_transaction_id: tx_ids).update_all(status: :live)
         id_hashes = CellOutput.upsert_all(cell_outputs_attributes, unique_by: %i[tx_hash cell_index status],
                                                                    returning: %i[id data_hash])
+        CellOutput.pending.where(ckb_transaction_id: tx_ids).destroy_all
         cell_data_attrs = []
 
         id_hashes.each do |row|
