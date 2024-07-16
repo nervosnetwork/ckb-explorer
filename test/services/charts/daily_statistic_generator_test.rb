@@ -468,5 +468,19 @@ module Charts
       locked_capacity = Charts::DailyStatisticGenerator.new(@datetime).call.locked_capacity
       assert_equal locked_capacity_temp, locked_capacity
     end
+
+    test "it should get holder_count" do
+      address1 = create(:address)
+      address2 = create(:address)
+      consumed_tx = create(:ckb_transaction)
+
+      create(:cell_output, :with_full_transaction,
+             block_timestamp: @datetime.beginning_of_day.to_i * 1000 - 10000, block: @block, address_id: address1.id)
+      create(:cell_output, :with_full_transaction,
+             block_timestamp: @datetime.beginning_of_day.to_i * 1000 - 10000, block: @block, address_id: address2.id, status: :dead, consumed_block_timestamp: @datetime.beginning_of_day.to_i * 1000 + 10000, consumed_by_id: consumed_tx.id)
+
+      holder_count = Charts::DailyStatisticGenerator.new(@datetime).call.holder_count
+      assert_equal 2, holder_count
+    end
   end
 end

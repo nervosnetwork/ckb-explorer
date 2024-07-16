@@ -128,4 +128,10 @@ class DailyStatisticSerializer
   attribute :ckb_hodl_wave, if: Proc.new { |_record, params|
     params.present? && params[:indicator].include?("ckb_hodl_wave")
   }
+
+  attribute :holder_count, if: Proc.new { |_record, params|
+    params.present? && params[:indicator].include?("holder_count")
+  } do |object|
+    object.holder_count.to_s
+  end
 end
