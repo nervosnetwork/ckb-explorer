@@ -912,13 +912,13 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
           local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}") do
             # TODO use LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
             LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type,
-                             args: output.lock.args).select(:id).take!
+                             args: output.lock.args).take!
           end
           if output.type.present?
             local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}") do
               # TODO use TypeScript.where(script_hash: output.type.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
               TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type,
-                               args: output.type.args).select(:id).take!
+                               args: output.type.args).take!
             end
           end
         end
@@ -1147,7 +1147,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       attrs = {
         ckb_transaction_id: ckb_transaction["id"],
         capacity: output.capacity,
-        occupied_capacity: 0,
+        occupied_capacity: CkbUtils.cal_cell_min_capacity(lock_script, type_script, output.capacity, binary_data),
         address_id: address.id,
         block_id: local_block.id,
         tx_hash: ckb_transaction["tx_hash"],
