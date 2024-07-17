@@ -399,11 +399,13 @@ class DailyStatistic < ApplicationRecord
   end
 
   define_logic :holder_count do
+    ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
     live_query = CellOutput.live.generated_before(to_be_counted_date.to_i * 1000 - 1).select(:address_id).to_sql
     dead_query = CellOutput.dead.generated_before(to_be_counted_date.to_i * 1000 - 1).consumed_after(to_be_counted_date.to_i * 1000).select(:address_id).to_sql
     combined_query = "#{live_query} UNION #{dead_query}"
     count_query = "SELECT COUNT(DISTINCT address_id) AS count FROM (#{combined_query}) AS combined_results;"
     ActiveRecord::Base.connection.execute(count_query).first["count"]
+    ActiveRecord::Base.connection.execute("RESET statement_timeout")
   end
 
   private
