@@ -28,7 +28,7 @@ class XudtTagWorkerTest < ActiveJob::TestCase
     assert_changes -> { XudtTag.count }, from: 1, to: 2 do
       XudtTagWorker.new.perform
     end
-    assert_equal ["rgbpp-compatible", "layer-1-asset", "supply-limited"], XudtTag.last.tags
+    assert_equal ["rgb++", "layer-1-asset", "supply-limited"], XudtTag.last.tags
   end
 
   test "insert invalid tag" do
@@ -40,7 +40,7 @@ class XudtTagWorkerTest < ActiveJob::TestCase
   end
 
   test "insert suspicious tag" do
-    create(:udt, :xudt, symbol: "CK BB")
+    create(:udt, :xudt, symbol: "CK  BB")
     assert_changes -> { XudtTag.count }, from: 0, to: 1 do
       XudtTagWorker.new.perform
     end
@@ -48,20 +48,28 @@ class XudtTagWorkerTest < ActiveJob::TestCase
   end
 
   test "insert out-of-length-range tag" do
-    create(:udt, :xudt, symbol: "CKBBBB")
+    create(:udt, :xudt, symbol: "CK BBBB")
     assert_changes -> { XudtTag.count }, from: 0, to: 1 do
       XudtTagWorker.new.perform
     end
     assert_equal ["out-of-length-range"], XudtTag.last.tags
   end
 
-  test "insert duplicate tag" do
+  test "insert utility tag" do
+    create(:udt, :xudt, symbol: "CKBBB", args: "0xdd6faefeffaa7d2a7b2e6890713c5fa4bbf378add1cfc1b27672a50a6ad3e83500000040")
+    assert_changes -> { XudtTag.count }, from: 0, to: 1 do
+      XudtTagWorker.new.perform
+    end
+    assert_equal ["utility"], XudtTag.last.tags
+  end
+
+  test "insert suspicious tag when not lp token but duplicate" do
     udt = create(:udt, :xudt, symbol: "CKBBB", block_timestamp: 1.day.ago.to_i * 1000)
-    create(:xudt_tag, udt_id: udt.id, udt_type_hash: udt.type_hash, tags: ["rgbpp-compatible", "layer-1-asset", "supply-limited"])
+    create(:xudt_tag, udt_id: udt.id, udt_type_hash: udt.type_hash, tags: ["rgb++", "layer-1-asset", "supply-limited"])
     create(:udt, :xudt, symbol: "ckbbb", block_timestamp: Time.now.to_i * 1000, issuer_address: @address.address_hash)
     assert_changes -> { XudtTag.count }, from: 1, to: 2 do
       XudtTagWorker.new.perform
     end
-    assert_equal ["duplicate", "layer-1-asset", "supply-limited"], XudtTag.last.tags
+    assert_equal ["suspicious"], XudtTag.last.tags
   end
 end

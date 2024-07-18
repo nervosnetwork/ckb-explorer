@@ -21,16 +21,10 @@ class TokenCollectionTagWorker
       ["suspicious"]
     elsif out_of_length?(token_collection.name)
       ["out-of-length-range"]
-    elsif first_token_collection?(token_collection.name, token_collection.block_timestamp, token_collection.standard)
-      if rgbpp_lock?(token_collection.creator.address_hash)
-        ["rgbpp-compatible", "layer-1-asset"]
-      else
-        ["rgbpp-compatible", "layer-2-asset"]
-      end
     elsif rgbpp_lock?(token_collection.creator.address_hash)
-      ["duplicate", "layer-1-asset"]
+      ["rgbpp-compatible", "layer-1-asset"]
     else
-      ["duplicate", "layer-2-asset"]
+      ["rgbpp-compatible", "layer-2-asset"]
     end
   end
 
@@ -39,7 +33,7 @@ class TokenCollectionTagWorker
   end
 
   def invisible_char?(name)
-    (name =~ /^[\x21-\x7E]+$/).nil?
+    (name =~ /^[\x21-\x7E]+(?:\s[\x21-\x7E]+)?$/).nil?
   end
 
   def out_of_length?(name)

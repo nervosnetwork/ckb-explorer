@@ -23,16 +23,14 @@ class XudtTagWorker
       ["suspicious"]
     elsif out_of_length?(udt.symbol)
       ["out-of-length-range"]
-    elsif first_xudt?(udt.symbol, udt.block_timestamp)
-      if rgbpp_lock?(udt.issuer_address)
-        ["rgbpp-compatible", "layer-1-asset", "supply-limited"]
-      else
-        ["rgbpp-compatible", "layer-2-asset", "supply-unlimited"]
-      end
+    elsif utility_lp_token?(udt.args)
+      ["utility"]
+    elsif !first_xudt?(udt.symbol, udt.block_timestamp)
+      ["suspicious"]
     elsif rgbpp_lock?(udt.issuer_address)
-      ["duplicate", "layer-1-asset", "supply-limited"]
+      ["rgb++", "layer-1-asset", "supply-limited"]
     else
-      ["duplicate", "layer-2-asset", "supply-unlimited"]
+      ["rgb++", "layer-2-asset", "supply-unlimited"]
     end
   end
 
@@ -41,7 +39,7 @@ class XudtTagWorker
   end
 
   def invisible_char?(symbol)
-    (symbol =~ /^[\x21-\x7E]+$/).nil?
+    (symbol =~ /^[\x21-\x7E]+(?:\s[\x21-\x7E]+)?$/).nil?
   end
 
   def out_of_length?(symbol)
@@ -55,6 +53,10 @@ class XudtTagWorker
   def rgbpp_lock?(issuer_address)
     address_code_hash = CkbUtils.parse_address(issuer_address).script.code_hash
     issuer_address.present? && CkbSync::Api.instance.rgbpp_code_hash.include?(address_code_hash)
+  end
+
+  def utility_lp_token?(args)
+    args.length == 74
   end
 
   ## TODO: current no this condition
