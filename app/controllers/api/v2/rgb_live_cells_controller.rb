@@ -10,7 +10,7 @@ module Api
           # The average block time of BTC is 10 minutes longer
           total_count = Rails.cache.fetch(scope.cache_key, expires_in: 5.minutes) { scope.count }
           scope = scope.page(@page).per(@page_size, max_per_page: 1000).fast_page
-          outpoints = cell_outputs.pluck(:tx_hash, :cell_index)
+          outpoints = scope.pluck(:tx_hash, :cell_index)
         else
           total_count = 0
           outpoints = CellOutput.none
