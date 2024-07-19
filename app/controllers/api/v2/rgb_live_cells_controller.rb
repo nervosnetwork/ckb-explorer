@@ -6,11 +6,11 @@ module Api
         code_hash = params.fetch("code_hash", nil)
 
         if CkbSync::Api.instance.rgbpp_code_hash.include?(code_hash)
-          scope = CellOutput.live.includes(:lock_script).where(lock_scripts: { code_hash: })
-          # The average block time of BTC is 10 minutes longer
-          total_count = Rails.cache.fetch(scope.cache_key, expires_in: 5.minutes) { scope.count }
-          scope = scope.page(@page).per(@page_size, max_per_page: 1000).fast_page
-          cells = scope.map { { tx_hash: _1.tx_hash, cell_index: _1.cell_index } }
+          scope = BitcoinVout.bound.without_op_return.includes(cell_output: [:lock_script]).
+            where(cell_outputs: { status: "live" }, lock_scripts: { code_hash: }).
+            page(@page).per(@page_size, max_per_page: 1000).fast_page
+          total_count = scope.total_count
+          cells = scope.map { { tx_hash: _1.cell_output.tx_hash, cell_index: _1.cell_output.cell_index } }
         else
           total_count = 0
           cells = CellOutput.none
