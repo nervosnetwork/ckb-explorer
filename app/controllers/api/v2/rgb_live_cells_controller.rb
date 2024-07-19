@@ -10,13 +10,13 @@ module Api
           # The average block time of BTC is 10 minutes longer
           total_count = Rails.cache.fetch(scope.cache_key, expires_in: 5.minutes) { scope.count }
           scope = scope.page(@page).per(@page_size, max_per_page: 1000).fast_page
-          outpoints = scope.pluck(:tx_hash, :cell_index)
+          cells = scope.map { { tx_hash: _1.tx_hash, cell_index: _1.cell_index } }
         else
           total_count = 0
-          outpoints = CellOutput.none
+          cells = CellOutput.none
         end
 
-        render json: { data: outpoints, meta: { total: total_count, page_size: @page_size } }
+        render json: { cells:, meta: { total: total_count, page_size: @page_size } }
       end
 
       private
