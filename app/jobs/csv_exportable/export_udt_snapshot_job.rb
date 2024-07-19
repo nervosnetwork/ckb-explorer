@@ -8,10 +8,11 @@ module CsvExportable
 
       cell_outputs = fetch_cell_outputs(type_script.id)
       data = fetch_address_data(cell_outputs)
-      merged_data = merge_data(data)
+      merged_data = merge_data(data, to_boolean(args[:merge_with_owner]))
 
+      header = generate_header(to_boolean(args[:merge_with_owner]))
       rows = prepare_rows(merged_data)
-      header = ["Token Symbol", "Block Height", "UnixTimestamp", "date(UTC)", "Owner", "Amount"]
+
       generate_csv(header, rows)
     end
 
@@ -33,33 +34,29 @@ module CsvExportable
     end
 
     def fetch_address_data(cell_outputs)
-      data = []
-      cell_outputs.keys.each_slice(1000) do |address_ids|
+      cell_outputs.keys.each_slice(1000).flat_map do |address_ids|
         addresses = Address.includes(bitcoin_address_mapping: [:bitcoin_address]).
           where(id: address_ids).pluck("addresses.id", "addresses.address_hash", "bitcoin_addresses.address_hash")
 
-        addresses.each do |address|
-          data << {
+        addresses.map do |address|
+          {
             address_hash: address[1],
             bitcoin_address_hash: address[2],
             udt_amount: cell_outputs[address[0]],
           }
         end
       end
-      data
     end
 
-    def merge_data(data)
+    def merge_data(data, merge_with_owner)
       data.each_with_object(Hash.new(0)) do |entry, hash|
-        owner = entry[:bitcoin_address_hash].presence || entry[:address_hash]
+        owner = merge_with_owner ? (entry[:bitcoin_address_hash].presence || entry[:address_hash]) : entry[:address_hash]
         hash[owner] += entry[:udt_amount]
       end
     end
 
     def prepare_rows(merged_data)
-      merged_data.sort_by { |_, amount| -amount }.map do |item|
-        generate_row(item)
-      end.compact
+      merged_data.sort_by { |_, amount| -amount }.map { |item| generate_row(item) }.compact
     end
 
     def generate_row(item)
@@ -74,6 +71,18 @@ module CsvExportable
         item[0],
         decimal.present? ? parse_udt_amount(item[1].to_d, decimal) : "#{item[1]} (raw)",
       ]
+    end
+
+    def generate_header(merge_with_owner)
+      if merge_with_owner
+        ["Token Symbol", "Block Height", "UnixTimestamp", "date(UTC)", "Owner", "Amount"]
+      else
+        ["Token Symbol", "Block Height", "UnixTimestamp", "date(UTC)", "CKB Address", "Amount"]
+      end
+    end
+
+    def to_boolean(param)
+      param == true || param.to_s.downcase == "true" || param.to_s == "1"
     end
   end
 end
