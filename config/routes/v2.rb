@@ -98,5 +98,6 @@ namespace :api do
     resources :bitcoin_addresses, only: :show do
       get :rgb_cells, on: :member
     end
+    resources :rgb_live_cells, only: :index
   end
 end
