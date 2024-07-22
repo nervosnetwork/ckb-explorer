@@ -18,7 +18,7 @@ class XudtTagWorkerTest < ActiveJob::TestCase
     assert_changes -> { XudtTag.count }, from: 0, to: 1 do
       XudtTagWorker.new.perform
     end
-    assert_equal ["unnamed"], XudtTag.last.tags
+    assert_equal ["unnamed", "rgb++"], XudtTag.last.tags
   end
 
   test "insert to xudt_tags successfully" do
@@ -36,7 +36,7 @@ class XudtTagWorkerTest < ActiveJob::TestCase
     assert_changes -> { XudtTag.count }, from: 0, to: 1 do
       XudtTagWorker.new.perform
     end
-    assert_equal ["invalid"], XudtTag.last.tags
+    assert_equal ["invalid", "rgb++"], XudtTag.last.tags
   end
 
   test "insert suspicious tag" do
@@ -44,7 +44,7 @@ class XudtTagWorkerTest < ActiveJob::TestCase
     assert_changes -> { XudtTag.count }, from: 0, to: 1 do
       XudtTagWorker.new.perform
     end
-    assert_equal ["suspicious"], XudtTag.last.tags
+    assert_equal ["suspicious", "rgb++"], XudtTag.last.tags
   end
 
   test "insert out-of-length-range tag" do
@@ -52,7 +52,7 @@ class XudtTagWorkerTest < ActiveJob::TestCase
     assert_changes -> { XudtTag.count }, from: 0, to: 1 do
       XudtTagWorker.new.perform
     end
-    assert_equal ["out-of-length-range"], XudtTag.last.tags
+    assert_equal ["out-of-length-range", "rgb++"], XudtTag.last.tags
   end
 
   test "insert utility tag" do
@@ -60,7 +60,7 @@ class XudtTagWorkerTest < ActiveJob::TestCase
     assert_changes -> { XudtTag.count }, from: 0, to: 1 do
       XudtTagWorker.new.perform
     end
-    assert_equal ["utility"], XudtTag.last.tags
+    assert_equal ["utility", "rgb++"], XudtTag.last.tags
   end
 
   test "insert suspicious tag when not lp token but duplicate" do
@@ -70,6 +70,6 @@ class XudtTagWorkerTest < ActiveJob::TestCase
     assert_changes -> { XudtTag.count }, from: 1, to: 2 do
       XudtTagWorker.new.perform
     end
-    assert_equal ["suspicious"], XudtTag.last.tags
+    assert_equal ["suspicious", "rgb++"], XudtTag.last.tags
   end
 end
