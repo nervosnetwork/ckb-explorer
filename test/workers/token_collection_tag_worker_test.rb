@@ -25,9 +25,9 @@ class TokenCollectionTagWorkerTest < ActiveJob::TestCase
     assert_equal ["out-of-length-range"], TokenCollection.last.tags
   end
 
-  test "add rgbpp-compatible tag to token_collection" do
+  test "add rgb++ tag to token_collection" do
     create(:token_collection, name: "CKBNFT", cell_id: @cell.id, creator_id: @address.id, block_timestamp: 1.hour.ago.to_i)
     TokenCollectionTagWorker.new.perform
-    assert_equal ["rgbpp-compatible", "layer-1-asset"], TokenCollection.last.tags
+    assert_equal ["rgb++", "layer-1-asset"], TokenCollection.last.tags
   end
 end

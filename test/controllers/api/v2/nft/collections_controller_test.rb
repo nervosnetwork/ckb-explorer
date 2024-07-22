@@ -14,17 +14,17 @@ module Api
       end
 
       test "should filter by union tags" do
-        create :token_collection, name: "token1", tags: ["layer-1-asset", "rgbpp-compatible"]
-        create :token_collection, name: "token2", tags: ["layer-1-asset", "rgbpp-compatible"]
+        create :token_collection, name: "token1", tags: ["layer-1-asset", "rgb++"]
+        create :token_collection, name: "token2", tags: ["layer-1-asset", "rgb++"]
 
-        get api_v2_nft_collections_url, params: { tags: "layer-1-asset,rgbpp-compatible", union: true }
+        get api_v2_nft_collections_url, params: { tags: "layer-1-asset,rgb++", union: true }
         assert_response :success
         assert_equal JSON.parse(response.body)["data"].size, 2
       end
 
       test "should filter by tags but not match" do
-        create :token_collection, name: "token1", tags: ["layer-1-asset", "rgbpp-compatible"]
-        create :token_collection, name: "token2", tags: ["layer-1-asset", "rgbpp-compatible"]
+        create :token_collection, name: "token1", tags: ["layer-1-asset", "rgb++"]
+        create :token_collection, name: "token2", tags: ["layer-1-asset", "rgb++"]
 
         get api_v2_nft_collections_url, params: { tags: "layer-1-asset,invalid" }
         assert_response :success

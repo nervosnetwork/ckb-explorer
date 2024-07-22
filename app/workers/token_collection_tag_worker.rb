@@ -22,9 +22,9 @@ class TokenCollectionTagWorker
     elsif out_of_length?(token_collection.name)
       ["out-of-length-range"]
     elsif rgbpp_lock?(token_collection.creator.address_hash)
-      ["rgbpp-compatible", "layer-1-asset"]
+      ["rgb++", "layer-1-asset"]
     else
-      ["rgbpp-compatible", "layer-2-asset"]
+      ["rgb++", "layer-2-asset"]
     end
   end
 
