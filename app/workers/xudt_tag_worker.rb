@@ -7,6 +7,7 @@ class XudtTagWorker
       attrs =
         udts.map do |udt|
           tags = mark_tags(udt)
+          tags << "rgb++" if udt.xudt && !tags.include?("rgb++")
           { udt_id: udt.id, udt_type_hash: udt.type_hash, tags: }
         end
 

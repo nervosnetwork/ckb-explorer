@@ -671,7 +671,9 @@ dao_contract)
               nft_token_attr[:decimal] = info[:decimal]
               nft_token_attr[:published] = true
             when "xudt", "xudt_compatible"
-              issuer_address = Address.find_by(lock_hash: output.type.args[0..65])&.address_hash
+              if output.type.args.length == 66
+                issuer_address = Address.find_by(lock_hash: output.type.args[0..65])&.address_hash
+              end
               items.each_with_index do |output, index|
                 if output.type&.code_hash == CkbSync::Api.instance.unique_cell_code_hash
                   info = CkbUtils.parse_unique_cell(outputs_data[tx_index][index])
