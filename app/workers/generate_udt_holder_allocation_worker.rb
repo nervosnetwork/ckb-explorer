@@ -5,7 +5,7 @@ class GenerateUdtHolderAllocationWorker
     type_hashes ||= $redis.smembers("udt_holder_allocation")
 
     type_hashes.each do |type_hash|
-      udt = Udt.published_xudt.find_by(type_hash:)
+      udt = Udt.find_by(type_hash:, published: true)
       next unless udt
 
       update_btc_holder_allocation(udt)
