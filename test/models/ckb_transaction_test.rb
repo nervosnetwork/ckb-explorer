@@ -538,7 +538,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       id from_cellbase capacity address_hash
       generated_tx_hash cell_index cell_type since extra_info
     ).sort
-    expected_m_nft_attributes = %i(class_name token_id total).sort
+    expected_m_nft_attributes = %i(class_name token_id total collection).sort
     expected_display_input = CkbUtils.hash_value_to_s(
       id: m_nft_cell_output.id,
       from_cellbase: false,
@@ -687,13 +687,14 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                               block: nrc_721_token_output_block)
 
     nrc_factory_cell = create(:nrc_factory_cell,
-                              code_hash: "0x00000000000000000000000000000000000000000000000000545950455f4944013620e2ced53373c5b55c5cef79b7fd0a875c60a70382a9e9664fe28e0bb345ab22c70f8e24a90dcccc7eb1ea669ac6cfecab095a1886af01d71612fdb3c836c8",
-                              args: "0x3620e2ced53373c5b55c5cef79b7fd0a875c60a70382a9e9664fe28e0bb345ab",
+                              code_hash: "0xf31f9c3241043976c93db9f203d765ce2c1d96465c918b93fbb117cd35bcfb98",
+                              args: "0x47a6262383ad9b266c6fae7c460dc39261e4f914e77467426809ce0fd607baec",
                               verified: true)
     nrc_721_factory_type_script = create(:type_script,
                                          code_hash: nrc_factory_cell.code_hash,
                                          hash_type: "type",
-                                         args: nrc_factory_cell.args)
+                                         args: nrc_factory_cell.args,
+                                         script_hash: "0xcf4f2494ea1fbebcd07a7445415a0e8b36be214af6257065888dae0ce1434434")
     nrc_721_factory_cell_output = create(:cell_output,
                                          block: nrc_721_token_output_block,
                                          ckb_transaction: nrc_721_token_output_transaction,
@@ -729,7 +730,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       symbol: "TTF", amount: "", decimal: "", type_hash: "0x", published: true
     }
     token_info = {
-      symbol: "TTF", amount: udt_account.nft_token_id, decimal: "6", type_hash: "0x", published: true
+      symbol: "TTF", amount: udt_account.nft_token_id, decimal: "6", type_hash: "0x", published: true, collection: { type_hash: "0xcf4f2494ea1fbebcd07a7445415a0e8b36be214af6257065888dae0ce1434434" }
     }
     display_outputs = nrc_721_token_output_transaction.display_outputs
     assert_equal factory_info.to_a,

@@ -40,6 +40,9 @@ module CellOutputs
               class_name: parsed_class_data.name,
               token_id: type_script.args[50..-1],
               total: parsed_class_data.total,
+              collection: {
+                type_hash: m_nft_class_type.script_hash,
+              },
             }
           else
             value = { class_name: "", token_id: nil, total: "" }
@@ -47,6 +50,24 @@ module CellOutputs
         else
           raise "invalid cell type"
         end
+
+        CkbUtils.hash_value_to_s(value)
+      end
+
+      def dob_info
+        return unless cell_type.in?(%w(spore_cell did_cell))
+
+        ti = TokenItem.find_by(type_script_id:)
+        coll = ti.collection
+
+        value = {
+          cluster_name: coll&.name,
+          token_id: ti.token_id,
+          collection: {
+            type_hash: coll&.sn,
+          },
+          published: true,
+        }
 
         CkbUtils.hash_value_to_s(value)
       end
@@ -79,6 +100,9 @@ module CellOutputs
             decimal: udt_account.decimal,
             type_hash:,
             published: true,
+            collection: {
+              type_hash: factory_cell&.type_script&.script_hash,
+            },
           }
         else
           raise "invalid cell type"
