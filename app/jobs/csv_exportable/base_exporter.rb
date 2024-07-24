@@ -55,11 +55,11 @@ module CsvExportable
       result = amount_big_decimal / (BigDecimal(10)**decimal_int)
 
       if decimal_int > 20
-        return "#{result.round(20).to_s('F')}..."
+        return "#{format('%.2f', result.round(20))}..."
       end
 
       if result.to_s.length >= 16 || result < BigDecimal("0.000001")
-        return result.round(decimal_int).to_s("F")
+        return format("%.#{decimal_int}f", result.round(decimal_int))
       end
 
       result.to_s("F")

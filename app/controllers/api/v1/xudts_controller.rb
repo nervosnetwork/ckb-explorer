@@ -55,7 +55,7 @@ module Api
       end
 
       def snapshot
-        args = params.permit(:id, :number)
+        args = params.permit(:id, :number, :merge_with_owner)
         file = CsvExportable::ExportUdtSnapshotJob.perform_now(args.to_h)
 
         if params[:format] == "json"
