@@ -18,6 +18,7 @@ module Api
                 bitcoin_vouts: { index: previous_vout["index"], op_return: false })
         bitcoin_vouts.each do |vout|
           next if vout.unbound? || vout.normal?
+          next unless vout.cell_output
 
           status =
             if vout.cell_output.dead?
