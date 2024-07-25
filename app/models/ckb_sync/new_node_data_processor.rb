@@ -1146,7 +1146,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       attrs = {
         ckb_transaction_id: ckb_transaction["id"],
         capacity: output.capacity,
-        occupied_capacity: CkbUtils.cal_cell_min_capacity(lock_script, type_script, output.capacity, binary_data),
+        occupied_capacity: CkbUtils.cal_cell_min_capacity(output.lock, output.type, binary_data),
         address_id: address.id,
         block_id: local_block.id,
         tx_hash: ckb_transaction["tx_hash"],

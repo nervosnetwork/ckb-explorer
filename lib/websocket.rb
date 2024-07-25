@@ -22,36 +22,36 @@ $message_id = 0
 def subscribe(connection, topic)
   $message_id += 1
   message = Protocol::WebSocket::JSONMessage.generate({
-    "id": $message_id,
-    "jsonrpc": "2.0",
-    "method": "subscribe",
-    "params": [topic]
-  })
+                                                        "id": $message_id,
+                                                        "jsonrpc": "2.0",
+                                                        "method": "subscribe",
+                                                        "params": [topic],
+                                                      })
   message.send(connection)
   connection.flush
 end
 
-queue = Queue.new
+# queue = Queue.new
 
-persister =
-  Thread.new do
-    Rails.application.executor.wrap do
-      loop do
-        data = queue.pop
+# persister =
+#   Thread.new do
+#     Rails.application.executor.wrap do
+#       loop do
+#         data = queue.pop
 
-        begin
-          ImportTransactionJob.new.perform(data["transaction"], {
-            cycles: data["cycles"].hex,
-            fee: data["fee"].hex,
-            size: data["size"].hex,
-            timestamp: data["timestamp"].hex
-          })
-        rescue StandardError => e
-          Rails.logger.error "Error occurred during ImportTransactionJob data: #{data}, error: #{e.message}"
-        end
-      end
-    end
-  end
+#         begin
+#           ImportTransactionJob.new.perform(data["transaction"], {
+#                                              cycles: data["cycles"].hex,
+#                                              fee: data["fee"].hex,
+#                                              size: data["size"].hex,
+#                                              timestamp: data["timestamp"].hex,
+#                                            })
+#         rescue StandardError => e
+#           Rails.logger.error "Error occurred during ImportTransactionJob data: #{data}, error: #{e.message}"
+#         end
+#       end
+#     end
+#   end
 
 Async do |_task|
   endpoint = Async::HTTP::Endpoint.parse(URL, alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
@@ -64,9 +64,6 @@ Async do |_task|
       res = message.to_h
       if res[:method] == "subscribe"
         data = JSON.parse res[:params][:result]
-        # binding.pry
-        puts data["transaction"]["hash"]
-        queue.push(data)
       end
     end
   end
