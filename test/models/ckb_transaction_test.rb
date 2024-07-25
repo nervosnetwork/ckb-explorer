@@ -477,7 +477,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       id from_cellbase capacity address_hash
       generated_tx_hash cell_index cell_type since extra_info
     ).sort
-    expected_m_nft_attributes = %i(class_name total).sort
+    expected_m_nft_attributes = %i(class_name total type_hash).sort
     expected_display_input = CkbUtils.hash_value_to_s(
       id: m_nft_cell_output.id,
       from_cellbase: false,
@@ -604,7 +604,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       id capacity address_hash status consumed_tx_hash
       cell_type extra_info
     ).sort
-    expected_m_nft_attributes = %i(class_name total).sort
+    expected_m_nft_attributes = %i(class_name total type_hash).sort
     expected_display_output = CkbUtils.hash_value_to_s(
       id: m_nft_cell_output.id,
       capacity: m_nft_cell_output.capacity,

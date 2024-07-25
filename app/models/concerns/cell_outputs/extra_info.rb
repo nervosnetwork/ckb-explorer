@@ -25,7 +25,7 @@ module CellOutputs
           value = { issuer_name: CkbUtils.parse_issuer_data(data).info["name"] }
         when "m_nft_class"
           parsed_data = CkbUtils.parse_token_class_data(data)
-          value = { class_name: parsed_data.name, total: parsed_data.total }
+          value = { class_name: parsed_data.name, total: parsed_data.total, type_hash: }
         when "m_nft_token"
           # issuer_id size is 20 bytes, class_id size is 4 bytes
           m_nft_class_type = TypeScript.where(
@@ -55,19 +55,25 @@ module CellOutputs
       end
 
       def dob_info
-        return unless cell_type.in?(%w(spore_cell did_cell))
+        return unless cell_type.in?(%w(spore_cluster spore_cell did_cell))
 
-        ti = TokenItem.find_by(type_script_id:)
-        coll = ti.collection
+        case cell_type
+        when "spore_cluster"
+          tc = TokenCollection.find_by(sn: type_hash)
+          value = { cluster_name: tc&.name, published: !tc.nil?, type_hash: }
+        else
+          ti = TokenItem.find_by(type_script_id:)
+          coll = ti.collection
 
-        value = {
-          cluster_name: coll&.name,
-          token_id: ti.token_id,
-          collection: {
-            type_hash: coll&.sn,
-          },
-          published: true,
-        }
+          value = {
+            cluster_name: coll&.name,
+            token_id: ti.token_id,
+            collection: {
+              type_hash: coll&.sn,
+            },
+            published: true,
+          }
+        end
 
         CkbUtils.hash_value_to_s(value)
       end
