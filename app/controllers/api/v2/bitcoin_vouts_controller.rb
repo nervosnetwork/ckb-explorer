@@ -16,19 +16,18 @@ module Api
         bitcoin_vouts = BitcoinVout.includes(:bitcoin_transaction).
           where(bitcoin_transactions: { txid: previous_vout["txid"] },
                 bitcoin_vouts: { index: previous_vout["index"], op_return: false })
-        bitcoin_vouts.each do |vout|
-          next if vout.unbound? || vout.normal?
-          next unless vout.cell_output
 
-          status =
-            if vout.cell_output.dead?
-              "normal"
-            elsif vout.cell_output == cell_output
-              "binding"
-            else
-              "unbound"
-            end
-          vout.update(consumed_by:, status:)
+        related_cell_outputs = bitcoin_vouts.map(&:cell_output).compact
+        if related_cell_outputs.all?(&:live?)
+          bitcoin_vouts.update_all(status: "binding")
+        else
+          bitcoin_vouts.each do |vout|
+            next unless vout.cell_output
+            next if vout.normal? || vout.unbound?
+
+            status = vout.cell_output.dead? ? "normal" : "unbound"
+            vout.update(consumed_by:, status:)
+          end
         end
 
         head :no_content
