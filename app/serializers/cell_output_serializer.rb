@@ -45,6 +45,8 @@ class CellOutputSerializer
       object.m_nft_info.merge!(type: "m_nft")
     when "nrc_721_token", "nrc_721_factory"
       object.nrc_721_nft_info.merge!(type: "nrc_721")
+    when "spore_cluster", "spore_cell", "did_cell"
+      object.dob_info.merge!(type: "dob")
     when "omiga_inscription_info", "omiga_inscription"
       object.omiga_inscription_info.merge!(type: "omiga_inscription")
     end
