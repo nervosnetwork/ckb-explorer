@@ -37,7 +37,7 @@ class UpdateUdtInfoWorker
       }
 
       # generate udt holder allocation
-      if udt.xudt_compatible? || udt.xudt? || xudt.omiga_inscription?
+      if udt.xudt_compatible? || udt.xudt? || udt.omiga_inscription?
         $redis.sadd("udt_holder_allocation", type_hash)
       end
     end
