@@ -37,7 +37,7 @@ class TokenCollectionTagWorker
   end
 
   def out_of_length?(name)
-    name.length > 255
+    name.length > 60
   end
 
   def first_token_collection?(name, block_timestamp, standard)

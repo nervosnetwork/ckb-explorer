@@ -20,7 +20,7 @@ class TokenCollectionTagWorkerTest < ActiveJob::TestCase
   end
 
   test "add out-of-length-range tag to token_collection" do
-    create(:token_collection, name: "C" * 256, cell_id: @cell.id, creator_id: @address.id)
+    create(:token_collection, name: "C" * 66, cell_id: @cell.id, creator_id: @address.id)
     TokenCollectionTagWorker.new.perform
     assert_equal ["out-of-length-range"], TokenCollection.last.tags
   end
