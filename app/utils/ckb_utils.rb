@@ -614,15 +614,27 @@ class CkbUtils
   end
 
   def self.parse_spore_cluster_data(hex_data)
-    data = hex_data.slice(2..-1)
-    name_offset = [data.slice(8, 8)].pack("H*").unpack1("l") * 2
-    description_offset = [data.slice(16, 8)].pack("H*").unpack1("l") * 2
-    name = [data.slice(name_offset + 8..description_offset - 1)].pack("H*")
-    description = [data.slice(description_offset + 8..-1)].pack("H*")
-    name = "#{name[0, 97]}..." if name.length > 100
-    { name:, description: }
-  rescue StandardError => _e
-    { name: nil, description: nil }
+    safe_encode = Proc.new do |str|
+      str.force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace, replace: "")
+    rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
+      ""
+    end
+
+    begin
+      data = hex_data.slice(2..-1)
+      name_offset = [data.slice(8, 8)].pack("H*").unpack1("l") * 2
+      description_offset = [data.slice(16, 8)].pack("H*").unpack1("l") * 2
+      name = [data.slice(name_offset + 8..description_offset - 1)].pack("H*")
+      description = [data.slice(description_offset + 8..-1)].pack("H*")
+      name = "#{name[0, 97]}..." if name.length > 100
+      name = safe_encode.call(name)
+      description = safe_encode.call(description)
+
+      { name:, description: }
+    rescue StandardError => e
+      puts "Error parsing spore cluster data: #{e.message}"
+      { name: nil, description: nil }
+    end
   end
 
   def self.parse_spore_cell_data(hex_data)
