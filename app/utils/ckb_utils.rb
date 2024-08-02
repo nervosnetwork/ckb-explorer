@@ -614,27 +614,17 @@ class CkbUtils
   end
 
   def self.parse_spore_cluster_data(hex_data)
-    safe_encode = Proc.new do |str|
-      str.force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace, replace: "")
-    rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
-      ""
-    end
+    data = hex_data.slice(2..-1)
+    name_offset = [data.slice(8, 8)].pack("H*").unpack1("l") * 2
+    description_offset = [data.slice(16, 8)].pack("H*").unpack1("l") * 2
+    name = [data.slice(name_offset + 8..description_offset - 1)].pack("H*")
+    description = [data.slice(description_offset + 8..-1)].pack("H*")
+    name = "#{name[0, 97]}..." if name.length > 100
 
-    begin
-      data = hex_data.slice(2..-1)
-      name_offset = [data.slice(8, 8)].pack("H*").unpack1("l") * 2
-      description_offset = [data.slice(16, 8)].pack("H*").unpack1("l") * 2
-      name = [data.slice(name_offset + 8..description_offset - 1)].pack("H*")
-      description = [data.slice(description_offset + 8..-1)].pack("H*")
-      name = "#{name[0, 97]}..." if name.length > 100
-      name = safe_encode.call(name)
-      description = safe_encode.call(description)
-
-      { name:, description: }
-    rescue StandardError => e
-      puts "Error parsing spore cluster data: #{e.message}"
-      { name: nil, description: nil }
-    end
+    { name: sanitize_string(name), description: sanitize_string(description) }
+  rescue StandardError => e
+    puts "Error parsing spore cluster data: #{e.message}"
+    { name: nil, description: nil }
   end
 
   def self.parse_spore_cell_data(hex_data)
@@ -771,5 +761,11 @@ class CkbUtils
     symbol_len = "0x#{data.slice!(0, 2)}".to_i(16)
     symbol = [data.slice!(0, symbol_len * 2)].pack("H*")
     { decimal:, name: name.presence, symbol: symbol.presence }
+  end
+
+  def self.sanitize_string(str)
+    str.force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace, replace: "").gsub(/[[:cntrl:]\u2028\u2029\u200B]/, "")
+  rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
+    ""
   end
 end
