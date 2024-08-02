@@ -45,6 +45,34 @@ module Api
         render json: { data: { rgb_cells: cells }, meta: { total: bitcoin_vouts.total_count, page_size: @page_size } }
       end
 
+      def udt_accounts
+        expires_in 1.minute, public: true, must_revalidate: true, stale_while_revalidate: 10.seconds
+
+        address = Addresses::Explore.run!(key: params[:id])
+        address_ids = address.map(&:id)
+
+        cell_types = %w(udt xudt xudt_compatible)
+        cell_outputs = CellOutput.live.includes(:bitcoin_vout).where(cell_outputs: { address_id: address_ids, cell_type: cell_types }).
+          where.not(bitcoin_vouts: { status: "unbound" }).group(:cell_type, :type_hash).sum(:udt_amount)
+
+        udt_accounts = cell_outputs.map do |k, v|
+          udt = Udt.find_by(type_hash: "1", published: true)
+          next unless udt
+
+          {
+            symbol: udt.symbol,
+            decimal: udt.decimal,
+            amount: v,
+            type_hash: k[1],
+            udt_icon_file: udt.icon_file,
+            udt_type: udt.udt_type,
+            udt_type_script: udt.type_script,
+          }
+        end.compact
+
+        render json: { data: { udt_accounts: } }
+      end
+
       private
 
       def set_pagination_params
