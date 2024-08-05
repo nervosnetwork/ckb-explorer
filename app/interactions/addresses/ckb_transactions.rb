@@ -4,7 +4,7 @@ module Addresses
 
     object :request, class: ActionDispatch::Request
     string :key, default: nil
-    string :sort, default: "ckb_transaction_id.desc"
+    string :sort, default: "time.desc"
     integer :page, default: 1
     integer :page_size, default: CkbTransaction.default_per_page
 
@@ -29,16 +29,10 @@ module Addresses
     private
 
     def account_books_ordering
-      sort_by, sort_order = sort.split(".", 2)
-      sort_by =
-        case sort_by
-        when "time" then "ckb_transactions.block_timestamp"
-        else "ckb_transactions.id"
-        end
+      sort_by = "ckb_transactions.block_timestamp"
+      _, sort_order = sort.split(".", 2)
 
-      if sort_order.nil? || !sort_order.match?(/^(asc|desc)$/i)
-        sort_order = "asc"
-      end
+      sort_order = "asc" unless sort_order&.match?(/^(asc|desc)$/i)
 
       [sort_by, sort_order]
     end

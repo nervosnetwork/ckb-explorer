@@ -1,5 +1,5 @@
 class TokenCollection < ApplicationRecord
-  VALID_TAGS = ["invalid", "suspicious", "out-of-length-range", "rgbpp-compatible", "layer-1-asset", "duplicate", "layer-2-asset"]
+  VALID_TAGS = ["invalid", "suspicious", "out-of-length-range", "rgb++", "layer-1-asset", "layer-2-asset"]
 
   enum standard: { cota: "cota", spore: "spore", m_nft: "m_nft", nrc721: "nrc721" }
 
