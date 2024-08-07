@@ -28,6 +28,8 @@ class XudtTagWorker
       ["utility"]
     elsif !first_xudt?(udt.symbol, udt.block_timestamp)
       ["suspicious"]
+    elsif single_use_lock?(udt.issuer_address)
+      ["supply-limited"]
     elsif rgbpp_lock?(udt.issuer_address)
       ["rgb++", "layer-1-asset", "supply-limited"]
     else
@@ -54,6 +56,11 @@ class XudtTagWorker
   def rgbpp_lock?(issuer_address)
     address_code_hash = CkbUtils.parse_address(issuer_address).script.code_hash
     issuer_address.present? && CkbSync::Api.instance.rgbpp_code_hash.include?(address_code_hash)
+  end
+
+  def single_use_lock?(issuer_address)
+    address_script = CkbUtils.parse_address(issuer_address).script
+    issuer_address.present? && CkbSync::Api.instance.single_use_lock_code_hash == address_script.code_hash && address_script.hash_type == "data1"
   end
 
   def utility_lp_token?(args)

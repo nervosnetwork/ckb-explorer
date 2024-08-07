@@ -86,3 +86,5 @@ rgbpp_code_hash:
 # btc time code hash
 btc_time_code_hash:
   - "0x70d64497a075bd651e98ac030455ea200637ee325a12ad08aff03f1a117e5a62"
+
+single_use_lock_code_hash: "0x8290467a512e5b9a6b816469b0edabba1f4ac474e28ffdd604c2a7c76446bbaf"
