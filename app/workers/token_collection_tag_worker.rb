@@ -21,6 +21,8 @@ class TokenCollectionTagWorker
       ["suspicious"]
     elsif out_of_length?(token_collection.name)
       ["out-of-length-range"]
+    elsif single_use_lock?(token_collection.creator.address_hash)
+      ["supply-limited"]
     elsif rgbpp_lock?(token_collection.creator.address_hash)
       ["rgb++", "layer-1-asset"]
     else
@@ -29,11 +31,11 @@ class TokenCollectionTagWorker
   end
 
   def invalid_char?(name)
-    !name.ascii_only?
+    !name.ascii_only? && (name =~ /^[\u4E00-\u9FFF]+$/).nil?
   end
 
   def invisible_char?(name)
-    (name =~ /^[\x21-\x7E]+(?:\s[\x21-\x7E]+)?$/).nil?
+    (name =~ /^[\x21-\x7E\u4E00-\u9FFF]+(?:\s[\x21-\x7E\u4E00-\u9FFF]+)?$/).nil?
   end
 
   def out_of_length?(name)
@@ -47,5 +49,10 @@ class TokenCollectionTagWorker
   def rgbpp_lock?(issuer_address)
     address_code_hash = CkbUtils.parse_address(issuer_address).script.code_hash
     issuer_address.present? && CkbSync::Api.instance.rgbpp_code_hash.include?(address_code_hash)
+  end
+
+  def single_use_lock?(issuer_address)
+    address_script = CkbUtils.parse_address(issuer_address).script
+    issuer_address.present? && CkbSync::Api.instance.single_use_lock_code_hash == address_script.code_hash && address_script.hash_type == "data1"
   end
 end
