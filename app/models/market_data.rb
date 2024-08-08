@@ -86,11 +86,11 @@ class MarketData
   end
 
   def total_supply
-    if current_timestamp > first_released_timestamp_may
-      result = parsed_dao.c_i - BURN_QUOTA - yesterday_treasury_amount.to_i
-    else
-      result = parsed_dao.c_i - BURN_QUOTA
-    end
+    result = if current_timestamp > first_released_timestamp_may
+               parsed_dao.c_i - BURN_QUOTA - yesterday_treasury_amount.to_i
+             else
+               parsed_dao.c_i - BURN_QUOTA
+             end
 
     unit == "ckb" ? (result / 10**8).truncate(8) : result
   end
@@ -104,11 +104,9 @@ class MarketData
   # 2020-05-01
   def first_released_timestamp_may
     @first_released_timestamp_may ||=
-      begin
-        Rails.cache.realize("first_released_timestamp_may") do
-          lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323t90gna20lusyshreg32qee4fhkt9jj2t6qrqzzqxzq8yqt8kmd9")
-          lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-05-01"))
-        end
+      Rails.cache.realize("first_released_timestamp_may") do
+        lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn323t90gna20lusyshreg32qee4fhkt9jj2t6qrqzzqxzq8yqt8kmd9")
+        lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-05-01"))
       end
   end
 
@@ -133,11 +131,9 @@ class MarketData
   # 2020-07-01
   def first_released_timestamp_other
     @first_released_timestamp_other ||=
-      begin
-        Rails.cache.realize("first_released_timestamp_may") do
-          lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32s3y29vjv73cfm8qax220dwwmpdccl4upy4s9qzzqxzq8yqyd09am")
-          lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-07-01"))
-        end
+      Rails.cache.realize("first_released_timestamp_may") do
+        lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32s3y29vjv73cfm8qax220dwwmpdccl4upy4s9qzzqxzq8yqyd09am")
+        lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2020-07-01"))
       end
   end
 
@@ -160,6 +156,7 @@ class MarketData
   end
 
   def yesterday_treasury_amount
-    DailyStatistic.order(:created_at_unixtimestamp).last.treasury_amount
+    treasury_amounts = DailyStatistic.order(created_at_unixtimestamp: :desc).first(2).pluck(:treasury_amount)
+    treasury_amounts[0] == "0" ? treasury_amounts[1] : treasury_amounts[0]
   end
 end
