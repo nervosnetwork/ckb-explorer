@@ -92,3 +92,5 @@ rgbpp_code_hash:
 btc_time_code_hash:
   - "0x00cdf8fab0f8ac638758ebf5ea5e4052b1d71e8a77b9f43139718621f6849326"
   - "0x80a09eca26d77cea1f5a69471c59481be7404febf40ee90f886c36a948385b55"
+
+single_use_lock_code_hash: "0x8290467a512e5b9a6b816469b0edabba1f4ac474e28ffdd604c2a7c76446bbaf"
