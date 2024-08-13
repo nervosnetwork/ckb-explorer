@@ -18,7 +18,7 @@ module Charts
 
       daily_statistic
     rescue Exception => e
-      NewRelic::Agent.notice_error(e.message)
+      Rails.logger.error "Error occurred during DailyStatisticGenerator error: #{e.message}"
     end
 
     private
