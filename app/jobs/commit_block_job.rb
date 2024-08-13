@@ -21,7 +21,7 @@ class CommitBlockJob < ApplicationJob
     # reject all the other cell output that is consumed by
     # transactions in current block
 
-    # collect all the previous cell outupts
+    # collect all the previous cell outputs
     # select related cell inputs which are not in current block
     # mark the transaction contains these cell input to be rejected
 
