@@ -26,6 +26,7 @@ common: &default_settings
 
   # Logging level for log/newrelic_agent.log
   log_level: info
+  disable_sidekiq: true
 
   application_logging:
     # If `true`, all logging-related features for the agent can be enabled or disabled
