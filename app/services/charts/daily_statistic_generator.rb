@@ -18,7 +18,7 @@ module Charts
 
       daily_statistic
     rescue Exception => e
-      NewRelic::Agent.notice_error(e.message)
+      NewRelic::Agent.notice_error(e)
     end
 
     private
