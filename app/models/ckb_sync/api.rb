@@ -103,8 +103,12 @@ module CkbSync
       Settings.xudt_code_hash
     end
 
-    def xudt_compatible_code_hash
-      Settings.xudt_compatible_code_hash
+    def xudt_compatible_code_hashes
+      if mode == CKB::MODE::MAINNET
+        [Settings.xudt_compatible_code_hash]
+      else
+        [Settings.xudt_compatible_code_hash, Settings.xudt_compatible2_code_hash]
+      end
     end
 
     def unique_cell_code_hash
