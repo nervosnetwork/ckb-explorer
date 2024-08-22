@@ -403,7 +403,7 @@ GEM
     redis-objects (2.0.0.beta)
       redis (~> 5.0)
     regexp_parser (2.7.0)
-    rexml (3.3.3)
+    rexml (3.3.6)
       strscan
     rubocop (1.50.1)
       json (~> 2.3)
