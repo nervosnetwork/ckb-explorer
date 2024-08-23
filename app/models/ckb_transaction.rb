@@ -275,6 +275,7 @@ end
 #  bytes             :bigint           default(0)
 #  cycles            :bigint
 #  confirmation_time :integer
+#  tx_index          :integer
 #
 # Indexes
 #
