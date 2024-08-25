@@ -1246,11 +1246,10 @@ _prev_outputs, index = nil)
     def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
       cycles = CkbSync::Api.instance.get_block_cycles node_block.header.hash
       ckb_transactions_attributes = []
-      tx_index = 0
       hashes = []
       header_deps = {}
       witnesses = {}
-      node_block.transactions.each do |tx|
+      node_block.transactions.each_with_index do |tx, tx_index|
         attrs = ckb_transaction_attributes(local_block, tx, tx_index)
         if cycles
           attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
@@ -1263,8 +1262,6 @@ _prev_outputs, index = nil)
         inputs[tx_index] = tx.inputs
         outputs[tx_index] = tx.outputs
         outputs_data[tx_index] = tx.outputs_data
-
-        tx_index += 1
       end
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
@@ -1358,6 +1355,7 @@ _prev_outputs, index = nil)
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
         bytes: tx.serialized_size_in_block,
+        tx_index: tx_index
       }
     end
 
