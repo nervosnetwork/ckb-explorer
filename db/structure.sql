@@ -10,13 +10,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
 -- Name: btree_gin; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -1350,7 +1343,8 @@ CREATE TABLE public.ckb_transactions (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer
+    confirmation_time integer,
+    tx_index integer
 )
 PARTITION BY LIST (tx_status);
 
@@ -1395,7 +1389,8 @@ CREATE TABLE public.ckb_transactions_committed (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer
+    confirmation_time integer,
+    tx_index integer
 );
 
 
@@ -1420,7 +1415,8 @@ CREATE TABLE public.ckb_transactions_pending (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer
+    confirmation_time integer,
+    tx_index integer
 );
 
 
@@ -1445,7 +1441,8 @@ CREATE TABLE public.ckb_transactions_proposed (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer
+    confirmation_time integer,
+    tx_index integer
 );
 
 
@@ -1470,7 +1467,8 @@ CREATE TABLE public.ckb_transactions_rejected (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer
+    confirmation_time integer,
+    tx_index integer
 );
 
 
@@ -6098,4 +6096,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240709131020'),
 ('20240709131132'),
 ('20240709131713'),
-('20240709142013');
+('20240709142013'),
+('20240822024448');
+
+
