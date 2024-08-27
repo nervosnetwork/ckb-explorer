@@ -103,11 +103,11 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
-  client = Dalli::Client.new(ENV["MEMCACHED_URL"],
-                             value_max_bytes: 10485760)
-  config.action_dispatch.rack_cache = {
-    verbose: true,
-    metastore: client,
-    entitystore: client,
-  }
+  # client = Dalli::Client.new(ENV["MEMCACHED_URL"],
+  #                            value_max_bytes: 10485760)
+  # config.action_dispatch.rack_cache = {
+  #   verbose: true,
+  #   metastore: client,
+  #   entitystore: client,
+  # }
 end
