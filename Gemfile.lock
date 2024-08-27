@@ -7,6 +7,13 @@ GIT
       rbnacl (~> 7.1.1)
       rbsecp256k1 (~> 5.1.1)
 
+GIT
+  remote: https://github.com/rabbitz/dalli.git
+  revision: c5ef4323ddff0b7cf4a7bc9e00ceb6055b71a425
+  branch: value_max_bytes
+  specs:
+    dalli (3.2.3)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -149,7 +156,6 @@ GEM
       rexml
     crass (1.0.6)
     daemon-spawn (0.4.2)
-    dalli (3.2.3)
     database_cleaner (2.0.1)
       database_cleaner-active_record (~> 2.0.0)
     database_cleaner-active_record (2.0.1)
@@ -499,7 +505,7 @@ DEPENDENCIES
   bootsnap
   ckb-sdk-ruby!
   config
-  dalli
+  dalli!
   database_cleaner
   database_cleaner-active_record
   digest-crc
