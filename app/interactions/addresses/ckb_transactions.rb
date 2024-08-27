@@ -17,7 +17,7 @@ module Addresses
       order_by, asc_or_desc = account_books_ordering
       records = CkbTransaction.tx_committed.joins(:account_books).where(
         account_books: { address_id: },
-      ).order(order_by => asc_or_desc).distinct.page(page).per(page_size)
+      ).order(order_by => asc_or_desc, "ckb_transactions.tx_index" => "desc").distinct.page(page).per(page_size)
 
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address: })
@@ -45,7 +45,7 @@ module Addresses
     end
 
     def select_fields
-      %i[id tx_hash block_id block_number block_timestamp
+      %i[id tx_hash tx_index block_id block_number block_timestamp
          is_cellbase updated_at capacity_involved created_at]
     end
 

@@ -71,7 +71,7 @@ module Api
         page = 1
         page_size = 10
         address = create(:address, :with_transactions)
-        ckb_transactions = address.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        ckb_transactions = address.ckb_transactions.order(block_timestamp: :desc, tx_index: :desc).page(page).per(page_size)
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 

@@ -43,7 +43,7 @@ class CkbTransaction < ApplicationRecord
 
   attribute :tx_hash, :ckb_hash
 
-  scope :recent, -> { order("block_timestamp desc nulls last, id desc") }
+  scope :recent, -> { order("block_timestamp desc nulls last, tx_index desc") }
   scope :cellbase, -> { where(is_cellbase: true) }
   scope :normal, -> { where(is_cellbase: false) }
   scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
