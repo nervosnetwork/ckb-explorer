@@ -2,7 +2,7 @@ class XudtTagWorker
   include Sidekiq::Job
 
   def perform
-    udts = Udt.published_xudt.left_joins(:xudt_tag).where(xudt_tag: { id: nil }).limit(100)
+    udts = Udt.published_xudt.left_joins(:xudt_tag).where(xudt_tag: { id: nil }).where.not(issuer_address: nil).limit(100)
     if !udts.empty?
       attrs =
         udts.map do |udt|
@@ -46,7 +46,7 @@ class XudtTagWorker
   end
 
   def out_of_length?(symbol)
-    symbol.length > 5 || symbol.length < 4
+    symbol.length > 60
   end
 
   def first_xudt?(symbol, block_timestamp)

@@ -9,6 +9,11 @@ FactoryBot.define do
     symbol { "kfc" }
     decimal { 6 }
     h24_ckb_transactions_count { 0 }
+    issuer_address do
+      script = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, args: "0x#{SecureRandom.hex(20)}",
+                                      hash_type: "type")
+      CKB::Address.new(script).generate
+    end
 
     trait :with_transactions do
       after(:create) do |udt, _evaluator|
@@ -71,6 +76,5 @@ FactoryBot.define do
       symbol { "XC" }
       decimal { 8 }
     end
-
   end
 end

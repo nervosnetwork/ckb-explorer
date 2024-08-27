@@ -48,7 +48,7 @@ class XudtTagWorkerTest < ActiveJob::TestCase
   end
 
   test "insert out-of-length-range tag" do
-    create(:udt, :xudt, symbol: "CK BBBB")
+    create(:udt, :xudt, symbol: "CKBBBB" * 11)
     assert_changes -> { XudtTag.count }, from: 0, to: 1 do
       XudtTagWorker.new.perform
     end
