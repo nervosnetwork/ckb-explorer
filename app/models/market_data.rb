@@ -87,7 +87,7 @@ class MarketData
 
   def total_supply
     result = if current_timestamp > first_released_timestamp_may
-               parsed_dao.c_i - BURN_QUOTA - yesterday_treasury_amount.to_i
+               parsed_dao.c_i - BURN_QUOTA - (parsed_dao.s_i - unmade_dao_interests)
              else
                parsed_dao.c_i - BURN_QUOTA
              end
@@ -166,10 +166,5 @@ class MarketData
         lock_address = Address.find_by_address_hash("ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32sdufwedw7a0w9dkvhpsah4mdk2gkfq63e0q6qzzqxzq8yqnqq85p")
         lock_address.present? ? lock_address.lock_script.lock_info[:estimated_unlock_time].to_i : CkbUtils.time_in_milliseconds(Time.find_zone("UTC").parse("2022-12-31"))
       end
-  end
-
-  def yesterday_treasury_amount
-    treasury_amounts = DailyStatistic.order(created_at_unixtimestamp: :desc).first(2).pluck(:treasury_amount)
-    treasury_amounts[0] == "0" ? treasury_amounts[1] : treasury_amounts[0]
   end
 end
