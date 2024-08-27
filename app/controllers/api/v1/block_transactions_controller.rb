@@ -6,8 +6,8 @@ module Api
       def show
         block = Block.find_by!(block_hash: params[:id])
         ckb_transactions = block.ckb_transactions.
-          select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at, :tags).
-          order(is_cellbase: :desc, id: :asc)
+          select(:id, :tx_hash, :tx_index, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at, :tags).
+          order(tx_index: :asc)
 
         if params[:tx_hash].present?
           ckb_transactions = ckb_transactions.where(tx_hash: params[:tx_hash])
