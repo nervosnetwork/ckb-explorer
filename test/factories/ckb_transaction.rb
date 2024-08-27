@@ -2,6 +2,7 @@ FactoryBot.define do
   factory :ckb_transaction do
     block
     tx_hash { "0x#{SecureRandom.hex(32)}" }
+    sequence(:tx_index) { |n| n }
     tx_status { "committed" }
     block_number { block.number }
     block_timestamp { block.timestamp }

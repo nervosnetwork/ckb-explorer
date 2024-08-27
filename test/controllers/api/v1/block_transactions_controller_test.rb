@@ -371,8 +371,8 @@ module Api
         page = 1
         page_size = 10
         block = create(:block, :with_block_hash)
-        _ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block:)
-        _cellbase_ckb_transaction = create(:ckb_transaction, block:, is_cellbase: true)
+        _ckb_transaction = create(:ckb_transaction, :with_multiple_inputs_and_outputs, block:, tx_index: 1)
+        _cellbase_ckb_transaction = create(:ckb_transaction, block:, is_cellbase: true, tx_index: 0)
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: {
           page:, page_size:

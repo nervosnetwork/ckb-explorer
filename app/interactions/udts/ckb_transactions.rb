@@ -18,7 +18,7 @@ module Udts
       udt = Udt.find_by(type_hash:, published: true)
       raise UdtNotFoundError if udt.blank?
 
-      order_by = "ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc"
+      order_by = "ckb_transactions.block_timestamp desc nulls last, ckb_transactions.tx_index desc"
       ckb_transactions = udt.ckb_transactions.tx_committed.select(select_fields).order(order_by)
       ckb_transactions = ckb_transactions.where(tx_hash:) if tx_hash.present?
 
@@ -53,7 +53,7 @@ module Udts
     end
 
     def select_fields
-      %i[id tx_hash block_id block_number block_timestamp
+      %i[id tx_hash tx_index block_id block_number block_timestamp
          is_cellbase updated_at created_at tags]
     end
   end
