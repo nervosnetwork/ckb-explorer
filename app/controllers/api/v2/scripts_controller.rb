@@ -16,7 +16,7 @@ module Api
       def ckb_transactions
         head :not_found and return if @contract.blank?
 
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         @ckb_transactions =
           if @contract.ckb_transactions_count.zero?
             CkbTransaction.none
