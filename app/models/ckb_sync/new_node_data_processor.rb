@@ -914,13 +914,13 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
           local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}") do
             # TODO use LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
             LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type,
-                             args: output.lock.args).take!
+                             args: output.lock.args).order("id asc").first
           end
           if output.type.present?
             local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}") do
               # TODO use TypeScript.where(script_hash: output.type.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
               TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type,
-                               args: output.type.args).take!
+                               args: output.type.args).order("id asc").first
             end
           end
         end
