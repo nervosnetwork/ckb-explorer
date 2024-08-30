@@ -26,8 +26,6 @@ class XudtTagWorker
       ["out-of-length-range"]
     elsif utility_lp_token?(udt.args)
       ["utility"]
-    elsif !first_xudt?(udt.symbol, udt.block_timestamp)
-      ["suspicious"]
     elsif single_use_lock?(udt.issuer_address)
       ["supply-limited"]
     elsif rgbpp_lock?(udt.issuer_address)
@@ -47,10 +45,6 @@ class XudtTagWorker
 
   def out_of_length?(symbol)
     symbol.length > 60
-  end
-
-  def first_xudt?(symbol, block_timestamp)
-    !Udt.published_xudt.where("LOWER(symbol) = ?", symbol.downcase).where("block_timestamp < ?", block_timestamp).exists?
   end
 
   def rgbpp_lock?(issuer_address)
