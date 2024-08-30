@@ -8,7 +8,7 @@ class BitcoinTransaction < ApplicationRecord
       raw_transaction = rpc.getrawtransaction(txid, 2)
       raw_transaction.dig("result", "confirmations")
     rescue StandardError => e
-      Rails.logger.error "get #{txid} confirmations  faild: #{e.message}"
+      Rails.logger.error "get #{txid} confirmations failed: #{e.message}"
       0
     end
   end

@@ -32,7 +32,7 @@ class Block < ApplicationRecord
   belongs_to :parent_block, class_name: "Block", foreign_key: "parent_hash", primary_key: "block_hash", optional: true,
                             inverse_of: :subsequent_blocks
 
-  # one block can have serveral different subsequent blocks, and only one can be included on chain
+  # one block can have several different subsequent blocks, and only one can be included on chain
   has_many :subsequent_blocks, class_name: "Block", foreign_key: "parent_hash", primary_key: "block_hash",
                                inverse_of: :parent_block
   belongs_to :epoch_statistic, primary_key: :epoch_number, foreign_key: :epoch, optional: true

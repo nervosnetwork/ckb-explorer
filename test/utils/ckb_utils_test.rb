@@ -296,7 +296,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     end
   end
 
-  test ".parse_dao should return nil whne dao is blank" do
+  test ".parse_dao should return nil when dao is blank" do
     assert_nil CkbUtils.parse_dao(nil)
   end
 
