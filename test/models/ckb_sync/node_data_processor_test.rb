@@ -2839,14 +2839,8 @@ module CkbSync
 
       create(:type_script, args: udt_script.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data",
                            cell_output: output1)
-      create(:type_script, args: udt_script.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data",
-                           cell_output: output2)
-      create(:type_script, args: udt_script.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data",
-                           cell_output: output3)
       create(:type_script, args: udt_script1.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data",
                            cell_output: output4)
-      create(:type_script, args: udt_script1.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data",
-                           cell_output: output5)
       Address.create(lock_hash: udt_script.args,
                      address_hash: "0x#{SecureRandom.hex(32)}")
       Address.create(lock_hash: udt_script1.args,
@@ -3110,15 +3104,6 @@ module CkbSync
                            type_hash: udt_script.compute_hash)
 
       create(:type_script, args: udt_script.args,
-                           code_hash: Settings.sudt_cell_type_hash,
-                           hash_type: "data")
-      create(:type_script, args: udt_script.args,
-                           code_hash: Settings.sudt_cell_type_hash,
-                           hash_type: "data")
-      create(:type_script, args: udt_script.args,
-                           code_hash: Settings.sudt_cell_type_hash,
-                           hash_type: "data")
-      create(:type_script, args: udt_script1.args,
                            code_hash: Settings.sudt_cell_type_hash,
                            hash_type: "data")
       create(:type_script, args: udt_script1.args,
@@ -3434,12 +3419,6 @@ module CkbSync
                                      tx_hash: tx4.tx_hash, cell_index: 0, address: input_address4, cell_type: "udt", lock_script_id: address4_lock.id, type_script_id: type_script1.id, type_hash: udt_script1.compute_hash)
       output5 = create(:cell_output, ckb_transaction: tx5, block: block2, capacity: 70000 * 10**8,
                                      tx_hash: tx5.tx_hash, cell_index: 0, address: input_address5, cell_type: "udt", lock_script_id: address5_lock.id, type_script_id: type_script2.id, type_hash: udt_script2.compute_hash)
-      create(:type_script, args: udt_script1.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data",
-                           cell_output: output1)
-      create(:type_script, args: udt_script1.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data",
-                           cell_output: output2)
-      create(:type_script, args: udt_script2.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data",
-                           cell_output: output3)
       output1.update(type_hash: CKB::Types::Script.new(**output1.type_script.to_node).compute_hash)
       output2.update(type_hash: CKB::Types::Script.new(**output2.type_script.to_node).compute_hash)
       output3.update(type_hash: CKB::Types::Script.new(**output3.type_script.to_node).compute_hash)
@@ -3449,7 +3428,6 @@ module CkbSync
                      address_hash: "0x#{SecureRandom.hex(32)}")
       Address.create(lock_hash: udt_script2.args,
                      address_hash: "0x#{SecureRandom.hex(32)}")
-
       header = CKB::Types::BlockHeader.new(compact_target: "0x1000", hash: "0x#{SecureRandom.hex(32)}",
                                            number: DEFAULT_NODE_BLOCK_NUMBER, parent_hash: "0x#{SecureRandom.hex(32)}", nonce: 1757392074788233522, timestamp: CkbUtils.time_in_milliseconds(Time.current), transactions_root: "0x#{SecureRandom.hex(32)}", proposals_hash: "0x#{SecureRandom.hex(32)}", extra_hash: "0x#{SecureRandom.hex(32)}", version: 0, epoch: 1, dao: "0x01000000000000000000c16ff286230000a3a65e97fd03000057c138586f0000")
       inputs = [
@@ -3643,12 +3621,6 @@ module CkbSync
                                           hash_type: "data")
       type_script2 = create(:type_script, args: udt_script2.args, code_hash: Settings.sudt_cell_type_hash,
                                           hash_type: "data")
-      type_script3 = create(:type_script, args: udt_script1.args, code_hash: Settings.sudt_cell_type_hash,
-                                          hash_type: "data")
-      type_script4 = create(:type_script, args: udt_script1.args, code_hash: Settings.sudt_cell_type_hash,
-                                          hash_type: "data")
-      type_script5 = create(:type_script, args: udt_script2.args, code_hash: Settings.sudt_cell_type_hash,
-                                          hash_type: "data")
       udt1 = create(:udt, type_hash: CKB::Types::Script.new(**type_script1.to_node).compute_hash,
                           args: udt_script1.args, ckb_transactions_count: 3)
       udt2 = create(:udt, type_hash: CKB::Types::Script.new(**type_script2.to_node).compute_hash,
@@ -3688,11 +3660,11 @@ module CkbSync
       output2 = create(:cell_output, ckb_transaction: tx2, block: block2, capacity: 60000 * 10**8,
                                      tx_hash: tx2.tx_hash, cell_index: 1, address: input_address2, cell_type: "udt", lock_script_id: address2_lock.id, type_script_id: type_script2.id)
       output3 = create(:cell_output, ckb_transaction: tx3, block: block2, capacity: 70000 * 10**8,
-                                     tx_hash: tx3.tx_hash, cell_index: 2, address: input_address3, cell_type: "udt", lock_script_id: address3_lock.id, type_script_id: type_script3.id)
+                                     tx_hash: tx3.tx_hash, cell_index: 2, address: input_address3, cell_type: "udt", lock_script_id: address3_lock.id, type_script_id: type_script1.id)
       output4 = create(:cell_output, ckb_transaction: tx4, block: block2, capacity: 70000 * 10**8,
-                                     tx_hash: tx4.tx_hash, cell_index: 0, address: input_address4, cell_type: "udt", lock_script_id: address4_lock.id, type_script_id: type_script4.id)
+                                     tx_hash: tx4.tx_hash, cell_index: 0, address: input_address4, cell_type: "udt", lock_script_id: address4_lock.id, type_script_id: type_script1.id)
       output5 = create(:cell_output, ckb_transaction: tx5, block: block2, capacity: 70000 * 10**8,
-                                     tx_hash: tx5.tx_hash, cell_index: 0, address: input_address5, cell_type: "udt", lock_script_id: address5_lock.id, type_script_id: type_script5.id)
+                                     tx_hash: tx5.tx_hash, cell_index: 0, address: input_address5, cell_type: "udt", lock_script_id: address5_lock.id, type_script_id: type_script2.id)
       output1.update(type_hash: CKB::Types::Script.new(**output1.type_script.to_node).compute_hash)
       output2.update(type_hash: CKB::Types::Script.new(**output2.type_script.to_node).compute_hash)
       output3.update(type_hash: CKB::Types::Script.new(**output3.type_script.to_node).compute_hash)
@@ -3960,9 +3932,8 @@ module CkbSync
         hash_type: "type",
         args: old_factory_cell.args,
       )
-      type_script1 = create(:type_script, args: factory_cell_script.args,
-                                          code_hash: factory_cell_script.code_hash,
-                                          hash_type: "type")
+      type_script1 = TypeScript.find_by(script_hash: factory_cell_script.compute_hash)
+
       block1 = create(:block, :with_block_hash,
                       number: DEFAULT_NODE_BLOCK_NUMBER - 1)
       tx1 = create(:ckb_transaction, block: block1)
