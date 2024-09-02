@@ -1213,56 +1213,6 @@ CREATE TABLE public.cell_outputs_live (
 
 
 --
--- Name: cell_outputs_old; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.cell_outputs_old (
-    id bigint NOT NULL,
-    capacity numeric(64,2),
-    data bytea,
-    ckb_transaction_id bigint,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL,
-    status smallint DEFAULT 0,
-    address_id numeric(30,0),
-    block_id numeric(30,0),
-    tx_hash bytea,
-    cell_index integer,
-    consumed_by_id numeric(30,0),
-    cell_type integer DEFAULT 0,
-    data_size integer,
-    occupied_capacity numeric(30,0),
-    block_timestamp numeric(30,0),
-    consumed_block_timestamp numeric(30,0),
-    type_hash character varying,
-    udt_amount numeric(40,0),
-    dao character varying,
-    lock_script_id bigint,
-    type_script_id bigint,
-    data_hash bytea
-);
-
-
---
--- Name: cell_outputs_old_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.cell_outputs_old_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: cell_outputs_old_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.cell_outputs_old_id_seq OWNED BY public.cell_outputs_old.id;
-
-
---
 -- Name: cell_outputs_pending; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3060,13 +3010,6 @@ ALTER TABLE ONLY public.cell_outputs ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
--- Name: cell_outputs_old id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.cell_outputs_old ALTER COLUMN id SET DEFAULT nextval('public.cell_outputs_old_id_seq'::regclass);
-
-
---
 -- Name: ckb_transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3500,14 +3443,6 @@ ALTER TABLE ONLY public.cell_outputs_dead
 
 ALTER TABLE ONLY public.cell_outputs_live
     ADD CONSTRAINT cell_outputs_live_pkey PRIMARY KEY (id, status);
-
-
---
--- Name: cell_outputs_old cell_outputs_old_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.cell_outputs_old
-    ADD CONSTRAINT cell_outputs_old_pkey PRIMARY KEY (id);
 
 
 --
@@ -4700,97 +4635,6 @@ CREATE INDEX index_cell_dependencies_on_script_id ON public.cell_dependencies US
 --
 
 CREATE UNIQUE INDEX index_cell_inputs_on_ckb_transaction_id_and_index ON public.cell_inputs USING btree (ckb_transaction_id, index);
-
-
---
--- Name: index_cell_outputs_old_on_address_id_and_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_address_id_and_status ON public.cell_outputs_old USING btree (address_id, status);
-
-
---
--- Name: index_cell_outputs_old_on_block_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_block_id ON public.cell_outputs_old USING btree (block_id);
-
-
---
--- Name: index_cell_outputs_old_on_block_timestamp; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_block_timestamp ON public.cell_outputs_old USING btree (block_timestamp);
-
-
---
--- Name: index_cell_outputs_old_on_cell_type; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_cell_type ON public.cell_outputs_old USING btree (cell_type);
-
-
---
--- Name: index_cell_outputs_old_on_ckb_transaction_id_and_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_cell_outputs_old_on_ckb_transaction_id_and_cell_index ON public.cell_outputs_old USING btree (ckb_transaction_id, cell_index);
-
-
---
--- Name: index_cell_outputs_old_on_consumed_block_timestamp; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_consumed_block_timestamp ON public.cell_outputs_old USING btree (consumed_block_timestamp);
-
-
---
--- Name: index_cell_outputs_old_on_consumed_by_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_consumed_by_id ON public.cell_outputs_old USING btree (consumed_by_id);
-
-
---
--- Name: index_cell_outputs_old_on_data_hash; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_data_hash ON public.cell_outputs_old USING hash (data_hash);
-
-
---
--- Name: index_cell_outputs_old_on_lock_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_lock_script_id ON public.cell_outputs_old USING btree (lock_script_id);
-
-
---
--- Name: index_cell_outputs_old_on_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_status ON public.cell_outputs_old USING btree (status);
-
-
---
--- Name: index_cell_outputs_old_on_tx_hash_and_cell_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_cell_outputs_old_on_tx_hash_and_cell_index ON public.cell_outputs_old USING btree (tx_hash, cell_index);
-
-
---
--- Name: index_cell_outputs_old_on_type_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_type_script_id ON public.cell_outputs_old USING btree (type_script_id);
-
-
---
--- Name: index_cell_outputs_old_on_type_script_id_and_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_outputs_old_on_type_script_id_and_id ON public.cell_outputs_old USING btree (type_script_id, id);
 
 
 --
@@ -6097,6 +5941,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240709131132'),
 ('20240709131713'),
 ('20240709142013'),
-('20240822024448');
+('20240822024448'),
+('20240902025657');
 
 
