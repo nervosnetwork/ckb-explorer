@@ -53,7 +53,7 @@ module Api
 
         cell_types = %w(udt xudt xudt_compatible)
         cell_outputs = CellOutput.live.includes(:bitcoin_vout).where(cell_outputs: { address_id: address_ids, cell_type: cell_types }).
-          where.not(bitcoin_vouts: { status: "unbound" }).group(:cell_type, :type_hash).sum(:udt_amount)
+          where.not(bitcoin_vouts: { status: ["unbound", "binding"] }).group(:cell_type, :type_hash).sum(:udt_amount)
 
         udt_accounts = cell_outputs.map do |k, v|
           udt = Udt.find_by(type_hash: k[1], published: true)
