@@ -1293,7 +1293,7 @@ CREATE TABLE public.ckb_transactions (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer,
+    confirmation_time bigint,
     tx_index integer
 )
 PARTITION BY LIST (tx_status);
@@ -1339,7 +1339,7 @@ CREATE TABLE public.ckb_transactions_committed (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer,
+    confirmation_time bigint,
     tx_index integer
 );
 
@@ -1365,7 +1365,7 @@ CREATE TABLE public.ckb_transactions_pending (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer,
+    confirmation_time bigint,
     tx_index integer
 );
 
@@ -1391,7 +1391,7 @@ CREATE TABLE public.ckb_transactions_proposed (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer,
+    confirmation_time bigint,
     tx_index integer
 );
 
@@ -1417,7 +1417,7 @@ CREATE TABLE public.ckb_transactions_rejected (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer,
+    confirmation_time bigint,
     tx_index integer
 );
 
@@ -5944,4 +5944,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240822024448'),
 ('20240823071323'),
 ('20240823071420'),
-('20240902025657');
+('20240902025657'),
+('20240904043807');
