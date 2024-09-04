@@ -64,6 +64,7 @@ Async do |_task|
       res = message.to_h
       if res[:method] == "subscribe"
         data = JSON.parse res[:params][:result]
+        ImportPendingTxWorker.perform_async(data)
       end
     end
   end

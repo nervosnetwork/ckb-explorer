@@ -1,6 +1,7 @@
 ---
 :concurrency: 5
 :queues:
+  - pending_tx
   - critical
   - default
   - bitcoin
