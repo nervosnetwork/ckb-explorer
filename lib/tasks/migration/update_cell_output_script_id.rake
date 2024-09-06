@@ -10,7 +10,7 @@ namespace :migration do
       pluck(:script_hash)
     duplicate_script_hashes.each do |hash|
       LockScript.where(script_hash: hash).each do |script|
-        unless CellOutput.live.where(lock_script_id: script.id).exists?
+        unless CellOutput.where(lock_script_id: script.id).exists?
           script.destroy
         end
       end
@@ -35,7 +35,7 @@ namespace :migration do
       pluck(:script_hash)
     duplicate_script_hashes.each do |hash|
       LockScript.where(script_hash: hash).each do |script|
-        unless CellOutput.live.where(lock_script_id: script.id).exists?
+        unless CellOutput.where(lock_script_id: script.id).exists?
           script.destroy
         end
       end
@@ -50,7 +50,7 @@ namespace :migration do
 
     duplicate_type_script_hashes.each do |hash|
       TypeScript.where(script_hash: hash).each do |script|
-        unless CellOutput.live.where(type_script_id: script.id).exists?
+        unless CellOutput.where(type_script_id: script.id).exists?
           script.destroy
         end
       end
@@ -76,7 +76,7 @@ namespace :migration do
 
     duplicate_type_script_hashes.each do |hash|
       TypeScript.where(script_hash: hash).each do |script|
-        unless CellOutput.live.where(type_script_id: script.id).exists?
+        unless CellOutput.where(type_script_id: script.id).exists?
           script.destroy
         end
       end
