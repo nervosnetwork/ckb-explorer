@@ -16,9 +16,7 @@ class XudtTagWorker
   end
 
   def mark_tags(udt)
-    if udt.symbol.blank?
-      ["unnamed"]
-    elsif invalid_char?(udt.symbol)
+    if invalid_char?(udt.symbol)
       ["invalid"]
     elsif invisible_char?(udt.symbol)
       ["suspicious"]
@@ -36,15 +34,15 @@ class XudtTagWorker
   end
 
   def invalid_char?(symbol)
-    !symbol.ascii_only?
+    symbol.present? && !symbol.ascii_only?
   end
 
   def invisible_char?(symbol)
-    (symbol =~ /^[\x21-\x7E]+(?:\s[\x21-\x7E]+)?$/).nil?
+    symbol.present? && (symbol =~ /^[\x21-\x7E]+(?:\s[\x21-\x7E]+)?$/).nil?
   end
 
   def out_of_length?(symbol)
-    symbol.length > 60
+    symbol.present? && symbol.length > 60
   end
 
   def rgbpp_lock?(issuer_address)
