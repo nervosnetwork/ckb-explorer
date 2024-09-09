@@ -1,7 +1,7 @@
 class XudtTag < ApplicationRecord
   belongs_to :udt
 
-  VALID_TAGS = ["unnamed", "invalid", "suspicious", "out-of-length-range", "rgb++", "layer-1-asset", "supply-limited", "utility", "layer-2-asset", "supply-unlimited"]
+  VALID_TAGS = ["invalid", "suspicious", "out-of-length-range", "rgb++", "layer-1-asset", "supply-limited", "utility", "layer-2-asset", "supply-unlimited"]
 end
 
 # == Schema Information
