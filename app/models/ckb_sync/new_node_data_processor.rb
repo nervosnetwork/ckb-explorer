@@ -814,8 +814,8 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
             contract = Contract.create code_hash: lock_script.script_hash
             temp_hash = temp_hash.merge contract_id: contract.id
           end
-          script = Script.find_or_create_by temp_hash
-          lock_script.update script_id: script.id
+          # script = Script.find_or_create_by temp_hash
+          # lock_script.update script_id: script.id
         end
       end
 
@@ -835,8 +835,8 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
             contract = Contract.create code_hash: type_script.script_hash
             temp_hash = temp_hash.merge contract_id: contract.id
           end
-          script = Script.find_or_create_by temp_hash
-          type_script.update script_id: script.id
+          # script = Script.find_or_create_by temp_hash
+          # type_script.update script_id: script.id
         end
       end
       build_addresses!(outputs, local_block)
