@@ -1293,7 +1293,7 @@ CREATE TABLE public.ckb_transactions (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer,
+    confirmation_time bigint,
     tx_index integer
 )
 PARTITION BY LIST (tx_status);
@@ -1339,7 +1339,7 @@ CREATE TABLE public.ckb_transactions_committed (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer,
+    confirmation_time bigint,
     tx_index integer
 );
 
@@ -1365,7 +1365,7 @@ CREATE TABLE public.ckb_transactions_pending (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer,
+    confirmation_time bigint,
     tx_index integer
 );
 
@@ -1391,7 +1391,7 @@ CREATE TABLE public.ckb_transactions_proposed (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer,
+    confirmation_time bigint,
     tx_index integer
 );
 
@@ -1417,7 +1417,7 @@ CREATE TABLE public.ckb_transactions_rejected (
     tags character varying[] DEFAULT '{}'::character varying[],
     bytes bigint DEFAULT 0,
     cycles bigint,
-    confirmation_time integer,
+    confirmation_time bigint,
     tx_index integer
 );
 
@@ -4788,7 +4788,7 @@ CREATE INDEX index_lock_scripts_on_code_hash_and_hash_type_and_args ON public.lo
 -- Name: index_lock_scripts_on_script_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_lock_scripts_on_script_hash ON public.lock_scripts USING hash (script_hash);
+CREATE UNIQUE INDEX index_lock_scripts_on_script_hash ON public.lock_scripts USING btree (script_hash);
 
 
 --
@@ -4998,7 +4998,7 @@ CREATE INDEX index_type_scripts_on_code_hash_and_hash_type_and_args ON public.ty
 -- Name: index_type_scripts_on_script_hash; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_type_scripts_on_script_hash ON public.type_scripts USING hash (script_hash);
+CREATE UNIQUE INDEX index_type_scripts_on_script_hash ON public.type_scripts USING btree (script_hash);
 
 
 --
@@ -5942,6 +5942,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240709131713'),
 ('20240709142013'),
 ('20240822024448'),
-('20240902025657');
-
-
+('20240823071323'),
+('20240823071420'),
+('20240902025657'),
+('20240904043807');

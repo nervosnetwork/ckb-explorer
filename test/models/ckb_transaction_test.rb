@@ -685,25 +685,20 @@ class CkbTransactionTest < ActiveSupport::TestCase
     nrc_721_token_output_block = create(:block, :with_block_hash)
     nrc_721_token_output_transaction = create(:ckb_transaction,
                                               block: nrc_721_token_output_block)
-
     nrc_factory_cell = create(:nrc_factory_cell,
                               code_hash: "0xf31f9c3241043976c93db9f203d765ce2c1d96465c918b93fbb117cd35bcfb98",
                               args: "0x47a6262383ad9b266c6fae7c460dc39261e4f914e77467426809ce0fd607baec",
                               verified: true)
-    nrc_721_factory_type_script = create(:type_script,
-                                         code_hash: nrc_factory_cell.code_hash,
-                                         hash_type: "type",
-                                         args: nrc_factory_cell.args,
-                                         script_hash: "0xcf4f2494ea1fbebcd07a7445415a0e8b36be214af6257065888dae0ce1434434")
-    nrc_721_factory_cell_output = create(:cell_output,
-                                         block: nrc_721_token_output_block,
-                                         ckb_transaction: nrc_721_token_output_transaction,
-                                         cell_type: "nrc_721_factory",
-                                         cell_index: 1,
-                                         tx_hash: nrc_721_token_output_transaction.tx_hash,
-                                         data: "0x24ff5a9ab8c38d195ce2b4ea75ca8987000a47616d62697420317374000000156465762e6b6f6c6c6563742e6d652f746f6b656e73000000000000003c000000000000000000",
-                                         type_hash: "0x",
-                                         type_script_id: nrc_721_factory_type_script.id)
+    nrc_721_factory_type_script = TypeScript.find_by(script_hash: "0xcf4f2494ea1fbebcd07a7445415a0e8b36be214af6257065888dae0ce1434434")
+    _nrc_721_factory_cell_output = create(:cell_output,
+                                          block: nrc_721_token_output_block,
+                                          ckb_transaction: nrc_721_token_output_transaction,
+                                          cell_type: "nrc_721_factory",
+                                          cell_index: 1,
+                                          tx_hash: nrc_721_token_output_transaction.tx_hash,
+                                          data: "0x24ff5a9ab8c38d195ce2b4ea75ca8987000a47616d62697420317374000000156465762e6b6f6c6c6563742e6d652f746f6b656e73000000000000003c000000000000000000",
+                                          type_hash: "0x",
+                                          type_script_id: nrc_721_factory_type_script.id)
 
     nrc_721_token_type_script = create(:type_script,
                                        code_hash: "0x#{SecureRandom.hex(32)}",

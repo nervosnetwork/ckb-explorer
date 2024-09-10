@@ -11,10 +11,7 @@ class CkbUtils
     output.calculate_min_capacity(data)
   end
 
-  def self.cal_cell_min_capacity(lock_script, type_script, capacity, binary_data)
-    lock = CKB::Types::Script.new(**lock_script.to_node)
-    type = type_script.present? ? CKB::Types::Script.new(**type_script.to_node) : nil
-    CKB::Types::Output.new(capacity: capacity.to_i, lock:, type:)
+  def self.cal_cell_min_capacity(lock_script, type_script, binary_data)
     CKB::Utils.byte_to_shannon([8, binary_data&.bytesize || 0, lock_script.calculate_bytesize,
                                 type_script&.calculate_bytesize || 0].sum)
   end
