@@ -209,7 +209,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     lock_script = create(:lock_script, code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0x6a21bc1b72d1e654f8e2ded400cffa46075494c6")
     type_script = create(:type_script, code_hash: "0x554cff969f3148e3c620749384004e9692e67c429f621554d139b505a281c7b8", hash_type: "type", args: "0x01")
     assert_equal 9700000000,
-                 CkbUtils.cal_cell_min_capacity(lock_script, type_script, 0.4e11, "\n\f")
+                 CkbUtils.cal_cell_min_capacity(lock_script, type_script, "\n\f")
   end
 
   test ".block_cell_consumed generated block's cell_consumed should equal to the sum of transactions output occupied capacity" do

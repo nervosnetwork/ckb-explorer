@@ -274,7 +274,7 @@ end
 #  tags              :string           default([]), is an Array
 #  bytes             :bigint           default(0)
 #  cycles            :bigint
-#  confirmation_time :integer
+#  confirmation_time :bigint
 #  tx_index          :integer
 #
 # Indexes

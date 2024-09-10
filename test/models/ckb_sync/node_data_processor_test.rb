@@ -148,8 +148,9 @@ module CkbSync
         ),
       )
       VCR.use_cassette("blocks/11") do
+        timestamp = Time.now.to_i * 1000
         tx = create(:pending_transaction,
-                    tx_hash: "0x4298daf91148df9093c844d2ae7d16bee6b74e7ab1ccccd108ce834d1ca1a56c")
+                    tx_hash: "0x4298daf91148df9093c844d2ae7d16bee6b74e7ab1ccccd108ce834d1ca1a56c", confirmation_time: timestamp)
         node_block = CkbSync::Api.instance.get_block_by_number(11)
         create(:block, :with_block_hash, number: node_block.header.number - 1)
         node_block.transactions.first.hash = tx.tx_hash
@@ -159,7 +160,7 @@ module CkbSync
           node_data_processor.process_block(node_block)
         end
         assert_equal tx.reload.confirmation_time,
-                     tx.reload.block_timestamp.to_i / 1000 - tx.created_at.to_i
+                     (tx.reload.block_timestamp.to_i - timestamp) / 1000
       end
     end
 

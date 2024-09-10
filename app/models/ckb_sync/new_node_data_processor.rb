@@ -1146,7 +1146,7 @@ tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_addr_ids, a
       attrs = {
         ckb_transaction_id: ckb_transaction["id"],
         capacity: output.capacity,
-        occupied_capacity: CkbUtils.cal_cell_min_capacity(lock_script, type_script, output.capacity, binary_data),
+        occupied_capacity: CkbUtils.cal_cell_min_capacity(output.lock, output.type, binary_data),
         address_id: address.id,
         block_id: local_block.id,
         tx_hash: ckb_transaction["tx_hash"],
@@ -1264,7 +1264,7 @@ _prev_outputs, index = nil)
       # locate correct record according to tx_hash
       binary_hashes = CkbUtils.hexes_to_bins_sql(hashes)
       pending_txs = CkbTransaction.where("tx_hash IN (#{binary_hashes})").where(tx_status: :pending).pluck(
-        :tx_hash, :created_at
+        :tx_hash, :confirmation_time
       )
       CkbTransaction.where("tx_hash IN (#{binary_hashes})").update_all tx_status: "committed"
 
@@ -1280,7 +1280,7 @@ _prev_outputs, index = nil)
           end.map do |tx|
             {
               id: tx["id"], tx_status: :committed,
-              confirmation_time: (tx["block_timestamp"].to_i / 1000) - hash_to_pool_times[tx["tx_hash"].tr("\\", "0")].to_i
+              confirmation_time: (tx["block_timestamp"].to_i - hash_to_pool_times[tx["tx_hash"].tr("\\", "0")].to_i) / 1000
             }
           end
         CkbTransaction.upsert_all(confirmation_time_attrs, update_only: [:confirmation_time],
