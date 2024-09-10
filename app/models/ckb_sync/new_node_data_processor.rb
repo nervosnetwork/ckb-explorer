@@ -801,11 +801,10 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
         lock_scripts_attributes.map! do |attr|
           attr.merge!(created_at: Time.current, updated_at: Time.current)
         end
-        lock_script_ids = LockScript.insert_all!(lock_scripts_attributes).map do |e|
-          e["id"]
-        end
+        lock_script_ids = LockScript.upsert_all(lock_scripts_attributes, unique_by: :script_hash, returning: [:id])
 
-        lock_script_ids.each do |lock_script_id|
+        lock_script_ids.each do |row|
+          lock_script_id = row["id"]
           lock_script = LockScript.find lock_script_id
           contract = Contract.find_by code_hash: lock_script.code_hash
           temp_hash = { script_hash: lock_script&.script_hash, is_contract: false }
@@ -824,11 +823,9 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
         type_scripts_attributes.map! do |attr|
           attr.merge!(created_at: Time.current, updated_at: Time.current)
         end
-        type_script_ids = TypeScript.insert_all!(type_scripts_attributes).map do |e|
-          e["id"]
-        end
-
-        type_script_ids.each do |type_script_id|
+        type_script_ids = TypeScript.upsert_all(type_scripts_attributes, unique_by: :script_hash, returning: [:id])
+        type_script_ids.each do |row|
+          type_script_id = row["id"]
           type_script = TypeScript.find(type_script_id)
           temp_hash = { script_hash: type_script&.script_hash, is_contract: false }
           contract = Contract.find_by code_hash: type_script.code_hash
@@ -1355,7 +1352,7 @@ _prev_outputs, index = nil)
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
         bytes: tx.serialized_size_in_block,
-        tx_index: tx_index
+        tx_index:,
       }
     end
 
