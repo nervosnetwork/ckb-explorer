@@ -13,12 +13,13 @@ module Addresses
       raise AddressNotFoundError if address.is_a?(NullAddress)
 
       address_id = address.map(&:id)
-      account_books = AccountBook.joins(:ckb_transaction).
-        where(account_books: { address_id: }, ckb_transactions: { tx_status: :committed }).
-        order(transactions_ordering).
-        select("DISTINCT account_books.ckb_transaction_id, ckb_transactions.block_timestamp, ckb_transactions.tx_index").
-        page(page).per(page_size)
-      records = CkbTransaction.where(id: account_books.map(&:ckb_transaction_id)).order(transactions_ordering)
+      tx_ids = AccountBook.where(address_id:).order("ckb_transaction_id desc").limit(5000).pluck(:ckb_transaction_id)
+      # account_books = AccountBook.joins(:ckb_transaction).
+      #   where(account_books: { address_id: }, ckb_transactions: { tx_status: :committed }).
+      #   order(transactions_ordering).
+      #   select("DISTINCT account_books.ckb_transaction_id, ckb_transactions.block_timestamp, ckb_transactions.tx_index").
+      #   page(page).per(page_size)
+      records = CkbTransaction.where(id: tx_ids).order(transactions_ordering).page(page).per(page_size)
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address: })
 
