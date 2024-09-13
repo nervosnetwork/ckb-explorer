@@ -27,7 +27,7 @@ default: &default
   reaping_frequency: 60 # every 60s check pool
   timeout: 5000 # over 5s will timeout
   variables:
-    statement_timeout: 60000 # query timemout over 60s
+    statement_timeout: <%= ENV.fetch("DATABASE_STATEMENT_TIMEOUT") { 60000 } %> # query timemout over 60s
     idle_in_transaction_session_timeout: 120000 # idle transaction over 120s
 
 development:
