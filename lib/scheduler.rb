@@ -30,13 +30,6 @@ def call_worker(clz)
   puts "fininsh #{clz.name}"
 end
 
-# Vacuum database periodically for better performance
-s.cron "0 2 * * 1" do
-  ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
-  ApplicationRecord.connection.execute "vacuum (verbose, analyze)"
-  ActiveRecord::Base.connection.execute("RESET statement_timeout")
-end
-
 s.cron "0 8 * * *" do
   call_worker Charts::DailyStatistic
 end
