@@ -109,5 +109,6 @@ Rails.application.configure do
     verbose: true,
     metastore: client,
     entitystore: client,
+    verbose: true,
   }
 end
