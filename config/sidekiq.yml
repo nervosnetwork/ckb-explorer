@@ -5,6 +5,7 @@
   - critical
   - default
   - bitcoin
+  - fiber
   - low
 
 production:

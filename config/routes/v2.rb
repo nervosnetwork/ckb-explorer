@@ -100,5 +100,9 @@ namespace :api do
       get :udt_accounts, on: :member
     end
     resources :rgb_live_cells, only: :index
+    namespace :fiber do
+      resources :peers, param: :peer_id, only: %i[index show create]
+      resources :channels, param: :channel_id, only: :show
+    end
   end
 end

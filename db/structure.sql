@@ -24,20 +24,6 @@ COMMENT ON EXTENSION btree_gin IS 'support for indexing common datatypes in GIN'
 
 
 --
--- Name: pg_buffercache; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS pg_buffercache WITH SCHEMA public;
-
-
---
--- Name: EXTENSION pg_buffercache; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON EXTENSION pg_buffercache IS 'examine the shared buffer cache';
-
-
---
 -- Name: array_subtract(anyarray, anyarray); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -188,7 +174,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;
+    END LOOP;    
     close c;
 end
 $$;
@@ -210,21 +196,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null
+	if old is null 
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-
+	
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP
+	   LOOP 
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id)
+			insert into account_books (ckb_transaction_id, address_id) 
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -429,9 +415,9 @@ CREATE TABLE public.addresses (
     dao_deposit numeric(30,0) DEFAULT 0.0,
     interest numeric(30,0) DEFAULT 0.0,
     block_timestamp bigint,
-    visible boolean DEFAULT true,
     live_cells_count bigint DEFAULT 0.0,
     mined_blocks_count integer DEFAULT 0,
+    visible boolean DEFAULT true,
     average_deposit_time bigint,
     unclaimed_compensation numeric(30,0),
     is_depositor boolean DEFAULT false,
@@ -484,6 +470,7 @@ CREATE TABLE public.blocks (
     "timestamp" bigint,
     transactions_root bytea,
     proposals_hash bytea,
+    uncles_count integer,
     extra_hash bytea,
     uncle_block_hashes bytea,
     version integer,
@@ -510,7 +497,6 @@ CREATE TABLE public.blocks (
     nonce numeric(50,0) DEFAULT 0.0,
     start_number numeric(30,0) DEFAULT 0.0,
     length numeric(30,0) DEFAULT 0.0,
-    uncles_count integer,
     compact_target numeric(20,0),
     live_cell_changes integer,
     block_time bigint,
@@ -520,8 +506,8 @@ CREATE TABLE public.blocks (
     miner_message character varying,
     extension jsonb,
     median_timestamp bigint DEFAULT 0.0,
-    cycles bigint,
-    ckb_node_version character varying
+    ckb_node_version character varying,
+    cycles bigint
 );
 
 
@@ -670,6 +656,39 @@ CREATE SEQUENCE public.bitcoin_statistics_id_seq
 --
 
 ALTER SEQUENCE public.bitcoin_statistics_id_seq OWNED BY public.bitcoin_statistics.id;
+
+
+--
+-- Name: bitcoin_time_locks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bitcoin_time_locks (
+    id bigint NOT NULL,
+    bitcoin_transaction_id bigint,
+    ckb_transaction_id bigint,
+    cell_output_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: bitcoin_time_locks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.bitcoin_time_locks_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: bitcoin_time_locks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.bitcoin_time_locks_id_seq OWNED BY public.bitcoin_time_locks.id;
 
 
 --
@@ -1474,9 +1493,9 @@ ALTER SEQUENCE public.contracts_id_seq OWNED BY public.contracts.id;
 
 CREATE TABLE public.daily_statistics (
     id bigint NOT NULL,
-    transactions_count character varying DEFAULT '0'::character varying,
-    addresses_count character varying DEFAULT '0'::character varying,
-    total_dao_deposit character varying DEFAULT '0.0'::character varying,
+    transactions_count character varying DEFAULT 0,
+    addresses_count character varying DEFAULT 0,
+    total_dao_deposit character varying DEFAULT 0.0,
     block_timestamp numeric(30,0),
     created_at_unixtimestamp integer,
     created_at timestamp(6) without time zone NOT NULL,
@@ -1495,8 +1514,8 @@ CREATE TABLE public.daily_statistics (
     avg_difficulty character varying DEFAULT '0'::character varying,
     uncle_rate character varying DEFAULT '0'::character varying,
     total_depositors_count character varying DEFAULT '0'::character varying,
-    address_balance_distribution jsonb,
     total_tx_fee numeric(30,0),
+    address_balance_distribution jsonb,
     occupied_capacity numeric(30,0),
     daily_dao_deposit numeric(30,0),
     daily_dao_depositors_count integer,
@@ -1686,6 +1705,113 @@ ALTER SEQUENCE public.epoch_statistics_id_seq OWNED BY public.epoch_statistics.i
 
 
 --
+-- Name: fiber_channels; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.fiber_channels (
+    id bigint NOT NULL,
+    peer_id character varying,
+    channel_id character varying,
+    state_name character varying,
+    state_flags character varying[] DEFAULT '{}'::character varying[],
+    local_balance numeric(64,2) DEFAULT 0.0,
+    sent_tlc_balance numeric(64,2) DEFAULT 0.0,
+    remote_balance numeric(64,2) DEFAULT 0.0,
+    received_tlc_balance numeric(64,2) DEFAULT 0.0,
+    shutdown_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: fiber_channels_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.fiber_channels_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: fiber_channels_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.fiber_channels_id_seq OWNED BY public.fiber_channels.id;
+
+
+--
+-- Name: fiber_peers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.fiber_peers (
+    id bigint NOT NULL,
+    name character varying,
+    peer_id character varying,
+    rpc_listening_addr character varying,
+    first_channel_opened_at timestamp(6) without time zone,
+    last_channel_updated_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: fiber_peers_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.fiber_peers_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: fiber_peers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.fiber_peers_id_seq OWNED BY public.fiber_peers.id;
+
+
+--
+-- Name: fiber_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.fiber_transactions (
+    id bigint NOT NULL,
+    fiber_peer_id integer,
+    fiber_channel_id integer,
+    ckb_transaction_id integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: fiber_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.fiber_transactions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: fiber_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.fiber_transactions_id_seq OWNED BY public.fiber_transactions.id;
+
+
+--
 -- Name: forked_blocks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1697,6 +1823,7 @@ CREATE TABLE public.forked_blocks (
     "timestamp" bigint,
     transactions_root bytea,
     proposals_hash bytea,
+    uncles_count integer,
     extra_hash bytea,
     uncle_block_hashes bytea,
     version integer,
@@ -1723,7 +1850,6 @@ CREATE TABLE public.forked_blocks (
     nonce numeric(50,0) DEFAULT 0.0,
     start_number numeric(30,0) DEFAULT 0.0,
     length numeric(30,0) DEFAULT 0.0,
-    uncles_count integer,
     compact_target numeric(20,0),
     live_cell_changes integer,
     block_time numeric(13,0),
@@ -1733,8 +1859,8 @@ CREATE TABLE public.forked_blocks (
     miner_message character varying,
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
-    cycles bigint,
-    ckb_node_version character varying
+    ckb_node_version character varying,
+    cycles bigint
 );
 
 
@@ -2919,6 +3045,13 @@ ALTER TABLE ONLY public.bitcoin_statistics ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
+-- Name: bitcoin_time_locks id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_time_locks ALTER COLUMN id SET DEFAULT nextval('public.bitcoin_time_locks_id_seq'::regclass);
+
+
+--
 -- Name: bitcoin_transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3056,6 +3189,27 @@ ALTER TABLE ONLY public.deployed_cells ALTER COLUMN id SET DEFAULT nextval('publ
 --
 
 ALTER TABLE ONLY public.epoch_statistics ALTER COLUMN id SET DEFAULT nextval('public.epoch_statistics_id_seq'::regclass);
+
+
+--
+-- Name: fiber_channels id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_channels ALTER COLUMN id SET DEFAULT nextval('public.fiber_channels_id_seq'::regclass);
+
+
+--
+-- Name: fiber_peers id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_peers ALTER COLUMN id SET DEFAULT nextval('public.fiber_peers_id_seq'::regclass);
+
+
+--
+-- Name: fiber_transactions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_transactions ALTER COLUMN id SET DEFAULT nextval('public.fiber_transactions_id_seq'::regclass);
 
 
 --
@@ -3326,6 +3480,14 @@ ALTER TABLE ONLY public.bitcoin_statistics
 
 
 --
+-- Name: bitcoin_time_locks bitcoin_time_locks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bitcoin_time_locks
+    ADD CONSTRAINT bitcoin_time_locks_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: bitcoin_transactions bitcoin_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3587,6 +3749,30 @@ ALTER TABLE ONLY public.deployed_cells
 
 ALTER TABLE ONLY public.epoch_statistics
     ADD CONSTRAINT epoch_statistics_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fiber_channels fiber_channels_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_channels
+    ADD CONSTRAINT fiber_channels_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fiber_peers fiber_peers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_peers
+    ADD CONSTRAINT fiber_peers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fiber_transactions fiber_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_transactions
+    ADD CONSTRAINT fiber_transactions_pkey PRIMARY KEY (id);
 
 
 --
@@ -4463,6 +4649,13 @@ CREATE UNIQUE INDEX index_bitcoin_statistics_on_timestamp ON public.bitcoin_stat
 
 
 --
+-- Name: index_bitcoin_time_locks_on_cell; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_bitcoin_time_locks_on_cell ON public.bitcoin_time_locks USING btree (bitcoin_transaction_id, cell_output_id);
+
+
+--
 -- Name: index_bitcoin_transactions_on_txid; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4736,6 +4929,13 @@ CREATE UNIQUE INDEX index_epoch_statistics_on_epoch_number ON public.epoch_stati
 
 
 --
+-- Name: index_fiber_channels_on_peer_id_and_channel_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_fiber_channels_on_peer_id_and_channel_id ON public.fiber_channels USING btree (peer_id, channel_id);
+
+
+--
 -- Name: index_forked_events_on_status; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4831,6 +5031,13 @@ CREATE UNIQUE INDEX index_omiga_inscription_infos_on_udt_hash ON public.omiga_in
 --
 
 CREATE UNIQUE INDEX index_portfolios_on_user_id_and_address_id ON public.portfolios USING btree (user_id, address_id);
+
+
+--
+-- Name: index_referring_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_referring_cells_on_cell_output_id ON public.referring_cells USING btree (cell_output_id);
 
 
 --
@@ -5945,4 +6152,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240823071323'),
 ('20240823071420'),
 ('20240902025657'),
-('20240904043807');
+('20240904043807'),
+('20240918024407'),
+('20240918024415'),
+('20240918033146');
+
+

@@ -10,7 +10,7 @@ module Api
 
           head :no_content
         rescue StandardError => e
-          raise Api::V2::Exceptions::SyncPortfolioAddressesError
+          raise Api::V2::Exceptions::ParamsInvalidError
         end
       end
     end
