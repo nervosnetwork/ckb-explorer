@@ -1720,7 +1720,8 @@ CREATE TABLE public.fiber_channels (
     received_tlc_balance numeric(64,2) DEFAULT 0.0,
     shutdown_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    fiber_peer_id integer
 );
 
 
@@ -4929,6 +4930,13 @@ CREATE UNIQUE INDEX index_epoch_statistics_on_epoch_number ON public.epoch_stati
 
 
 --
+-- Name: index_fiber_channels_on_fiber_peer_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_fiber_channels_on_fiber_peer_id ON public.fiber_channels USING btree (fiber_peer_id);
+
+
+--
 -- Name: index_fiber_channels_on_peer_id_and_channel_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6155,6 +6163,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240904043807'),
 ('20240918024407'),
 ('20240918024415'),
-('20240918033146');
+('20240918033146'),
+('20240920094807');
 
 
