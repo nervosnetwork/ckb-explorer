@@ -69,7 +69,25 @@ module Api
 
       class AddressNotFoundError < Error
         def initialize
-          super code: 2009, status: 404, title: "Address Not Found", detail: "No address found by given address hash or lock hash", href: ""
+          super code: 2009, status: 404, title: "address Not Found", detail: "No address found by given address hash or lock hash", href: ""
+        end
+      end
+
+      class FiberPeerParamsInvalidError < Error
+        def initialize(detail)
+          super code: 2010, status: 404, title: "fiber peer params invalid", detail: , href: ""
+        end
+      end
+
+      class FiberPeerNotFoundError < Error
+        def initialize
+          super code: 2011, status: 404, title: "fiber peer Not Found", detail: "No peer found by given peer_id", href: ""
+        end
+      end
+
+      class FiberChannelNotFoundError < Error
+        def initialize
+          super code: 2012, status: 404, title: "fiber channel Not Found", detail: "No channel found by given channel_id", href: ""
         end
       end
     end

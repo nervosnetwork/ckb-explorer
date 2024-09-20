@@ -1,6 +1,14 @@
 class FiberPeer < ApplicationRecord
-  has_many :fiber_channels, dependent: :destroy, foreign_key: :peer_id
-  has_many :fiber_transactions
+  has_many :fiber_channels, foreign_key: :peer_id, primary_key: :peer_id, inverse_of: :fiber_peer, dependent: :destroy
+  # has_many :fiber_transactions
+
+  def total_local_balance
+    fiber_channels.where(state_name: "CHANNEL_READY").sum(:local_balance)
+  end
+
+  def channels_count
+    fiber_channels.where(state_name: "CHANNEL_READY").count
+  end
 end
 
 # == Schema Information

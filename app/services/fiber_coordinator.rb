@@ -1,25 +1,23 @@
-class Fiber
+class FiberCoordinator
   include Singleton
-
   METHOD_NAMES = %w(list_channels).freeze
 
   def initialize
     @id = 0
-    @endpoint = ENV["FIBER_RPC_URL"]
   end
 
   METHOD_NAMES.each do |name|
-    define_method name do |*params|
-      call_rpc(name, params:)
+    define_method name do |endpoint, *params|
+      call_rpc(name, endpoint, params:)
     end
   end
 
   private
 
-  def call_rpc(method, params: [])
+  def call_rpc(method, endpoint, params: [])
     @id += 1
     payload = { jsonrpc: "2.0", id: @id, method:, params: }
-    make_request(@endpoint, payload)
+    make_request(endpoint, payload)
   end
 
   def make_request(endpoint, payload)
@@ -33,7 +31,7 @@ class Fiber
     return data if data.is_a?(Array)
 
     if data.is_a?(Hash)
-      raise ArgumentError, data["error"]["message"] if data["error"].present?
+      raise ArgumentError, data["error"]["data"] if data["error"].present?
     else
       raise ArgumentError, "Unexpected response format: #{data.class}"
     end
