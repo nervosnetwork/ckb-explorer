@@ -13,7 +13,7 @@ end
 #  state_name           :string
 #  state_flags          :string           default([]), is an Array
 #  local_balance        :decimal(64, 2)   default(0.0)
-#  sent_tlc_balance     :decimal(64, 2)   default(0.0)
+#  offered_tlc_balance  :decimal(64, 2)   default(0.0)
 #  remote_balance       :decimal(64, 2)   default(0.0)
 #  received_tlc_balance :decimal(64, 2)   default(0.0)
 #  shutdown_at          :datetime

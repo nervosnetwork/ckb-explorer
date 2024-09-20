@@ -1715,7 +1715,7 @@ CREATE TABLE public.fiber_channels (
     state_name character varying,
     state_flags character varying[] DEFAULT '{}'::character varying[],
     local_balance numeric(64,2) DEFAULT 0.0,
-    sent_tlc_balance numeric(64,2) DEFAULT 0.0,
+    offered_tlc_balance numeric(64,2) DEFAULT 0.0,
     remote_balance numeric(64,2) DEFAULT 0.0,
     received_tlc_balance numeric(64,2) DEFAULT 0.0,
     shutdown_at timestamp(6) without time zone,

@@ -2,6 +2,8 @@ class FiberPeer < ApplicationRecord
   has_many :fiber_channels, dependent: :destroy
   # has_many :fiber_transactions
 
+  validates :peer_id, presence: true, uniqueness: true
+
   def total_local_balance
     fiber_channels.where(state_name: "CHANNEL_READY").sum(:local_balance)
   end
