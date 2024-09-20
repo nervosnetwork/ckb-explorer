@@ -1,5 +1,5 @@
 class FiberPeer < ApplicationRecord
-  has_many :fiber_channels, foreign_key: :peer_id, primary_key: :peer_id, inverse_of: :fiber_peer, dependent: :destroy
+  has_many :fiber_channels, dependent: :destroy
   # has_many :fiber_transactions
 
   def total_local_balance

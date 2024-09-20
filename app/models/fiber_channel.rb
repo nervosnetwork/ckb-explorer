@@ -1,5 +1,5 @@
 class FiberChannel < ApplicationRecord
-  belongs_to :fiber_peer, class_name: "FiberPeer", foreign_key: :peer_id, primary_key: :peer_id, inverse_of: :fiber_channels
+  belongs_to :fiber_peer
   # has_many :fiber_transactions
 end
 
@@ -19,8 +19,10 @@ end
 #  shutdown_at          :datetime
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
+#  fiber_peer_id        :integer
 #
 # Indexes
 #
+#  index_fiber_channels_on_fiber_peer_id           (fiber_peer_id)
 #  index_fiber_channels_on_peer_id_and_channel_id  (peer_id,channel_id) UNIQUE
 #

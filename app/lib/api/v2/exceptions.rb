@@ -81,7 +81,7 @@ module Api
 
       class FiberPeerNotFoundError < Error
         def initialize
-          super code: 2011, status: 404, title: "fiber peer Not Found", detail: "No peer found by given peer_id", href: ""
+          super code: 2011, status: 404, title: "fiber peer Not Found", detail: "No peer found by given peer id", href: ""
         end
       end
 
