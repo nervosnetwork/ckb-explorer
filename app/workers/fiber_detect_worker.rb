@@ -15,7 +15,7 @@ class FiberDetectWorker
   end
 
   def build_channels_attributes(fiber_peer)
-    data = rpc.list_channels(fiber_peer.rpc_listening_addr, { peer_id: fiber_peer.peer_id })
+    data = rpc.list_channels(fiber_peer.rpc_listening_addr, { peer_id: nil })
     data["result"]["channels"].map do |channel|
       {
         fiber_peer_id: fiber_peer.id,
@@ -24,7 +24,7 @@ class FiberDetectWorker
         state_name: channel["state"]["state_name"],
         state_flags: parse_state_flags(channel["state"]["state_flags"]),
         local_balance: channel["local_balance"].to_i(16),
-        sent_tlc_balance: channel["sent_tlc_balance"].to_i(16),
+        offered_tlc_balance: channel["offered_tlc_balance"].to_i(16),
         remote_balance: channel["remote_balance"].to_i(16),
         received_tlc_balance: channel["received_tlc_balance"].to_i(16),
         created_at: Time.at(channel["created_at"].to_i(16) / 10**6),
