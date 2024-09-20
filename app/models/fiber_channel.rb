@@ -1,6 +1,6 @@
 class FiberChannel < ApplicationRecord
-  belongs_to :fiber_channel
-  has_many :fiber_transactions
+  belongs_to :fiber_peer, class_name: "FiberPeer", foreign_key: :peer_id, primary_key: :peer_id, inverse_of: :fiber_channels
+  # has_many :fiber_transactions
 end
 
 # == Schema Information
