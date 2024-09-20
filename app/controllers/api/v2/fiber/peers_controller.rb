@@ -9,7 +9,7 @@ module Api
         end
 
         def show
-          @peer = FiberPeer.find_by(id: params[:id])
+          @peer = FiberPeer.find_by(peer_id: params[:peer_id])
           raise Api::V2::Exceptions::FiberPeerNotFoundError unless @peer
         end
 
