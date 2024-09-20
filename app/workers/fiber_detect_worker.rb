@@ -18,6 +18,7 @@ class FiberDetectWorker
     data = rpc.list_channels(fiber_peer.rpc_listening_addr, { peer_id: fiber_peer.peer_id })
     data["result"]["channels"].map do |channel|
       {
+        fiber_peer_id: fiber_peer.id,
         peer_id: channel["peer_id"],
         channel_id: channel["channel_id"],
         state_name: channel["state"]["state_name"],

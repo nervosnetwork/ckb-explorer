@@ -9,7 +9,7 @@ module Api
         end
 
         def show
-          @peer = FiberPeer.find_by(peer_id: params[:peer_id])
+          @peer = FiberPeer.find_by(id: params[:id])
           raise Api::V2::Exceptions::FiberPeerNotFoundError unless @peer
         end
 
@@ -32,10 +32,8 @@ module Api
         end
 
         def test_connection
-          endpoint = fiber_peer_params[:rpc_listening_addr]
-          payload = { "peer_id": fiber_peer_params[:peer_id] }
-          FiberCoordinator.instance.list_channels(endpoint, payload)
-        rescue ArgumentError => e
+          FiberCoordinator.instance.list_channels(fiber_peer_params[:rpc_listening_addr], { "peer_id": nil })
+        rescue StandardError => e
           raise Api::V2::Exceptions::FiberPeerParamsInvalidError.new(e.message)
         end
       end
