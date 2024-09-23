@@ -140,6 +140,7 @@ module CellOutputs
             name: udt.full_name,
             decimal: udt.decimal,
             amount: udt_amount,
+            type_hash:,
           }
         else
           raise "invalid cell type"
