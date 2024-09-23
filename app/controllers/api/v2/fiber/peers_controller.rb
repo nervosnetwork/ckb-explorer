@@ -5,7 +5,9 @@ module Api
         before_action :test_connection, only: :create
 
         def index
-          @peers = FiberPeer.all
+          @page = params.fetch(:page, 1)
+          @page_size = params.fetch(:page_size, FiberPeer.default_per_page)
+          @peers = FiberPeer.all.page(@page).per(@page_size)
         end
 
         def show
