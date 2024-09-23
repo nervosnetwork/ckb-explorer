@@ -4,3 +4,7 @@ json.data do
     json.total_local_balance peer.total_local_balance.to_s
   end
 end
+json.meta do
+  json.total @peers.total_count
+  json.page_size @page_size.to_i
+end

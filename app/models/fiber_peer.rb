@@ -1,4 +1,9 @@
 class FiberPeer < ApplicationRecord
+  MAX_PAGINATES_PER = 100
+  DEFAULT_PAGINATES_PER = 10
+  paginates_per DEFAULT_PAGINATES_PER
+  max_paginates_per MAX_PAGINATES_PER
+
   has_many :fiber_channels, dependent: :destroy
   # has_many :fiber_transactions
 
