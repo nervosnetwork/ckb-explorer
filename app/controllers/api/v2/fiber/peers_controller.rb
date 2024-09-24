@@ -17,7 +17,9 @@ module Api
 
         def create
           fiber_peer = FiberPeer.find_or_initialize_by(peer_id: fiber_peer_params[:peer_id])
-          fiber_peer.assign_attributes(fiber_peer_params)
+          fiber_peer.name = fiber_peer_params[:name]
+          new_rpc = Array(fiber_peer_params[:rpc_listening_addr])
+          fiber_peer.rpc_listening_addr = (fiber_peer.rpc_listening_addr + new_rpc).uniq
           fiber_peer.save!
 
           FiberDetectWorker.perform_async(fiber_peer.peer_id)
