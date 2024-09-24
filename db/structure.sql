@@ -1752,7 +1752,7 @@ CREATE TABLE public.fiber_peers (
     id bigint NOT NULL,
     name character varying,
     peer_id character varying,
-    rpc_listening_addr character varying,
+    rpc_listening_addr character varying[] DEFAULT '{}'::character varying[],
     first_channel_opened_at timestamp(6) without time zone,
     last_channel_updated_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
@@ -6164,6 +6164,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240918024407'),
 ('20240918024415'),
 ('20240918033146'),
-('20240920094807');
+('20240920094807'),
+('20240924065539');
 
 

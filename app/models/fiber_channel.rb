@@ -1,6 +1,14 @@
 class FiberChannel < ApplicationRecord
   belongs_to :fiber_peer
   # has_many :fiber_transactions
+
+  def local_peer
+    fiber_peer || FiberPeer.new
+  end
+
+  def remote_peer
+    FiberPeer.find_by(peer_id:) || FiberPeer.new
+  end
 end
 
 # == Schema Information

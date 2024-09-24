@@ -25,7 +25,7 @@ end
 #  id                      :bigint           not null, primary key
 #  name                    :string
 #  peer_id                 :string
-#  rpc_listening_addr      :string
+#  rpc_listening_addr      :string           default([]), is an Array
 #  first_channel_opened_at :datetime
 #  last_channel_updated_at :datetime
 #  created_at              :datetime         not null
