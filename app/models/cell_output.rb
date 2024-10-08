@@ -292,6 +292,12 @@ class CellOutput < ApplicationRecord
       end
     end
   end
+
+  def self.dead_reltuples_count
+    sql = "SELECT reltuples FROM pg_class WHERE relname = 'cell_outputs_dead'"
+    result = ActiveRecord::Base.connection.execute(sql)
+    result.getvalue(0, 0).to_i
+  end
 end
 
 # == Schema Information
