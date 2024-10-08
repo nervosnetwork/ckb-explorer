@@ -10,13 +10,13 @@ module Charts
 
       hash_rate = StatisticInfo.hash_rate(block_number)
       live_cells_count = CellOutput.live.count
-      dead_cells_count = CellOutput.dead.count
-      block_statistic = ::BlockStatistic.find_or_create_by(block_number: block_number)
+      dead_cells_count = CellOutput.dead_reltuples_count
+      block_statistic = ::BlockStatistic.find_or_create_by(block_number:)
       block_statistic.update(epoch_number: target_block.epoch,
                              difficulty: target_block.difficulty,
-                             hash_rate: hash_rate,
-                             live_cells_count: live_cells_count,
-                             dead_cells_count: dead_cells_count)
+                             hash_rate:,
+                             live_cells_count:,
+                             dead_cells_count:)
     end
 
     private
