@@ -125,3 +125,5 @@ gem "jwt"
 
 gem "active_interaction", "~> 5.3"
 gem "bitcoinrb", require: "bitcoin"
+
+gem "memory_profiler"

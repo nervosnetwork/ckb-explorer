@@ -3,8 +3,8 @@ class UpdateH24CkbTransactionsCountOnCollectionsWorker
   sidekiq_options queue: "low"
 
   def perform
-    TokenCollection.find_each do |collection|
-      collection.update_h24_ckb_transactions_count
+    TokenItem.joins(:collection).includes(:collection).where("token_items.updated_at > ?", 1.hour.ago).each do |item|
+      item.collection.update_h24_ckb_transactions_count
     end
   end
 end

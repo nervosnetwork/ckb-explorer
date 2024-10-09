@@ -1,6 +1,7 @@
 module AttrLogics
   extend ActiveSupport::Concern
   included do
+    require "memory_profiler"
     class_attribute :attr_definitions
     self.attr_definitions = {}
   end
@@ -20,15 +21,16 @@ module AttrLogics
 
   def reset(*attr_names)
     attr_names.flatten.each do |a|
-      Rails.logger.info("RESET ATTR #{a} STARTED AT: #{Time.now}")
       reset_one a
-      Rails.logger.info("RESET ATTR #{a} ENDED AT: #{Time.now}")
     end
   end
 
   def reset!(*attr_names)
-    reset *attr_names
-    save!
+    report = MemoryProfiler.report do
+      reset *attr_names
+      save!
+    end
+    report.pretty_print
   end
 
   def reset_all
