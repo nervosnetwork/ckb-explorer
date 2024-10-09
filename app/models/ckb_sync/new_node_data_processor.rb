@@ -1266,7 +1266,7 @@ _prev_outputs, index = nil)
       pending_txs = CkbTransaction.where("tx_hash IN (#{binary_hashes})").where(tx_status: :pending).pluck(
         :tx_hash, :confirmation_time
       )
-      CkbTransaction.where("tx_hash IN (#{binary_hashes})").update_all tx_status: "committed"
+      CkbTransaction.where("tx_hash IN (#{binary_hashes}) AND tx_status = 0").update_all tx_status: "committed"
 
       txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: %i[tx_status tx_hash],
                                                                    returning: %w(id tx_hash block_timestamp created_at))
