@@ -36,6 +36,7 @@ xudt_code_hash: "0x50bd8d6680b8b9cf98b73f3c08faf8b2a21914311954118ad6609be6e78a1
 
 # xudt compatible
 xudt_compatible_code_hash: "0x092c2c4a26ea475a8e860c29cf00502103add677705e2ccd8d6fe5af3caa5ae3"
+xudt_compatible2_code_hash: "0x26a33e0815888a4a0614a0b7d09fa951e0993ff21e55905510104a0b1312032b"
 
 unique_cell_code_hash: "0x2c8c11c985da60b0a330c61a85507416d6382c130ba67f0c47ab071e00aec628"
 

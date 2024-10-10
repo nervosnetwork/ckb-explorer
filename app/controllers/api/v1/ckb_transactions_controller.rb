@@ -137,7 +137,7 @@ module Api
       end
 
       def find_transaction
-        @ckb_transaction = CkbTransaction.where(tx_hash: params[:id]).order(tx_status: :desc).first
+        @ckb_transaction = CkbTransaction.where(tx_hash: params[:id]).order(tx_status: :asc).first
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if @ckb_transaction.blank?
       end
     end

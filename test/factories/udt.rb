@@ -21,9 +21,9 @@ FactoryBot.define do
         20.times do |i|
           block = create(:block, :with_block_hash)
           transaction = create(:ckb_transaction, block:,
-                                                 contained_udt_ids: [udt.id], tags: ["udt"], tx_index: i + 2)
+                                                 contained_udt_ids: [udt.id], tags: ["udt"], tx_index: i * 2)
           transaction1 = create(:ckb_transaction, block:,
-                                                  contained_udt_ids: [udt.id], tags: ["udt"], tx_index: i + 1 == 1 ? 0 : i + 1)
+                                                  contained_udt_ids: [udt.id], tags: ["udt"], tx_index: i * 2 + 1)
           cell_output = create(:cell_output, block:,
                                              ckb_transaction: transaction,
                                              consumed_by: transaction1,
