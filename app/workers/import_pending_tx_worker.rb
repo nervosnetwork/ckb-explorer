@@ -1,7 +1,7 @@
 # Check every pending transaction in the pool if rejected
 class ImportPendingTxWorker
   include Sidekiq::Worker
-  sidekiq_options retry: 1, queue: "pending_tx"
+  sidekiq_options retry: 1, queue: "pending_tx", dead: false
 
   def perform(data)
     committed_tx = CkbTransaction.tx_committed.find_by(tx_hash: data["transaction"]["hash"])
