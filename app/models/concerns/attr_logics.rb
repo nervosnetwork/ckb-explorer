@@ -20,9 +20,7 @@ module AttrLogics
 
   def reset(*attr_names)
     attr_names.flatten.each do |a|
-      Rails.logger.info("RESET ATTR #{a} STARTED AT: #{Time.now}")
       reset_one a
-      Rails.logger.info("RESET ATTR #{a} ENDED AT: #{Time.now}")
     end
   end
 
