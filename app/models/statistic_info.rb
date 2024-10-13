@@ -111,7 +111,7 @@ class StatisticInfo < ApplicationRecord
       where("bytes > 0 and transaction_fee > 0 and confirmation_time > 0").
       order("id desc").limit(10000).
       pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time)
-    txs.map do |id, created_at, transaction_fee, bytes, confirmation_time|
+    result = txs.map do |id, created_at, transaction_fee, bytes, confirmation_time|
       {
         id:,
         timestamp: created_at.to_i,
@@ -119,6 +119,9 @@ class StatisticInfo < ApplicationRecord
         confirmation_time:,
       }
     end
+
+    txs = nil
+    result
   end
 
   define_logic :pending_transaction_fee_rates do
