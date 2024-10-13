@@ -31,7 +31,6 @@ module AttrLogics
       save!
     end
     report.pretty_print
-    attr_definitions.clear
   end
 
   def reset_all
@@ -41,7 +40,6 @@ module AttrLogics
   def reset_all!
     reset_all
     save!
-    attr_definitions.clear
   end
 
   def reset_one(attr_name)
