@@ -78,10 +78,10 @@ end
 #   StatisticInfo.default.reset! :pending_transaction_fee_rates
 # end
 
-# s.interval "1m" do
-#   puts "reset transactions_last_24hrs"
-#   StatisticInfo.default.reset! :transactions_last_24hrs
-# end
+s.interval "1m" do
+  puts "reset transactions_last_24hrs"
+  StatisticInfo.default.reset! :transactions_last_24hrs
+end
 
 s.every "1h", overlap: false do
   puts "reset hash_rate"
