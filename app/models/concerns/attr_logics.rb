@@ -29,6 +29,7 @@ module AttrLogics
     report = MemoryProfiler.report do
       reset *attr_names
       save!
+      attr_definitions.clear
     end
     report.pretty_print
   end
@@ -40,6 +41,7 @@ module AttrLogics
   def reset_all!
     reset_all
     save!
+    attr_definitions.clear
   end
 
   def reset_one(attr_name)
