@@ -21,16 +21,17 @@ module AttrLogics
 
   def reset(*attr_names)
     attr_names.flatten.each do |a|
-      reset_one a
+      puts "===============#{a}"
+      report = MemoryProfiler.report(retained_strings: 5, allocated_strings: 5, detailed_report: true) do
+        reset_one a
+      end
+      report.pretty_print
     end
   end
 
   def reset!(*attr_names)
-    report = MemoryProfiler.report do
-      reset *attr_names
-      save!
-    end
-    report.pretty_print
+    reset *attr_names
+    save!
   end
 
   def reset_all
