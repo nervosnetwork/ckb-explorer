@@ -62,17 +62,17 @@ s.every "2m", overlap: false do
   call_worker PoolTransactionCheckWorker
 end
 
-# s.interval "10s", overlap: false do
-#   puts "reset transactions_count_per_minute, average_block_time, transaction_fee_rates"
-#   StatisticInfo.default.reset! :transactions_count_per_minute,
-#                                :average_block_time,
-#                                :transaction_fee_rates
-# end
+s.interval "10s", overlap: false do
+  puts "reset transactions_count_per_minute, average_block_time, transaction_fee_rates"
+  StatisticInfo.default.reset! :transactions_count_per_minute,
+                               :average_block_time,
+                               :transaction_fee_rates
+end
 
-# s.interval "30s", overlap: false do
-#   puts "reset pending_transaction_fee_rates"
-#   StatisticInfo.default.reset! :pending_transaction_fee_rates
-# end
+s.interval "30s", overlap: false do
+  puts "reset pending_transaction_fee_rates"
+  StatisticInfo.default.reset! :pending_transaction_fee_rates
+end
 
 s.interval "1m" do
   puts "reset transactions_last_24hrs"

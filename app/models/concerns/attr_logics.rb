@@ -1,7 +1,6 @@
 module AttrLogics
   extend ActiveSupport::Concern
   included do
-    require "memory_profiler"
     class_attribute :attr_definitions
     self.attr_definitions = {}
   end
@@ -21,11 +20,7 @@ module AttrLogics
 
   def reset(*attr_names)
     attr_names.flatten.each do |a|
-      puts "===============#{a}"
-      report = MemoryProfiler.report(retained_strings: 5, allocated_strings: 5, detailed_report: true) do
-        reset_one a
-      end
-      report.pretty_print
+      reset_one a
     end
   end
 
