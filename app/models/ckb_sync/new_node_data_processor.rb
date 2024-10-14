@@ -692,7 +692,7 @@ dao_contract)
         end
       end
       if udts_attributes.present?
-        unique_udt_attributes = udt_attributes.uniq { |ua| ua[:type_hash] }
+        unique_udt_attributes = udts_attributes.uniq { |ua| ua[:type_hash] }
         returning_attrs = Udt.insert_all!(unique_udt_attributes, record_timestamps: true, returning: %w[id udt_type type_hash])
         omiga_inscription_info_attrs = returning_attrs.rows.filter do |r|
                                          r[1] == 4
