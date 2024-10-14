@@ -36,6 +36,7 @@ omiga_inscription_info_code_hash: "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01
 omiga_inscription_code_hash: "0x3a241ceceede72a5f55c8fb985652690f09a517d6c9070f0df0d3572fa03fb70"
 # xudt
 xudt_code_hash: "0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb"
+xudt_data_hash: "0x50bd8d6680b8b9cf98b73f3c08faf8b2a21914311954118ad6609be6e78a1b95"
 unique_cell_code_hash: "0x8e341bcfec6393dcd41e635733ff2dca00a6af546949f70c57a706c0f344df8b"
 
 # xudt compatible

@@ -103,6 +103,10 @@ module CkbSync
       Settings.xudt_code_hash
     end
 
+    def xudt_data_hash
+      Settings.xudt_data_hash
+    end
+
     def xudt_compatible_code_hashes
       [Settings.xudt_compatible_code_hash, Settings.xudt_compatible2_code_hash]
     end
