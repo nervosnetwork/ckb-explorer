@@ -4,7 +4,6 @@ Dir.chdir(root)
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
 require "rubygems"
 require "bundler/setup"
-require "memory_profiler"
 
 ENV["RAILS_ENV"] ||= "development"
 require File.join(root, "config", "environment")
@@ -27,10 +26,7 @@ def call_worker(clz)
   clz = clz.constantize if clz.is_a?(String)
 
   puts "invoking #{clz.name}"
-  report = MemoryProfiler.report do
-    clz.new.perform
-  end
-  report.pretty_print
+  clz.new.perform
   puts "fininsh #{clz.name}"
 end
 
@@ -117,10 +113,7 @@ s.every "6h", overlap: false do
 end
 
 s.cron "0,30 * * * *" do
-  report = MemoryProfiler.report do
-    BitcoinStatistic.refresh
-  end
-  report.pretty_print
+  BitcoinStatistic.refresh
 end
 
 s.every "2m", overlap: false do
