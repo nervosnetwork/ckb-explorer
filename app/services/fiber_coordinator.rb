@@ -1,6 +1,6 @@
 class FiberCoordinator
   include Singleton
-  METHOD_NAMES = %w(list_channels).freeze
+  METHOD_NAMES = %w(graph_nodes graph_channels list_channels).freeze
 
   def initialize
     @id = 0

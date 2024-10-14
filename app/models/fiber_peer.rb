@@ -5,7 +5,6 @@ class FiberPeer < ApplicationRecord
   max_paginates_per MAX_PAGINATES_PER
 
   has_many :fiber_channels, dependent: :destroy
-  # has_many :fiber_transactions
 
   validates :peer_id, presence: true, uniqueness: true
 
@@ -30,4 +29,10 @@ end
 #  last_channel_updated_at :datetime
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
+#  node_id                 :string
+#  chain_hash              :string
+#
+# Indexes
+#
+#  index_fiber_peers_on_peer_id  (peer_id) UNIQUE
 #

@@ -103,6 +103,8 @@ namespace :api do
     namespace :fiber do
       resources :peers, param: :peer_id, only: %i[index show create]
       resources :channels, param: :channel_id, only: :show
+      resources :graph_nodes, param: :node_id, only: %i[index show]
+      resources :graph_channels, only: :index
     end
   end
 end
