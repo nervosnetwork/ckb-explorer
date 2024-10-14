@@ -2,7 +2,7 @@ class FiberDetectWorker
   include Sidekiq::Worker
   sidekiq_options queue: "fiber"
 
-  def perform(peer_id)
+  def perform(peer_id = nil)
     fiber_peers = peer_id.present? ? FiberPeer.where(peer_id:) : FiberPeer.all
     fiber_peers.each { sync_with_fiber_channels(_1) }
   end

@@ -1,6 +1,5 @@
 class FiberChannel < ApplicationRecord
   belongs_to :fiber_peer
-  # has_many :fiber_transactions
 
   def local_peer
     fiber_peer || FiberPeer.new

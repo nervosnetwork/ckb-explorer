@@ -1788,6 +1788,83 @@ ALTER SEQUENCE public.fiber_channels_id_seq OWNED BY public.fiber_channels.id;
 
 
 --
+-- Name: fiber_graph_channels; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.fiber_graph_channels (
+    id bigint NOT NULL,
+    channel_outpoint character varying,
+    funding_tx_block_number bigint,
+    funding_tx_index integer,
+    node1 character varying,
+    node2 character varying,
+    last_updated_timestamp bigint,
+    created_timestamp bigint,
+    node1_to_node2_fee_rate numeric(30,0) DEFAULT 0.0,
+    node2_to_node1_fee_rate numeric(30,0) DEFAULT 0.0,
+    capacity numeric(64,2) DEFAULT 0.0,
+    chain_hash character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: fiber_graph_channels_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.fiber_graph_channels_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: fiber_graph_channels_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.fiber_graph_channels_id_seq OWNED BY public.fiber_graph_channels.id;
+
+
+--
+-- Name: fiber_graph_nodes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.fiber_graph_nodes (
+    id bigint NOT NULL,
+    alias character varying,
+    node_id character varying,
+    addresses character varying[] DEFAULT '{}'::character varying[],
+    "timestamp" bigint,
+    chain_hash character varying,
+    auto_accept_min_ckb_funding_amount numeric(30,0),
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: fiber_graph_nodes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.fiber_graph_nodes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: fiber_graph_nodes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.fiber_graph_nodes_id_seq OWNED BY public.fiber_graph_nodes.id;
+
+
+--
 -- Name: fiber_peers; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1799,7 +1876,9 @@ CREATE TABLE public.fiber_peers (
     first_channel_opened_at timestamp(6) without time zone,
     last_channel_updated_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    node_id character varying,
+    chain_hash character varying
 );
 
 
@@ -3250,6 +3329,20 @@ ALTER TABLE ONLY public.fiber_channels ALTER COLUMN id SET DEFAULT nextval('publ
 
 
 --
+-- Name: fiber_graph_channels id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_graph_channels ALTER COLUMN id SET DEFAULT nextval('public.fiber_graph_channels_id_seq'::regclass);
+
+
+--
+-- Name: fiber_graph_nodes id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_graph_nodes ALTER COLUMN id SET DEFAULT nextval('public.fiber_graph_nodes_id_seq'::regclass);
+
+
+--
 -- Name: fiber_peers id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3816,6 +3909,22 @@ ALTER TABLE ONLY public.epoch_statistics
 
 ALTER TABLE ONLY public.fiber_channels
     ADD CONSTRAINT fiber_channels_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fiber_graph_channels fiber_graph_channels_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_graph_channels
+    ADD CONSTRAINT fiber_graph_channels_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fiber_graph_nodes fiber_graph_nodes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_graph_nodes
+    ADD CONSTRAINT fiber_graph_nodes_pkey PRIMARY KEY (id);
 
 
 --
@@ -5006,6 +5115,27 @@ CREATE INDEX index_fiber_channels_on_fiber_peer_id ON public.fiber_channels USIN
 --
 
 CREATE UNIQUE INDEX index_fiber_channels_on_peer_id_and_channel_id ON public.fiber_channels USING btree (peer_id, channel_id);
+
+
+--
+-- Name: index_fiber_graph_channels_on_channel_outpoint; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_fiber_graph_channels_on_channel_outpoint ON public.fiber_graph_channels USING btree (channel_outpoint);
+
+
+--
+-- Name: index_fiber_graph_nodes_on_node_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_fiber_graph_nodes_on_node_id ON public.fiber_graph_nodes USING btree (node_id);
+
+
+--
+-- Name: index_fiber_peers_on_peer_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_fiber_peers_on_peer_id ON public.fiber_peers USING btree (peer_id);
 
 
 --
@@ -6238,6 +6368,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240918033146'),
 ('20240920094807'),
 ('20240924065539'),
+('20241012014906'),
 ('20241105070340'),
 ('20241105070619'),
 ('20241106062022'),
