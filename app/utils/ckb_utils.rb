@@ -421,7 +421,7 @@ class CkbUtils
         *CkbSync::Api.instance.spore_cell_code_hashes,
         CkbSync::Api.instance.xudt_data_hash,
         CkbSync::Api.instance.xudt_code_hash,
-        CkbSync::Api.instance.unique_cell_code_hash
+        CkbSync::Api.instance.unique_cell_code_hash,
       ].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
 
     case type_script&.code_hash
