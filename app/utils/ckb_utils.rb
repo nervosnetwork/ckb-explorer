@@ -419,9 +419,10 @@ class CkbUtils
       [
         *CkbSync::Api.instance.spore_cluster_code_hashes,
         *CkbSync::Api.instance.spore_cell_code_hashes,
-      ].include?(type_script&.code_hash) && type_script&.hash_type == "data1" ||
-      CkbSync::Api.instance.mode == CKB::MODE::MAINNET && [CkbSync::Api.instance.xudt_code_hash,
-                                                           CkbSync::Api.instance.unique_cell_code_hash].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
+        CkbSync::Api.instance.xudt_data_hash,
+        CkbSync::Api.instance.xudt_code_hash,
+        CkbSync::Api.instance.unique_cell_code_hash,
+      ].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
 
     case type_script&.code_hash
     when Settings.dao_code_hash, Settings.dao_type_hash
@@ -464,6 +465,8 @@ class CkbUtils
           "xudt"
         end
       end
+    when CkbSync::Api.instance.xudt_data_hash
+      "xudt"
     when CkbSync::Api.instance.unique_cell_code_hash
       "unique_cell"
     else
