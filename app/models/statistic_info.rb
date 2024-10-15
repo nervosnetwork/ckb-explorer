@@ -103,7 +103,7 @@ class StatisticInfo < ApplicationRecord
     result.alerts.delete_if do |alert|
       alert.message == message_need_to_be_filtered_out
     end
-    report.to_json
+    result.to_json
   end
 
   define_logic :transaction_fee_rates do
