@@ -12,6 +12,7 @@ class Address < ApplicationRecord
   has_many :mining_infos
   has_many :udt_accounts
   has_many :dao_events
+  belongs_to :lock_script, optional: true
 
   has_one :bitcoin_address_mapping, foreign_key: "ckb_address_id"
   has_one :bitcoin_address, through: :bitcoin_address_mapping
