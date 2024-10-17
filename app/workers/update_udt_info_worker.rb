@@ -7,13 +7,8 @@ class UpdateUdtInfoWorker
     return if local_block.blank?
 
     type_hashes = []
-    local_block.cell_outputs.udt.select(:id, :type_hash).each do |udt_output|
-      type_hashes << udt_output.type_hash
-    end
-    local_block.cell_outputs.omiga_inscription.select(:id, :type_hash).each do |udt_output|
-      type_hashes << udt_output.type_hash
-    end
-    local_block.cell_outputs.xudt.select(:id, :type_hash).each do |udt_output|
+    local_block.cell_outputs.where(cell_type: ["udt", "omiga_inscription", "xudt", "xudt_compatible"]).
+      select(:id, :type_hash).each do |udt_output|
       type_hashes << udt_output.type_hash
     end
     local_block.ckb_transactions.pluck(:id).each do |tx_id|
