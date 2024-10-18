@@ -26,7 +26,7 @@ def call_worker(clz)
   clz = clz.constantize if clz.is_a?(String)
 
   puts "invoking #{clz.name}"
-  clz.new.perform
+  clz.new.perform_async
   puts "fininsh #{clz.name}"
 end
 
