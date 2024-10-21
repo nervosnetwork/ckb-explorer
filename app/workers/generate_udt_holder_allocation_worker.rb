@@ -79,7 +79,8 @@ class GenerateUdtHolderAllocationWorker
     allocation_data = {}
 
     unique_ckb_address_ids.each_slice(500) do |batch_address_ids|
-      holder_counts = LockScript.where(address_id: batch_address_ids).group(:code_hash).count("DISTINCT address_id")
+      lock_script_ids = Address.where(id: batch_address_ids).map(&:lock_script_id).uniq
+      holder_counts = LockScript.where(id: lock_script_ids).group(:code_hash).count("DISTINCT id")
       holder_counts.each do |code_hash, count|
         allocation_data[code_hash] ||= 0
         allocation_data[code_hash] += count
