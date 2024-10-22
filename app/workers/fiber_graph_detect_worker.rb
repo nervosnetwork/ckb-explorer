@@ -24,7 +24,7 @@ class FiberGraphDetectWorker
   def fetch_nodes(last_cursor)
     return if ENV["FIBER_NODE_URL"].blank?
 
-    data = rpc.graph_nodes(ENV["FIBER_NODE_URL"], { limit: 1, after: last_cursor })
+    data = rpc.graph_nodes(ENV["FIBER_NODE_URL"], { limit: "0x100", after: last_cursor })
     node_attributes = data["result"]["nodes"].map do |node|
       {
         alias: node["alias"],
@@ -47,7 +47,7 @@ class FiberGraphDetectWorker
   def fetch_channels(last_cursor)
     return if ENV["FIBER_NODE_URL"].blank?
 
-    data = rpc.graph_channels(ENV["FIBER_NODE_URL"], { limit: 1, after: last_cursor })
+    data = rpc.graph_channels(ENV["FIBER_NODE_URL"], { limit: "0x100", after: last_cursor })
     channel_attributes = data["result"]["channels"].map do |channel|
       {
         channel_outpoint: channel["channel_outpoint"],
