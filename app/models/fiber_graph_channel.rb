@@ -3,6 +3,16 @@ class FiberGraphChannel < ApplicationRecord
   DEFAULT_PAGINATES_PER = 10
   paginates_per DEFAULT_PAGINATES_PER
   max_paginates_per MAX_PAGINATES_PER
+
+  belongs_to :udt, optional: true
+
+  def open_transaction_hash
+    channel_outpoint[0..65]
+  end
+
+  def udt_info
+    udt&.as_json(only: %i[full_name symbol decimal icon_file])
+  end
 end
 
 # == Schema Information
@@ -23,6 +33,7 @@ end
 #  chain_hash              :string
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
+#  udt_id                  :bigint
 #
 # Indexes
 #

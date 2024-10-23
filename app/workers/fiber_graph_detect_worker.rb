@@ -25,18 +25,38 @@ class FiberGraphDetectWorker
     return if ENV["FIBER_NODE_URL"].blank?
 
     data = rpc.graph_nodes(ENV["FIBER_NODE_URL"], { limit: "0x100", after: last_cursor })
-    node_attributes = data["result"]["nodes"].map do |node|
-      {
-        alias: node["alias"],
-        node_id: node["node_id"],
-        addresses: node["addresses"],
-        timestamp: node["timestamp"].to_i(16),
-        chain_hash: node["chain_hash"],
-        auto_accept_min_ckb_funding_amount: node["auto_accept_min_ckb_funding_amount"],
-      }
-    end
+    ApplicationRecord.transaction do
+      data["result"]["nodes"].each do |node|
+        node_attributes = {
+          alias: node["alias"],
+          node_id: node["node_id"],
+          addresses: node["addresses"],
+          timestamp: node["timestamp"].to_i(16),
+          chain_hash: node["chain_hash"],
+          auto_accept_min_ckb_funding_amount: node["auto_accept_min_ckb_funding_amount"],
+        }
 
-    FiberGraphNode.upsert_all(node_attributes, unique_by: %i[node_id]) if node_attributes.any?
+        fiber_graph_node = FiberGraphNode.upsert(node_attributes, unique_by: %i[node_id], returning: %i[id])
+
+        cfg_info_attributes = []
+        node["udt_cfg_infos"].each do |info|
+          udt = Udt.find_by(info["script"].symbolize_keys)
+
+          if udt
+            cfg_info_attributes << {
+              fiber_graph_node_id: fiber_graph_node[0]["id"],
+              udt_id: udt.id,
+              auto_accept_amount: info["auto_accept_amount"].to_i(16),
+            }
+          end
+        end
+
+        if cfg_info_attributes.present?
+          puts
+          FiberUdtCfgInfo.upsert_all(cfg_info_attributes, unique_by: %i[fiber_graph_node_id udt_id])
+        end
+      end
+    end
 
     data["result"]["last_cursor"]
   rescue StandardError => e
@@ -49,6 +69,10 @@ class FiberGraphDetectWorker
 
     data = rpc.graph_channels(ENV["FIBER_NODE_URL"], { limit: "0x100", after: last_cursor })
     channel_attributes = data["result"]["channels"].map do |channel|
+      if (udt_type_script = channel["udt_type_script"]).present?
+        udt = Udt.find_by(type_hash: udt_type_script)
+      end
+
       {
         channel_outpoint: channel["channel_outpoint"],
         funding_tx_block_number: channel["funding_tx_block_number"].to_i(16),
@@ -61,6 +85,7 @@ class FiberGraphDetectWorker
         node2_to_node1_fee_rate: channel["node2_to_node1_fee_rate"].to_i(16),
         capacity: channel["capacity"].to_i(16),
         chain_hash: channel["chain_hash"],
+        udt_id: udt&.id,
       }
     end
 
