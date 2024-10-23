@@ -3,6 +3,25 @@ class FiberGraphNode < ApplicationRecord
   DEFAULT_PAGINATES_PER = 10
   paginates_per DEFAULT_PAGINATES_PER
   max_paginates_per MAX_PAGINATES_PER
+
+  has_many :fiber_udt_cfg_infos, dependent: :delete_all
+
+  def channel_links
+    FiberGraphChannel.where(node1: node_id).or(FiberGraphChannel.where(node2: node_id))
+  end
+
+  def udt_cfg_infos
+    fiber_udt_cfg_infos.map(&:udt_info)
+  end
+
+  def total_capacity
+    channel_links.sum(&:capacity)
+  end
+
+  def connected_node_ids
+    node_ids = channel_links.pluck(:node1, :node2).flatten
+    node_ids.uniq - [node_id]
+  end
 end
 
 # == Schema Information
