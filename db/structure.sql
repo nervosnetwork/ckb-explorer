@@ -1805,7 +1805,8 @@ CREATE TABLE public.fiber_graph_channels (
     capacity numeric(64,2) DEFAULT 0.0,
     chain_hash character varying,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    udt_id bigint
 );
 
 
@@ -1932,6 +1933,39 @@ CREATE SEQUENCE public.fiber_transactions_id_seq
 --
 
 ALTER SEQUENCE public.fiber_transactions_id_seq OWNED BY public.fiber_transactions.id;
+
+
+--
+-- Name: fiber_udt_cfg_infos; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.fiber_udt_cfg_infos (
+    id bigint NOT NULL,
+    fiber_graph_node_id bigint,
+    udt_id bigint,
+    auto_accept_amount numeric(64,2) DEFAULT 0.0,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: fiber_udt_cfg_infos_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.fiber_udt_cfg_infos_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: fiber_udt_cfg_infos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.fiber_udt_cfg_infos_id_seq OWNED BY public.fiber_udt_cfg_infos.id;
 
 
 --
@@ -3357,6 +3391,13 @@ ALTER TABLE ONLY public.fiber_transactions ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
+-- Name: fiber_udt_cfg_infos id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_udt_cfg_infos ALTER COLUMN id SET DEFAULT nextval('public.fiber_udt_cfg_infos_id_seq'::regclass);
+
+
+--
 -- Name: forked_blocks id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3941,6 +3982,14 @@ ALTER TABLE ONLY public.fiber_peers
 
 ALTER TABLE ONLY public.fiber_transactions
     ADD CONSTRAINT fiber_transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fiber_udt_cfg_infos fiber_udt_cfg_infos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_udt_cfg_infos
+    ADD CONSTRAINT fiber_udt_cfg_infos_pkey PRIMARY KEY (id);
 
 
 --
@@ -5136,6 +5185,13 @@ CREATE UNIQUE INDEX index_fiber_graph_nodes_on_node_id ON public.fiber_graph_nod
 --
 
 CREATE UNIQUE INDEX index_fiber_peers_on_peer_id ON public.fiber_peers USING btree (peer_id);
+
+
+--
+-- Name: index_fiber_udt_cfg_infos_on_fiber_graph_node_id_and_udt_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_fiber_udt_cfg_infos_on_fiber_graph_node_id_and_udt_id ON public.fiber_udt_cfg_infos USING btree (fiber_graph_node_id, udt_id);
 
 
 --
@@ -6369,6 +6425,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240920094807'),
 ('20240924065539'),
 ('20241012014906'),
+('20241023055256'),
+('20241023063536'),
 ('20241105070340'),
 ('20241105070619'),
 ('20241106062022'),
