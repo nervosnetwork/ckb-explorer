@@ -588,7 +588,7 @@ dao_contract)
         items.each_with_index do |output, index|
           cell_type = cell_type(output.type, outputs_data[tx_index][index])
           if cell_type == "unique_cell"
-            items.each do |xudt_output, index|
+            items.each do |xudt_output|
               if xudt_output.type&.code_hash == CkbSync::Api.instance.xudt_code_hash || xudt_output.type&.code_hash == CkbSync::Api.instance.xudt_data_hash || xudt_output.type&.code_hash.in?(CkbSync::Api.instance.xudt_compatible_code_hashes)
                 UpdateXudtInfoWithUniqueCellWorker.perform_in(5.minutes, xudt_output.type.compute_hash, outputs_data[tx_index][index])
                 break
