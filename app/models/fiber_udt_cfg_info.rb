@@ -3,7 +3,7 @@ class FiberUdtCfgInfo < ApplicationRecord
   belongs_to :udt
 
   def udt_info
-    udt.as_json(only: %i[full_name symbol decimal icon_file])
+    udt.as_json(only: %i[full_name symbol decimal icon_file args code_hash hash_type]).merge(auto_accept_amount:)
   end
 end
 
