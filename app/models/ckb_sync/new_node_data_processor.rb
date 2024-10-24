@@ -587,6 +587,14 @@ dao_contract)
       outputs.each do |tx_index, items|
         items.each_with_index do |output, index|
           cell_type = cell_type(output.type, outputs_data[tx_index][index])
+          if cell_type == "unique_cell"
+            items.each do |xudt_output|
+              if xudt_output.type&.code_hash == CkbSync::Api.instance.xudt_code_hash || xudt_output.type&.code_hash == CkbSync::Api.instance.xudt_data_hash || xudt_output.type&.code_hash.in?(CkbSync::Api.instance.xudt_compatible_code_hashes)
+                UpdateXudtInfoWithUniqueCellWorker.perform_in(5.minutes, xudt_output.type.compute_hash, outputs_data[tx_index][index])
+                break
+              end
+            end
+          end
           next unless cell_type.in?(%w(udt m_nft_token nrc_721_token spore_cell did_cell
                                        omiga_inscription_info omiga_inscription xudt xudt_compatible))
 
@@ -673,15 +681,6 @@ dao_contract)
             when "xudt", "xudt_compatible"
               if output.type.args.length == 66
                 issuer_address = Address.find_by(lock_hash: output.type.args[0..65])&.address_hash
-              end
-              items.each_with_index do |output, index|
-                if output.type&.code_hash == CkbSync::Api.instance.unique_cell_code_hash
-                  info = CkbUtils.parse_unique_cell(outputs_data[tx_index][index])
-                  nft_token_attr[:full_name] = info[:name]
-                  nft_token_attr[:symbol] = info[:symbol]
-                  nft_token_attr[:decimal] = info[:decimal]
-                  nft_token_attr[:published] = true
-                end
               end
             end
             udts_attributes << {
