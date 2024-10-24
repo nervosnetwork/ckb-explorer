@@ -138,7 +138,7 @@ class DeployedCell < ApplicationRecord
     scripts.each do |lock_script_or_type_script|
       dep =
         case lock_script_or_type_script.hash_type
-        when "data", "data1"
+        when "data", "data1", "data2"
           by_data_hash[lock_script_or_type_script.code_hash]
         when "type"
           by_type_hash[lock_script_or_type_script.code_hash]
