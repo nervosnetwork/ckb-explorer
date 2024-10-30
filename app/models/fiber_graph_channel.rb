@@ -5,13 +5,31 @@ class FiberGraphChannel < ApplicationRecord
   max_paginates_per MAX_PAGINATES_PER
 
   belongs_to :udt, optional: true
+  belongs_to :open_transaction, class_name: "CkbTransaction"
+  belongs_to :closed_transaction, class_name: "CkbTransaction", optional: true
 
-  def open_transaction_hash
-    channel_outpoint[0..65]
+  validates :open_transaction_id, presence: true
+
+  scope :open_channels, -> { where(closed_transaction_id: nil) }
+
+  def outpoint_info
+    open_transaction.as_json(only: %i[tx_hash block_number block_timestamp transaction_fee]).merge(
+      {
+        funding_capacity: funding_cell.capacity,
+        funding_udt_amount: funding_cell.udt_amount,
+        funding_address: funding_cell.address_hash,
+      },
+    )
   end
 
   def udt_info
     udt&.as_json(only: %i[full_name symbol decimal icon_file])
+  end
+
+  def funding_cell
+    open_transaction.outputs.includes(:lock_script).find_by(
+      lock_scripts: { code_hash: Settings.fiber_funding_code_hash },
+    )
   end
 end
 
@@ -34,6 +52,8 @@ end
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  udt_id                  :bigint
+#  open_transaction_id     :bigint
+#  closed_transaction_id   :bigint
 #
 # Indexes
 #

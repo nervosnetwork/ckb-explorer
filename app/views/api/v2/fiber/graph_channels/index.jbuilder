@@ -1,6 +1,6 @@
 json.data do
   json.fiber_graph_channels @channels do |channel|
-    json.(channel, :channel_outpoint, :node1, :node2, :chain_hash, :open_transaction_hash)
+    json.(channel, :channel_outpoint, :node1, :node2, :chain_hash, :outpoint_info)
     json.funding_tx_block_number channel.funding_tx_block_number.to_s
     json.funding_tx_index channel.funding_tx_index.to_s
     json.last_updated_timestamp channel.last_updated_timestamp.to_s

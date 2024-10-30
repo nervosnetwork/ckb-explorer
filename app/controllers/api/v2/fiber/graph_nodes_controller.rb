@@ -15,6 +15,10 @@ module Api
           @graph_channels = FiberGraphChannel.where(node1: params[:node_id]).or(
             FiberGraphChannel.where(node2: params[:node_id]),
           )
+
+          if params[:status] == "closed"
+            @graph_channels = @graph_channels.where.not(closed_transaction_id: nil)
+          end
         end
       end
     end

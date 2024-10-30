@@ -129,7 +129,6 @@ s.every "10m", overlap: false do
 end
 
 s.every "5m", overlap: false do
-  # call_worker FiberDetectWorker
   call_worker FiberGraphDetectWorker
 end
 

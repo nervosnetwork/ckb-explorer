@@ -95,3 +95,6 @@ btc_time_code_hash:
   - "0x80a09eca26d77cea1f5a69471c59481be7404febf40ee90f886c36a948385b55"
 
 single_use_lock_code_hash: "0x8290467a512e5b9a6b816469b0edabba1f4ac474e28ffdd604c2a7c76446bbaf"
+
+# fiber funding lock code hash
+fiber_funding_code_hash: "0x6c67887fe201ee0c7853f1682c0b77c0e6214044c156c7558269390a8afa6d7c"

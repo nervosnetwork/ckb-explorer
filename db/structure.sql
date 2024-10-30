@@ -1763,7 +1763,9 @@ CREATE TABLE public.fiber_graph_channels (
     chain_hash character varying,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    udt_id bigint
+    udt_id bigint,
+    open_transaction_id bigint,
+    closed_transaction_id bigint
 );
 
 
@@ -6355,6 +6357,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241009081935'),
 ('20241012014906'),
 ('20241023055256'),
-('20241023063536');
+('20241023063536'),
+('20241030023309');
 
 

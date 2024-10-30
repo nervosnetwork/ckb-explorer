@@ -22,6 +22,10 @@ class FiberGraphNode < ApplicationRecord
     node_ids = channel_links.pluck(:node1, :node2).flatten
     node_ids.uniq - [node_id]
   end
+
+  def open_channels_count
+    channel_links.where(closed_transaction_id: nil).count
+  end
 end
 
 # == Schema Information
