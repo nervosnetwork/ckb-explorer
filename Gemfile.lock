@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/zmcNotafraid/ckb-sdk-ruby
-  revision: 5eb4c049ea3f6974b3edf3af75a24b9b71683ef4
+  revision: 164a506ee6d8107d6acab10b988df98f10ea9a7f
   branch: data2-index
   specs:
     ckb-sdk-ruby (0.103.0)
