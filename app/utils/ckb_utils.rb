@@ -91,7 +91,7 @@ class CkbUtils
   end
 
   def self.parse_address(address_hash)
-    CkbAddressParser.new(address_hash).parse
+    CKB::AddressParser.new(address_hash).parse
   end
 
   def self.block_reward(block_number, block_economic_state)
