@@ -108,7 +108,7 @@ module CkbSync
     end
 
     def xudt_compatible_code_hashes
-      [Settings.xudt_compatible_code_hash, Settings.xudt_compatible2_code_hash]
+      [Settings.xudt_compatible_code_hash, Settings.xudt_compatible2_code_hash, Settings.xudt_compatible3_code_hash]
     end
 
     def unique_cell_code_hash
