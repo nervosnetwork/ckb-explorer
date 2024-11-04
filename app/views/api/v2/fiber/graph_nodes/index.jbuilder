@@ -5,7 +5,6 @@ json.data do
     json.auto_accept_min_ckb_funding_amount node.auto_accept_min_ckb_funding_amount.to_s
     json.total_capacity node.total_capacity.to_s
     json.udt_cfg_infos node.udt_cfg_infos
-    json.channel_links_count node.channel_links.count
   end
 end
 json.meta do

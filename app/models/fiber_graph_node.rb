@@ -7,7 +7,8 @@ class FiberGraphNode < ApplicationRecord
   has_many :fiber_udt_cfg_infos, dependent: :delete_all
 
   def channel_links
-    FiberGraphChannel.where(node1: node_id).or(FiberGraphChannel.where(node2: node_id))
+    FiberGraphChannel.where(node1: node_id).or(FiberGraphChannel.where(node2: node_id)).
+      where(closed_transaction_id: nil)
   end
 
   def udt_cfg_infos
@@ -24,7 +25,7 @@ class FiberGraphNode < ApplicationRecord
   end
 
   def open_channels_count
-    channel_links.where(closed_transaction_id: nil).count
+    channel_links.count
   end
 end
 
