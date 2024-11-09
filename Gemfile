@@ -38,7 +38,7 @@ gem "dotenv-rails"
 gem "config"
 
 # CKB SDK
-gem "ckb-sdk-ruby", git: "https://github.com/zmcNotafraid/ckb-sdk-ruby", branch: "data2-index", require: "ckb"
+gem "ckb-sdk-ruby", git: "https://github.com/nervosnetwork/ckb-sdk-ruby.git", require: "ckb"
 
 # Redis
 gem "digest-crc"
