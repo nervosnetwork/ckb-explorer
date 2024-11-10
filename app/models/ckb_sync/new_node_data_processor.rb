@@ -646,7 +646,7 @@ dao_contract)
                 binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
                 spore_cluster_type_ids = TypeScript.where("code_hash IN (#{binary_hashes})").where(hash_type: "data1", args: parsed_spore_cell[:cluster_id]).pluck(:id)
                 if spore_cluster_type_ids.present?
-                  spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
+                  spore_cluster_cell = CellOutput.where(type_script_id: spore_cluster_type_ids, status: %i[pending live]).last
                   parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
                   nft_token_attr[:full_name] = parsed_cluster_data[:name]
                 end
