@@ -38,6 +38,7 @@ unique_cell_code_hash: "0x2c8c11c985da60b0a330c61a85507416d6382c130ba67f0c47ab07
 # xudt compatible
 xudt_compatible_code_hash: "0x092c2c4a26ea475a8e860c29cf00502103add677705e2ccd8d6fe5af3caa5ae3"
 xudt_compatible2_code_hash: "0x26a33e0815888a4a0614a0b7d09fa951e0993ff21e55905510104a0b1312032b"
+xudt_compatible3_code_hash: "0x42a0b2aacc836c0fc2bbd421a9020de42b8411584190f30be547fdf54214acc3"
 
 # hash length of an attribute(especially which comes from bytea column),
 # e.g. Block.uncle_block_hashes: "0x587f354162afd133b4a4f7a4b621d11e043c3c08b0af2801f1686b5403b14953", which has a length of 66 ( 2 + 64)
