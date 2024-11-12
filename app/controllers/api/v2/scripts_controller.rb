@@ -9,14 +9,14 @@ module Api
       def general_info
         head :not_found and return if @contracts.blank?
 
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         render json: { data: get_script_content }
       end
 
       def ckb_transactions
         head :not_found and return if @contracts.blank?
 
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         @ckb_transaction_ids = @contracts.joins(cell_deps_point_outputs: :cell_dependency).
           order("cell_dependencies.block_number DESC, cell_dependencies.tx_index ASC").
           pluck("cell_dependencies.ckb_transaction_id").
@@ -28,7 +28,7 @@ module Api
       def deployed_cells
         head :not_found and return if @contracts.blank?
 
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
         CellOutput.live.where(id: @contracts.map(&:deployed_cell_output_id)).page(@page).per(@page_size)
       end
@@ -36,7 +36,7 @@ module Api
       def referring_cells
         head :not_found and return if @contracts.blank?
 
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
         script_ids = Contract.query_script_ids(@contracts)
         scope = CellOutput.live.by_scripts(script_ids[:lock_script], script_ids[:type_script])
