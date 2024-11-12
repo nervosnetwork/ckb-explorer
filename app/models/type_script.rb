@@ -10,33 +10,35 @@ class TypeScript < ApplicationRecord
   validates_presence_of :code_hash
   attribute :code_hash, :ckb_hash
 
+  scope :type_script?, ->(type_hash, data_hash) { where(code_hash: [type_hash, data_hash]).exists? }
+
   def self.process(sdk_type)
     type_hash = sdk_type.compute_hash
     # contract = Contract.create_or_find_by(code_hash: lock.code_hash)
     # script = Script
     create_with(
-      script_hash: type_hash
+      script_hash: type_hash,
     ).find_or_create_by(
       code_hash: sdk_type.code_hash,
       hash_type: sdk_type.hash_type,
-      args: sdk_type.args
+      args: sdk_type.args,
     )
   end
 
   def to_node
     {
-      args: args,
-      code_hash: code_hash,
-      hash_type: hash_type
+      args:,
+      code_hash:,
+      hash_type:,
     }
   end
 
-  def as_json(options = {})
+  def as_json(_options = {})
     {
-      args: args,
-      code_hash: code_hash,
-      hash_type: hash_type,
-      script_hash: script_hash
+      args:,
+      code_hash:,
+      hash_type:,
+      script_hash:,
     }
   end
 
@@ -50,7 +52,11 @@ class TypeScript < ApplicationRecord
 
   def generate_script_hash
     self.hash_type ||= "type"
-    self.script_hash ||= CKB::Types::Script.new(**to_node).compute_hash rescue nil
+    self.script_hash ||= begin
+      CKB::Types::Script.new(**to_node).compute_hash
+    rescue StandardError
+      nil
+    end
   end
 
   # @return [Integer] Byte

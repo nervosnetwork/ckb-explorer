@@ -1035,12 +1035,14 @@ ALTER SEQUENCE public.cell_data_cell_output_id_seq OWNED BY public.cell_data.cel
 
 CREATE TABLE public.cell_dependencies (
     id bigint NOT NULL,
-    contract_id bigint,
     ckb_transaction_id bigint NOT NULL,
     dep_type integer,
     contract_cell_id bigint NOT NULL,
     script_id bigint,
-    implicit boolean DEFAULT true NOT NULL
+    contract_id bigint,
+    implicit boolean,
+    block_number bigint,
+    tx_index integer
 );
 
 
@@ -1061,6 +1063,40 @@ CREATE SEQUENCE public.cell_dependencies_id_seq
 --
 
 ALTER SEQUENCE public.cell_dependencies_id_seq OWNED BY public.cell_dependencies.id;
+
+
+--
+-- Name: cell_deps_out_points; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cell_deps_out_points (
+    id bigint NOT NULL,
+    tx_hash bytea,
+    cell_index integer,
+    deployed_cell_output_id bigint,
+    contract_cell_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: cell_deps_out_points_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.cell_deps_out_points_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: cell_deps_out_points_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.cell_deps_out_points_id_seq OWNED BY public.cell_deps_out_points.id;
 
 
 --
@@ -1445,7 +1481,12 @@ CREATE TABLE public.contracts (
     total_deployed_cells_capacity numeric(30,0) DEFAULT 0.0,
     total_referring_cells_capacity numeric(30,0) DEFAULT 0.0,
     addresses_count integer,
-    h24_ckb_transactions_count integer
+    h24_ckb_transactions_count integer,
+    type_hash bytea,
+    data_hash bytea,
+    deployed_cell_output_id bigint,
+    is_type_script boolean,
+    is_lock_script boolean
 );
 
 
@@ -2996,6 +3037,13 @@ ALTER TABLE ONLY public.cell_dependencies ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
+-- Name: cell_deps_out_points id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cell_deps_out_points ALTER COLUMN id SET DEFAULT nextval('public.cell_deps_out_points_id_seq'::regclass);
+
+
+--
 -- Name: cell_inputs id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3411,6 +3459,14 @@ ALTER TABLE ONLY public.cell_data
 
 ALTER TABLE ONLY public.cell_dependencies
     ADD CONSTRAINT cell_dependencies_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: cell_deps_out_points cell_deps_out_points_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cell_deps_out_points
+    ADD CONSTRAINT cell_deps_out_points_pkey PRIMARY KEY (id);
 
 
 --
@@ -4610,6 +4666,13 @@ CREATE INDEX index_blocks_on_timestamp ON public.blocks USING btree ("timestamp"
 
 
 --
+-- Name: index_cell_dependencies_on_block_number_and_tx_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_block_number_and_tx_index ON public.cell_dependencies USING btree (block_number, tx_index);
+
+
+--
 -- Name: index_cell_dependencies_on_contract_cell_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4617,17 +4680,10 @@ CREATE INDEX index_cell_dependencies_on_contract_cell_id ON public.cell_dependen
 
 
 --
--- Name: index_cell_dependencies_on_contract_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_cell_deps_out_points_on_contract_cell_id_deployed_cell_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_cell_dependencies_on_contract_id ON public.cell_dependencies USING btree (contract_id);
-
-
---
--- Name: index_cell_dependencies_on_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_dependencies_on_script_id ON public.cell_dependencies USING btree (script_id);
+CREATE UNIQUE INDEX index_cell_deps_out_points_on_contract_cell_id_deployed_cell_id ON public.cell_deps_out_points USING btree (contract_cell_id, deployed_cell_output_id);
 
 
 --
@@ -5945,4 +6001,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240823071323'),
 ('20240823071420'),
 ('20240902025657'),
-('20240904043807');
+('20240904043807'),
+('20241105070340'),
+('20241105070619'),
+('20241106062022');
+
+

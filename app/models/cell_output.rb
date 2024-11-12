@@ -107,6 +107,7 @@ class CellOutput < ApplicationRecord
   scope :occupied, -> {
                      where.not(type_hash: nil).or(where.not(data_hash: nil))
                    }
+  scope :by_scripts, ->(lock_script_ids, type_script_ids) { where("lock_script_id IN (?) AND type_script_id IN (?)", lock_script_ids, type_script_ids) }
 
   before_create :setup_address
 

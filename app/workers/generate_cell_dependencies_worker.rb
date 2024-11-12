@@ -7,8 +7,7 @@ class GenerateCellDependenciesWorker
 
     tx_cell_deps = build_cell_deps(block.number)
     block.ckb_transactions.each do |txs|
-      DeployedCell.create_initial_data_for_ckb_transaction(txs, tx_cell_deps[txs.tx_hash])
-      ReferringCell.create_initial_data_for_ckb_transaction(txs)
+      CellDependency.parse_cell_dpes_from_ckb_transaction(txs, tx_cell_deps[txs.tx_hash])
     end
   end
 

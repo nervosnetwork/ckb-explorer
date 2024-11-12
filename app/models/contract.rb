@@ -1,24 +1,23 @@
 class Contract < ApplicationRecord
-  has_many :scripts
-  has_many :deployed_cells
-  has_many :deployed_cell_outputs, through: :deployed_cells, source: :cell_output
   has_many :referring_cells
   has_many :referring_cell_outputs, through: :referring_cells, source: :cell_output
-  has_many :cell_dependencies
-  has_many :ckb_transactions, through: :cell_dependencies
+  has_many :cell_deps_point_outputs, foreign_key: :deployed_cell_id, primary_key: :deployed_cell_id
+  has_many :cell_dependencies, through: :cell_deps_point_outputs
+  has_one :deployed_cell_output, foreign_key: :deployed_cell_output_id
 
   scope :filter_nil_hash_type, -> { where("hash_type IS NOT null and addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
 
-  def self.create_initial_data
-    Contract.transaction do
-      Script.find_each do |script|
-        contract = Contract.find_by code_hash: script.script_hash
-        if contract.blank?
-          contract = Contract.create code_hash: script.script_hash
-        end
-        script.update contract_id: contract.id
+  def self.query_script_ids(contracts)
+    lock_script_ids = []
+    type_script_ids = []
+    contracts.each do |_contract|
+      if is_lock_script
+        lock_script_ids << LockScript.where(code_hash: [type_hash, data_hash]).pluck(:id)
+      elsif is_type_script
+        type_script_ids << TypeScript.where(code_hash: [type_hash, data_hash]).pluck(:id)
       end
     end
+    { lock_script: lock_script_ids.flatten.uniq, type_script: type_script_ids.flatten.uniq }
   end
 end
 
@@ -45,6 +44,11 @@ end
 #  total_referring_cells_capacity :decimal(30, )    default(0)
 #  addresses_count                :integer
 #  h24_ckb_transactions_count     :integer
+#  type_hash                      :binary
+#  data_hash                      :binary
+#  deployed_cell_output_id        :bigint
+#  is_type_script                 :boolean
+#  is_lock_script                 :boolean
 #
 # Indexes
 #
