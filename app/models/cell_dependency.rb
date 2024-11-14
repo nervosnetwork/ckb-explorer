@@ -44,7 +44,7 @@ class CellDependency < ApplicationRecord
 
         cell_deps_out_points_attrs << {
           tx_hash: cell_dep["out_point"]["tx_hash"],
-          cell_index: cell_dep["out_point"]["cell_index"],
+          cell_index: cell_dep["out_point"]["index"],
           deployed_cell_output_id: cell_output.id,
           contract_cell_id: cell_output.id,
         }
