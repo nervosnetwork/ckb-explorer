@@ -79,14 +79,12 @@ class CellDependency < ApplicationRecord
         0.upto(out_points_count[0] - 1) do |i|
           tx_hash, cell_index = binary_data[4 + i * 36, 36].unpack("H64L<")
           cell_output = CellOutput.find_by_pointer tx_hash, cell_index
-          unless CellDepsOutPoint.where(contract_cell_id: mid_cell.id).exists?
-            cell_deps_out_points_attrs << {
-              tx_hash:,
-              cell_index:,
-              deployed_cell_output_id: cell_output.id,
-              contract_cell_id: mid_cell.id,
-            }
-          end
+          cell_deps_out_points_attrs << {
+            tx_hash:,
+            cell_index:,
+            deployed_cell_output_id: cell_output.id,
+            contract_cell_id: mid_cell.id,
+          }
 
           contract_attrs <<
             {
@@ -104,7 +102,7 @@ class CellDependency < ApplicationRecord
                                 unique_by: %i[ckb_transaction_id contract_cell_id])
       CellDepsOutPoint.upsert_all(cell_deps_out_points_attrs,
                                   unique_by: %i[contract_cell_id deployed_cell_output_id])
-      Contract.upsert_all(contract_attrs, unique_by: %i[deployed_cell_output_id])
+      Contract.upsert_all(contract_attrs, unique_by: %i[deployed_cell_output_id], update_only: %i[is_lock_script is_type_script])
     end
   end
 end
