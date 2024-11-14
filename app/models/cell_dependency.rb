@@ -20,7 +20,7 @@ class CellDependency < ApplicationRecord
     }
   end
 
-  def parse_cell_dpes_from_ckb_transaction(ckb_transaction, cell_deps)
+  def self.parse_cell_dpes_from_ckb_transaction(ckb_transaction, cell_deps)
     return if cell_deps.blank?
 
     cell_dependencies_attrs = []
