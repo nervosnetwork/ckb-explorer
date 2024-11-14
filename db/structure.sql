@@ -4701,6 +4701,13 @@ CREATE INDEX index_contracts_on_code_hash ON public.contracts USING btree (code_
 
 
 --
+-- Name: index_contracts_on_deployed_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_contracts_on_deployed_cell_output_id ON public.contracts USING btree (deployed_cell_output_id);
+
+
+--
 -- Name: index_contracts_on_deprecated; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6004,6 +6011,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240904043807'),
 ('20241105070340'),
 ('20241105070619'),
-('20241106062022');
+('20241106062022'),
+('20241114074433');
 
 
