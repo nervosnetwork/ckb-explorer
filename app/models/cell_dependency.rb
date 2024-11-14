@@ -77,7 +77,8 @@ class CellDependency < ApplicationRecord
         out_points_count = binary_data[0, 4].unpack("L<")
         # iterate over the out point list and append actual referred contract cells to cell dependencies_attrs
         0.upto(out_points_count[0] - 1) do |i|
-          tx_hash, cell_index = binary_data[4 + i * 36, 36].unpack("H64L<")
+          part_tx_hash, cell_index = binary_data[4 + i * 36, 36].unpack("H64L<")
+          tx_hash = "0x#{part_tx_hash}"
           cell_output = CellOutput.find_by_pointer tx_hash, cell_index
           cell_deps_out_points_attrs << {
             tx_hash:,
