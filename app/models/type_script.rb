@@ -10,7 +10,7 @@ class TypeScript < ApplicationRecord
   validates_presence_of :code_hash
   attribute :code_hash, :ckb_hash
 
-  scope :type_script?, ->(type_hash, data_hash) { where(code_hash: [type_hash, data_hash]).exists? }
+  scope :type_script, ->(type_hash, data_hash) { where(code_hash: [type_hash, data_hash]) }
 
   def self.process(sdk_type)
     type_hash = sdk_type.compute_hash
