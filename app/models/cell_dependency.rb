@@ -54,8 +54,8 @@ class CellDependency < ApplicationRecord
             type_hash: cell_output.type_script&.script_hash,
             data_hash: cell_output.data_hash,
             deployed_cell_output_id: cell_output.id,
-            is_type_script: TypeScript.type_script?(cell_output.type_script&.script_hash, cell_output.data_hash),
-            is_lock_script: LockScript.lock_script?(cell_output.type_script&.script_hash, cell_output.data_hash),
+            is_type_script: TypeScript.type_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
+            is_lock_script: LockScript.lock_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
             deployed_args: cell_output.type_script&.args,
           }
 
@@ -91,8 +91,8 @@ class CellDependency < ApplicationRecord
             {
               type_hash: cell_output.type_script&.script_hash,
               data_hash: cell_output.data_hash,
-              is_type_script: TypeScript.type_script?(cell_output.type_script&.script_hash, cell_output.data_hash),
-              is_lock_script: LockScript.lock_script?(cell_output.type_script&.script_hash, cell_output.data_hash),
+              is_type_script: TypeScript.type_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
+              is_lock_script: LockScript.lock_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
               deployed_cell_output_id: cell_output.id,
               deployed_args: cell_output.type_script&.args,
             }
