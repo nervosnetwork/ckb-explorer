@@ -108,9 +108,9 @@ s.cron "0 6 * * 1" do
   call_worker CleanAddressBlockSnapshotWorker
 end
 
-s.every "6h", overlap: false do
-  call_worker ContractStatisticWorker
-end
+# s.every "6h", overlap: false do
+#   call_worker ContractStatisticWorker
+# end
 
 s.cron "0,30 * * * *" do
   BitcoinStatistic.refresh

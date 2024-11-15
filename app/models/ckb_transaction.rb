@@ -186,7 +186,7 @@ class CkbTransaction < ApplicationRecord
 
   def cell_deps
     _outputs = cell_outputs.order(cell_index: :asc).to_a
-    cell_dependencies.explicit.includes(:cell_output).to_a.map(&:to_raw)
+    cell_dependencies.includes(:cell_output).to_a.map(&:to_raw)
   end
 
   def income(address)
@@ -215,7 +215,7 @@ class CkbTransaction < ApplicationRecord
   def to_raw
     Rails.cache.fetch([self.class.name, tx_hash, "raw_hash"], expires_in: 1.day) do
       _outputs = cell_outputs.order(cell_index: :asc).to_a
-      cell_deps = cell_dependencies.explicit.includes(:cell_output).to_a
+      cell_deps = cell_dependencies.includes(:cell_output).to_a
 
       {
         hash: tx_hash,
