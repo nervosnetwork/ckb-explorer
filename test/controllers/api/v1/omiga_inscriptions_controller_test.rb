@@ -72,7 +72,7 @@ module Api
         assert_equal %w(
           symbol full_name total_amount addresses_count
           decimal icon_file h24_ckb_transactions_count created_at description
-          published type_hash type_script issuer_address mint_status mint_limit expected_supply
+          published type_hash type_script issuer_address mint_status mint_limit expected_supply holders_count
           inscription_info_id udt_type pre_udt_hash info_type_hash operator_website email is_repeated_symbol
         ).sort,
                      response_udt["attributes"].keys.sort
@@ -86,7 +86,7 @@ module Api
         response_udt = json["data"]
         assert_equal %w(
           symbol full_name total_amount addresses_count
-          decimal icon_file h24_ckb_transactions_count created_at description
+          decimal icon_file h24_ckb_transactions_count created_at description holders_count
           published type_hash type_script issuer_address mint_status mint_limit expected_supply inscription_info_id
           udt_type pre_udt_hash info_type_hash operator_website email is_repeated_symbol
         ).sort,
