@@ -49,15 +49,15 @@ class CellDependency < ApplicationRecord
           contract_cell_id: cell_output.id,
         }
 
-        contract_attrs <<
-          {
-            type_hash: cell_output.type_script&.script_hash,
-            data_hash: cell_output.data_hash,
-            deployed_cell_output_id: cell_output.id,
-            is_type_script: TypeScript.type_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
-            is_lock_script: LockScript.lock_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
-            deployed_args: cell_output.type_script&.args,
-          }
+        # contract_attrs <<
+        #   {
+        #     type_hash: cell_output.type_script&.script_hash,
+        #     data_hash: cell_output.data_hash,
+        #     deployed_cell_output_id: cell_output.id,
+        #     is_type_script: TypeScript.type_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
+        #     is_lock_script: LockScript.lock_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
+        #     deployed_args: cell_output.type_script&.args,
+        #   }
 
       when "dep_group"
         # when the type of cell_dep is "dep_group", it means the cell specified by the `out_point` is a list of out points to the actual referred contract cells
@@ -87,15 +87,15 @@ class CellDependency < ApplicationRecord
             contract_cell_id: mid_cell.id,
           }
 
-          contract_attrs <<
-            {
-              type_hash: cell_output.type_script&.script_hash,
-              data_hash: cell_output.data_hash,
-              is_type_script: TypeScript.type_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
-              is_lock_script: LockScript.lock_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
-              deployed_cell_output_id: cell_output.id,
-              deployed_args: cell_output.type_script&.args,
-            }
+          # contract_attrs <<
+          #   {
+          #     type_hash: cell_output.type_script&.script_hash,
+          #     data_hash: cell_output.data_hash,
+          #     is_type_script: TypeScript.type_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
+          #     is_lock_script: LockScript.lock_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
+          #     deployed_cell_output_id: cell_output.id,
+          #     deployed_args: cell_output.type_script&.args,
+          #   }
         end
       end
     end
