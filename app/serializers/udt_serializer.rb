@@ -22,8 +22,11 @@ class UdtSerializer
   attribute :h24_ckb_transactions_count do |object|
     object.h24_ckb_transactions_count.to_s
   end
-  attributes :created_at do |object|
+  attribute :created_at do |object|
     object.block_timestamp.to_s
+  end
+  attribute :holders_count do |object|
+    object.holders_count.to_s
   end
 
   attribute :mint_status, if: Proc.new { |record, _params|
