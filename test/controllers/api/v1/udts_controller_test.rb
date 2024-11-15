@@ -120,7 +120,7 @@ module Api
 
         response_tx_transaction = json["data"]
         assert_equal %w(
-          symbol full_name total_amount addresses_count
+          symbol full_name total_amount addresses_count holders_count
           decimal icon_file h24_ckb_transactions_count created_at description
           published type_hash type_script issuer_address udt_type operator_website email
         ).sort,
