@@ -26,6 +26,19 @@ class CellDependency < ApplicationRecord
     cell_dependencies_attrs = []
     cell_deps_out_points_attrs = Set.new
     contract_attrs = Set.new
+    type_script_hashes = Set.new
+    lock_script_hashes = Set.new
+
+    cell_outputs = ckb_transaction.cell_outputs.includes(:type_script).to_a
+    cell_inputs = ckb_transaction.cell_inputs.includes(:previous_cell_output).map(&:previous_cell_output)
+    cell_inputs.each do |input|
+      lock_script_hashes << input.lock_script.code_hash
+      type_script_hashes << input.type_script.code_hash if input.type_script
+    end
+
+    cell_outputs.each do |output|
+      type_script_hashes << output.type_script.code_hash if output.type_script
+    end
 
     cell_deps.each do |cell_dep|
       if cell_dep.is_a?(CKB::Types::CellDep)
@@ -49,15 +62,20 @@ class CellDependency < ApplicationRecord
           contract_cell_id: cell_output.id,
         }
 
-        # contract_attrs <<
-        #   {
-        #     type_hash: cell_output.type_script&.script_hash,
-        #     data_hash: cell_output.data_hash,
-        #     deployed_cell_output_id: cell_output.id,
-        #     is_type_script: TypeScript.type_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
-        #     is_lock_script: LockScript.lock_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
-        #     deployed_args: cell_output.type_script&.args,
-        #   }
+        is_lock_script = cell_output.type_script&.script_hash.in?(lock_script_hashes) || cell_output.data_hash.in?(lock_script_hashes)
+        is_type_script = cell_output.type_script&.script_hash.in?(type_script_hashes) || cell_output.data_hash.in?(type_script_hashes)
+
+        if is_lock_script || is_type_script
+          contract_attrs <<
+            {
+              type_hash: cell_output.type_script&.script_hash,
+              data_hash: cell_output.data_hash,
+              deployed_cell_output_id: cell_output.id,
+              is_type_script:,
+              is_lock_script:,
+              deployed_args: cell_output.type_script&.args,
+            }
+        end
 
       when "dep_group"
         # when the type of cell_dep is "dep_group", it means the cell specified by the `out_point` is a list of out points to the actual referred contract cells
@@ -87,15 +105,20 @@ class CellDependency < ApplicationRecord
             contract_cell_id: mid_cell.id,
           }
 
-          # contract_attrs <<
-          #   {
-          #     type_hash: cell_output.type_script&.script_hash,
-          #     data_hash: cell_output.data_hash,
-          #     is_type_script: TypeScript.type_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
-          #     is_lock_script: LockScript.lock_script(cell_output.type_script&.script_hash, cell_output.data_hash).exists?,
-          #     deployed_cell_output_id: cell_output.id,
-          #     deployed_args: cell_output.type_script&.args,
-          #   }
+          is_lock_script = cell_output.type_script&.script_hash.in?(lock_script_hashes) || cell_output.data_hash.in?(lock_script_hashes)
+          is_type_script = cell_output.type_script&.script_hash.in?(type_script_hashes) || cell_output.data_hash.in?(type_script_hashes)
+
+          if is_lock_script || is_type_script
+            contract_attrs <<
+              {
+                type_hash: cell_output.type_script&.script_hash,
+                data_hash: cell_output.data_hash,
+                deployed_cell_output_id: cell_output.id,
+                deployed_args: cell_output.type_script&.args,
+                is_type_script:,
+                is_lock_script:,
+              }
+          end
         end
       end
     end
