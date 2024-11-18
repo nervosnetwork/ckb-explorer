@@ -9,7 +9,7 @@ module Charts
       datetime ||= 1.day.ago.beginning_of_day
       last_record = ::DailyStatistic.order(created_at_unixtimestamp: :desc).first
       start_time = Time.zone.at(last_record ? last_record.created_at_unixtimestamp : Block.find_by(number: 0).timestamp / 1000)
-      while start_time < datetime
+      while start_time <= datetime
         start_time += 1.day
         ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
         Charts::DailyStatisticGenerator.new(start_time).call
