@@ -50,7 +50,11 @@ module CkbSync
           tx_mappings = tx_returnings.rows.to_h { |id, tx_hash| [tx_hash.sub(/^\\x/, "0x"), id] }
           lock_script_returnings = LockScript.upsert_all(lock_script_attrs.to_a, unique_by: :script_hash, returning: %i[id script_hash])
           lock_script_mappings = lock_script_returnings.rows.to_h { |id, script_hash| [script_hash, id] }
-          address_returnings = Address.upsert_all(addresses_attrs.to_a, unique_by: :lock_hash, returning: %i[id lock_hash])
+          new_addresses_attrs =
+            addresses_attrs.to_a.map do |attr|
+              attr.merge({ lock_script_id: lock_script_mappings[attr[:lock_hash]] })
+            end
+          address_returnings = Address.upsert_all(new_addresses_attrs, unique_by: :lock_hash, returning: %i[id lock_hash])
           address_mappings = address_returnings.rows.to_h { |id, lock_hash| [[lock_hash.sub(/^\\x/, "")].pack("H*"), id] }
           type_script_mappings = {}
           if type_script_attrs.present?

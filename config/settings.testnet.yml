@@ -36,11 +36,13 @@ omiga_inscription_info_code_hash: "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01
 omiga_inscription_code_hash: "0x3a241ceceede72a5f55c8fb985652690f09a517d6c9070f0df0d3572fa03fb70"
 # xudt
 xudt_code_hash: "0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb"
+xudt_data_hash: "0x50bd8d6680b8b9cf98b73f3c08faf8b2a21914311954118ad6609be6e78a1b95"
 unique_cell_code_hash: "0x8e341bcfec6393dcd41e635733ff2dca00a6af546949f70c57a706c0f344df8b"
 
 # xudt compatible
 xudt_compatible_code_hash: "0x98701eaf939113606a8a70013fd2e8f27b8f1e234acdc329f3d71f9e9d3d3233"
 xudt_compatible2_code_hash: "0x1142755a044bf2ee358cba9f2da187ce928c91cd4dc8692ded0337efa677d21a"
+xudt_compatible3_code_hash: "0xcc9dc33ef234e14bc788c43a4848556a5fb16401a04662fc55db9bb201987037" # stable coin
 
 # hash length of an attribute(especially which comes from bytea column),
 # e.g. Block.uncle_block_hashes: "0x587f354162afd133b4a4f7a4b621d11e043c3c08b0af2801f1686b5403b14953", which has a length of 66 ( 2 + 64)

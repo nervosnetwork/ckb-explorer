@@ -646,7 +646,7 @@ dao_contract)
                 binary_hashes = CkbUtils.hexes_to_bins_sql(CkbSync::Api.instance.spore_cluster_code_hashes)
                 spore_cluster_type_ids = TypeScript.where("code_hash IN (#{binary_hashes})").where(hash_type: "data1", args: parsed_spore_cell[:cluster_id]).pluck(:id)
                 if spore_cluster_type_ids.present?
-                  spore_cluster_cell = CellOutput.live.where(type_script_id: spore_cluster_type_ids).last
+                  spore_cluster_cell = CellOutput.where(type_script_id: spore_cluster_type_ids, status: %i[pending live]).last
                   parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
                   nft_token_attr[:full_name] = parsed_cluster_data[:name]
                 end
@@ -692,9 +692,8 @@ dao_contract)
         end
       end
       if udts_attributes.present?
-        returning_attrs = Udt.insert_all!(udts_attributes.map! do |attr|
-                                            attr.merge!(created_at: Time.current, updated_at: Time.current)
-                                          end, returning: %w[id udt_type type_hash])
+        unique_udt_attributes = udts_attributes.uniq { |ua| ua[:type_hash] }
+        returning_attrs = Udt.insert_all!(unique_udt_attributes, record_timestamps: true, returning: %w[id udt_type type_hash])
         omiga_inscription_info_attrs = returning_attrs.rows.filter do |r|
                                          r[1] == 4
                                        end.map do |k|
@@ -1266,7 +1265,7 @@ _prev_outputs, index = nil)
       pending_txs = CkbTransaction.where("tx_hash IN (#{binary_hashes})").where(tx_status: :pending).pluck(
         :tx_hash, :confirmation_time
       )
-      CkbTransaction.where("tx_hash IN (#{binary_hashes})").update_all tx_status: "committed"
+      CkbTransaction.where("tx_hash IN (#{binary_hashes}) AND tx_status = 0").update_all tx_status: "committed"
 
       txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: %i[tx_status tx_hash],
                                                                    returning: %w(id tx_hash block_timestamp created_at))

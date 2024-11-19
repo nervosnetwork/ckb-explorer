@@ -36,7 +36,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
   end
 
   test ".parse_address raise error when address is mainnet address and mode is testnet" do
-    assert_raises CkbAddressParser::InvalidPrefixError do
+    assert_raises CKB::AddressParser::InvalidPrefixError do
       CkbUtils.parse_address("haha1qygndsefa43s6m882pcj53m4gdnj4k440axqsm2hnz")
     end
   end

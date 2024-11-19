@@ -133,7 +133,7 @@ class SuggestQuery
   end
 
   def find_udts_by_name_or_symbol
-    udts = Udt.where(udt_type: %i[sudt xudt omiga_inscription], published: true).
+    udts = Udt.where(udt_type: %i[sudt xudt xudt_compatible omiga_inscription], published: true).
       where("LOWER(full_name) LIKE LOWER(:query_key) OR LOWER(symbol) LIKE LOWER(:query_key)", query_key: "%#{query_key}%")
     UdtSerializer.new(udts) if udts.present?
   end

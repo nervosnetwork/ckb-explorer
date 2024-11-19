@@ -42,6 +42,10 @@ class Udt < ApplicationRecord
       hash_type:,
     }
   end
+
+  def holders_count
+    udt_holder_allocations.sum("ckb_holder_count + btc_holder_count")
+  end
 end
 
 # == Schema Information
