@@ -285,6 +285,7 @@ class Block < ApplicationRecord
     uncle_blocks.delete_all
     # delete_address_txs_cache
     ckb_transactions.delete_all
+    CellOutput.where(block_id: id).delete_all
     ForkedBlock.create(attributes)
     destroy
   end
