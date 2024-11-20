@@ -30,7 +30,7 @@ class CkbTransaction < ApplicationRecord
 
   has_many :referring_cells, dependent: :delete_all
   has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all, inverse_of: :ckb_transaction
-  # has_many :cell_dependencies, dependent: :delete_all
+  has_many :cell_dependencies, dependent: :delete_all
   has_many :header_dependencies, dependent: :delete_all
   has_many :witnesses, dependent: :delete_all
 
