@@ -284,7 +284,7 @@ class Block < ApplicationRecord
   def invalid!
     uncle_blocks.delete_all
     # delete_address_txs_cache
-    ckb_transactions.destroy_all
+    ckb_transactions.delete_all
     ForkedBlock.create(attributes)
     destroy
   end
