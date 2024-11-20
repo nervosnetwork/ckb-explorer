@@ -25,12 +25,12 @@ class CkbTransaction < ApplicationRecord
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput"
   has_many :dao_events # , dependent: :delete_all
-  has_many :script_transactions, dependent: :delete_all
-  has_many :scripts, through: :script_transactions
+  # has_many :script_transactions, dependent: :delete_all
+  # has_many :scripts, through: :script_transactions
 
   has_many :referring_cells, dependent: :delete_all
   has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all, inverse_of: :ckb_transaction
-  has_many :cell_dependencies, dependent: :delete_all
+  # has_many :cell_dependencies, dependent: :delete_all
   has_many :header_dependencies, dependent: :delete_all
   has_many :witnesses, dependent: :delete_all
 
