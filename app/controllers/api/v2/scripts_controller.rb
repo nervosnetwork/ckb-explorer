@@ -9,37 +9,42 @@ module Api
       def general_info
         head :not_found and return if @contracts.blank?
 
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
         render json: { data: get_script_content }
       end
 
       def ckb_transactions
         head :not_found and return if @contracts.blank?
 
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-        @ckb_transaction_ids = @contracts.joins(cell_deps_point_outputs: :cell_dependency).
-          order("cell_dependencies.block_number DESC, cell_dependencies.tx_index ASC").
-          pluck("cell_dependencies.ckb_transaction_id").
+        contract_ids = @contracts.map { |contract| contract.id }
+        contract_cell_ids = CellDepsOutPoint.list_contract_cell_ids_by_contract(contract_ids)
+        base_query = CkbTransaction.joins(:cell_dependencies).
+          where(cell_dependencies: { contract_cell_id: contract_cell_ids }).
+          order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
+          limit(10000)
+        @ckb_transactions = CkbTransaction.from("(#{base_query.to_sql}) AS ckb_transactions").
+          order("block_number DESC, tx_index DESC").
           page(@page).
           per(@page_size)
-        CkbTransaction.where(id: @ckb_transaction_ids).order("block_number DESC, tx_index ASC")
       end
 
       def deployed_cells
         head :not_found and return if @contracts.blank?
 
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
-        CellOutput.live.where(id: @contracts.map(&:deployed_cell_output_id)).page(@page).per(@page_size)
+        @deployed_cells = CellOutput.live.where(id: @contracts.map(&:deployed_cell_output_id)).page(@page).per(@page_size)
       end
 
       def referring_cells
         head :not_found and return if @contracts.blank?
 
-        expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
+        # expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
         script_ids = Contract.query_script_ids(@contracts)
-        scope = CellOutput.live.by_scripts(script_ids[:lock_script], script_ids[:type_script])
+        scope = CellOutput.live.by_scripts(script_ids[:lock_script], script_ids[:type_script]).
+          order("block_timestamp DESC, cell_index DESC").
+          limit(10000)
         if params[:args].present?
           type_script = TypeScript.find_by(args: params[:args])
           scope = scope.or(CellOutput.where(type_script_id: type_script.id))
@@ -49,22 +54,37 @@ module Api
           scope = scope.where(address_id: address.map(&:id))
         end
 
-        @referring_cells = sort_referring_cells(scope).page(@page).per(@page_size)
+        @referring_cells =
+          CellOutput.from("(#{scope.to_sql}) AS cell_outputs").
+            order("block_timestamp DESC, cell_index DESC").
+            page(@page).
+            per(@page_size)
       end
 
       private
 
       def get_script_content
-        @contracts.map do |contract|
-          {
-            type_hash: contract.type_hash,
-            data_hash: contract.data_hash,
-            is_lock_script: contract.is_lock_script,
-            is_type_script: contract.is_type_script,
-            # capacity_of_deployed_cells: contract.total_deployed_cells_capacity,
-            # capacity_of_referring_cells: contract.total_referring_cells_capacity,
-          }
-        end
+        sum_hash =
+          @contracts.inject({
+                              capacity_of_deployed_cells: 0,
+                              capacity_of_referring_cells: 0,
+                              count_of_transactions: 0,
+                              count_of_deployed_cells: 0,
+                              count_of_referring_cells: 0,
+                            }) do |sum, contract|
+            sum[:capacity_of_deployed_cells] += contract.total_deployed_cells_capacity
+            sum[:capacity_of_referring_cells] += contract.total_referring_cells_capacity
+            sum[:count_of_transactions] += contract.ckb_transactions_count
+            sum[:count_of_deployed_cells] += 1
+            sum[:count_of_referring_cells] += contract.referring_cells_count
+            sum
+          end
+        {
+          id: @contracts.first.type_hash,
+          code_hash: params[:code_hash],
+          hash_type: params[:hash_type],
+          script_type: @contracts.first.is_lock_script ? "LockScript" : "TypeScript",
+        }.merge(sum_hash)
       end
 
       def set_page_and_page_size
@@ -78,7 +98,7 @@ module Api
           when "data", "data1", "data2"
             Contract.where(data_hash: params[:code_hash])
           when "type"
-            Contract.find_by(type_hash: params[:code_hash])
+            Contract.where(type_hash: params[:code_hash])
           end
       end
 
