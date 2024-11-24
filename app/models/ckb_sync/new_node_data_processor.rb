@@ -59,7 +59,8 @@ module CkbSync
         inputs = @inputs = {}
         outputs = @outputs = {}
         outputs_data = @outputs_data = {}
-        @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data).to_a
+        cell_deps = {}
+        @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data, cell_deps).to_a
         benchmark :build_udts!, local_block, outputs, outputs_data
 
         tags = []
@@ -74,7 +75,7 @@ module CkbSync
         addrs_changes = Hash.new { |hash, key| hash[key] = {} }
 
         input_capacities, output_capacities = benchmark :build_cells_and_locks!, local_block, node_block, ckb_txs, inputs, outputs,
-                                                        tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes, token_transfer_ckb_tx_ids
+                                                        tags, udt_address_ids, dao_address_ids, contained_udt_ids, contained_address_ids, addrs_changes, token_transfer_ckb_tx_ids, cell_deps
 
         # update explorer data
         benchmark :update_ckb_txs_rel_and_fee, ckb_txs, tags, input_capacities, output_capacities, udt_address_ids,
@@ -92,7 +93,7 @@ module CkbSync
       async_update_udt_infos(local_block)
       flush_inputs_outputs_caches(local_block)
       generate_statistics_data(local_block)
-      generate_deployed_cells_and_referring_cells(local_block)
+      # generate_deployed_cells_and_referring_cells(local_block)
       detect_cota_infos(local_block)
       detect_token_transfer(token_transfer_ckb_tx_ids)
       detect_bitcoin_transactions(local_block)
@@ -785,7 +786,7 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
 
     def build_cells_and_locks!(
       local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids,
-      dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids
+      dao_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids, cell_deps
     )
       cell_outputs_attributes = []
       cell_inputs_attributes = []
@@ -864,6 +865,34 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
         if cell_data_attrs.present?
           CellDatum.upsert_all(cell_data_attrs, unique_by: [:cell_output_id])
         end
+      end
+
+      hash2index = {}
+      hash2id = {}
+      ckb_txs.each do |t|
+        hash2id["0#{t['tx_hash'][1..]}"] = t["id"]
+        hash2index["0#{t['tx_hash'][1..]}"] = t["tx_index"]
+      end
+
+      cell_deps_attrs = []
+      cell_deps.each do |tx_hash, cell_deps|
+        txid = hash2id[tx_hash]
+        tx_index = hash2index[tx_hash]
+
+        cell_deps.each do |cell_dep|
+          cell_deps_attrs <<
+            {
+              ckb_transaction_id: txid,
+              dep_type: cell_dep.dep_type,
+              contract_cell_id: CellOutput.find_by_pointer(cell_dep.out_point.tx_hash, cell_dep.out_point.index).id,
+              block_number: local_block.number,
+              tx_index:,
+            }
+        end
+      end
+      if cell_deps_attrs.present?
+        CellDependency.upsert_all(cell_deps_attrs,
+                                  unique_by: %i[ckb_transaction_id contract_cell_id dep_type])
       end
 
       prev_outputs = nil
@@ -1239,7 +1268,7 @@ _prev_outputs, index = nil)
       end
     end
 
-    def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data)
+    def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data, cell_deps)
       cycles = CkbSync::Api.instance.get_block_cycles node_block.header.hash
       ckb_transactions_attributes = []
       hashes = []
@@ -1251,6 +1280,7 @@ _prev_outputs, index = nil)
           attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
         end
         header_deps[tx.hash] = tx.header_deps
+        cell_deps[tx.hash] = tx.cell_deps
         witnesses[tx.hash] = tx.witnesses
         ckb_transactions_attributes << attrs
         hashes << tx.hash
@@ -1268,7 +1298,7 @@ _prev_outputs, index = nil)
       CkbTransaction.where("tx_hash IN (#{binary_hashes}) AND tx_status = 0").update_all tx_status: "committed"
 
       txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: %i[tx_status tx_hash],
-                                                                   returning: %w(id tx_hash block_timestamp created_at))
+                                                                   returning: %w(id tx_hash tx_index block_timestamp created_at))
 
       if pending_txs.any?
         hash_to_pool_times = pending_txs.to_h
