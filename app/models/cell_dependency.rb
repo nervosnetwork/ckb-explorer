@@ -143,6 +143,7 @@ end
 #  implicit           :boolean
 #  block_number       :bigint
 #  tx_index           :integer
+#  contract_analyzed  :boolean          default(FALSE)
 #
 # Indexes
 #
