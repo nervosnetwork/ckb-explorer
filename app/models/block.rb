@@ -81,7 +81,7 @@ class Block < ApplicationRecord
 
   def self.fetch_transaction_fee_rate_from_cache(date_string)
     Rails.cache.fetch("transaction_fee_rate_#{date_string}", expires_in: 10.minutes) do
-      self.query_transaction_fee_rate date_string
+      query_transaction_fee_rate date_string
     end
   end
 
@@ -227,7 +227,7 @@ class Block < ApplicationRecord
   end
 
   def fraction_epoch
-    OpenStruct.new(number: epoch, index: block_index_in_epoch, length: length)
+    OpenStruct.new(number: epoch, index: block_index_in_epoch, length:)
   end
 
   def self.find_block!(query_key)
@@ -261,7 +261,7 @@ class Block < ApplicationRecord
       if b&.block_size
         {
           number: b.number,
-          bytes: b.block_size
+          bytes: b.block_size,
         }
       end
     end
@@ -284,7 +284,8 @@ class Block < ApplicationRecord
   def invalid!
     uncle_blocks.delete_all
     # delete_address_txs_cache
-    ckb_transactions.destroy_all
+    ckb_transactions.delete_all
+    CellOutput.where(block_id: id).delete_all
     ForkedBlock.create(attributes)
     destroy
   end
@@ -310,7 +311,7 @@ class Block < ApplicationRecord
   end
 
   def update_counter_for_ckb_node_version
-    witness = self.cellbase.witnesses[0].data
+    witness = cellbase.witnesses[0].data
     return if witness.blank?
 
     matched = [witness.gsub("0x", "")].pack("H*").match(/\d\.\d+\.\d/)
@@ -325,7 +326,7 @@ class Block < ApplicationRecord
 
     # update the current block's ckb_node_version
     self.ckb_node_version = matched[0]
-    self.save!
+    save!
   end
 
   # NOTICE: this method would do a fresh calculate for all the block's ckb_node_version, it will:
