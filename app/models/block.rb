@@ -284,8 +284,15 @@ class Block < ApplicationRecord
   def invalid!
     uncle_blocks.delete_all
     # delete_address_txs_cache
-    ckb_transactions.delete_all
-    CellOutput.where(block_id: id).delete_all
+    ckb_transaction_ids = ckb_transactions.pluck(:id)
+    CellOutput.where(ckb_transaction_id: ckb_transaction_ids).delete_all
+    CellInput.where(ckb_transaction_id: ckb_transaction_ids).delete_all
+    AccountBook.where(ckb_transaction_id: ckb_transaction_ids).delete_all
+    CellDependency.where(ckb_transaction_id: ckb_transaction_ids).delete_all
+    HeaderDependency.where(ckb_transaction_id: ckb_transaction_ids).delete_all
+    TokenTransfer.where(transaction_id: ckb_transaction_ids).delete_all
+    Witness.where(ckb_transaction_id: ckb_transaction_ids).delete_all
+    ckb_transactions.destroy_all
     ForkedBlock.create(attributes)
     destroy
   end
