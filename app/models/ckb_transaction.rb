@@ -16,11 +16,11 @@ class CkbTransaction < ApplicationRecord
   has_many :included_blocks, class_name: "Block",
                              through: :block_transactions,
                              inverse_of: :contained_transactions
-  has_many :account_books, dependent: :delete_all
+  has_many :account_books
   has_many :addresses, through: :account_books
-  has_many :cell_inputs, dependent: :delete_all
+  has_many :cell_inputs
   has_many :input_cells, through: :cell_inputs, source: :previous_cell_output
-  has_many :cell_outputs, dependent: :delete_all
+  has_many :cell_outputs
   accepts_nested_attributes_for :cell_outputs
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput"
@@ -28,11 +28,11 @@ class CkbTransaction < ApplicationRecord
   # has_many :script_transactions, dependent: :delete_all
   # has_many :scripts, through: :script_transactions
 
-  has_many :referring_cells, dependent: :delete_all
-  has_many :token_transfers, foreign_key: :transaction_id, dependent: :delete_all, inverse_of: :ckb_transaction
-  has_many :cell_dependencies, dependent: :delete_all
-  has_many :header_dependencies, dependent: :delete_all
-  has_many :witnesses, dependent: :delete_all
+  has_many :referring_cells
+  has_many :token_transfers, foreign_key: :transaction_id, inverse_of: :ckb_transaction
+  has_many :cell_dependencies
+  has_many :header_dependencies
+  has_many :witnesses
 
   has_one :reject_reason
 

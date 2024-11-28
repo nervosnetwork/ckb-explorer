@@ -32,6 +32,7 @@ class CellOutput < ApplicationRecord
     unique_cell: 16,
     xudt_compatible: 17,
     did_cell: 18,
+    stablepp_pool: 19,
   }
 
   belongs_to :ckb_transaction

@@ -19,7 +19,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
     should have_many(:addresses).through(:account_books)
     should have_many(:cell_inputs)
     should have_many(:cell_outputs)
-    should have_many(:script_transactions)
     should have_many(:cell_dependencies)
 
     should have_and_belong_to_many(:contained_udt_addresses)
