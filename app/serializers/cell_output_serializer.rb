@@ -49,6 +49,8 @@ class CellOutputSerializer
       object.dob_info.merge!(type: "dob")
     when "omiga_inscription_info", "omiga_inscription"
       object.omiga_inscription_info.merge!(type: "omiga_inscription")
+    when "stablepp_pool"
+      { type: "stablepp_pool", capacity: object.capacity.to_s }
     end
   end
 end

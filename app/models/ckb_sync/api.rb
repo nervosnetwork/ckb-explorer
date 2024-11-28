@@ -127,6 +127,10 @@ module CkbSync
       Settings.single_use_lock_code_hash
     end
 
+    def stablepp_pool_code_hash
+      Settings.stablepp_pool_code_hash
+    end
+
     METHOD_NAMES.each do |name|
       define_method name do |*params|
         call_rpc(name, params:)
