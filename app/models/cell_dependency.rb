@@ -148,6 +148,7 @@ end
 # Indexes
 #
 #  index_cell_dependencies_on_block_number_and_tx_index       (block_number,tx_index)
+#  index_cell_dependencies_on_contract_analyzed               (contract_analyzed)
 #  index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type  (ckb_transaction_id,contract_cell_id,dep_type) UNIQUE
 #  index_on_cell_dependencies_contract_cell_block_tx          (contract_cell_id,block_number DESC,tx_index DESC)
 #

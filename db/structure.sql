@@ -4668,6 +4668,13 @@ CREATE INDEX index_cell_dependencies_on_block_number_and_tx_index ON public.cell
 
 
 --
+-- Name: index_cell_dependencies_on_contract_analyzed; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_contract_analyzed ON public.cell_dependencies USING btree (contract_analyzed);
+
+
+--
 -- Name: index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6017,5 +6024,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241114074433'),
 ('20241119014652'),
 ('20241121073245'),
-('20241202072604');
 ('20241125100650');
+('20241129000339');
+('20241202072604');
+
+
