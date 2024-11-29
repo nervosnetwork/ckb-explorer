@@ -412,7 +412,8 @@ class CkbUtils
       CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
       CkbSync::Api.instance.token_script_code_hash, CkbSync::Api.instance.cota_registry_code_hash,
       CkbSync::Api.instance.cota_regular_code_hash, CkbSync::Api.instance.omiga_inscription_info_code_hash,
-      CkbSync::Api.instance.xudt_code_hash, CkbSync::Api.instance.unique_cell_code_hash, *CkbSync::Api.instance.xudt_compatible_code_hashes, CkbSync::Api.instance.did_cell_code_hash
+      CkbSync::Api.instance.xudt_code_hash, CkbSync::Api.instance.unique_cell_code_hash, *CkbSync::Api.instance.xudt_compatible_code_hashes,
+      CkbSync::Api.instance.did_cell_code_hash, CkbSync::Api.instance.stablepp_pool_code_hash
     ].include?(type_script&.code_hash) && type_script&.hash_type == "type") ||
       is_nrc_721_token_cell?(output_data) ||
       is_nrc_721_factory_cell?(output_data) ||
@@ -469,6 +470,8 @@ class CkbUtils
       "xudt"
     when CkbSync::Api.instance.unique_cell_code_hash
       "unique_cell"
+    when CkbSync::Api.instance.stablepp_pool_code_hash
+      "stablepp_pool"
     else
       if is_nrc_721_token_cell?(output_data)
         "nrc_721_token"
