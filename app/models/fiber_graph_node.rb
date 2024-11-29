@@ -42,6 +42,7 @@ end
 #  auto_accept_min_ckb_funding_amount :decimal(30, )
 #  created_at                         :datetime         not null
 #  updated_at                         :datetime         not null
+#  peer_id                            :string
 #
 # Indexes
 #
