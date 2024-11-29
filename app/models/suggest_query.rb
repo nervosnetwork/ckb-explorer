@@ -57,6 +57,9 @@ class SuggestQuery
     if (collections = find_nft_collections_by_name).present?
       results[:data].concat(collections.serializable_hash[:data])
     end
+    if (nodes = find_fiber_graph_nodes).present?
+      results[:data].concat(nodes.serializable_hash[:data])
+    end
 
     raise ActiveRecord::RecordNotFound if results.blank?
 
@@ -151,5 +154,10 @@ class SuggestQuery
   def find_bitcoin_address
     bitcoin_address = BitcoinAddress.find_by(address_hash: query_key)
     BitcoinAddressSerializer.new(bitcoin_address) if bitcoin_address.present?
+  end
+
+  def find_fiber_graph_nodes
+    fiber_graph_nodes = FiberGraphNode.where("alias = :query_key or peer_id = :query_key or node_id = :query_key", query_key:)
+    FiberGraphNodeSerializer.new(fiber_graph_nodes) if fiber_graph_nodes.present?
   end
 end

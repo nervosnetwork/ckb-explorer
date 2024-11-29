@@ -58,6 +58,7 @@ class FiberGraphDetectWorker
       addresses: node["addresses"],
       timestamp: node["timestamp"].to_i(16),
       chain_hash: node["chain_hash"],
+      peer_id: extract_peer_id(node["addresses"]),
       auto_accept_min_ckb_funding_amount: node["auto_accept_min_ckb_funding_amount"],
     }
 
@@ -102,6 +103,17 @@ class FiberGraphDetectWorker
       open_transaction_id: open_transaction&.id,
       udt_id: udt&.id,
     }
+  end
+
+  def extract_peer_id(addresses)
+    return nil if addresses.blank?
+
+    parts = addresses[0].split("/")
+    p2p_index = parts.index("p2p") || parts.index("ipfs")
+
+    if p2p_index && parts.length > p2p_index + 1
+      parts[p2p_index + 1]
+    end
   end
 
   def rpc

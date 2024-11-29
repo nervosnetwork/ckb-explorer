@@ -1842,7 +1842,8 @@ CREATE TABLE public.fiber_graph_nodes (
     chain_hash character varying,
     auto_accept_min_ckb_funding_amount numeric(30,0),
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    peer_id character varying
 );
 
 
@@ -6421,5 +6422,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241012014906'),
 ('20241023055256'),
 ('20241023063536'),
-('20241030023309');
+('20241030023309'),
+('20241129032447');
 
