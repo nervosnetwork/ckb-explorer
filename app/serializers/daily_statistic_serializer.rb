@@ -134,4 +134,8 @@ class DailyStatisticSerializer
   } do |object|
     object.holder_count.to_s
   end
+
+  attribute :knowledge_size, if: Proc.new { |_record, params|
+    params.present? && params[:indicator].include?("knowledge_size")
+  }
 end

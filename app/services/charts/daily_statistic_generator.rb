@@ -32,7 +32,7 @@ module Charts
       }
       others = %i{
         block_timestamp transactions_count addresses_count daily_dao_withdraw
-        average_deposit_time mining_reward
+        average_deposit_time mining_reward knowledge_size
         treasury_amount estimated_apc live_cells_count dead_cells_count avg_hash_rate
         avg_difficulty uncle_rate address_balance_distribution
         total_tx_fee occupied_capacity daily_dao_deposit total_supply block_time_distribution
