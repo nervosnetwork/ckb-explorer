@@ -444,6 +444,14 @@ module Charts
       assert_equal total_supply_temp, total_supply
     end
 
+    test "it should get knowledge_size" do
+      tip_dao = @current_tip_block.dao
+      tip_parse_dao = CkbUtils.parse_dao(tip_dao)
+      knowledge_size_temp = tip_parse_dao.u_i - MarketData::BURN_QUOTA * 0.6
+      knowledge_size = Charts::DailyStatisticGenerator.new(@datetime).call.knowledge_size
+      assert_equal knowledge_size_temp, knowledge_size
+    end
+
     test "it should get epoch_length_distribution" do
       max_n = 1700
       ranges = (700..max_n).step(100).map { |n| [n, n + 100] }
