@@ -6,7 +6,7 @@ class AnalyzeContractFromCellDependencyWorker
     contract_attrs = Set.new
     cell_deps_attrs = []
 
-    CellDependency.where(contract_analyzed: false).limit(1000).each do |cell_dep|
+    CellDependency.where(contract_analyzed: false).order("block_number desc").limit(1000).each do |cell_dep|
       cell_deps_attrs << { contract_analyzed: true, ckb_transaction_id: cell_dep.ckb_transaction_id, contract_cell_id: cell_dep.contract_cell_id, dep_type: cell_dep.dep_type }
 
       next if CellDepsOutPoint.where(contract_cell_id: cell_dep.contract_cell_id).exists?
