@@ -3,7 +3,7 @@ class Contract < ApplicationRecord
   has_many :cell_dependencies, through: :cell_deps_out_points
   has_one :deployed_cell_output, foreign_key: :deployed_cell_output_id
 
-  scope :filter_nil_hash_type, -> { where("hash_type IS NOT null and addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
+  scope :active, -> { where("addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
 
   def self.query_script_ids(contracts)
     lock_script_ids = []

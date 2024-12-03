@@ -2,7 +2,7 @@
 class CellDependency < ApplicationRecord
   belongs_to :ckb_transaction
   belongs_to :cell_output, foreign_key: "contract_cell_id", class_name: "CellOutput"
-  belongs_to :cell_deps_out_point, foreign_key: :contract_cell_id, primary_key: :contract_cell_id
+  belongs_to :cell_deps_out_point, foreign_key: :contract_cell_id, primary_key: :contract_cell_id, optional: true
 
   enum :dep_type, %i[code dep_group]
 
