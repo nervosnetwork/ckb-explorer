@@ -12,13 +12,27 @@ class FiberGraphChannel < ApplicationRecord
 
   scope :open_channels, -> { where(closed_transaction_id: nil) }
 
-  def outpoint_info
-    open_transaction.as_json(only: %i[tx_hash block_number block_timestamp transaction_fee]).merge(
+  def open_transaction_info
+    open_transaction.as_json(only: %i[tx_hash block_number block_timestamp]).merge(
       {
-        funding_capacity: funding_cell.capacity,
-        funding_udt_amount: funding_cell.udt_amount,
-        funding_address: funding_cell.address_hash,
+        capacity: funding_cell.capacity,
+        udt_amount: funding_cell.udt_amount,
+        address: funding_cell.address_hash,
       },
+    )
+  end
+
+  def closed_transaction_info
+    return Hash.new unless closed_transaction
+
+    closed_transaction.as_json(only: %i[tx_hash block_number block_timestamp]).merge(
+      close_accounts: closed_transaction.outputs.map do |cell|
+        {
+          capacity: cell.capacity,
+          udt_amount: cell.udt_amount,
+          address: cell.address_hash,
+        }
+      end,
     )
   end
 

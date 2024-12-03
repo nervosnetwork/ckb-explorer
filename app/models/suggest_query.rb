@@ -157,7 +157,12 @@ class SuggestQuery
   end
 
   def find_fiber_graph_nodes
-    normalized_key = QueryKeyUtils.hex_string?(query_key) ? query_key.delete_prefix(Settings.default_hash_prefix) : query_key
+    normalized_key =
+      if QueryKeyUtils.start_with_default_hash_prefix?(query_key)
+        query_key.delete_prefix(Settings.default_hash_prefix)
+      else
+        query_key
+      end
     fiber_graph_nodes = FiberGraphNode.where("alias = :query_key or peer_id = :query_key or node_id = :query_key", query_key: normalized_key)
     FiberGraphNodeSerializer.new(fiber_graph_nodes) if fiber_graph_nodes.present?
   end
