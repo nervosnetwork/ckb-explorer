@@ -5,18 +5,25 @@ class Contract < ApplicationRecord
 
   scope :active, -> { where("addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
 
-  def self.query_script_ids(contracts)
-    lock_script_ids = []
-    type_script_ids = []
+  def self.referring_cells_query(contracts)
+    lock_script_hashes = []
+    type_script_hashes = []
     contracts.each do |contract|
       binary_hashes = CkbUtils.hexes_to_bins_sql([contract.type_hash, contract.data_hash].compact)
       if contract.is_lock_script
-        lock_script_ids << LockScript.where("code_hash IN (#{binary_hashes})").pluck(:id)
+        lock_script_hashes << binary_hashes
       elsif contract.is_type_script
-        type_script_ids << TypeScript.where("code_hash IN (#{binary_hashes})").pluck(:id)
+        type_script_hashes << binary_hashes
       end
     end
-    { lock_script: lock_script_ids.flatten.uniq, type_script: type_script_ids.flatten.uniq }
+    scope = CellOutput.live
+    if lock_script_hashes.length > 0
+      scope = scope.joins(:lock_script).where("lock_scripts.code_hash IN (#{lock_script_hashes.join(',')})")
+    end
+    if type_script_hashes.length > 0
+      scope = scope.joins(:type_script).where("type_scripts.code_hash IN (#{type_script_hashes.join(',')})")
+    end
+    scope
   end
 end
 
