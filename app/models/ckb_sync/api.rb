@@ -75,7 +75,7 @@ module CkbSync
       if mode == CKB::MODE::MAINNET
         [Settings.spore_cluster1_code_hash]
       else
-        [Settings.spore_cluster1_code_hash, Settings.spore_cluster2_code_hash, Settings.spore_cluster3_code_hash]
+        [Settings.spore_cluster1_code_hash, Settings.spore_cluster2_code_hash]
       end
     end
 
@@ -83,7 +83,7 @@ module CkbSync
       if mode == CKB::MODE::MAINNET
         [Settings.spore_cell1_code_hash]
       else
-        [Settings.spore_cell1_code_hash, Settings.spore_cell2_code_hash, Settings.spore_cell3_code_hash]
+        [Settings.spore_cell1_code_hash, Settings.spore_cell2_code_hash]
       end
     end
 

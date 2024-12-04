@@ -5,7 +5,7 @@ class ContractStatisticWorker
   def perform
     h24_tx_ids = CkbTransaction.h24.pluck(:id)
     ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
-    Contract.find_each do |contract|
+    Contract.where(verified: true).find_each do |contract|
       contract_cell_ids = CellDepsOutPoint.list_contract_cell_ids_by_contract([contract.id])
       ckb_transactions_count = CellDependency.where(contract_cell_id: contract_cell_ids).select(:ckb_transaction_id).distinct.count
       h24_ckb_transactions_count = CellDependency.where(contract_cell_id: contract_cell_ids, ckb_transaction_id: h24_tx_ids).select(:ckb_transaction_id).distinct.count

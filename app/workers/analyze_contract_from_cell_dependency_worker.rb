@@ -4,7 +4,7 @@ class AnalyzeContractFromCellDependencyWorker
   def perform
     cell_deps_out_points_attrs = Set.new
     contract_attrs = Set.new
-    cell_deps_attrs = []
+    cell_deps_attrs = Set.new
 
     CellDependency.where(contract_analyzed: false).where.not(block_number: nil).order("block_number desc").limit(1000).each do |cell_dep|
       cell_deps_attrs << { contract_analyzed: true, ckb_transaction_id: cell_dep.ckb_transaction_id, contract_cell_id: cell_dep.contract_cell_id, dep_type: cell_dep.dep_type }
@@ -16,7 +16,7 @@ class AnalyzeContractFromCellDependencyWorker
       type_script_hashes = Set.new
       lock_script_hashes = Set.new
 
-      cell_outputs = ckb_transaction.cell_outputs.includes(:type_script).to_a
+      cell_outputs = ckb_transaction.cell_outputs.includes(:type_script, :lock_script).to_a
       cell_inputs = ckb_transaction.cell_inputs.includes(:previous_cell_output).map(&:previous_cell_output)
       cell_inputs.each do |input|
         lock_script_hashes << input.lock_script.code_hash
@@ -24,6 +24,7 @@ class AnalyzeContractFromCellDependencyWorker
       end
 
       cell_outputs.each do |output|
+        lock_script_hashes << output.lock_script.code_hash
         type_script_hashes << output.type_script.code_hash if output.type_script
       end
 
