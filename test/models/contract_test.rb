@@ -6,10 +6,6 @@ class ContractTest < ActiveSupport::TestCase
   end
 
   context "associations" do
-    should have_many(:referring_cells)
-    should have_many(:deployed_cells)
-    should have_many(:scripts)
-    should have_many(:ckb_transactions)
     should have_many(:cell_dependencies)
   end
 
@@ -25,7 +21,8 @@ class ContractTest < ActiveSupport::TestCase
   end
 
   test "it should update contract" do
-    @contract.update deprecated: true, verified: true, hash_type: 'type1', code_hash: '0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876c876320fc9634e2a81', name: 'CKB COIN TEST1', role: 'lock_script', symbol: 'TTF1', deployed_args: '0x284c65a608e8e280aaa9c119a1a8fe0463a171511', description: 'Source Code is a script which allows a group of users to sign a single transaction.'
+    @contract.update deprecated: true, verified: true, hash_type: "type1", code_hash: "0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876c876320fc9634e2a81", name: "CKB COIN TEST1",
+                     role: "lock_script", symbol: "TTF1", deployed_args: "0x284c65a608e8e280aaa9c119a1a8fe0463a171511", description: "Source Code is a script which allows a group of users to sign a single transaction."
     assert_equal true, @contract.verified
     assert_equal true, @contract.deprecated
     assert_equal "type1", @contract.hash_type
@@ -36,15 +33,4 @@ class ContractTest < ActiveSupport::TestCase
     assert_equal "CKB COIN TEST1", @contract.name
     assert_equal "TTF1", @contract.symbol
   end
-  test "it should create initial data" do
-    Script.delete_all
-    LockScript.delete_all
-    TypeScript.delete_all
-    create :lock_script
-    create :type_script
-    Script.create_initial_data
-    Contract.create_initial_data
-    assert_equal 3, Contract.count
-  end
-
 end

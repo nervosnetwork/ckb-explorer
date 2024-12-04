@@ -1,5 +1,5 @@
 FactoryBot.define do
   factory :cell_dependency do
-    dep_type { :dep_group }
+    dep_type { :code }
   end
 end

@@ -4168,11 +4168,21 @@ module CkbSync
                         number: node_block.header.number - 1)
         tx1 = create(:ckb_transaction, block: block1,
                                        tx_hash: "0x3e89753ebca825e1504498eb18b56576d5b7eff59fe033346a10ab9e8ca359a4")
+        tx2 = create(:ckb_transaction, block: block1,
+                                       tx_hash: "0xf8de3bb47d055cdf460d93a2a6e1b05f7432f9777c8c474abf4eec1d4aee5d37")
+        tx3 = create(:ckb_transaction, block: block1,
+                                       tx_hash: "0x2415ee81413fa9dd82245db054c19eb1ae2191185e2cb18ed1262947aec323c3")
+        tx4 = create(:ckb_transaction, block: block1,
+                                       tx_hash: "0xbf6fb538763efec2a70a6a3dcb7242787087e1030c4e7d86585bc63a9d337f5f")
+
         input_address1 = create(:address)
         address1_lock = create(:lock_script, address_id: input_address1.id,
                                              args: "0x#{SecureRandom.hex(20)}",
                                              code_hash: Settings.secp_cell_type_hash,
                                              hash_type: "type")
+        create :cell_output, ckb_transaction: tx2, tx_hash: tx2.tx_hash, cell_index: 0, lock_script_id: address1_lock.id
+        create :cell_output, ckb_transaction: tx3, tx_hash: tx3.tx_hash, cell_index: 0, lock_script_id: address1_lock.id
+        create :cell_output, ckb_transaction: tx4, tx_hash: tx4.tx_hash, cell_index: 0, lock_script_id: address1_lock.id
         output1 = create(:cell_output, ckb_transaction: tx1,
                                        block: block1, capacity: 50000000 * 10**8,
                                        tx_hash: tx1.tx_hash,
@@ -4192,6 +4202,7 @@ module CkbSync
         assert_equal 8, xudt.decimal
         assert_equal "xudt", xudt.udt_type
         assert_equal "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqga7eurwgfm534kew3092y28sp3mwlqpqcptqy24", xudt.issuer_address
+        assert_equal 3, CellDependency.count
         ENV["CKB_NET_MODE"] = "mainnet"
       end
     end
