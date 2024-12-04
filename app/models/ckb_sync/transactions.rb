@@ -95,7 +95,7 @@ module CkbSync
             cell_deps_attrs.map do |attr|
               { ckb_transaction_id: tx_mappings[attr[:tx_hash]], contract_cell_id: cell_dep_mappings["#{attr[:out_point_tx_hash]}-#{attr[:out_point_index]}"], dep_type: attr[:dep_type] }
             end.filter { |attr| !attr[:contract_cell_id].nil? }
-          CellDependency.upsert_all(new_cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id]) if new_cell_deps_attrs.present?
+          CellDependency.upsert_all(new_cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type]) if new_cell_deps_attrs.present?
 
           input_conditions = cell_inputs_attrs.filter do |input|
                                input[:previous_tx_hash] != CellOutput::SYSTEM_TX_HASH

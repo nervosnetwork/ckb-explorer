@@ -101,7 +101,7 @@ module Api
       test "return contracts resource distributed with code_hashes params" do
         contracts = create_list(:contract, 3)
 
-        get contract_resource_distributed_api_v2_statistics_url, params: { code_hashes: "#{contracts[0].code_hash},#{contracts[1].code_hash}" }
+        get contract_resource_distributed_api_v2_statistics_url, params: { code_hashes: "#{contracts[0].type_hash},#{contracts[1].type_hash}" }
         data = JSON.parse(response.body)
 
         assert_equal 2, data.size

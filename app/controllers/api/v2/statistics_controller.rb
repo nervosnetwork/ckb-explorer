@@ -14,10 +14,10 @@ module Api::V2
     end
 
     def contract_resource_distributed
-      contracts = Contract.filter_nil_hash_type
+      contracts = Contract.active
       if params[:code_hashes].present?
         hashes =  params[:code_hashes].split(",")
-        contracts = contracts.where(code_hash: hashes)
+        contracts = contracts.where(type_hash: hashes)
       end
       if stale?(contracts)
         expires_in 30.minutes, public: true

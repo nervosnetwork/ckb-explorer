@@ -26,7 +26,7 @@ json.data do
     json.rgb_txid tx.rgb_txid
   end
   json.meta do
-    json.total @contract.ckb_transactions_count
+    json.total @ckb_transactions.total_count
     json.page_size @page_size.to_i
   end
 end

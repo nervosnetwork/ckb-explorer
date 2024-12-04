@@ -23,7 +23,7 @@ json.data do
     json.type_script_id deployed_cell.type_script_id
   end
   json.meta do
-    json.total @contract.deployed_cells_count
+    json.total @deployed_cells.total_count
     json.page_size @page_size.to_i
   end
 end

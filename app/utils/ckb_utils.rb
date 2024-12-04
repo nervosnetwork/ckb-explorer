@@ -626,7 +626,6 @@ class CkbUtils
 
     { name: sanitize_string(name), description: sanitize_string(description) }
   rescue StandardError => e
-    puts "Error parsing spore cluster data: #{e.message}"
     { name: nil, description: nil }
   end
 
