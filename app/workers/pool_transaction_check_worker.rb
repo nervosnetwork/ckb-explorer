@@ -24,10 +24,6 @@ class PoolTransactionCheckWorker
           tx.create_reject_reason!(message: "unknown")
         end
       end
-
-      if reason["status"] == "committed" && CkbTransaction.where(tx_hash: tx.tx_hash).count == 2 && CkbTransaction.where(tx_hash: tx.tx_hash, tx_status: :committed).exists?
-        tx.destroy
-      end
     end
   end
 end
