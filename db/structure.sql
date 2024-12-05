@@ -1674,38 +1674,6 @@ ALTER SEQUENCE public.dao_events_id_seq OWNED BY public.dao_events.id;
 
 
 --
--- Name: deployed_cells; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.deployed_cells (
-    id bigint NOT NULL,
-    cell_output_id bigint NOT NULL,
-    contract_id bigint NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: deployed_cells_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.deployed_cells_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: deployed_cells_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.deployed_cells_id_seq OWNED BY public.deployed_cells.id;
-
-
---
 -- Name: epoch_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2347,39 +2315,6 @@ ALTER SEQUENCE public.portfolios_id_seq OWNED BY public.portfolios.id;
 
 
 --
--- Name: referring_cells; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.referring_cells (
-    id bigint NOT NULL,
-    cell_output_id bigint,
-    contract_id bigint,
-    ckb_transaction_id bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: referring_cells_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.referring_cells_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: referring_cells_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.referring_cells_id_seq OWNED BY public.referring_cells.id;
-
-
---
 -- Name: reject_reasons; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2428,70 +2363,6 @@ CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
 CREATE TABLE public.schema_migrations (
     version character varying NOT NULL
 );
-
-
---
--- Name: script_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.script_transactions (
-    id bigint NOT NULL,
-    script_id bigint NOT NULL,
-    ckb_transaction_id bigint NOT NULL
-);
-
-
---
--- Name: script_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.script_transactions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: script_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.script_transactions_id_seq OWNED BY public.script_transactions.id;
-
-
---
--- Name: scripts; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.scripts (
-    id bigint NOT NULL,
-    args character varying,
-    script_hash character varying,
-    is_contract boolean DEFAULT false,
-    contract_id bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: scripts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.scripts_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: scripts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.scripts_id_seq OWNED BY public.scripts.id;
 
 
 --
@@ -2714,39 +2585,6 @@ CREATE SEQUENCE public.transaction_address_changes_id_seq
 --
 
 ALTER SEQUENCE public.transaction_address_changes_id_seq OWNED BY public.transaction_address_changes.id;
-
-
---
--- Name: transaction_propagation_delays; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.transaction_propagation_delays (
-    id bigint NOT NULL,
-    tx_hash character varying,
-    created_at_unixtimestamp integer,
-    durations jsonb,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: transaction_propagation_delays_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.transaction_propagation_delays_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: transaction_propagation_delays_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.transaction_propagation_delays_id_seq OWNED BY public.transaction_propagation_delays.id;
 
 
 --
@@ -3345,13 +3183,6 @@ ALTER TABLE ONLY public.dao_events ALTER COLUMN id SET DEFAULT nextval('public.d
 
 
 --
--- Name: deployed_cells id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.deployed_cells ALTER COLUMN id SET DEFAULT nextval('public.deployed_cells_id_seq'::regclass);
-
-
---
 -- Name: epoch_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3464,31 +3295,10 @@ ALTER TABLE ONLY public.portfolios ALTER COLUMN id SET DEFAULT nextval('public.p
 
 
 --
--- Name: referring_cells id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.referring_cells ALTER COLUMN id SET DEFAULT nextval('public.referring_cells_id_seq'::regclass);
-
-
---
 -- Name: reject_reasons id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reject_reasons ALTER COLUMN id SET DEFAULT nextval('public.reject_reasons_id_seq'::regclass);
-
-
---
--- Name: script_transactions id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.script_transactions ALTER COLUMN id SET DEFAULT nextval('public.script_transactions_id_seq'::regclass);
-
-
---
--- Name: scripts id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.scripts ALTER COLUMN id SET DEFAULT nextval('public.scripts_id_seq'::regclass);
 
 
 --
@@ -3531,13 +3341,6 @@ ALTER TABLE ONLY public.token_transfers ALTER COLUMN id SET DEFAULT nextval('pub
 --
 
 ALTER TABLE ONLY public.transaction_address_changes ALTER COLUMN id SET DEFAULT nextval('public.transaction_address_changes_id_seq'::regclass);
-
-
---
--- Name: transaction_propagation_delays id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.transaction_propagation_delays ALTER COLUMN id SET DEFAULT nextval('public.transaction_propagation_delays_id_seq'::regclass);
 
 
 --
@@ -3932,14 +3735,6 @@ ALTER TABLE ONLY public.dao_events
 
 
 --
--- Name: deployed_cells deployed_cells_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.deployed_cells
-    ADD CONSTRAINT deployed_cells_pkey PRIMARY KEY (id);
-
-
---
 -- Name: epoch_statistics epoch_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4068,14 +3863,6 @@ ALTER TABLE ONLY public.portfolios
 
 
 --
--- Name: referring_cells referring_cells_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.referring_cells
-    ADD CONSTRAINT referring_cells_pkey PRIMARY KEY (id);
-
-
---
 -- Name: reject_reasons reject_reasons_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4089,22 +3876,6 @@ ALTER TABLE ONLY public.reject_reasons
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
-
-
---
--- Name: script_transactions script_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.script_transactions
-    ADD CONSTRAINT script_transactions_pkey PRIMARY KEY (id);
-
-
---
--- Name: scripts scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.scripts
-    ADD CONSTRAINT scripts_pkey PRIMARY KEY (id);
 
 
 --
@@ -4153,14 +3924,6 @@ ALTER TABLE ONLY public.token_transfers
 
 ALTER TABLE ONLY public.transaction_address_changes
     ADD CONSTRAINT transaction_address_changes_pkey PRIMARY KEY (id);
-
-
---
--- Name: transaction_propagation_delays transaction_propagation_delays_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.transaction_propagation_delays
-    ADD CONSTRAINT transaction_propagation_delays_pkey PRIMARY KEY (id);
 
 
 --
@@ -5135,20 +4898,6 @@ CREATE INDEX index_dao_events_on_status_and_event_type ON public.dao_events USIN
 
 
 --
--- Name: index_deployed_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_deployed_cells_on_cell_output_id ON public.deployed_cells USING btree (cell_output_id);
-
-
---
--- Name: index_deployed_cells_on_contract_id_and_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_deployed_cells_on_contract_id_and_cell_output_id ON public.deployed_cells USING btree (contract_id, cell_output_id);
-
-
---
 -- Name: index_epoch_statistics_on_epoch_number; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5303,20 +5052,6 @@ CREATE UNIQUE INDEX index_portfolios_on_user_id_and_address_id ON public.portfol
 
 
 --
--- Name: index_referring_cells_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_referring_cells_on_cell_output_id ON public.referring_cells USING btree (cell_output_id);
-
-
---
--- Name: index_referring_cells_on_contract_id_and_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_referring_cells_on_contract_id_and_cell_output_id ON public.referring_cells USING btree (contract_id, cell_output_id);
-
-
---
 -- Name: index_reject_reasons_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5328,34 +5063,6 @@ CREATE UNIQUE INDEX index_reject_reasons_on_ckb_transaction_id ON public.reject_
 --
 
 CREATE UNIQUE INDEX index_rolling_avg_block_time_on_timestamp ON public.rolling_avg_block_time USING btree ("timestamp");
-
-
---
--- Name: index_script_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_script_transactions_on_ckb_transaction_id ON public.script_transactions USING btree (ckb_transaction_id);
-
-
---
--- Name: index_script_transactions_on_ckb_transaction_id_and_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_script_transactions_on_ckb_transaction_id_and_script_id ON public.script_transactions USING btree (ckb_transaction_id, script_id);
-
-
---
--- Name: index_script_transactions_on_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_script_transactions_on_script_id ON public.script_transactions USING btree (script_id);
-
-
---
--- Name: index_scripts_on_contract_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_scripts_on_contract_id ON public.scripts USING btree (contract_id);
 
 
 --
@@ -5447,13 +5154,6 @@ CREATE INDEX index_token_transfers_on_transaction_id ON public.token_transfers U
 --
 
 CREATE INDEX index_transaction_address_changes_on_ckb_transaction_id ON public.transaction_address_changes USING btree (ckb_transaction_id);
-
-
---
--- Name: index_tx_propagation_timestamp; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_tx_propagation_timestamp ON public.transaction_propagation_delays USING btree (created_at_unixtimestamp);
 
 
 --
@@ -6440,4 +6140,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241125100650'),
 ('20241129000339'),
 ('20241129032447'),
-('20241202072604');
+('20241202072604'),
+('20241205023729');
+
+
