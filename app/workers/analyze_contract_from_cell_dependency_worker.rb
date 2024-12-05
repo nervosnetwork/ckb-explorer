@@ -1,12 +1,13 @@
 class AnalyzeContractFromCellDependencyWorker
   include Sidekiq::Worker
+  sidekiq_options queue: "contract", retry: 0
 
   def perform
     cell_deps_out_points_attrs = Set.new
     contract_attrs = Set.new
     cell_deps_attrs = Set.new
 
-    CellDependency.where(contract_analyzed: false).where.not(block_number: nil).order("block_number desc").limit(1000).each do |cell_dep|
+    CellDependency.where(contract_analyzed: false).where.not(block_number: nil).limit(1000).each do |cell_dep|
       cell_deps_attrs << { contract_analyzed: true, ckb_transaction_id: cell_dep.ckb_transaction_id, contract_cell_id: cell_dep.contract_cell_id, dep_type: cell_dep.dep_type }
 
       next if CellDepsOutPoint.where(contract_cell_id: cell_dep.contract_cell_id).exists?
