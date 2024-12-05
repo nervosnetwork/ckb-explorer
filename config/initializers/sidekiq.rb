@@ -8,8 +8,8 @@ redis_password = redis_config["password"]
 Sidekiq.strict_args!(false)
 
 Sidekiq.configure_server do |config|
-  config.redis = { url: redis_url, driver: :ruby, password: redis_password }
-  # config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
+  # config.redis = { url: redis_url, driver: :ruby, password: redis_password }
+  config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
 
   config.client_middleware do |chain|
     chain.add SidekiqUniqueJobs::Middleware::Client
@@ -22,8 +22,8 @@ Sidekiq.configure_server do |config|
   SidekiqUniqueJobs::Server.configure(config)
 end
 Sidekiq.configure_client do |config|
-  # config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
-  config.redis = { url: redis_url, driver: :ruby, password: redis_password }
+  config.redis = { url: redis_url, driver: :hiredis, password: redis_password }
+  # config.redis = { url: redis_url, driver: :ruby, password: redis_password }
 
   config.client_middleware do |chain|
     chain.add SidekiqUniqueJobs::Middleware::Client
