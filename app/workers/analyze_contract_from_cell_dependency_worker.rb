@@ -1,5 +1,6 @@
 class AnalyzeContractFromCellDependencyWorker
   include Sidekiq::Worker
+  sidekiq_options queue: "contract", retry: 0
 
   def perform
     cell_deps_out_points_attrs = Set.new
