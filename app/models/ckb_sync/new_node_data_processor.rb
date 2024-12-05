@@ -93,7 +93,6 @@ module CkbSync
       async_update_udt_infos(local_block)
       flush_inputs_outputs_caches(local_block)
       generate_statistics_data(local_block)
-      # generate_deployed_cells_and_referring_cells(local_block)
       detect_cota_infos(local_block)
       detect_token_transfer(token_transfer_ckb_tx_ids)
       detect_bitcoin_transactions(local_block)
@@ -121,10 +120,6 @@ module CkbSync
     end
 
     private
-
-    def generate_deployed_cells_and_referring_cells(local_block)
-      GenerateCellDependenciesWorker.perform_async(local_block.id)
-    end
 
     def generate_statistics_data(local_block)
       GenerateStatisticsDataWorker.perform_async(local_block.id)
@@ -794,51 +789,14 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
       input_capacities = []
       output_capacities = []
       lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
-      lock_script_ids = []
-      type_script_ids = []
 
-      if lock_scripts_attributes.present?
-        lock_scripts_attributes.map! do |attr|
-          attr.merge!(created_at: Time.current, updated_at: Time.current)
-        end
-        LockScript.upsert_all(lock_scripts_attributes, unique_by: :script_hash, returning: [:id])
-
-        # lock_script_ids.each do |row|
-        #   lock_script_id = row["id"]
-        #   lock_script = LockScript.find lock_script_id
-        #   contract = Contract.find_by code_hash: lock_script.code_hash
-        #   temp_hash = { script_hash: lock_script&.script_hash, is_contract: false }
-        #   if contract
-        #     temp_hash = temp_hash.merge is_contract: true, contract_id: contract.id
-        #   else
-        #     contract = Contract.create code_hash: lock_script.script_hash
-        #     temp_hash = temp_hash.merge contract_id: contract.id
-        #   end
-        #   # script = Script.find_or_create_by temp_hash
-        #   # lock_script.update script_id: script.id
-        # end
+      if lock_scripts_attributes.any?
+        LockScript.upsert_all(lock_scripts_attributes, unique_by: :script_hash, returning: [:id], record_timestamps: true)
+      end
+      if type_scripts_attributes.any?
+        TypeScript.upsert_all(type_scripts_attributes, unique_by: :script_hash, returning: [:id], record_timestamps: true)
       end
 
-      if type_scripts_attributes.present?
-        type_scripts_attributes.map! do |attr|
-          attr.merge!(created_at: Time.current, updated_at: Time.current)
-        end
-        TypeScript.upsert_all(type_scripts_attributes, unique_by: :script_hash, returning: [:id])
-        # type_script_ids.each do |row|
-        #   type_script_id = row["id"]
-        #   type_script = TypeScript.find(type_script_id)
-        #   temp_hash = { script_hash: type_script&.script_hash, is_contract: false }
-        #   contract = Contract.find_by code_hash: type_script.code_hash
-        #   if contract
-        #     temp_hash = temp_hash.merge is_contract: true, contract_id: contract.id
-        #   else
-        #     contract = Contract.create code_hash: type_script.script_hash
-        #     temp_hash = temp_hash.merge contract_id: contract.id
-        #   end
-        #   # script = Script.find_or_create_by temp_hash
-        # # type_script.update script_id: script.id
-        # end
-      end
       build_addresses!(outputs, local_block)
       # prepare script ids for insert cell_outputs
       prepare_script_ids(outputs)
@@ -909,9 +867,6 @@ dao_address_ids, contained_udt_ids, contained_addr_ids
                               unique_by: %i[tx_hash cell_index status],
                               record_timestamps: true)
       end
-
-      # ScriptTransaction.create_from_scripts TypeScript.where(id: type_script_ids)
-      # ScriptTransaction.create_from_scripts LockScript.where(id: lock_script_ids)
 
       [input_capacities, output_capacities]
     end
