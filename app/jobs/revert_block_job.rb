@@ -31,7 +31,6 @@ class RevertBlockJob < ApplicationJob
       benchmark :recalculate_udt_accounts, udt_type_hashes, local_tip_block
       benchmark :update_address_balance_and_ckb_transactions_count, local_tip_block
       benchmark :revert_block_rewards, local_tip_block
-      benchmark :revert_referring_cells, local_tip_block
       ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch,
                           block_timestamp: local_tip_block.timestamp)
       ApplicationRecord.benchmark "BlockStatisticGenerator" do
@@ -207,10 +206,5 @@ class RevertBlockJob < ApplicationJob
     ckb_transaction_counter = TableRecordCount.find_or_initialize_by(table_name: "ckb_transactions")
     normal_transactions = local_tip_block.ckb_transactions.normal
     ckb_transaction_counter.decrement!(:count, normal_transactions.count) if normal_transactions.present?
-  end
-
-  def revert_referring_cells(local_tip_block)
-    tx_ids = local_tip_block.ckb_transaction_ids
-    ReferringCell.where(ckb_transaction_id: tx_ids).delete_all
   end
 end

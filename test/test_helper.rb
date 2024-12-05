@@ -48,7 +48,6 @@ end
 def prepare_node_data(node_tip_block_number = 30)
   Sidekiq::Testing.inline!
   GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
-  GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
   BitcoinTransactionDetectWorker.any_instance.stubs(:perform).returns(true)
   CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(node_tip_block_number + 1)
   CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
