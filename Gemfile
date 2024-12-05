@@ -49,6 +49,7 @@ gem "redis" # , "~> 4.2.0"
 # Background Jobs
 gem "rufus-scheduler"
 gem "sidekiq"
+gem "sidekiq-unique-jobs"
 # bulk insertion of data into database using ActiveRecord
 gem "activerecord-import"
 
