@@ -7,9 +7,6 @@
   - bitcoin
   - fiber
   - low
-  - contract
-:limits:
-  contract: 1
 
 production:
   :concurrency: 20
