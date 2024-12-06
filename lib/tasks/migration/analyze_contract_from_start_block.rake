@@ -1,12 +1,12 @@
 namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:analyze_contract_from_start_block"
   task analyze_contract_from_start_block: :environment do
-    CellDependency.where(contract_analyzed: false).where.not(block_number: nil).find_in_batches do |group|
+    while CellDependency.where(contract_analyzed: false).where.not(block_number: nil).exists?
       cell_deps_out_points_attrs = Set.new
       contract_attrs = Set.new
       cell_deps_attrs = Set.new
 
-      group.each do |cell_dep|
+      CellDependency.where(contract_analyzed: false).where.not(block_number: nil).limit(1000).each do |cell_dep|
         cell_deps_attrs << { contract_analyzed: true, ckb_transaction_id: cell_dep.ckb_transaction_id, contract_cell_id: cell_dep.contract_cell_id, dep_type: cell_dep.dep_type }
 
         next if CellDepsOutPoint.where(contract_cell_id: cell_dep.contract_cell_id).exists?
@@ -177,14 +177,14 @@ namespace :migration do
             end
           end
         end
-      end
 
-      if cell_deps_out_points_attrs.any?
-        CellDepsOutPoint.upsert_all(cell_deps_out_points_attrs,
-                                    unique_by: %i[contract_cell_id deployed_cell_output_id])
+        if cell_deps_out_points_attrs.any?
+          CellDepsOutPoint.upsert_all(cell_deps_out_points_attrs,
+                                      unique_by: %i[contract_cell_id deployed_cell_output_id])
+        end
+        Contract.upsert_all(contract_attrs, unique_by: %i[deployed_cell_output_id]) if contract_attrs.any?
+        CellDependency.upsert_all(cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: :contract_analyzed)
       end
-      Contract.upsert_all(contract_attrs, unique_by: %i[deployed_cell_output_id]) if contract_attrs.any?
-      CellDependency.upsert_all(cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: :contract_analyzed)
     end
   end
 end
