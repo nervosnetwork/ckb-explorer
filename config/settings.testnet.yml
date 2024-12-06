@@ -21,12 +21,10 @@ nrc_721_factory_output_data_header: "0x24ff5a9ab8c38d195ce2b4ea75ca8987"
 nrc_721_token_output_data_header: "0x0ddeff3e8ee03cbf6a2c6920d05c381e"
 
 # spore nft code hash
-spore_cluster1_code_hash: "0x7366a61534fa7c7e6225ecc0d828ea3b5366adec2b58206f2ee84995fe030075" # tag: v2 preview
+spore_cluster1_code_hash: "0x0bbe768b519d8ea7b96d58f1182eb7e6ef96c541fbd9526975077ee09f049058" # tag: v2 preview
 spore_cluster2_code_hash: "0x598d793defef36e2eeba54a9b45130e4ca92822e1d193671f490950c3b856080" # tag: v1 latest
-spore_cluster3_code_hash: "0x0bbe768b519d8ea7b96d58f1182eb7e6ef96c541fbd9526975077ee09f049058" # tag: 0.2.2-beta.2
-spore_cell1_code_hash: "0x5e063b4c0e7abeaa6a428df3b693521a3050934cf3b0ae97a800d1bc31449398" # tag: v2 preview
+spore_cell1_code_hash: "0x685a60219309029d01310311dba953d67029170ca4848a4ff638e57002130a0d" # tag: v2 preview
 spore_cell2_code_hash: "0xbbad126377d45f90a8ee120da988a2d7332c78ba8fd679aab478a19d6c133494" # tag: v1 latest
-spore_cell3_code_hash: "0x685a60219309029d01310311dba953d67029170ca4848a4ff638e57002130a0d" # tag: 0.2.2-beta.2
 
 #did cell
 did_cell_code_hash: "0x0b1f412fbae26853ff7d082d422c2bdd9e2ff94ee8aaec11240a5b34cc6e890f"
@@ -97,3 +95,6 @@ btc_time_code_hash:
   - "0x80a09eca26d77cea1f5a69471c59481be7404febf40ee90f886c36a948385b55"
 
 single_use_lock_code_hash: "0x8290467a512e5b9a6b816469b0edabba1f4ac474e28ffdd604c2a7c76446bbaf"
+
+# fiber funding lock code hash
+fiber_funding_code_hash: "0x6c67887fe201ee0c7853f1682c0b77c0e6214044c156c7558269390a8afa6d7c"

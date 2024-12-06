@@ -7,49 +7,48 @@ class LockScript < ApplicationRecord
 
   belongs_to :address, optional: true # will remove this later
 
-  belongs_to :script, optional: true
-  belongs_to :contract, optional: true, primary_key: "code_hash", foreign_key: "code_hash"
-
   validates_presence_of :code_hash
   attribute :code_hash, :ckb_hash
+
+  scope :lock_script, ->(type_hash, data_hash) { where(code_hash: [type_hash, data_hash]) }
 
   def self.process(sdk_lock)
     lock_hash = sdk_lock.compute_hash
     address_hash = CkbUtils.generate_address(sdk_lock)
 
-    address = Address.create_with(address_hash: address_hash).find_or_create_by!(lock_hash: lock_hash)
+    address = Address.create_with(address_hash:).find_or_create_by!(lock_hash:)
     # contract = Contract.create_or_find_by(code_hash: lock.code_hash)
     # script = Script
     create_with(
       script_hash: lock_hash,
-      address: address
+      address:,
     ).find_or_create_by!(
       code_hash: sdk_lock.code_hash,
       hash_type: sdk_lock.hash_type,
-      args: sdk_lock.args
+      args: sdk_lock.args,
     )
   end
 
   def to_node
     {
-      args: args,
-      code_hash: code_hash,
-      hash_type: hash_type
+      args:,
+      code_hash:,
+      hash_type:,
     }
   end
 
-  def as_json(options = {})
+  def as_json(_options = {})
     {
-      args: args,
-      code_hash: code_hash,
-      hash_type: hash_type,
-      script_hash: script_hash
+      args:,
+      code_hash:,
+      hash_type:,
+      script_hash:,
     }
   end
 
   def ckb_transactions
-    CkbTransaction.where(id: CellOutput.where(lock_script_id: self.id).pluck("ckb_transaction_id",
-                                                                             "consumed_by_id").flatten)
+    CkbTransaction.where(id: CellOutput.where(lock_script_id: id).pluck("ckb_transaction_id",
+                                                                        "consumed_by_id").flatten)
   end
 
   def cell_output
@@ -83,7 +82,8 @@ class LockScript < ApplicationRecord
 
         {
           status: lock_info_status(since_value, tip_epoch), epoch_number: epoch_number.to_s,
-          epoch_index: since_value_index.to_s, estimated_unlock_time: estimated_unlock_time.strftime("%Q") }
+          epoch_index: since_value_index.to_s, estimated_unlock_time: estimated_unlock_time.strftime("%Q")
+        }
       rescue SinceParser::IncorrectSinceFlagsError
         nil
       end
@@ -110,7 +110,7 @@ class LockScript < ApplicationRecord
       since_value_index = since_value.index
     end
 
-    return epoch_number, since_value_index
+    [epoch_number, since_value_index]
   end
 
   def lock_info_status(since_value, tip_epoch)

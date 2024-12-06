@@ -128,4 +128,12 @@ s.every "10m", overlap: false do
   call_worker GenerateUdtHolderAllocationWorker
 end
 
+s.every "5s", overlap: false do
+  call_worker AnalyzeContractFromCellDependencyWorker
+end
+
+s.every "5m", overlap: false do
+  call_worker FiberGraphDetectWorker
+end
+
 s.join

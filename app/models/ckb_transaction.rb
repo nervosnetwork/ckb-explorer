@@ -24,11 +24,8 @@ class CkbTransaction < ApplicationRecord
   accepts_nested_attributes_for :cell_outputs
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput"
-  has_many :dao_events # , dependent: :delete_all
-  # has_many :script_transactions, dependent: :delete_all
-  # has_many :scripts, through: :script_transactions
+  has_many :dao_events
 
-  has_many :referring_cells
   has_many :token_transfers, foreign_key: :transaction_id, inverse_of: :ckb_transaction
   has_many :cell_dependencies
   has_many :header_dependencies
@@ -186,7 +183,7 @@ class CkbTransaction < ApplicationRecord
 
   def cell_deps
     _outputs = cell_outputs.order(cell_index: :asc).to_a
-    cell_dependencies.explicit.includes(:cell_output).to_a.map(&:to_raw)
+    cell_dependencies.includes(:cell_output).to_a.map(&:to_raw)
   end
 
   def income(address)
@@ -215,7 +212,7 @@ class CkbTransaction < ApplicationRecord
   def to_raw
     Rails.cache.fetch([self.class.name, tx_hash, "raw_hash"], expires_in: 1.day) do
       _outputs = cell_outputs.order(cell_index: :asc).to_a
-      cell_deps = cell_dependencies.explicit.includes(:cell_output).to_a
+      cell_deps = cell_dependencies.includes(:cell_output).to_a
 
       {
         hash: tx_hash,

@@ -1,24 +1,29 @@
 class Contract < ApplicationRecord
-  has_many :scripts
-  has_many :deployed_cells
-  has_many :deployed_cell_outputs, through: :deployed_cells, source: :cell_output
-  has_many :referring_cells
-  has_many :referring_cell_outputs, through: :referring_cells, source: :cell_output
-  has_many :cell_dependencies
-  has_many :ckb_transactions, through: :cell_dependencies
+  has_many :cell_deps_out_points, foreign_key: :deployed_cell_output_id, primary_key: :deployed_cell_output_id
+  has_many :cell_dependencies, through: :cell_deps_out_points
+  has_one :deployed_cell_output, foreign_key: :deployed_cell_output_id
 
-  scope :filter_nil_hash_type, -> { where("hash_type IS NOT null and addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
+  scope :active, -> { where("addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
 
-  def self.create_initial_data
-    Contract.transaction do
-      Script.find_each do |script|
-        contract = Contract.find_by code_hash: script.script_hash
-        if contract.blank?
-          contract = Contract.create code_hash: script.script_hash
-        end
-        script.update contract_id: contract.id
+  def self.referring_cells_query(contracts)
+    lock_script_hashes = []
+    type_script_hashes = []
+    contracts.each do |contract|
+      binary_hashes = CkbUtils.hexes_to_bins_sql([contract.type_hash, contract.data_hash].compact)
+      if contract.is_lock_script
+        lock_script_hashes << binary_hashes
+      elsif contract.is_type_script
+        type_script_hashes << binary_hashes
       end
     end
+    scope = CellOutput.live
+    if lock_script_hashes.length > 0
+      scope = scope.joins(:lock_script).where("lock_scripts.code_hash IN (#{lock_script_hashes.join(',')})")
+    end
+    if type_script_hashes.length > 0
+      scope = scope.joins(:type_script).where("type_scripts.code_hash IN (#{type_script_hashes.join(',')})")
+    end
+    scope
   end
 end
 
@@ -45,14 +50,20 @@ end
 #  total_referring_cells_capacity :decimal(30, )    default(0)
 #  addresses_count                :integer
 #  h24_ckb_transactions_count     :integer
+#  type_hash                      :binary
+#  data_hash                      :binary
+#  deployed_cell_output_id        :bigint
+#  is_type_script                 :boolean
+#  is_lock_script                 :boolean
 #
 # Indexes
 #
-#  index_contracts_on_code_hash   (code_hash)
-#  index_contracts_on_deprecated  (deprecated)
-#  index_contracts_on_hash_type   (hash_type)
-#  index_contracts_on_name        (name)
-#  index_contracts_on_role        (role)
-#  index_contracts_on_symbol      (symbol)
-#  index_contracts_on_verified    (verified)
+#  index_contracts_on_code_hash                (code_hash)
+#  index_contracts_on_deployed_cell_output_id  (deployed_cell_output_id) UNIQUE
+#  index_contracts_on_deprecated               (deprecated)
+#  index_contracts_on_hash_type                (hash_type)
+#  index_contracts_on_name                     (name)
+#  index_contracts_on_role                     (role)
+#  index_contracts_on_symbol                   (symbol)
+#  index_contracts_on_verified                 (verified)
 #
