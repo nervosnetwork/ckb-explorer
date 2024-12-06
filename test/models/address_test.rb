@@ -11,7 +11,6 @@ class AddressTest < ActiveSupport::TestCase
       ],
     )
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
-    GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
     BitcoinTransactionDetectWorker.any_instance.stubs(:perform).returns(true)
   end
 
