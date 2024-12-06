@@ -1,7 +1,7 @@
 namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:analyze_contract_from_start_block"
   task analyze_contract_from_start_block: :environment do
-    while CellDependency.where(contract_analyzed: false).where.not(block_number: nil).exists?
+    loop do
       cell_deps_out_points_attrs = Set.new
       contract_attrs = Set.new
       cell_deps_attrs = Set.new
@@ -186,6 +186,8 @@ namespace :migration do
       CellDependency.upsert_all(cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: :contract_analyzed)
 
       puts cell_deps_attrs.to_a.last[:ckb_transaction_id]
+
+      break unless CellDependency.where(contract_analyzed: false).where.not(block_number: nil).exists?
     end
     puts "DONE"
   end
