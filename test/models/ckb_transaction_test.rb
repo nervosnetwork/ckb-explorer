@@ -15,7 +15,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
   context "associations" do
     # should belong_to(:block, required: false)
     should have_many(:account_books)
-    should have_many(:referring_cells)
     should have_many(:addresses).through(:account_books)
     should have_many(:cell_inputs)
     should have_many(:cell_outputs)
@@ -26,7 +25,6 @@ class CkbTransactionTest < ActiveSupport::TestCase
 
   test "#tx_hash should decodes packed string" do
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
-    GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
     BitcoinTransactionDetectWorker.any_instance.stubs(:perform).returns(true)
     VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(

@@ -6,7 +6,6 @@ class CellOutputTest < ActiveSupport::TestCase
     should belong_to(:address)
     # should belong_to(:block)
     should have_many(:cell_dependencies)
-    # should have_many(:referring_cells)
   end
 
   context "validations" do
@@ -17,14 +16,14 @@ class CellOutputTest < ActiveSupport::TestCase
 
   test "should have cell_type column" do
     block = create(:block)
-    cell_output = create(:cell_output, :with_full_transaction, block: block)
+    cell_output = create(:cell_output, :with_full_transaction, block:)
 
     assert_equal "normal", cell_output.cell_type
   end
 
   test "#to_raw should contain correct keys" do
     block = create(:block)
-    cell_output = create(:cell_output, :with_full_transaction, block: block)
+    cell_output = create(:cell_output, :with_full_transaction, block:)
     raw = cell_output.to_raw
     assert_equal %i(capacity lock type).sort, raw.keys.sort
     assert_equal raw[:lock][:code_hash], cell_output.lock_script.code_hash

@@ -17,7 +17,6 @@ class TypeScriptTest < ActiveSupport::TestCase
 
   test "#code_hash should decodes packed string" do
     GenerateStatisticsDataWorker.any_instance.stubs(:perform).returns(true)
-    GenerateCellDependenciesWorker.any_instance.stubs(:perform).returns(true)
     BitcoinTransactionDetectWorker.any_instance.stubs(:perform).returns(true)
     CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
       CKB::Types::Epoch.new(
