@@ -177,14 +177,16 @@ namespace :migration do
             end
           end
         end
-
-        if cell_deps_out_points_attrs.any?
-          CellDepsOutPoint.upsert_all(cell_deps_out_points_attrs,
-                                      unique_by: %i[contract_cell_id deployed_cell_output_id])
-        end
-        Contract.upsert_all(contract_attrs, unique_by: %i[deployed_cell_output_id]) if contract_attrs.any?
-        CellDependency.upsert_all(cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: :contract_analyzed)
       end
+      if cell_deps_out_points_attrs.any?
+        CellDepsOutPoint.upsert_all(cell_deps_out_points_attrs,
+                                    unique_by: %i[contract_cell_id deployed_cell_output_id])
+      end
+      Contract.upsert_all(contract_attrs, unique_by: %i[deployed_cell_output_id]) if contract_attrs.any?
+      CellDependency.upsert_all(cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: :contract_analyzed)
+
+      puts cell_deps_attrs.last.ckb_transaction_id
     end
+    puts "DONE"
   end
 end
