@@ -12,17 +12,8 @@ module Addresses
       address = Explore.run!(key:)
       raise AddressNotFoundError if address.is_a?(NullAddress)
 
-      account_books =
-        AccountBook.joins(:ckb_transaction).where(
-          account_books: { address_id: address.map(&:id) },
-          ckb_transactions: { tx_status: "pending" },
-        )
-      ckb_transaction_ids =
-        CellInput.where(ckb_transaction_id: account_books.map(&:ckb_transaction_id)).
-          where.not(previous_cell_output_id: nil, from_cell_base: false).
-          distinct.pluck(:ckb_transaction_id)
       records =
-        CkbTransaction.where(id: ckb_transaction_ids).
+        CkbTransaction.joins(:account_books).where(ckb_transactions: { tx_status: :pending }, account_books: { address_id: address.map(&:id) }).
           select(select_fields).
           order(transactions_ordering).
           page(page).per(page_size)
