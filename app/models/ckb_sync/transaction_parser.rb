@@ -93,7 +93,7 @@ module CkbSync
         if output_data != "0x"
           @cell_data_attrs <<
             {
-              data: output_data,
+              data: binary_data,
               cell_index: index,
               tx_hash: transaction.hash,
             }
