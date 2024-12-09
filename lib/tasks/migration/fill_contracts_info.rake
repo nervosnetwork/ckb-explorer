@@ -51,7 +51,7 @@ namespace :migration do
           { code_hash: "0xe4d4ecc6e5f9a059bf2f7a82cca292083aebc0c421566a52484fe2ec51a9fb0c", hash_type: "type",
             name: "CHEQUE",
             tx_hashes: ["0x04632cc459459cf5c9d384b43dee3e36f542a464bdd4127be7d6618ac6f8d268-0"],
-            dep_type: "code",
+            dep_type: "dep_group",
             description: "" },
           { code_hash: "0x1122a4fb54697cf2e6e3a96c9d80fd398a936559b90954c6e88eb7ba0cf652df", hash_type: "type",
             name: "CoTA",
@@ -74,7 +74,6 @@ namespace :migration do
             tx_hashes: ["0x0f0c22372a05f3c5f47acb066c65f9bae86bdce043762310e50309cc5a77abd4-0"],
             dep_type: "dep_group",
             description: "" },
-
           { code_hash: "0x000f87062a2fe9bb4a6cc475212ea11014b84deb32e0375ee51e6ec4a553e009", hash_type: "type",
             name: "Godwoken Custodian Lock",
             tx_hashes: ["0x71b55e3641fdc8d00d9943a93b2c6e6ab42f7e57909009c2a1ad5c234956cdc5-0"],
