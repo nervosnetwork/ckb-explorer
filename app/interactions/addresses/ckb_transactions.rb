@@ -16,7 +16,7 @@ module Addresses
       account_books = AccountBook.where(address_id:).order("ckb_transaction_id desc").select(:ckb_transaction_id).distinct.limit(5000)
       records = CkbTransaction.where(tx_status: :committed, id: account_books.map(&:ckb_transaction_id)).order(transactions_ordering).page(page).per(page_size)
       options = paginate_options(records, address_id)
-      options.merge!(params: { previews: true, address: })
+      options.merge!(params: { previews: false, address: })
 
       result = CkbTransactionsSerializer.new(records, options)
       wrap_result(result, address)
