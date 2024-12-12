@@ -103,10 +103,7 @@ namespace :migration do
           contract_attrs.map do |attr|
             attr.merge(contract_roles[attr[:deployed_cell_output_id]])
           end
-<<<<<<< HEAD
-=======
         puts new_contract_attrs
->>>>>>> issue-794-7
         Contract.upsert_all(new_contract_attrs, unique_by: %i[deployed_cell_output_id])
       end
       CellDependency.upsert_all(cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: :contract_analyzed)
