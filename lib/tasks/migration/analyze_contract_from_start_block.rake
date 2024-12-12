@@ -7,7 +7,7 @@ namespace :migration do
       cell_deps_attrs = Set.new
       contract_roles = Hash.new { |hash, key| hash[key] = {} }
 
-      CellDependency.where(contract_analyzed: false).where.not(block_number: nil).limit(200).group_by do |cell_dep|
+      CellDependency.where(contract_analyzed: false).where.not(block_number: nil).limit(1000).group_by do |cell_dep|
         cell_dep.ckb_transaction_id
       end.each do |ckb_transaction_id, cell_deps|
         ckb_transaction = CkbTransaction.find(ckb_transaction_id)
@@ -103,6 +103,10 @@ namespace :migration do
           contract_attrs.map do |attr|
             attr.merge(contract_roles[attr[:deployed_cell_output_id]])
           end
+<<<<<<< HEAD
+=======
+        puts new_contract_attrs
+>>>>>>> issue-794-7
         Contract.upsert_all(new_contract_attrs, unique_by: %i[deployed_cell_output_id])
       end
       CellDependency.upsert_all(cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: :contract_analyzed)
