@@ -42,7 +42,7 @@ class AnalyzeContractFromCellDependencyWorker
     CellDependency.where(contract_analyzed: false).
       where.not(block_number: nil).
       order("block_number desc").
-      limit(100).
+      limit(50).
       group_by(&:ckb_transaction_id)
   end
 
