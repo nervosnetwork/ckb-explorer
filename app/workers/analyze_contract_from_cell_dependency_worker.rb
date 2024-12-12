@@ -101,11 +101,13 @@ class AnalyzeContractFromCellDependencyWorker
                                   unique_by: %i[contract_cell_id deployed_cell_output_id])
     end
     # some contract in a cell may be lock script but in another cell may be type script
-    new_contract_attrs =
-      contract_attrs.map do |attr|
-        attr.merge(contract_roles[attr[:deployed_cell_output_id]])
-      end
-    Contract.upsert_all(new_contract_attrs, unique_by: %i[deployed_cell_output_id]) if contract_attrs.any?
+    if contract_attrs.any?
+      new_contract_attrs =
+        contract_attrs.map do |attr|
+          attr.merge(contract_roles[attr[:deployed_cell_output_id]])
+        end
+      Contract.upsert_all(new_contract_attrs, unique_by: %i[deployed_cell_output_id])
+    end
     CellDependency.upsert_all(cell_deps_attrs, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: :contract_analyzed)
   end
 end
