@@ -7,7 +7,7 @@ class GenerateUdtHourlyStatisticWorker
     ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
     Udt.where(udt_type: udt_types, published: true).find_each do |udt|
       puts "Generating statistics for #{udt.id}"
-      RgbppHourlyStatistic.upsert(
+      UdtHourlyStatistic.upsert(
         {
           udt_id: udt.id,
           amount: calc_amount(udt),
