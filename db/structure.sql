@@ -2345,6 +2345,38 @@ ALTER SEQUENCE public.reject_reasons_id_seq OWNED BY public.reject_reasons.id;
 
 
 --
+-- Name: rgbpp_hourly_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.rgbpp_hourly_statistics (
+    id bigint NOT NULL,
+    total_count integer DEFAULT 0,
+    created_at_unixtimestamp integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: rgbpp_hourly_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.rgbpp_hourly_statistics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: rgbpp_hourly_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.rgbpp_hourly_statistics_id_seq OWNED BY public.rgbpp_hourly_statistics.id;
+
+
+--
 -- Name: rolling_avg_block_time; Type: MATERIALIZED VIEW; Schema: public; Owner: -
 --
 
@@ -3337,6 +3369,13 @@ ALTER TABLE ONLY public.reject_reasons ALTER COLUMN id SET DEFAULT nextval('publ
 
 
 --
+-- Name: rgbpp_hourly_statistics id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rgbpp_hourly_statistics ALTER COLUMN id SET DEFAULT nextval('public.rgbpp_hourly_statistics_id_seq'::regclass);
+
+
+--
 -- Name: statistic_infos id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3910,6 +3949,14 @@ ALTER TABLE ONLY public.portfolios
 
 ALTER TABLE ONLY public.reject_reasons
     ADD CONSTRAINT reject_reasons_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: rgbpp_hourly_statistics rgbpp_hourly_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rgbpp_hourly_statistics
+    ADD CONSTRAINT rgbpp_hourly_statistics_pkey PRIMARY KEY (id);
 
 
 --
@@ -5130,6 +5177,13 @@ CREATE UNIQUE INDEX index_reject_reasons_on_ckb_transaction_id ON public.reject_
 
 
 --
+-- Name: index_rgbpp_hourly_statistics_on_created_at_unixtimestamp; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_rgbpp_hourly_statistics_on_created_at_unixtimestamp ON public.rgbpp_hourly_statistics USING btree (created_at_unixtimestamp);
+
+
+--
 -- Name: index_rolling_avg_block_time_on_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6214,6 +6268,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241129032447'),
 ('20241202072604'),
 ('20241205023729'),
-('20241212022531');
+('20241212022531'),
+('20241213053309');
 
 
