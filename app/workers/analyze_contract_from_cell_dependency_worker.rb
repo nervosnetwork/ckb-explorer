@@ -73,6 +73,7 @@ class AnalyzeContractFromCellDependencyWorker
         contract_cell_id: cell_dep.contract_cell_id,
         dep_type: cell_dep.dep_type,
       }
+      next if Contract.joins(:cell_deps_out_points).where(cell_deps_out_points: { contract_cell_id: cell_dep.contract_cell_id }).exists?
 
       case cell_dep.dep_type
       when "code"

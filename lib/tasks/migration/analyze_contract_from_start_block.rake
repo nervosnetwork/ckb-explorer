@@ -27,6 +27,7 @@ namespace :migration do
 
         cell_deps.each do |cell_dep|
           cell_deps_attrs << { contract_analyzed: true, ckb_transaction_id: cell_dep.ckb_transaction_id, contract_cell_id: cell_dep.contract_cell_id, dep_type: cell_dep.dep_type }
+          next if Contract.joins(:cell_deps_out_points).where(cell_deps_out_points: { contract_cell_id: cell_dep.contract_cell_id }).exists?
 
           case cell_dep.dep_type
           when "code"
@@ -86,6 +87,10 @@ namespace :migration do
                   {
                     type_hash: cell_output.type_script&.script_hash,
                     data_hash: cell_output.data_hash,
+<<<<<<< HEAD
+=======
+
+>>>>>>> issue-794-7
                     deployed_cell_output_id: cell_output.id,
                     deployed_args: cell_output.type_script&.args,
                   }
