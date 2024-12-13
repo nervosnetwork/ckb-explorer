@@ -76,15 +76,16 @@ namespace :migration do
 
               is_lock_script = (lock_scripts[cell_output.data_hash] || lock_scripts[cell_output.type_script&.script_hash]).present?
               is_type_script = (type_scripts[cell_output.data_hash] || type_scripts[cell_output.type_script&.script_hash]).present?
+              hash_type = lock_scripts[cell_output.data_hash] || type_scripts[cell_output.data_hash]
               contract_roles[cell_output.id][:is_lock_script] ||= is_lock_script
               contract_roles[cell_output.id][:is_type_script] ||= is_type_script
+              contract_roles[cell_output.id][:hash_type] ||= hash_type
 
               if is_lock_script || is_type_script
                 contract_attrs <<
                   {
                     type_hash: cell_output.type_script&.script_hash,
                     data_hash: cell_output.data_hash,
-                    hash_type: lock_scripts[cell_output.data_hash] || type_scripts[cell_output.data_hash],
                     deployed_cell_output_id: cell_output.id,
                     deployed_args: cell_output.type_script&.args,
                   }
