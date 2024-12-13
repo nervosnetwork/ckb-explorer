@@ -136,4 +136,8 @@ s.every "5m", overlap: false do
   call_worker FiberGraphDetectWorker
 end
 
+s.cron "0 8 * * *" do
+  call_worker GenerateUdtHourlyStatisticWorker
+end
+
 s.join
