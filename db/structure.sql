@@ -1054,12 +1054,12 @@ ALTER SEQUENCE public.cell_data_cell_output_id_seq OWNED BY public.cell_data.cel
 
 CREATE TABLE public.cell_dependencies (
     id bigint NOT NULL,
+    contract_id bigint,
     ckb_transaction_id bigint NOT NULL,
     dep_type integer,
     contract_cell_id bigint NOT NULL,
     script_id bigint,
-    contract_id bigint,
-    implicit boolean,
+    implicit boolean DEFAULT true NOT NULL,
     block_number bigint,
     tx_index integer,
     contract_analyzed boolean DEFAULT false
@@ -2699,6 +2699,41 @@ ALTER SEQUENCE public.udt_holder_allocations_id_seq OWNED BY public.udt_holder_a
 
 
 --
+-- Name: udt_hourly_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.udt_hourly_statistics (
+    id bigint NOT NULL,
+    udt_id bigint NOT NULL,
+    ckb_transactions_count integer DEFAULT 0,
+    amount numeric(40,0) DEFAULT 0.0,
+    holders_count integer DEFAULT 0,
+    created_at_unixtimestamp integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: udt_hourly_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.udt_hourly_statistics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: udt_hourly_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.udt_hourly_statistics_id_seq OWNED BY public.udt_hourly_statistics.id;
+
+
+--
 -- Name: udt_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3365,6 +3400,13 @@ ALTER TABLE ONLY public.udt_holder_allocations ALTER COLUMN id SET DEFAULT nextv
 
 
 --
+-- Name: udt_hourly_statistics id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udt_hourly_statistics ALTER COLUMN id SET DEFAULT nextval('public.udt_hourly_statistics_id_seq'::regclass);
+
+
+--
 -- Name: udt_verifications id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3948,6 +3990,14 @@ ALTER TABLE ONLY public.udt_accounts
 
 ALTER TABLE ONLY public.udt_holder_allocations
     ADD CONSTRAINT udt_holder_allocations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: udt_hourly_statistics udt_hourly_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.udt_hourly_statistics
+    ADD CONSTRAINT udt_hourly_statistics_pkey PRIMARY KEY (id);
 
 
 --
@@ -4793,6 +4843,20 @@ CREATE INDEX index_cell_dependencies_on_contract_analyzed ON public.cell_depende
 
 
 --
+-- Name: index_cell_dependencies_on_contract_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_contract_id ON public.cell_dependencies USING btree (contract_id);
+
+
+--
+-- Name: index_cell_dependencies_on_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_dependencies_on_script_id ON public.cell_dependencies USING btree (script_id);
+
+
+--
 -- Name: index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5042,6 +5106,13 @@ CREATE UNIQUE INDEX index_omiga_inscription_infos_on_udt_hash ON public.omiga_in
 --
 
 CREATE INDEX index_on_cell_dependencies_contract_cell_block_tx ON public.cell_dependencies USING btree (contract_cell_id, block_number DESC, tx_index DESC);
+
+
+--
+-- Name: index_on_udt_id_and_unixtimestamp; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_on_udt_id_and_unixtimestamp ON public.udt_hourly_statistics USING btree (udt_id, created_at_unixtimestamp);
 
 
 --
@@ -6127,6 +6198,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240918033146'),
 ('20240920094807'),
 ('20240924065539'),
+('20241009081935'),
 ('20241012014906'),
 ('20241023055256'),
 ('20241023063536'),
@@ -6141,6 +6213,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241129000339'),
 ('20241129032447'),
 ('20241202072604'),
-('20241205023729');
+('20241205023729'),
+('20241212022531');
 
 
