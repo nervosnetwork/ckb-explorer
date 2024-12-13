@@ -87,10 +87,6 @@ namespace :migration do
                   {
                     type_hash: cell_output.type_script&.script_hash,
                     data_hash: cell_output.data_hash,
-<<<<<<< HEAD
-=======
-
->>>>>>> issue-794-7
                     deployed_cell_output_id: cell_output.id,
                     deployed_args: cell_output.type_script&.args,
                   }
