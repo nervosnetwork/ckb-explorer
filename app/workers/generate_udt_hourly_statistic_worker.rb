@@ -4,19 +4,22 @@ class GenerateUdtHourlyStatisticWorker
   def perform
     statistic_attributes = []
     udt_types = %i[xudt xudt_compatible spore_cell did_cell]
+    created_at_unixtimestamp = to_be_counted_date.beginning_of_day.to_i
     Udt.where(udt_type: udt_types, published: true).find_each do |udt|
       statistic_attributes << {
         udt_id: udt.id,
         amount: calc_amount(udt),
         ckb_transactions_count: calc_ckb_transactions_count(udt),
         holders_count: calc_holders_count(udt),
-        created_at_unixtimestamp: to_be_counted_date.beginning_of_day.to_i,
+        created_at_unixtimestamp:,
       }
     end
 
     if statistic_attributes.present?
-      DailyStatisticGenerator.upsert_all(statistic_attributes,
-                                         unique_by: %i[udt_id created_at_unixtimestamp])
+      DailyStatisticGenerator.upsert_all(
+        statistic_attributes,
+        unique_by: %i[udt_id created_at_unixtimestamp],
+      )
     end
   rescue StandardError => e
     Rails.logger.error "Error occurred during GenerateUdtHourlyStatistic error: #{e.message}"

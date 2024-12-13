@@ -32,6 +32,8 @@ end
 
 s.cron "0 8 * * *" do
   call_worker Charts::DailyStatistic
+  call_worker GenerateUdtHourlyStatisticWorker
+  call_worker GenerateRgbppHourlyStatisticWorker
 end
 
 s.every "10m", overlap: false do
@@ -134,10 +136,6 @@ end
 
 s.every "5m", overlap: false do
   call_worker FiberGraphDetectWorker
-end
-
-s.cron "0 8 * * *" do
-  call_worker GenerateUdtHourlyStatisticWorker
 end
 
 s.join
