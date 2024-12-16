@@ -107,6 +107,7 @@ class CellOutput < ApplicationRecord
                      where.not(type_hash: nil).or(where.not(data_hash: nil))
                    }
   scope :by_scripts, ->(lock_script_ids, type_script_ids) { where("lock_script_id IN (?) OR type_script_id IN (?)", lock_script_ids, type_script_ids) }
+  scope :established_status, -> { where(status: ["live", "dead"]) }
 
   before_create :setup_address
 
