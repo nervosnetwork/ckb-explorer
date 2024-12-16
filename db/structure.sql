@@ -2350,7 +2350,8 @@ ALTER SEQUENCE public.reject_reasons_id_seq OWNED BY public.reject_reasons.id;
 
 CREATE TABLE public.rgbpp_hourly_statistics (
     id bigint NOT NULL,
-    total_count integer DEFAULT 0,
+    xudt_count integer DEFAULT 0,
+    dob_count integer DEFAULT 0,
     created_at_unixtimestamp integer,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL

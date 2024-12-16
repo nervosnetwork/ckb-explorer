@@ -2,13 +2,11 @@ class GenerateRgbppHourlyStatisticWorker
   include Sidekiq::Job
 
   def perform
-    xudts_count = Udt.published_xudt.joins(:xudt_tag).where("xudt_tags.tags && ARRAY[?]::varchar[]", ["rgb++"]).count
-    nft_collections_count = TokenCollection.where("tags && ARRAY[?]::varchar[]", ["rgb++"]).count
+    xudt_count = Udt.published_xudt.joins(:xudt_tag).where("xudt_tags.tags && ARRAY[?]::varchar[]", ["rgb++"]).count
+    dob_count = TokenCollection.where("tags && ARRAY[?]::varchar[]", ["rgb++"]).count
+    created_at_unixtimestamp = to_be_counted_date.beginning_of_day.to_i
     RgbppHourlyStatistic.upsert(
-      {
-        total_count: xudts_count + nft_collections_count,
-        created_at_unixtimestamp: to_be_counted_date.beginning_of_day.to_i,
-      },
+      { xudt_count:, dob_count:, created_at_unixtimestamp: },
       unique_by: :created_at_unixtimestamp,
     )
   rescue StandardError => e

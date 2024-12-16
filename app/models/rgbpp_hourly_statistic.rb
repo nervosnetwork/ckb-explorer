@@ -6,7 +6,8 @@ end
 # Table name: rgbpp_hourly_statistics
 #
 #  id                       :bigint           not null, primary key
-#  total_count              :integer          default(0)
+#  xudt_count               :integer          default(0)
+#  dob_count                :integer          default(0)
 #  created_at_unixtimestamp :integer
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
