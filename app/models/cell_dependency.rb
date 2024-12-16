@@ -26,12 +26,12 @@ end
 # Table name: cell_dependencies
 #
 #  id                 :bigint           not null, primary key
+#  contract_id        :bigint
 #  ckb_transaction_id :bigint           not null
 #  dep_type           :integer
 #  contract_cell_id   :bigint           not null
 #  script_id          :bigint
-#  contract_id        :bigint
-#  implicit           :boolean
+#  implicit           :boolean          default(TRUE), not null
 #  block_number       :bigint
 #  tx_index           :integer
 #  contract_analyzed  :boolean          default(FALSE)
@@ -40,6 +40,8 @@ end
 #
 #  index_cell_dependencies_on_block_number_and_tx_index       (block_number,tx_index)
 #  index_cell_dependencies_on_contract_analyzed               (contract_analyzed)
+#  index_cell_dependencies_on_contract_id                     (contract_id)
+#  index_cell_dependencies_on_script_id                       (script_id)
 #  index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type  (ckb_transaction_id,contract_cell_id,dep_type) UNIQUE
 #  index_on_cell_dependencies_contract_cell_block_tx          (contract_cell_id,block_number DESC,tx_index DESC)
 #
