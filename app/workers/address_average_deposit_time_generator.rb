@@ -22,7 +22,7 @@ class AddressAverageDepositTimeGenerator
     # we must calculate the locked duration from lock to unlock.
     # for locking deposit cell
     # we calculate the locked duration from lock to now.
-    address.cell_outputs.nervos_dao_deposit.each do |cell|
+    address.cell_outputs.established_status.nervos_dao_deposit.each do |cell|
       total_deposits += cell.capacity
       total_ckb_deposit_time += cell.capacity * ((cell.consumed_by_id ? cell.consumed_block_timestamp : ended_at) - cell.block_timestamp)
     end
