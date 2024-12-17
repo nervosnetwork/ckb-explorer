@@ -83,6 +83,7 @@ type_id_code_hash: "0x0000000000000000000000000000000000000000000000000054595045
 homepage_transactions_records_count: 15
 homepage_block_records_count: 15
 proposal_window: 10
+query_default_limit: 5000
 
 # rgbpp code hash
 rgbpp_code_hash:
