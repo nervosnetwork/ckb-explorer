@@ -15,7 +15,7 @@ module FastJsonapi
     end
 
     def calculated_total_pages
-      (total_count / @page_size).ceil
+      (total_count.to_f / @page_size).ceil
     end
 
     def call
