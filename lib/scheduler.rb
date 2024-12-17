@@ -32,6 +32,8 @@ end
 
 s.cron "0 8 * * *" do
   call_worker Charts::DailyStatistic
+  call_worker GenerateUdtHourlyStatisticWorker
+  call_worker GenerateRgbppHourlyStatisticWorker
 end
 
 s.every "10m", overlap: false do
