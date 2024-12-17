@@ -11,9 +11,9 @@ class FiberGraphDetectWorker
     # sync graph nodes and channels
     ["nodes", "channels"].each { fetch_graph_infos(_1) }
     # purge outdated graph nodes
-    FiberGraphNode.where.not(node_id: @graph_node_ids).delete_all
+    FiberGraphNode.where.not(node_id: @graph_node_ids).destroy_all
     # purge outdated graph channels
-    FiberGraphChannel.where.not(channel_outpoint: @graph_channel_outpoints).delete_all
+    FiberGraphChannel.where.not(channel_outpoint: @graph_channel_outpoints).destroy_all
 
     # check channel is closed
     FiberGraphChannel.open_channels.each do |channel|
