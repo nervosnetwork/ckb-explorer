@@ -43,12 +43,10 @@ class GenerateUdtHourlyStatisticWorker
   def calc_amount(udt)
     inputs_amount = 0
     outputs_amount = 0
-    ckb_transaction_ids = udt.ckb_transactions.map(&:id)
-    ckb_transaction_ids.each_slice(5000) do |ids|
-      batch_inputs_amount = CellOutput.select(:udt_amount).where(consumed_by_id: ids).map(&:udt_amount).compact
-      inputs_amount += batch_inputs_amount.sum
-      batch_outputs_amount = CellOutput.select(:udt_amount).where(ckb_transaction_id: ids).map(&:udt_amount).compact
-      outputs_amount += batch_outputs_amount.sum
+    udt.ckb_transactions.includes(:cell_outputs).find_in_batches(batch_size: 1000) do |transactions|
+      ids = transactions.map(&:id)
+      inputs_amount += CellOutput.select(:udt_amount).where(consumed_by_id: ids).sum(:udt_amount)
+      outputs_amount += CellOutput.select(:udt_amount).where(ckb_transaction_id: ids).sum(:udt_amount)
     end
     [inputs_amount, outputs_amount].max
   end
