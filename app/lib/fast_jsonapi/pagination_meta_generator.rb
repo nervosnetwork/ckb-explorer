@@ -11,7 +11,7 @@ module FastJsonapi
       @records_counter = records_counter || records
       @total_count = total_count || @records_counter.total_count.to_i
       @total_pages = total_pages || calculated_total_pages
-      @hash = { links: {}, meta: { total: @total_count, page_size: @page_size } }
+      @hash = { links: {}, meta: { total: @total_count, page_size: @page_size, total_pages: @total_pages } }
     end
 
     def calculated_total_pages
