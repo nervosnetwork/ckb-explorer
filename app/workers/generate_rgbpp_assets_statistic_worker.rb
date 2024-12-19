@@ -23,13 +23,15 @@ class GenerateRgbppAssetsStatisticWorker
   private
 
   def ft_count_attributes
-    xudts_count = Udt.published_xudt.where(created_at: ..ended_at).count
+    timestamp = CkbUtils.time_in_milliseconds(ended_at) - 1
+    xudts_count = Udt.published_xudt.where(block_timestamp: ..timestamp).count
     { indicator: "ft_count", value: xudts_count, network: "global" }
   end
 
   def dob_count_attributes
+    timestamp = CkbUtils.time_in_milliseconds(ended_at) - 1
     token_collections_count = TokenCollection.where("tags && ARRAY[?]::varchar[]", ["rgb++"]).
-      where(created_at: ..ended_at).count
+      where(block_timestamp: ..timestamp).count
     { indicator: "dob_count", value: token_collections_count, network: "global" }
   end
 
