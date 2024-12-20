@@ -2345,6 +2345,40 @@ ALTER SEQUENCE public.reject_reasons_id_seq OWNED BY public.reject_reasons.id;
 
 
 --
+-- Name: rgbpp_assets_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.rgbpp_assets_statistics (
+    id bigint NOT NULL,
+    indicator integer NOT NULL,
+    value numeric(40,0) DEFAULT 0.0,
+    network integer DEFAULT 0,
+    created_at_unixtimestamp integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: rgbpp_assets_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.rgbpp_assets_statistics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: rgbpp_assets_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.rgbpp_assets_statistics_id_seq OWNED BY public.rgbpp_assets_statistics.id;
+
+
+--
 -- Name: rgbpp_hourly_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3370,6 +3404,13 @@ ALTER TABLE ONLY public.reject_reasons ALTER COLUMN id SET DEFAULT nextval('publ
 
 
 --
+-- Name: rgbpp_assets_statistics id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rgbpp_assets_statistics ALTER COLUMN id SET DEFAULT nextval('public.rgbpp_assets_statistics_id_seq'::regclass);
+
+
+--
 -- Name: rgbpp_hourly_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3950,6 +3991,14 @@ ALTER TABLE ONLY public.portfolios
 
 ALTER TABLE ONLY public.reject_reasons
     ADD CONSTRAINT reject_reasons_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: rgbpp_assets_statistics rgbpp_assets_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rgbpp_assets_statistics
+    ADD CONSTRAINT rgbpp_assets_statistics_pkey PRIMARY KEY (id);
 
 
 --
@@ -5157,6 +5206,13 @@ CREATE INDEX index_on_cell_dependencies_contract_cell_block_tx ON public.cell_de
 
 
 --
+-- Name: index_on_indicator_and_network_and_created_at_unixtimestamp; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_on_indicator_and_network_and_created_at_unixtimestamp ON public.rgbpp_assets_statistics USING btree (indicator, network, created_at_unixtimestamp);
+
+
+--
 -- Name: index_on_udt_id_and_unixtimestamp; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6253,6 +6309,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240918033146'),
 ('20240920094807'),
 ('20240924065539'),
+('20241009081935'),
 ('20241012014906'),
 ('20241023055256'),
 ('20241023063536'),
@@ -6269,6 +6326,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241202072604'),
 ('20241205023729'),
 ('20241212022531'),
-('20241213053309');
+('20241213053309'),
+('20241218085721');
 
 

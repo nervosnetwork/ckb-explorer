@@ -107,6 +107,6 @@ namespace :api do
       resources :graph_channels, only: :index
     end
     resources :udt_hourly_statistics, only: :show
-    resources :rgbpp_hourly_statistics, only: :index
+    resources :rgbpp_assets_statistics, only: :index
   end
 end
