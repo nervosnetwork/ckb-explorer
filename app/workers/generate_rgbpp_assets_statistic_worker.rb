@@ -24,7 +24,7 @@ class GenerateRgbppAssetsStatisticWorker
 
   def ft_count_attributes
     timestamp = CkbUtils.time_in_milliseconds(ended_at) - 1
-    xudts_count = Udt.published_xudt.where(block_timestamp: ..timestamp).count
+    xudts_count = Udt.where(udt_type: %i[xudt xudt_compatible], block_timestamp: ..timestamp).count
     { indicator: "ft_count", value: xudts_count, network: "global" }
   end
 
