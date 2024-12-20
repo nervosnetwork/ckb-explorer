@@ -2,9 +2,18 @@ class FiberGraphDetectWorker
   include Sidekiq::Worker
   sidekiq_options queue: "fiber"
 
+  attr_accessor :graph_node_ids, :graph_channel_outpoint
+
   def perform
+    @graph_node_ids = []
+    @graph_channel_outpoints = []
+
     # sync graph nodes and channels
     ["nodes", "channels"].each { fetch_graph_infos(_1) }
+    # purge outdated graph nodes
+    FiberGraphNode.where.not(node_id: @graph_node_ids).destroy_all
+    # purge outdated graph channels
+    FiberGraphChannel.where.not(channel_outpoint: @graph_channel_outpoints).destroy_all
 
     # check channel is closed
     FiberGraphChannel.open_channels.each do |channel|
@@ -61,7 +70,7 @@ class FiberGraphDetectWorker
       peer_id: extract_peer_id(node["addresses"]),
       auto_accept_min_ckb_funding_amount: node["auto_accept_min_ckb_funding_amount"],
     }
-
+    @graph_node_ids << node_attributes[:node_id]
     fiber_graph_node = FiberGraphNode.upsert(node_attributes, unique_by: %i[node_id], returning: %i[id])
 
     return unless fiber_graph_node && node["udt_cfg_infos"].present?
@@ -87,6 +96,7 @@ class FiberGraphDetectWorker
 
     channel_outpoint = channel["channel_outpoint"]
     open_transaction = CkbTransaction.find_by(tx_hash: channel_outpoint[0..65])
+    @graph_channel_outpoints << channel_outpoint
 
     {
       channel_outpoint:,
