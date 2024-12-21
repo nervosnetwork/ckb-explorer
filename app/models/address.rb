@@ -17,8 +17,8 @@ class Address < ApplicationRecord
   has_one :bitcoin_address_mapping, foreign_key: "ckb_address_id"
   has_one :bitcoin_address, through: :bitcoin_address_mapping
 
-  validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit,
-            numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  # validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit,
+  #           numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :lock_hash, presence: true, uniqueness: true
 
   scope :visible, -> { where(visible: true) }
