@@ -30,21 +30,30 @@ class GenerateRgbppAssetsStatisticWorker
 
   def dob_count_attributes
     timestamp = CkbUtils.time_in_milliseconds(ended_at) - 1
-    token_collections_count = TokenCollection.where("tags && ARRAY[?]::varchar[]", ["rgb++"]).
-      where(block_timestamp: ..timestamp).count
+    token_collections_count = TokenCollection.spore.where(block_timestamp: ..timestamp).count
     { indicator: "dob_count", value: token_collections_count, network: "global" }
   end
 
   def btc_transactions_count_attributes
-    transactions_count = BitcoinTransaction.where(time: started_at.to_i..ended_at.to_i).count
+    transactions_count = BitcoinTransaction.where(time: ..ended_at.to_i).count
     { indicator: "transactions_count", value: transactions_count, network: "btc" }
   end
 
   def ckb_transactions_count_attributes
-    started_timestamp = CkbUtils.time_in_milliseconds(started_at)
-    ended_timestamp = CkbUtils.time_in_milliseconds(ended_at) - 1
-    transactions_count = BitcoinAnnotation.includes(:ckb_transaction).
-      where(ckb_transactions: { block_timestamp: started_timestamp..ended_timestamp }).count
+    timestamp = CkbUtils.time_in_milliseconds(ended_at) - 1
+
+    ft_transaction_ids = Set.new
+    Udt.where(udt_type: %i[xudt xudt_compatible]).find_each do |xudt|
+      ft_transaction_ids.merge(xudt.ckb_transactions.where(block_timestamp: ..timestamp).ids)
+    end
+
+    dob_transaction_ids = Set.new
+    TokenCollection.spore.find_each do |token_collection|
+      transfers = token_collection.transfers.joins(:ckb_transaction).where("ckb_transactions.block_timestamp <= ?", timestamp)
+      dob_transaction_ids.merge(transfers.map(&:transaction_id))
+    end
+
+    transactions_count = ft_transaction_ids.length + dob_transaction_ids.length
     { indicator: "transactions_count", value: transactions_count, network: "ckb" }
   end
 
@@ -67,14 +76,14 @@ class GenerateRgbppAssetsStatisticWorker
 
   def to_be_counted_date
     if @datetime.present?
-      return Time.zone.parse(@datetime)
+      return Time.parse(@datetime)
     end
 
     last_record = UdtHourlyStatistic.order(created_at_unixtimestamp: :desc).first
     if last_record
-      Time.zone.at(last_record.created_at_unixtimestamp) + 1.day
+      Time.at(last_record.created_at_unixtimestamp) + 1.day
     else
-      Time.current.yesterday
+      Time.now.yesterday
     end
   end
 
