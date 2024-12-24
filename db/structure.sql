@@ -380,16 +380,6 @@ ALTER SEQUENCE public.address_block_snapshots_id_seq OWNED BY public.address_blo
 
 
 --
--- Name: address_dao_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.address_dao_transactions (
-    ckb_transaction_id bigint,
-    address_id bigint
-);
-
-
---
 -- Name: address_udt_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1650,7 +1640,8 @@ CREATE TABLE public.dao_events (
     status smallint DEFAULT 0,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    block_timestamp numeric(30,0)
+    block_timestamp numeric(30,0),
+    cell_index integer
 );
 
 
@@ -2342,6 +2333,40 @@ CREATE SEQUENCE public.reject_reasons_id_seq
 --
 
 ALTER SEQUENCE public.reject_reasons_id_seq OWNED BY public.reject_reasons.id;
+
+
+--
+-- Name: rgbpp_assets_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.rgbpp_assets_statistics (
+    id bigint NOT NULL,
+    indicator integer NOT NULL,
+    value numeric(40,0) DEFAULT 0.0,
+    network integer DEFAULT 0,
+    created_at_unixtimestamp integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: rgbpp_assets_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.rgbpp_assets_statistics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: rgbpp_assets_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.rgbpp_assets_statistics_id_seq OWNED BY public.rgbpp_assets_statistics.id;
 
 
 --
@@ -3370,6 +3395,13 @@ ALTER TABLE ONLY public.reject_reasons ALTER COLUMN id SET DEFAULT nextval('publ
 
 
 --
+-- Name: rgbpp_assets_statistics id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rgbpp_assets_statistics ALTER COLUMN id SET DEFAULT nextval('public.rgbpp_assets_statistics_id_seq'::regclass);
+
+
+--
 -- Name: rgbpp_hourly_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3953,6 +3985,14 @@ ALTER TABLE ONLY public.reject_reasons
 
 
 --
+-- Name: rgbpp_assets_statistics rgbpp_assets_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rgbpp_assets_statistics
+    ADD CONSTRAINT rgbpp_assets_statistics_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: rgbpp_hourly_statistics rgbpp_hourly_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4118,13 +4158,6 @@ ALTER TABLE ONLY public.witnesses
 
 ALTER TABLE ONLY public.xudt_tags
     ADD CONSTRAINT xudt_tags_pkey PRIMARY KEY (id);
-
-
---
--- Name: address_dao_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX address_dao_tx_alt_pk ON public.address_dao_transactions USING btree (address_id, ckb_transaction_id);
 
 
 --
@@ -4660,13 +4693,6 @@ CREATE UNIQUE INDEX index_address_block_snapshots_on_block_id_and_address_id ON 
 
 
 --
--- Name: index_address_dao_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_address_dao_transactions_on_ckb_transaction_id ON public.address_dao_transactions USING btree (ckb_transaction_id);
-
-
---
 -- Name: index_address_udt_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5154,6 +5180,13 @@ CREATE UNIQUE INDEX index_omiga_inscription_infos_on_udt_hash ON public.omiga_in
 --
 
 CREATE INDEX index_on_cell_dependencies_contract_cell_block_tx ON public.cell_dependencies USING btree (contract_cell_id, block_number DESC, tx_index DESC);
+
+
+--
+-- Name: index_on_indicator_and_network_and_created_at_unixtimestamp; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_on_indicator_and_network_and_created_at_unixtimestamp ON public.rgbpp_assets_statistics USING btree (indicator, network, created_at_unixtimestamp);
 
 
 --
@@ -6270,6 +6303,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241202072604'),
 ('20241205023729'),
 ('20241212022531'),
-('20241213053309');
+('20241213053309'),
+('20241218085721'),
+('20241223023654'),
+('20241223060331');
 
 

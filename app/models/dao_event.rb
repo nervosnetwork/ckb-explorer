@@ -65,6 +65,7 @@ end
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  block_timestamp    :decimal(30, )
+#  cell_index         :integer
 #
 # Indexes
 #
