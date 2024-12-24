@@ -51,7 +51,7 @@ class RevertBlockJob < ApplicationJob
         address.live_cells_count = address.cell_outputs.live.count
         # address.ckb_transactions_count = address.custom_ckb_transactions.count
         address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
-        address.dao_transactions_count = AddressDaoTransaction.where(address_id: address.id).count
+        address.dao_transactions_count = DaoEvent.processed.where(address_id: address.id).distinct(:ckb_transaction_id).count
         address.cal_balance!
         address.save!
       end
