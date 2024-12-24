@@ -37,25 +37,14 @@ class GenerateRgbppAssetsStatisticWorker
   end
 
   def btc_transactions_count_attributes
-<<<<<<< HEAD
-    transactions_count = BitcoinTransaction.where(time: started_at.to_i..ended_at.to_i).count
-=======
     transactions_count = BitcoinTransaction.where(time: ..ended_at.to_i).count
->>>>>>> 569480db1d55fb5b98658c4198219c13f77089e5
     { indicator: "transactions_count", value: transactions_count, network: "btc" }
   end
 
   def ckb_transactions_count_attributes
-<<<<<<< HEAD
-    started_timestamp = CkbUtils.time_in_milliseconds(started_at)
-    ended_timestamp = CkbUtils.time_in_milliseconds(ended_at) - 1
-    transactions_count = BitcoinAnnotation.includes(:ckb_transaction).
-      where(ckb_transactions: { block_timestamp: started_timestamp..ended_timestamp }).count
-=======
     ended_timestamp = CkbUtils.time_in_milliseconds(ended_at) - 1
     transactions_count = BitcoinAnnotation.includes(:ckb_transaction).
       where(ckb_transactions: { block_timestamp: ..ended_timestamp }).count
->>>>>>> 569480db1d55fb5b98658c4198219c13f77089e5
     { indicator: "transactions_count", value: transactions_count, network: "ckb" }
   end
 
@@ -78,24 +67,14 @@ class GenerateRgbppAssetsStatisticWorker
 
   def to_be_counted_date
     if @datetime.present?
-<<<<<<< HEAD
-      return Time.zone.parse(@datetime)
-=======
       return Time.parse(@datetime)
->>>>>>> 569480db1d55fb5b98658c4198219c13f77089e5
     end
 
     last_record = UdtHourlyStatistic.order(created_at_unixtimestamp: :desc).first
     if last_record
-<<<<<<< HEAD
-      Time.zone.at(last_record.created_at_unixtimestamp) + 1.day
-    else
-      Time.current.yesterday
-=======
       Time.at(last_record.created_at_unixtimestamp) + 1.day
     else
       Time.now.yesterday
->>>>>>> 569480db1d55fb5b98658c4198219c13f77089e5
     end
   end
 
