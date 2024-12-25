@@ -36,7 +36,7 @@ module Charts
         treasury_amount estimated_apc live_cells_count dead_cells_count avg_hash_rate
         avg_difficulty uncle_rate address_balance_distribution
         total_tx_fee occupied_capacity daily_dao_deposit total_supply block_time_distribution
-        epoch_time_distribution epoch_length_distribution locked_capacity ckb_hodl_wave holder_count
+        epoch_time_distribution epoch_length_distribution locked_capacity ckb_hodl_wave holder_count activity_address_contract_distribution
       }
 
       established_order + others
