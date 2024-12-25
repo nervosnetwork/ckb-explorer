@@ -23,7 +23,7 @@ module Api
         address = create(:address, :with_udt_transactions)
         valid_get api_v1_address_live_cell_url(address.address_hash)
 
-        assert_equal ({ "data" => [], "meta" => { "total" => 0, "page_size" => 20 } }), json
+        assert_equal ({ "data" => [], "meta" => { "total" => 0, "page_size" => 20, "total_pages" => 0 } }), json
       end
 
       test "should return all live cells" do

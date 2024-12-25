@@ -21,7 +21,7 @@ module Api
         base_query = CkbTransaction.joins(:cell_dependencies).
           where(cell_dependencies: { contract_cell_id: contract_cell_ids }).
           order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
-          limit(10000)
+          limit(Settings.query_default_limit)
         @ckb_transactions = CkbTransaction.from("(#{base_query.to_sql}) AS ckb_transactions").
           order("block_number DESC, tx_index DESC").
           page(@page).
@@ -43,7 +43,7 @@ module Api
 
         scope = Contract.referring_cells_query(@contracts).
           order("block_timestamp DESC, cell_index DESC").
-          limit(10000)
+          limit(Settings.query_default_limit)
         if params[:args].present?
           type_script = TypeScript.find_by(args: params[:args])
           scope = scope.or(CellOutput.where(type_script_id: type_script.id))
