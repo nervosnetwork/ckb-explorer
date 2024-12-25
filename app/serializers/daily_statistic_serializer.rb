@@ -138,4 +138,8 @@ class DailyStatisticSerializer
   attribute :knowledge_size, if: Proc.new { |_record, params|
     params.present? && params[:indicator].include?("knowledge_size")
   }
+
+  attribute :activity_address_contract_distribution, if: Proc.new { |_record, params|
+    params.present? && params[:indicator].include?("activity_address_contract_distribution")
+  }
 end
