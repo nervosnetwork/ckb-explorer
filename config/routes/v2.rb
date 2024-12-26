@@ -106,5 +106,7 @@ namespace :api do
       resources :graph_nodes, param: :node_id, only: %i[index show]
       resources :graph_channels, only: :index
     end
+    resources :udt_hourly_statistics, only: :show
+    resources :rgbpp_assets_statistics, only: :index
   end
 end
