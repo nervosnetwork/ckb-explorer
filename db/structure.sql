@@ -4771,7 +4771,7 @@ CREATE UNIQUE INDEX index_bitcoin_annotations_on_ckb_transaction_id ON public.bi
 -- Name: index_bitcoin_statistics_on_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_bitcoin_statistics_on_timestamp ON public.bitcoin_statistics USING btree ("timestamp");
+CREATE INDEX index_bitcoin_statistics_on_timestamp ON public.bitcoin_statistics USING btree ("timestamp");
 
 
 --
