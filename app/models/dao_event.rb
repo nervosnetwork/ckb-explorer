@@ -54,17 +54,19 @@ end
 #
 # Table name: dao_events
 #
-#  id                 :bigint           not null, primary key
-#  block_id           :bigint
-#  ckb_transaction_id :bigint
-#  address_id         :bigint
-#  contract_id        :bigint
-#  event_type         :integer
-#  value              :decimal(30, )    default(0)
-#  status             :integer          default("pending")
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
-#  block_timestamp    :decimal(30, )
+#  id                       :bigint           not null, primary key
+#  block_id                 :bigint
+#  ckb_transaction_id       :bigint
+#  address_id               :bigint
+#  contract_id              :bigint
+#  event_type               :integer
+#  value                    :decimal(30, )    default(0)
+#  status                   :integer          default("pending")
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
+#  block_timestamp          :decimal(30, )
+#  withdrawn_transaction_id :bigint
+#  cell_index               :integer
 #
 # Indexes
 #
