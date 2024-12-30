@@ -15,7 +15,7 @@ class GenerateBitcoinStatisticWorker
 
     BitcoinStatistic.upsert_all(statistic_attributes, unique_by: %i[timestamp network])
   rescue StandardError => e
-    Rails.logger.error "Error occurred during GenerateRgbppHourlyStatistic error: #{e.message}"
+    Rails.logger.error "Error occurred during GenerateBitcoinStatisticWorker error: #{e.message}"
   end
 
   private
@@ -47,7 +47,7 @@ class GenerateBitcoinStatisticWorker
 
     transactions_count = ft_transaction_ids.length + dob_transaction_ids.length
     timestamp = end_time.utc.to_i * 1000
-    { timestamp:, transactions_count:, network: :ckb }
+    { timestamp:, addresses_count: 0, transactions_count:, network: :ckb }
   end
 
   def time_range
