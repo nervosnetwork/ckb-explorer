@@ -1651,7 +1651,9 @@ CREATE TABLE public.dao_events (
     status smallint DEFAULT 0,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    block_timestamp numeric(30,0)
+    block_timestamp numeric(30,0),
+    withdrawn_transaction_id bigint,
+    cell_index integer
 );
 
 
@@ -6329,6 +6331,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241212022531'),
 ('20241213053309'),
 ('20241218085721'),
+('20241223060331'),
 ('20241225045757');
 
 
