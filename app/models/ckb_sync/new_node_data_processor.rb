@@ -269,6 +269,7 @@ dao_contract)
             addrs_withdraw_info[address.id][:is_depositor] = false
             dao_events_attributes << {
               ckb_transaction_id: dao_input.ckb_transaction_id,
+              cell_index: nil,
               block_id: local_block.id,
               block_timestamp: local_block.timestamp,
               address_id: previous_cell_output.address_id,
@@ -353,7 +354,7 @@ dao_contract)
       addresses_deposit_info = {}
       # build deposit dao events
       local_block.cell_outputs.nervos_dao_deposit.select(:id, :address_id, :capacity,
-                                                         :ckb_transaction_id).find_in_batches do |dao_outputs|
+                                                         :ckb_transaction_id, :cell_index).find_in_batches do |dao_outputs|
         deposit_dao_events_attributes = []
         dao_outputs.each do |dao_output|
           address = dao_output.address

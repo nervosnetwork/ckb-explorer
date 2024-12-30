@@ -7,7 +7,7 @@ class DaoEventTest < ActiveSupport::TestCase
 
   test "should have correct columns" do
     dao_event = create(:dao_event)
-    expected_attributes = %w(address_id block_id block_timestamp contract_id created_at event_type id status ckb_transaction_id updated_at value).sort
+    expected_attributes = %w(address_id block_id block_timestamp contract_id created_at event_type id status ckb_transaction_id updated_at value cell_index withdrawn_transaction_id).sort
     assert_equal expected_attributes, dao_event.attributes.keys.sort
   end
 end
