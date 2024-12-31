@@ -410,18 +410,18 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
                                 tx_hash: "0x#{SecureRandom.hex(32)}",
                                 block:,
                                 address:,
-                                contained_dao_address_ids: [address.id],
                                 contained_address_ids: [address.id],
                                 tags: ["dao"])
+      create(:dao_event, ckb_transaction_id: ckb_transaction1.id, address_id: address.id, event_type: "deposit_to_dao")
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: number,
                            tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit", address:)
     else
       ckb_transaction2 = create(:ckb_transaction,
                                 tx_hash: "0x#{SecureRandom.hex(32)}",
                                 block:, address:,
-                                contained_dao_address_ids: [address.id],
                                 contained_address_ids: [address.id],
                                 tags: ["dao"])
+      create(:dao_event, ckb_transaction_id: ckb_transaction2.id, address_id: address.id, event_type: "deposit_to_dao")
       create(:cell_output,
              ckb_transaction: ckb_transaction2,
              cell_index: number,
