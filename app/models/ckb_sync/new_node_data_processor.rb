@@ -222,7 +222,7 @@ module CkbSync
             addrs_withdraw_info[address.id][:is_depositor] = false
           end
 
-          updated_deposit_dao_events_attributes << { block_id: previous_cell_output.id, ckb_transaction_id: previous_cell_output.ckb_transaction_id, cell_index: dao_input.index, event_type: "deposit_to_dao",
+          updated_deposit_dao_events_attributes << { block_id: previous_cell_output.block_id, ckb_transaction_id: previous_cell_output.ckb_transaction_id, cell_index: dao_input.index, event_type: "deposit_to_dao",
                                                      withdrawn_transaction_id: dao_input.ckb_transaction_id }
           dao_events_attributes << {
             ckb_transaction_id: dao_input.ckb_transaction_id,
