@@ -17,9 +17,6 @@ class DaoContractTest < ActiveSupport::TestCase
     should validate_presence_of(:depositors_count)
     should validate_numericality_of(:depositors_count).
       is_greater_than_or_equal_to(0)
-    should validate_presence_of(:total_depositors_count)
-    should validate_numericality_of(:total_depositors_count).
-      is_greater_than_or_equal_to(0)
   end
 
   test "should have correct columns" do

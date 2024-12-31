@@ -71,9 +71,9 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-        assert_equal %w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp withdrawn_transaction_id cell_index), deposit_to_dao_events.first.attribute_names.reject { |attribute|
+        assert_equal(%w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp withdrawn_transaction_id cell_index), deposit_to_dao_events.first.attribute_names.reject do |attribute|
                                                                                                                                                            attribute.in?(%w(created_at updated_at id))
-                                                                                                                                                         }
+                                                                                                                                                         end)
       end
     end
 
@@ -113,26 +113,6 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_interest")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-      end
-    end
-
-    test "#process_block should decrease dao contract depositors count when previous output is a dao cell and address interest change to zero" do
-      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        tx = fake_dao_withdraw_transaction(node_block)
-        output = tx.cell_outputs.first
-        address = output.address
-        address.update(dao_deposit: output.capacity)
-        DaoContract.default_contract.update(total_deposit: 100000000000, depositors_count: 1)
-
-        assert_difference -> { DaoContract.default_contract.reload.depositors_count }, -1 do
-          node_data_processor.process_block(node_block)
-        end
-
-        take_away_all_deposit_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "take_away_all_deposit")
-        assert_equal ["processed"], take_away_all_deposit_events.pluck(:status).uniq
       end
     end
 
@@ -381,32 +361,6 @@ module CkbSync
       end
     end
 
-    test "should increase dao contract depositors_count when block is invalid and previous output is a dao cell" do
-      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
-      DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        tx = fake_dao_withdraw_transaction(node_block)
-        output = tx.cell_outputs.first
-        address = output.address
-        address.update(dao_deposit: output.capacity)
-        node_data_processor.process_block(node_block)
-      end
-
-      local_block = Block.find_by(block_hash: "0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
-        assert_difference -> { DaoContract.default_contract.depositors_count }, 1 do
-          node_data_processor.call
-        end
-
-        deposit_to_dao_events = local_block.dao_events.where(event_type: "take_away_all_deposit")
-        assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
-      end
-    end
-
     test "#process_block should create dao_event which event_type is withdraw_from_dao when previous output is a dao cell" do
       DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
@@ -420,9 +374,9 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-        assert_equal %w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp withdrawn_transaction_id cell_index), deposit_to_dao_events.first.attribute_names.reject { |attribute|
+        assert_equal(%w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp withdrawn_transaction_id cell_index), deposit_to_dao_events.first.attribute_names.reject do |attribute|
                                                                                                                                                            attribute.in?(%w(created_at updated_at id))
-                                                                                                                                                         }
+                                                                                                                                                         end)
       end
     end
 
@@ -440,40 +394,6 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "issue_interest")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-      end
-    end
-
-    test "#process_block should create dao_event which event_type is take away all deposit when previous output is a dao cell and address interest change to zero" do
-      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
-      DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        tx = fake_dao_withdraw_transaction(node_block)
-        output = tx.cell_outputs.first
-        address = output.address
-        address.update(dao_deposit: output.capacity)
-
-        assert_difference -> { DaoEvent.where(event_type: "take_away_all_deposit").count }, 1 do
-          node_data_processor.process_block(node_block)
-        end
-
-        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "take_away_all_deposit")
-        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-      end
-    end
-
-    test "#process_block should keep address deposit 0 when only have dao withdrawal event" do
-      DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
-      DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        tx = fake_dao_withdraw_transaction(node_block)
-        output = tx.cell_outputs.first
-        address = output.address
-
-        assert_equal 0, address.reload.dao_deposit
       end
     end
 
@@ -506,9 +426,9 @@ module CkbSync
       init_interest_granted = 10**8 * 100
       init_deposit_transactions_count = 2
       init_withdraw_transactions_count = 1
-      init_total_depositors_count = 2
       dao_contract.update(total_deposit: init_total_deposit, depositors_count: init_depositors_count,
-                          claimed_compensation: init_interest_granted, deposit_transactions_count: init_deposit_transactions_count, withdraw_transactions_count: init_withdraw_transactions_count, total_depositors_count: init_total_depositors_count)
+                          claimed_compensation: init_interest_granted, deposit_transactions_count: init_deposit_transactions_count, withdraw_transactions_count: init_withdraw_transactions_count)
+      create_list(:dao_event, 3, status: :processed, contract_id: 1, event_type: "deposit_to_dao")
       prepare_node_data(HAS_UNCLES_BLOCK_NUMBER)
       local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
@@ -521,7 +441,6 @@ module CkbSync
         assert_equal init_interest_granted, dao_contract.claimed_compensation
         assert_equal init_deposit_transactions_count, dao_contract.deposit_transactions_count
         assert_equal init_withdraw_transactions_count, dao_contract.withdraw_transactions_count
-        assert_equal init_total_depositors_count, dao_contract.total_depositors_count
       end
     end
 
@@ -613,40 +532,6 @@ module CkbSync
       end
     end
 
-    test "should revert dao contract depositors count when block is invalid and there is dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
-      node_block = fake_node_block
-      create(:block, :with_block_hash, number: node_block.header.number - 1, timestamp: 1557282351075)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        fake_dao_deposit_transaction(node_block)
-        node_data_processor.process_block(node_block)
-      end
-      dao_contract = DaoContract.default_contract
-      local_block = Block.find_by(number: DEFAULT_NODE_BLOCK_NUMBER)
-      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
-        assert_difference -> { dao_contract.reload.depositors_count }, -1 do
-          node_data_processor.call
-        end
-
-        deposit_to_dao_events = local_block.dao_events.where(event_type: "new_dao_depositor")
-        assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
-      end
-    end
-
-    test "#process_block should create dao_event which event_type is new_dao_depositor when output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        fake_dao_deposit_transaction(node_block)
-
-        assert_difference -> { DaoEvent.where(event_type: "new_dao_depositor").count }, 1 do
-          node_data_processor.process_block(node_block)
-        end
-      end
-    end
-
     test "#process_block should update address deposits when dao_event is deposit_to_dao and output is a dao cell" do
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
@@ -695,46 +580,6 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "deposit_to_dao")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-      end
-    end
-
-    test "#process_block should update dao contract depositors count when dao_event is new_dao_depositor and output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
-
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        fake_dao_deposit_transaction(node_block)
-
-        assert_difference -> { DaoContract.default_contract.depositors_count }, 1 do
-          node_data_processor.process_block(node_block)
-        end
-      end
-
-      deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "new_dao_depositor")
-      assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-      assert_not_empty DaoEvent.where(event_type: "new_dao_depositor")
-    end
-
-    test "#process_block should update dao contract total depositors count when dao_event is new_dao_depositor and output is a dao cell" do
-      CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
-
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        fake_dao_deposit_transaction(node_block)
-
-        assert_difference -> { DaoContract.default_contract.total_depositors_count }, 1 do
-          node_data_processor.process_block(node_block)
-        end
-
-        deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "new_dao_depositor")
-        assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
-        assert_equal %w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp withdrawn_transaction_id cell_index), deposit_to_dao_events.first.attribute_names.reject { |attribute|
-                                                                                                                                                           attribute.in?(%w(created_at updated_at id))
-                                                                                                                                                         }
       end
     end
 
@@ -807,11 +652,11 @@ module CkbSync
       tx3 = create(:ckb_transaction, block: block2)
       tx4 = create(:ckb_transaction, block: block2)
       tx5 = create(:ckb_transaction, block: block2)
-      input_address1 = create(:address)
-      input_address2 = create(:address)
+      input_address1 = create(:address, dao_deposit: 50000 * 10**8)
+      input_address2 = create(:address, dao_deposit: 60000 * 10**8)
       input_address3 = create(:address)
-      input_address4 = create(:address)
-      input_address5 = create(:address)
+      input_address4 = create(:address, dao_deposit: 70000 * 10**8)
+      input_address5 = create(:address, dao_deposit: 70000 * 10**8)
       create(:cell_output, ckb_transaction: tx1,  block: block1, capacity: 50000 * 10**8, tx_hash: tx1.tx_hash,
                            cell_index: 0, address: input_address1, cell_type: "nervos_dao_deposit")
       create(:cell_output, ckb_transaction: tx2,  block: block2, capacity: 60000 * 10**8, tx_hash: tx2.tx_hash,
@@ -889,8 +734,8 @@ module CkbSync
       block2 = create(:block, :with_block_hash, number: DEFAULT_NODE_BLOCK_NUMBER - 1)
       tx2 = create(:ckb_transaction, block: block2)
       tx3 = create(:ckb_transaction, block: block2)
-      input_address1 = create(:address)
-      input_address2 = create(:address)
+      input_address1 = create(:address, dao_deposit: 50000 * 10**8)
+      input_address2 = create(:address, dao_deposit: 60000 * 10**8)
       input_address3 = create(:address)
       create(:cell_output, ckb_transaction: tx1,  block: block1, capacity: 50000 * 10**8, tx_hash: tx1.tx_hash,
                            cell_index: 0, address: input_address1, cell_type: "nervos_dao_deposit")
@@ -975,10 +820,11 @@ module CkbSync
                             tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
                             block:, capacity: 10**8 * 1000,
                             lock_script_id: lock.id)
-      cell_output1.address.update(balance: 10**8 * 1000)
+      cell_output1.address.update(balance: 10**8 * 1000, dao_deposit: 10**8 * 1000)
       cell_output2.address.update(balance: 10**8 * 1000)
       tx = node_block.transactions.last
       output = tx.outputs.first
+
       output.type = CKB::Types::Script.new(args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type",
                                            code_hash: Settings.dao_type_hash)
       tx.outputs_data[0] = CKB::Utils.bin_to_hex("\x02" * 8)

@@ -100,11 +100,6 @@ module Charts
       assert_equal addresses_count_temp.to_s, addresses_count
     end
 
-    test "it should get daily_dao_withdraw" do
-      daily_dao_withdraw = Charts::DailyStatisticGenerator.new(@datetime).call.daily_dao_withdraw
-      assert_equal @daily_dao_withdraw, daily_dao_withdraw
-    end
-
     test "it should get total_dao_deposit" do
       # 1. from scratch
       deposit_amount = DaoEvent.processed.deposit_to_dao.created_before(@ended_at).sum(:value)
@@ -282,20 +277,6 @@ module Charts
       assert_equal uncle_rate_temp.to_s, uncle_rate
     end
 
-    test "it should get total_depositors_count" do
-      # 1. from scratch
-      is_from_scratch = true
-      total_depositors_count_temp = DaoEvent.processed.take_away_all_deposit.created_before(@ended_at).count
-      total_depositors_count = Charts::DailyStatisticGenerator.new(@datetime,
-                                                                   is_from_scratch).call.total_depositors_count
-      assert_equal total_depositors_count_temp.to_s, total_depositors_count
-      # 2. not from scratch
-      new_depositors_count_today = DaoEvent.processed.new_dao_depositor.created_after(@started_at).created_before(@ended_at).count
-      total_depositors_count_temp = new_depositors_count_today + @yesterday_daily_statistic.total_depositors_count.to_i
-      total_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).call.total_depositors_count
-      assert_equal total_depositors_count_temp.to_s, total_depositors_count
-    end
-
     test "it should get address_balance_distribution" do
       max_n = 9
       ranges =
@@ -347,30 +328,6 @@ module Charts
       daily_dao_deposit_temp = DaoEvent.processed.deposit_to_dao.created_after(@started_at).created_before(@ended_at).sum(:value)
       daily_dao_deposit = Charts::DailyStatisticGenerator.new(@datetime).call.daily_dao_deposit
       assert_equal daily_dao_deposit_temp, daily_dao_deposit
-    end
-
-    test "it should get daily_dao_depositors_count" do
-      daily_dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).call.daily_dao_depositors_count
-      daily_dao_depositors_count_temp ||= DaoEvent.processed.new_dao_depositor.created_after(@started_at).created_before(@ended_at).count
-      assert_equal daily_dao_depositors_count_temp, daily_dao_depositors_count
-    end
-
-    test "it should get dao_depositors_count" do
-      # 1. from scratch
-      is_from_scratch = true
-      create :dao_event_with_block, block: @block, ckb_transaction: @tx, event_type: :new_dao_depositor,
-                                    status: :processed, block_timestamp: @block.timestamp
-      total_depositors_count = Charts::DailyStatisticGenerator.new(@datetime,
-                                                                   is_from_scratch).call.total_depositors_count
-      dao_depositors_count_temp = total_depositors_count.to_i - DaoEvent.processed.take_away_all_deposit.created_before(@ended_at).count
-      dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime, is_from_scratch).call.dao_depositors_count
-      assert_equal dao_depositors_count_temp.to_s, dao_depositors_count
-      # 2. not from scratch
-      daily_dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).call.daily_dao_depositors_count
-      withdrawals_today = DaoEvent.processed.take_away_all_deposit.created_after(@started_at).created_before(@ended_at).count
-      dao_depositors_count_temp = daily_dao_depositors_count.to_i - withdrawals_today + @yesterday_daily_statistic.dao_depositors_count.to_i
-      dao_depositors_count = Charts::DailyStatisticGenerator.new(@datetime).call.dao_depositors_count
-      assert_equal dao_depositors_count_temp.to_s, dao_depositors_count
     end
 
     test "it should get circulation_ratio" do

@@ -1,10 +1,12 @@
+# TODO
+# remove dao_depositors_count daily_dao_withdraw nodes_distribution nodes_count average_block_time columns
 class DailyStatistic < ApplicationRecord
   include AttrLogics
 
   VALID_INDICATORS = %w(
     transactions_count addresses_count total_dao_deposit live_cells_count dead_cells_count avg_hash_rate avg_difficulty uncle_rate
     total_depositors_count address_balance_distribution total_tx_fee occupied_capacity daily_dao_deposit daily_dao_depositors_count
-    circulation_ratio daily_dao_withdraw nodes_count circulating_supply burnt locked_capacity treasury_amount mining_reward
+    circulation_ratio nodes_count circulating_supply burnt locked_capacity treasury_amount mining_reward
     deposit_compensation liquidity created_at_unixtimestamp ckb_hodl_wave holder_count knowledge_size activity_address_contract_distribution
   ).freeze
   MILLISECONDS_IN_DAY = BigDecimal(24 * 60 * 60 * 1000)
@@ -54,22 +56,10 @@ class DailyStatistic < ApplicationRecord
       withdraw_amount = DaoEvent.processed.withdraw_from_dao.created_before(ended_at).sum(:value)
       total_dao_deposit = deposit_amount - withdraw_amount
     else
-      daily_dao_withdraw = @daily_dao_withdraw ||= DaoEvent.processed.withdraw_from_dao.created_after(started_at).created_before(ended_at).sum(:value)
-      daily_dao_deposit = @daily_dao_deposit ||= DaoEvent.processed.deposit_to_dao.created_after(started_at).created_before(ended_at).sum(:value)
+      daily_dao_withdraw = DaoEvent.processed.withdraw_from_dao.created_after(started_at).created_before(ended_at).sum(:value)
       total_dao_deposit = daily_dao_deposit - daily_dao_withdraw + yesterday_daily_statistic.total_dao_deposit.to_i
     end
     total_dao_deposit
-  end
-
-  define_logic :dao_depositors_count do
-    dao_depositors_count = ""
-    if from_scratch
-      dao_depositors_count = total_depositors_count.to_i - DaoEvent.processed.take_away_all_deposit.created_before(ended_at).count
-    else
-      withdrawals_today = DaoEvent.processed.take_away_all_deposit.created_after(started_at).created_before(ended_at).count
-      dao_depositors_count = daily_dao_depositors_count.to_i - withdrawals_today + yesterday_daily_statistic.dao_depositors_count.to_i
-    end
-    dao_depositors_count
   end
 
   define_logic :unclaimed_compensation do
@@ -174,13 +164,11 @@ class DailyStatistic < ApplicationRecord
   end
 
   define_logic :total_depositors_count do
-    @total_depositors_count ||=
-      if from_scratch
-        DaoEvent.processed.new_dao_depositor.created_before(ended_at).count
-      else
-        new_depositors_count_today = processed_dao_events_in_current_period.new_dao_depositor.count
-        new_depositors_count_today + yesterday_daily_statistic.total_depositors_count.to_i
-      end
+    @total_depositors_count ||= if from_scratch
+                                  DaoEvent.created_before(ended_at).deposit_to_dao.distinct.count(:address_id)
+                                else
+                                  daily_dao_depositors_count + yesterday_daily_statistic.total_depositors_count.to_i
+                                end
   end
 
   define_logic :address_balance_distribution do
@@ -222,11 +210,10 @@ class DailyStatistic < ApplicationRecord
   end
 
   define_logic :daily_dao_depositors_count do
-    processed_dao_events_in_current_period.new_dao_depositor.count
-  end
-
-  define_logic :daily_dao_withdraw do
-    processed_dao_events_in_current_period.withdraw_from_dao.sum(:value)
+    processed_dao_events_in_current_period.
+      deposit_to_dao.
+      where.not(address_id: DaoEvent.created_before(started_at).depositor.
+                                                               select(:address_id)).distinct.count(:address_id)
   end
 
   define_logic :circulation_ratio do
@@ -513,12 +500,8 @@ class DailyStatistic < ApplicationRecord
       end
   end
 
-  def dao_events_in_current_period
-    @dao_events_in_current_period ||= DaoEvent.created_between(started_at, ended_at)
-  end
-
   def processed_dao_events_in_current_period
-    @processed_dao_events_in_current_period ||= dao_events_in_current_period.processed
+    @processed_dao_events_in_current_period ||= DaoEvent.created_between(started_at, ended_at).processed
   end
 
   def yesterday_daily_statistic
@@ -529,7 +512,7 @@ class DailyStatistic < ApplicationRecord
         if to_be_counted_date.beginning_of_day.to_i == Time.at(GENESIS_TIMESTAMP / 1000).in_time_zone.beginning_of_day.to_i \
           || aggron_first_day? \
           || yesterday_statistic.blank?
-          OpenStruct.new(addresses_count: 0, total_dao_deposit: 0, dao_depositors_count: 0,
+          OpenStruct.new(addresses_count: 0, total_dao_deposit: 0,
                          unclaimed_compensation: 0, claimed_compensation: 0,
                          average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0,
                          treasury_amount: 0, total_depositors_count: 0,
