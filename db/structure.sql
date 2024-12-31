@@ -5024,6 +5024,13 @@ CREATE INDEX index_dao_events_on_block_id ON public.dao_events USING btree (bloc
 
 
 --
+-- Name: index_dao_events_on_block_id_tx_id_and_index_and_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_dao_events_on_block_id_tx_id_and_index_and_type ON public.dao_events USING btree (block_id, ckb_transaction_id, cell_index, event_type);
+
+
+--
 -- Name: index_dao_events_on_block_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6309,6 +6316,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241218085721'),
 ('20241223023654'),
 ('20241223060331'),
-('20241225045757');
+('20241225045757'),
+('20241231022644');
 
 

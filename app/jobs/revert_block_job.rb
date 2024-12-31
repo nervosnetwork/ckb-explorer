@@ -51,7 +51,7 @@ class RevertBlockJob < ApplicationJob
         address.live_cells_count = address.cell_outputs.live.count
         # address.ckb_transactions_count = address.custom_ckb_transactions.count
         address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
-        address.dao_transactions_count = AddressDaoTransaction.where(address_id: address.id).count
+        address.dao_transactions_count = DaoEvent.processed.where(address_id: address.id).distinct(:ckb_transaction_id).count
         address.cal_balance!
         address.save!
       end
@@ -91,8 +91,7 @@ class RevertBlockJob < ApplicationJob
     revert_withdraw_from_dao(dao_contract, dao_events)
     revert_issue_interest(dao_contract, dao_events)
     revert_deposit_to_dao(dao_contract, dao_events)
-    revert_new_dao_depositor(dao_contract, dao_events)
-    revert_take_away_all_deposit(dao_contract, dao_events)
+    dao_contract.update(depositors_count: DaoEvent.depositor.count)
   end
 
   def recalculate_udt_accounts(udt_type_hashes, local_tip_block)
@@ -123,24 +122,6 @@ class RevertBlockJob < ApplicationJob
     miner_address.decrement!(:mined_blocks_count)
   end
 
-  def revert_dao_contract_related_operations(local_tip_block)
-    dao_events = DaoEvent.where(block: local_tip_block).processed
-    dao_contract = DaoContract.default_contract
-    revert_withdraw_from_dao(dao_contract, dao_events)
-    revert_issue_interest(dao_contract, dao_events)
-    revert_deposit_to_dao(dao_contract, dao_events)
-    revert_new_dao_depositor(dao_contract, dao_events)
-    revert_take_away_all_deposit(dao_contract, dao_events)
-  end
-
-  def revert_take_away_all_deposit(dao_contract, dao_events)
-    take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
-    take_away_all_deposit_dao_events.each do |event|
-      dao_contract.increment!(:depositors_count)
-      event.reverted!
-    end
-  end
-
   def revert_issue_interest(dao_contract, dao_events)
     issue_interest_dao_events = dao_events.where(event_type: "issue_interest")
     issue_interest_dao_events.each do |event|
@@ -153,20 +134,13 @@ class RevertBlockJob < ApplicationJob
 
   def revert_withdraw_from_dao(dao_contract, dao_events)
     withdraw_from_dao_events = dao_events.where(event_type: "withdraw_from_dao")
+    ids = withdraw_from_dao_events.pluck(:ckb_transaction_id)
+    DaoEvent.processed.where(withdrawn_transaction_id: ids).update_all(withdrawn_transaction_id: nil)
     withdraw_from_dao_events.each do |event|
       dao_contract.decrement!(:withdraw_transactions_count)
       dao_contract.increment!(:total_deposit, event.value)
       address = event.address
       address.increment!(:dao_deposit, event.value)
-      event.reverted!
-    end
-  end
-
-  def revert_new_dao_depositor(dao_contract, dao_events)
-    new_dao_depositor_events = dao_events.where(event_type: "new_dao_depositor")
-    new_dao_depositor_events.each do |event|
-      dao_contract.decrement!(:depositors_count)
-      dao_contract.decrement!(:total_depositors_count)
       event.reverted!
     end
   end
