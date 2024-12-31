@@ -202,12 +202,11 @@ class AddressTest < ActiveSupport::TestCase
     30.times do |number|
       block = create(:block, :with_block_hash)
       contained_address_ids = number % 2 == 0 ? [address.id] : [address1.id]
-      tx = create(:ckb_transaction, block:, tags: ["dao"], contained_dao_address_ids: contained_address_ids,
-                                    contained_address_ids:)
+      tx = create(:ckb_transaction, block:, tags: ["dao"], contained_address_ids:)
+      create(:dao_event,  block:, address_id: contained_address_ids[0],
+                          ckb_transaction_id: tx.id)
       AccountBook.find_or_create_by(address_id: contained_address_ids[0],
                                     ckb_transaction: tx)
-      AddressDaoTransaction.insert({ address_id: contained_address_ids[0],
-                                     ckb_transaction_id: tx.id })
       cell_type = number % 2 == 0 ? "nervos_dao_deposit" : "nervos_dao_withdrawing"
       cell_output_address = number % 2 == 0 ? address : address1
       create(:cell_output, block:, address: cell_output_address,
@@ -221,13 +220,13 @@ class AddressTest < ActiveSupport::TestCase
     expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).recent
 
     assert_equal expected_ckb_transactions.pluck(:id).sort,
-                 address.ckb_dao_transactions.recent.pluck(:id).sort
+                 address.ckb_dao_transactions.select(:id, :block_timestamp, :tx_index).recent.map { |tx| tx.id }.sort
   end
 
   test "#ckb_dao_transactions should return an empty array when there aren't dao cell" do
     address = create(:address)
 
-    assert_equal [], address.ckb_dao_transactions.recent.pluck(:id)
+    assert_equal [], address.ckb_dao_transactions.select(:id, :block_timestamp, :tx_index).recent.map { |tx| tx.id }
   end
 
   test "#ckb_udt_transactions should return correct ckb transactions with udt cell when there are udt cells" do

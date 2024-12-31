@@ -13,6 +13,7 @@ class Address < ApplicationRecord
   has_many :udt_accounts
   has_many :dao_events
   belongs_to :lock_script, optional: true
+  has_many :ckb_dao_transactions, -> { distinct }, through: :dao_events, source: :ckb_transaction
 
   has_one :bitcoin_address_mapping, foreign_key: "ckb_address_id"
   has_one :bitcoin_address, through: :bitcoin_address_mapping
@@ -32,8 +33,6 @@ class Address < ApplicationRecord
   def custom_ckb_transactions
     ckb_transactions
   end
-
-  has_and_belongs_to_many :ckb_dao_transactions, class_name: "CkbTransaction", join_table: "address_dao_transactions"
 
   def ckb_udt_transactions(udt)
     udt = Udt.find_by_id(udt) unless udt.is_a?(Udt)
