@@ -316,9 +316,10 @@ module CkbSync
             addresses_deposit_info[address.id] =
               {
                 dao_deposit: address.dao_deposit.to_i + dao_output.capacity,
-                is_depositor: true,
+
               }
           end
+          addresses_deposit_info[address.id][:is_depositor] = true
           deposit_amount += dao_output.capacity
           deposit_transaction_ids << dao_output.ckb_transaction_id
           dao_events_attributes << {
@@ -351,6 +352,7 @@ module CkbSync
           id: address_id,
           dao_deposit: address_info[:dao_deposit],
           interest: address_info[:interest],
+          is_depositor: address_info[:is_depositor],
         }
       end
       Address.upsert_all(addresses_deposit_attributes, record_timestamps: true) if addresses_deposit_attributes.present?

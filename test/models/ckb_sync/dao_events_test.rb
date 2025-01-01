@@ -300,8 +300,8 @@ module CkbSync
           node_data_processor.call
         end
 
-        deposit_to_dao_events = local_block.dao_events.where(event_type: "withdraw_from_dao")
-        assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
+        dao_events = local_block.dao_events.where(event_type: "withdraw_from_dao")
+        assert_equal ["reverted"], dao_events.pluck(:status).uniq
       end
     end
 
@@ -366,13 +366,15 @@ module CkbSync
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
-        fake_dao_withdraw_transaction(node_block)
+        tx = fake_dao_withdraw_transaction(node_block)
+        assert_equal true, tx.cell_outputs.first.address.is_depositor
         DaoContract.default_contract.update(total_deposit: 100000000000)
         assert_difference -> { DaoEvent.where(event_type: "withdraw_from_dao").count }, 1 do
           node_data_processor.process_block(node_block)
         end
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
+        assert_equal false, tx.cell_outputs.first.address.is_depositor
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
         assert_equal(%w(block_id ckb_transaction_id address_id contract_id event_type value status block_timestamp withdrawn_transaction_id cell_index), deposit_to_dao_events.first.attribute_names.reject do |attribute|
                                                                                                                                                            attribute.in?(%w(created_at updated_at id))
@@ -540,6 +542,7 @@ module CkbSync
         tx = fake_dao_deposit_transaction(node_block)
         output = tx.outputs.first
         address = Address.find_or_create_address(output.lock, node_block.header.timestamp)
+        assert_equal false, address.is_depositor
 
         assert_difference -> { address.reload.dao_deposit }, 10**8 * 1000 do
           node_data_processor.process_block(node_block)
@@ -547,6 +550,7 @@ module CkbSync
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "deposit_to_dao")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
+        assert_equal true, address.reload.is_depositor
       end
     end
 
@@ -820,7 +824,7 @@ module CkbSync
                             tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
                             block:, capacity: 10**8 * 1000,
                             lock_script_id: lock.id)
-      cell_output1.address.update(balance: 10**8 * 1000, dao_deposit: 10**8 * 1000)
+      cell_output1.address.update(balance: 10**8 * 1000, dao_deposit: 10**8 * 1000, is_depositor: true)
       cell_output2.address.update(balance: 10**8 * 1000)
       tx = node_block.transactions.last
       output = tx.outputs.first
