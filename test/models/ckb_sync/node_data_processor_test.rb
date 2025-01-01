@@ -2624,11 +2624,12 @@ module CkbSync
                                          transactions:, header:)
       block = node_data_processor.process_block(node_block)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
+      DaoContract.default_contract.update(deposit_transactions_count: 4)
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                        record: :new_episodes) do
         assert_changes -> {
-                         DaoContract.default_contract.ckb_transactions_count
+                         DaoContract.default_contract.reload.ckb_transactions_count
                        }, from: 2, to: 0 do
           node_data_processor.call
         end
