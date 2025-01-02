@@ -26,7 +26,7 @@ module Api
         result.map do |record|
           address_hash = BitcoinAddress.find_by(id: record.bitcoin_address_id).address_hash
           position_ratio = udt.total_amount.zero? ? 0 : format("%.5f", record.total_amount.to_f / udt.total_amount)
-          { address_hash:, amount: record.total_amount.to_s, position_ratio: position_ratio.to_s, chain: "btc" }
+          { address_hash:, amount: record.total_amount.to_s, position_ratio: position_ratio.to_s, network: "btc" }
         end
       end
 
@@ -37,7 +37,7 @@ module Api
           order("udt_accounts.amount desc").limit(10).map do |udt_account|
           address_hash = udt_account.address.address_hash
           position_ratio = udt.total_amount.zero? ? 0 : format("%.5f", udt_account.amount.to_f / udt.total_amount)
-          { address_hash:, amount: udt_account.amount.to_s, position_ratio: position_ratio.to_s, chain: "ckb" }
+          { address_hash:, amount: udt_account.amount.to_s, position_ratio: position_ratio.to_s, network: "ckb" }
         end
       end
     end
