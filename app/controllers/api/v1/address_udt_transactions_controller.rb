@@ -12,14 +12,14 @@ module Api
         udt = Udt.find_by(type_hash: params[:type_hash], published: true)
         raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
 
-        ckb_dao_transactions = address.ckb_udt_transactions(udt.id).
+        ckb_udt_transactions = address.ckb_udt_transactions(udt.id).
           select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at, :tags).
           recent.page(@page).per(@page_size).fast_page
         json =
-          Rails.cache.realize(ckb_dao_transactions.cache_key, version: ckb_dao_transactions.cache_version) do
+          Rails.cache.realize(ckb_udt_transactions.cache_key, version: ckb_udt_transactions.cache_version) do
             records_counter = RecordCounters::AddressUdtTransactions.new(address, udt.id)
-            options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_dao_transactions, page: @page, page_size: @page_size, records_counter:).call
-            CkbTransactionsSerializer.new(ckb_dao_transactions, options.merge(params: { previews: true })).serialized_json
+            options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_udt_transactions, page: @page, page_size: @page_size, records_counter:).call
+            CkbTransactionsSerializer.new(ckb_udt_transactions, options.merge(params: { previews: true })).serialized_json
           end
 
         render json:

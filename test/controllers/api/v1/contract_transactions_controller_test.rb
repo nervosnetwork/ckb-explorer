@@ -213,7 +213,8 @@ module Api
 
         contract_ckb_transactions = address.ckb_dao_transactions.joins(:account_books).
           where(account_books: { address_id: address.id }).
-          order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc").page(page).per(page_size).fast_page
+          select(:id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at, :tags).
+          order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc").page(page).per(page_size)
 
         valid_get api_v1_contract_transaction_url(DaoContract::CONTRACT_NAME),
                   params: { page:, page_size:, address_hash: address.address_hash }

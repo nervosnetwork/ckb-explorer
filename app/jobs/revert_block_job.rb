@@ -21,7 +21,6 @@ class RevertBlockJob < ApplicationJob
             uniq.concat(local_tip_block.cell_outputs.m_nft_token.pluck(:type_hash).uniq)
         end
       benchmark :recalculate_udt_transactions_count, local_tip_block
-      benchmark :recalculate_dao_contract_transactions_count, local_tip_block
       benchmark :decrease_records_count, local_tip_block
 
       ApplicationRecord.benchmark "invalid! block" do
@@ -51,21 +50,13 @@ class RevertBlockJob < ApplicationJob
         address.live_cells_count = address.cell_outputs.live.count
         # address.ckb_transactions_count = address.custom_ckb_transactions.count
         address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
-        address.dao_transactions_count = AddressDaoTransaction.where(address_id: address.id).count
+        address.dao_transactions_count = DaoEvent.processed.where(address_id: address.id).distinct(:ckb_transaction_id).count
         address.cal_balance!
         address.save!
       end
     end
 
     AddressBlockSnapshot.where(block_id: local_tip_block.id).delete_all
-  end
-
-  def recalculate_dao_contract_transactions_count(local_tip_block)
-    dao_transactions_count = local_tip_block.ckb_transactions.where("tags @> array[?]::varchar[]", ["dao"]).count
-    if dao_transactions_count > 0
-      DaoContract.default_contract.decrement!(:ckb_transactions_count,
-                                              dao_transactions_count)
-    end
   end
 
   def recalculate_udt_transactions_count(local_tip_block)
@@ -83,16 +74,6 @@ class RevertBlockJob < ApplicationJob
       end
 
     Udt.upsert_all(udt_counts_value) if udt_counts_value.present?
-  end
-
-  def revert_dao_contract_related_operations(local_tip_block)
-    dao_events = DaoEvent.where(block: local_tip_block).processed
-    dao_contract = DaoContract.default_contract
-    revert_withdraw_from_dao(dao_contract, dao_events)
-    revert_issue_interest(dao_contract, dao_events)
-    revert_deposit_to_dao(dao_contract, dao_events)
-    revert_new_dao_depositor(dao_contract, dao_events)
-    revert_take_away_all_deposit(dao_contract, dao_events)
   end
 
   def recalculate_udt_accounts(udt_type_hashes, local_tip_block)
@@ -125,61 +106,90 @@ class RevertBlockJob < ApplicationJob
 
   def revert_dao_contract_related_operations(local_tip_block)
     dao_events = DaoEvent.where(block: local_tip_block).processed
+    dao_transactions_count = local_tip_block.ckb_transactions.where("tags @> array[?]::varchar[]", ["dao"]).count
     dao_contract = DaoContract.default_contract
-    revert_withdraw_from_dao(dao_contract, dao_events)
-    revert_issue_interest(dao_contract, dao_events)
-    revert_deposit_to_dao(dao_contract, dao_events)
-    revert_new_dao_depositor(dao_contract, dao_events)
-    revert_take_away_all_deposit(dao_contract, dao_events)
+
+    withdraw_transactions_count, withdraw_total_deposit = revert_withdraw_from_dao(dao_events)
+    claimed_compensation = revert_issue_interest(dao_events)
+    deposit_transactions_count, deposit_total_deposit = revert_deposit_to_dao(dao_events)
+
+    dao_events.update_all(status: "reverted")
+    dao_contract.update!(deposit_transactions_count: dao_contract.deposit_transactions_count - deposit_transactions_count,
+                         withdraw_transactions_count: dao_contract.withdraw_transactions_count - withdraw_transactions_count,
+                         total_deposit: dao_contract.total_deposit + withdraw_total_deposit - deposit_total_deposit,
+                         claimed_compensation: dao_contract.claimed_compensation - claimed_compensation,
+                         ckb_transactions_count: dao_contract.ckb_transactions_count - dao_transactions_count,
+                         depositors_count: DaoEvent.depositor.count)
   end
 
-  def revert_take_away_all_deposit(dao_contract, dao_events)
-    take_away_all_deposit_dao_events = dao_events.where(event_type: "take_away_all_deposit")
-    take_away_all_deposit_dao_events.each do |event|
-      dao_contract.increment!(:depositors_count)
-      event.reverted!
-    end
-  end
-
-  def revert_issue_interest(dao_contract, dao_events)
-    issue_interest_dao_events = dao_events.where(event_type: "issue_interest")
+  def revert_issue_interest(dao_events)
+    issue_interest_dao_events = dao_events.issue_interest
+    claimed_compensation = 0
+    address_attrs = {}
     issue_interest_dao_events.each do |event|
-      dao_contract.decrement!(:claimed_compensation, event.value)
+      claimed_compensation += event.value
+
       address = event.address
-      address.decrement!(:interest, event.value)
-      event.reverted!
+      address_attrs[address.id] ||= {
+        id: address.id,
+        interest: address.interest,
+      }
+      address_attrs[address.id][:interest] -= event.value
     end
+    upsert_data = address_attrs.values
+    Address.upsert_all(upsert_data, unique_by: :id) if upsert_data.present?
+    claimed_compensation
   end
 
-  def revert_withdraw_from_dao(dao_contract, dao_events)
-    withdraw_from_dao_events = dao_events.where(event_type: "withdraw_from_dao")
+  def revert_withdraw_from_dao(dao_events)
+    withdraw_from_dao_events = dao_events.includes(:address).withdraw_from_dao
+
+    ids = withdraw_from_dao_events.pluck(:ckb_transaction_id)
+    DaoEvent.processed.where(withdrawn_transaction_id: ids).update_all(withdrawn_transaction_id: nil)
+
+    redundant_total_deposit = 0
+    address_attrs = {}
     withdraw_from_dao_events.each do |event|
-      dao_contract.decrement!(:withdraw_transactions_count)
-      dao_contract.increment!(:total_deposit, event.value)
+      redundant_total_deposit += event.value
+
       address = event.address
-      address.increment!(:dao_deposit, event.value)
-      event.reverted!
+      address_attrs[address.id] ||= {
+        id: address.id,
+        dao_deposit: address.dao_deposit,
+        is_depositor: address.is_depositor,
+      }
+      address_attrs[address.id][:dao_deposit] += event.value
+      address_attrs[address.id][:is_depositor] = true
     end
+
+    upsert_data = address_attrs.values
+    Address.upsert_all(upsert_data, unique_by: :id) if upsert_data.present?
+
+    [withdraw_from_dao_events.size, redundant_total_deposit]
   end
 
-  def revert_new_dao_depositor(dao_contract, dao_events)
-    new_dao_depositor_events = dao_events.where(event_type: "new_dao_depositor")
-    new_dao_depositor_events.each do |event|
-      dao_contract.decrement!(:depositors_count)
-      dao_contract.decrement!(:total_depositors_count)
-      event.reverted!
-    end
-  end
+  def revert_deposit_to_dao(dao_events)
+    deposit_to_dao_events = dao_events.deposit_to_dao
+    redundant_total_deposit = 0
+    address_attrs = {}
 
-  def revert_deposit_to_dao(dao_contract, dao_events)
-    deposit_to_dao_events = dao_events.where(event_type: "deposit_to_dao")
     deposit_to_dao_events.each do |event|
+      redundant_total_deposit += event.value
+
       address = event.address
-      address.decrement!(:dao_deposit, event.value)
-      dao_contract.decrement!(:total_deposit, event.value)
-      dao_contract.decrement!(:deposit_transactions_count)
-      event.reverted!
+      address_attrs[address.id] ||= {
+        id: address.id,
+        dao_deposit: address.dao_deposit,
+      }
+      address_attrs[address.id][:dao_deposit] -= event.value
     end
+
+    upsert_data = address_attrs.values
+    address_ids = address_attrs.values.map { |hash| hash[:id] }
+    Address.upsert_all(upsert_data, unique_by: :id) if upsert_data.present?
+    Address.where(id: address_ids, dao_deposit: 0).update_all(is_depositor: false)
+
+    [deposit_to_dao_events.size, redundant_total_deposit]
   end
 
   def revert_block_rewards(local_tip_block)
