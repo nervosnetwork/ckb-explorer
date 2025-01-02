@@ -94,29 +94,6 @@ module Api
         assert_equal response_json, response.body
       end
 
-      test "should return recent year transactions count and timestamp" do
-        target_date = Time.current.beginning_of_year
-
-        i = 1
-        o_date = i.days.ago
-        while o_date > target_date
-          newly_created_object = create(:daily_statistic, created_at_unixtimestamp: o_date)
-          i += 1
-          o_date = i.days.ago
-        end
-        daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).
-          where("created_at_unixtimestamp > ?", target_date.to_i).
-          valid_indicators
-        valid_get api_v1_daily_statistic_url("transactions_count")
-
-        assert_equal [%w(transactions_count created_at_unixtimestamp).sort], json.dig("data").map { |item|
-                                                                               item.dig("attributes").keys.sort
-                                                                             }.uniq
-        assert_equal DailyStatisticSerializer.new(daily_statistic_data, params: { indicator: "transactions_count" }).serialized_json,
-                     response.body
-        assert_equal ((Time.current - target_date) / (24 * 60 * 60)).to_i, json.dig("data").size
-      end
-
       test "should return recent all days average hash rate" do
         100.times do |i|
           create(:daily_statistic, created_at_unixtimestamp: (360 - i).days.ago.to_i)

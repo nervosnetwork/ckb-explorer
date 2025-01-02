@@ -35,9 +35,6 @@ FactoryBot.define do
                                      header_hash: header_dep, index: i)
         end
       end
-      if eval.cell_deps.present?
-        DeployedCell.create_initial_data_for_ckb_transaction tx, eval.cell_deps
-      end
     end
 
     transient do

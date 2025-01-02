@@ -25,6 +25,7 @@ class CkbTransaction < ApplicationRecord
   has_many :inputs, class_name: "CellOutput", inverse_of: "consumed_by", foreign_key: "consumed_by_id"
   has_many :outputs, class_name: "CellOutput"
   has_many :dao_events
+  has_many :contained_dao_addresses, -> { distinct }, through: :dao_events, source: :address
 
   has_many :token_transfers, foreign_key: :transaction_id, inverse_of: :ckb_transaction
   has_many :cell_dependencies
@@ -35,12 +36,11 @@ class CkbTransaction < ApplicationRecord
 
   has_and_belongs_to_many :contained_addresses, class_name: "Address", join_table: "account_books"
   has_and_belongs_to_many :contained_udts, class_name: "Udt", join_table: :udt_transactions
-  has_and_belongs_to_many :contained_dao_addresses, class_name: "Address", join_table: "address_dao_transactions"
   has_and_belongs_to_many :contained_udt_addresses, class_name: "Address", join_table: "address_udt_transactions"
 
   attribute :tx_hash, :ckb_hash
 
-  scope :recent, -> { order("block_timestamp desc nulls last, tx_index desc") }
+  scope :recent, -> { order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.tx_index desc") }
   scope :cellbase, -> { where(is_cellbase: true) }
   scope :normal, -> { where(is_cellbase: false) }
   scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }

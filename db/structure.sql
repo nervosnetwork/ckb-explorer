@@ -380,16 +380,6 @@ ALTER SEQUENCE public.address_block_snapshots_id_seq OWNED BY public.address_blo
 
 
 --
--- Name: address_dao_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.address_dao_transactions (
-    ckb_transaction_id bigint,
-    address_id bigint
-);
-
-
---
 -- Name: address_udt_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4173,13 +4163,6 @@ ALTER TABLE ONLY public.xudt_tags
 
 
 --
--- Name: address_dao_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX address_dao_tx_alt_pk ON public.address_dao_transactions USING btree (address_id, ckb_transaction_id);
-
-
---
 -- Name: address_udt_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4712,13 +4695,6 @@ CREATE UNIQUE INDEX index_address_block_snapshots_on_block_id_and_address_id ON 
 
 
 --
--- Name: index_address_dao_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_address_dao_transactions_on_ckb_transaction_id ON public.address_dao_transactions USING btree (ckb_transaction_id);
-
-
---
 -- Name: index_address_udt_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5045,6 +5021,13 @@ CREATE UNIQUE INDEX index_daily_statistics_on_created_at_unixtimestamp ON public
 --
 
 CREATE INDEX index_dao_events_on_block_id ON public.dao_events USING btree (block_id);
+
+
+--
+-- Name: index_dao_events_on_block_id_tx_id_and_index_and_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_dao_events_on_block_id_tx_id_and_index_and_type ON public.dao_events USING btree (block_id, ckb_transaction_id, cell_index, event_type);
 
 
 --
@@ -6331,7 +6314,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241212022531'),
 ('20241213053309'),
 ('20241218085721'),
+('20241223023654'),
 ('20241223060331'),
-('20241225045757');
+('20241225045757'),
+('20241231022644');
 
 
