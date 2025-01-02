@@ -421,9 +421,9 @@ module CkbSync
         local_block = node_data_processor.process_block(node_block)
         expected_capacity_involved = local_block.ckb_transactions.normal.map(&:capacity_involved)
 
-        assert_equal expected_capacity_involved, local_block.ckb_transactions.normal.map { |transaction|
+        assert_equal(expected_capacity_involved, local_block.ckb_transactions.normal.map do |transaction|
                                                    transaction.inputs.sum(:capacity)
-                                                 }
+                                                 end)
       end
     end
 
@@ -828,12 +828,12 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                        record: :new_episodes) do
         assert_difference -> {
-                            dao_contract.reload.total_depositors_count
+                            dao_contract.reload.depositors_count
                           }, -1 do
           node_data_processor.call
         end
 
-        deposit_to_dao_events = local_block.dao_events.where(event_type: "new_dao_depositor")
+        deposit_to_dao_events = local_block.dao_events.where(event_type: "deposit_to_dao")
         assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
@@ -1254,6 +1254,7 @@ module CkbSync
       address2 = Address.find_by(lock_hash: lock2.compute_hash)
       address3 = Address.find_by(lock_hash: lock3.compute_hash)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
+      DaoContract.default_contract.update!(deposit_transactions_count: 4)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                        record: :new_episodes) do
         node_data_processor.call
@@ -2624,11 +2625,12 @@ module CkbSync
                                          transactions:, header:)
       block = node_data_processor.process_block(node_block)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
+      DaoContract.default_contract.update(deposit_transactions_count: 4)
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                        record: :new_episodes) do
         assert_changes -> {
-                         DaoContract.default_contract.ckb_transactions_count
+                         DaoContract.default_contract.reload.ckb_transactions_count
                        }, from: 2, to: 0 do
           node_data_processor.call
         end
@@ -3135,7 +3137,7 @@ module CkbSync
       ]
       inputs1 = [
         CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx4.tx_hash, index: 0)), # nervos_dao_withdrawing cell
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx5.tx_hash, index: 0)),  # udt cell
+        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(tx_hash: tx5.tx_hash, index: 0)), # udt cell
       ]
       lock1 = CKB::Types::Script.new(
         code_hash: Settings.secp_cell_type_hash,
@@ -3838,7 +3840,7 @@ module CkbSync
       Sidekiq::Testing.inline!
       block = node_data_processor.process_block(node_block)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-
+      DaoContract.default_contract.update!(deposit_transactions_count: 4)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                        record: :new_episodes) do
         node_data_processor.call
