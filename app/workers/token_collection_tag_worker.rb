@@ -35,7 +35,7 @@ class TokenCollectionTagWorker
   end
 
   def invisible_char?(name)
-    (name =~ /^[\x21-\x7E\u4E00-\u9FFF]+(?:\s[\x21-\x7E\u4E00-\u9FFF]+)?$/).nil?
+    (name =~ /^[\x21-\x7E\u4E00-\u9FFF]+(?:\s[\x21-\x7E\u4E00-\u9FFF]+)*$/).nil?
   end
 
   def out_of_length?(name)

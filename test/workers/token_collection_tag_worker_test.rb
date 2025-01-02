@@ -19,6 +19,12 @@ class TokenCollectionTagWorkerTest < ActiveJob::TestCase
     assert_equal ["suspicious"], TokenCollection.last.tags
   end
 
+  test "add suspicious tag to token_collection when blanks are not continuous" do
+    create(:token_collection, name: "C K B B", cell_id: @cell.id, creator_id: @address.id)
+    TokenCollectionTagWorker.new.perform
+    assert_equal ["rgb++", "layer-1-asset"], TokenCollection.last.tags
+  end
+
   test "add out-of-length-range tag to token_collection" do
     create(:token_collection, name: "C" * 66, cell_id: @cell.id, creator_id: @address.id)
     TokenCollectionTagWorker.new.perform
