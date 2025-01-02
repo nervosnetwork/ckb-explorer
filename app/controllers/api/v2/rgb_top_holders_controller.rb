@@ -18,7 +18,7 @@ module Api
       def btc_top_holders(udt)
         result = BitcoinAddressMapping.
           joins("LEFT OUTER JOIN udt_accounts ON udt_accounts.address_id = bitcoin_address_mappings.ckb_address_id").
-          where(udt_accounts: { udt_id: udt.id }).
+          where(udt_accounts: { udt_id: udt.id }).where("udt_accounts.amount > 0").
           group("bitcoin_address_mappings.bitcoin_address_id").
           select("bitcoin_address_mappings.bitcoin_address_id, SUM(udt_accounts.amount) AS total_amount").
           order("total_amount DESC").limit(10)
