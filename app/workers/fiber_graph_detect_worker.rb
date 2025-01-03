@@ -100,14 +100,13 @@ class FiberGraphDetectWorker
 
     {
       channel_outpoint:,
-      funding_tx_block_number: channel["funding_tx_block_number"].to_i(16),
-      funding_tx_index: channel["funding_tx_index"].to_i(16),
       node1: channel["node1"],
       node2: channel["node2"],
-      last_updated_timestamp: channel["last_updated_timestamp"].to_i(16),
       created_timestamp: channel["created_timestamp"],
-      node1_to_node2_fee_rate: channel["node1_to_node2_fee_rate"].to_i(16),
-      node2_to_node1_fee_rate: channel["node2_to_node1_fee_rate"].to_i(16),
+      last_updated_timestamp_of_node1: channel["last_updated_timestamp_of_node1"].to_i(16),
+      last_updated_timestamp_of_node2: channel["last_updated_timestamp_of_node2"].to_i(16),
+      fee_rate_of_node1: channel["fee_rate_of_node1"].to_i(16),
+      fee_rate_of_node2: channel["fee_rate_of_node2"].to_i(16),
       capacity: channel["capacity"].to_i(16),
       chain_hash: channel["chain_hash"],
       open_transaction_id: open_transaction&.id,

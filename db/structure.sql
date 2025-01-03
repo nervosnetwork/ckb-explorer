@@ -1755,21 +1755,20 @@ ALTER SEQUENCE public.fiber_channels_id_seq OWNED BY public.fiber_channels.id;
 CREATE TABLE public.fiber_graph_channels (
     id bigint NOT NULL,
     channel_outpoint character varying,
-    funding_tx_block_number bigint,
-    funding_tx_index integer,
     node1 character varying,
     node2 character varying,
-    last_updated_timestamp bigint,
     created_timestamp bigint,
-    node1_to_node2_fee_rate numeric(30,0) DEFAULT 0.0,
-    node2_to_node1_fee_rate numeric(30,0) DEFAULT 0.0,
     capacity numeric(64,2) DEFAULT 0.0,
     chain_hash character varying,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     udt_id bigint,
     open_transaction_id bigint,
-    closed_transaction_id bigint
+    closed_transaction_id bigint,
+    last_updated_timestamp_of_node1 bigint,
+    last_updated_timestamp_of_node2 bigint,
+    fee_rate_of_node1 numeric(30,0) DEFAULT 0.0,
+    fee_rate_of_node2 numeric(30,0) DEFAULT 0.0
 );
 
 
@@ -4747,7 +4746,7 @@ CREATE UNIQUE INDEX index_bitcoin_annotations_on_ckb_transaction_id ON public.bi
 -- Name: index_bitcoin_statistics_on_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_bitcoin_statistics_on_timestamp ON public.bitcoin_statistics USING btree ("timestamp");
+CREATE INDEX index_bitcoin_statistics_on_timestamp ON public.bitcoin_statistics USING btree ("timestamp");
 
 
 --
@@ -6317,6 +6316,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241223023654'),
 ('20241223060331'),
 ('20241225045757'),
-('20241231022644');
+('20241231022644'),
+('20250103072945');
 
 

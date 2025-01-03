@@ -15,9 +15,8 @@ module Charts
       daily_statistic = ::DailyStatistic.find_or_create_by!(created_at_unixtimestamp: to_be_counted_date.to_i)
       daily_statistic.from_scratch = from_scratch
       daily_statistic.reset!(updated_attrs)
-
       daily_statistic
-    rescue Exception => e
+    rescue StandardError => e
       Rails.logger.error "Error occurred during DailyStatisticGenerator error: #{e.message}"
     end
 
