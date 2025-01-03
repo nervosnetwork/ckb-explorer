@@ -51,23 +51,22 @@ end
 #
 # Table name: fiber_graph_channels
 #
-#  id                      :bigint           not null, primary key
-#  channel_outpoint        :string
-#  funding_tx_block_number :bigint
-#  funding_tx_index        :integer
-#  node1                   :string
-#  node2                   :string
-#  last_updated_timestamp  :bigint
-#  created_timestamp       :bigint
-#  node1_to_node2_fee_rate :decimal(30, )    default(0)
-#  node2_to_node1_fee_rate :decimal(30, )    default(0)
-#  capacity                :decimal(64, 2)   default(0.0)
-#  chain_hash              :string
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
-#  udt_id                  :bigint
-#  open_transaction_id     :bigint
-#  closed_transaction_id   :bigint
+#  id                              :bigint           not null, primary key
+#  channel_outpoint                :string
+#  node1                           :string
+#  node2                           :string
+#  created_timestamp               :bigint
+#  capacity                        :decimal(64, 2)   default(0.0)
+#  chain_hash                      :string
+#  created_at                      :datetime         not null
+#  updated_at                      :datetime         not null
+#  udt_id                          :bigint
+#  open_transaction_id             :bigint
+#  closed_transaction_id           :bigint
+#  last_updated_timestamp_of_node1 :bigint
+#  last_updated_timestamp_of_node2 :bigint
+#  fee_rate_of_node1               :decimal(30, )    default(0)
+#  fee_rate_of_node2               :decimal(30, )    default(0)
 #
 # Indexes
 #
