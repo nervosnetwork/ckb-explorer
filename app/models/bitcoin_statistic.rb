@@ -34,5 +34,5 @@ end
 #
 # Indexes
 #
-#  index_bitcoin_statistics_on_timestamp  (timestamp) UNIQUE
+#  index_bitcoin_statistics_on_timestamp  (timestamp)
 #
