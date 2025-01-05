@@ -355,7 +355,17 @@ module CkbSync
           is_depositor: address_info[:is_depositor],
         }
       end
-      Address.upsert_all(addresses_deposit_attributes, record_timestamps: true) if addresses_deposit_attributes.present?
+      if addresses_deposit_attributes.present?
+        Address.upsert_all(
+          addresses_deposit_attributes,
+          record_timestamps: true,
+          on_duplicate: Arel.sql(
+            "dao_deposit = COALESCE(EXCLUDED.dao_deposit, addresses.dao_deposit), " \
+            "interest = COALESCE(EXCLUDED.interest, addresses.interest), " \
+            "is_depositor = COALESCE(EXCLUDED.is_depositor, addresses.is_depositor)",
+          ),
+        )
+      end
     end
 
     def update_or_create_udt_accounts!(local_block)
