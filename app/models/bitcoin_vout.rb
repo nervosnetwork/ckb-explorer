@@ -13,8 +13,8 @@ class BitcoinVout < ApplicationRecord
   def commitment
     return unless op_return?
 
-    script_pubkey = Bitcoin::Script.parse_from_payload(data.htb)
-    script_pubkey.op_return_data.bth
+    script_pub_key = Bitcoin::Script.parse_from_payload(data.htb)
+    script_pub_key.op_return_data.bth
   end
 end
 
