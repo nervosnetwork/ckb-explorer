@@ -285,10 +285,15 @@ class Block < ApplicationRecord
     uncle_blocks.delete_all
     # delete_address_txs_cache
     ckb_transaction_ids = ckb_transactions.pluck(:id)
+    tx_hashes = ckb_transactions.pluck(:tx_hash)
     CellOutput.where(ckb_transaction_id: ckb_transaction_ids).delete_all
     CellInput.where(ckb_transaction_id: ckb_transaction_ids).delete_all
     AccountBook.where(ckb_transaction_id: ckb_transaction_ids).delete_all
     CellDependency.where(ckb_transaction_id: ckb_transaction_ids).delete_all
+    cell_deps = CellDepsOutPoint.where(tx_hash: tx_hashes).select(:tx_hash, :cell_index)
+    cell_deps.each do |cell_dep|
+      Rails.cache.delete(["cell_output", cell_dep.tx_hash, cell_dep.cell_index])
+    end
     HeaderDependency.where(ckb_transaction_id: ckb_transaction_ids).delete_all
     TokenTransfer.where(transaction_id: ckb_transaction_ids).delete_all
     Witness.where(ckb_transaction_id: ckb_transaction_ids).delete_all
