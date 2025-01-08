@@ -14,7 +14,6 @@ class FiberGraphDetectWorker
     FiberGraphNode.where.not(node_id: @graph_node_ids).destroy_all
     # purge outdated graph channels
     FiberGraphChannel.where.not(channel_outpoint: @graph_channel_outpoints).destroy_all
-
     # check channel is closed
     FiberGraphChannel.open_channels.each do |channel|
       funding_cell = channel.funding_cell
@@ -62,7 +61,7 @@ class FiberGraphDetectWorker
 
   def upsert_node_with_cfg_info(node)
     node_attributes = {
-      alias: node["alias"],
+      node_name: node["node_name"],
       node_id: node["node_id"],
       addresses: node["addresses"],
       timestamp: node["timestamp"].to_i(16),

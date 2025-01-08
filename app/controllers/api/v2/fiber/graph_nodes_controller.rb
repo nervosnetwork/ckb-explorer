@@ -7,7 +7,7 @@ module Api
           @page_size = params.fetch(:page_size, FiberGraphNode.default_per_page)
           @nodes =
             if params[:q].present?
-              FiberGraphNode.where("alias = :q or peer_id = :q or node_id = :q", q: params[:q]).page(@page).per(@page_size)
+              FiberGraphNode.where("node_name = :q or peer_id = :q or node_id = :q", q: params[:q]).page(@page).per(@page_size)
             else
               FiberGraphNode.all.page(@page).per(@page_size)
             end

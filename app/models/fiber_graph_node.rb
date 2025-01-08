@@ -34,7 +34,7 @@ end
 # Table name: fiber_graph_nodes
 #
 #  id                                 :bigint           not null, primary key
-#  alias                              :string
+#  node_name                          :string
 #  node_id                            :string
 #  addresses                          :string           default([]), is an Array
 #  timestamp                          :bigint
