@@ -163,7 +163,7 @@ class SuggestQuery
       else
         query_key
       end
-    fiber_graph_nodes = FiberGraphNode.where("alias = :query_key or peer_id = :query_key or node_id = :query_key", query_key: normalized_key)
+    fiber_graph_nodes = FiberGraphNode.where("node_name = :query_key or peer_id = :query_key or node_id = :query_key", query_key: normalized_key)
     FiberGraphNodeSerializer.new(fiber_graph_nodes) if fiber_graph_nodes.present?
   end
 end

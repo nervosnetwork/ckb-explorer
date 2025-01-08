@@ -1797,7 +1797,7 @@ ALTER SEQUENCE public.fiber_graph_channels_id_seq OWNED BY public.fiber_graph_ch
 
 CREATE TABLE public.fiber_graph_nodes (
     id bigint NOT NULL,
-    alias character varying,
+    node_name character varying,
     node_id character varying,
     addresses character varying[] DEFAULT '{}'::character varying[],
     "timestamp" bigint,
@@ -6317,6 +6317,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241223060331'),
 ('20241225045757'),
 ('20241231022644'),
-('20250103072945');
+('20250103072945'),
+('20250108053433');
 
 
