@@ -1,5 +1,5 @@
 # TODO
-# remove dao_depositors_count daily_dao_withdraw nodes_distribution nodes_count average_block_time columns
+# remove daily_dao_withdraw nodes_distribution nodes_count average_block_time columns
 class DailyStatistic < ApplicationRecord
   include AttrLogics
 
@@ -214,6 +214,10 @@ class DailyStatistic < ApplicationRecord
       deposit_to_dao.
       where.not(address_id: DaoEvent.created_before(started_at).depositor.
                                                                select(:address_id)).distinct.count(:address_id)
+  end
+
+  define_logic :dao_depositors_count do
+    DaoEvent.depositor.created_before(ended_at).distinct.count(:address_id)
   end
 
   define_logic :circulation_ratio do
@@ -512,7 +516,7 @@ class DailyStatistic < ApplicationRecord
         if to_be_counted_date.beginning_of_day.to_i == Time.at(GENESIS_TIMESTAMP / 1000).in_time_zone.beginning_of_day.to_i \
           || aggron_first_day? \
           || yesterday_statistic.blank?
-          OpenStruct.new(addresses_count: 0, total_dao_deposit: 0,
+          OpenStruct.new(addresses_count: 0, total_dao_deposit: 0, dao_depositors_count: 0,
                          unclaimed_compensation: 0, claimed_compensation: 0,
                          average_deposit_time: 0, mining_reward: 0, deposit_compensation: 0,
                          treasury_amount: 0, total_depositors_count: 0,
