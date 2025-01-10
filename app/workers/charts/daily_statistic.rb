@@ -1,7 +1,7 @@
 module Charts
   class DailyStatistic
     include Sidekiq::Worker
-    sidekiq_options queue: "critical", backtrace: 20
+    sidekiq_options queue: "critical"
 
     # iterate from the creation timestamp of last daily statistic record to now day by day
     # and generate daily statistic record for each day
