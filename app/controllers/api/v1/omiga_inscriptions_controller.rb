@@ -93,7 +93,7 @@ module Api
         if sort == "mint_status"
           records.joins(:omiga_inscription_info).order("omiga_inscription_infos.mint_status #{order}")
         else
-          records.order("#{sort} #{order}")
+          records.order("#{sort} #{order}").order("full_name ASC, id ASC")
         end
       end
     end
