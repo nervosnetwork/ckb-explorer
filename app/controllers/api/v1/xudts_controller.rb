@@ -101,7 +101,7 @@ module Api
           order = "asc"
         end
 
-        records.order("#{sort} #{order}")
+        records.order("#{sort} #{order}").order("full_name ASC, id ASC")
       end
 
       def parse_tags
