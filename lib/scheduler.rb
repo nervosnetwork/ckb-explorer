@@ -115,7 +115,7 @@ s.every "6h", overlap: false do
 end
 
 s.cron "0,30 * * * *" do
-  BitcoinStatistic.refresh
+  call_worker GenerateBitcoinStatisticWorker
 end
 
 s.every "2m", overlap: false do
