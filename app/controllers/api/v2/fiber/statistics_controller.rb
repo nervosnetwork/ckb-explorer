@@ -17,7 +17,7 @@ module Api
           expires_in 15.minutes, public: true, stale_while_revalidate: 5.minutes, stale_if_error: 5.minutes
           statistics = FiberStatistic.filter_by_indicator(params[:id]).order(created_at_unixtimestamp: :desc).limit(14)
 
-          render json: { data: statistics.map { _1.attributes.transform_values(&:to_s) } }
+          render json: { data: statistics.map { _1.attributes.except("id").transform_values(&:to_s) } }
         end
       end
     end
