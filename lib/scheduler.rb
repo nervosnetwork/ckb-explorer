@@ -124,6 +124,7 @@ end
 
 s.every "5m", overlap: false do
   call_worker TokenCollectionTagWorker
+  call_worker UpdateFiberChannelWorker
 end
 
 s.every "10m", overlap: false do
@@ -134,7 +135,7 @@ s.every "5s", overlap: false do
   call_worker AnalyzeContractFromCellDependencyWorker
 end
 
-s.every "5m", overlap: false do
+s.every "0 */4 * * *", overlap: false do
   call_worker FiberGraphDetectWorker
 end
 
