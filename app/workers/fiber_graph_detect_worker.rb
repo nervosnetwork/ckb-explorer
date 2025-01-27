@@ -8,18 +8,15 @@ class FiberGraphDetectWorker
     @graph_node_ids = []
     @graph_channel_outpoints = []
 
-    # sync graph nodes and channels
-    ["nodes", "channels"].each { fetch_graph_infos(_1) }
-    # purge outdated graph nodes
-    FiberGraphNode.where.not(node_id: @graph_node_ids).destroy_all
-    # purge outdated graph channels
-    FiberGraphChannel.where.not(channel_outpoint: @graph_channel_outpoints).destroy_all
-    # check channel is closed
-    FiberGraphChannel.open_channels.each do |channel|
-      funding_cell = channel.funding_cell
-      if funding_cell.consumed_by
-        channel.update(closed_transaction_id: funding_cell.consumed_by_id)
-      end
+    ApplicationRecord.transaction do
+      # sync graph nodes and channels
+      ["nodes", "channels"].each { fetch_graph_infos(_1) }
+      # purge outdated graph nodes
+      FiberGraphNode.where.not(node_id: @graph_node_ids).destroy_all
+      # purge outdated graph channels
+      FiberGraphChannel.where.not(channel_outpoint: @graph_channel_outpoints).destroy_all
+      # generate statistic
+      compute_statistic
     end
   end
 
@@ -42,7 +39,7 @@ class FiberGraphDetectWorker
 
   def fetch_nodes(last_cursor)
     data = rpc.graph_nodes(ENV["FIBER_NODE_URL"], { limit: "0x64", after: last_cursor })
-    ApplicationRecord.transaction { data.dig("result", "nodes").each { upsert_node_with_cfg_info(_1) } }
+    data.dig("result", "nodes").each { upsert_node_with_cfg_info(_1) }
     data.dig("result", "last_cursor")
   rescue StandardError => e
     Rails.logger.error("Error fetching nodes: #{e.message}")
@@ -54,9 +51,6 @@ class FiberGraphDetectWorker
     channel_attributes = data.dig("result", "channels").map { build_channel_attributes(_1) }.compact
     FiberGraphChannel.upsert_all(channel_attributes, unique_by: %i[channel_outpoint]) if channel_attributes.any?
     data.dig("result", "last_cursor")
-  rescue StandardError => e
-    Rails.logger.error("Error fetching channels: #{e.message}")
-    nil
   end
 
   def upsert_node_with_cfg_info(node)
@@ -121,6 +115,44 @@ class FiberGraphDetectWorker
 
     if p2p_index && parts.length > p2p_index + 1
       parts[p2p_index + 1]
+    end
+  end
+
+  def compute_statistic
+    total_nodes = FiberGraphNode.count
+    total_channels = FiberGraphChannel.count
+    # 资金总量
+    total_liquidity = FiberGraphChannel.sum(:capacity)
+    # 资金均值
+    mean_value_locked = total_channels.zero? ? 0.0 : total_liquidity.to_f / total_channels
+    # fee 均值
+    mean_fee_rate = FiberGraphChannel.average("fee_rate_of_node1 + fee_rate_of_node2") || 0.0
+    # 获取 capacity 的数据
+    capacities = FiberGraphChannel.pluck(:capacity).compact
+    # 获取 fee_rate_of_node1 和 fee_rate_of_node2 的数据并合并
+    fee_rate_of_node1 = FiberGraphChannel.pluck(:fee_rate_of_node1).compact
+    fee_rate_of_node2 = FiberGraphChannel.pluck(:fee_rate_of_node2).compact
+    combined_fee_rates = fee_rate_of_node1 + fee_rate_of_node2
+    # 计算中位数
+    medium_value_locked = calculate_median(capacities)
+    medium_fee_rate = calculate_median(combined_fee_rates)
+    created_at_unixtimestamp = Time.now.beginning_of_day.to_i
+    FiberStatistic.upsert(
+      { total_nodes:, total_channels:, total_liquidity:,
+        mean_value_locked:, mean_fee_rate:, medium_value_locked:,
+        medium_fee_rate:, created_at_unixtimestamp: }, unique_by: %i[created_at_unixtimestamp]
+    )
+  end
+
+  def calculate_median(array)
+    sorted = array.sort
+    count = sorted.size
+    return nil if count.zero?
+
+    if count.odd?
+      sorted[count / 2] # 奇数个，取中间值
+    else
+      (sorted[(count / 2) - 1] + sorted[count / 2]).to_f / 2 # 偶数个，取中间两个的平均值
     end
   end
 

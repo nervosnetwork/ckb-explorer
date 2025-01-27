@@ -1866,6 +1866,44 @@ ALTER SEQUENCE public.fiber_peers_id_seq OWNED BY public.fiber_peers.id;
 
 
 --
+-- Name: fiber_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.fiber_statistics (
+    id bigint NOT NULL,
+    total_nodes integer,
+    total_channels integer,
+    total_liquidity bigint,
+    mean_value_locked bigint,
+    mean_fee_rate integer,
+    medium_value_locked bigint,
+    medium_fee_rate integer,
+    created_at_unixtimestamp integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: fiber_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.fiber_statistics_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: fiber_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.fiber_statistics_id_seq OWNED BY public.fiber_statistics.id;
+
+
+--
 -- Name: fiber_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3312,6 +3350,13 @@ ALTER TABLE ONLY public.fiber_peers ALTER COLUMN id SET DEFAULT nextval('public.
 
 
 --
+-- Name: fiber_statistics id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_statistics ALTER COLUMN id SET DEFAULT nextval('public.fiber_statistics_id_seq'::regclass);
+
+
+--
 -- Name: fiber_transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3887,6 +3932,14 @@ ALTER TABLE ONLY public.fiber_graph_nodes
 
 ALTER TABLE ONLY public.fiber_peers
     ADD CONSTRAINT fiber_peers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fiber_statistics fiber_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_statistics
+    ADD CONSTRAINT fiber_statistics_pkey PRIMARY KEY (id);
 
 
 --
@@ -5083,6 +5136,13 @@ CREATE UNIQUE INDEX index_fiber_graph_nodes_on_node_id ON public.fiber_graph_nod
 --
 
 CREATE UNIQUE INDEX index_fiber_peers_on_peer_id ON public.fiber_peers USING btree (peer_id);
+
+
+--
+-- Name: index_fiber_statistics_on_created_at_unixtimestamp; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_fiber_statistics_on_created_at_unixtimestamp ON public.fiber_statistics USING btree (created_at_unixtimestamp);
 
 
 --
@@ -6318,6 +6378,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241225045757'),
 ('20241231022644'),
 ('20250103072945'),
-('20250108053433');
+('20250108053433'),
+('20250126022459');
 
 

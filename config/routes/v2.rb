@@ -103,8 +103,11 @@ namespace :api do
     namespace :fiber do
       resources :peers, param: :peer_id, only: %i[index show create]
       resources :channels, param: :channel_id, only: :show
-      resources :graph_nodes, param: :node_id, only: %i[index show]
+      resources :graph_nodes, param: :node_id, only: %i[index show] do
+        get :addresses, on: :collection
+      end
       resources :graph_channels, only: :index
+      resources :statistics, only: %i[index show]
     end
     resources :udt_hourly_statistics, only: :show
     resources :rgb_assets_statistics, only: :index
