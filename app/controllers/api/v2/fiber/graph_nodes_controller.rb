@@ -25,6 +25,11 @@ module Api
             @graph_channels = @graph_channels.where.not(closed_transaction_id: nil)
           end
         end
+
+        def addresses
+          nodes = FiberGraphNode.all.select(:node_id, :addresses)
+          render json: { data: nodes.map { _1.attributes.except("id") } }
+        end
       end
     end
   end
