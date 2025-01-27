@@ -16,7 +16,7 @@ class FiberGraphChannel < ApplicationRecord
     open_transaction.as_json(only: %i[tx_hash block_number block_timestamp]).merge(
       {
         capacity: funding_cell.capacity,
-        udt_amount: funding_cell.udt_amount,
+        udt_info: funding_cell.udt_info,
         address: funding_cell.address_hash,
       },
     )
@@ -29,7 +29,7 @@ class FiberGraphChannel < ApplicationRecord
       close_accounts: closed_transaction.outputs.map do |cell|
         {
           capacity: cell.capacity,
-          udt_amount: cell.udt_amount,
+          udt_info: cell.udt_info,
           address: cell.address_hash,
         }
       end,
