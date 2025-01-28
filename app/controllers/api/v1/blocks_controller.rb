@@ -20,17 +20,17 @@ module Api
           order_by, asc_or_desc = params[:sort].split(".", 2)
           order_by =
             case order_by
-                     when "height"
-                       "number"
-                     when "transactions"
-                       "ckb_transactions_count"
-                     else
-                       order_by
+            when "height"
+              "number"
+            when "transactions"
+              "ckb_transactions_count"
+            else
+              order_by
             end
 
           head :not_found and return unless order_by.in? %w[number reward timestamp ckb_transactions_count]
 
-          blocks = blocks.order(order_by => asc_or_desc).page(@page).per(@page_size)
+          blocks = blocks.order(order_by => asc_or_desc).order("number DESC").page(@page).per(@page_size)
 
           json =
             Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do

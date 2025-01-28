@@ -16,8 +16,6 @@ module Charts
       daily_statistic.from_scratch = from_scratch
       daily_statistic.reset!(updated_attrs)
       daily_statistic
-    rescue StandardError => e
-      Rails.logger.error "Error occurred during DailyStatisticGenerator error: #{e.message}"
     end
 
     private

@@ -11,7 +11,7 @@ module Api
           where.not(previous_cell_output_id: nil, from_cell_base: false).
           pluck(:ckb_transaction_id).uniq
         pending_transactions = CkbTransaction.where(id: unique_tx_ids).
-          order(transactions_ordering).page(@page).per(@page_size)
+          order(transactions_ordering).order("id DESC").page(@page).per(@page_size)
 
         json = {
           data: pending_transactions.map do |tx|
@@ -20,13 +20,13 @@ module Api
               capacity_involved: tx.capacity_involved,
               transaction_fee: tx.transaction_fee,
               created_at: tx.created_at,
-              create_timestamp: (tx.created_at.to_f * 1000).to_i
+              create_timestamp: (tx.created_at.to_f * 1000).to_i,
             }
           end,
           meta: {
             total: pending_transactions.total_count,
-            page_size: @page_size.to_i
-          }
+            page_size: @page_size.to_i,
+          },
         }
 
         render json: json
@@ -34,7 +34,7 @@ module Api
 
       def count
         render json: {
-          data: CkbTransaction.tx_pending.count
+          data: CkbTransaction.tx_pending.count,
         }
       end
 
