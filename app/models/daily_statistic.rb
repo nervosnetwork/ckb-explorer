@@ -117,7 +117,11 @@ class DailyStatistic < ApplicationRecord
   end
 
   define_logic :mining_reward do
-    Block.created_before(ended_at).sum(:secondary_reward)
+    if from_scratch
+      Block.created_before(ended_at).sum(:secondary_reward)
+    else
+      Block.created_between(started_at, ended_at).sum(:secondary_reward) + yesterday_daily_statistic.mining_reward.to_i
+    end
   end
 
   define_logic :deposit_compensation do
