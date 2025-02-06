@@ -179,7 +179,7 @@ module CkbSync
       process_deposit_dao_events!(local_block, dao_contract)
       process_withdraw_dao_events!(local_block, dao_contract)
       process_interest_dao_events!(local_block, dao_contract)
-      dao_contract.update(depositors_count: DaoEvent.depositor.count)
+      dao_contract.update(depositors_count: DaoEvent.depositor.distinct.count(:address_id))
 
       # update dao contract ckb_transactions_count
       dao_contract.increment!(:ckb_transactions_count,
