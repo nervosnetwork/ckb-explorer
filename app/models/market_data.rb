@@ -98,12 +98,13 @@ class MarketData
   def unmade_dao_interests
     @unmade_dao_interests ||=
       Rails.cache.fetch("unmade_dao_interests", expires_in: 1.day) do
-        tip_dao = tip_block.dao
-        total = 0
-        CellOutput.nervos_dao_deposit.generated_before(tip_block.timestamp).unconsumed_at(tip_block.timestamp).find_each do |cell_output|
-          total += DaoCompensationCalculator.new(cell_output, tip_dao).call
-        end
-        total
+        # tip_dao = tip_block.dao
+        # total = 0
+        # CellOutput.nervos_dao_deposit.generated_before(tip_block.timestamp).unconsumed_at(tip_block.timestamp).find_each do |cell_output|
+        #   total += DaoCompensationCalculator.new(cell_output, tip_dao).call
+        # end
+        # total
+        0
       end
   end
 
