@@ -28,7 +28,7 @@ module Api
 
         def addresses
           nodes = FiberGraphNode.all.select(:node_id, :addresses)
-          render json: { data: nodes.map { _1.attributes.except("id") } }
+          render json: { data: nodes.map { { node_id: _1.node_id, addresses: _1.addresses, connections: _1.connected_node_ids } } }
         end
       end
     end
