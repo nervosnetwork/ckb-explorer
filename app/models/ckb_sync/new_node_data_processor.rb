@@ -179,7 +179,7 @@ module CkbSync
       process_deposit_dao_events!(local_block, dao_contract)
       process_withdraw_dao_events!(local_block, dao_contract)
       process_interest_dao_events!(local_block, dao_contract)
-      dao_contract.update(depositors_count: DaoEvent.depositor.count)
+      dao_contract.update(depositors_count: DaoEvent.depositor.distinct.count(:address_id))
 
       # update dao contract ckb_transactions_count
       dao_contract.increment!(:ckb_transactions_count,
@@ -335,6 +335,7 @@ module CkbSync
           }
         end
         DaoEvent.upsert_all(dao_events_attributes, unique_by: %i[block_id ckb_transaction_id cell_index event_type]) if dao_events_attributes.present?
+        Rails.cache.delete("unmade_dao_interests")
       end
       # update dao contract info
       dao_contract.update!(
