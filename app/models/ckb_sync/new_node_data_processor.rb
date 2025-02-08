@@ -335,6 +335,7 @@ module CkbSync
           }
         end
         DaoEvent.upsert_all(dao_events_attributes, unique_by: %i[block_id ckb_transaction_id cell_index event_type]) if dao_events_attributes.present?
+        Rails.cache.delete("unmade_dao_interests")
       end
       # update dao contract info
       dao_contract.update!(
