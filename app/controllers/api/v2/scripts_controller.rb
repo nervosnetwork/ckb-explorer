@@ -33,7 +33,7 @@ module Api
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
-        @deployed_cells = CellOutput.live.where(id: @contracts.map(&:deployed_cell_output_id)).page(@page).per(@page_size)
+        @deployed_cells = CellOutput.where(id: @contracts.map(&:deployed_cell_output_id)).page(@page).per(@page_size)
       end
 
       def referring_cells
