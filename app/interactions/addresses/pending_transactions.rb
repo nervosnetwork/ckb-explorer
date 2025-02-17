@@ -46,7 +46,7 @@ module Addresses
 
     def select_fields
       %i[id tx_hash block_id block_number block_timestamp tags
-         is_cellbase updated_at capacity_involved created_at]
+         is_cellbase updated_at capacity_involved created_at tx_status]
     end
 
     # A lock script can correspond to multiple CKB addresses
