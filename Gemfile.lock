@@ -156,7 +156,7 @@ GEM
       activerecord (>= 5.a)
       database_cleaner-core (~> 2.0.0)
     database_cleaner-core (2.0.1)
-    date (3.3.4)
+    date (3.4.1)
     deep_merge (1.2.2)
     digest-crc (0.6.4)
       rake (>= 12.0.0, < 14.0.0)
@@ -297,7 +297,7 @@ GEM
     murmurhash3 (0.1.7)
     net-http-persistent (4.0.4)
       connection_pool (~> 2.2)
-    net-imap (0.4.10)
+    net-imap (0.4.19)
       date
       net-protocol
     net-pop (0.1.2)
@@ -463,7 +463,7 @@ GEM
       listen (>= 2.7, < 4.0)
       spring (>= 4)
     thor (1.3.1)
-    timeout (0.4.1)
+    timeout (0.4.3)
     timers (4.3.5)
     traces (0.8.0)
     tzinfo (2.0.6)
