@@ -10,10 +10,8 @@ class AnalyzeContractFromCellDependencyWorker
     cell_deps_attrs = Set.new
     contract_roles = Hash.new { |hash, key| hash[key] = {} }
 
-    # 加载未分析的依赖数据
     dependencies = load_unanalyzed_dependencies
 
-    # 按事务分组并逐组处理
     dependencies.each do |ckb_transaction_id, cell_deps|
       ckb_transaction = CkbTransaction.find(ckb_transaction_id)
       lock_scripts, type_scripts = analyze_scripts(ckb_transaction)
@@ -29,7 +27,6 @@ class AnalyzeContractFromCellDependencyWorker
       )
     end
 
-    # 持久化数据
     save_cell_deps_out_points(cell_deps_out_points_attrs)
     save_contracts(contract_attrs, contract_roles)
     save_cell_dependencies(cell_deps_attrs)
@@ -37,7 +34,6 @@ class AnalyzeContractFromCellDependencyWorker
 
   private
 
-  # 加载未分析的依赖数据
   def load_unanalyzed_dependencies
     CellDependency.where(contract_analyzed: false).
       where.not(block_number: nil).
@@ -45,7 +41,6 @@ class AnalyzeContractFromCellDependencyWorker
       group_by(&:ckb_transaction_id)
   end
 
-  # 分析脚本
   def analyze_scripts(ckb_transaction)
     lock_scripts = {}
     type_scripts = {}
@@ -63,27 +58,26 @@ class AnalyzeContractFromCellDependencyWorker
     [lock_scripts, type_scripts]
   end
 
-  # 处理每个依赖
   def process_cell_dependencies(cell_deps, lock_scripts, type_scripts, out_points_attrs, contract_attrs, cell_deps_attrs, contract_roles)
     cell_deps.each do |cell_dep|
+      is_used =
+        case cell_dep.dep_type
+        when "code"
+          process_code_dep(cell_dep, lock_scripts, type_scripts, out_points_attrs, contract_attrs, contract_roles)
+        when "dep_group"
+          process_dep_group(cell_dep, lock_scripts, type_scripts, out_points_attrs, contract_attrs, contract_roles)
+        end
+
       cell_deps_attrs << {
         contract_analyzed: true,
+        is_used:,
         ckb_transaction_id: cell_dep.ckb_transaction_id,
         contract_cell_id: cell_dep.contract_cell_id,
         dep_type: cell_dep.dep_type,
       }
-      next if Contract.joins(:cell_deps_out_points).where(cell_deps_out_points: { contract_cell_id: cell_dep.contract_cell_id }).exists?
-
-      case cell_dep.dep_type
-      when "code"
-        process_code_dep(cell_dep, lock_scripts, type_scripts, out_points_attrs, contract_attrs, contract_roles)
-      when "dep_group"
-        process_dep_group(cell_dep, lock_scripts, type_scripts, out_points_attrs, contract_attrs, contract_roles)
-      end
     end
   end
 
-  # 处理 "code" 类型依赖
   def process_code_dep(cell_dep, lock_scripts, type_scripts, out_points_attrs, contract_attrs, contract_roles)
     cell_output = cell_dep.cell_output
     out_points_attrs << {
@@ -97,14 +91,17 @@ class AnalyzeContractFromCellDependencyWorker
 
     if contract_roles[cell_output.id][:is_lock_script] || contract_roles[cell_output.id][:is_type_script]
       contract_attrs << build_contract_attr(cell_output, lock_scripts, type_scripts)
+      true
+    else
+      false
     end
   end
 
-  # 处理 "dep_group" 类型依赖
   def process_dep_group(cell_dep, lock_scripts, type_scripts, out_points_attrs, contract_attrs, contract_roles)
     mid_cell = cell_dep.cell_output
     binary_data = mid_cell.binary_data
     out_points_count = binary_data[0, 4].unpack1("L<")
+    is_used = false
 
     0.upto(out_points_count - 1) do |i|
       part_tx_hash, cell_index = binary_data[4 + i * 36, 36].unpack("H64L<")
@@ -121,12 +118,13 @@ class AnalyzeContractFromCellDependencyWorker
       update_contract_roles(cell_output, lock_scripts, type_scripts, contract_roles)
 
       if contract_roles[cell_output.id][:is_lock_script] || contract_roles[cell_output.id][:is_type_script]
-        contract_attrs << build_contract_attr(cell_output, lock_scripts, type_scripts)
+        contract_attrs << build_contract_attr(cell_output)
+        is_used = is_used || true
       end
     end
+    is_used
   end
 
-  # 更新 contract_roles
   def update_contract_roles(cell_output, lock_scripts, type_scripts, contract_roles)
     is_lock_script = (lock_scripts[cell_output.data_hash] || lock_scripts[cell_output.type_script&.script_hash]).present?
     is_type_script = (type_scripts[cell_output.data_hash] || type_scripts[cell_output.type_script&.script_hash]).present?
@@ -137,8 +135,7 @@ class AnalyzeContractFromCellDependencyWorker
     contract_roles[cell_output.id][:hash_type] ||= data_type
   end
 
-  # 构建单个合约属性
-  def build_contract_attr(cell_output, _lock_scripts, _type_scripts)
+  def build_contract_attr(cell_output)
     {
       type_hash: cell_output.type_script&.script_hash,
       data_hash: cell_output.data_hash,
@@ -147,7 +144,6 @@ class AnalyzeContractFromCellDependencyWorker
     }
   end
 
-  # 保存数据
   def save_cell_deps_out_points(attrs)
     CellDepsOutPoint.upsert_all(attrs.to_a, unique_by: %i[contract_cell_id deployed_cell_output_id]) if attrs.any?
   end
@@ -160,6 +156,6 @@ class AnalyzeContractFromCellDependencyWorker
   end
 
   def save_cell_dependencies(attrs)
-    CellDependency.upsert_all(attrs.to_a, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: :contract_analyzed) if attrs.any?
+    CellDependency.upsert_all(attrs.to_a, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: %i[contract_analyzed is_used]) if attrs.any?
   end
 end
