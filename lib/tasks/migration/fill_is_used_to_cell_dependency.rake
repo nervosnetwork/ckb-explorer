@@ -2,6 +2,7 @@ namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:fill_is_used_to_cell_dependency[0,10000]"
   task :fill_is_used_to_cell_dependency, %i[start_block end_block] => :environment do |_, args|
     $error_ids = Set.new
+    ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
     (args[:start_block].to_i..args[:end_block].to_i).to_a.each_slice(100).to_a.each do |range|
       fill_is_used(range)
     end; nil
@@ -13,7 +14,8 @@ namespace :migration do
   private
 
   def fill_is_used(range)
-    response = CkbTransaction.includes(:cell_dependencies).where(block_number: range, is_cellbase: false)
+    puts range.first
+    response = CkbTransaction.includes(:cell_dependencies, :cell_outputs, :cell_inputs).where(block_number: range, is_cellbase: false)
     cell_deps_attrs = Set.new
     response.each do |ckb_transaction|
       type_scripts = Hash.new
