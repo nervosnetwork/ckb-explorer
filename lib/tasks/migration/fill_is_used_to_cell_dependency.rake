@@ -15,27 +15,29 @@ namespace :migration do
 
   def fill_is_used(range)
     puts range.first
-    response = CkbTransaction.includes(:cell_dependencies, :cell_outputs, :cell_inputs).where(block_number: range, is_cellbase: false)
     cell_deps_attrs = Set.new
-    response.each do |ckb_transaction|
-      type_scripts = Hash.new
-      lock_scripts = Hash.new
+    CellDependency.where(block_number: range).group_by { |cell_dep| cell_dep.ckb_transaction_id }.each do |tx_id, cell_deps|
+      ckb_transaction = CkbTransaction.find_by(id: tx_id)
+      if ckb_transaction
+        type_scripts = Hash.new
+        lock_scripts = Hash.new
 
-      cell_outputs = ckb_transaction.cell_outputs.includes(:type_script).to_a
-      cell_inputs = ckb_transaction.cell_inputs.includes(:previous_cell_output).map(&:previous_cell_output)
-      (cell_inputs + cell_outputs).each do |cell|
-        lock_scripts[cell.lock_script.code_hash] = cell.lock_script.hash_type
-        if cell.type_script
-          type_scripts[cell.type_script.code_hash] = cell.type_script.hash_type
+        cell_outputs = ckb_transaction.cell_outputs.includes(:type_script).to_a
+        cell_inputs = ckb_transaction.cell_inputs.includes(:previous_cell_output).map(&:previous_cell_output)
+        (cell_inputs + cell_outputs).each do |cell|
+          lock_scripts[cell.lock_script.code_hash] = cell.lock_script.hash_type
+          if cell.type_script
+            type_scripts[cell.type_script.code_hash] = cell.type_script.hash_type
+          end
         end
-      end
 
-      ckb_transaction.cell_dependencies.each do |cell_dep|
-        case cell_dep.dep_type
-        when "code"
-          process_code_dep(cell_dep, lock_scripts, type_scripts, cell_deps_attrs)
-        when "dep_group"
-          process_dep_group(cell_dep, lock_scripts, type_scripts, cell_deps_attrs)
+        cell_deps.each do |cell_dep|
+          case cell_dep.dep_type
+          when "code"
+            process_code_dep(cell_dep, lock_scripts, type_scripts, cell_deps_attrs)
+          when "dep_group"
+            process_dep_group(cell_dep, lock_scripts, type_scripts, cell_deps_attrs)
+          end
         end
       end
     end
