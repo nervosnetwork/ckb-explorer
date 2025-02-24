@@ -18,12 +18,11 @@ module Api
       end
       test "should get index" do
 
-        get api_v2_nft_transfers_url(collection_id: @token_collection.id, token_id: @token_item.id,
+        get api_v2_nft_transfers_url(collection_id: @token_collection.id, token_id: @token_item.token_id,
                                      from: @from_address.address_hash,
                                      to: @to_address.address_hash)
         assert_response :success
         assert_equal 1, JSON.parse(response.body)['data'].size
-        puts response.body
         assert_equal @token_transfer.id, JSON.parse(response.body)['data'][0]['id']
       end
 
