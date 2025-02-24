@@ -3,50 +3,18 @@ module Api
     module NFT
       class TransfersController < BaseController
         def index
+          scope = TokenTransfer.all
+
           if params[:collection_id].present?
-            if /\A\d+\z/.match?(params[:collection_id])
-              collection = TokenCollection.find params[:collection_id]
-            else
-              collection = TokenCollection.find_by_sn params[:collection_id]
-            end
+            collection = find_collection(params[:collection_id])
+            scope = collection.present? ? filtered_by_token_id(collection) : TokenTransfer.none
           end
 
-          if collection && params[:token_id]
-            item = collection.items.find_by token_id: params[:token_id]
-          end
-
-          if item
-            scope = item.transfers
-          elsif collection
-            scope = collection.transfers
-          else
-            scope = TokenTransfer.all
-          end
-
-          if params[:from]
-            scope = scope.where(from: find_address(params[:from]))
-          end
-          if params[:to]
-            scope = scope.where(to: find_address(params[:to]))
-          end
-          if params[:address_hash]
-            address = find_address(params[:address_hash])
-            scope = scope.where(from: address).or(scope.where(to: address))
-          end
-          if params[:transfer_action]
-            scope = scope.where(action: params[:transfer_action])
-          end
-          if params[:tx_hash]
-            scope = scope.includes(:ckb_transaction).where(ckb_transaction: { tx_hash: params[:tx_hash] })
-          end
-
+          scope = apply_filters(scope)
           scope = scope.order(transaction_id: :desc)
           pagy, token_transfers = pagy(scope)
 
-          render json: {
-            data: token_transfers,
-            pagination: pagy
-          }
+          render json: { data: token_transfers, pagination: pagy }
         end
 
         def show
@@ -63,6 +31,36 @@ module Api
         end
 
         private
+
+        def find_collection(collection_id)
+          if /\A\d+\z/.match?(collection_id)
+            TokenCollection.find_by(id: collection_id)
+          else
+            TokenCollection.find_by(sn: collection_id)
+          end
+        end
+
+        def filtered_by_token_id(collection)
+          if params[:token_id].present?
+            item = collection.items.find_by(token_id: params[:token_id])
+            item.nil? ? TokenTransfer.none : item.transfers
+          else
+            collection.transfers
+          end
+        end
+
+        def apply_filters(scope)
+          scope = scope.where(from: find_address(params[:from])) if params[:from].present?
+          scope = scope.where(to: find_address(params[:to])) if params[:to].present?
+          if params[:address_hash].present?
+            address = find_address(params[:address_hash])
+            scope = scope.where(from: address).or(scope.where(to: address))
+          end
+          scope = scope.where(action: params[:transfer_action]) if params[:transfer_action].present?
+          scope = scope.includes(:ckb_transaction).where(ckb_transaction: { tx_hash: params[:tx_hash] }) if params[:tx_hash].present?
+
+          scope
+        end
 
         def find_address(address_hash)
           Address.find_by_address_hash(address_hash)
