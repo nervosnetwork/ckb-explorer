@@ -18,10 +18,19 @@ module Api
 
         contract_ids = @contracts.map { |contract| contract.id }
         contract_cell_ids = CellDepsOutPoint.list_contract_cell_ids_by_contract(contract_ids)
-        base_query = CkbTransaction.joins(:cell_dependencies).
-          where(cell_dependencies: { contract_cell_id: contract_cell_ids }).
-          order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
-          limit(Settings.query_default_limit)
+        restrict_query =
+          if params[:restrict] == "true"
+            CkbTransaction.joins(:cell_dependencies).
+              where(cell_dependencies: { contract_cell_id: contract_cell_ids, is_used: true })
+          else
+            CkbTransaction.joins(:cell_dependencies).
+              where(cell_dependencies: { contract_cell_id: contract_cell_ids })
+          end
+
+        base_query =
+          restrict_query.
+            order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
+            limit(Settings.query_default_limit)
         @ckb_transactions = CkbTransaction.from("(#{base_query.to_sql}) AS ckb_transactions").
           order("block_number DESC, tx_index DESC").
           page(@page).

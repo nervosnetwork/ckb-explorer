@@ -1044,15 +1044,13 @@ ALTER SEQUENCE public.cell_data_cell_output_id_seq OWNED BY public.cell_data.cel
 
 CREATE TABLE public.cell_dependencies (
     id bigint NOT NULL,
-    contract_id bigint,
     ckb_transaction_id bigint NOT NULL,
     dep_type integer,
     contract_cell_id bigint NOT NULL,
-    script_id bigint,
-    implicit boolean DEFAULT true NOT NULL,
     block_number bigint,
     tx_index integer,
-    contract_analyzed boolean DEFAULT false
+    contract_analyzed boolean DEFAULT false,
+    is_used boolean DEFAULT true
 );
 
 
@@ -4971,20 +4969,6 @@ CREATE INDEX index_cell_dependencies_on_contract_analyzed ON public.cell_depende
 
 
 --
--- Name: index_cell_dependencies_on_contract_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_dependencies_on_contract_id ON public.cell_dependencies USING btree (contract_id);
-
-
---
--- Name: index_cell_dependencies_on_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_cell_dependencies_on_script_id ON public.cell_dependencies USING btree (script_id);
-
-
---
 -- Name: index_cell_dependencies_on_tx_id_and_cell_id_and_dep_type; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6379,6 +6363,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20241231022644'),
 ('20250103072945'),
 ('20250108053433'),
-('20250126022459');
+('20250126022459'),
+('20250218062041');
 
 
