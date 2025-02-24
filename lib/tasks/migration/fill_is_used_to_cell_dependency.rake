@@ -23,9 +23,14 @@ namespace :migration do
         lock_scripts = Hash.new
 
         cell_outputs = ckb_transaction.cell_outputs.includes(:type_script).to_a
-        cell_inputs = ckb_transaction.cell_inputs.includes(:previous_cell_output).map(&:previous_cell_output)
-        (cell_inputs + cell_outputs).each do |cell|
+        cell_inputs = ckb_transaction.input_cells.includes(:lock_script, :type_script).to_a
+        cell_inputs.each do |cell|
           lock_scripts[cell.lock_script.code_hash] = cell.lock_script.hash_type
+          if cell.type_script
+            type_scripts[cell.type_script.code_hash] = cell.type_script.hash_type
+          end
+        end
+        cell_outputs.each do |cell|
           if cell.type_script
             type_scripts[cell.type_script.code_hash] = cell.type_script.hash_type
           end
@@ -46,8 +51,9 @@ namespace :migration do
 
   def process_code_dep(cell_dep, lock_scripts, type_scripts, cell_deps_attrs)
     cell_output = cell_dep.cell_output
-    is_lock_script = (lock_scripts[cell_output.data_hash] || lock_scripts[cell_output.type_script&.script_hash]).present?
-    is_type_script = (type_scripts[cell_output.data_hash] || type_scripts[cell_output.type_script&.script_hash]).present?
+    script_hash = cell_output.type_script&.script_hash
+    is_lock_script = (lock_scripts[cell_output.data_hash] || lock_scripts[script_hash]).present?
+    is_type_script = (type_scripts[cell_output.data_hash] || type_scripts[script_hash]).present?
     unless is_lock_script || is_type_script
       cell_deps_attrs << { ckb_transaction_id: cell_dep.ckb_transaction_id,
                            contract_cell_id: cell_dep.contract_cell_id,
@@ -65,9 +71,10 @@ namespace :migration do
       part_tx_hash, cell_index = binary_data[4 + i * 36, 36].unpack("H64L<")
       tx_hash = "0x#{part_tx_hash}"
       cell_output = CellOutput.find_by_pointer(tx_hash, cell_index)
+      script_hash = cell_output.type_script&.script_hash
 
-      is_lock_script = (lock_scripts[cell_output.data_hash] || lock_scripts[cell_output.type_script&.script_hash]).present?
-      is_type_script = (type_scripts[cell_output.data_hash] || type_scripts[cell_output.type_script&.script_hash]).present?
+      is_lock_script = (lock_scripts[cell_output.data_hash] || lock_scripts[script_hash]).present?
+      is_type_script = (type_scripts[cell_output.data_hash] || type_scripts[script_hash]).present?
       if is_lock_script || is_type_script
         is_used = is_used || true
       end

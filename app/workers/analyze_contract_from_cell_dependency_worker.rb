@@ -48,8 +48,13 @@ class AnalyzeContractFromCellDependencyWorker
     cell_outputs = ckb_transaction.cell_outputs.includes(:type_script).to_a
     cell_inputs = ckb_transaction.cell_inputs.includes(:previous_cell_output).map(&:previous_cell_output)
 
-    (cell_inputs + cell_outputs).each do |cell|
+    cell_inputs.each do |cell|
       lock_scripts[cell.lock_script.code_hash] = cell.lock_script.hash_type
+      if cell.type_script
+        type_scripts[cell.type_script.code_hash] = cell.type_script.hash_type
+      end
+    end
+    cell_outputs.each do |cell|
       if cell.type_script
         type_scripts[cell.type_script.code_hash] = cell.type_script.hash_type
       end
