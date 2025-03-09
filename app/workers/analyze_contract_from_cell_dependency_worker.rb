@@ -95,7 +95,7 @@ class AnalyzeContractFromCellDependencyWorker
     update_contract_roles(cell_output, lock_scripts, type_scripts, contract_roles)
 
     if contract_roles[cell_output.id][:is_lock_script] || contract_roles[cell_output.id][:is_type_script]
-      contract_attrs << build_contract_attr(cell_output, lock_scripts, type_scripts)
+      contract_attrs << build_contract_attr(cell_output)
       true
     else
       false
