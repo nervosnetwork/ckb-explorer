@@ -62,6 +62,7 @@ class FiberGraphDetectWorker
       chain_hash: node["chain_hash"],
       peer_id: extract_peer_id(node["addresses"]),
       auto_accept_min_ckb_funding_amount: node["auto_accept_min_ckb_funding_amount"],
+      deleted_at: nil,
     }
     @graph_node_ids << node_attributes[:node_id]
     fiber_graph_node = FiberGraphNode.upsert(node_attributes, unique_by: %i[node_id], returning: %i[id])
@@ -76,6 +77,7 @@ class FiberGraphDetectWorker
         fiber_graph_node_id: fiber_graph_node[0]["id"],
         udt_id: udt.id,
         auto_accept_amount: info["auto_accept_amount"].to_i(16),
+        deleted_at: nil,
       }
     end.compact
 
@@ -104,6 +106,7 @@ class FiberGraphDetectWorker
       chain_hash: channel["chain_hash"],
       open_transaction_id: open_transaction&.id,
       udt_id: udt&.id,
+      deleted_at: nil,
     }
   end
 
