@@ -126,3 +126,4 @@ gem "jwt"
 
 gem "active_interaction", "~> 5.3"
 gem "bitcoinrb", require: "bitcoin"
+gem "paranoia", "~> 2.6.4"

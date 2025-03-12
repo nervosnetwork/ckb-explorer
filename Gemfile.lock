@@ -311,13 +311,11 @@ GEM
     nokogiri (1.18.3)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
-    nokogiri (1.18.3-arm64-darwin)
-      racc (~> 1.4)
-    nokogiri (1.18.3-x86_64-linux-gnu)
-      racc (~> 1.4)
     pagy (5.10.1)
       activesupport
     parallel (1.22.1)
+    paranoia (2.6.4)
+      activerecord (>= 5.1, < 7.2)
     parser (3.2.2.0)
       ast (~> 2.4.1)
     pg (1.4.5)
@@ -526,6 +524,7 @@ DEPENDENCIES
   net-smtp
   newrelic_rpm
   pagy
+  paranoia (~> 2.6.4)
   pg (>= 0.18, < 2.0)
   pry
   pry-byebug

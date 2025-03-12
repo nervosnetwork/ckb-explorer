@@ -1766,7 +1766,8 @@ CREATE TABLE public.fiber_graph_channels (
     last_updated_timestamp_of_node1 bigint,
     last_updated_timestamp_of_node2 bigint,
     fee_rate_of_node1 numeric(30,0) DEFAULT 0.0,
-    fee_rate_of_node2 numeric(30,0) DEFAULT 0.0
+    fee_rate_of_node2 numeric(30,0) DEFAULT 0.0,
+    deleted_at timestamp(6) without time zone
 );
 
 
@@ -1803,7 +1804,8 @@ CREATE TABLE public.fiber_graph_nodes (
     auto_accept_min_ckb_funding_amount numeric(30,0),
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    peer_id character varying
+    peer_id character varying,
+    deleted_at timestamp(6) without time zone
 );
 
 
@@ -1944,7 +1946,8 @@ CREATE TABLE public.fiber_udt_cfg_infos (
     udt_id bigint,
     auto_accept_amount numeric(64,2) DEFAULT 0.0,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    deleted_at timestamp(6) without time zone
 );
 
 
@@ -5109,6 +5112,20 @@ CREATE UNIQUE INDEX index_fiber_graph_channels_on_channel_outpoint ON public.fib
 
 
 --
+-- Name: index_fiber_graph_channels_on_deleted_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_fiber_graph_channels_on_deleted_at ON public.fiber_graph_channels USING btree (deleted_at);
+
+
+--
+-- Name: index_fiber_graph_nodes_on_deleted_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_fiber_graph_nodes_on_deleted_at ON public.fiber_graph_nodes USING btree (deleted_at);
+
+
+--
 -- Name: index_fiber_graph_nodes_on_node_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5127,6 +5144,13 @@ CREATE UNIQUE INDEX index_fiber_peers_on_peer_id ON public.fiber_peers USING btr
 --
 
 CREATE UNIQUE INDEX index_fiber_statistics_on_created_at_unixtimestamp ON public.fiber_statistics USING btree (created_at_unixtimestamp);
+
+
+--
+-- Name: index_fiber_udt_cfg_infos_on_deleted_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_fiber_udt_cfg_infos_on_deleted_at ON public.fiber_udt_cfg_infos USING btree (deleted_at);
 
 
 --
@@ -6364,6 +6388,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250103072945'),
 ('20250108053433'),
 ('20250126022459'),
-('20250218062041');
+('20250218062041'),
+('20250311084903');
 
 
