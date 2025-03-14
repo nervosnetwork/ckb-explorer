@@ -1,4 +1,6 @@
 class FiberGraphChannel < ApplicationRecord
+  acts_as_paranoid
+
   MAX_PAGINATES_PER = 100
   DEFAULT_PAGINATES_PER = 10
   paginates_per DEFAULT_PAGINATES_PER
@@ -45,6 +47,12 @@ class FiberGraphChannel < ApplicationRecord
       lock_scripts: { code_hash: Settings.fiber_funding_code_hash },
     )
   end
+
+  def deleted_at_timestamp
+    return unless deleted_at
+
+    (deleted_at.to_f * 1000).to_i.to_s
+  end
 end
 
 # == Schema Information
@@ -67,8 +75,10 @@ end
 #  last_updated_timestamp_of_node2 :bigint
 #  fee_rate_of_node1               :decimal(30, )    default(0)
 #  fee_rate_of_node2               :decimal(30, )    default(0)
+#  deleted_at                      :datetime
 #
 # Indexes
 #
 #  index_fiber_graph_channels_on_channel_outpoint  (channel_outpoint) UNIQUE
+#  index_fiber_graph_channels_on_deleted_at        (deleted_at)
 #
