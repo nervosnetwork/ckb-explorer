@@ -14,7 +14,7 @@ module Addresses
 
       address_id = address.map(&:id)
       account_books = AccountBook.where(address_id:).order("ckb_transaction_id desc").select(:ckb_transaction_id).distinct.limit(Settings.query_default_limit)
-      records = CkbTransaction.where(tx_status: :committed, id: account_books.map(&:ckb_transaction_id)).order(transactions_ordering).page(page).per(page_size)
+      records = CkbTransaction.includes(:cell_outputs, :inputs).where(tx_status: :committed, id: account_books.map(&:ckb_transaction_id)).order(transactions_ordering).page(page).per(page_size)
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address: })
 
