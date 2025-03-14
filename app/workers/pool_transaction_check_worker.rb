@@ -6,10 +6,10 @@ class PoolTransactionCheckWorker
 
   def perform
     pending_transactions = CkbTransaction.tx_pending.where("created_at < ?",
-                                                           5.minutes.ago).limit(100)
+                                                           10.minutes.ago).limit(100)
     pending_transactions.each do |tx|
       committed_tx = CkbTransaction.find_by(tx_hash: tx.tx_hash, tx_status: "committed")
-      if committed_tx
+      if committed_tx && tx.reload.tx_pending?
         tx.cell_inputs.delete_all
         tx.delete
       else
