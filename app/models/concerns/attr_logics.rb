@@ -39,6 +39,7 @@ module AttrLogics
   end
 
   def reset_one(attr_name)
+    Rails.logger.info("================Current Reset:#{attr_name}")
     raise "undefined attribute '#{attr_name}' calculation logic" unless attr_definitions[attr_name]
 
     self[attr_name] = instance_eval(&attr_definitions[attr_name])
