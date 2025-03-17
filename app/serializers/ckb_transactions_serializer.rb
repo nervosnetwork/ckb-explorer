@@ -45,11 +45,11 @@ class CkbTransactionsSerializer
     end
   end
 
-  attribute :income do |object, params|
-    if params && params[:previews] && params[:address].present?
-      object.income(params[:address])
-    end
-  end
+  # attribute :income do |object, params|
+  #   if params && params[:previews] && params[:address].present?
+  #     object.income(params[:address])
+  #   end
+  # end
 
   attribute :is_rgb_transaction do |object|
     object.rgb_transaction?
