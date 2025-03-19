@@ -71,7 +71,7 @@ module CkbSync
 
         benchmark :process_ckb_txs, node_block, ckb_txs, contained_address_ids,
                   contained_udt_ids, tags, udt_address_ids
-        addrs_changes = Hash.new { |hash, key| hash[key] = {} }
+        @addrs_changes = Hash.new { |hash, key| hash[key] = {} }
 
         input_capacities, output_capacities = benchmark :build_cells_and_locks!, local_block, node_block, ckb_txs, inputs, outputs,
                                                         tags, udt_address_ids, contained_udt_ids, contained_address_ids, addrs_changes, token_transfer_ckb_tx_ids, cell_deps
