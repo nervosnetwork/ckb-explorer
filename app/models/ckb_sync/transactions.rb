@@ -106,7 +106,7 @@ module CkbSync
                 input_hash = input_mappings["#{attr[:previous_tx_hash]}-#{attr[:previous_index]}"]
                 attr[:previous_cell_output_id] = input_hash[:id]
                 attr[:cell_type] = input_hash[:cell_type]
-                input_account_book_attrs << { ckb_transaction_id: attr[:ckb_transaction_id], address_id: input_hash[:address_id], capacity: input_hash[:capacity] }
+                input_account_books_attrs << { ckb_transaction_id: attr[:ckb_transaction_id], address_id: input_hash[:address_id], capacity: input_hash[:capacity] }
               end
               attr.except(:tx_hash)
             end
