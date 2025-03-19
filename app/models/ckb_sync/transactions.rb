@@ -112,8 +112,8 @@ module CkbSync
             end
           CellInput.upsert_all(new_cell_inputs_attrs, unique_by: %i[ckb_transaction_id index])
           new_output_account_books_attrs =
-            output_account_books_attrs.to_a.map do |attr|
-              { ckb_transaction_id: tx_mappings[attr[:tx_hash]], address_id: address_mappings[attr[:lock_script_hash]], capacity: attr.capacity }
+            output_account_books_attrs.map do |attr|
+              { ckb_transaction_id: tx_mappings[attr[:tx_hash]], address_id: address_mappings[attr[:lock_script_hash]], capacity: attr[:capacity] }
             end
           account_books_attrs = calculate_income(new_output_account_books_attrs, input_account_books_attrs)
           AccountBook.upsert_all(account_books_attrs, unique_by: %i[address_id ckb_transaction_id])
