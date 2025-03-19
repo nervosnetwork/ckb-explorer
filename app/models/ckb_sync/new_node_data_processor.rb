@@ -8,7 +8,7 @@ module CkbSync
     include Redis::Objects
 
     value :reorg_started_at, global: true
-    attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :addrs_changes,
+    attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :target_block_number, :addrs_changes,
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
                   :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids
 
@@ -23,7 +23,7 @@ module CkbSync
     def call
       @local_tip_block = Block.recent.first
       tip_block_number = @tip_block_number = CkbSync::Api.instance.get_tip_block_number
-      target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
+      @target_block_number = local_tip_block.present? ? local_tip_block.number + 1 : 0
       puts "Offset #{@offset}" if @offset > 0
       return if target_block_number > tip_block_number - @offset.to_i
 
@@ -71,7 +71,7 @@ module CkbSync
 
         benchmark :process_ckb_txs, node_block, ckb_txs, contained_address_ids,
                   contained_udt_ids, tags, udt_address_ids
-        addrs_changes = Hash.new { |hash, key| hash[key] = {} }
+        @addrs_changes = Hash.new { |hash, key| hash[key] = {} }
 
         input_capacities, output_capacities = benchmark :build_cells_and_locks!, local_block, node_block, ckb_txs, inputs, outputs,
                                                         tags, udt_address_ids, contained_udt_ids, contained_address_ids, addrs_changes, token_transfer_ckb_tx_ids, cell_deps
@@ -678,8 +678,8 @@ module CkbSync
       ckb_txs.each do |tx|
         tx_id = tx["id"]
         full_tx_address_ids +=
-          contained_addr_ids[tx_index].to_a.map do |a|
-            { address_id: a, ckb_transaction_id: tx_id }
+          contained_addr_ids[tx_index].to_a.map do |address_id|
+            { address_id:, ckb_transaction_id: tx_id, income: addrs_changes[address_id][:balance_diff], block_number: target_block_number, tx_index: }
           end
         full_tx_udt_ids += contained_udt_ids[tx_index].to_a.map do |u|
           { udt_id: u, ckb_transaction_id: tx_id }
