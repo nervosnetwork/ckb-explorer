@@ -78,7 +78,7 @@ module CkbSync
 
         # update explorer data
         benchmark :update_ckb_txs_rel_and_fee, ckb_txs, tags, input_capacities, output_capacities, udt_address_ids,
-                  contained_udt_ids, contained_address_ids, addrs_changes
+                  contained_udt_ids, contained_address_ids
         benchmark :update_block_info!, local_block
         benchmark :update_block_reward_info!, local_block
         benchmark :update_mining_info, local_block
