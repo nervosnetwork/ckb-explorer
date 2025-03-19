@@ -27,10 +27,11 @@ module CkbSync
         cell_deps_attrs = []
         witnesses_attrs = []
         header_deps_attrs = []
+        input_account_books_attrs = []
+        output_account_books_attrs = []
         lock_script_attrs = Set.new
         addresses_attrs = Set.new
         type_script_attrs = Set.new
-        account_books_attrs = Set.new
 
         group_parsers.each do |parser|
           tx_attrs << parser.tx_attr
@@ -40,10 +41,10 @@ module CkbSync
           cell_deps_attrs.concat(parser.cell_deps_attrs)
           header_deps_attrs.concat(parser.header_deps_attrs)
           cell_inputs_attrs.concat(parser.cell_inputs_attrs)
+          output_account_books_attrs.concat(parser.output_account_books_attrs)
           lock_script_attrs.merge(parser.lock_script_attrs)
           addresses_attrs.merge(parser.addresses_attrs)
           type_script_attrs.merge(parser.type_script_attrs)
-          account_books_attrs.merge(parser.account_books_attrs)
         end
         ApplicationRecord.transaction do
           tx_returnings = CkbTransaction.upsert_all(tx_attrs, unique_by: %i[tx_status tx_hash], returning: %i[id tx_hash])
@@ -61,11 +62,7 @@ module CkbSync
             type_script_returnings = TypeScript.upsert_all(type_script_attrs.to_a, unique_by: :script_hash, returning: %i[id script_hash])
             type_script_mappings = type_script_returnings.rows.to_h { |id, script_hash| [script_hash, id] }
           end
-          new_account_books_attrs =
-            account_books_attrs.to_a.map do |attr|
-              { ckb_transaction_id: tx_mappings[attr[:tx_hash]], address_id: address_mappings[attr[:lock_script_hash]] }
-            end
-          AccountBook.upsert_all(new_account_books_attrs, unique_by: %i[address_id ckb_transaction_id])
+
           new_cell_outputs_attrs =
             cell_outputs_attrs.map do |attr|
               attr.merge({ ckb_transaction_id: tx_mappings[attr[:tx_hash]], lock_script_id: lock_script_mappings[attr[:lock_script_hash]],
@@ -100,24 +97,44 @@ module CkbSync
           input_conditions = cell_inputs_attrs.filter do |input|
                                input[:previous_tx_hash] != CellOutput::SYSTEM_TX_HASH
                              end.map { |input| { tx_hash: input[:previous_tx_hash], cell_index: input[:previous_index] } }
-          input_returnings = batch_query_outputs(input_conditions, %i[id cell_type tx_hash cell_index capacity])
-          input_mappings = input_returnings.to_h { |id, cell_type, tx_hash, cell_index| ["#{tx_hash}-#{cell_index}", "#{cell_type}-#{id}"] }
+          input_returnings = batch_query_outputs(input_conditions, %i[id cell_type tx_hash cell_index address_id capacity])
+          input_mappings = input_returnings.to_h { |id, cell_type, tx_hash, cell_index, address_id, capacity| ["#{tx_hash}-#{cell_index}", { id:, cell_type:, address_id:, capacity: }] }
           new_cell_inputs_attrs =
             cell_inputs_attrs.map do |attr|
               attr[:ckb_transaction_id] = tx_mappings[attr[:tx_hash]]
               if attr[:previous_tx_hash] != CellOutput::SYSTEM_TX_HASH && input_mappings["#{attr[:previous_tx_hash]}-#{attr[:previous_index]}"].present?
-                cell_type, previous_cell_output_id = input_mappings["#{attr[:previous_tx_hash]}-#{attr[:previous_index]}"].split("-")
-                attr[:previous_cell_output_id] = previous_cell_output_id
-                attr[:cell_type] = cell_type
+                input_hash = input_mappings["#{attr[:previous_tx_hash]}-#{attr[:previous_index]}"]
+                attr[:previous_cell_output_id] = input_hash[:id]
+                attr[:cell_type] = input_hash[:cell_type]
+                input_account_books_attrs << { ckb_transaction_id: attr[:ckb_transaction_id], address_id: input_hash[:address_id], capacity: input_hash[:capacity] }
               end
               attr.except(:tx_hash)
             end
           CellInput.upsert_all(new_cell_inputs_attrs, unique_by: %i[ckb_transaction_id index])
+          new_output_account_books_attrs =
+            output_account_books_attrs.map do |attr|
+              { ckb_transaction_id: tx_mappings[attr[:tx_hash]], address_id: address_mappings[attr[:lock_script_hash]], capacity: attr[:capacity] }
+            end
+          account_books_attrs = calculate_income(new_output_account_books_attrs, input_account_books_attrs)
+          AccountBook.upsert_all(account_books_attrs, unique_by: %i[address_id ckb_transaction_id])
         end
       end
     end
 
     private
+
+    def calculate_income(outputs, inputs)
+      grouped_outputs = outputs.group_by { |o| [o[:ckb_transaction_id], o[:address_id]] }
+      grouped_inputs = inputs.group_by { |i| [i[:ckb_transaction_id], i[:address_id]] }
+
+      all_keys = (grouped_outputs.keys + grouped_inputs.keys).uniq
+
+      all_keys.map do |key|
+        out_cap = grouped_outputs[key]&.sum { |o| o[:capacity] } || 0
+        in_cap = grouped_inputs[key]&.sum { |i| i[:capacity] } || 0
+        { address_id: key[1], ckb_transaction_id: key[0], income: out_cap - in_cap }
+      end
+    end
 
     def batch_query_outputs(conditions, returnings = %i[id cell_type tx_hash cell_index])
       relation = CellOutput.none
