@@ -14,9 +14,9 @@ module CkbSync
       @cell_deps_attrs = []
       @witnesses_attrs = []
       @header_deps_attrs = []
+      @output_account_books_attrs = []
       @lock_script_attrs = Set.new
       @addresses_attrs = Set.new
-      @output_account_books_attrs = Set.new
       @type_script_attrs = Set.new
     end
 
