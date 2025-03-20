@@ -1,9 +1,9 @@
 namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:fill_account_book_block_number_and_tx_index"
   task fill_account_book_block_number_and_tx_index: :environment do
-    AccountBook.where(block_number: nil).order("ckb_transaction_id asc").find_each do |results|
+    AccountBook.where(block_number: nil).order("ckb_transaction_id asc").find_in_batches do |group|
       attrs = []
-      results.group_by { |r| r.ckb_transaction_id }.each do |ckb_transaction_id, records|
+      group.group_by { |r| r.ckb_transaction_id }.each do |ckb_transaction_id, records|
         tx = CkbTransaction.includes(:inputs, :outputs).find_by(id: ckb_transaction_id)
         if tx.present?
           records.each do |r|
