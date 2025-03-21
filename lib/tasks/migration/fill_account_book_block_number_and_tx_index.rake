@@ -26,8 +26,6 @@ namespace :migration do
     puts $missed_tx_ids.join(",")
     puts "done"
 
-    private
-
     def ensure_all_data_exists(address_ids, tx_id)
       data =
         address_ids.map do |address_id|
