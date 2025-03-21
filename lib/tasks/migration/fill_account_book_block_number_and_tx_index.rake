@@ -25,15 +25,14 @@ namespace :migration do
 
     puts $missed_tx_ids.join(",")
     puts "done"
-
-    def ensure_all_data_exists(address_ids, tx_id)
-      data =
-        address_ids.map do |address_id|
-          { address_id:, ckb_transaction_id: tx_id }
-        end
-      query_conditions = data.map { |d| "(address_id = #{d[:address_id]} AND ckb_transaction_id = #{d[:ckb_transaction_id]})" }.join(" OR ")
-      existing_records = AccountBook.where(query_conditions).pluck(:address_id, :ckb_transaction_id)
-      data.map(&:values).to_set.subset?(existing_records.to_set)
-    end
+  end
+  def ensure_all_data_exists(address_ids, tx_id)
+    data =
+      address_ids.map do |address_id|
+        { address_id:, ckb_transaction_id: tx_id }
+      end
+    query_conditions = data.map { |d| "(address_id = #{d[:address_id]} AND ckb_transaction_id = #{d[:ckb_transaction_id]})" }.join(" OR ")
+    existing_records = AccountBook.where(query_conditions).pluck(:address_id, :ckb_transaction_id)
+    data.map(&:values).to_set.subset?(existing_records.to_set)
   end
 end
