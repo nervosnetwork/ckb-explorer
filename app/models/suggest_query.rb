@@ -2,7 +2,7 @@ class SuggestQuery
   attr_reader :query_key, :filter_by
 
   def initialize(query_key, filter_by = nil)
-    @query_key = query_key
+    @query_key = contains_letter?(query_key) ? query_key : query_key.downcase
     @filter_by = filter_by
   end
 
@@ -163,7 +163,17 @@ class SuggestQuery
       else
         query_key
       end
-    fiber_graph_nodes = FiberGraphNode.where("node_name = :query_key or peer_id = :query_key or node_id = :query_key", query_key: normalized_key)
+    fiber_graph_nodes = FiberGraphNode.where(
+      "LOWER(node_name) = LOWER(:query_key) OR LOWER(peer_id) = LOWER(:query_key) OR LOWER(node_id) = LOWER(:query_key)",
+      query_key: normalized_key
+    )
     FiberGraphNodeSerializer.new(fiber_graph_nodes) if fiber_graph_nodes.present?
+  end
+
+  private
+
+  def contains_letter?(keyword)
+    return false unless keyword.present?
+    keyword.match?(/[A-Z]/)
   end
 end
