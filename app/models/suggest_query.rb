@@ -2,7 +2,7 @@ class SuggestQuery
   attr_reader :query_key, :filter_by
 
   def initialize(query_key, filter_by = nil)
-    @query_key = contains_letter?(query_key) ? query_key : query_key.downcase
+    @query_key = contains_letter?(query_key) ? query_key.downcase : query_key
     @filter_by = filter_by
   end
 
