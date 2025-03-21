@@ -324,7 +324,10 @@ SET default_table_access_method = heap;
 CREATE TABLE public.account_books (
     id bigint NOT NULL,
     address_id bigint,
-    ckb_transaction_id bigint
+    ckb_transaction_id bigint,
+    income numeric(30,0),
+    block_number bigint,
+    tx_index integer
 );
 
 
@@ -4720,6 +4723,13 @@ CREATE UNIQUE INDEX index_account_books_on_address_id_and_ckb_transaction_id ON 
 
 
 --
+-- Name: index_account_books_on_block_number_and_tx_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_account_books_on_block_number_and_tx_index ON public.account_books USING btree (block_number, tx_index);
+
+
+--
 -- Name: index_account_books_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6389,6 +6399,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250108053433'),
 ('20250126022459'),
 ('20250218062041'),
-('20250311084903');
+('20250311084903'),
+('20250318021630');
 
 
