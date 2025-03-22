@@ -3,6 +3,7 @@ namespace :migration do
   task :fill_account_book_block_number_and_tx_index, %i[start_block end_block] => :environment do |_, args|
     $missed_tx_ids = []
     (args[:start_block].to_i..args[:end_block].to_i).to_a.each do |block_number|
+      puts block_number
       attrs = Set.new
       CkbTransaction.includes(:inputs, :outputs).where(block_number:).where(is_cellbase: false).each do |tx|
         outputs = tx.outputs.pluck(:address_id, :capacity).group_by { |item| item[0] }.
