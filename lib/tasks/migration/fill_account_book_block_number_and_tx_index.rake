@@ -1,6 +1,7 @@
 namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:fill_account_book_block_number_and_tx_index[0,1000000]"
   task :fill_account_book_block_number_and_tx_index, %i[start_block end_block] => :environment do |_, args|
+    ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
     $missed_tx_ids = []
     (args[:start_block].to_i..args[:end_block].to_i).to_a.each do |block_number|
       puts block_number
