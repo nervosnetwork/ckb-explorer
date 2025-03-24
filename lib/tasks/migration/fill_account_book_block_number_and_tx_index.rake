@@ -1,10 +1,12 @@
 namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:fill_account_book_block_number_and_tx_index[0,1000000]"
   task :fill_account_book_block_number_and_tx_index, %i[start_block end_block] => :environment do |_, args|
+    ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
     $missed_tx_ids = []
     (args[:start_block].to_i..args[:end_block].to_i).to_a.each do |block_number|
+      puts block_number
       attrs = Set.new
-      CkbTransaction.includes(:inputs, :outputs).where(block_number:).where(is_cellbase: false).each do |tx|
+      CkbTransaction.joins(:block).includes(:inputs, :outputs).where(block: { number: block_number }).where(is_cellbase: false).each do |tx|
         outputs = tx.outputs.pluck(:address_id, :capacity).group_by { |item| item[0] }.
           transform_values { |values| values.sum { |v| v[1] } }
         inputs = tx.inputs.pluck(:address_id, :capacity).group_by { |item| item[0] }.
