@@ -6,7 +6,7 @@ namespace :migration do
     (args[:start_block].to_i..args[:end_block].to_i).to_a.each do |block_number|
       puts block_number
       attrs = Set.new
-      CkbTransaction.includes(:inputs, :outputs).where(block_number:).where(is_cellbase: false).each do |tx|
+      CkbTransaction.joins(:block).includes(:inputs, :outputs).where(block: { number: block_number }).where(is_cellbase: false).each do |tx|
         outputs = tx.outputs.pluck(:address_id, :capacity).group_by { |item| item[0] }.
           transform_values { |values| values.sum { |v| v[1] } }
         inputs = tx.inputs.pluck(:address_id, :capacity).group_by { |item| item[0] }.
