@@ -46,6 +46,10 @@ class FiberGraphNode < ApplicationRecord
 
     (deleted_at.to_f * 1000).to_i.to_s
   end
+
+  def created_timestamp
+    (created_at.to_f * 1000).to_i.to_s
+  end
 end
 
 # == Schema Information
