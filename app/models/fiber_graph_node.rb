@@ -48,7 +48,7 @@ class FiberGraphNode < ApplicationRecord
   end
 
   def created_timestamp
-    (created_at.to_f * 1000).to_i.to_s
+    [(created_at.utc.to_f * 1000).to_i, last_updated_timestamp.to_i].min.to_s
   end
 end
 
