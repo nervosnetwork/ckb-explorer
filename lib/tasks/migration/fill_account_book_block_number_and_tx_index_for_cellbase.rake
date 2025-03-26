@@ -1,6 +1,6 @@
 namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:fill_account_book_block_number_and_tx_index_for_cellbase[0,1000000]"
-  task :fill_account_book_block_number_and_tx_index_for_cellbase, %i[start_block end_block] => :environment do |_, _args|
+  task :fill_account_book_block_number_and_tx_index_for_cellbase, %i[start_block end_block] => :environment do |_, args|
     $missed_tx_ids = []
     (args[:start_block].to_i..args[:end_block].to_i).to_a.each do |block_number|
       puts block_number
