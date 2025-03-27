@@ -53,11 +53,7 @@ module Api
           if order.nil? || !order.match?(/^(asc|desc)$/i)
             order = "asc"
           end
-          if sort == "block_timestamp"
-            records.left_joins(:cell).order("cell_outputs.#{sort} #{order}")
-          else
-            records.order("#{sort} #{order}")
-          end
+          records.order("#{sort} #{order}, block_timestamp desc")
         end
 
         def parse_tags
