@@ -4716,17 +4716,17 @@ CREATE INDEX idx_cell_inputs_on_previous_tx_hash_and_previous_index ON public.ce
 
 
 --
+-- Name: index_account_books_on_address_id_and_block_number_and_tx_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_account_books_on_address_id_and_block_number_and_tx_index ON public.account_books USING btree (address_id, block_number DESC, tx_index DESC);
+
+
+--
 -- Name: index_account_books_on_address_id_and_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_account_books_on_address_id_and_ckb_transaction_id ON public.account_books USING btree (address_id, ckb_transaction_id);
-
-
---
--- Name: index_account_books_on_block_number_and_tx_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_account_books_on_block_number_and_tx_index ON public.account_books USING btree (block_number, tx_index);
 
 
 --
@@ -6400,6 +6400,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250126022459'),
 ('20250218062041'),
 ('20250311084903'),
-('20250318021630');
+('20250318021630'),
+('20250329100620');
 
 
