@@ -71,14 +71,14 @@ module Api
         ckb_transactions =
           if @address
             records_counter = @tx_ids =
-              AccountBook.where(
+              AccountBook.tx_committed.where(
                 address_id: @address.id,
               ).order(
-                "ckb_transaction_id" => :desc,
+                "block_number desc, tx_index desc",
               ).select(
                 "ckb_transaction_id",
               ).page(@page).per(@page_size).fast_page
-            CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
+            CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(block_number: :desc, tx_index: :desc)
           else
             records_counter = RecordCounters::Transactions.new
             CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
@@ -97,7 +97,7 @@ module Api
             ).call
             CkbTransactionsSerializer.new(ckb_transactions,
                                           options.merge(params: {
-                                                          previews: true, address: @address
+                                                          previews: true, address_id: @address.id
                                                         })).serialized_json
           end
         render json:

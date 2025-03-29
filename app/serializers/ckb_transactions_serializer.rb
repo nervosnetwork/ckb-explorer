@@ -46,8 +46,8 @@ class CkbTransactionsSerializer
   end
 
   attribute :income do |object, params|
-    if params && params[:previews] && params[:address].present?
-      object.income(params[:address])
+    if params && params[:previews] && params[:address_id].present?
+      object.account_books.where(address_id: params[:address_id]).sum(:income)
     end
   end
 
