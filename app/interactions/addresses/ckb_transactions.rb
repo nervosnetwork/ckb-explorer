@@ -13,17 +13,12 @@ module Addresses
       raise AddressNotFoundError if address.is_a?(NullAddress)
 
       address_id = address.map(&:id)
-<<<<<<< HEAD
-      account_books = AccountBook.where(address_id:).order("ckb_transaction_id desc").select(:ckb_transaction_id).distinct.limit(Settings.query_default_limit)
-      records = CkbTransaction.includes(:cell_outputs, :inputs).where(tx_status: :committed, id: account_books.map(&:ckb_transaction_id)).order(transactions_ordering).page(page).per(page_size)
-=======
       account_books = AccountBook.tx_committed.where(address_id:).
         order("block_number desc, tx_index desc").
         select(:ckb_transaction_id, :block_number, :tx_index).
         distinct.
         limit(Settings.query_default_limit)
       records = CkbTransaction.where(id: account_books.map(&:ckb_transaction_id)).order(transactions_ordering).page(page).per(page_size)
->>>>>>> issue-829-4
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address_id: })
 
