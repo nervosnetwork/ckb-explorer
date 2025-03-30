@@ -23,7 +23,7 @@ module CsvExportable
       end
 
       ckb_transactions = ckb_transactions.includes(:inputs, :outputs).
-        order(block_timestamp: :desc).limit(5000)
+        order(block_timestamp: :desc).limit(Settings.query_default_limit)
 
       rows = []
       ckb_transactions.find_in_batches(batch_size: 1000, order: :desc) do |transactions|
