@@ -27,7 +27,7 @@ module CsvExportable
                                                 args[:end_number])
       end
 
-      token_transfers = token_transfers.order("token_transfers.id desc").limit(5000)
+      token_transfers = token_transfers.order("token_transfers.id desc").limit(Settings.query_default_limit)
 
       rows = []
       token_transfers.find_in_batches(batch_size: 1000, order: :desc) do |transfers|
@@ -67,7 +67,7 @@ module CsvExportable
         transfer.from&.address_hash || "/",
         transfer.to&.address_hash || "/",
         fee,
-        datetime
+        datetime,
       ]
     end
 

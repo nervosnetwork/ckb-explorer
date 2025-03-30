@@ -5,7 +5,7 @@ module CsvExportable
         select("DISTINCT ON (ckb_transaction_id) account_books.*").
         where(address_id: args[:address_ids]).
         order(ckb_transaction_id: :asc).
-        limit(5000)
+        limit(Settings.query_default_limit)
 
       if args[:start_date].present?
         start_date = BigDecimal(args[:start_date])
@@ -62,11 +62,11 @@ module CsvExportable
       rows = []
       units = input_info.keys | output_info.keys
       units.each_with_index do |unit, index|
-        if unit == "CKB"
-          data = build_ckb_data(input_info[unit], output_info[unit])
-        else
-          data = build_udt_data(input_info[unit], output_info[unit])
-        end
+        data = if unit == "CKB"
+                 build_ckb_data(input_info[unit], output_info[unit])
+               else
+                 build_udt_data(input_info[unit], output_info[unit])
+               end
 
         display_fee =
           if units.include?("CKB")
@@ -86,7 +86,7 @@ module CsvExportable
           data[:token_out],
           data[:balance_diff],
           (display_fee ? fee : "/"),
-          datetime
+          datetime,
         ]
       end
 

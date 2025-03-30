@@ -2,6 +2,8 @@
 class AccountBook < ApplicationRecord
   belongs_to :address
   belongs_to :ckb_transaction
+
+  scope :tx_committed, -> { where.not(block_number: nil) }
 end
 
 # == Schema Information

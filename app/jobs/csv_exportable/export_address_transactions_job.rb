@@ -6,8 +6,8 @@ module CsvExportable
 
       tx_ids = AccountBook.joins(:ckb_transaction).
         where(address_id: args[:address_id]).
-        order(ckb_transaction_id: :asc).
-        limit(5000)
+        order(block_number: :desc, tx_index: :desc).
+        limit(Settings.query_default_limit)
 
       if args[:start_date].present?
         start_date = BigDecimal(args[:start_date])

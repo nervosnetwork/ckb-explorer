@@ -38,9 +38,9 @@ module Api
         transaction3 = create(:ckb_transaction, block: block3)
         cell1 = create(:cell_output, block_timestamp: 10.days.ago.to_i * 1000, block: block1, ckb_transaction: transaction1)
         cell3 = create(:cell_output, block_timestamp: 1.day.ago.to_i * 1000, block: block3, ckb_transaction: transaction3)
-        tc1 = create :token_collection, name: "token1", cell_id: cell1.id
+        tc1 = create :token_collection, name: "token1", cell_id: cell1.id, block_timestamp: cell1.block_timestamp
         tc2 = create :token_collection, name: "token2"
-        _tc3 = create :token_collection, name: "token3", cell_id: cell3.id
+        _tc3 = create :token_collection, name: "token3", cell_id: cell3.id, block_timestamp: cell3.block_timestamp
         get api_v2_nft_collections_url, params: { sort: "timestamp.asc" }
         assert_response :success
         assert_equal tc1.id, json["data"].first["id"]
@@ -55,9 +55,9 @@ module Api
         transaction3 = create(:ckb_transaction, block: block3)
         cell1 = create(:cell_output, block_timestamp: timestamp, block: block1, ckb_transaction: transaction1)
         cell3 = create(:cell_output, block_timestamp: 1.day.ago.to_i * 1000, block: block3, ckb_transaction: transaction3)
-        tc1 = create :token_collection, name: "token1", cell_id: cell1.id
+        tc1 = create :token_collection, name: "token1", cell_id: cell1.id, block_timestamp: cell1.block_timestamp
         _tc2 = create :token_collection, name: "token2", standard: "cota"
-        tc3 = create :token_collection, name: "token3", cell_id: cell3.id
+        tc3 = create :token_collection, name: "token3", cell_id: cell3.id, block_timestamp: cell3.block_timestamp
 
         get api_v2_nft_collections_url, params: { sort: "timestamp.desc", type: "nrc721" }
         assert_response :success

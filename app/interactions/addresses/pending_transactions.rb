@@ -12,8 +12,9 @@ module Addresses
       address = Explore.run!(key:)
       raise AddressNotFoundError if address.is_a?(NullAddress)
 
+      address_id = address.map(&:id)
       records =
-        CkbTransaction.joins(:account_books).where(ckb_transactions: { tx_status: :pending }, account_books: { address_id: address.map(&:id) }).
+        CkbTransaction.joins(:account_books).where(ckb_transactions: { tx_status: :pending }, account_books: { address_id: }).
           select(select_fields).
           order(transactions_ordering).
           page(page).per(page_size)
@@ -21,7 +22,7 @@ module Addresses
       options = FastJsonapi::PaginationMetaGenerator.new(
         request:, records:, page:, page_size:,
       ).call
-      options.merge!(params: { previews: true, address: })
+      options.merge!(params: { previews: true, address_id: })
 
       result = CkbTransactionsSerializer.new(records, options)
       wrap_result(result, address)

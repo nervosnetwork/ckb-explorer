@@ -71,7 +71,7 @@ module Api
         page = 1
         page_size = 10
         address = create(:address, :with_transactions)
-        ckb_transactions = address.ckb_transactions.order(block_timestamp: :desc, tx_index: :desc).page(page).per(page_size)
+        ckb_transactions = address.ckb_transactions.order(block_number: :desc, tx_index: :desc).page(page).per(page_size)
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 
@@ -89,7 +89,7 @@ module Api
           options.merge(
             params: {
               previews: true,
-              address:,
+              address_id: address.id,
             },
           ),
         ).serialized_json, response.body
@@ -99,7 +99,7 @@ module Api
         page = 1
         page_size = 10
         address = create(:address, :with_transactions)
-        ckb_transactions = address.ckb_transactions.order(block_timestamp: :desc).page(page).per(page_size)
+        ckb_transactions = address.ckb_transactions.order(block_number: :desc, tx_index: :desc).page(page).per(page_size)
 
         valid_get api_v1_address_transaction_url(address.lock_hash)
 
@@ -117,7 +117,7 @@ module Api
           options.merge(
             params: {
               previews: true,
-              address:,
+              address_id: address.id,
             },
           ),
         ).serialized_json, response.body
@@ -153,26 +153,27 @@ module Api
         address = create(:address)
 
         block = create(:block, :with_block_hash)
-        generated_ckb_transaction = create(:ckb_transaction, block:,
-                                                             block_timestamp: "1567131126594",
-                                                             contained_address_ids: [address.id])
+        ckb_transaction = create(:ckb_transaction, block:,
+                                                   block_timestamp: "1567131126594",
+                                                   contained_address_ids: [address.id])
+
         create(:cell_output, capacity: 10**8 * 8,
-                             ckb_transaction: generated_ckb_transaction,
-                             block: generated_ckb_transaction.block,
-                             tx_hash: generated_ckb_transaction.tx_hash,
+                             ckb_transaction: ckb_transaction,
+                             block: ckb_transaction.block,
+                             tx_hash: ckb_transaction.tx_hash,
                              cell_index: 0,
                              address:)
         consumed_ckb_transaction = create(:ckb_transaction, block:,
                                                             block_timestamp: "1567131126595",
                                                             contained_address_ids: [address.id])
 
-        generated_ckb_transaction1 = create(:ckb_transaction, block:,
-                                                              block_timestamp: "1567131126596",
-                                                              contained_address_ids: [address.id])
+        ckb_transaction1 = create(:ckb_transaction, block:,
+                                                    block_timestamp: "1567131126596",
+                                                    contained_address_ids: [address.id])
         create(:cell_output, capacity: 10**8 * 8,
-                             ckb_transaction: generated_ckb_transaction1,
-                             block: generated_ckb_transaction1.block,
-                             tx_hash: generated_ckb_transaction1.tx_hash,
+                             ckb_transaction: ckb_transaction1,
+                             block: ckb_transaction1.block,
+                             tx_hash: ckb_transaction1.tx_hash,
                              cell_index: 0,
                              address:)
         create(:cell_output, capacity: 10**8 * 6,
@@ -183,7 +184,7 @@ module Api
                              consumed_by: consumed_ckb_transaction,
                              status: "dead",
                              address:)
-        # address.ckb_transactions << [generated_ckb_transaction1, consumed_ckb_transaction, generated_ckb_transaction]
+        # address.ckb_transactions << [ckb_transaction1, consumed_ckb_transaction, ckb_transaction]
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 
@@ -271,7 +272,7 @@ module Api
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
-                                                    address:,
+                                                    address_id: address.id,
                                                   })
         ).serialized_json
 
@@ -297,7 +298,7 @@ module Api
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
-                                                    address:,
+                                                    address_id: address.id,
                                                   })
         ).serialized_json
 
@@ -323,7 +324,7 @@ module Api
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
-                                                    address:,
+                                                    address_id: address.id,
                                                   })
         ).serialized_json
 
@@ -348,7 +349,7 @@ module Api
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
-                                                    address:,
+                                                    address_id: address.id,
                                                   })
         ).serialized_json
 
@@ -385,7 +386,6 @@ module Api
         block = create(:block, :with_block_hash)
         create(:ckb_transaction,
                :with_multiple_inputs_and_outputs, block:, contained_address_ids: [address.id])
-
         valid_get api_v1_address_transaction_url(address.address_hash)
 
         assert_equal 10,
@@ -484,7 +484,7 @@ module Api
 
         csv_data = CSV.parse(response.body)
 
-        assert_equal csv_data.length, 1
+        assert_equal csv_data.length, 2
       end
     end
   end

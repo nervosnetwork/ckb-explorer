@@ -45,7 +45,7 @@ module CsvExportable
 
       dao_contract = DaoContract.default_contract
       dao_contract.ckb_transactions.includes(dao_events: [:address]).tx_committed.where(sql).
-        order("block_timestamp desc nulls last, id desc").limit(5000).find_in_batches(batch_size: 500) do |transactions|
+        order("block_timestamp desc nulls last, id desc").limit(Settings.query_default_limit).find_in_batches(batch_size: 500) do |transactions|
         transactions.each do |transaction|
           row = generate_row(transaction)
           next if row.blank?

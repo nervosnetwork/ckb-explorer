@@ -186,14 +186,6 @@ class CkbTransaction < ApplicationRecord
     cell_dependencies.includes(:cell_output).to_a.map(&:to_raw)
   end
 
-  def income(address)
-    if tx_pending?
-      cell_outputs.where(address:).sum(:capacity) - input_cells.where(address:).sum(:capacity)
-    else
-      outputs.where(address:).sum(:capacity) - inputs.where(address:).sum(:capacity)
-    end
-  end
-
   def dao_transaction?
     inputs.where(cell_type: %w(
                    nervos_dao_deposit
