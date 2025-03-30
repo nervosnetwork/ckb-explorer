@@ -109,13 +109,18 @@ FactoryBot.define do
     end
 
     trait :with_multiple_inputs_and_outputs do
-      after(:create) do |ckb_transaction|
+      after(:create) do |ckb_transaction, evaluator|
         15.times do |index|
           block = create(:block, :with_block_hash, number: 12)
           tx = create(:ckb_transaction, :with_cell_output_and_lock_script,
                       block:)
-          create(:cell_output, capacity: 10**8 * 8,
-                               ckb_transaction:, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index)
+          if evaluator.contained_address_ids.present?
+            create(:cell_output, capacity: 10**8 * 8,
+                                 ckb_transaction:, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index, address_id: evaluator.contained_address_ids.first)
+          else
+            create(:cell_output, capacity: 10**8 * 8,
+                                 ckb_transaction:, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index)
+          end
           previous_output = { tx_hash: tx.tx_hash, index: 0 }
           create(:cell_input, previous_output:,
                               ckb_transaction:, block: ckb_transaction.block)
