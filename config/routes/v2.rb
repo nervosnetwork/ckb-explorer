@@ -109,7 +109,7 @@ namespace :api do
       resources :graph_channels, only: :index
       resources :statistics, only: %i[index show]
     end
-    resources :udt_hourly_statistics, only: :show
+    resources :udt_hourly_statistics, only: %i[index show]
     resources :rgb_assets_statistics, only: :index
     resources :rgb_top_holders, only: :show
   end
