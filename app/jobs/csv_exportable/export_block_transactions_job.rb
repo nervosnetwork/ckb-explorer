@@ -18,7 +18,7 @@ module CsvExportable
 
       blocks = blocks.where("number >= ?", args[:start_number]) if args[:start_number].present?
       blocks = blocks.where("number <= ?", args[:end_number]) if args[:end_number].present?
-      blocks = blocks.order(number: :desc).last(5000)
+      blocks = blocks.order(number: :desc).last(Settings.query_default_limit)
 
       rows = []
       blocks.each do |block|
@@ -43,7 +43,7 @@ module CsvExportable
         block.timestamp,
         reward,
         block.miner_hash,
-        datetime
+        datetime,
       ]
     end
   end
