@@ -33,22 +33,22 @@ FactoryBot.define do
     end
 
     trait :with_block_number do
-      number { Faker::Number.within(range: 100..10000) }
+      sequence(:number, 100)
     end
 
     trait :with_proposals do
       proposals { ["0xb5658716ac", "0xb5658716ac"] }
-      proposals_count { (proposals.size).to_s }
+      proposals_count { proposals.size.to_s }
     end
 
     trait :with_uncle_block_hashes do
       uncle_block_hashes { ["0xa43e4bb916f6d08f746a055271049d3a61a5344ad266553454862ef68d41bc4d", "0xa43e4bb916f6d08f746a055271049d3a61a5344ad266553454862ef68d41bc3d"] }
-      uncles_count { (uncle_block_hashes.size).to_s }
+      uncles_count { uncle_block_hashes.size.to_s }
     end
 
     trait :with_ckb_transactions do
       after(:create) do |block, evaluator|
-        create_list(:ckb_transaction, evaluator.transactions_count, block: block)
+        create_list(:ckb_transaction, evaluator.transactions_count, block:)
         block.update(ckb_transactions_count: evaluator.transactions_count)
       end
     end
