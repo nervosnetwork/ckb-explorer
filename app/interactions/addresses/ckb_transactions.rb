@@ -37,7 +37,8 @@ module Addresses
     end
 
     def paginate_options(records, address_id)
-      total_count = AccountBook.where(address_id:).distinct.count
+      # total_count = AccountBook.where(address_id:).distinct.count
+      total_count = Address.find(address_id).ckb_transactions_count
       FastJsonapi::PaginationMetaGenerator.new(
         request:, records:, page:, page_size:, total_pages: records.total_pages, total_count:,
       ).call
