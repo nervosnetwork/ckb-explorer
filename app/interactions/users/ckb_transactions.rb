@@ -24,7 +24,7 @@ module Users
         page:,
         page_size:,
       ).call
-      options[:params] = { previews: true, address: user.addresses }
+      options[:params] = { previews: true, address_id: user.addresses.map(&:id) }
 
       transactions_serializer = CkbTransactionsSerializer.new(transactions, options)
       transactions_serializer.serialized_json

@@ -89,7 +89,7 @@ module Api
           options.merge(
             params: {
               previews: true,
-              address:,
+              address_id: address.id,
             },
           ),
         ).serialized_json, response.body
@@ -115,7 +115,7 @@ module Api
           options.merge(
             params: {
               previews: true,
-              address:,
+              address_id: address.id,
             },
           ),
         ).serialized_json, response.body
@@ -220,7 +220,7 @@ module Api
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
-                                                    address:,
+                                                    address_id: address.id,
                                                   })
         ).serialized_json
 
@@ -244,7 +244,7 @@ module Api
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
-                                                    address:,
+                                                    address_id: address.id,
                                                   })
         ).serialized_json
 
@@ -268,7 +268,7 @@ module Api
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
-                                                    address:,
+                                                    address_id: address.id,
                                                   })
         ).serialized_json
 
@@ -291,7 +291,7 @@ module Api
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
-                                                    address:,
+                                                    address_id: address.id,
                                                   })
         ).serialized_json
 

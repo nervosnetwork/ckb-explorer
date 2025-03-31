@@ -404,7 +404,7 @@ module Api
         options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_transactions, page:,
                                                            page_size:, records_counter:).call
 
-        assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address: })).serialized_json,
+        assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address_id: address.id })).serialized_json,
                      response.body
       end
     end

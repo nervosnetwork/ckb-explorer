@@ -13,10 +13,14 @@ module Addresses
       raise AddressNotFoundError if address.is_a?(NullAddress)
 
       address_id = address.map(&:id)
-      account_books = AccountBook.where(address_id:).order("ckb_transaction_id desc").select(:ckb_transaction_id).distinct.limit(Settings.query_default_limit)
-      records = CkbTransaction.where(tx_status: :committed, id: account_books.map(&:ckb_transaction_id)).order(transactions_ordering).page(page).per(page_size)
+      account_books = AccountBook.tx_committed.where(address_id:).
+        order("block_number desc, tx_index desc").
+        select(:ckb_transaction_id, :block_number, :tx_index).
+        distinct.
+        limit(Settings.query_default_limit)
+      records = CkbTransaction.includes(:account_books).where(id: account_books.map(&:ckb_transaction_id)).select(select_fields).order(transactions_ordering).page(page).per(page_size)
       options = paginate_options(records, address_id)
-      options.merge!(params: { previews: true, address: })
+      options.merge!(params: { previews: true, address_id: })
 
       result = CkbTransactionsSerializer.new(records, options)
       wrap_result(result, address)
@@ -33,7 +37,7 @@ module Addresses
     end
 
     def paginate_options(records, address_id)
-      total_count = AccountBook.where(address_id:).distinct.count
+      total_count = Address.where(id: address_id).sum(:ckb_transactions_count)
       FastJsonapi::PaginationMetaGenerator.new(
         request:, records:, page:, page_size:, total_pages: records.total_pages, total_count:,
       ).call
