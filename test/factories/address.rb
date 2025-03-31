@@ -41,7 +41,7 @@ FactoryBot.define do
           ckb_transactions << create(:ckb_transaction, block:, block_timestamp: Time.current.to_i + i, tx_index: i)
         end
 
-        AccountBook.upsert_all ckb_transactions.map { |t| { address_id: address.id, ckb_transaction_id: t.id } }
+        AccountBook.upsert_all(ckb_transactions.map { |t| { address_id: address.id, ckb_transaction_id: t.id, block_number: t.block_number, tx_index: t.tx_index } })
         address.update(ckb_transactions_count: address.ckb_transactions.count)
       end
     end
@@ -56,7 +56,12 @@ FactoryBot.define do
                                                                                               block_timestamp: Time.current.to_i + i)
         end
 
-        AccountBook.upsert_all ckb_transactions.map { |t| { address_id: address.id, ckb_transaction_id: t.id } }
+        attrs =
+          ckb_transactions.map do |t|
+            income = t.outputs.where(address:).sum(:capacity) - t.input_cells.where(address:).sum(:capacity)
+            { address_id: address.id, ckb_transaction_id: t.id, income: }
+          end
+        AccountBook.upsert_all(attrs)
         address.update(ckb_transactions_count: address.ckb_transactions.count)
       end
     end
