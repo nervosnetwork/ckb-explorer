@@ -442,7 +442,7 @@ module Api
         assert_response :success
       end
 
-      test "should submit udt info suceessfully" do
+      test "should submit udt info successfully" do
         udt = create(:udt, published: true)
 
         valid_put api_v1_udt_url(udt.type_hash), params: {
