@@ -9,6 +9,10 @@ module Api
           if params[:status] == "closed"
             @channels = @channels.where.not(closed_transaction_id: nil)
           end
+          if params[:address_hash].present?
+            address = Address.find_address!(params[:address_hash])
+            @channels = @channels.where(address:)
+          end
           @channels = @channels.page(@page).per(@page_size)
         end
       end

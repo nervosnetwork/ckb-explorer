@@ -59,6 +59,7 @@ module Api
                         "cell_index" => 0,
                         "type_hash" => info.type_hash,
                         "data" => "0x0814434b42204669737420496e736372697074696f6e04434b4249a69f54bf339dd121febe64cb0be3a2cf366a8b13ec1a5ae4bebdccb9039c7efa0040075af0750700000000000000000000e8764817000000000000000000000002",
+                        "tags" => [],
                         "capacity" => "1000000000000.0",
                         "occupied_capacity" => "100000000000",
                         "block_timestamp" => block.timestamp.to_s,
