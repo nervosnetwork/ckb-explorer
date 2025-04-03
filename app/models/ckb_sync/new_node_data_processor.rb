@@ -493,19 +493,29 @@ module CkbSync
         addr = Address.find addr_id
         check_invalid_address(addr)
 
-        balance_diff = values[:balance_diff]
-        balance_occupied_diff = values[:balance_occupied_diff].presence || 0
-        live_cells_diff = values[:cells_diff]
-        dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
-        ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
+        if addr.last_updated_block_number.nil?
+          addr.last_updated_block_number =  local_block.number
+          addr.live_cells_count = addr.cell_outputs.live.count
+          addr.ckb_transactions_count = AccountBook.where(address_id: addr.id).count
+          addr.dao_transactions_count = DaoEvent.processed.where(address_id: addr.id).distinct(:ckb_transaction_id).count
+          addr.cal_balance!
+          addr.save!
+        else
+          balance_diff = values[:balance_diff]
+          balance_occupied_diff = values[:balance_occupied_diff].presence || 0
+          live_cells_diff = values[:cells_diff]
+          dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
+          ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
 
-        addr.update!(
-          balance: addr.balance + balance_diff,
-          balance_occupied: addr.balance_occupied + balance_occupied_diff,
-          ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
-          live_cells_count: addr.live_cells_count + live_cells_diff,
-          dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
-        )
+          addr.update!(
+            last_updated_block_number: local_block.number,
+            balance: addr.balance + balance_diff,
+            balance_occupied: addr.balance_occupied + balance_occupied_diff,
+            ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
+            live_cells_count: addr.live_cells_count + live_cells_diff,
+            dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
+          )
+        end
 
         save_address_block_snapshot!(addr, local_block)
       end
