@@ -109,7 +109,8 @@ class FiberGraphDetectWorker
       capacity: channel["capacity"].to_i(16),
       chain_hash: channel["chain_hash"],
       open_transaction_id: open_transaction.id,
-      address_id: cell_output.address_id,
+      address_id: cell_output.address,
+      cell_output:,
       udt_id: udt&.id,
       deleted_at: nil,
     }
