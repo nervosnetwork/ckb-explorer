@@ -174,7 +174,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;    
+    END LOOP;
     close c;
 end
 $$;
@@ -196,21 +196,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null 
+	if old is null
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-	
+
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP 
+	   LOOP
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id) 
+			insert into account_books (ckb_transaction_id, address_id)
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -400,7 +400,6 @@ CREATE TABLE public.addresses (
     id bigint NOT NULL,
     balance numeric(30,0) DEFAULT 0,
     address_hash bytea,
-    cell_consumed bigint,
     ckb_transactions_count bigint DEFAULT 0.0,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
@@ -416,7 +415,8 @@ CREATE TABLE public.addresses (
     is_depositor boolean DEFAULT false,
     dao_transactions_count bigint DEFAULT 0.0,
     lock_script_id bigint,
-    balance_occupied numeric(30,0) DEFAULT 0.0
+    balance_occupied numeric(30,0) DEFAULT 0.0,
+    last_updated_block_number bigint
 );
 
 
@@ -6411,6 +6411,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250311084903'),
 ('20250318021630'),
 ('20250329100620'),
-('20250402032340');
-
-
+('20250331055307'),
+('20250402032340'),
+('20250403090946');
