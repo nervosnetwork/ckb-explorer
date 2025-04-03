@@ -484,7 +484,7 @@ module CkbSync
       CkbUtils.update_current_block_mining_info(local_block)
     end
 
-    def update_addresses_info(addrs_change, local_block, refresh_balance)
+    def update_addresses_info(addrs_change, _local_block, refresh_balance)
       return unless refresh_balance
 
       ### because `upsert` don't validate record, so it may pass invalid data into database.
@@ -507,7 +507,7 @@ module CkbSync
           dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
         )
 
-        save_address_block_snapshot!(addr, local_block)
+        # save_address_block_snapshot!(addr, local_block)
       end
     end
 
