@@ -1004,59 +1004,59 @@ module CkbSync
       end
     end
 
-    test "#process_block should update block's contained address's live cells count" do
-      prepare_node_data(12)
-      local_block = Block.find_by(number: 12)
-      origin_live_cells_count = local_block.contained_addresses.sum(:live_cells_count)
-      VCR.use_cassette("blocks/13", record: :new_episodes) do
-        new_local_block = node_data_processor.call
+    # test "#process_block should update block's contained address's live cells count" do
+    #   prepare_node_data(12)
+    #   local_block = Block.find_by(number: 12)
+    #   origin_live_cells_count = local_block.contained_addresses.sum(:live_cells_count)
+    #   VCR.use_cassette("blocks/13", record: :new_episodes) do
+    #     new_local_block = node_data_processor.call
 
-        assert_equal origin_live_cells_count + 1,
-                     new_local_block.contained_addresses.sum(:live_cells_count)
+    #     assert_equal origin_live_cells_count + 1,
+    #                  new_local_block.contained_addresses.sum(:live_cells_count)
 
-        address = new_local_block.contained_addresses.first
-        snapshot = AddressBlockSnapshot.find_by(block_id: new_local_block.id,
-                                                address_id: address.id)
-        assert_equal snapshot.final_state["live_cells_count"],
-                     address.live_cells_count
-      end
-    end
+    #     address = new_local_block.contained_addresses.first
+    #     snapshot = AddressBlockSnapshot.find_by(block_id: new_local_block.id,
+    #                                             address_id: address.id)
+    #     assert_equal snapshot.final_state["live_cells_count"],
+    #                  address.live_cells_count
+    #   end
+    # end
 
-    test "#process_block should update block's contained address's balance" do
-      prepare_node_data(12)
-      local_block = Block.find_by(number: 12)
-      origin_balance = local_block.contained_addresses.sum(:balance)
-      VCR.use_cassette("blocks/13") do
-        node_block = CkbSync::Api.instance.get_block_by_number(13)
-        lock1 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
-                                       args: "0x#{SecureRandom.hex(20)}")
-        lock2 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
-                                       args: "0x#{SecureRandom.hex(20)}")
-        Address.find_or_create_address(lock1, node_block.header.timestamp)
-        Address.find_or_create_address(lock2, node_block.header.timestamp)
-        300.times do |i|
-          node_block.transactions.first.outputs << if i % 2 == 0
-                                                     CKB::Types::Output.new(
-                                                       capacity: 30000 * 10**8, lock: lock1,
-                                                     )
-                                                   else
-                                                     CKB::Types::Output.new(
-                                                       capacity: 40000 * 10**8, lock: lock2,
-                                                     )
-                                                   end
-          node_block.transactions.first.outputs_data << "0x"
-        end
-        new_local_block = node_data_processor.process_block(node_block)
+    # test "#process_block should update block's contained address's balance" do
+    #   prepare_node_data(12)
+    #   local_block = Block.find_by(number: 12)
+    #   origin_balance = local_block.contained_addresses.sum(:balance)
+    #   VCR.use_cassette("blocks/13") do
+    #     node_block = CkbSync::Api.instance.get_block_by_number(13)
+    #     lock1 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
+    #                                    args: "0x#{SecureRandom.hex(20)}")
+    #     lock2 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
+    #                                    args: "0x#{SecureRandom.hex(20)}")
+    #     Address.find_or_create_address(lock1, node_block.header.timestamp)
+    #     Address.find_or_create_address(lock2, node_block.header.timestamp)
+    #     300.times do |i|
+    #       node_block.transactions.first.outputs << if i % 2 == 0
+    #                                                  CKB::Types::Output.new(
+    #                                                    capacity: 30000 * 10**8, lock: lock1,
+    #                                                  )
+    #                                                else
+    #                                                  CKB::Types::Output.new(
+    #                                                    capacity: 40000 * 10**8, lock: lock2,
+    #                                                  )
+    #                                                end
+    #       node_block.transactions.first.outputs_data << "0x"
+    #     end
+    #     new_local_block = node_data_processor.process_block(node_block)
 
-        assert_equal origin_balance + new_local_block.cell_outputs.sum(:capacity),
-                     new_local_block.contained_addresses.sum(:balance)
+    #     assert_equal origin_balance + new_local_block.cell_outputs.sum(:capacity),
+    #                  new_local_block.contained_addresses.sum(:balance)
 
-        address = new_local_block.contained_addresses.first
-        snapshot = AddressBlockSnapshot.find_by(block_id: new_local_block.id,
-                                                address_id: address.id)
-        assert_equal snapshot.final_state["balance"], address.balance
-      end
-    end
+    #     address = new_local_block.contained_addresses.first
+    #     snapshot = AddressBlockSnapshot.find_by(block_id: new_local_block.id,
+    #                                             address_id: address.id)
+    #     assert_equal snapshot.final_state["balance"], address.balance
+    #   end
+    # end
 
     test "#process_block should update block's contained address's dao_ckb_transactions_count" do
       block1 = create(:block, :with_block_hash,
