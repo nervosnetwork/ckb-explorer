@@ -71,6 +71,7 @@ Rails.application.routes.draw do
       resources :udt_verifications, only: :update
       resources :address_pending_transactions, only: :show
       resources :address_live_cells, only: :show
+      resources :address_deployed_cells, only: :show
     end
   end
   draw "v2"

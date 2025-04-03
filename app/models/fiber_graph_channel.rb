@@ -9,6 +9,8 @@ class FiberGraphChannel < ApplicationRecord
   belongs_to :udt, optional: true
   belongs_to :open_transaction, class_name: "CkbTransaction"
   belongs_to :closed_transaction, class_name: "CkbTransaction", optional: true
+  belongs_to :address
+  belongs_to :cell_output
 
   validates :open_transaction_id, presence: true
 
@@ -76,9 +78,12 @@ end
 #  fee_rate_of_node1               :decimal(30, )    default(0)
 #  fee_rate_of_node2               :decimal(30, )    default(0)
 #  deleted_at                      :datetime
+#  cell_output_id                  :bigint
+#  address_id                      :bigint
 #
 # Indexes
 #
+#  index_fiber_graph_channels_on_address_id        (address_id)
 #  index_fiber_graph_channels_on_channel_outpoint  (channel_outpoint) UNIQUE
 #  index_fiber_graph_channels_on_deleted_at        (deleted_at)
 #
