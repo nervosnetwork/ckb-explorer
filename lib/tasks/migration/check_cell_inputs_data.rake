@@ -5,12 +5,8 @@ namespace :migration do
     error_ids = []
     (args[:start_block].to_i..args[:end_block].to_i).to_a.each_slice(1000).each do |range|
       puts range[0]
-      CkbTransaction.tx_committed.where(block_number: range[0]..range[-1]).each do |tx|
-        if tx.is_cellbase
-          if tx.cell_inputs.count != 1
-            error_ids << tx.id
-          end
-        elsif tx.cell_inputs.count != tx.inputs.count
+      CkbTransaction.tx_committed.where(block_number: range[0]..range[-1]).where(is_cellbase: false).each do |tx|
+        if tx.cell_inputs.count != tx.inputs.count
           error_ids << tx.id
         end
       end
