@@ -232,25 +232,6 @@ class CkbUtilsTest < ActiveSupport::TestCase
     end
   end
 
-  test ".address_cell_consumed should return right cell consumed by the address" do
-    prepare_node_data(12)
-    VCR.use_cassette("blocks/12") do
-      node_block = CkbSync::Api.instance.get_block_by_number(13)
-      cellbase = node_block.transactions.first
-      lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-      miner_address = Address.find_or_create_address(lock_script,
-                                                     node_block.header.timestamp)
-      unspent_cells = miner_address.cell_outputs.live
-      expected_address_cell_consumed =
-        unspent_cells.reduce(0) do |memo, cell|
-          memo + cell.node_output.calculate_min_capacity(cell.data)
-        end
-
-      assert_equal expected_address_cell_consumed,
-                   CkbUtils.address_cell_consumed(miner_address.address_hash)
-    end
-  end
-
   test ".ckb_transaction_fee should return right tx_fee when tx is not dao withdraw tx" do
     node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
     create(:block, :with_block_hash, number: node_block.header.number - 1)

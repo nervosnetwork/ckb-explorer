@@ -212,19 +212,6 @@ class CkbUtils
     get_unspent_cells(address_hash).sum(:capacity)
   end
 
-  def self.address_cell_consumed(address_hash)
-    return if address_hash.blank?
-
-    address_cell_consumed = 0
-    get_unspent_cells(address_hash).find_each do |cell_output|
-      address_cell_consumed += calculate_cell_min_capacity(
-        cell_output.node_output, cell_output.data
-      )
-    end
-
-    address_cell_consumed
-  end
-
   def self.update_block_reward!(current_block)
     target_block_number = current_block.target_block_number
     target_block = current_block.target_block
