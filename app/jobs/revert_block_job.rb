@@ -41,11 +41,17 @@ class RevertBlockJob < ApplicationJob
 
   def update_address_balance_and_ckb_transactions_count(local_tip_block)
     local_tip_block.contained_addresses.each do |address|
-      address.live_cells_count = address.cell_outputs.live.count
-      address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
-      address.dao_transactions_count = DaoEvent.processed.where(address_id: address.id).distinct(:ckb_transaction_id).count
-      address.cal_balance!
-      address.save!
+      snapshot = snapshots.fetch(address.id, []).first
+      if snapshot.present?
+        attrs = snapshot.final_state
+        address.update!(attrs)
+      else
+        address.live_cells_count = address.cell_outputs.live.count
+        address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
+        address.dao_transactions_count = DaoEvent.processed.where(address_id: address.id).distinct(:ckb_transaction_id).count
+        address.cal_balance!
+        address.save!
+      end
     end
   end
 
