@@ -517,10 +517,6 @@ module CkbSync
             dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
           )
         end
-<<<<<<< HEAD
-
-        # save_address_block_snapshot!(addr, local_block)
-=======
         snapshot_attrs << {
           block_number: local_block.number,
           final_state: {
@@ -533,7 +529,6 @@ module CkbSync
           address_id: addr.id,
           block_id: local_block.id,
         }
->>>>>>> issue-649
       end
 
       AddressBlockSnapshot.upsert_all(snapshot_attrs, unique_by: %i[block_id address_id]) if snapshot_attrs.present?
