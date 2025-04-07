@@ -487,6 +487,7 @@ module CkbSync
     def update_addresses_info(addrs_change, local_block, refresh_balance)
       return unless refresh_balance
 
+      snapshot_attrs = []
       ### because `upsert` don't validate record, so it may pass invalid data into database.
       ### here we use one by one update (maybe slower)
       addrs_change.each do |addr_id, values|
@@ -494,7 +495,7 @@ module CkbSync
         check_invalid_address(addr)
 
         if addr.last_updated_block_number.nil?
-          addr.last_updated_block_number =  local_block.number
+          addr.last_updated_block_number = local_block.number
           addr.live_cells_count = addr.cell_outputs.live.count
           addr.ckb_transactions_count = AccountBook.where(address_id: addr.id).count
           addr.dao_transactions_count = DaoEvent.processed.where(address_id: addr.id).distinct(:ckb_transaction_id).count
@@ -516,25 +517,21 @@ module CkbSync
             dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
           )
         end
-
-        save_address_block_snapshot!(addr, local_block)
+        snapshot_attrs << {
+          block_number: local_block.number,
+          final_state: {
+            balance: addr.balance,
+            balance_occupied: addr.balance_occupied,
+            ckb_transactions_count: addr.ckb_transactions_count,
+            live_cells_count: addr.live_cells_count,
+            dao_transactions_count: addr.dao_transactions_count,
+          },
+          address_id: addr.id,
+          block_id: local_block.id,
+        }
       end
-    end
 
-    def save_address_block_snapshot!(addr, local_block)
-      AddressBlockSnapshot.create_with(
-        block_number: local_block.number,
-        final_state: {
-          balance: addr.balance,
-          balance_occupied: addr.balance_occupied,
-          ckb_transactions_count: addr.ckb_transactions_count,
-          live_cells_count: addr.live_cells_count,
-          dao_transactions_count: addr.dao_transactions_count,
-        },
-      ).find_or_create_by!(
-        address_id: addr.id,
-        block_id: local_block.id,
-      )
+      AddressBlockSnapshot.upsert_all(snapshot_attrs, unique_by: %i[block_id address_id]) if snapshot_attrs.present?
     end
 
     def update_block_info!(local_block)
