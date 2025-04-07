@@ -517,6 +517,7 @@ module CkbSync
             dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
           )
         end
+        addr.reload
         snapshot_attrs << {
           block_number: local_block.number,
           final_state: {
