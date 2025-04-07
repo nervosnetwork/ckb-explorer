@@ -18,7 +18,7 @@ class Address < ApplicationRecord
   has_one :bitcoin_address_mapping, foreign_key: "ckb_address_id"
   has_one :bitcoin_address, through: :bitcoin_address_mapping
 
-  validates :balance, :cell_consumed, :ckb_transactions_count, :interest, :dao_deposit,
+  validates :balance, :ckb_transactions_count, :interest, :dao_deposit,
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :lock_hash, presence: true, uniqueness: true
 
@@ -249,26 +249,26 @@ end
 #
 # Table name: addresses
 #
-#  id                     :bigint           not null, primary key
-#  balance                :decimal(30, )    default(0)
-#  address_hash           :binary
-#  cell_consumed          :bigint
-#  ckb_transactions_count :bigint           default(0)
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  lock_hash              :binary
-#  dao_deposit            :decimal(30, )    default(0)
-#  interest               :decimal(30, )    default(0)
-#  block_timestamp        :bigint
-#  live_cells_count       :bigint           default(0)
-#  mined_blocks_count     :integer          default(0)
-#  visible                :boolean          default(TRUE)
-#  average_deposit_time   :bigint
-#  unclaimed_compensation :decimal(30, )
-#  is_depositor           :boolean          default(FALSE)
-#  dao_transactions_count :bigint           default(0)
-#  lock_script_id         :bigint
-#  balance_occupied       :decimal(30, )    default(0)
+#  id                        :bigint           not null, primary key
+#  balance                   :decimal(30, )    default(0)
+#  address_hash              :binary
+#  ckb_transactions_count    :bigint           default(0)
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  lock_hash                 :binary
+#  dao_deposit               :decimal(30, )    default(0)
+#  interest                  :decimal(30, )    default(0)
+#  block_timestamp           :bigint
+#  live_cells_count          :bigint           default(0)
+#  mined_blocks_count        :integer          default(0)
+#  visible                   :boolean          default(TRUE)
+#  average_deposit_time      :bigint
+#  unclaimed_compensation    :decimal(30, )
+#  is_depositor              :boolean          default(FALSE)
+#  dao_transactions_count    :bigint           default(0)
+#  lock_script_id            :bigint
+#  balance_occupied          :decimal(30, )    default(0)
+#  last_updated_block_number :bigint
 #
 # Indexes
 #

@@ -20,6 +20,7 @@ class RevertBlockJobTest < ActiveJob::TestCase
     assert_equal @address.reload.dao_transactions_count, @local_block_snapshot.final_state["dao_transactions_count"]
     assert_equal @address.reload.balance, @local_block_snapshot.final_state["balance"]
     assert_equal @address.reload.balance_occupied, @local_block_snapshot.final_state["balance_occupied"]
+    assert_equal @address.reload.last_updated_block_number, @local_block_snapshot.final_state["last_updated_block_number"]
 
     RevertBlockJob.new(@local_block).update_address_balance_and_ckb_transactions_count(@local_block)
 
@@ -28,6 +29,8 @@ class RevertBlockJobTest < ActiveJob::TestCase
     assert_equal @address.reload.dao_transactions_count, @parent_block_snapshot.final_state["dao_transactions_count"]
     assert_equal @address.reload.balance, @parent_block_snapshot.final_state["balance"]
     assert_equal @address.reload.balance_occupied, @parent_block_snapshot.final_state["balance_occupied"]
+    assert_equal @address.reload.last_updated_block_number, @parent_block_snapshot.final_state["last_updated_block_number"]
+
 
     assert_nil AddressBlockSnapshot.find_by(id: @local_block_snapshot.id)
   end

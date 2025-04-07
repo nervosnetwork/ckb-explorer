@@ -400,7 +400,6 @@ CREATE TABLE public.addresses (
     id bigint NOT NULL,
     balance numeric(30,0) DEFAULT 0,
     address_hash bytea,
-    cell_consumed bigint,
     ckb_transactions_count bigint DEFAULT 0.0,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
@@ -416,7 +415,8 @@ CREATE TABLE public.addresses (
     is_depositor boolean DEFAULT false,
     dao_transactions_count bigint DEFAULT 0.0,
     lock_script_id bigint,
-    balance_occupied numeric(30,0) DEFAULT 0.0
+    balance_occupied numeric(30,0) DEFAULT 0.0,
+    last_updated_block_number bigint
 );
 
 
@@ -6400,6 +6400,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250126022459'),
 ('20250218062041'),
 ('20250311084903'),
-('20250318021630');
+('20250318021630'),
+('20250403090946');
 
 
