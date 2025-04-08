@@ -1878,14 +1878,15 @@ CREATE TABLE public.fiber_statistics (
     id bigint NOT NULL,
     total_nodes integer,
     total_channels integer,
-    total_liquidity bigint,
+    total_capacity bigint,
     mean_value_locked bigint,
     mean_fee_rate integer,
     medium_value_locked bigint,
     medium_fee_rate integer,
     created_at_unixtimestamp integer,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    total_liquidity jsonb
 );
 
 
@@ -6413,4 +6414,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250329100620'),
 ('20250331055307'),
 ('20250402032340'),
-('20250403090946');
+('20250403090946'),
+('20250408020030');
