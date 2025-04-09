@@ -76,9 +76,12 @@ end
 #  fee_rate_of_node1               :decimal(30, )    default(0)
 #  fee_rate_of_node2               :decimal(30, )    default(0)
 #  deleted_at                      :datetime
+#  cell_output_id                  :bigint
+#  address_id                      :bigint
 #
 # Indexes
 #
+#  index_fiber_graph_channels_on_address_id        (address_id)
 #  index_fiber_graph_channels_on_channel_outpoint  (channel_outpoint) UNIQUE
 #  index_fiber_graph_channels_on_deleted_at        (deleted_at)
 #

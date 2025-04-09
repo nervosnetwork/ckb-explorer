@@ -1770,7 +1770,9 @@ CREATE TABLE public.fiber_graph_channels (
     last_updated_timestamp_of_node2 bigint,
     fee_rate_of_node1 numeric(30,0) DEFAULT 0.0,
     fee_rate_of_node2 numeric(30,0) DEFAULT 0.0,
-    deleted_at timestamp(6) without time zone
+    deleted_at timestamp(6) without time zone,
+    cell_output_id bigint,
+    address_id bigint
 );
 
 
@@ -1876,14 +1878,15 @@ CREATE TABLE public.fiber_statistics (
     id bigint NOT NULL,
     total_nodes integer,
     total_channels integer,
-    total_liquidity bigint,
+    total_capacity bigint,
     mean_value_locked bigint,
     mean_fee_rate integer,
     medium_value_locked bigint,
     medium_fee_rate integer,
     created_at_unixtimestamp integer,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    total_liquidity jsonb
 );
 
 
@@ -5115,6 +5118,13 @@ CREATE UNIQUE INDEX index_fiber_channels_on_peer_id_and_channel_id ON public.fib
 
 
 --
+-- Name: index_fiber_graph_channels_on_address_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_fiber_graph_channels_on_address_id ON public.fiber_graph_channels USING btree (address_id);
+
+
+--
 -- Name: index_fiber_graph_channels_on_channel_outpoint; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6401,6 +6411,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250218062041'),
 ('20250311084903'),
 ('20250318021630'),
-('20250403090946');
+('20250402032340'),
+('20250403090946'),
+('20250408020030');
 
 
