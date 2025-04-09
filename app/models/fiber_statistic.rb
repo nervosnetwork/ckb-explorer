@@ -60,9 +60,9 @@ class FiberStatistic < ApplicationRecord
     return nil if count.zero?
 
     if count.odd?
-      sorted[count / 2] # 奇数个，取中间值
+      sorted[count / 2]
     else
-      (sorted[(count / 2) - 1] + sorted[count / 2]).to_f / 2 # 偶数个，取中间两个的平均值
+      (sorted[(count / 2) - 1] + sorted[count / 2]).to_f / 2
     end
   end
 
