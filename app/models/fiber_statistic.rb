@@ -67,7 +67,7 @@ class FiberStatistic < ApplicationRecord
   end
 
   def parsed_total_liquidity
-    total_liquidity.map do |type_hash, amount|
+    total_liquidity&.map do |type_hash, amount|
       if type_hash.present?
         udt_info = Udt.find_by(type_hash: type_hash)
         CkbUtils.hash_value_to_s(
