@@ -180,6 +180,13 @@ module CellOutputs
           consumed_txid: bitcoin_vout.consumed_by&.txid,
         )
       end
+
+      def tags
+        tags = []
+        tags << "fiber" if lock_script.code_hash == Settings.fiber_funding_code_hash
+        tags << "deployment" if Contract.exists?(deployed_cell_output_id: id)
+        tags
+      end
     end
   end
 end

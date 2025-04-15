@@ -94,6 +94,7 @@ module CkbTransactions
               raw: hex_since(cell_input.since.to_i),
               median_timestamp: cell_input.block&.median_timestamp.to_i,
             },
+            tags: previous_cell_output.tags,
           }
 
           if previous_cell_output.nervos_dao_withdrawing?

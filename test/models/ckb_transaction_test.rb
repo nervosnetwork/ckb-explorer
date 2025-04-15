@@ -79,7 +79,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                              :with_multiple_inputs_and_outputs)
     expected_attributes = %i(
       id from_cellbase capacity occupied_capacity address_hash
-      generated_tx_hash cell_type cell_index since
+      generated_tx_hash cell_type cell_index since tags
     ).sort
 
     assert_equal [expected_attributes],
@@ -217,11 +217,12 @@ class CkbTransactionTest < ActiveSupport::TestCase
         raw: "0x0000000000000000",
         median_timestamp: "0",
       },
+      tags: [],
     ).sort
     expected_attributes = %i(
       id from_cellbase capacity occupied_capacity address_hash generated_tx_hash compensation_started_block_number
       compensation_ended_block_number compensation_started_timestamp compensation_ended_timestamp
-      interest cell_type cell_index since locked_until_block_number locked_until_block_timestamp
+      interest cell_type cell_index since locked_until_block_number locked_until_block_timestamp tags
     ).sort
     display_inputs = ckb_transaction.display_inputs
     assert_equal expected_attributes, display_inputs.first.keys.sort
@@ -284,11 +285,12 @@ class CkbTransactionTest < ActiveSupport::TestCase
         raw: "0x0000000000000000",
         median_timestamp: "0",
       },
+      tags: [],
     ).sort
     expected_attributes = %i(
       id from_cellbase capacity occupied_capacity address_hash generated_tx_hash interest cell_type
       compensation_ended_block_number compensation_ended_timestamp compensation_started_block_number
-      compensation_started_timestamp cell_index since
+      compensation_started_timestamp cell_index since tags
     ).sort
 
     assert_equal expected_attributes,
@@ -344,7 +346,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     cell_input.update(previous_tx_hash: udt_input_transaction.tx_hash, index: 0)
     expected_attributes = %i(
       id from_cellbase capacity address_hash
-      generated_tx_hash cell_index cell_type since extra_info
+      generated_tx_hash cell_index cell_type since extra_info tags
     ).sort
     expected_udt_attributes = %i(
       symbol amount decimal type_hash published
@@ -359,6 +361,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       cell_index: udt_cell_output.cell_index,
       cell_type: udt_cell_output.cell_type,
       since: { raw: "0x0000000000000000", median_timestamp: "0" },
+      tags: [],
       extra_info: udt_cell_output.udt_info,
     )
     display_inputs = ckb_transaction.display_inputs
@@ -443,6 +446,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       cell_type: m_nft_cell_output.cell_type,
       since: { raw: "0x0000000000000000", median_timestamp: "0" },
       extra_info: m_nft_cell_output.m_nft_info,
+      tags: [],
     )
     display_inputs = ckb_transaction.display_inputs
     o = display_inputs.first
@@ -486,6 +490,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
       cell_type: m_nft_cell_output.cell_type,
       since: { raw: "0x0000000000000000", median_timestamp: "0" },
       extra_info: m_nft_cell_output.m_nft_info,
+      tags: [],
     )
     display_inputs = ckb_transaction.display_inputs
     o = display_inputs.first
@@ -549,6 +554,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
         raw: "0x0000000000000000",
         median_timestamp: "0",
       },
+      tags: [],
       extra_info: m_nft_cell_output.m_nft_info,
     )
     display_inputs = ckb_transaction.display_inputs
