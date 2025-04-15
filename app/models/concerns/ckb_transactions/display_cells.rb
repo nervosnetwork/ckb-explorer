@@ -142,6 +142,7 @@ module CkbTransactions
             cell_type: output.cell_type,
             generated_tx_hash: output.tx_hash,
             cell_index: output.cell_index,
+            tags: output.tags,
           }
 
           display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
