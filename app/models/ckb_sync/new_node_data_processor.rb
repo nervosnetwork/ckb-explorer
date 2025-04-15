@@ -10,7 +10,7 @@ module CkbSync
     value :reorg_started_at, global: true
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :target_block_number, :addrs_changes,
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
-                  :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids
+                  :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -72,6 +72,7 @@ module CkbSync
         benchmark :process_ckb_txs, node_block, ckb_txs, contained_address_ids,
                   contained_udt_ids, tags, udt_address_ids
         @addrs_changes = Hash.new { |hash, key| hash[key] = {} }
+        @addr_tx_changes = Hash.new { |h, k| h[k] = Hash.new(0) }
 
         input_capacities, output_capacities = benchmark :build_cells_and_locks!, local_block, node_block, ckb_txs, inputs, outputs,
                                                         tags, udt_address_ids, contained_udt_ids, contained_address_ids, addrs_changes, token_transfer_ckb_tx_ids, cell_deps
@@ -526,7 +527,7 @@ module CkbSync
             ckb_transactions_count: addr.ckb_transactions_count,
             live_cells_count: addr.live_cells_count,
             dao_transactions_count: addr.dao_transactions_count,
-            last_updated_block_number: local_block.number
+            last_updated_block_number: local_block.number,
           },
           address_id: addr.id,
           block_id: local_block.id,
@@ -688,7 +689,7 @@ module CkbSync
         tx_id = tx["id"]
         full_tx_address_ids +=
           contained_addr_ids[tx_index].to_a.map do |address_id|
-            { address_id:, ckb_transaction_id: tx_id, income: addrs_changes[address_id][:balance_diff], block_number: target_block_number, tx_index: }
+            { address_id:, ckb_transaction_id: tx_id, income: addr_tx_changes[tx_index][address_id], block_number: target_block_number, tx_index: }
           end
         full_tx_udt_ids += contained_udt_ids[tx_index].to_a.map do |u|
           { udt_id: u, ckb_transaction_id: tx_id }
@@ -931,8 +932,8 @@ input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, 
             type_hash = attributes[:type_hash]
             data = attributes[:data]
             change_rec = addrs_changes[address_id]
-            # change_rec.with_defaults!
 
+            addr_tx_changes[tx_index][address_id] -= capacity
             change_rec[:balance_diff] ||= 0
             change_rec[:balance_diff]  -= capacity
             change_rec[:balance_occupied_diff] ||= 0
@@ -1005,6 +1006,7 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, tok
           address_id = address.id
           cell_data = node_block.transactions[tx_index].outputs_data[cell_index]
           change_rec = addrs_changes[address_id]
+          addr_tx_changes[tx_index][address_id] += item.capacity
 
           change_rec[:balance_diff] ||= 0
           change_rec[:balance_diff] += item.capacity
