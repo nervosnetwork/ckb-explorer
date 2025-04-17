@@ -90,7 +90,11 @@ class FiberGraphDetectWorker
     end
 
     channel_outpoint = channel["channel_outpoint"]
-    open_transaction = CkbTransaction.find_by(tx_hash: channel_outpoint[0..65])
+    tx_hash = channel_outpoint[0..65]
+    cell_index = [channel_outpoint[66..]].pack("H*").unpack1("V")
+    open_transaction = CkbTransaction.find_by(tx_hash:)
+    cell_output = CellOutput.find_by(tx_hash:, cell_index:)
+
     @graph_channel_outpoints << channel_outpoint
 
     {
@@ -104,7 +108,9 @@ class FiberGraphDetectWorker
       fee_rate_of_node2: channel["fee_rate_of_node2"]&.to_i(16),
       capacity: channel["capacity"].to_i(16),
       chain_hash: channel["chain_hash"],
-      open_transaction_id: open_transaction&.id,
+      open_transaction_id: open_transaction.id,
+      address_id: cell_output.address_id,
+      cell_output_id: cell_output.id,
       udt_id: udt&.id,
       deleted_at: nil,
     }
