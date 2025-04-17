@@ -22,20 +22,20 @@ module Api
         }
         json = capacities.map { |address, value|
           {
-            address: address,
+            address:,
             transfers: [
               {
                 asset: "CKB",
                 capacity: value,
                 token_name: "CKB",
                 entity_type: "CKB",
-                transfer_type: "simple_transfer"
+                transfer_type: "simple_transfer",
               }
             ]
           }
         }
 
-        render json: {data: json}
+        render json: { data: json }
       end
 
       protected

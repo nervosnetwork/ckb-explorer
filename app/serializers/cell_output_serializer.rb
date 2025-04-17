@@ -1,7 +1,7 @@
 class CellOutputSerializer
   include FastJsonapi::ObjectSerializer
 
-  attributes :cell_type, :tx_hash, :cell_index, :type_hash, :data
+  attributes :cell_type, :tx_hash, :cell_index, :type_hash, :data, :tags
 
   attribute :block_number do |object|
     object.block.number.to_s
