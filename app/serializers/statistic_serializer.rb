@@ -38,4 +38,8 @@ class StatisticSerializer
   attribute :maintenance_info, if: Proc.new { |_record, params|
     params && params[:info_name] == "maintenance_info"
   }
+
+  attribute :last_updated_timestamp do |object|
+    (object.updated_at.to_i * 1000).to_s
+  end
 end

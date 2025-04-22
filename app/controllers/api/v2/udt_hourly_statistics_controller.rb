@@ -14,6 +14,7 @@ module Api
               ckb_transactions_count: statistic.ckb_transactions_count.to_s,
               holders_count: statistic.holders_count.to_s,
               created_at_unixtimestamp: statistic.created_at_unixtimestamp.to_s,
+              last_updated_timestamp: (statistic.updated_at.to_i * 1000).to_s
             }
           end,
         }
