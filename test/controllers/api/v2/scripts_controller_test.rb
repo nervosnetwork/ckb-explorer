@@ -15,7 +15,7 @@ module Api
         cell_output = create :cell_output, ckb_transaction: unused_ckb_transaction, block: @block
         create :cell_dependency, ckb_transaction_id: unused_ckb_transaction.id, contract_cell_id: cell_output.id, is_used: false
         create :cell_deps_out_point, contract_cell_id: cell_output.id, deployed_cell_output_id: deployed_cell_output.id
-        create :contract, type_hash: @code_hash, hash_type: @hash_type, deployed_cell_output_id: deployed_cell_output.id, is_type_script: true
+        @contract = create :contract, type_hash: @code_hash, hash_type: @hash_type, deployed_cell_output_id: deployed_cell_output.id, is_type_script: true
         create :cell_dependency, ckb_transaction_id: @contract_cell_tx.id, contract_cell_id: contract_cell_output.id
         create :cell_deps_out_point, contract_cell_id: contract_cell_output.id, deployed_cell_output_id: deployed_cell_output.id
       end
@@ -41,6 +41,13 @@ module Api
       test "should get referring_cells" do
         valid_get referring_cells_api_v2_scripts_url(code_hash: @code_hash, hash_type: @hash_type)
         assert_response :success
+      end
+
+      test "should returns contract list" do
+        valid_get api_v2_scripts_url
+        json = JSON.parse response.body
+        assert_response :success
+        assert @contract.name, json["data"].first["name"]
       end
     end
   end

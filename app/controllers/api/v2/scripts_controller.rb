@@ -3,8 +3,12 @@ require "jbuilder"
 module Api
   module V2
     class ScriptsController < BaseController
-      before_action :set_page_and_page_size
-      before_action :set_contracts
+      before_action :set_page_and_page_size, excepts: [:index]
+      before_action :set_contracts, excepts: [:index]
+
+      def index
+        @contracts = Contract.where(verified: true)
+      end
 
       def general_info
         head :not_found and return if @contracts.blank?
