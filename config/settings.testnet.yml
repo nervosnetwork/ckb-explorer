@@ -99,3 +99,5 @@ single_use_lock_code_hash: "0x8290467a512e5b9a6b816469b0edabba1f4ac474e28ffdd604
 
 # fiber funding lock code hash
 fiber_funding_code_hash: "0x6c67887fe201ee0c7853f1682c0b77c0e6214044c156c7558269390a8afa6d7c"
+
+multisig_code_hash: "0x36c971b8d41fbd94aabca77dc75e826729ac98447b46f91e00796155dddb0d29"
