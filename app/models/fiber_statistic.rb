@@ -39,7 +39,15 @@ class FiberStatistic < ApplicationRecord
   end
 
   define_logic :mean_fee_rate do
-    FiberGraphChannel.average("fee_rate_of_node1 + fee_rate_of_node2") || 0.0
+    rates = FiberGraphChannel.all.filter_map do |ch|
+      r1 = ch.update_info_of_node1["fee_rate"]
+      r2 = ch.update_info_of_node2["fee_rate"]
+      next unless r1 && r2
+
+      r1.to_i + r2.to_i
+    end
+
+    rates.any? ? rates.sum.to_f / rates.size : 0.0
   end
 
   define_logic :medium_value_locked do
@@ -48,9 +56,13 @@ class FiberStatistic < ApplicationRecord
   end
 
   define_logic :medium_fee_rate do
-    fee_rate_of_node1 = FiberGraphChannel.pluck(:fee_rate_of_node1).compact
-    fee_rate_of_node2 = FiberGraphChannel.pluck(:fee_rate_of_node2).compact
-    combined_fee_rates = fee_rate_of_node1 + fee_rate_of_node2
+    combined_fee_rates = FiberGraphChannel.all.flat_map do |ch|
+      [
+        ch.update_info_of_node1["fee_rate"]&.to_i,
+        ch.update_info_of_node2["fee_rate"]&.to_i,
+      ]
+    end.compact
+
     calculate_median(combined_fee_rates)
   end
 
