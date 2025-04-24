@@ -32,8 +32,8 @@ class DistributionData
     DailyStatistic.recent.first&.nodes_distribution || DailyStatistic.where.not(nodes_distribution: nil).recent.first&.nodes_distribution || []
   end
 
-  def updated_at
-    DailyStatistic.recent.first&.updated_at
+  def created_at_unixtimestamp
+    DailyStatistic.recent.first&.created_at_unixtimestamp
   end
 
   def block_propagation_delay_history
