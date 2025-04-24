@@ -185,6 +185,7 @@ module CellOutputs
         tags = []
         tags << "fiber" if lock_script.code_hash == Settings.fiber_funding_code_hash
         tags << "deployment" if Contract.exists?(deployed_cell_output_id: id)
+        tags << "multisig" if lock_script.code_hash == Settings.multisig_code_hash && lock_script.hash_type == "data1"
         tags
       end
     end

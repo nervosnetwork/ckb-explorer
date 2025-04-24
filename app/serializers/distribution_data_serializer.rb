@@ -58,4 +58,8 @@ class DistributionDataSerializer
       object.miner_address_distribution
     end
   end
+
+  attribute :last_updated_timestamp do |object|
+    (object.updated_at.to_i * 1000).to_s
+  end
 end

@@ -44,7 +44,7 @@ module Api
         block_statistic_data = EpochStatistic.order(epoch_number: :desc).reverse
         valid_get api_v1_epoch_statistic_url("difficulty-uncle_rate")
 
-        assert_equal [%w(difficulty uncle_rate epoch_number largest_block largest_tx).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal [%w(difficulty uncle_rate epoch_number largest_block largest_tx last_updated_timestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
         assert_equal EpochStatisticSerializer.new(block_statistic_data, { params: { indicator: "difficulty-uncle_rate" } }).serialized_json, response.body
       end
 
@@ -53,7 +53,7 @@ module Api
         block_statistic_data = EpochStatistic.order(epoch_number: :desc).reverse
         valid_get api_v1_epoch_statistic_url("difficulty-hash_rate")
 
-        assert_equal [%w(difficulty hash_rate epoch_number largest_block largest_tx).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal [%w(difficulty hash_rate epoch_number largest_block largest_tx last_updated_timestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
         assert_equal EpochStatisticSerializer.new(block_statistic_data, { params: { indicator: "difficulty-hash_rate" } }).serialized_json, response.body
       end
 
@@ -62,7 +62,7 @@ module Api
         block_statistic_data = EpochStatistic.order(epoch_number: :desc).reverse
         valid_get api_v1_epoch_statistic_url("epoch_time-epoch_length")
 
-        assert_equal [%w(epoch_length epoch_time epoch_number largest_block largest_tx).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal [%w(epoch_length epoch_time epoch_number largest_block largest_tx last_updated_timestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
         assert_equal EpochStatisticSerializer.new(block_statistic_data, { params: { indicator: "epoch_time-epoch_length" } }).serialized_json, response.body
       end
 
@@ -71,7 +71,7 @@ module Api
         block_statistic_data = EpochStatistic.order(epoch_number: :desc).limit(10).reverse
         valid_get api_v1_epoch_statistic_url("difficulty-uncle_rate", limit: 10)
 
-        assert_equal [%w(difficulty uncle_rate epoch_number largest_block largest_tx).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
+        assert_equal [%w(difficulty uncle_rate epoch_number largest_block largest_tx last_updated_timestamp).sort], json.dig("data").map { |item| item.dig("attributes").keys.sort }.uniq
         assert_equal EpochStatisticSerializer.new(block_statistic_data, { params: { indicator: "difficulty-uncle_rate" } }).serialized_json, response.body
       end
 
