@@ -45,7 +45,7 @@ class EpochStatisticSerializer
     }
   end
 
-  attribute :last_updated_timestamp do |object|
-    (object.updated_at.to_i * 1000).to_s
+  attribute :created_at_unixtimestamp do |object|
+    object.updated_at.to_i.to_s
   end
 end

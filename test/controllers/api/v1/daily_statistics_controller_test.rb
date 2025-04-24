@@ -49,7 +49,7 @@ module Api
         daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).valid_indicators
         valid_get api_v1_daily_statistic_url("transactions_count")
 
-        assert_equal [%w(transactions_count created_at_unixtimestamp last_updated_timestamp).sort], json.dig("data").map { |item|
+        assert_equal [%w(transactions_count created_at_unixtimestamp).sort], json.dig("data").map { |item|
                                                                                item.dig("attributes").keys.sort
                                                                              }.uniq
         assert_equal DailyStatisticSerializer.new(daily_statistic_data, params: { indicator: "transactions_count" }).serialized_json,
@@ -61,7 +61,7 @@ module Api
         daily_statistic_data = DailyStatistic.order(created_at_unixtimestamp: :asc).valid_indicators
         valid_get api_v1_daily_statistic_url("addresses_count")
 
-        assert_equal [%w(addresses_count created_at_unixtimestamp last_updated_timestamp).sort],
+        assert_equal [%w(addresses_count created_at_unixtimestamp).sort],
                      json.dig("data").map { |item|
                        item.dig("attributes").keys.sort
                      }.uniq
@@ -74,7 +74,7 @@ module Api
         create_list(:daily_statistic, 15)
         valid_get api_v1_daily_statistic_url("total_dao_deposit")
 
-        assert_equal [%w(total_dao_deposit created_at_unixtimestamp last_updated_timestamp).sort],
+        assert_equal [%w(total_dao_deposit created_at_unixtimestamp).sort],
                      json.dig("data").map { |item|
                        item.dig("attributes").keys.sort
                      }.uniq
@@ -101,9 +101,9 @@ module Api
         daily_statistic_data = DailyStatistic.order(:created_at_unixtimestamp).valid_indicators
         valid_get api_v1_daily_statistic_url("avg_hash_rate")
 
-        assert_equal [%w(avg_hash_rate created_at_unixtimestamp last_updated_timestamp).sort], json.dig("data").map { |item|
-                                                                          item.dig("attributes").keys.sort
-                                                                        }.uniq
+        assert_equal [%w(avg_hash_rate created_at_unixtimestamp).sort], json.dig("data").map { |item|
+                                                                                                 item.dig("attributes").keys.sort
+                                                                                               }.uniq
         assert_equal DailyStatisticSerializer.new(daily_statistic_data, params: { indicator: "avg_hash_rate" }).serialized_json,
                      response.body
         assert_equal 100, json.dig("data").size
