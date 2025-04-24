@@ -142,4 +142,8 @@ class DailyStatisticSerializer
   attribute :activity_address_contract_distribution, if: Proc.new { |_record, params|
     params.present? && params[:indicator].include?("activity_address_contract_distribution")
   }
+
+  attribute :last_updated_timestamp do |object|
+    (object.updated_at.to_i * 1000).to_s
+  end
 end
