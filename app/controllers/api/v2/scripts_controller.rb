@@ -3,11 +3,12 @@ require "jbuilder"
 module Api
   module V2
     class ScriptsController < BaseController
-      before_action :set_page_and_page_size, excepts: [:index]
+      before_action :set_page_and_page_size
       before_action :set_contracts, excepts: [:index]
 
       def index
-        @contracts = Contract.where(verified: true)
+        scope = Contract.where(verified: true)
+        @contracts = sort_scripts(scope).page(@page).per(@page_size)
       end
 
       def general_info
@@ -114,13 +115,15 @@ module Api
           end
       end
 
-      def sort_referring_cells(records)
-        sort, order = params.fetch(:sort, "block_timestamp.desc").split(".", 2)
+      def sort_scripts(records)
+        sort, order = params.fetch(:sort, "deployed_cell_output_id.asc").split(".", 2)
         sort =
           case sort
-          when "created_time" then "block_timestamp"
-          else "block_timestamp"
+          when "transactions" then "h24_ckb_transactions_count"
+          else
+            sort
           end
+
         order = "asc" unless order&.match?(/^(asc|desc)$/i)
         records.order("#{sort} #{order}")
       end

@@ -49,6 +49,18 @@ module Api
         assert_response :success
         assert @contract.name, json["data"].first["name"]
       end
+
+      test "should returns first page " do
+        outputs = create_list(:cell_output, 10, :with_full_transaction)
+        outputs.each do |output|
+          create(:contract, deployed_cell_output_id: output.id)
+        end
+
+        valid_get api_v2_scripts_url(page: 1, page_size: 10)
+        json = JSON.parse response.body
+        assert_response :success
+        assert 10, json["data"].length
+      end
     end
   end
 end

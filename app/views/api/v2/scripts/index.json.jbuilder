@@ -13,3 +13,7 @@ json.data do
     json.is_lock_script contract.is_lock_script
   end
 end
+json.meta do
+  json.total @contracts.total_count
+  json.page_size @page_size.to_i
+end
