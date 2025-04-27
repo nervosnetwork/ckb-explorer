@@ -8,6 +8,16 @@ module Api
 
       def index
         scope = Contract.where(verified: true)
+        if params[:script_type].present?
+          script_types = params[:script_type].split(",").map(&:strip)
+          if script_types.include?("lock")
+            scope = scope.where(is_lock_script: true)
+          end
+          if script_types.include?("type")
+            scope = scope.where(is_type_script: true)
+          end
+        end
+
         @contracts = sort_scripts(scope).page(@page).per(@page_size)
       end
 
@@ -97,6 +107,11 @@ module Api
           code_hash: params[:code_hash],
           hash_type: params[:hash_type],
           script_type: @contracts.first.is_lock_script ? "LockScript" : "TypeScript",
+          rfc: @contracts.first.rfc,
+          website: @contracts.first.website,
+          description: @contracts.first.description,
+          deprecated: @contracts.first.deprecated,
+          source_url: @contracts.first.source_url,
         }.merge(sum_hash)
       end
 
@@ -116,10 +131,11 @@ module Api
       end
 
       def sort_scripts(records)
-        sort, order = params.fetch(:sort, "deployed_cell_output_id.asc").split(".", 2)
+        sort, order = params.fetch(:sort, "deployed_block_timestamp.asc").split(".", 2)
         sort =
           case sort
-          when "transactions" then "h24_ckb_transactions_count"
+          when "capacity" then "total_referring_cells_capacity"
+          when "timestamp" then "deployed_block_timestamp"
           else
             sort
           end
