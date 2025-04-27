@@ -66,6 +66,7 @@ end
 #  source_url                     :string
 #  dep_type                       :integer
 #  website                        :string
+#  deployed_block_timestamp       :bigint
 #
 # Indexes
 #

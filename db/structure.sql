@@ -1498,7 +1498,8 @@ CREATE TABLE public.contracts (
     rfc character varying,
     source_url character varying,
     dep_type integer,
-    website character varying
+    website character varying,
+    deployed_block_timestamp bigint
 );
 
 
@@ -6395,6 +6396,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250403090946'),
 ('20250408020030'),
 ('20250423042854'),
-('20250423104930');
+('20250423104930'),
+('20250427105936');
 
 
