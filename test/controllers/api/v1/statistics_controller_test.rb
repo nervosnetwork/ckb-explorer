@@ -113,7 +113,7 @@ module Api
         StatisticInfo.default.reset_all!
         valid_get api_v1_statistic_url("miner_ranking")
 
-        assert_equal %w(miner_ranking), json.dig("data", "attributes").keys.sort
+        assert_equal %w(created_at_unixtimestamp miner_ranking), json.dig("data", "attributes").keys.sort
       end
 
       test "should return right ranking" do

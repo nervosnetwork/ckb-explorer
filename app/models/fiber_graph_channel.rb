@@ -9,6 +9,8 @@ class FiberGraphChannel < ApplicationRecord
   belongs_to :udt, optional: true
   belongs_to :open_transaction, class_name: "CkbTransaction"
   belongs_to :closed_transaction, class_name: "CkbTransaction", optional: true
+  belongs_to :address
+  belongs_to :cell_output
 
   validates :open_transaction_id, presence: true
 

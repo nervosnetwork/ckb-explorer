@@ -1,7 +1,7 @@
 class Contract < ApplicationRecord
   has_many :cell_deps_out_points, foreign_key: :deployed_cell_output_id, primary_key: :deployed_cell_output_id
   has_many :cell_dependencies, through: :cell_deps_out_points
-  has_one :deployed_cell_output, foreign_key: :deployed_cell_output_id
+  belongs_to :deployed_cell_output, class_name: "CellOutput", optional: true
 
   scope :active, -> { where("addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
 

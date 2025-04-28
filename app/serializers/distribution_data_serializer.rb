@@ -58,4 +58,8 @@ class DistributionDataSerializer
       object.miner_address_distribution
     end
   end
+
+  attribute :created_at_unixtimestamp do |object|
+    object.created_at_unixtimestamp.to_s
+  end
 end

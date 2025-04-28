@@ -38,4 +38,8 @@ class StatisticSerializer
   attribute :maintenance_info, if: Proc.new { |_record, params|
     params && params[:info_name] == "maintenance_info"
   }
+
+  attribute :created_at_unixtimestamp do |object|
+    object.updated_at.to_i.to_s
+  end
 end

@@ -102,8 +102,8 @@ module Api
         valid_get api_v1_daily_statistic_url("avg_hash_rate")
 
         assert_equal [%w(avg_hash_rate created_at_unixtimestamp).sort], json.dig("data").map { |item|
-                                                                          item.dig("attributes").keys.sort
-                                                                        }.uniq
+                                                                                                 item.dig("attributes").keys.sort
+                                                                                               }.uniq
         assert_equal DailyStatisticSerializer.new(daily_statistic_data, params: { indicator: "avg_hash_rate" }).serialized_json,
                      response.body
         assert_equal 100, json.dig("data").size

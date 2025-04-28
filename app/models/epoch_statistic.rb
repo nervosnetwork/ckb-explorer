@@ -1,7 +1,7 @@
 class EpochStatistic < ApplicationRecord
   include AttrLogics
 
-  VALID_INDICATORS = %w(difficulty uncle_rate hash_rate epoch_time epoch_length).freeze
+  VALID_INDICATORS = %w(difficulty uncle_rate hash_rate epoch_time epoch_length updated_at).freeze
 
   has_many :blocks, primary_key: :epoch_number, foreign_key: :epoch
   has_many :ckb_transactions, through: :blocks

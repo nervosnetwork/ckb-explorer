@@ -1,7 +1,7 @@
 class DistributionData
   VALID_INDICATORS = %w(
     address_balance_distribution block_time_distribution epoch_time_distribution epoch_length_distribution
-    average_block_time nodes_distribution block_propagation_delay_history miner_address_distribution
+    average_block_time nodes_distribution block_propagation_delay_history miner_address_distribution updated_at
   ).freeze
 
   def id
@@ -30,6 +30,10 @@ class DistributionData
 
   def nodes_distribution
     DailyStatistic.recent.first&.nodes_distribution || DailyStatistic.where.not(nodes_distribution: nil).recent.first&.nodes_distribution || []
+  end
+
+  def created_at_unixtimestamp
+    DailyStatistic.recent.first&.created_at_unixtimestamp
   end
 
   def block_propagation_delay_history

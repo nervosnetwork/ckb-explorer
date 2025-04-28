@@ -5,8 +5,7 @@ RUN apt-get update && apt-get install -y  build-essential \
   git libpq-dev libcurl4 libjemalloc2 \
   libsecp256k1-dev  libsodium-dev
 ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
-# --registry=https://registry.npm.taobao.org
-# RUN gem sources --add https://gems.ruby-china.com/ --remove https://rubygems.org/ && \
+RUN gem update --system 3.3.22
 WORKDIR /usr/src/
 ARG RAILS_ENV=production
 ARG BUNDLER_VERSION=2.3.25
@@ -25,12 +24,11 @@ ADD . /usr/src/
 
 
 FROM ruby:${RUBY_VERSION}-slim
-# RUN sed --in-place --regexp-extended "s/(\/\/)(deb|security).debian.org/\1mirrors.ustc.edu.cn/" /etc/apt/sources.list && \
-#   apt-get update && apt-get upgrade --yes
 RUN apt-get update && apt-get install -y \
   libpq5 libsodium23 curl \
   libcurl4 libjemalloc2 \
   && rm -rf /var/lib/apt/lists/*
+RUN gem update --system 3.3.22
 ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
 ARG BUNDLER_VERSION=2.2.32
 RUN gem i -N bundler:$BUNDLER_VERSION foreman
@@ -42,4 +40,3 @@ ARG RAILS_ENV=production
 ENV RAILS_ENV=${RAILS_ENV}
 ENV RAILS_SERVE_STATIC_FILES true
 ENV RAILS_LOG_TO_STDOUT true
-
