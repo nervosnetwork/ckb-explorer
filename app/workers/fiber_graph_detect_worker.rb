@@ -150,7 +150,7 @@ class FiberGraphDetectWorker
 
   def build_fiber_account_books
     account_book_attributes = []
-    scope.where.not(deleted_at: nil).find_each do |channel|
+    FiberGraphChannel.where.not(deleted_at: nil).find_each do |channel|
       open_transaction = channel.open_transaction
       open_transaction.account_books.each do |account_book|
         account_book_attributes << {
