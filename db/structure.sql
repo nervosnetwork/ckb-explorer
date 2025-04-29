@@ -1710,6 +1710,37 @@ ALTER SEQUENCE public.epoch_statistics_id_seq OWNED BY public.epoch_statistics.i
 
 
 --
+-- Name: fiber_account_books; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.fiber_account_books (
+    id bigint NOT NULL,
+    fiber_graph_channel_id bigint,
+    ckb_transaction_id bigint,
+    address_id bigint
+);
+
+
+--
+-- Name: fiber_account_books_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.fiber_account_books_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: fiber_account_books_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.fiber_account_books_id_seq OWNED BY public.fiber_account_books.id;
+
+
+--
 -- Name: fiber_channels; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1772,7 +1803,9 @@ CREATE TABLE public.fiber_graph_channels (
     fee_rate_of_node2 numeric(30,0) DEFAULT 0.0,
     deleted_at timestamp(6) without time zone,
     cell_output_id bigint,
-    address_id bigint
+    address_id bigint,
+    update_info_of_node1 jsonb DEFAULT '{}'::jsonb,
+    update_info_of_node2 jsonb DEFAULT '{}'::jsonb
 );
 
 
@@ -3329,6 +3362,13 @@ ALTER TABLE ONLY public.epoch_statistics ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: fiber_account_books id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_account_books ALTER COLUMN id SET DEFAULT nextval('public.fiber_account_books_id_seq'::regclass);
+
+
+--
 -- Name: fiber_channels id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3907,6 +3947,14 @@ ALTER TABLE ONLY public.dao_events
 
 ALTER TABLE ONLY public.epoch_statistics
     ADD CONSTRAINT epoch_statistics_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fiber_account_books fiber_account_books_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fiber_account_books
+    ADD CONSTRAINT fiber_account_books_pkey PRIMARY KEY (id);
 
 
 --
@@ -5101,6 +5149,20 @@ CREATE INDEX index_dao_events_on_status_and_event_type ON public.dao_events USIN
 --
 
 CREATE UNIQUE INDEX index_epoch_statistics_on_epoch_number ON public.epoch_statistics USING btree (epoch_number);
+
+
+--
+-- Name: index_fiber_account_books_on_address_id_and_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_fiber_account_books_on_address_id_and_ckb_transaction_id ON public.fiber_account_books USING btree (address_id, ckb_transaction_id);
+
+
+--
+-- Name: index_fiber_account_books_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_fiber_account_books_on_ckb_transaction_id ON public.fiber_account_books USING btree (ckb_transaction_id);
 
 
 --
@@ -6413,6 +6475,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250318021630'),
 ('20250402032340'),
 ('20250403090946'),
-('20250408020030');
+('20250408020030'),
+('20250415063535'),
+('20250418085300');
 
 
