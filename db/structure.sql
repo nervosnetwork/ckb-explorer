@@ -1484,9 +1484,7 @@ CREATE TABLE public.contracts (
     updated_at timestamp(6) without time zone NOT NULL,
     deprecated boolean,
     ckb_transactions_count numeric(30,0) DEFAULT 0.0,
-    deployed_cells_count numeric(30,0) DEFAULT 0.0,
     referring_cells_count numeric(30,0) DEFAULT 0.0,
-    total_deployed_cells_capacity numeric(30,0) DEFAULT 0.0,
     total_referring_cells_capacity numeric(30,0) DEFAULT 0.0,
     addresses_count integer,
     h24_ckb_transactions_count integer,
@@ -1499,7 +1497,8 @@ CREATE TABLE public.contracts (
     source_url character varying,
     dep_type integer,
     website character varying,
-    deployed_block_timestamp bigint
+    deployed_block_timestamp bigint,
+    contract_cell_id bigint
 );
 
 
@@ -6397,6 +6396,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250408020030'),
 ('20250423042854'),
 ('20250423104930'),
-('20250427105936');
+('20250427105936'),
+('20250429170657');
 
 

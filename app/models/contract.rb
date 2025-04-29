@@ -1,7 +1,8 @@
 class Contract < ApplicationRecord
   has_many :cell_deps_out_points, foreign_key: :deployed_cell_output_id, primary_key: :deployed_cell_output_id
   has_many :cell_dependencies, through: :cell_deps_out_points
-  belongs_to :deployed_cell_output, class_name: "CellOutput", optional: true
+  belongs_to :deployed_cell_output, class_name: "CellOutput"
+  belongs_to :contract_cell, class_name: "CellOutput", optional: true
 
   scope :active, -> { where("addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
 
@@ -51,9 +52,7 @@ end
 #  updated_at                     :datetime         not null
 #  deprecated                     :boolean
 #  ckb_transactions_count         :decimal(30, )    default(0)
-#  deployed_cells_count           :decimal(30, )    default(0)
 #  referring_cells_count          :decimal(30, )    default(0)
-#  total_deployed_cells_capacity  :decimal(30, )    default(0)
 #  total_referring_cells_capacity :decimal(30, )    default(0)
 #  addresses_count                :integer
 #  h24_ckb_transactions_count     :integer
@@ -67,6 +66,7 @@ end
 #  dep_type                       :integer
 #  website                        :string
 #  deployed_block_timestamp       :bigint
+#  contract_cell_id               :bigint
 #
 # Indexes
 #

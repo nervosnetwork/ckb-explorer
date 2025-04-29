@@ -12,5 +12,12 @@ FactoryBot.define do
     type_hash { "0x#{SecureRandom.hex(32)}" }
     is_type_script { true }
     dep_type { "code" }
+
+    after(:build) do |contract, _evaluator|
+      if contract.deployed_cell_output_id.nil?
+        output = create(:cell_output, :with_full_transaction)
+        contract.deployed_cell_output_id = output.id
+      end
+    end
   end
 end

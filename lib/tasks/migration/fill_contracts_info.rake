@@ -4,6 +4,20 @@ namespace :migration do
     hashes =
       if ENV["CKB_NET_MODE"] == "mainnet"
         [
+          {
+            code_hash: "0xe4d4ecc6e5f9a059bf2f7a82cca292083aebc0c421566a52484fe2ec51a9fb0c",
+            hash_type: "type",
+            tx_hashes: ["0x04632cc459459cf5c9d384b43dee3e36f542a464bdd4127be7d6618ac6f8d268-0"],
+            dep_type: "dep_group",
+            name: "CHEQUE",
+          },
+          {
+            code_hash: "0x081dbffa88dab54ba426d231ca64eb760cea2fe9e16761a1da400da1b2cbe128",
+            hash_type: "type",
+            tx_hashes: ["0x0f0c22372a05f3c5f47acb066c65f9bae86bdce043762310e50309cc5a77abd4-0"],
+            dep_type: "dep_group",
+            name: "FlashSigner",
+          },
           { code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type",
             name: "SECP256K1/blake160",
             tx_hashes: ["0x71a7ba8fc96349fea0ed3a5c47992e3b4084b031a42264a018e0072e8172e46c-0"],
@@ -283,7 +297,7 @@ namespace :migration do
             description: "SECP256K1/blake160 is the default lock script to verify CKB transaction signature.",
             rfc: "https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0024-ckb-genesis-script-list/0024-ckb-genesis-script-list.md#secp256k1blake160",
             code: "https://github.com/nervosnetwork/ckb-system-scripts/blob/master/c/secp256k1_blake160_sighash_all.c" },
-          { code_hash: "0x36c971b8d41fbd94aabca77dc75e826729ac98447b46f91e00796155dddb0d29", hash_type: "data1",
+          { code_hash: "0x5c5069eb0857efc65e1bca0c07df34c31663b3622fd3876c876320fc9634e2a8", hash_type: "type",
             name: "SECP256K1/multisig",
             dep_type: "dep_group",
             tx_hashes: ["0xf8de3bb47d055cdf460d93a2a6e1b05f7432f9777c8c474abf4eec1d4aee5d37-1"],
@@ -534,6 +548,20 @@ namespace :migration do
             tx_hashes: ["0x89af398edc7ed0054506b33349b031097d94378e11e77bf0690ee69d82623a43-0"],
             description: "",
             website: "https://www.ckbfiber.net" },
+          {
+            code_hash: "0x577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b242",
+            hash_type: "type",
+            tx_hashes: ["0xb66776ff3244033fcd15312ae8b17d384c11bebbb923fce3bd896d89f4744d48-0"],
+            dep_type: "dep_group",
+            name: "FlashSigner",
+          },
+          {
+            code_hash: "0x60d5f39efce409c587cb9ea359cefdead650ca128f0bd9cb3855348f98c70d5b",
+            hash_type: "type",
+            tx_hashes: ["0x7f96858be0a9d584b4a9ea190e0420835156a6010a5fde15ffcdc9d9c721ccab-0"],
+            dep_type: "dep_group",
+            name: "CHEQUE",
+          },
         ]
       end
 
@@ -548,7 +576,7 @@ namespace :migration do
           hash_type =
             hash[:hash_type] == "type" ? nil : hash[:hash_type]
           contract.update(verified: true, name: hash[:name], description: hash[:description], hash_type:, deprecated: hash[:deprecated], rfc: hash[:rfc],
-                          source_url: hash[:code], website: hash[:website], dep_type: hash[:dep_type])
+                          source_url: hash[:code], website: hash[:website], dep_type: hash[:dep_type], contract_cell_id: co.id)
         end
       when "dep_group"
         hash[:tx_hashes].each do |tx|
@@ -565,7 +593,7 @@ namespace :migration do
             hash_type =
               hash[:hash_type] == "type" ? nil : hash[:hash_type]
             contract.first.update(verified: true, name: hash[:name], description: hash[:description], hash_type:, deprecated: hash[:deprecated], rfc: hash[:rfc],
-                                  source_url: hash[:code], website: hash[:website], dep_type: hash[:dep_type])
+                                  source_url: hash[:code], website: hash[:website], dep_type: hash[:dep_type], contract_cell_id: contract_cell.id)
           else
             error_hashes << hash[:code_hash]
           end

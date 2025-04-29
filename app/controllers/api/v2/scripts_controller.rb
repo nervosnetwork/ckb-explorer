@@ -87,32 +87,27 @@ module Api
       private
 
       def get_script_content
-        sum_hash =
-          @contracts.inject({
-                              capacity_of_deployed_cells: 0,
-                              capacity_of_referring_cells: 0,
-                              count_of_transactions: 0,
-                              count_of_deployed_cells: 0,
-                              count_of_referring_cells: 0,
-                            }) do |sum, contract|
-            sum[:capacity_of_deployed_cells] += contract.total_deployed_cells_capacity
-            sum[:capacity_of_referring_cells] += contract.total_referring_cells_capacity
-            sum[:count_of_transactions] += contract.ckb_transactions_count
-            sum[:count_of_deployed_cells] += 1
-            sum[:count_of_referring_cells] += contract.referring_cells_count
-            sum
-          end
-        {
-          id: @contracts.first.type_hash,
-          code_hash: params[:code_hash],
-          hash_type: params[:hash_type],
-          script_type: @contracts.first.is_lock_script ? "LockScript" : "TypeScript",
-          rfc: @contracts.first.rfc,
-          website: @contracts.first.website,
-          description: @contracts.first.description,
-          deprecated: @contracts.first.deprecated,
-          source_url: @contracts.first.source_url,
-        }.merge(sum_hash)
+        @contracts.map do |contract|
+          {
+            name: contract.name,
+            type_hash: contract.type_hash,
+            data_hash: contract.data_hash,
+            hash_type: contract.hash_type,
+            is_lock_script: contract.is_lock_script,
+            is_type_script: contract.is_type_script,
+            rfc: contract.rfc,
+            website: contract.website,
+            description: contract.description,
+            deprecated: contract.deprecated,
+            source_url: contract.source_url,
+            capacity_of_deployed_cells: contract.deployed_cell_output.capacity.to_s,
+            capacity_of_referring_cells: contract.total_referring_cells_capacity.to_s,
+            count_of_transactions: contract.ckb_transactions_count,
+            count_of_referring_cells: contract.referring_cells_count,
+            script_out_point: "#{contract.contract_cell.tx_hash}-#{contract.contract_cell.cell_index}",
+            dep_type: contract.dep_type,
+          }
+        end
       end
 
       def set_page_and_page_size
@@ -124,9 +119,9 @@ module Api
         @contracts =
           case params[:hash_type]
           when "data", "data1", "data2"
-            Contract.where(data_hash: params[:code_hash])
+            Contract.includes(:deployed_cell_output, :contract_cell).where(verified: true, data_hash: params[:code_hash])
           when "type"
-            Contract.where(type_hash: params[:code_hash])
+            Contract.includes(:deployed_cell_output, :contract_cell).where(verified: true, type_hash: params[:code_hash])
           end
       end
 

@@ -95,7 +95,7 @@ class AnalyzeContractFromCellDependencyWorker
     update_contract_roles(cell_output, lock_scripts, type_scripts, contract_roles)
 
     if contract_roles[cell_output.id][:is_lock_script] || contract_roles[cell_output.id][:is_type_script]
-      contract_attrs << build_contract_attr(cell_output, "code")
+      contract_attrs << build_contract_attr(cell_output)
       true
     else
       false
@@ -123,7 +123,7 @@ class AnalyzeContractFromCellDependencyWorker
       update_contract_roles(cell_output, lock_scripts, type_scripts, contract_roles)
 
       if contract_roles[cell_output.id][:is_lock_script] || contract_roles[cell_output.id][:is_type_script]
-        contract_attrs << build_contract_attr(cell_output, "dep_group")
+        contract_attrs << build_contract_attr(cell_output)
         is_used = is_used || true
       end
     end
@@ -140,7 +140,7 @@ class AnalyzeContractFromCellDependencyWorker
     contract_roles[cell_output.id][:hash_type] ||= data_type
   end
 
-  def build_contract_attr(cell_output, dep_type)
+  def build_contract_attr(cell_output)
     {
       type_hash: cell_output.type_script&.script_hash,
       data_hash: cell_output.data_hash,
