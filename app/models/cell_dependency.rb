@@ -1,15 +1,15 @@
 class CellDependency < ApplicationRecord
   belongs_to :ckb_transaction
   belongs_to :cell_output, foreign_key: "contract_cell_id", class_name: "CellOutput"
-  has_many :cell_deps_out_points, foreign_key: :contract_cell_id, primary_key: :contract_cell_id
-  has_many :contracts, foreign_key: :contract_cell_id, primary_key: :contract_cell_id
+  has_many :cell_deps_out_points, foreign_key: :contract_cell_id, primary_key: :contract_cell_id, class_name: "CellDepsOutPoint"
+  has_many :contracts, foreign_key: :contract_cell_id, primary_key: :contract_cell_id, class_name: "Contract"
 
   enum :dep_type, %i[code dep_group]
 
   def to_raw
     code_hash, hash_type =
-      if contracts
-        contracts.first.code_hash_hash_type
+      if contracts.primary.first
+        contracts.primary.first.code_hash_hash_type
       else
         [nil, nil]
       end
@@ -20,7 +20,7 @@ class CellDependency < ApplicationRecord
       },
       dep_type:,
       script: {
-        name: contracts.first.name,
+        name: contracts.primary.first&.name,
         code_hash: code_hash,
         hash_type: hash_type,
       },

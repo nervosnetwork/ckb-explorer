@@ -1498,7 +1498,8 @@ CREATE TABLE public.contracts (
     dep_type integer,
     website character varying,
     deployed_block_timestamp bigint,
-    contract_cell_id bigint
+    contract_cell_id bigint,
+    is_primary boolean
 );
 
 
@@ -6397,6 +6398,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250423042854'),
 ('20250423104930'),
 ('20250427105936'),
-('20250429170657');
+('20250429170657'),
+('20250508112010');
 
 
