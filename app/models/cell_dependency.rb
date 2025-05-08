@@ -6,12 +6,23 @@ class CellDependency < ApplicationRecord
   enum :dep_type, %i[code dep_group]
 
   def to_raw
+    code_hash, hash_type =
+      if cell_deps_out_point.contract
+        cell_deps_out_point.contract.code_hash_hash_type
+      else
+        [nil, nil]
+      end
     {
       out_point: {
         tx_hash: cell_output.tx_hash,
         index: cell_output.cell_index,
       },
       dep_type:,
+      script: {
+        name: cell_deps_out_point.contract&.name,
+        code_hash: code_hash,
+        hash_type: hash_type,
+      },
     }
   end
 end
