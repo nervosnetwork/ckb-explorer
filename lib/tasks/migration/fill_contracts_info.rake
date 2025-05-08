@@ -576,7 +576,7 @@ namespace :migration do
           hash_type =
             hash[:hash_type] == "type" ? nil : hash[:hash_type]
           contract.update(verified: true, name: hash[:name], description: hash[:description], hash_type:, deprecated: hash[:deprecated], rfc: hash[:rfc],
-                          source_url: hash[:code], website: hash[:website], dep_type: hash[:dep_type], contract_cell_id: co.id)
+                          source_url: hash[:code], website: hash[:website], dep_type: hash[:dep_type], contract_cell_id: co.id, is_primary: true)
         end
       when "dep_group"
         hash[:tx_hashes].each do |tx|
@@ -593,7 +593,7 @@ namespace :migration do
             hash_type =
               hash[:hash_type] == "type" ? nil : hash[:hash_type]
             contract.first.update(verified: true, name: hash[:name], description: hash[:description], hash_type:, deprecated: hash[:deprecated], rfc: hash[:rfc],
-                                  source_url: hash[:code], website: hash[:website], dep_type: hash[:dep_type], contract_cell_id: contract_cell.id)
+                                  source_url: hash[:code], website: hash[:website], dep_type: hash[:dep_type], contract_cell_id: contract_cell.id, is_primary: true)
           else
             error_hashes << hash[:code_hash]
           end
