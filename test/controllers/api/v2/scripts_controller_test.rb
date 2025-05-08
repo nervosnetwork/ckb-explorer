@@ -77,13 +77,15 @@ module Api
             "website" => nil,
             "description" => "SECP256K1/multisig (Source Code) is a script which allows a group of users to sign a single transaction.",
             "deprecated" => false,
+            "verified" => true,
             "source_url" => nil,
             "capacity_of_deployed_cells" => @contract.deployed_cell_output.capacity.to_s,
             "capacity_of_referring_cells" => @contract.total_referring_cells_capacity.to_s,
             "count_of_transactions" => @contract.ckb_transactions_count,
             "count_of_referring_cells" => 0,
             "script_out_point" => "#{@contract.contract_cell.tx_hash}-#{@contract.contract_cell.cell_index}",
-            "dep_type" => @contract.dep_type },
+            "dep_type" => @contract.dep_type,
+          },
         ],
                      json["data"]
       end

@@ -99,12 +99,13 @@ module Api
             website: contract.website,
             description: contract.description,
             deprecated: contract.deprecated,
+            verified: contract.verified,
             source_url: contract.source_url,
             capacity_of_deployed_cells: contract.deployed_cell_output.capacity.to_s,
             capacity_of_referring_cells: contract.total_referring_cells_capacity.to_s,
             count_of_transactions: contract.ckb_transactions_count,
             count_of_referring_cells: contract.referring_cells_count,
-            script_out_point: "#{contract.contract_cell.tx_hash}-#{contract.contract_cell.cell_index}",
+            script_out_point: "#{contract.contract_cell&.tx_hash}-#{contract.contract_cell&.cell_index}",
             dep_type: contract.dep_type,
           }
         end
@@ -119,9 +120,9 @@ module Api
         @contracts =
           case params[:hash_type]
           when "data", "data1", "data2"
-            Contract.includes(:deployed_cell_output, :contract_cell).where(verified: true, data_hash: params[:code_hash])
+            Contract.includes(:deployed_cell_output, :contract_cell).where(data_hash: params[:code_hash])
           when "type"
-            Contract.includes(:deployed_cell_output, :contract_cell).where(verified: true, type_hash: params[:code_hash])
+            Contract.includes(:deployed_cell_output, :contract_cell).where(type_hash: params[:code_hash])
           end
       end
 
