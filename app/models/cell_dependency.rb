@@ -8,8 +8,8 @@ class CellDependency < ApplicationRecord
 
   def to_raw
     code_hash, hash_type =
-      if contracts
-        contracts.first.code_hash_hash_type
+      if contracts.primary.first
+        contracts.primary.first.code_hash_hash_type
       else
         [nil, nil]
       end
@@ -20,7 +20,7 @@ class CellDependency < ApplicationRecord
       },
       dep_type:,
       script: {
-        name: contracts.first.name,
+        name: contracts.primary.first&.name,
         code_hash: code_hash,
         hash_type: hash_type,
       },
