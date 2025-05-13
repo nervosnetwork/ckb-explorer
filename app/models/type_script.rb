@@ -64,6 +64,14 @@ class TypeScript < ApplicationRecord
 
     bytesize
   end
+
+  def verified_script
+    if hash_type == "type"
+      Contract.where(verified: true, type_hash: code_hash)&.first
+    else
+      Contract.where(verified: true, data_hash: code_hash)&.first
+    end
+  end
 end
 
 # == Schema Information

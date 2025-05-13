@@ -1475,21 +1475,16 @@ CREATE TABLE public.ckb_transactions_rejected (
 
 CREATE TABLE public.contracts (
     id bigint NOT NULL,
-    code_hash bytea,
     hash_type character varying,
     deployed_args character varying,
-    role character varying DEFAULT 'type_script'::character varying,
     name character varying,
-    symbol character varying,
     description character varying,
     verified boolean DEFAULT false,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     deprecated boolean,
     ckb_transactions_count numeric(30,0) DEFAULT 0.0,
-    deployed_cells_count numeric(30,0) DEFAULT 0.0,
     referring_cells_count numeric(30,0) DEFAULT 0.0,
-    total_deployed_cells_capacity numeric(30,0) DEFAULT 0.0,
     total_referring_cells_capacity numeric(30,0) DEFAULT 0.0,
     addresses_count integer,
     h24_ckb_transactions_count integer,
@@ -1497,7 +1492,14 @@ CREATE TABLE public.contracts (
     data_hash bytea,
     deployed_cell_output_id bigint,
     is_type_script boolean,
-    is_lock_script boolean
+    is_lock_script boolean,
+    rfc character varying,
+    source_url character varying,
+    dep_type integer,
+    website character varying,
+    deployed_block_timestamp bigint,
+    contract_cell_id bigint,
+    is_primary boolean
 );
 
 
@@ -5006,13 +5008,6 @@ CREATE UNIQUE INDEX index_cell_inputs_on_ckb_transaction_id_and_index ON public.
 
 
 --
--- Name: index_contracts_on_code_hash; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_contracts_on_code_hash ON public.contracts USING btree (code_hash);
-
-
---
 -- Name: index_contracts_on_deployed_cell_output_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5038,20 +5033,6 @@ CREATE INDEX index_contracts_on_hash_type ON public.contracts USING btree (hash_
 --
 
 CREATE INDEX index_contracts_on_name ON public.contracts USING btree (name);
-
-
---
--- Name: index_contracts_on_role; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_contracts_on_role ON public.contracts USING btree (role);
-
-
---
--- Name: index_contracts_on_symbol; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_contracts_on_symbol ON public.contracts USING btree (symbol);
 
 
 --
@@ -6413,6 +6394,11 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250318021630'),
 ('20250402032340'),
 ('20250403090946'),
-('20250408020030');
+('20250408020030'),
+('20250423042854'),
+('20250423104930'),
+('20250427105936'),
+('20250429170657'),
+('20250508112010');
 
 

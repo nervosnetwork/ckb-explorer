@@ -4,7 +4,22 @@ module Api
   module V2
     class ScriptsController < BaseController
       before_action :set_page_and_page_size
-      before_action :set_contracts
+      before_action :set_contracts, excepts: [:index]
+
+      def index
+        scope = Contract.where(verified: true)
+        if params[:script_type].present?
+          script_types = params[:script_type].split(",").map(&:strip)
+          if script_types.include?("lock")
+            scope = scope.where(is_lock_script: true)
+          end
+          if script_types.include?("type")
+            scope = scope.where(is_type_script: true)
+          end
+        end
+
+        @contracts = sort_scripts(scope).page(@page).per(@page_size)
+      end
 
       def general_info
         head :not_found and return if @contracts.blank?
@@ -72,27 +87,28 @@ module Api
       private
 
       def get_script_content
-        sum_hash =
-          @contracts.inject({
-                              capacity_of_deployed_cells: 0,
-                              capacity_of_referring_cells: 0,
-                              count_of_transactions: 0,
-                              count_of_deployed_cells: 0,
-                              count_of_referring_cells: 0,
-                            }) do |sum, contract|
-            sum[:capacity_of_deployed_cells] += contract.total_deployed_cells_capacity
-            sum[:capacity_of_referring_cells] += contract.total_referring_cells_capacity
-            sum[:count_of_transactions] += contract.ckb_transactions_count
-            sum[:count_of_deployed_cells] += 1
-            sum[:count_of_referring_cells] += contract.referring_cells_count
-            sum
-          end
-        {
-          id: @contracts.first.type_hash,
-          code_hash: params[:code_hash],
-          hash_type: params[:hash_type],
-          script_type: @contracts.first.is_lock_script ? "LockScript" : "TypeScript",
-        }.merge(sum_hash)
+        @contracts.map do |contract|
+          {
+            name: contract.name,
+            type_hash: contract.type_hash,
+            data_hash: contract.data_hash,
+            hash_type: contract.hash_type,
+            is_lock_script: contract.is_lock_script,
+            is_type_script: contract.is_type_script,
+            rfc: contract.rfc,
+            website: contract.website,
+            description: contract.description,
+            deprecated: contract.deprecated,
+            verified: contract.verified,
+            source_url: contract.source_url,
+            capacity_of_deployed_cells: contract.deployed_cell_output.capacity.to_s,
+            capacity_of_referring_cells: contract.total_referring_cells_capacity.to_s,
+            count_of_transactions: contract.ckb_transactions_count,
+            count_of_referring_cells: contract.referring_cells_count,
+            script_out_point: "#{contract.contract_cell&.tx_hash}-#{contract.contract_cell&.cell_index}",
+            dep_type: contract.dep_type,
+          }
+        end
       end
 
       def set_page_and_page_size
@@ -104,19 +120,22 @@ module Api
         @contracts =
           case params[:hash_type]
           when "data", "data1", "data2"
-            Contract.where(data_hash: params[:code_hash])
+            Contract.includes(:deployed_cell_output, :contract_cell).where(data_hash: params[:code_hash])
           when "type"
-            Contract.where(type_hash: params[:code_hash])
+            Contract.includes(:deployed_cell_output, :contract_cell).where(type_hash: params[:code_hash])
           end
       end
 
-      def sort_referring_cells(records)
-        sort, order = params.fetch(:sort, "block_timestamp.desc").split(".", 2)
+      def sort_scripts(records)
+        sort, order = params.fetch(:sort, "deployed_block_timestamp.asc").split(".", 2)
         sort =
           case sort
-          when "created_time" then "block_timestamp"
-          else "block_timestamp"
+          when "capacity" then "total_referring_cells_capacity"
+          when "timestamp" then "deployed_block_timestamp"
+          else
+            sort
           end
+
         order = "asc" unless order&.match?(/^(asc|desc)$/i)
         records.order("#{sort} #{order}")
       end
