@@ -22,8 +22,7 @@ class CellDependency < ApplicationRecord
           name: nil,
           code_hash: nil,
           hash_type: nil,
-          is_lock_script: nil,
-          is_type_script: nil,
+          is_lock_script: false,
         }
       end
     {
