@@ -31,7 +31,7 @@ class GenerateUdtHolderAllocationWorker
 
     existing_allocations = udt.udt_holder_allocations.where.not(contract_id: nil)
     existing_allocations.each do |allocation|
-      unless allocation_data.key?(allocation.contract.code_hash)
+      unless allocation_data.key?(allocation.contract.code_hash_hash_type[0])
         allocation.destroy!
       end
     end

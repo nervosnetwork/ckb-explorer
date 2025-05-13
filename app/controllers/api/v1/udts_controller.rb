@@ -90,10 +90,11 @@ module Api
         btc_holder_count = holder_allocation&.btc_holder_count || 0
 
         lock_hashes = udt.udt_holder_allocations.includes(:contract).where.not(contract_id: nil).map do |allocation|
+          code_hash, hash_type = allocation.contract.code_hash_hash_type
           {
             name: allocation.contract.name,
-            code_hash: allocation.contract.code_hash,
-            hash_type: allocation.contract.hash_type,
+            code_hash: code_hash,
+            hash_type: hash_type,
             holder_count: allocation.ckb_holder_count,
           }
         end
