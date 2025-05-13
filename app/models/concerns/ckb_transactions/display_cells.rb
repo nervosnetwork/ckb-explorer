@@ -124,6 +124,9 @@ module CkbTransactions
           if previous_cell_output.bitcoin_vout
             display_input.merge!(attributes_for_rgb_cell(previous_cell_output))
           end
+          if previous_cell_output.cell_type.in?(%w(spore_cluster spore_cell did_cell))
+            display_input.merge!(attributes_for_dob_cell(previous_cell_output))
+          end
 
           CkbUtils.hash_value_to_s(display_input)
         end
@@ -161,6 +164,9 @@ module CkbTransactions
           end
           if output.bitcoin_vout
             display_output.merge!(attributes_for_rgb_cell(output))
+          end
+          if output.cell_type.in?(%w(spore_cluster spore_cell did_cell))
+            display_output.merge!(attributes_for_dob_cell(output))
           end
 
           CkbUtils.hash_value_to_s(display_output)
@@ -237,6 +243,14 @@ module CkbTransactions
       def attributes_for_xudt_compatible_cell(xudt_compatible_cell)
         info = CkbUtils.hash_value_to_s(xudt_compatible_cell.udt_info)
         { xudt_compatible_info: info, extra_info: info }
+      end
+
+      def attributes_for_dob_cell(dob_cell)
+        info = dob_cell.dob_info
+        if dob_cell.cell_type.in?(%w(did_cell spore_cell))
+          info[:data] = dob_cell.data
+        end
+        { dob_info: info, extra_info: info }
       end
 
       def hex_since(int_since_value)
