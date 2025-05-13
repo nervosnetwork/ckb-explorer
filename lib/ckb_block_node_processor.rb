@@ -28,5 +28,5 @@ loop do
       duration = 0
     end
   end
-  sleep(1 - duration) if remain <= 0 && duration < 1 # only sleep when catched up with network
+  sleep(1 - duration) if remain <= 0 && duration < 1 # only sleep when caught up with network
 end

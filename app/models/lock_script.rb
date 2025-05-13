@@ -99,6 +99,14 @@ class LockScript < ApplicationRecord
     bytesize
   end
 
+  def verified_script
+    if hash_type == "type"
+      Contract.where(verified: true, type_hash: code_hash)&.first
+    else
+      Contract.where(verified: true, data_hash: code_hash)&.first
+    end
+  end
+
   private
 
   def set_since_epoch_number_and_index(since_value)
@@ -115,8 +123,8 @@ class LockScript < ApplicationRecord
 
   def lock_info_status(since_value, tip_epoch)
     after_lock_epoch_number = tip_epoch.number > since_value.number
-    at_lock_epoch_number_but_exceeded_index = (tip_epoch.number == since_value.number &&
-      tip_epoch.index * since_value.length > since_value.index * tip_epoch.length)
+    at_lock_epoch_number_but_exceeded_index = tip_epoch.number == since_value.number &&
+      tip_epoch.index * since_value.length > since_value.index * tip_epoch.length
 
     after_lock_epoch_number || at_lock_epoch_number_but_exceeded_index ? "unlocked" : "locked"
   end

@@ -58,7 +58,7 @@ namespace :api do
     end
 
     resources :dao_events, only: [:index]
-    resources :scripts, only: [] do
+    resources :scripts, only: [:index] do
       collection do
         get :ckb_transactions
         get :deployed_cells

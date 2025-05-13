@@ -1,4 +1,4 @@
-# special addreses (also check config/settings folder, there are more special addresses defined there)
+# special addresses (also check config/settings folder, there are more special addresses defined there)
 special_addresses:
   short_address: "0x"
 

@@ -55,7 +55,7 @@ module Charts
       Charts::DailyStatistic.new.perform(1.day.ago)
       assert_equal 2, ::DailyStatistic.count
 
-      # it's very wired that this unit test would fail in test environtment in github.
+      # it's very wired that this unit test would fail in test environment in github.
       # assert_equal Time.at(::DailyStatistic.last.created_at_unixtimestamp).strftime("%Y-%m-%d"), 1.day.ago.strftime("%Y-%m-%d")
       assert_equal block.timestamp, ::DailyStatistic.last.block_timestamp
     end

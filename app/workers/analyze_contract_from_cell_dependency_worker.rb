@@ -109,7 +109,7 @@ class AnalyzeContractFromCellDependencyWorker
     is_used = false
 
     0.upto(out_points_count - 1) do |i|
-      part_tx_hash, cell_index = binary_data[4 + i * 36, 36].unpack("H64L<")
+      part_tx_hash, cell_index = binary_data[4 + (i * 36), 36].unpack("H64L<")
       tx_hash = "0x#{part_tx_hash}"
       cell_output = CellOutput.find_by_pointer(tx_hash, cell_index)
 
@@ -145,7 +145,9 @@ class AnalyzeContractFromCellDependencyWorker
       type_hash: cell_output.type_script&.script_hash,
       data_hash: cell_output.data_hash,
       deployed_cell_output_id: cell_output.id,
+      deployed_block_timestamp: cell_output.block_timestamp,
       deployed_args: cell_output.type_script&.args,
+      dep_type:,
     }
   end
 
