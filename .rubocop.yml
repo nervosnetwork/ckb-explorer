@@ -1,4 +1,5 @@
 AllCops:
+  NewCops: enable
   Exclude:
     - db/schema.rb
 
