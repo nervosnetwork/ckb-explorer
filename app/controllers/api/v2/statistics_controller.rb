@@ -24,8 +24,8 @@ module Api::V2
         json = contracts.map do |contract|
           {
             name: contract.name,
-            code_hash: contract.code_hash,
-            hash_type: contract.hash_type,
+            code_hash: contract.code_hash_hash_type[0],
+            hash_type: contract.code_hash_hash_type[1],
             tx_count: contract.ckb_transactions_count,
             h24_tx_count: contract.h24_ckb_transactions_count,
             ckb_amount: (contract.total_referring_cells_capacity / 10**8).truncate(8),

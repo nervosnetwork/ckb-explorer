@@ -1,17 +1,29 @@
 class CellDependency < ApplicationRecord
   belongs_to :ckb_transaction
   belongs_to :cell_output, foreign_key: "contract_cell_id", class_name: "CellOutput"
-  belongs_to :cell_deps_out_point, foreign_key: :contract_cell_id, primary_key: :contract_cell_id, optional: true
+  has_many :cell_deps_out_points, foreign_key: :contract_cell_id, primary_key: :contract_cell_id, class_name: "CellDepsOutPoint"
+  has_many :contracts, foreign_key: :contract_cell_id, primary_key: :contract_cell_id, class_name: "Contract"
 
   enum :dep_type, %i[code dep_group]
 
   def to_raw
+    code_hash, hash_type =
+      if contracts.primary.first
+        contracts.primary.first.code_hash_hash_type
+      else
+        [nil, nil]
+      end
     {
       out_point: {
         tx_hash: cell_output.tx_hash,
         index: cell_output.cell_index,
       },
       dep_type:,
+      script: {
+        name: contracts.primary.first&.name,
+        code_hash: code_hash,
+        hash_type: hash_type,
+      },
     }
   end
 end
