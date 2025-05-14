@@ -7,23 +7,31 @@ class CellDependency < ApplicationRecord
   enum :dep_type, %i[code dep_group]
 
   def to_raw
-    code_hash, hash_type =
-      if contracts.primary.first
-        contracts.primary.first.code_hash_hash_type
+    contract = contracts.primary.first
+    script =
+      if contract
+        {
+          name: contract.name,
+          code_hash: contract.code_hash_hash_type[0],
+          hash_type: contract.code_hash_hash_type[1],
+          is_lock_script: contract.is_lock_script,
+          is_type_script: contract.is_type_script,
+        }
       else
-        [nil, nil]
+        {
+          name: nil,
+          code_hash: nil,
+          hash_type: nil,
+          is_lock_script: false,
+        }
       end
     {
       out_point: {
         tx_hash: cell_output.tx_hash,
         index: cell_output.cell_index,
       },
-      dep_type:,
-      script: {
-        name: contracts.primary.first&.name,
-        code_hash: code_hash,
-        hash_type: hash_type,
-      },
+      dep_type: dep_type,
+      script: script,
     }
   end
 end
