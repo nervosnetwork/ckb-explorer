@@ -1,5 +1,7 @@
 class SsriContract < ApplicationRecord
   belongs_to :contract
+
+  scope :udt, -> { where(is_udt: true) }
 end
 
 # == Schema Information
