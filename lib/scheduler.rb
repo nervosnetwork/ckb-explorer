@@ -135,6 +135,10 @@ s.every "5s", overlap: false do
   call_worker AnalyzeContractFromCellDependencyWorker
 end
 
+s.every "1m", overlap: false do
+  call_worker SsriContractWorker
+end
+
 s.cron "0 */4 * * *", overlap: false do
   call_worker FiberGraphDetectWorker
 end
