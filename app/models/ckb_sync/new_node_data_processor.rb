@@ -28,17 +28,17 @@ module CkbSync
       return if target_block_number > tip_block_number - @offset.to_i
 
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
-      if !forked?(target_block, local_tip_block)
+      if forked?(target_block, local_tip_block)
+        self.reorg_started_at = Time.now
+        res = RevertBlockJob.perform_now(local_tip_block)
+        reorg_started_at.delete
+        res
+      else
         Rails.logger.error "process_block: #{target_block_number}"
         res =
           ApplicationRecord.cache do
             process_block(target_block)
           end
-        reorg_started_at.delete
-        res
-      else
-        self.reorg_started_at = Time.now
-        res = RevertBlockJob.perform_now(local_tip_block)
         reorg_started_at.delete
         res
       end
@@ -418,7 +418,7 @@ module CkbSync
                                                                              :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
           if udt_account.present?
             case udt_type
-            when "sudt", "omiga_inscription", "xudt", "xudt_compatible"
+            when "sudt", "ssri", "omiga_inscription", "xudt", "xudt_compatible"
               udt_accounts_attributes << { id: udt_account.id, amount:,
                                            created_at: udt.created_at }
             when "m_nft_token", "nrc_721_token", "spore_cell", "did_cell"
@@ -447,7 +447,7 @@ module CkbSync
 
     def udt_account_amount(udt_type, type_hash, address)
       case udt_type
-      when "sudt"
+      when "sudt", "ssri"
         address.cell_outputs.live.udt.where(type_hash:).sum(:udt_amount)
       when "xudt", "xudt_compatible", "omiga_inscription", "m_nft_token", "spore_cell", "did_cell"
         address.cell_outputs.live.where(cell_type: udt_type).where(type_hash:).sum(:udt_amount)
@@ -763,7 +763,7 @@ module CkbSync
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
                           udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids)
       if cell_outputs_attributes.present?
-        tx_hashes = cell_outputs_attributes.map { |attr| attr[:tx_hash] }
+        tx_hashes = cell_outputs_attributes.pluck(:tx_hash)
         binary_hashes = CkbUtils.hexes_to_bins_sql(tx_hashes)
         CellOutput.pending.where("tx_hash IN (#{binary_hashes})").update_all(status: :live)
         id_hashes = CellOutput.upsert_all(cell_outputs_attributes, unique_by: %i[tx_hash cell_index status],
@@ -821,7 +821,7 @@ module CkbSync
       CellInput.upsert_all(cell_inputs_attributes,
                            unique_by: %i[ckb_transaction_id index])
       if prev_cell_outputs_attributes.present?
-        cell_ouput_ids = prev_cell_outputs_attributes.map { |attr| attr[:id] }
+        cell_ouput_ids = prev_cell_outputs_attributes.pluck(:id)
         CellOutput.live.where(id: cell_ouput_ids).update_all(status: :dead)
         CellOutput.upsert_all(prev_cell_outputs_attributes,
                               unique_by: %i[tx_hash cell_index status],
@@ -962,6 +962,12 @@ input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, 
               udt_address_ids[tx_index] << address_id
               contained_udt_ids[tx_index] << Udt.where(type_hash:,
                                                        udt_type: "sudt").pick(:id)
+            when "ssri"
+              tags[tx_index] << "ssri"
+              udt_address_ids[tx_index] << address_id
+              contained_udt_ids[tx_index] << Udt.where(type_hash:,
+                                                       udt_type: "ssri").pick(:id)
+
             when "omiga_inscription"
               tags[tx_index] << "omiga_inscription"
               udt_address_ids[tx_index] << address_id
@@ -1039,6 +1045,12 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, tok
             contained_udt_ids[tx_index] << Udt.where(
               type_hash: item.type.compute_hash, udt_type: "sudt",
             ).pick(:id)
+          elsif attr[:cell_type] == "ssri"
+            tags[tx_index] << "ssri"
+            udt_address_ids[tx_index] << address.id
+            contained_udt_ids[tx_index] << Udt.where(
+              type_hash: item.type.compute_hash, udt_type: "ssri",
+            ).pick(:id)
           elsif attr[:cell_type] == "omiga_inscription"
             tags[tx_index] << "omiga_inscription"
             udt_address_ids[tx_index] << address_id
@@ -1068,7 +1080,7 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, tok
     end
 
     def occupied?(type_hash, cell_data)
-      cell_data.present? && cell_data != "0x" || type_hash.present?
+      (cell_data.present? && cell_data != "0x") || type_hash.present?
     end
 
     def cell_output_attributes(output, address, ckb_transaction, local_block, cell_index, output_data)
