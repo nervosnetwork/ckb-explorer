@@ -737,8 +737,4 @@ class CkbUtils
   rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
     ""
   end
-
-  def hex_to_utf8(hex)
-    [hex.delete_prefix("0x")].pack("H*").force_encoding("UTF-8")
-  end
 end
