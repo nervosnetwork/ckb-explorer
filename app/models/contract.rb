@@ -1,6 +1,7 @@
 class Contract < ApplicationRecord
   has_many :cell_deps_out_points, foreign_key: :deployed_cell_output_id, primary_key: :deployed_cell_output_id
   has_many :cell_dependencies, through: :cell_deps_out_points
+  has_one :ssri_contract
   belongs_to :deployed_cell_output, class_name: "CellOutput"
   belongs_to :contract_cell, class_name: "CellOutput", optional: true
 

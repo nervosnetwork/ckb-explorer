@@ -33,6 +33,7 @@ class CellOutput < ApplicationRecord
     xudt_compatible: 17,
     did_cell: 18,
     stablepp_pool: 19,
+    ssri: 20,
   }
 
   belongs_to :ckb_transaction
@@ -147,7 +148,7 @@ class CellOutput < ApplicationRecord
 
   # @return [Boolean]
   def free?
-    type_hash.blank? && (data.present? && data == "0x")
+    type_hash.blank? && data.present? && data == "0x"
   end
 
   def address_hash
