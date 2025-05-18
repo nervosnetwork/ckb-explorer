@@ -166,9 +166,9 @@ class AnalyzeContractFromCellDependencyWorker
     CellDependency.upsert_all(attrs.to_a, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: %i[contract_analyzed is_used]) if attrs.any?
   end
 
-  def parse_ssri_contract(contract_ids, ckb_transaction_id)
+  def parse_ssri_contract(contract_ids)
     return if contract_ids.nil?
 
-    SsriContractWorker.perform_async(contract_ids.rows.flatten, ckb_transaction_id)
+    SsriContractWorker.perform_async(contract_ids.rows.flatten)
   end
 end
