@@ -28,8 +28,9 @@ class AnalyzeContractFromCellDependencyWorker
     end
 
     save_cell_deps_out_points(cell_deps_out_points_attrs)
-    save_contracts(contract_attrs, contract_roles)
+    returning_contract_ids = save_contracts(contract_attrs, contract_roles)
     save_cell_dependencies(cell_deps_attrs)
+    parse_ssri_contract(returning_contract_ids)
   end
 
   private
@@ -158,10 +159,16 @@ class AnalyzeContractFromCellDependencyWorker
     return if attrs.empty?
 
     new_attrs = attrs.map { |attr| attr.merge(roles[attr[:deployed_cell_output_id]]) }
-    Contract.upsert_all(new_attrs, unique_by: %i[deployed_cell_output_id])
+    Contract.upsert_all(new_attrs, unique_by: %i[deployed_cell_output_id], returning: [:id])
   end
 
   def save_cell_dependencies(attrs)
     CellDependency.upsert_all(attrs.to_a, unique_by: %i[ckb_transaction_id contract_cell_id dep_type], update_only: %i[contract_analyzed is_used]) if attrs.any?
+  end
+
+  def parse_ssri_contract(contract_ids)
+    return if contract_ids.nil?
+
+    SsriContractWorker.perform_async(contract_ids.rows.flatten)
   end
 end
