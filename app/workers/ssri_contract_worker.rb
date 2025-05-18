@@ -68,7 +68,13 @@ class SsriContractWorker
                                                    issuer_address: first_output.address.address_hash))
 
       CellOutput.live.where(type_script_id: script.id).each do |cell_output|
-        udt_amount = CkbUtils.parse_udt_cell_data(cell_output.binary_data)
+        udt_amount =
+          begin
+            CkbUtils.parse_udt_cell_data(cell_output.binary_data)
+          rescue StandardError => e
+            Rails.logger.error("Error parse udt cell data #{cell_output.id}: #{e.message}")
+            0
+          end
 
         udt_account_attrs << base_attr.merge(
           amount: udt_amount,
