@@ -30,7 +30,7 @@ class AnalyzeContractFromCellDependencyWorker
     save_cell_deps_out_points(cell_deps_out_points_attrs)
     returning_contract_ids = save_contracts(contract_attrs, contract_roles)
     save_cell_dependencies(cell_deps_attrs)
-    parse_ssri_contract(returning_contract_ids, ckb_transaction_id)
+    parse_ssri_contract(returning_contract_ids)
   end
 
   private

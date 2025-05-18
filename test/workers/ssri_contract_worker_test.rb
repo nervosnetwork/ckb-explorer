@@ -19,7 +19,7 @@ class SsriContractWorkerTest < ActiveJob::TestCase
                                                                     icon: "http://example.com/icon.png",
                                                                   })
 
-    SsriContractWorker.new.perform([@contract.id], @tx.id)
+    SsriContractWorker.new.perform([@contract.id])
     assert_equal "Pausable UDT without external data", Udt.first.full_name
     assert_equal @type_script.script_hash, Udt.first.type_hash
     assert_equal 9997000000000000, UdtAccount.first.amount
