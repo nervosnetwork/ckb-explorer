@@ -2,6 +2,12 @@ class SsriContract < ApplicationRecord
   belongs_to :contract
 
   scope :udt, -> { where(is_udt: true) }
+
+  def self.udt_code_hashes
+    Rails.cache.fetch("ssri_contracts:udt_code_hashes") do
+      udt.pluck(:code_hash, :hash_type)
+    end
+  end
 end
 
 # == Schema Information

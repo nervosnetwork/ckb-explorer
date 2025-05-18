@@ -86,7 +86,7 @@ class CkbUtils
   end
 
   def self.generate_address(lock_script, version = CKB::Address::Version::CKB2021)
-    CKB::Address.new(lock_script, mode: ENV["CKB_NET_MODE"],
+    CKB::Address.new(lock_script, mode: ENV.fetch("CKB_NET_MODE", nil),
                                   version:).generate
   end
 
@@ -116,23 +116,23 @@ class CkbUtils
   end
 
   def self.epoch_reward_with_halving(epoch_number)
-    Settings.default_epoch_reward.to_i >> epoch_number / HALVING_EPOCH
+    Settings.default_epoch_reward.to_i >> (epoch_number / HALVING_EPOCH)
   end
 
   def self.primary_reward(block_number, block_economic_state)
-    block_number != 0 ? block_economic_state.miner_reward.primary : 0
+    block_number == 0 ? 0 : block_economic_state.miner_reward.primary
   end
 
   def self.secondary_reward(block_number, block_economic_state)
-    block_number != 0 ? block_economic_state.miner_reward.secondary : 0
+    block_number == 0 ? 0 : block_economic_state.miner_reward.secondary
   end
 
   def self.proposal_reward(block_number, block_economic_state)
-    block_number != 0 ? block_economic_state.miner_reward.proposal : 0
+    block_number == 0 ? 0 : block_economic_state.miner_reward.proposal
   end
 
   def self.commit_reward(block_number, block_economic_state)
-    block_number != 0 ? block_economic_state.miner_reward.committed : 0
+    block_number == 0 ? 0 : block_economic_state.miner_reward.committed
   end
 
   def self.get_epoch_info(epoch)
@@ -326,7 +326,7 @@ class CkbUtils
   end
 
   def self.target_to_difficulty(target)
-    u256_max_value = 2**256 - 1
+    u256_max_value = (2**256) - 1
     hspace = "0x10000000000000000000000000000000000000000000000000000000000000000".hex
     if target.zero?
       u256_max_value
@@ -396,80 +396,54 @@ class CkbUtils
   # @param [String] output_data
   # @return [String] cell type
   def self.cell_type(type_script, output_data)
-    return "normal" unless ([
-      Settings.dao_code_hash, Settings.dao_type_hash, Settings.sudt_cell_type_hash, Settings.sudt1_cell_type_hash,
-      CkbSync::Api.instance.issuer_script_code_hash, CkbSync::Api.instance.token_class_script_code_hash,
-      CkbSync::Api.instance.token_script_code_hash, CkbSync::Api.instance.cota_registry_code_hash,
-      CkbSync::Api.instance.cota_regular_code_hash, CkbSync::Api.instance.omiga_inscription_info_code_hash,
-      CkbSync::Api.instance.xudt_code_hash, CkbSync::Api.instance.unique_cell_code_hash, *CkbSync::Api.instance.xudt_compatible_code_hashes,
-      CkbSync::Api.instance.did_cell_code_hash, CkbSync::Api.instance.stablepp_pool_code_hash
-    ].include?(type_script&.code_hash) && type_script&.hash_type == "type") ||
-      is_nrc_721_token_cell?(output_data) ||
-      is_nrc_721_factory_cell?(output_data) ||
-      [
-        *CkbSync::Api.instance.spore_cluster_code_hashes,
-        *CkbSync::Api.instance.spore_cell_code_hashes,
-        CkbSync::Api.instance.xudt_data_hash,
-        CkbSync::Api.instance.xudt_code_hash,
-        CkbSync::Api.instance.unique_cell_code_hash,
-      ].include?(type_script&.code_hash) && type_script&.hash_type == "data1"
+    return "normal" unless type_script.present?
 
-    case type_script&.code_hash
-    when Settings.dao_code_hash, Settings.dao_type_hash
-      if output_data == CKB::Utils.bin_to_hex("\x00" * 8)
-        "nervos_dao_deposit"
-      else
-        "nervos_dao_withdrawing"
+    return "nrc_721_token" if is_nrc_721_token_cell?(output_data)
+    return "nrc_721_factory" if is_nrc_721_factory_cell?(output_data)
+
+    code_hash = type_script.code_hash
+    hash_type = type_script.hash_type
+
+    case [code_hash, hash_type]
+    when [Settings.dao_code_hash, "type"], [Settings.dao_type_hash, "type"]
+      return output_data == CKB::Utils.bin_to_hex("\x00" * 8) ? "nervos_dao_deposit" : "nervos_dao_withdrawing"
+    when [Settings.sudt_cell_type_hash, "type"], [Settings.sudt1_cell_type_hash, "type"]
+      return CKB::Utils.hex_to_bin(output_data).bytesize >= CellOutput::MIN_SUDT_AMOUNT_BYTESIZE ? "udt" : "normal"
+    when [CkbSync::Api.instance.issuer_script_code_hash, "type"]
+      return "m_nft_issuer"
+    when [CkbSync::Api.instance.token_class_script_code_hash, "type"]
+      return "m_nft_class"
+    when [CkbSync::Api.instance.token_script_code_hash, "type"]
+      return "m_nft_token"
+    when [CkbSync::Api.instance.cota_registry_code_hash, "type"]
+      return "cota_registry"
+    when [CkbSync::Api.instance.cota_regular_code_hash, "type"]
+      return "cota_regular"
+    when *CkbSync::Api.instance.spore_cluster_code_hashes.product(["data1"])
+      return "spore_cluster"
+    when *CkbSync::Api.instance.spore_cell_code_hashes.product(["data1"])
+      return "spore_cell"
+    when [CkbSync::Api.instance.did_cell_code_hash, "type"]
+      return "did_cell"
+    when [CkbSync::Api.instance.omiga_inscription_info_code_hash, "type"]
+      return "omiga_inscription_info"
+    when *CkbSync::Api.instance.xudt_compatible_code_hashes.product(["type"])
+      return "xudt_compatible"
+    when [CkbSync::Api.instance.xudt_code_hash, "type"]
+      return Rails.cache.fetch(type_script.compute_hash) do
+        OmigaInscriptionInfo.exists?(udt_hash: type_script.compute_hash) ? "omiga_inscription" : "xudt"
       end
-    when Settings.sudt_cell_type_hash, Settings.sudt1_cell_type_hash
-      if CKB::Utils.hex_to_bin(output_data).bytesize >= CellOutput::MIN_SUDT_AMOUNT_BYTESIZE
-        "udt"
-      else
-        "normal"
-      end
-    when CkbSync::Api.instance.issuer_script_code_hash
-      "m_nft_issuer"
-    when CkbSync::Api.instance.token_class_script_code_hash
-      "m_nft_class"
-    when CkbSync::Api.instance.token_script_code_hash
-      "m_nft_token"
-    when CkbSync::Api.instance.cota_registry_code_hash
-      "cota_registry"
-    when CkbSync::Api.instance.cota_regular_code_hash
-      "cota_regular"
-    when *CkbSync::Api.instance.spore_cluster_code_hashes
-      "spore_cluster"
-    when *CkbSync::Api.instance.spore_cell_code_hashes
-      "spore_cell"
-    when CkbSync::Api.instance.did_cell_code_hash
-      "did_cell"
-    when CkbSync::Api.instance.omiga_inscription_info_code_hash
-      "omiga_inscription_info"
-    when *CkbSync::Api.instance.xudt_compatible_code_hashes
-      "xudt_compatible"
-    when CkbSync::Api.instance.xudt_code_hash
-      Rails.cache.fetch(type_script.compute_hash) do
-        if OmigaInscriptionInfo.exists?(udt_hash: type_script.compute_hash)
-          "omiga_inscription"
-        else
-          "xudt"
-        end
-      end
-    when CkbSync::Api.instance.xudt_data_hash
-      "xudt"
-    when CkbSync::Api.instance.unique_cell_code_hash
-      "unique_cell"
-    when CkbSync::Api.instance.stablepp_pool_code_hash
-      "stablepp_pool"
-    else
-      if is_nrc_721_token_cell?(output_data)
-        "nrc_721_token"
-      elsif is_nrc_721_factory_cell?(output_data)
-        "nrc_721_factory"
-      else
-        "normal"
-      end
+    when [CkbSync::Api.instance.xudt_data_hash, "data1"]
+      return "xudt"
+    when [CkbSync::Api.instance.unique_cell_code_hash, "data1"]
+      return "unique_cell"
+    when [CkbSync::Api.instance.stablepp_pool_code_hash, "type"]
+      return "stablepp_pool"
+    when *SsriContract.udt_code_hashes
+      return "ssri"
     end
+
+    "normal"
   end
 
   # Parse mNFT issuer data information from cell data
@@ -502,14 +476,14 @@ class CkbUtils
     issued = data[10..17].to_i(16)
     configure = data[18..19].to_i(16)
     name_size = data[20..23].to_i(16)
-    name_end_index = (24 + name_size * 2 - 1)
+    name_end_index = (24 + (name_size * 2) - 1)
     name = [data[24..name_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8", invalid: :replace,
                                                                                          undef: :replace).delete("\u0000")
     description_size_start_index = name_end_index + 1
     description_size_end_index = description_size_start_index + 4 - 1
     description_size = data[description_size_start_index..description_size_end_index].to_i(16)
     description_start_index = description_size_end_index + 1
-    description_end_index = description_start_index + description_size * 2 - 1
+    description_end_index = description_start_index + (description_size * 2) - 1
     description = [data[description_start_index..description_end_index]].pack("H*").force_encoding("UTF-8").encode(
       "UTF-8", invalid: :replace, undef: :replace
     ).delete("\u0000")
@@ -517,7 +491,7 @@ class CkbUtils
     renderer_size_end_index = renderer_size_start_index + 4 - 1
     renderer_size = data[renderer_size_start_index..renderer_size_end_index].to_i(16)
     renderer_start_index = renderer_size_end_index + 1
-    renderer_end_index = renderer_start_index + renderer_size * 2 - 1
+    renderer_end_index = renderer_start_index + (renderer_size * 2) - 1
     renderer = [data[renderer_start_index, renderer_end_index]].pack("H*").force_encoding("UTF-8").encode("UTF-8",
                                                                                                           invalid: :replace, undef: :replace).delete("\u0000")
     OpenStruct.new(version:, total:, issued:, configure:, name:,
@@ -567,7 +541,7 @@ class CkbUtils
                                  arg_base_token_uri_length].to_i(16)
     factory_base_token_uri_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length),
                                       base_token_uri_length * 2]
-    extra_data_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length + base_token_uri_length * 2)..-1]
+    extra_data_hex = data[(arg_name_length + factory_name_hex.length + arg_symbol_length + factory_symbol_hex.length + arg_base_token_uri_length + (base_token_uri_length * 2))..-1]
     OpenStruct.new(name: [factory_name_hex].pack("H*"), symbol: [factory_symbol_hex].pack("H*"),
                    base_token_uri: [factory_base_token_uri_hex].pack("H*"), extra_data: extra_data_hex)
   end
@@ -726,7 +700,7 @@ class CkbUtils
       # Before a Bitcoin transaction is confirmed on the blockchain, its transaction ID (txid) is uncertain.
       # Therefore, when passing parameters to `calculateCommitment`, manually replace the txid part in the lock args with "0x01000....0000".
       new_output = CKB::Types::Output.from_h(output.to_raw)
-      new_output.lock.args = new_output.lock.args.slice(0, 10) + "0" * 64
+      new_output.lock.args = new_output.lock.args.slice(0, 10) + ("0" * 64)
 
       binary_output = CKB::Utils.hex_to_bin(CKB::Serializers::OutputSerializer.new(new_output).serialize)
       hash.update(binary_output.bytes.pack("C*"))
