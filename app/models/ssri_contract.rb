@@ -5,7 +5,7 @@ class SsriContract < ApplicationRecord
 
   def self.udt_code_hashes
     Rails.cache.fetch("ssri_contracts:udt_code_hashes") do
-      udt.pluck(:code_hash, :hash_type).map { |code_hash, hash_type| "#{code_hash}-#{hash_type}" }
+      udt.pluck(:code_hash, :hash_type)
     end
   end
 end

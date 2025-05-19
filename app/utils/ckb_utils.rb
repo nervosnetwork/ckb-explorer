@@ -398,7 +398,6 @@ class CkbUtils
   def self.cell_type(type_script, output_data)
     return "normal" unless type_script.present?
 
-    return "ssri" if ssri_contract_type?(type_script)
     return "nrc_721_token" if is_nrc_721_token_cell?(output_data)
     return "nrc_721_factory" if is_nrc_721_factory_cell?(output_data)
 
@@ -440,6 +439,8 @@ class CkbUtils
       return "unique_cell"
     when [CkbSync::Api.instance.stablepp_pool_code_hash, "type"]
       return "stablepp_pool"
+    when *SsriContract.udt_code_hashes
+      return "ssri"
     end
 
     "normal"
