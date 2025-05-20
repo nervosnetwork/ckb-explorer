@@ -79,5 +79,7 @@ class UdtSerializer
 
   attribute :ssri_contract_outpoint, if: Proc.new { |record, _params|
     record.udt_type == "ssri"
-  }, &:ssri_contract_outpoint
+  } do |object|
+    object.ssri_contract_outpoint
+  end
 end
