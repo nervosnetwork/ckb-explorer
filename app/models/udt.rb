@@ -46,6 +46,13 @@ class Udt < ApplicationRecord
   def holders_count
     udt_holder_allocations.sum("ckb_holder_count + btc_holder_count")
   end
+
+  def ssri_contract_outpoint
+    return unless udt_type == "ssri"
+
+    cell = SsriContract.find_by(code_hash: code_hash, hash_type: hash_type).contract.deployed_cell_output
+    { tx_hash: cell.tx_hash, cell_index: cell.cell_index }
+  end
 end
 
 # == Schema Information
