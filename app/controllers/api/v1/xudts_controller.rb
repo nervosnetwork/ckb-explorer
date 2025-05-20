@@ -110,7 +110,7 @@ module Api
       end
 
       def xudt_type_params
-        params[:type].blank? ? ["xudt", "xudt_compatible"] : "xudt_compatible"
+        params[:type].blank? ? ["xudt", "xudt_compatible", "ssri"] : "xudt_compatible"
       end
     end
   end
