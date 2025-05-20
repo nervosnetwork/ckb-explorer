@@ -13,7 +13,7 @@ class CellInput < ApplicationRecord
     normal: 0, nervos_dao_deposit: 1, nervos_dao_withdrawing: 2, udt: 3, m_nft_issuer: 4,
     m_nft_class: 5, m_nft_token: 6, nrc_721_token: 7, nrc_721_factory: 8, cota_registry: 9,
     cota_regular: 10, spore_cluster: 11, spore_cell: 12, omiga_inscription_info: 13, omiga_inscription: 14,
-    xudt: 15, unique_cell: 16, xudt_compatible: 17, did_cell: 18, stablepp_pool: 19
+    xudt: 15, unique_cell: 16, xudt_compatible: 17, did_cell: 18, stablepp_pool: 19, ssri: 20
   }
 
   def output

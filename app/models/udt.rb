@@ -8,7 +8,7 @@ class Udt < ApplicationRecord
   has_many :udt_holder_allocations
 
   enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3,
-                   omiga_inscription: 4, xudt: 5, xudt_compatible: 6, did_cell: 7 }
+                   omiga_inscription: 4, xudt: 5, xudt_compatible: 6, did_cell: 7, ssri: 8 }
 
   validates_presence_of :total_amount
   validates :decimal,
