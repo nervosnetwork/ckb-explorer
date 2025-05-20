@@ -2472,6 +2472,41 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: ssri_contracts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ssri_contracts (
+    id bigint NOT NULL,
+    contract_id bigint,
+    methods character varying[] DEFAULT '{}'::character varying[],
+    is_udt boolean,
+    code_hash bytea,
+    hash_type character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: ssri_contracts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ssri_contracts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ssri_contracts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ssri_contracts_id_seq OWNED BY public.ssri_contracts.id;
+
+
+--
 -- Name: statistic_infos; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3464,6 +3499,13 @@ ALTER TABLE ONLY public.rgbpp_hourly_statistics ALTER COLUMN id SET DEFAULT next
 
 
 --
+-- Name: ssri_contracts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ssri_contracts ALTER COLUMN id SET DEFAULT nextval('public.ssri_contracts_id_seq'::regclass);
+
+
+--
 -- Name: statistic_infos id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -4069,6 +4111,14 @@ ALTER TABLE ONLY public.rgbpp_hourly_statistics
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: ssri_contracts ssri_contracts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ssri_contracts
+    ADD CONSTRAINT ssri_contracts_pkey PRIMARY KEY (id);
 
 
 --
@@ -5302,6 +5352,13 @@ CREATE UNIQUE INDEX index_rolling_avg_block_time_on_timestamp ON public.rolling_
 
 
 --
+-- Name: index_ssri_contracts_on_contract_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_ssri_contracts_on_contract_id ON public.ssri_contracts USING btree (contract_id);
+
+
+--
 -- Name: index_table_record_counts_on_table_name_and_count; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -6399,6 +6456,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250423104930'),
 ('20250427105936'),
 ('20250429170657'),
-('20250508112010');
+('20250508112010'),
+('20250513034909');
 
 
