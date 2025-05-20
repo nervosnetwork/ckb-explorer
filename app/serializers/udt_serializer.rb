@@ -6,7 +6,7 @@ class UdtSerializer
 
   attribute :email do |object|
     object.email&.sub(/\A(..)(.*)@(.*)(..)\z/) do
-      $1 + "*" * $2.length + "@" + "*" * $3.length + $4
+      $1 + ("*" * $2.length) + "@" + ("*" * $3.length) + $4
     end
   end
 
@@ -76,4 +76,8 @@ class UdtSerializer
   } do |object|
     object.xudt_tag&.tags
   end
+
+  attribute :ssri_contract_outpoint, if: Proc.new { |record, _params|
+    record.udt_type == "ssri"
+  }, &:ssri_contract_outpoint
 end
