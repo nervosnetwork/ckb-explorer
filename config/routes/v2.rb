@@ -70,6 +70,7 @@ namespace :api do
     resources :blocks, only: [] do
       collection do
         get :ckb_node_versions
+        get :by_epoch
       end
     end
 
