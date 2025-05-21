@@ -8,7 +8,7 @@ class Udt < ApplicationRecord
   has_many :udt_holder_allocations
 
   enum udt_type: { sudt: 0, m_nft_token: 1, nrc_721_token: 2, spore_cell: 3,
-                   omiga_inscription: 4, xudt: 5, xudt_compatible: 6, did_cell: 7 }
+                   omiga_inscription: 4, xudt: 5, xudt_compatible: 6, did_cell: 7, ssri: 8 }
 
   validates_presence_of :total_amount
   validates :decimal,
@@ -45,6 +45,13 @@ class Udt < ApplicationRecord
 
   def holders_count
     udt_holder_allocations.sum("ckb_holder_count + btc_holder_count")
+  end
+
+  def ssri_contract_outpoint
+    return unless udt_type == "ssri"
+
+    cell = SsriContract.find_by(code_hash: code_hash, hash_type: hash_type).contract.deployed_cell_output
+    { tx_hash: cell.tx_hash, cell_index: cell.cell_index }
   end
 end
 
