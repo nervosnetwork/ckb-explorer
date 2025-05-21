@@ -128,7 +128,7 @@ module CkbTransactions
             display_input.merge!(attributes_for_dob_cell(previous_cell_output))
           end
           if previous_cell_output.lock_script.code_hash == Settings.fiber_funding_code_hash
-            display_input.merge!(attributes_for_fiber_cell(output))
+            display_input.merge!(attributes_for_fiber_cell(previous_cell_output))
           end
 
           CkbUtils.hash_value_to_s(display_input)
