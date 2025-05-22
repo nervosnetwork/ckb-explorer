@@ -109,6 +109,9 @@ module CkbTransactions
           if previous_cell_output.xudt?
             display_input.merge!(attributes_for_xudt_cell(previous_cell_output))
           end
+          if previous_cell_output.ssri?
+            display_input.merge!(attributes_for_ssri_cell(previous_cell_output))
+          end
           if previous_cell_output.xudt_compatible?
             display_input.merge!(attributes_for_xudt_compatible_cell(previous_cell_output))
           end
@@ -150,6 +153,7 @@ module CkbTransactions
 
           display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
           display_output.merge!(attributes_for_xudt_cell(output)) if output.xudt?
+          display_output.merge!(attributes_for_ssri_cell(output)) if output.ssri?
           display_output.merge!(attributes_for_xudt_compatible_cell(output)) if output.xudt_compatible?
           display_output.merge!(attributes_for_cota_registry_cell(output)) if output.cota_registry?
           display_output.merge!(attributes_for_cota_regular_cell(output)) if output.cota_regular?
@@ -243,6 +247,11 @@ module CkbTransactions
       def attributes_for_xudt_compatible_cell(xudt_compatible_cell)
         info = CkbUtils.hash_value_to_s(xudt_compatible_cell.udt_info)
         { xudt_compatible_info: info, extra_info: info }
+      end
+
+      def attributes_for_ssri_cell(ssri_cell)
+        info = CkbUtils.hash_value_to_s(ssri_cell.udt_info)
+        { ssri_info: info, extra_info: info }
       end
 
       def attributes_for_dob_cell(dob_cell)
