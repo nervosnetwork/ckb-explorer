@@ -61,6 +61,9 @@ Rails.application.routes.draw do
         get :download_csv, on: :collection
         get :snapshot, on: :collection
       end
+      resources :fungible_tokens, only: %i(index show) do
+        get :download_csv, on: :collection
+      end
       resources :omiga_inscriptions, only: %i(index show) do
         get :download_csv, on: :collection
       end
