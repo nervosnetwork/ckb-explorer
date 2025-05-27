@@ -5,12 +5,21 @@ module Api
       before_action :validate_pagination_params, :pagination_params, only: :index
 
       def index
-        udts = Udt.where(published: true, udt_type: %i[ssri xudt xudt_compatible sudt])
+        scope = Udt.includes(:xudt_tag).where(published: true, udt_type: %i[ssri xudt xudt_compatible sudt])
 
-        if stale?(udts)
-          expires_in 30.minutes, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 10.minutes
+        if params[:tags].present?
+          tags = parse_tags
+          if params[:union].present?
+            scope = scope.joins(:xudt_tag).where("xudt_tags.tags && ARRAY[?]::varchar[]", tags).select("udts.*") unless tags.empty?
+          else
+            scope = scope.joins(:xudt_tag).where("xudt_tags.tags @> array[?]::varchar[]", tags).select("udts.*") unless tags.empty?
+          end
+        end
 
-          udts = sort_udts(udts).page(@page).per(@page_size).fast_page
+        if stale?(scope)
+          expires_in 1.minute, public: true
+
+          udts = sort_udts(scope).page(@page).per(@page_size).fast_page
           options = FastJsonapi::PaginationMetaGenerator.new(
             request:,
             records: udts,
@@ -72,6 +81,11 @@ module Api
         end
 
         records.order("#{sort} #{order}").order("full_name ASC, id ASC")
+      end
+
+      def parse_tags
+        tags = params[:tags].split(",")
+        tags & XudtTag::VALID_TAGS
       end
     end
   end
