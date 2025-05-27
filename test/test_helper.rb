@@ -464,6 +464,7 @@ module ActiveSupport
     # fixtures :all
     include FactoryBot::Syntax::Methods
     include ::RequestHelpers
+    parallelize(workers: ENV['PARALLEL_WORKERS'].to_i)
 
     # Add more helper methods to be used by all tests here...
     def before_setup

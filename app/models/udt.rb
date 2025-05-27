@@ -48,7 +48,7 @@ class Udt < ApplicationRecord
   end
 
   def ssri_contract_outpoint
-    return unless udt_type == "ssri"
+    return unless udt_type == "ssri" && SsriContract.find_by(code_hash: code_hash, hash_type: hash_type)
 
     cell = SsriContract.find_by(code_hash: code_hash, hash_type: hash_type).contract.deployed_cell_output
     { tx_hash: cell.tx_hash, cell_index: cell.cell_index }

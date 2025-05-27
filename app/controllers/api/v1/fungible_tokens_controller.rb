@@ -1,31 +1,16 @@
-require "csv"
-
 module Api
   module V1
-    class XudtsController < ApplicationController
+    class FungibleTokensController < ApplicationController
       before_action :validate_query_params, only: :show
       before_action :validate_pagination_params, :pagination_params, only: :index
 
       def index
-        scope = Udt.includes(:xudt_tag).where(udt_type: xudt_type_params)
+        udts = Udt.where(published: true, udt_type: %i[ssri xudt xudt_compatible sudt])
 
-        if params[:symbol].present?
-          scope = scope.where("LOWER(symbol) = ?", params[:symbol].downcase)
-        end
+        if stale?(udts)
+          expires_in 30.minutes, public: true, stale_while_revalidate: 10.minutes, stale_if_error: 10.minutes
 
-        if params[:tags].present?
-          tags = parse_tags
-          if params[:union].present?
-            scope = scope.joins(:xudt_tag).where("xudt_tags.tags && ARRAY[?]::varchar[]", tags).select("udts.*") unless tags.empty?
-          else
-            scope = scope.joins(:xudt_tag).where("xudt_tags.tags @> array[?]::varchar[]", tags).select("udts.*") unless tags.empty?
-          end
-        end
-
-        if stale?(scope)
-          expires_in 1.minute, public: true
-
-          udts = sort_udts(scope).page(@page).per(@page_size).fast_page
+          udts = sort_udts(udts).page(@page).per(@page_size).fast_page
           options = FastJsonapi::PaginationMetaGenerator.new(
             request:,
             records: udts,
@@ -49,22 +34,7 @@ module Api
         file = CsvExportable::ExportUdtTransactionsJob.perform_now(args.to_h)
 
         send_data file, type: "text/csv; charset=utf-8; header=present",
-                        disposition: "attachment;filename=xudt_transactions.csv"
-      rescue ActiveRecord::RecordNotFound
-        raise Api::V1::Exceptions::UdtNotFoundError
-      end
-
-      def snapshot
-        args = params.permit(:id, :number, :merge_with_owner)
-        file = CsvExportable::ExportUdtSnapshotJob.perform_now(args.to_h)
-
-        if params[:format] == "json"
-          csv_parsed = CSV.parse(file, headers: true)
-          render json: csv_parsed.map(&:to_h)
-        else
-          send_data file, type: "text/csv; charset=utf-8; header=present",
-                          disposition: "attachment;filename=xudt_snapshot.csv"
-        end
+                        disposition: "attachment;filename=udt_transactions.csv"
       rescue ActiveRecord::RecordNotFound
         raise Api::V1::Exceptions::UdtNotFoundError
       end
@@ -102,15 +72,6 @@ module Api
         end
 
         records.order("#{sort} #{order}").order("full_name ASC, id ASC")
-      end
-
-      def parse_tags
-        tags = params[:tags].split(",")
-        tags & XudtTag::VALID_TAGS
-      end
-
-      def xudt_type_params
-        params[:type].blank? ? ["xudt", "xudt_compatible"] : "xudt_compatible"
       end
     end
   end
