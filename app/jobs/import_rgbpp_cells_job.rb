@@ -96,8 +96,6 @@ class ImportRgbppCellsJob < ApplicationJob
         Rails.cache.write(txid, data, expires_in: 30.minutes)
       end
       raw_tx_data[txid] = data["result"]
-    rescue StandardError => e
-      Rails.logger.error("Failed to fetch transaction #{txid}: #{e.message}")
     end
 
     raw_tx_data
