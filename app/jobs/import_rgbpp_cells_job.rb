@@ -49,6 +49,7 @@ class ImportRgbppCellsJob < ApplicationJob
 
       rescue StandardError => e
         Rails.logger.error("Handle rgbpp cell (id: #{cell_output.id}) failed: #{e.message}")
+        raise e
       end
 
       if vout_attributes.present?
@@ -74,6 +75,7 @@ class ImportRgbppCellsJob < ApplicationJob
   rescue StandardError => e
     Rails.logger.error("ImportRgbppCells failed: #{e.message}")
     Rails.logger.error("Backtrace:\n#{e.backtrace.join("\n")}")
+    raise e
   end
 
   def build_utxo_map(cell_outputs)
