@@ -23,7 +23,7 @@ FactoryBot.define do
           transaction = create(:ckb_transaction, block:,
                                                  contained_udt_ids: [udt.id], tags: ["udt"], tx_index: i * 2)
           transaction1 = create(:ckb_transaction, block:,
-                                                  contained_udt_ids: [udt.id], tags: ["udt"], tx_index: i * 2 + 1)
+                                                  contained_udt_ids: [udt.id], tags: ["udt"], tx_index: (i * 2) + 1)
           cell_output = create(:cell_output, block:,
                                              ckb_transaction: transaction,
                                              consumed_by: transaction1,
