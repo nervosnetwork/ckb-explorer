@@ -1,6 +1,6 @@
 namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:fix_address_tx_count"
-  task check_address_info: :environment do
+  task fix_address_tx_count: :environment do
     ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
     AddressBlockSnapshot.select(:address_id).distinct.find_each(batch_size: 1000) do |snapshot|
       puts snapshot.address_id
