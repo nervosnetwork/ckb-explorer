@@ -498,7 +498,7 @@ module CkbSync
         if addr.last_updated_block_number.nil?
           addr.last_updated_block_number = local_block.number
           addr.live_cells_count = addr.cell_outputs.live.count
-          addr.ckb_transactions_count = AccountBook.where(address_id: addr.id).count
+          addr.ckb_transactions_count = AccountBook.tx_committed.where(address_id: addr.id).count
           addr.dao_transactions_count = DaoEvent.processed.where(address_id: addr.id).distinct(:ckb_transaction_id).count
           addr.cal_balance!
           addr.save!
@@ -1442,17 +1442,6 @@ _prev_outputs, index = nil)
       return false if local_tip_block.blank?
 
       target_block.header.parent_hash != local_tip_block.block_hash
-    end
-
-    def update_address_balance_and_ckb_transactions_count(local_tip_block)
-      local_tip_block.contained_addresses.each do |address|
-        address.live_cells_count = address.cell_outputs.live.count
-        # address.ckb_transactions_count = address.custom_ckb_transactions.count
-        address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
-        address.dao_transactions_count = DaoEvent.processed.where(address_id: address.id).distinct(:ckb_transaction_id).count
-        address.cal_balance!
-        address.save!
-      end
     end
 
     def update_nrc_factory_cell_info(type_script, output_data)
