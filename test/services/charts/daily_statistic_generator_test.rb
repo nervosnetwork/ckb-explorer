@@ -40,7 +40,7 @@ module Charts
 
     test "should create only 1 daily statistic record" do
       block = create(:block,
-                     dao: "0xaff1568bbe49672f8a02516252ab2300df8c9e15dad428000035a1d671700007", timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, number: 0)
+                     dao: "0xaff1568bbe49672f8a02516252ab2300df8c9e15dad428000035a1d671700007", timestamp: 1.day.ago.end_of_day.to_i * 1000, number: 0)
       first_released_timestamp_other = create(:address,
                                               address_hash: "ckb1q3w9q60tppt7l3j7r09qcp7lxnp3vcanvgha8pmvsa3jplykxn32s3y29vjv73cfm8qax220dwwmpdccl4upy4s9qzzqxzq8yqyd09am")
       first_released_timestamp_addr = create(:address,
@@ -53,11 +53,11 @@ module Charts
       create(:block, :with_block_hash, epoch: 69, timestamp: 1575090866093,
                                        dao: "0xeeaf2fe1baa6df2e577fda67799223009ca127a6d1e30c00002dc77aa42b0007")
       create(:address,
-             address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: 10**8 * 1000)
+             address_hash: "ckb1qyqy6mtud5sgctjwgg6gydd0ea05mr339lnslczzrc", balance: (10**8) * 1000)
       tx = create(:ckb_transaction, block:,
                                     block_timestamp: block.timestamp)
       create(:cell_output, cell_type: "nervos_dao_deposit",
-                           ckb_transaction: tx, block:, capacity: 10**8 * 1000, block_timestamp: (Time.current - 1.day).end_of_day.to_i * 1000, occupied_capacity: 6100000000, dao: block.dao)
+                           ckb_transaction: tx, block:, capacity: (10**8) * 1000, block_timestamp: 1.day.ago.end_of_day.to_i * 1000, occupied_capacity: 6100000000, dao: block.dao)
       CkbSync::Api.any_instance.stubs(:get_tip_header).returns(
         CKB::Types::BlockHeader.new(
           compact_target: "0x1a33cadd",
@@ -158,13 +158,13 @@ module Charts
           nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
           nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
           interest_bearing_deposits += nervos_dao_deposit_cell.capacity
-          memo + nervos_dao_deposit_cell.capacity * (nervos_dao_withdrawing_cell.block_timestamp - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
+          memo + (nervos_dao_deposit_cell.capacity * (nervos_dao_withdrawing_cell.block_timestamp - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY)
         end
       sum_uninterest_bearing =
         CellOutput.nervos_dao_deposit.generated_before(@ended_at).unconsumed_at(@ended_at).reduce(0) do |memo, nervos_dao_deposit_cell|
           uninterest_bearing_deposits += nervos_dao_deposit_cell.capacity
 
-          memo + nervos_dao_deposit_cell.capacity * (@ended_at - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
+          memo + (nervos_dao_deposit_cell.capacity * (@ended_at - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY)
         end
       total_deposits = interest_bearing_deposits + uninterest_bearing_deposits
       average_deposit_time = ((sum_interest_bearing + sum_uninterest_bearing) / total_deposits).truncate(3) if total_deposits != 0
@@ -254,12 +254,12 @@ module Charts
 
     test "it should get avg_difficulty" do
       total_blocks_count = Block.created_after(@started_at).created_before(@ended_at).count
-      epoch_numbers_for_the_day = Block.created_after(@started_at).created_before(@ended_at).distinct(:epoch).pluck(:epoch)
+      epoch_numbers_for_the_day = Block.created_after(@started_at).created_before(@ended_at).distinct.pluck(:epoch)
       total_difficulties_for_the_day ||=
         epoch_numbers_for_the_day.reduce(0) do |memo, epoch_number|
           first_block_of_the_epoch = Block.created_after(@started_at).created_before(@ended_at).where(epoch: epoch_number).order("timestamp asc").first
           last_block_of_the_epoch = Block.created_after(@started_at).created_before(@ended_at).where(epoch: epoch_number).recent.first
-          memo + first_block_of_the_epoch.difficulty * (last_block_of_the_epoch.number - first_block_of_the_epoch.number + 1)
+          memo + (first_block_of_the_epoch.difficulty * (last_block_of_the_epoch.number - first_block_of_the_epoch.number + 1))
         end
       ::DailyStatistic.any_instance.stubs(:total_difficulties_for_the_day).returns(200)
       ::DailyStatistic.any_instance.stubs(:total_blocks_count).returns(20000)
@@ -290,8 +290,8 @@ module Charts
 
       temp_address_balance_distribution =
         ranges.each_with_index.map do |range, index|
-          begin_value = range[0] * 10**8
-          end_value = range[1] * 10**8
+          begin_value = range[0] * (10**8)
+          end_value = range[1] * (10**8)
           if index == max_n - 1
             addresses_count = Address.visible.where("balance > ?",
                                                     begin_value).count
@@ -404,7 +404,7 @@ module Charts
     test "it should get knowledge_size" do
       tip_dao = @current_tip_block.dao
       tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-      knowledge_size_temp = tip_parse_dao.u_i - MarketData::BURN_QUOTA * 0.6
+      knowledge_size_temp = tip_parse_dao.u_i - (MarketData::BURN_QUOTA * 0.6)
       knowledge_size = Charts::DailyStatisticGenerator.new(@datetime).call.knowledge_size
       assert_equal knowledge_size_temp, knowledge_size
     end
@@ -440,9 +440,9 @@ module Charts
       consumed_tx = create(:ckb_transaction)
 
       create(:cell_output, :with_full_transaction,
-             block_timestamp: @datetime.beginning_of_day.to_i * 1000 - 10000, block: @block, address_id: address1.id)
+             block_timestamp: (@datetime.beginning_of_day.to_i * 1000) - 10000, block: @block, address_id: address1.id)
       create(:cell_output, :with_full_transaction,
-             block_timestamp: @datetime.beginning_of_day.to_i * 1000 - 10000, block: @block, address_id: address2.id, status: :dead, consumed_block_timestamp: @datetime.beginning_of_day.to_i * 1000 + 10000, consumed_by_id: consumed_tx.id)
+             block_timestamp: (@datetime.beginning_of_day.to_i * 1000) - 10000, block: @block, address_id: address2.id, status: :dead, consumed_block_timestamp: (@datetime.beginning_of_day.to_i * 1000) + 10000, consumed_by_id: consumed_tx.id)
 
       holder_count = Charts::DailyStatisticGenerator.new(@datetime).call.holder_count
       assert_equal 2, holder_count
