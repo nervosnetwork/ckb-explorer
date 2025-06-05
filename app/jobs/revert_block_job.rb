@@ -48,7 +48,7 @@ class RevertBlockJob < ApplicationJob
         address.update!(attrs)
       else
         address.live_cells_count = address.cell_outputs.live.count
-        address.ckb_transactions_count = AccountBook.where(address_id: address.id).count
+        address.ckb_transactions_count = AccountBook.tx_committed.where(address_id: address.id).count
         address.dao_transactions_count = DaoEvent.processed.where(address_id: address.id).distinct(:ckb_transaction_id).count
         address.cal_balance!
         address.save!
@@ -184,7 +184,7 @@ class RevertBlockJob < ApplicationJob
     end
 
     upsert_data = address_attrs.values
-    address_ids = address_attrs.values.map { |hash| hash[:id] }
+    address_ids = address_attrs.values.pluck(:id)
     Address.upsert_all(upsert_data, unique_by: :id) if upsert_data.present?
     Address.where(id: address_ids, dao_deposit: 0).update_all(is_depositor: false)
 
