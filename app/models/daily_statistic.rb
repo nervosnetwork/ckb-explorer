@@ -187,8 +187,8 @@ class DailyStatistic < ApplicationRecord
       end
 
     ranges.each_with_index.map do |range, index|
-      begin_value = range[0] * 10**8
-      end_value = range[1] * 10**8
+      begin_value = range[0] * (10**8)
+      end_value = range[1] * (10**8)
       if index == max_n - 1
         addresses_count = Address.visible.where("balance > ?", begin_value).count
         total_addresses_count = Address.visible.where("balance > 0").count
@@ -237,7 +237,7 @@ class DailyStatistic < ApplicationRecord
   define_logic :knowledge_size do
     tip_dao = current_tip_block.dao
     tip_parse_dao = CkbUtils.parse_dao(tip_dao)
-    tip_parse_dao.u_i - MarketData::BURN_QUOTA * 0.6
+    tip_parse_dao.u_i - (MarketData::BURN_QUOTA * 0.6)
   end
 
   define_logic :circulating_supply do
@@ -316,8 +316,8 @@ class DailyStatistic < ApplicationRecord
   define_logic :ckb_hodl_wave do
     over_three_years =
       if time_range_exceeded?(3.years)
-        CellOutput.live.generated_before(to_be_counted_date.years_ago(3).to_i * 1000 - 1).sum(:capacity) +
-          CellOutput.dead.generated_before(to_be_counted_date.years_ago(3).to_i * 1000 - 1).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
+        CellOutput.live.generated_before((to_be_counted_date.years_ago(3).to_i * 1000) - 1).sum(:capacity) +
+          CellOutput.dead.generated_before((to_be_counted_date.years_ago(3).to_i * 1000) - 1).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
       else
         0
       end
@@ -325,9 +325,9 @@ class DailyStatistic < ApplicationRecord
     one_year_to_three_years =
       if time_range_exceeded?(1.year)
         CellOutput.live.generated_between(
-          to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000 - 1
+          to_be_counted_date.years_ago(3).to_i * 1000, (to_be_counted_date.years_ago(1).to_i * 1000) - 1
         ).sum(:capacity) + CellOutput.dead.generated_between(
-          to_be_counted_date.years_ago(3).to_i * 1000, to_be_counted_date.years_ago(1).to_i * 1000 - 1
+          to_be_counted_date.years_ago(3).to_i * 1000, (to_be_counted_date.years_ago(1).to_i * 1000) - 1
         ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
       else
         0
@@ -336,9 +336,9 @@ class DailyStatistic < ApplicationRecord
     six_months_to_one_year =
       if time_range_exceeded?(6.months)
         CellOutput.live.generated_between(
-          to_be_counted_date.years_ago(1).to_i * 1000, to_be_counted_date.months_ago(6).to_i * 1000 - 1
+          to_be_counted_date.years_ago(1).to_i * 1000, (to_be_counted_date.months_ago(6).to_i * 1000) - 1
         ).sum(:capacity) + CellOutput.dead.generated_between(
-          to_be_counted_date.years_ago(1).to_i * 1000, to_be_counted_date.months_ago(6).to_i * 1000 - 1
+          to_be_counted_date.years_ago(1).to_i * 1000, (to_be_counted_date.months_ago(6).to_i * 1000) - 1
         ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
       else
         0
@@ -347,9 +347,9 @@ class DailyStatistic < ApplicationRecord
     three_months_to_six_months =
       if time_range_exceeded?(3.months)
         CellOutput.live.generated_between(
-          to_be_counted_date.months_ago(6).to_i * 1000, to_be_counted_date.months_ago(3).to_i * 1000 - 1
+          to_be_counted_date.months_ago(6).to_i * 1000, (to_be_counted_date.months_ago(3).to_i * 1000) - 1
         ).sum(:capacity) + CellOutput.dead.generated_between(
-          to_be_counted_date.months_ago(6).to_i * 1000, to_be_counted_date.months_ago(3).to_i * 1000 - 1
+          to_be_counted_date.months_ago(6).to_i * 1000, (to_be_counted_date.months_ago(3).to_i * 1000) - 1
         ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
       else
         0
@@ -358,30 +358,30 @@ class DailyStatistic < ApplicationRecord
     one_month_to_three_months =
       if time_range_exceeded?(1.month)
         CellOutput.live.generated_between(
-          to_be_counted_date.months_ago(3).to_i * 1000, to_be_counted_date.months_ago(1).to_i * 1000 - 1
+          to_be_counted_date.months_ago(3).to_i * 1000, (to_be_counted_date.months_ago(1).to_i * 1000) - 1
         ).sum(:capacity) + CellOutput.dead.generated_between(
-          to_be_counted_date.months_ago(3).to_i * 1000, to_be_counted_date.months_ago(1).to_i * 1000 - 1
+          to_be_counted_date.months_ago(3).to_i * 1000, (to_be_counted_date.months_ago(1).to_i * 1000) - 1
         ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
       else
         0
       end
 
     one_week_to_one_month = CellOutput.live.generated_between(
-      to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000 - 1
+      to_be_counted_date.months_ago(1).to_i * 1000, (to_be_counted_date.weeks_ago(1).to_i * 1000) - 1
     ).sum(:capacity) + CellOutput.dead.generated_between(
-      to_be_counted_date.months_ago(1).to_i * 1000, to_be_counted_date.weeks_ago(1).to_i * 1000 - 1
+      to_be_counted_date.months_ago(1).to_i * 1000, (to_be_counted_date.weeks_ago(1).to_i * 1000) - 1
     ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
 
     day_to_one_week = CellOutput.live.generated_between(
-      to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000 - 1
+      to_be_counted_date.weeks_ago(1).to_i * 1000, (to_be_counted_date.days_ago(1).to_i * 1000) - 1
     ).sum(:capacity) + CellOutput.dead.generated_between(
-      to_be_counted_date.weeks_ago(1).to_i * 1000, to_be_counted_date.days_ago(1).to_i * 1000 - 1
+      to_be_counted_date.weeks_ago(1).to_i * 1000, (to_be_counted_date.days_ago(1).to_i * 1000) - 1
     ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
 
     latest_day = CellOutput.live.generated_between(
-      to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000 - 1
+      to_be_counted_date.days_ago(1).to_i * 1000, (to_be_counted_date.to_i * 1000) - 1
     ).sum(:capacity) + CellOutput.dead.generated_between(
-      to_be_counted_date.days_ago(1).to_i * 1000, to_be_counted_date.to_i * 1000 - 1
+      to_be_counted_date.days_ago(1).to_i * 1000, (to_be_counted_date.to_i * 1000) - 1
     ).consumed_after(to_be_counted_date.to_i * 1000).sum(:capacity)
 
     base_attrs =
@@ -396,12 +396,12 @@ class DailyStatistic < ApplicationRecord
         latest_day:,
       }
     total_live_capacities = base_attrs.values.sum
-    base_attrs.merge(total_supply: total_live_capacities).transform_values { |value| (value.to_f / 10**8).truncate(8) }
+    base_attrs.merge(total_supply: total_live_capacities).transform_values { |value| (value.to_f / (10**8)).truncate(8) }
   end
 
   define_logic :holder_count do
-    live_query = CellOutput.live.generated_before(to_be_counted_date.to_i * 1000 - 1).select(:address_id).to_sql
-    dead_query = CellOutput.dead.generated_before(to_be_counted_date.to_i * 1000 - 1).consumed_after(to_be_counted_date.to_i * 1000).select(:address_id).to_sql
+    live_query = CellOutput.live.generated_before((to_be_counted_date.to_i * 1000) - 1).select(:address_id).to_sql
+    dead_query = CellOutput.dead.generated_before((to_be_counted_date.to_i * 1000) - 1).consumed_after(to_be_counted_date.to_i * 1000).select(:address_id).to_sql
     combined_query = "#{live_query} UNION #{dead_query}"
     count_query = "SELECT COUNT(DISTINCT address_id) AS count FROM (#{combined_query}) AS combined_results;"
     ActiveRecord::Base.connection.execute(count_query).first["count"]
@@ -451,9 +451,9 @@ class DailyStatistic < ApplicationRecord
 
   def time_range_exceeded?(time_range)
     if CkbSync::Api.instance.mode == CKB::MODE::MAINNET
-      GENESIS_TIMESTAMP + time_range.to_i * 1000 <= started_at
+      GENESIS_TIMESTAMP + (time_range.to_i * 1000) <= started_at
     else
-      TESTNET_GENESIS_TIMESTAMP + time_range.to_i * 1000 <= started_at
+      TESTNET_GENESIS_TIMESTAMP + (time_range.to_i * 1000) <= started_at
     end
   end
 
@@ -495,7 +495,7 @@ class DailyStatistic < ApplicationRecord
   end
 
   def epoch_numbers_for_the_day
-    blocks_in_current_period.distinct(:epoch).pluck(:epoch)
+    blocks_in_current_period.distinct.pluck(:epoch)
   end
 
   def total_difficulties_for_the_day
@@ -504,7 +504,7 @@ class DailyStatistic < ApplicationRecord
         scope = blocks_in_current_period.where(epoch: epoch_number)
         first_block_of_the_epoch = scope.order("timestamp asc").first
         last_block_of_the_epoch = scope.recent.first
-        memo + first_block_of_the_epoch.difficulty * (last_block_of_the_epoch.number - first_block_of_the_epoch.number + 1)
+        memo + (first_block_of_the_epoch.difficulty * (last_block_of_the_epoch.number - first_block_of_the_epoch.number + 1))
       end
   end
 
