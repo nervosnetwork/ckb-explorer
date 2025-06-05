@@ -24,6 +24,7 @@ class ImportBtcTimeCellsJob < ApplicationJob
         }
       rescue StandardError => e
         Rails.logger.error("Handle btc time cell (id: #{cell_output.id}) failed: #{e.message}")
+        raise e
       end
 
       if bitcoin_transfers_attributes.present?
@@ -34,6 +35,7 @@ class ImportBtcTimeCellsJob < ApplicationJob
   rescue StandardError => e
     Rails.logger.error("ImportBtcTimeCells failed: #{e.message}")
     Rails.logger.error("Backtrace:\n#{e.backtrace.join("\n")}")
+    raise e
   end
 
   def build_utxo_map(cell_outputs)
@@ -54,8 +56,6 @@ class ImportBtcTimeCellsJob < ApplicationJob
         Rails.cache.write(txid, data, expires_in: 30.minutes)
       end
       raw_tx_data[txid] = data["result"]
-    rescue StandardError => e
-      Rails.logger.error("Failed to fetch transaction #{txid}: #{e.message}")
     end
 
     raw_tx_data

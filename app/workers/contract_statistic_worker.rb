@@ -11,7 +11,7 @@ class ContractStatisticWorker
       h24_ckb_transactions_count = CellDependency.where(contract_cell_id: contract_cell_ids, ckb_transaction_id: h24_tx_ids).select(:ckb_transaction_id).distinct.count
       referring_cells_count = Contract.referring_cells_query([contract]).count
       total_referring_cells_capacity = Contract.referring_cells_query([contract]).sum(:capacity)
-      addresses_count = Contract.referring_cells_query([contract]).distinct(:address_id).count
+      addresses_count = Contract.referring_cells_query([contract]).distinct.count(:address_id)
 
       contract.update(
         ckb_transactions_count:,
