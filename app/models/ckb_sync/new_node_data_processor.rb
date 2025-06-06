@@ -499,7 +499,7 @@ module CkbSync
           addr.last_updated_block_number = local_block.number
           addr.live_cells_count = addr.cell_outputs.live.count
           addr.ckb_transactions_count = AccountBook.tx_committed.where(address_id: addr.id).count
-          addr.dao_transactions_count = DaoEvent.processed.where(address_id: addr.id).distinct(:ckb_transaction_id).count
+          addr.dao_transactions_count = DaoEvent.processed.where(address_id: addr.id).distinct.count(:ckb_transaction_id)
           addr.cal_balance!
           addr.save!
         else
