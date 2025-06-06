@@ -57,23 +57,28 @@ module CellOutputs
       def dob_info
         return unless cell_type.in?(%w(spore_cluster spore_cell did_cell))
 
-        case cell_type
-        when "spore_cluster"
-          tc = TokenCollection.find_by(sn: type_hash)
-          value = { cluster_name: tc&.name, published: !tc.nil?, type_hash: }
-        else
-          ti = TokenItem.find_by(type_script_id:)
-          coll = ti.collection
+        value =
+          case cell_type
+          when "spore_cluster"
+            tc = TokenCollection.find_by(sn: type_hash)
+            { cluster_name: tc&.name, published: !tc.nil?, type_hash: }
+          else
+            ti = TokenItem.find_by(type_script_id:)
+            if ti
+              coll = ti.collection
 
-          value = {
-            cluster_name: coll&.name,
-            token_id: ti.token_id,
-            collection: {
-              type_hash: coll&.sn,
-            },
-            published: true,
-          }
-        end
+              {
+                cluster_name: coll&.name,
+                token_id: ti.token_id,
+                collection: {
+                  type_hash: coll&.sn,
+                },
+                published: true,
+              }
+            else
+              {}
+            end
+          end
 
         CkbUtils.hash_value_to_s(value)
       end
