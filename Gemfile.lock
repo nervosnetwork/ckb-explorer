@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/nervosnetwork/ckb-sdk-ruby.git
-  revision: 4b43de58fb69cc046b3cef234d70fd9657711ff6
+  revision: 4dfcbb6829ef9c0d6abc67a15a20dc53f1189ff4
   specs:
     ckb-sdk-ruby (0.103.0)
       net-http-persistent (~> 4.0.1)
@@ -142,7 +142,7 @@ GEM
     config (4.1.0)
       deep_merge (~> 1.2, >= 1.2.1)
       dry-validation (~> 1.0, >= 1.0.0)
-    connection_pool (2.4.1)
+    connection_pool (2.5.3)
     console (1.16.2)
       fiber-local
     crack (0.4.5)
@@ -219,7 +219,7 @@ GEM
     fast_page (0.1.5)
       activerecord
       activesupport
-    ffi (1.15.5)
+    ffi (1.17.2)
     ffi-compiler (1.0.1)
       ffi (>= 1.0.0)
       rake
@@ -286,7 +286,7 @@ GEM
     marcel (1.0.4)
     method_source (1.1.0)
     mini_mime (1.1.5)
-    mini_portile2 (2.8.8)
+    mini_portile2 (2.8.9)
     minitest (5.25.4)
     minitest-reporters (1.6.1)
       ansi
@@ -297,8 +297,8 @@ GEM
       ruby2_keywords (>= 0.0.5)
     msgpack (1.6.0)
     murmurhash3 (0.1.7)
-    net-http-persistent (4.0.4)
-      connection_pool (~> 2.2)
+    net-http-persistent (4.0.6)
+      connection_pool (~> 2.2, >= 2.2.4)
     net-imap (0.4.20)
       date
       net-protocol
@@ -313,10 +313,6 @@ GEM
     nokogiri (1.18.8)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
-    nokogiri (1.18.8-arm64-darwin)
-      racc (~> 1.4)
-    nokogiri (1.18.8-x86_64-linux-gnu)
-      racc (~> 1.4)
     pagy (5.10.1)
       activesupport
     parallel (1.26.3)
@@ -326,7 +322,7 @@ GEM
       ast (~> 2.4.1)
       racc
     pg (1.4.5)
-    pkg-config (1.5.7)
+    pkg-config (1.6.2)
     prism (1.4.0)
     protocol-hpack (1.4.2)
     protocol-http (0.24.7)
@@ -433,7 +429,7 @@ GEM
       rubocop (>= 1.33.0, < 2.0)
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
-    rubyzip (2.3.2)
+    rubyzip (2.4.1)
     rufus-scheduler (3.8.2)
       fugit (~> 1.1, >= 1.1.6)
     sentry-rails (5.6.0)
