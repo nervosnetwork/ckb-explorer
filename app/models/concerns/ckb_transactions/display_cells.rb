@@ -130,6 +130,9 @@ module CkbTransactions
           if previous_cell_output.cell_type.in?(%w(spore_cluster spore_cell did_cell))
             display_input.merge!(attributes_for_dob_cell(previous_cell_output))
           end
+          if previous_cell_output.lock_script.code_hash == Settings.fiber_funding_code_hash
+            display_input.merge!(attributes_for_fiber_cell(previous_cell_output))
+          end
 
           CkbUtils.hash_value_to_s(display_input)
         end
@@ -171,6 +174,9 @@ module CkbTransactions
           end
           if output.cell_type.in?(%w(spore_cluster spore_cell did_cell))
             display_output.merge!(attributes_for_dob_cell(output))
+          end
+          if output.lock_script.code_hash == Settings.fiber_funding_code_hash
+            display_output.merge!(attributes_for_fiber_cell(output))
           end
 
           CkbUtils.hash_value_to_s(display_output)
@@ -260,6 +266,12 @@ module CkbTransactions
           info[:data] = dob_cell.data
         end
         { dob_info: info, extra_info: info }
+      end
+
+      def attributes_for_fiber_cell(fiber_cell)
+        fiber_graph_channel = FiberGraphChannel.with_deleted.find_by(cell_output_id: fiber_cell.id)
+        info = fiber_graph_channel&.slice(:node1, :node2)
+        { fiber_graph_channel_info: info }
       end
 
       def hex_since(int_since_value)
