@@ -31,8 +31,8 @@ class FiberGraphNode < ApplicationRecord
   end
 
   def last_updated_timestamp
-    node1_timestamps = FiberGraphChannel.where(node1: node_id).pluck(:last_updated_timestamp_of_node1)
-    node2_timestamps = FiberGraphChannel.where(node2: node_id).pluck(:last_updated_timestamp_of_node2)
+    node1_timestamps = FiberGraphChannel.where(node1: node_id).filter_map { _1.update_info_of_node1["timestamp"]&.to_i }
+    node2_timestamps = FiberGraphChannel.where(node2: node_id).filter_map { _1.update_info_of_node2["timestamp"]&.to_i }
     closed_transaction_ids = FiberGraphChannel.where(node1: node_id).
       or(FiberGraphChannel.where(node2: node_id)).
       where.not(closed_transaction_id: nil).pluck(:closed_transaction_id)

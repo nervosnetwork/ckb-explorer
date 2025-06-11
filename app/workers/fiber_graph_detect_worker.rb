@@ -2,15 +2,18 @@ class FiberGraphDetectWorker
   include Sidekiq::Worker
   sidekiq_options queue: "fiber"
 
-  attr_accessor :graph_node_ids, :graph_channel_outpoint
+  attr_accessor :graph_node_ids, :graph_channel_outpoint, :fiber_node_url
 
   def perform
     @graph_node_ids = []
     @graph_channel_outpoints = []
+    @fiber_node_url = ENV.fetch("FIBER_NODE_URL", nil)
 
     ApplicationRecord.transaction do
       # sync graph nodes and channels
       ["nodes", "channels"].each { fetch_graph_infos(_1) }
+      # generate fiber account books
+      build_fiber_account_books
       # purge outdated graph nodes
       FiberGraphNode.where.not(node_id: @graph_node_ids).destroy_all
       # purge outdated graph channels
@@ -23,7 +26,7 @@ class FiberGraphDetectWorker
   private
 
   def fetch_graph_infos(data_type)
-    return if ENV["FIBER_NODE_URL"].blank?
+    return if @fiber_node_url.blank?
 
     cursor = nil
 
@@ -38,16 +41,13 @@ class FiberGraphDetectWorker
   end
 
   def fetch_nodes(last_cursor)
-    data = rpc.graph_nodes(ENV["FIBER_NODE_URL"], { limit: "0x64", after: last_cursor })
+    data = rpc.graph_nodes(@fiber_node_url, { limit: "0x64", after: last_cursor })
     data.dig("result", "nodes").each { upsert_node_with_cfg_info(_1) }
     data.dig("result", "last_cursor")
-  rescue StandardError => e
-    Rails.logger.error("Error fetching nodes: #{e.message}")
-    nil
   end
 
   def fetch_channels(last_cursor)
-    data = rpc.graph_channels(ENV["FIBER_NODE_URL"], { limit: "0x64", after: last_cursor })
+    data = rpc.graph_channels(@fiber_node_url, { limit: "0x64", after: last_cursor })
     channel_attributes = data.dig("result", "channels").map { build_channel_attributes(_1) }.compact
     FiberGraphChannel.upsert_all(channel_attributes, unique_by: %i[channel_outpoint]) if channel_attributes.any?
     data.dig("result", "last_cursor")
@@ -69,7 +69,7 @@ class FiberGraphDetectWorker
 
     return unless fiber_graph_node && node["udt_cfg_infos"].present?
 
-    cfg_info_attributes = node["udt_cfg_infos"].map do |info|
+    cfg_info_attributes = node["udt_cfg_infos"].filter_map do |info|
       udt = Udt.find_by(info["script"].symbolize_keys)
       next unless udt
 
@@ -79,7 +79,7 @@ class FiberGraphDetectWorker
         auto_accept_amount: info["auto_accept_amount"].to_i(16),
         deleted_at: nil,
       }
-    end.compact
+    end
 
     FiberUdtCfgInfo.upsert_all(cfg_info_attributes, unique_by: %i[fiber_graph_node_id udt_id]) if cfg_info_attributes.any?
   end
@@ -93,20 +93,17 @@ class FiberGraphDetectWorker
     tx_hash = channel_outpoint[0..65]
     cell_index = [channel_outpoint[66..]].pack("H*").unpack1("V")
     open_transaction = CkbTransaction.find_by(tx_hash:)
-    cell_output = CellOutput.find_by(tx_hash:, cell_index:)
-
+    cell_output = open_transaction.outputs.find_by(cell_index:)
     @graph_channel_outpoints << channel_outpoint
 
-    {
+    channel_attributes = {
       channel_outpoint:,
       node1: channel["node1"],
       node2: channel["node2"],
-      created_timestamp: channel["created_timestamp"],
-      last_updated_timestamp_of_node1: channel["last_updated_timestamp_of_node1"]&.to_i(16),
-      last_updated_timestamp_of_node2: channel["last_updated_timestamp_of_node2"]&.to_i(16),
-      fee_rate_of_node1: channel["fee_rate_of_node1"]&.to_i(16),
-      fee_rate_of_node2: channel["fee_rate_of_node2"]&.to_i(16),
+      created_timestamp: channel["created_timestamp"].to_i(16),
       capacity: channel["capacity"].to_i(16),
+      update_info_of_node1: {},
+      update_info_of_node2: {},
       chain_hash: channel["chain_hash"],
       open_transaction_id: open_transaction.id,
       address_id: cell_output.address_id,
@@ -114,6 +111,30 @@ class FiberGraphDetectWorker
       udt_id: udt&.id,
       deleted_at: nil,
     }
+
+    if (info_of_node1 = channel["update_info_of_node1"]).present?
+      channel_attributes[:update_info_of_node1] = {
+        timestamp: info_of_node1["timestamp"].to_i(16),
+        enabled: info_of_node1["enabled"],
+        outbound_liquidity: info_of_node1["outbound_liquidity"],
+        tlc_expiry_delta: info_of_node1["tlc_expiry_delta"].to_i(16),
+        tlc_minimum_value: info_of_node1["tlc_minimum_value"].to_i(16),
+        fee_rate: info_of_node1["fee_rate"].to_i(16),
+      }
+    end
+
+    if (info_of_node2 = channel["update_info_of_node2"]).present?
+      channel_attributes[:update_info_of_node2] = {
+        timestamp: info_of_node2["timestamp"].to_i(16),
+        enabled: info_of_node2["enabled"],
+        outbound_liquidity: info_of_node2["outbound_liquidity"],
+        tlc_expiry_delta: info_of_node2["tlc_expiry_delta"].to_i(16),
+        tlc_minimum_value: info_of_node2["tlc_minimum_value"].to_i(16),
+        fee_rate: info_of_node2["fee_rate"].to_i(16),
+      }
+    end
+
+    channel_attributes
   end
 
   def extract_peer_id(addresses)
@@ -125,6 +146,22 @@ class FiberGraphDetectWorker
     if p2p_index && parts.length > p2p_index + 1
       parts[p2p_index + 1]
     end
+  end
+
+  def build_fiber_account_books
+    account_book_attributes = []
+    FiberGraphChannel.where.not(deleted_at: nil).find_each do |channel|
+      open_transaction = channel.open_transaction
+      open_transaction.account_books.each do |account_book|
+        account_book_attributes << {
+          fiber_graph_channel_id: channel.id,
+          ckb_transaction_id: open_transaction.id,
+          address_id: account_book.address_id,
+        }
+      end
+    end
+
+    FiberAccountBook.upsert_all(account_book_attributes, unique_by: %i[address_id ckb_transaction_id]) if account_book_attributes.any?
   end
 
   def compute_statistic
