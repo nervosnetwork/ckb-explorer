@@ -12,7 +12,8 @@ module Addresses
     def find_address
       return Address.find_by(lock_hash: key) if QueryKeyUtils.valid_hex?(key)
       return find_by_address_hash(key) if QueryKeyUtils.valid_address?(key)
-      return find_by_bitcoin_address_hash(key) if BitcoinUtils.valid_address?(key)
+
+      find_by_bitcoin_address_hash(key) if BitcoinUtils.valid_address?(key)
     end
 
     def find_by_address_hash(key)
