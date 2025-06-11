@@ -20,7 +20,7 @@ module GraphNodes
     def execute
       channels = FiberGraphChannel.with_deleted
       channels = channels.where(node1: node_id).or(channels.where(node2: node_id))
-      return FiberGraphChannel.none if channels.empty?
+      return Kaminari.paginate_array([]).page(page).per(page_size) if channels.empty?
 
       channels = filter_by_address(channels)
       channels = filter_by_type_hash(channels)
