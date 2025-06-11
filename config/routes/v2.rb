@@ -106,6 +106,8 @@ namespace :api do
       resources :channels, param: :channel_id, only: :show
       resources :graph_nodes, param: :node_id, only: %i[index show] do
         get :addresses, on: :collection
+        get :graph_channels, on: :member
+        get :transactions, on: :member
       end
       resources :graph_channels, only: :index
       resources :statistics, only: %i[index show]

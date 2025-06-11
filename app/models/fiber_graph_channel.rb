@@ -6,30 +6,36 @@ class FiberGraphChannel < ApplicationRecord
   paginates_per DEFAULT_PAGINATES_PER
   max_paginates_per MAX_PAGINATES_PER
 
+  has_many :fiber_account_books
   belongs_to :udt, optional: true
   belongs_to :open_transaction, class_name: "CkbTransaction"
   belongs_to :closed_transaction, class_name: "CkbTransaction", optional: true
+  belongs_to :funding_cell, class_name: "CellOutput", foreign_key: :cell_output_id
   belongs_to :address
-  belongs_to :cell_output
 
   validates :open_transaction_id, presence: true
 
   scope :open_channels, -> { where(closed_transaction_id: nil) }
 
   def open_transaction_info
-    open_transaction.as_json(only: %i[tx_hash block_number block_timestamp]).merge(
-      {
-        capacity: funding_cell.capacity,
-        udt_info: funding_cell.udt_info,
-        address: funding_cell.address_hash,
-      },
-    )
+    {
+      tx_hash: open_transaction.tx_hash,
+      block_number: open_transaction.block_number,
+      block_timestamp: open_transaction.block_timestamp,
+      capacity: funding_cell.capacity,
+      udt_info: funding_cell.udt_info,
+      address: funding_cell.address_hash,
+    }
   end
 
   def closed_transaction_info
     return Hash.new unless closed_transaction
 
-    closed_transaction.as_json(only: %i[tx_hash block_number block_timestamp]).merge(
+    {
+      tx_hash: closed_transaction.tx_hash,
+      block_number: closed_transaction.block_number,
+      block_timestamp: open_transaction.block_timestamp,
+    }.merge(
       close_accounts: closed_transaction.outputs.map do |cell|
         {
           capacity: cell.capacity,
@@ -42,12 +48,6 @@ class FiberGraphChannel < ApplicationRecord
 
   def udt_info
     udt&.as_json(only: %i[full_name symbol decimal icon_file])
-  end
-
-  def funding_cell
-    open_transaction.outputs.includes(:lock_script).find_by(
-      lock_scripts: { code_hash: Settings.fiber_funding_code_hash },
-    )
   end
 
   def deleted_at_timestamp
@@ -80,6 +80,8 @@ end
 #  deleted_at                      :datetime
 #  cell_output_id                  :bigint
 #  address_id                      :bigint
+#  update_info_of_node1            :jsonb
+#  update_info_of_node2            :jsonb
 #
 # Indexes
 #
