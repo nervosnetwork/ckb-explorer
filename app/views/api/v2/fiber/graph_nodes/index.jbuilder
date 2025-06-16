@@ -10,5 +10,5 @@ json.data do
 end
 json.meta do
   json.total @nodes.total_count
-  json.page_size @page_size.to_i
+  json.page_size @nodes.current_per_page
 end
