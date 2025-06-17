@@ -10,7 +10,7 @@ namespace :migration do
       Block.upsert_all(attrs, unique_by: :id, update_only: :difficulty)
     end
 
-    UncleBlock.where(difficulty: nil).select(:block_hash, :block_id).find_in_batches do |uncle_blocks|
+    UncleBlock.where(difficulty: nil).select(:id, :block_hash, :block_id, :compact_target).find_in_batches do |uncle_blocks|
       attrs =
         uncle_blocks.map do |uncle_block|
           { block_hash: uncle_block.block_hash, block_id: uncle_block.block_id, difficulty: CkbUtils.compact_to_difficulty(uncle_block.compact_target) }
