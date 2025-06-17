@@ -410,7 +410,7 @@ end
 #  median_timestamp           :bigint           default(0)
 #  ckb_node_version           :string
 #  cycles                     :bigint
-#  difficulty                 :decimal(, )
+#  difficulty                 :decimal(78, )
 #
 # Indexes
 #

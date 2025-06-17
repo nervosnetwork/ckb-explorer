@@ -37,7 +37,7 @@ end
 #  dao               :string
 #  nonce             :decimal(50, )    default(0)
 #  compact_target    :decimal(20, )
-#  difficulty        :decimal(, )
+#  difficulty        :decimal(78, )
 #
 # Indexes
 #
