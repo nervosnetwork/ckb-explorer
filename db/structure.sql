@@ -500,7 +500,8 @@ CREATE TABLE public.blocks (
     extension jsonb,
     median_timestamp bigint DEFAULT 0.0,
     ckb_node_version character varying,
-    cycles bigint
+    cycles bigint,
+    difficulty numeric
 );
 
 
@@ -2060,7 +2061,8 @@ CREATE TABLE public.forked_blocks (
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
     ckb_node_version character varying,
-    cycles bigint
+    cycles bigint,
+    difficulty numeric
 );
 
 
@@ -3026,7 +3028,8 @@ CREATE TABLE public.uncle_blocks (
     updated_at timestamp without time zone NOT NULL,
     dao character varying,
     nonce numeric(50,0) DEFAULT 0.0,
-    compact_target numeric(20,0)
+    compact_target numeric(20,0),
+    difficulty numeric
 );
 
 
@@ -6521,6 +6524,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250427105936'),
 ('20250429170657'),
 ('20250508112010'),
-('20250513034909');
+('20250513034909'),
+('20250617013030');
 
 
