@@ -9,10 +9,6 @@ class UncleBlock < ApplicationRecord
   attribute :proposals_hash, :ckb_hash
   attribute :extra_hash, :ckb_hash
   attribute :proposals, :ckb_array_hash, hash_length: Settings.default_short_hash_length
-
-  def difficulty
-    CkbUtils.compact_to_difficulty(compact_target)
-  end
 end
 
 # == Schema Information
