@@ -218,10 +218,6 @@ class Block < ApplicationRecord
     @target_block ||= Block.find_by(number: target_block_number)
   end
 
-  def difficulty
-    CkbUtils.compact_to_difficulty(compact_target)
-  end
-
   def block_index_in_epoch
     number - start_number
   end
