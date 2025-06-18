@@ -174,7 +174,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;    
+    END LOOP;
     close c;
 end
 $$;
@@ -196,21 +196,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null 
+	if old is null
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-	
+
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP 
+	   LOOP
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id) 
+			insert into account_books (ckb_transaction_id, address_id)
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -500,7 +500,8 @@ CREATE TABLE public.blocks (
     extension jsonb,
     median_timestamp bigint DEFAULT 0.0,
     ckb_node_version character varying,
-    cycles bigint
+    cycles bigint,
+    difficulty numeric(78,0)
 );
 
 
@@ -2060,7 +2061,8 @@ CREATE TABLE public.forked_blocks (
     extension jsonb,
     median_timestamp numeric DEFAULT 0.0,
     ckb_node_version character varying,
-    cycles bigint
+    cycles bigint,
+    difficulty numeric(78,0)
 );
 
 
@@ -3026,7 +3028,8 @@ CREATE TABLE public.uncle_blocks (
     updated_at timestamp without time zone NOT NULL,
     dao character varying,
     nonce numeric(50,0) DEFAULT 0.0,
-    compact_target numeric(20,0)
+    compact_target numeric(20,0),
+    difficulty numeric(78,0)
 );
 
 
@@ -6521,6 +6524,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250427105936'),
 ('20250429170657'),
 ('20250508112010'),
-('20250513034909');
-
-
+('20250513034909'),
+('20250617013030');
