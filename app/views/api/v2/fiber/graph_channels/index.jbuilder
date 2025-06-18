@@ -12,5 +12,5 @@ json.data do
 end
 json.meta do
   json.total @channels.total_count
-  json.page_size @page_size.to_i
+  json.page_size @channels.current_per_page
 end

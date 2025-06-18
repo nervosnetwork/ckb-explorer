@@ -325,10 +325,11 @@ class CkbUtils
     [ret, overflow]
   end
 
+  # https://github.com/nervosnetwork/ckb/blob/de539f019592a6660d622b7f9a5eee97852e5894/util/types/src/utilities/difficulty.rs#L11
   def self.target_to_difficulty(target)
     u256_max_value = (2**256) - 1
     hspace = "0x10000000000000000000000000000000000000000000000000000000000000000".hex
-    if target.zero?
+    if target == 1
       u256_max_value
     else
       hspace / target
@@ -429,7 +430,7 @@ class CkbUtils
       return "omiga_inscription_info"
     when *CkbSync::Api.instance.xudt_compatible_code_hashes.product(["type"])
       return "xudt_compatible"
-    when *[[CkbSync::Api.instance.xudt_code_hash, "type"], [CkbSync::Api.instance.xudt_data_hash, "data1"]]
+    when [CkbSync::Api.instance.xudt_code_hash, "type"], [CkbSync::Api.instance.xudt_data_hash, "data1"]
       return Rails.cache.fetch(type_script.compute_hash) do
         OmigaInscriptionInfo.exists?(udt_hash: type_script.compute_hash) ? "omiga_inscription" : "xudt"
       end

@@ -1317,6 +1317,7 @@ _prev_outputs, index = nil)
         epoch_info = CkbUtils.parse_epoch_info(header)
         UncleBlock.create_with(
           compact_target: header.compact_target,
+          difficulty: CkbUtils.compact_to_difficulty(header.compact_target),
           number: header.number,
           parent_hash: header.parent_hash,
           nonce: header.nonce,
@@ -1352,6 +1353,7 @@ _prev_outputs, index = nil)
         base_reward = CkbUtils.base_reward(header.number, epoch_info.number)
         block = Block.create_with(
           compact_target: header.compact_target,
+          difficulty: CkbUtils.compact_to_difficulty(header.compact_target),
           parent_hash: header.parent_hash,
           nonce: header.nonce,
           timestamp: header.timestamp,
