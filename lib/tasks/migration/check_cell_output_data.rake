@@ -1,7 +1,6 @@
 namespace :migration do
   desc "Usage: RAILS_ENV=production bundle exec rake migration:check_cell_output_data[0,1000000]"
-  ntask :check_cell_output_data, %i[start_block end_block] => :environment do |_, args|
-    $error_ids = Set.new
+  task :check_cell_output_data, %i[start_block end_block] => :environment do |_, args|
     $retry_ids = Set.new
     @api = CKB::API.new(host: ENV.fetch("CKB_NODE_URL", nil),
                         timeout_config: {
@@ -13,8 +12,6 @@ namespace :migration do
     end
     nil
 
-    puts "error IDS:"
-    puts $error_ids.join(",")
     puts "=============="
     puts "retry IDS:"
     puts $retry_ids.join(",")
@@ -34,7 +31,7 @@ namespace :migration do
           binary_data = CKB::Utils.hex_to_bin(output_data)
           data_hash = nil
           data_size = 0
-          if binary_data && binary_data.bytesize > 0
+          if binary_data&.bytesize&.positive?
             data_size = binary_data.bytesize
             data_hash = CKB::Utils.bin_to_hex(CKB::Blake2b.digest(binary_data))
           end
