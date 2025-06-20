@@ -12,5 +12,6 @@ FactoryBot.define do
     version { 0 }
     proposals {}
     proposals_count { 0 }
+    difficulty { 0 }
   end
 end

@@ -59,7 +59,7 @@ class StatisticInfo < ApplicationRecord
   end
 
   define_logic :average_block_time do
-    interval = (Settings.average_block_time_interval || 100)
+    interval = Settings.average_block_time_interval || 100
     start_block_number = [tip_block_number.to_i - interval + 1, 0].max
     timestamps = Block.where(number: [start_block_number,
                                       tip_block_number]).recent.pluck(:timestamp)
@@ -70,12 +70,12 @@ class StatisticInfo < ApplicationRecord
 
   def self.hash_rate(block_number)
     hash_rate_statistical_interval = Settings.hash_rate_statistical_interval || 900
-    blocks = Block.select(:id, :timestamp, :compact_target).
+    blocks = Block.select(:id, :timestamp, :difficulty).
       where("number <= ?", block_number).recent.limit(hash_rate_statistical_interval)
     return if blocks.blank?
 
     total_difficulties = blocks.sum(&:difficulty)
-    total_difficulties += UncleBlock.where(block_id: blocks.map(&:id)).select(:compact_target).to_a.sum(&:difficulty)
+    total_difficulties += UncleBlock.where(block_id: blocks.map(&:id)).sum(&:difficulty)
     total_time = blocks.first.timestamp - blocks.last.timestamp
 
     (total_difficulties.to_d / total_time).truncate(6)
