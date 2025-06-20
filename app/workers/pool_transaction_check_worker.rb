@@ -20,6 +20,7 @@ class PoolTransactionCheckWorker
         if reason["status"] == "rejected"
           ApplicationRecord.transaction do
             tx.update! tx_status: "rejected"
+            tx.cell_outputs.update_all(status: "rejected")
             tx.create_reject_reason!(message: reason["reason"])
           end
         end
@@ -27,6 +28,7 @@ class PoolTransactionCheckWorker
         if reason["status"] == "unknown"
           ApplicationRecord.transaction do
             tx.update! tx_status: "rejected"
+            tx.cell_outputs.update_all(status: "rejected")
             tx.create_reject_reason!(message: "unknown")
           end
         end
