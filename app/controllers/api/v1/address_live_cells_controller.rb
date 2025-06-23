@@ -8,7 +8,7 @@ module Api
 
         json = Addresses::LiveCells.run!(
           { request:,
-            key: params[:id], sort: params[:sort], bound_status: params[:bound_status],
+            key: params[:id], sort: params[:sort], bound_status: params[:bound_status], tag: params[:tag],
             page: params[:page], page_size: params[:page_size] },
         )
         render json:
