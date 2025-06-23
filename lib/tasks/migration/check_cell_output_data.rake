@@ -38,6 +38,7 @@ namespace :migration do
           co = CellOutput.find_by(tx_hash: tx[:hash], cell_index: index)
 
           if co.data_size != data_size || co.data_hash != data_hash
+            puts co.id
             co.update!(data_hash:, data_size:)
             if data_size.zero?
               co.cell_datum.destroy if co.cell_datum.present?
