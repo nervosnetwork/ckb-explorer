@@ -87,7 +87,7 @@ module Api
       private
 
       def get_script_content
-        @contracts.uniq_verified.map do |contract|
+        @contracts.map do |contract|
           {
             name: contract.name,
             type_hash: contract.type_hash,
