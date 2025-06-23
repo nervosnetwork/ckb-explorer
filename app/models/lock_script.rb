@@ -67,7 +67,7 @@ class LockScript < ApplicationRecord
         tip_epoch = tip_epoch(tip_block)
 
         epoch_number, since_value_index = set_since_epoch_number_and_index(since_value)
-        block_interval = (epoch_number * 1800 + since_value_index * 1800 / since_value.length) - (tip_epoch.number * 1800 + tip_epoch.index * 1800 / tip_epoch.length)
+        block_interval = ((epoch_number * 1800) + (since_value_index * 1800 / since_value.length)) - ((tip_epoch.number * 1800) + (tip_epoch.index * 1800 / tip_epoch.length))
 
         if block_interval.negative?
           block = Block.where(epoch: since_value.number).order(number: :desc).select(:start_number, :length)[0]
@@ -101,9 +101,9 @@ class LockScript < ApplicationRecord
 
   def verified_script
     if hash_type == "type"
-      Contract.where(verified: true, type_hash: code_hash)&.first
+      Contract.uniq_verified.where(type_hash: code_hash)&.first
     else
-      Contract.where(verified: true, data_hash: code_hash)&.first
+      Contract.uniq_verified.where(data_hash: code_hash)&.first
     end
   end
 

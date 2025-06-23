@@ -7,7 +7,7 @@ module Api
       before_action :set_contracts, excepts: [:index]
 
       def index
-        scope = Contract.where(verified: true)
+        scope = Contract.uniq_verified
         if params[:script_type].present?
           script_types = params[:script_type].split(",").map(&:strip)
           if script_types.include?("lock")
