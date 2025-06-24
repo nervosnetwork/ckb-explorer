@@ -8,14 +8,14 @@
 
 if Contract.find_by(name: "Zero Lock").nil?
   puts "Creating Zero Lock contract..."
-  Contract.create(
+  Contract.create!(
     hash_type: "data",
     name: "Zero Lock",
     verified: true,
     deprecated: false,
     type_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
     data_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
-    deployed_cell_output_id: nil,
+    deployed_cell_output_id: CellOutput.live.where(data_size: 0).first.id,
     is_type_script: false,
     is_lock_script: true,
     is_primary: true,

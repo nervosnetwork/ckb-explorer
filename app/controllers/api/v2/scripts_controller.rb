@@ -103,7 +103,7 @@ module Api
 
         if notes_param.include?("ownerless_cell")
           zero_lock_script_ids = LockScript.zero_lock.select(:id)
-          ids = CellOutput.where(lock_script_id: zero_lock_script_ids).pluck(:id)
+          ids = CellOutput.live.where(lock_script_id: zero_lock_script_ids).select(:id)
           note_conditions << scope.where(type_hash: Contract::ZERO_LOCK_HASH)
           note_conditions << scope.where(deployed_cell_output_id: ids)
         end
