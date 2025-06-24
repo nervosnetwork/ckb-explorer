@@ -11,6 +11,7 @@ class LockScript < ApplicationRecord
   attribute :code_hash, :ckb_hash
 
   scope :lock_script, ->(type_hash, data_hash) { where(code_hash: [type_hash, data_hash]) }
+  scope :zero_lock, -> { where(code_hash: "0x0000000000000000000000000000000000000000000000000000000000000000") }
 
   def self.process(sdk_lock)
     lock_hash = sdk_lock.compute_hash
