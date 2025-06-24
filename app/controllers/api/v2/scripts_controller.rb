@@ -17,6 +17,9 @@ module Api
             scope = scope.where(is_type_script: true)
           end
         end
+        if params[:notes].present?
+          scope = combine_note_conditions(scope, params[:notes])
+        end
 
         @contracts = sort_scripts(scope).page(@page).per(@page_size)
       end
@@ -31,25 +34,34 @@ module Api
       def ckb_transactions
         head :not_found and return if @contracts.blank?
 
-        contract_ids = @contracts.map { |contract| contract.id }
-        contract_cell_ids = CellDepsOutPoint.list_contract_cell_ids_by_contract(contract_ids)
-        restrict_query =
-          if params[:restrict] == "true"
-            CkbTransaction.joins(:cell_dependencies).
-              where(cell_dependencies: { contract_cell_id: contract_cell_ids, is_used: true })
-          else
-            CkbTransaction.joins(:cell_dependencies).
-              where(cell_dependencies: { contract_cell_id: contract_cell_ids })
-          end
+        if @contracts.length == 1 && @contracts.first.type_hash == Contract::ZERO_LOCK_HASH
+          zero_lock_script_ids = LockScript.zero_lock.select(:id)
+          tx_ids = CellOutput.where(lock_script_id: zero_lock_script_ids).order("block_timestamp DESC, ckb_transaction_id DESC, cell_index DESC").select(:ckb_transaction_id).distinct.limit(Settings.query_default_limit)
+          @ckb_transactions = CkbTransaction.where(id: tx_ids).
+            order("block_number DESC, tx_index DESC").
+            page(@page).
+            per(@page_size)
+        else
+          contract_ids = @contracts.map { |contract| contract.id }
+          contract_cell_ids = CellDepsOutPoint.list_contract_cell_ids_by_contract(contract_ids)
+          restrict_query =
+            if params[:restrict] == "true"
+              CkbTransaction.joins(:cell_dependencies).
+                where(cell_dependencies: { contract_cell_id: contract_cell_ids, is_used: true })
+            else
+              CkbTransaction.joins(:cell_dependencies).
+                where(cell_dependencies: { contract_cell_id: contract_cell_ids })
+            end
 
-        base_query =
-          restrict_query.
-            order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
-            limit(Settings.query_default_limit)
-        @ckb_transactions = CkbTransaction.from("(#{base_query.to_sql}) AS ckb_transactions").
-          order("block_number DESC, tx_index DESC").
-          page(@page).
-          per(@page_size)
+          base_query =
+            restrict_query.
+              order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
+              limit(Settings.query_default_limit)
+          @ckb_transactions = CkbTransaction.from("(#{base_query.to_sql}) AS ckb_transactions").
+            order("block_number DESC, tx_index DESC").
+            page(@page).
+            per(@page_size)
+        end
       end
 
       def deployed_cells
@@ -85,6 +97,35 @@ module Api
       end
 
       private
+
+      def combine_note_conditions(scope, notes_param)
+        note_conditions = []
+
+        if notes_param.include?("ownerless_cell")
+          zero_lock_script_ids = LockScript.zero_lock.select(:id)
+          ids = CellOutput.where(lock_script_id: zero_lock_script_ids).pluck(:id)
+          note_conditions << scope.where(type_hash: Contract::ZERO_LOCK_HASH)
+          note_conditions << scope.where(deployed_cell_output_id: ids)
+        end
+
+        if notes_param.include?("rfc")
+          note_conditions << scope.where.not(rfc: nil)
+        end
+
+        if notes_param.include?("website")
+          note_conditions << scope.where.not(website: nil)
+        end
+
+        if notes_param.include?("open_source")
+          note_conditions << scope.where.not(source_url: nil)
+        end
+
+        if note_conditions.any?
+          note_conditions.reduce { |acc, cond| acc.or(cond) }
+        else
+          scope
+        end
+      end
 
       def get_script_content
         @contracts.map do |contract|
