@@ -8,9 +8,8 @@ namespace :migration do
                           write_timeout: 1
                         })
     (args[:start_block].to_i..args[:end_block].to_i).to_a.each_slice(100).to_a.each do |range|
-      compare_output(range, 0)
+      check_output(range, 0)
     end
-    nil
 
     puts "=============="
     puts "retry IDS:"
@@ -18,7 +17,7 @@ namespace :migration do
     puts "done"
   end
 
-  def compare_output(range, retry_count)
+  def check_output(range, retry_count)
     request_body =
       range.map do |number|
         ["get_block_by_number", number]
