@@ -55,7 +55,7 @@ namespace :migration do
     if retry_count > 2
       $retry_ids << range.first
     else
-      compare_output(range, retry_count)
+      check_output(range, retry_count)
     end
   end
 end
