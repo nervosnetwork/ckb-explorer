@@ -67,9 +67,9 @@ class TypeScript < ApplicationRecord
 
   def verified_script
     if hash_type == "type"
-      Contract.where(verified: true, type_hash: code_hash)&.first
+      Contract.uniq_verified.where(type_hash: code_hash)&.first
     else
-      Contract.where(verified: true, data_hash: code_hash)&.first
+      Contract.uniq_verified.where(data_hash: code_hash)&.first
     end
   end
 end
