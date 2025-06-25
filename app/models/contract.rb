@@ -73,6 +73,7 @@ end
 #  deployed_block_timestamp       :bigint
 #  contract_cell_id               :bigint
 #  is_primary                     :boolean
+#  is_zero_lock                   :boolean
 #
 # Indexes
 #

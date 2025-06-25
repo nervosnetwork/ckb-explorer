@@ -6,7 +6,7 @@
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
 
-if Contract.find_by(name: "Zero Lock").nil?
+if Rails.env.production? && Contract.find_by(name: "Zero Lock").nil?
   puts "Creating Zero Lock contract..."
   Contract.create!(
     hash_type: "data",
@@ -19,5 +19,6 @@ if Contract.find_by(name: "Zero Lock").nil?
     is_type_script: false,
     is_lock_script: true,
     is_primary: true,
+    is_zero_lock: true,
   )
 end

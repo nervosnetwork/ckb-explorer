@@ -35,12 +35,14 @@ module Api
         head :not_found and return if @contracts.blank?
 
         if @contracts.length == 1 && @contracts.first.type_hash == Contract::ZERO_LOCK_HASH
-          zero_lock_script_ids = LockScript.zero_lock.select(:id)
-          tx_ids = CellOutput.where(lock_script_id: zero_lock_script_ids).order("block_timestamp DESC, ckb_transaction_id DESC, cell_index DESC").select(:ckb_transaction_id).distinct.limit(Settings.query_default_limit)
-          @ckb_transactions = CkbTransaction.where(id: tx_ids).
+          address_ids = LockScript.zero_lock.select(:address_id)
+          tx_ids = AccountBook.where(address_id: address_ids).
             order("block_number DESC, tx_index DESC").
-            page(@page).
-            per(@page_size)
+            select(:ckb_transaction_id).
+            limit(Settings.query_default_limit)
+          CkbTransaction.where(id: tx_ids).
+            order("block_number DESC, tx_index DESC").
+            page(@page).per(@page_size)
         else
           contract_ids = @contracts.map { |contract| contract.id }
           contract_cell_ids = CellDepsOutPoint.list_contract_cell_ids_by_contract(contract_ids)
@@ -55,9 +57,10 @@ module Api
 
           base_query =
             restrict_query.
+              select("ckb_transactions.*").
               order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
               limit(Settings.query_default_limit)
-          @ckb_transactions = CkbTransaction.from("(#{base_query.to_sql}) AS ckb_transactions").
+          @ckb_transactions = CkbTransaction.from(base_query, :ckb_transactions).
             order("block_number DESC, tx_index DESC").
             page(@page).
             per(@page_size)
@@ -102,10 +105,7 @@ module Api
         note_conditions = []
 
         if notes_param.include?("ownerless_cell")
-          zero_lock_script_ids = LockScript.zero_lock.select(:id)
-          ids = CellOutput.live.where(lock_script_id: zero_lock_script_ids).select(:id)
-          note_conditions << scope.where(type_hash: Contract::ZERO_LOCK_HASH)
-          note_conditions << scope.where(deployed_cell_output_id: ids)
+          note_conditions << scope.where(is_zero_lock: true)
         end
 
         if notes_param.include?("rfc")
@@ -148,6 +148,7 @@ module Api
             count_of_referring_cells: contract.referring_cells_count,
             script_out_point: "#{contract.contract_cell&.tx_hash}-#{contract.contract_cell&.cell_index}",
             dep_type: contract.dep_type,
+            is_zero_lock: contract.is_zero_lock,
           }
         end
       end

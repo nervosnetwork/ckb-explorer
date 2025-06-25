@@ -28,7 +28,8 @@ module Api
                deployed_cell_output_id: nil,
                is_type_script: false,
                is_lock_script: true,
-               is_primary: true)
+               is_primary: true,
+               is_zero_lock: true)
       end
 
       test "should return all ckb_transactions in normal mode" do
@@ -96,6 +97,7 @@ module Api
             "count_of_referring_cells" => 0,
             "script_out_point" => "#{@contract.contract_cell.tx_hash}-#{@contract.contract_cell.cell_index}",
             "dep_type" => @contract.dep_type,
+            "is_zero_lock" => false,
           },
         ],
                      json["data"]
