@@ -1,4 +1,6 @@
 class Contract < ApplicationRecord
+  ZERO_LOCK_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
+
   has_many :cell_deps_out_points, foreign_key: :deployed_cell_output_id, primary_key: :deployed_cell_output_id
   has_many :cell_dependencies, through: :cell_deps_out_points
   has_one :ssri_contract
@@ -71,6 +73,7 @@ end
 #  deployed_block_timestamp       :bigint
 #  contract_cell_id               :bigint
 #  is_primary                     :boolean
+#  is_zero_lock                   :boolean
 #
 # Indexes
 #
