@@ -9,11 +9,10 @@ module Api
       def index
         scope = Contract.uniq_verified
         if params[:script_type].present?
-          script_types = params[:script_type].split(",").map(&:strip)
-          if script_types.include?("lock")
+          if params[:script_type].include?("lock")
             scope = scope.where(is_lock_script: true)
           end
-          if script_types.include?("type")
+          if params[:script_type].include?("type")
             scope = scope.where(is_type_script: true)
           end
         end
