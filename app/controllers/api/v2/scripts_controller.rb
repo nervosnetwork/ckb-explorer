@@ -74,7 +74,7 @@ module Api
 
         @deployed_cells =
           if @contracts.length == 1 && @contracts.first.type_hash == Contract::ZERO_LOCK_HASH
-            []
+            { data: { deployed_cells: [], meta: { total: 0, page_size: @page_size.to_i } } }.to_json
           else
             CellOutput.where(id: @contracts.map(&:deployed_cell_output_id)).page(@page).per(@page_size)
           end
