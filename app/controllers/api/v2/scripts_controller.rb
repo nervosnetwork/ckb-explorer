@@ -33,37 +33,38 @@ module Api
       def ckb_transactions
         head :not_found and return if @contracts.blank?
 
-        if @contracts.length == 1 && @contracts.first.type_hash == Contract::ZERO_LOCK_HASH
-          address_ids = LockScript.zero_lock.select(:address_id)
-          tx_ids = AccountBook.where(address_id: address_ids).
-            order("block_number DESC, tx_index DESC").
-            select(:ckb_transaction_id).
-            limit(Settings.query_default_limit)
-          CkbTransaction.where(id: tx_ids).
-            order("block_number DESC, tx_index DESC").
-            page(@page).per(@page_size)
-        else
-          contract_ids = @contracts.map { |contract| contract.id }
-          contract_cell_ids = CellDepsOutPoint.list_contract_cell_ids_by_contract(contract_ids)
-          restrict_query =
-            if params[:restrict] == "true"
-              CkbTransaction.joins(:cell_dependencies).
-                where(cell_dependencies: { contract_cell_id: contract_cell_ids, is_used: true })
-            else
-              CkbTransaction.joins(:cell_dependencies).
-                where(cell_dependencies: { contract_cell_id: contract_cell_ids })
-            end
-
-          base_query =
-            restrict_query.
-              select("ckb_transactions.*").
-              order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
+        @ckb_transactions =
+          if @contracts.length == 1 && @contracts.first.type_hash == Contract::ZERO_LOCK_HASH
+            address_ids = LockScript.zero_lock.select(:address_id)
+            tx_ids = AccountBook.where(address_id: address_ids).
+              order("block_number DESC, tx_index DESC").
+              select(:ckb_transaction_id).
               limit(Settings.query_default_limit)
-          @ckb_transactions = CkbTransaction.from(base_query, :ckb_transactions).
-            order("block_number DESC, tx_index DESC").
-            page(@page).
-            per(@page_size)
-        end
+            CkbTransaction.where(id: tx_ids).
+              order("block_number DESC, tx_index DESC").
+              page(@page).per(@page_size)
+          else
+            contract_ids = @contracts.map { |contract| contract.id }
+            contract_cell_ids = CellDepsOutPoint.list_contract_cell_ids_by_contract(contract_ids)
+            restrict_query =
+              if params[:restrict] == "true"
+                CkbTransaction.joins(:cell_dependencies).
+                  where(cell_dependencies: { contract_cell_id: contract_cell_ids, is_used: true })
+              else
+                CkbTransaction.joins(:cell_dependencies).
+                  where(cell_dependencies: { contract_cell_id: contract_cell_ids })
+              end
+
+            base_query =
+              restrict_query.
+                select("ckb_transactions.*").
+                order("cell_dependencies.block_number DESC, cell_dependencies.tx_index DESC").
+                limit(Settings.query_default_limit)
+            CkbTransaction.from(base_query, :ckb_transactions).
+              order("block_number DESC, tx_index DESC").
+              page(@page).
+              per(@page_size)
+          end
       end
 
       def deployed_cells
@@ -71,7 +72,12 @@ module Api
 
         expires_in 15.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
-        @deployed_cells = CellOutput.where(id: @contracts.map(&:deployed_cell_output_id)).page(@page).per(@page_size)
+        @deployed_cells =
+          if @contracts.length == 1 && @contracts.first.type_hash == Contract::ZERO_LOCK_HASH
+            []
+          else
+            CellOutput.where(id: @contracts.map(&:deployed_cell_output_id)).page(@page).per(@page_size)
+          end
       end
 
       def referring_cells
