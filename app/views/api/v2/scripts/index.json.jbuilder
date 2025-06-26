@@ -11,6 +11,9 @@ json.data do
     json.deprecated contract.deprecated
     json.deployed_block_timestamp contract.deployed_block_timestamp
     json.total_referring_cells_capacity contract.total_referring_cells_capacity.to_s
+    json.rfc contract.rfc
+    json.website contract.website
+    json.source_url contract.source_url
   end
 end
 json.meta do
