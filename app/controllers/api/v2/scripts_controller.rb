@@ -158,7 +158,7 @@ module Api
             script_out_point: "#{contract.contract_cell&.tx_hash}-#{contract.contract_cell&.cell_index}",
             dep_type: contract.dep_type,
             is_zero_lock: contract.is_zero_lock,
-            deployed_cell_status: contract.deployed_cell_output&.status,
+            is_deployed_cell_dead: contract.deployed_cell_output&.status == "dead",
           }
         end
       end
