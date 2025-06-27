@@ -16,6 +16,7 @@ if Rails.env.production? && Contract.find_by(name: "Zero Lock").nil?
     type_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
     data_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
     deployed_cell_output_id: CellOutput.live.where(data_size: 0).first.id,
+    deployed_block_timestamp: Block.find_by(number: 0).timestamp,
     is_type_script: false,
     is_lock_script: true,
     is_primary: true,
