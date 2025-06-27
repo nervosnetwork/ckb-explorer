@@ -7,7 +7,7 @@ module Api
       before_action :set_contracts, excepts: [:index]
 
       def index
-        scope = Contract.uniq_verified
+        scope = Contract.live_verified
         if params[:script_type].present?
           if params[:script_type].include?("lock")
             scope = scope.where(is_lock_script: true)
@@ -113,6 +113,10 @@ module Api
           note_conditions << scope.where(is_zero_lock: true)
         end
 
+        if notes_param.include?("deprecated")
+          note_conditions << scope.where(deprecated: true)
+        end
+
         if notes_param.include?("rfc")
           note_conditions << scope.where.not(rfc: nil)
         end
@@ -154,6 +158,7 @@ module Api
             script_out_point: "#{contract.contract_cell&.tx_hash}-#{contract.contract_cell&.cell_index}",
             dep_type: contract.dep_type,
             is_zero_lock: contract.is_zero_lock,
+            is_deployed_cell_dead: contract.deployed_cell_output&.status == "dead",
           }
         end
       end

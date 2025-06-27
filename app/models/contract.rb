@@ -8,7 +8,7 @@ class Contract < ApplicationRecord
   belongs_to :contract_cell, class_name: "CellOutput", optional: true
 
   scope :active, -> { where("addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
-  scope :uniq_verified, -> { where(verified: true, deprecated: false) }
+  scope :live_verified, -> { joins(:deployed_cell_output).where(verified: true, deployed_cell_output: { status: :live }) }
   scope :primary, -> { where(is_primary: true) }
 
   enum dep_type: { code: 0, dep_group: 1 }
