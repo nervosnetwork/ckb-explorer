@@ -101,9 +101,9 @@ class LockScript < ApplicationRecord
 
   def verified_script
     if hash_type == "type"
-      Contract.uniq_verified.where(type_hash: code_hash)&.first
+      Contract.live_verified.where(type_hash: code_hash)&.first
     else
-      Contract.uniq_verified.where(data_hash: code_hash)&.first
+      Contract.live_verified.where(data_hash: code_hash)&.first
     end
   end
 
