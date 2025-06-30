@@ -11,6 +11,7 @@ class LockScript < ApplicationRecord
   attribute :code_hash, :ckb_hash
 
   scope :lock_script, ->(type_hash, data_hash) { where(code_hash: [type_hash, data_hash]) }
+  scope :zero_lock, -> { where(code_hash: Contract::ZERO_LOCK_HASH) }
 
   def self.process(sdk_lock)
     lock_hash = sdk_lock.compute_hash
@@ -101,9 +102,9 @@ class LockScript < ApplicationRecord
 
   def verified_script
     if hash_type == "type"
-      Contract.uniq_verified.where(type_hash: code_hash)&.first
+      Contract.live_verified.where(type_hash: code_hash)&.first
     else
-      Contract.uniq_verified.where(data_hash: code_hash)&.first
+      Contract.live_verified.where(data_hash: code_hash)&.first
     end
   end
 

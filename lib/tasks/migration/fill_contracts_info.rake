@@ -402,7 +402,7 @@ namespace :migration do
             dep_type: "dep_group",
             description: "An universal Account Protocol for Web3 Mass-adoption.",
             tx_hashes: ["0x4dcf3f3b09efac8995d6cbee87c5345e812d310094651e0c3d9a730f32dc9263-0"],
-            website: " https://joy.id/" },
+            website: "https://joy.id/" },
           { code_hash: "0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb", hash_type: "type",
             name: "xUDT(final_rls)",
             description: "Extensible UDT that derived from sUDT's programmability to support a wider range of scenarios",
