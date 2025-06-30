@@ -98,6 +98,7 @@ module Api
             "script_out_point" => "#{@contract.contract_cell.tx_hash}-#{@contract.contract_cell.cell_index}",
             "dep_type" => @contract.dep_type,
             "is_zero_lock" => false,
+            "is_deployed_cell_dead" => false,
           },
         ],
                      json["data"]
