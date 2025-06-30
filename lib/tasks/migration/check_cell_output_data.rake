@@ -44,7 +44,7 @@ namespace :migration do
             elsif co.cell_datum.present?
               co.cell_datum.update!(data: binary_data)
             else
-              co.cell_datum.create!(data: binary_data)
+              co.create_cell_datum!(data: binary_data)
             end
           end
         end
