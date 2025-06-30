@@ -1,4 +1,6 @@
 class Contract < ApplicationRecord
+  ZERO_LOCK_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000".freeze
+
   has_many :cell_deps_out_points, foreign_key: :deployed_cell_output_id, primary_key: :deployed_cell_output_id
   has_many :cell_dependencies, through: :cell_deps_out_points
   has_one :ssri_contract
@@ -6,7 +8,7 @@ class Contract < ApplicationRecord
   belongs_to :contract_cell, class_name: "CellOutput", optional: true
 
   scope :active, -> { where("addresses_count != 0 and total_referring_cells_capacity != 0 and ckb_transactions_count != 0") }
-  scope :uniq_verified, -> { where(verified: true, deprecated: false) }
+  scope :live_verified, -> { joins(:deployed_cell_output).where(verified: true, deployed_cell_output: { status: :live }) }
   scope :primary, -> { where(is_primary: true) }
 
   enum dep_type: { code: 0, dep_group: 1 }
@@ -71,6 +73,7 @@ end
 #  deployed_block_timestamp       :bigint
 #  contract_cell_id               :bigint
 #  is_primary                     :boolean
+#  is_zero_lock                   :boolean
 #
 # Indexes
 #

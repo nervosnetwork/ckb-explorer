@@ -18,6 +18,18 @@ module Api
         @contract = create :contract, type_hash: @code_hash, hash_type: @hash_type, deployed_cell_output_id: deployed_cell_output.id, contract_cell_id: deployed_cell_output.id, is_type_script: true
         create :cell_dependency, ckb_transaction_id: @contract_cell_tx.id, contract_cell_id: contract_cell_output.id
         create :cell_deps_out_point, contract_cell_id: contract_cell_output.id, deployed_cell_output_id: deployed_cell_output.id
+        create(:contract,
+               hash_type: "data",
+               name: "Zero Lock",
+               verified: true,
+               deprecated: false,
+               type_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+               data_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+               deployed_cell_output_id: nil,
+               is_type_script: false,
+               is_lock_script: true,
+               is_primary: true,
+               is_zero_lock: true)
       end
 
       test "should return all ckb_transactions in normal mode" do
@@ -85,9 +97,22 @@ module Api
             "count_of_referring_cells" => 0,
             "script_out_point" => "#{@contract.contract_cell.tx_hash}-#{@contract.contract_cell.cell_index}",
             "dep_type" => @contract.dep_type,
+            "is_zero_lock" => false,
+            "is_deployed_cell_dead" => false,
           },
         ],
                      json["data"]
+      end
+
+      test "should filter by notes" do
+        outputs = create_list(:cell_output, 10, :with_full_transaction)
+        outputs.each do |output|
+          create(:contract, deployed_cell_output_id: output.id, rfc: "https://test.com/rfc")
+        end
+        valid_get api_v2_scripts_url(notes: ["ownerless_cell", "rfc"])
+        json = JSON.parse response.body
+        assert_equal 10, json["data"].count
+        assert_equal "Zero Lock", json["data"].first["name"]
       end
     end
   end
