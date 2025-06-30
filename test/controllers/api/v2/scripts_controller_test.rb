@@ -26,6 +26,7 @@ module Api
                type_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
                data_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
                deployed_cell_output_id: nil,
+               deployed_block_timestamp: DailyStatistic::GENESIS_TIMESTAMP,
                is_type_script: false,
                is_lock_script: true,
                is_primary: true,
