@@ -148,7 +148,7 @@ class AnalyzeContractFromCellDependencyWorker
       deployed_cell_output_id: cell_output.id,
       deployed_block_timestamp: cell_output.block_timestamp,
       deployed_args: cell_output.type_script&.args,
-      deprecated: cell_output.dead?,
+      is_zero_lock: cell_output.lock_script.code_hash == Contract::ZERO_LOCK_HASH,
     }
   end
 
