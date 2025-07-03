@@ -10,7 +10,7 @@ module CkbSync
     @@latest_json_rpc_id = 0
 
     def initialize
-      @api = CKB::API.new(host: ENV["CKB_NODE_URL"],
+      @api = CKB::API.new(host: ENV.fetch("CKB_NODE_URL", nil),
                           timeout_config: {
                             open_timeout: 1, read_timeout: 3,
                             write_timeout: 1
@@ -28,7 +28,15 @@ module CkbSync
       #   CKB::MODE::TESTNET
       # end
 
-      ENV["CKB_NET_MODE"]
+      ENV.fetch("CKB_NET_MODE", nil)
+    end
+
+    def genesis_block_timestamp
+      if mode == CKB::MODE::MAINNET
+        DailyStatistic::GENESIS_TIMESTAMP
+      else
+        DailyStatistic::TESTNET_GENESIS_TIMESTAMP
+      end
     end
 
     def issuer_script_code_hash
@@ -158,13 +166,13 @@ module CkbSync
     #   parsed json,  e.g. `{"jsonrpc":"2.0","result":"0x1842749a5c0","id":1}`
     def directly_single_call_rpc(options)
       payload = {
-        "id": generate_json_rpc_id,
-        "jsonrpc": "2.0",
-        "method": options[:method],
-        "params": options[:params],
+        id: generate_json_rpc_id,
+        jsonrpc: "2.0",
+        method: options[:method],
+        params: options[:params],
       }
 
-      url = ENV["CKB_NODE_URL"]
+      url = ENV.fetch("CKB_NODE_URL", nil)
 
       # Rails.logger.debug "== in directly_call_rpc, url: #{url}, payload: #{payload}"
 
@@ -190,12 +198,12 @@ module CkbSync
     #      {"jsonrpc":"2.0","result":"0x16e81010c18","id":4997}
     #    ]`
     def directly_batch_call_rpc(payload)
-      url = ENV["CKB_NODE_URL"]
-      Rails.logger.debug "== in directly_batch_call_rpc, url: #{url}, payload: #{payload}"
+      url = ENV.fetch("CKB_NODE_URL", nil)
+      Rails.logger.debug { "== in directly_batch_call_rpc, url: #{url}, payload: #{payload}" }
 
       res = HTTP.post(url, json: payload)
       result = JSON.parse res.to_s
-      Rails.logger.debug "== in directly_batch_call_rpc result: #{result.inspect}"
+      Rails.logger.debug { "== in directly_batch_call_rpc result: #{result.inspect}" }
 
       result
     end
