@@ -45,6 +45,7 @@ module CkbTransactions
         cellbase = Cellbase.new(block)
         cell_outputs_for_display.map do |output|
           consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
+          tags = output.block_timestamp == CkbSync::Api.instance.genesis_block_timestamp ? output.tags : []
           CkbUtils.hash_value_to_s(
             id: output.id,
             capacity: output.capacity,
@@ -59,6 +60,7 @@ module CkbTransactions
             consumed_tx_hash:,
             generated_tx_hash: output.tx_hash,
             cell_index: output.cell_index,
+            tags:,
           )
         end
       end
