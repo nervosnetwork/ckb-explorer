@@ -118,7 +118,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     expected_attributes = %i(
       id capacity occupied_capacity address_hash target_block_number
       base_reward commit_reward proposal_reward secondary_reward status
-      consumed_tx_hash generated_tx_hash cell_index
+      consumed_tx_hash generated_tx_hash cell_index tags
     )
 
     assert_equal [expected_attributes],
@@ -163,9 +163,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction = create(:ckb_transaction,
                              :with_multiple_inputs_and_outputs)
     expected_output_is = ckb_transaction.cell_inputs.map(&:previous_cell_output).map(&:id).sort
-    assert_equal expected_output_is.map(&:to_s), ckb_transaction.display_inputs.map { |display_input|
-                                                   display_input[:id]
-                                                 }
+    assert_equal(expected_output_is.map(&:to_s), ckb_transaction.display_inputs.pluck(:id))
   end
 
   test "#display_inputs should return dao display input when cell type is nervos_dao_withdrawing" do
@@ -186,7 +184,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                         consumed_by: nervos_dao_withdrawing_cell.ckb_transaction,
                                         status: "dead",
                                         cell_type: "nervos_dao_deposit",
-                                        capacity: 10**8 * 1000,
+                                        capacity: (10**8) * 1000,
                                         data: CKB::Utils.bin_to_hex("\x00" * 8))
     nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.inputs.nervos_dao_deposit.first
     create(:cell_input, block: nervos_dao_withdrawing_cell_generated_tx.block,
@@ -235,7 +233,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
     ckb_transaction = create(:ckb_transaction, block:,
                                                tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042")
     deposit_output_cell = create(:cell_output, block: ckb_transaction.block,
-                                               capacity: 138 * 10**8,
+                                               capacity: 138 * (10**8),
                                                tx_hash: "0xe8a116ec65f7d2d0d4748ba2bbcf8691cbd31202908ccfa3a975414fef801042",
                                                cell_index: 0,
                                                ckb_transaction:,

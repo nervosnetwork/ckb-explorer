@@ -1466,6 +1466,7 @@ module CkbSync
             consumed_tx_hash: nil,
             generated_tx_hash: output.tx_hash,
             cell_index: output.cell_index,
+            tags: [],
           ),
         ]
 
@@ -1512,7 +1513,7 @@ module CkbSync
                                      address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number,
                                      base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward,
                                      secondary_reward: cellbase.secondary_reward, status: cell_output.status, consumed_tx_hash:, generated_tx_hash: cell_output.tx_hash,
-                                     cell_index: cell_output.cell_index)
+                                     cell_index: cell_output.cell_index, tags: [])
           end
         assert_equal expected_cellbase_display_outputs,
                      block.cellbase.display_outputs
@@ -1560,7 +1561,7 @@ module CkbSync
                                      address_hash: cell_output.address_hash, target_block_number: cellbase.target_block_number,
                                      base_reward: cellbase.base_reward, commit_reward: cellbase.commit_reward, proposal_reward: cellbase.proposal_reward,
                                      secondary_reward: cellbase.secondary_reward, status: "live", consumed_tx_hash: nil, generated_tx_hash: cell_output.tx_hash,
-                                     cell_index: cell_output.cell_index),
+                                     cell_index: cell_output.cell_index, tags: []),
           ]
 
           assert_equal expected_cellbase_display_outputs,
