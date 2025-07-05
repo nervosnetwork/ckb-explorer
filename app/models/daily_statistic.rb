@@ -46,7 +46,7 @@ class DailyStatistic < ApplicationRecord
   end
 
   define_logic :block_timestamp do
-    blocks_in_current_period.recent.pick(:timestamp)
+    current_tip_block.timestamp
   end
 
   define_logic :total_dao_deposit do
@@ -442,10 +442,14 @@ class DailyStatistic < ApplicationRecord
 
   def current_tip_block
     @current_tip_block ||=
-      if from_scratch
-        Block.created_before(ended_at).recent.first
-      else
-        blocks_in_current_period.recent.first || Block.recent.first
+      begin
+        start_at = ended_at - (1 * 60 * 1000)
+        tip_block = Block.created_between(start_at, ended_at).recent.first
+        unless tip_block
+          start_at = ended_at - (10 * 60 * 1000)
+          tip_block = Block.created_between(start_at, ended_at).recent.first
+        end
+        tip_block || Block.recent.first
       end
   end
 
