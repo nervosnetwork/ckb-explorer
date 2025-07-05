@@ -46,7 +46,7 @@ class DailyStatistic < ApplicationRecord
   end
 
   define_logic :block_timestamp do
-    blocks_in_current_period.recent.pick(:timestamp)
+    current_tip_block.timestamp
   end
 
   define_logic :total_dao_deposit do
@@ -151,8 +151,8 @@ class DailyStatistic < ApplicationRecord
   end
 
   define_logic :avg_hash_rate do
-    first_block_for_the_day = blocks_in_current_period.order("timestamp asc").first
-    last_block_for_the_day = blocks_in_current_period.recent.first
+    first_block_for_the_day = current_start_block
+    last_block_for_the_day = current_tip_block
     total_block_time = last_block_for_the_day.timestamp - first_block_for_the_day.timestamp
 
     BigDecimal(total_difficulties_for_the_day) / total_block_time
@@ -440,12 +440,29 @@ class DailyStatistic < ApplicationRecord
     @ended_at ||= CkbUtils.time_in_milliseconds(to_be_counted_date.end_of_day) - 1
   end
 
+  def current_start_block
+    @current_start_block ||=
+      begin
+        end_at = started_at + (1 * 60 * 1000)
+        start_block = Block.created_between(started_at, end_at).order("number asc").first
+        unless start_block
+          end_at = started_at + (10 * 60 * 1000)
+          start_block = Block.created_between(started_at, end_at).order("number asc").first
+        end
+        start_block || Block.first
+      end
+  end
+
   def current_tip_block
     @current_tip_block ||=
-      if from_scratch
-        Block.created_before(ended_at).recent.first
-      else
-        blocks_in_current_period.recent.first || Block.recent.first
+      begin
+        start_at = ended_at - (1 * 60 * 1000)
+        tip_block = Block.created_between(start_at, ended_at).recent.first
+        unless tip_block
+          start_at = ended_at - (10 * 60 * 1000)
+          tip_block = Block.created_between(start_at, ended_at).recent.first
+        end
+        tip_block || Block.recent.first
       end
   end
 
