@@ -7,7 +7,7 @@ module Charts
     setup do
       to_be_counted_date = Time.current.yesterday.beginning_of_day
 
-      @datetime = 1.day.ago
+      @datetime = Time.current.yesterday.end_of_day - 1.minute
       @started_at = CkbUtils.time_in_milliseconds(to_be_counted_date.beginning_of_day)
       @ended_at = CkbUtils.time_in_milliseconds(to_be_counted_date.end_of_day) - 1
 
