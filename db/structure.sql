@@ -174,7 +174,7 @@ begin
         insert into account_books (ckb_transaction_id, address_id)
         values (row.id, i) ON CONFLICT DO NOTHING;
         end loop;
-    END LOOP;    
+    END LOOP;
     close c;
 end
 $$;
@@ -196,21 +196,21 @@ DECLARE
    if new.contained_address_ids is null then
    	new.contained_address_ids := array[]::int[];
 	end if;
-	if old is null 
+	if old is null
 	then
 		to_add := new.contained_address_ids;
 		to_remove := array[]::int[];
 	else
-	
+
 	   to_add := array_subtract(new.contained_address_ids, old.contained_address_ids);
-	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);	
+	   to_remove := array_subtract(old.contained_address_ids, new.contained_address_ids);
 	end if;
 
    if to_add is not null then
 	   FOREACH i IN ARRAY to_add
-	   LOOP 
+	   LOOP
 	   	RAISE NOTICE 'ckb_tx_addr_id(%)', i;
-			insert into account_books (ckb_transaction_id, address_id) 
+			insert into account_books (ckb_transaction_id, address_id)
 			values (new.id, i);
 	   END LOOP;
 	end if;
@@ -1647,8 +1647,10 @@ CREATE TABLE public.dao_events (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     block_timestamp numeric(30,0),
-    withdrawn_transaction_id bigint,
-    cell_index integer
+    consumed_transaction_id bigint,
+    cell_index integer,
+    consumed_block_timestamp numeric(20,0),
+    cell_output_id bigint
 );
 
 
@@ -6528,6 +6530,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250513034909'),
 ('20250617013030'),
 ('20250617051653'),
-('20250625024348');
-
-
+('20250625024348'),
+('20250708075759');

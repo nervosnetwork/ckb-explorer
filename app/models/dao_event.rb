@@ -14,8 +14,10 @@ class DaoEvent < ApplicationRecord
   belongs_to :block
   belongs_to :ckb_transaction
   belongs_to :address
+  belongs_to :consumed_transaction, class_name: "CkbTransaction", optional: true
+  belongs_to :cell_output, optional: true
 
-  scope :depositor, -> { processed.where(event_type: "deposit_to_dao", withdrawn_transaction_id: nil) }
+  scope :depositor, -> { processed.where(event_type: "deposit_to_dao", consumed_transaction_id: nil) }
   scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
   scope :created_before, ->(block_timestamp) { where("block_timestamp <= ?", block_timestamp) }
   scope :created_between, ->(start_block_timestamp, end_block_timestamp) {
@@ -38,8 +40,10 @@ end
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  block_timestamp          :decimal(30, )
-#  withdrawn_transaction_id :bigint
+#  consumed_transaction_id  :bigint
 #  cell_index               :integer
+#  consumed_block_timestamp :decimal(20, )
+#  cell_output_id           :bigint
 #
 # Indexes
 #
