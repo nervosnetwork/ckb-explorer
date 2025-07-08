@@ -144,7 +144,7 @@ class RevertBlockJob < ApplicationJob
     withdraw_from_dao_events = dao_events.includes(:address).withdraw_from_dao
 
     ids = withdraw_from_dao_events.pluck(:ckb_transaction_id)
-    DaoEvent.processed.where(withdrawn_transaction_id: ids).update_all(withdrawn_transaction_id: nil)
+    DaoEvent.processed.where(consumed_transaction_id: ids).update_all(consumed_transaction_id: nil)
 
     redundant_total_deposit = 0
     address_attrs = {}
