@@ -223,8 +223,12 @@ module CkbSync
             addrs_withdraw_info[address.id][:is_depositor] = false
           end
 
-          updated_deposit_dao_events_attributes << { block_id: previous_cell_output.block_id, ckb_transaction_id: previous_cell_output.ckb_transaction_id, cell_index: dao_input.index, event_type: "deposit_to_dao",
-                                                     withdrawn_transaction_id: dao_input.ckb_transaction_id }
+          updated_deposit_dao_events_attributes << { block_id: previous_cell_output.block_id,
+                                                     ckb_transaction_id: previous_cell_output.ckb_transaction_id,
+                                                     cell_index: previous_cell_output.cell_index,
+                                                     event_type: "deposit_to_dao",
+                                                     consumed_transaction_id: dao_input.ckb_transaction_id,
+                                                     consumed_block_timestamp: local_block.timestamp }
           dao_events_attributes << {
             ckb_transaction_id: dao_input.ckb_transaction_id,
             cell_index: dao_input.index,
@@ -242,7 +246,7 @@ module CkbSync
         DaoEvent.upsert_all(dao_events_attributes, unique_by: %i[block_id ckb_transaction_id cell_index event_type]) if dao_events_attributes.present?
         if updated_deposit_dao_events_attributes.present?
           DaoEvent.upsert_all(updated_deposit_dao_events_attributes, unique_by: %i[block_id ckb_transaction_id cell_index event_type],
-                                                                     update_only: :withdrawn_transaction_id)
+                                                                     update_only: %i[consumed_transaction_id consumed_block_timestamp])
         end
       end
 
@@ -263,6 +267,7 @@ module CkbSync
       local_block.cell_inputs.nervos_dao_withdrawing.select(:id, :ckb_transaction_id, :block_id, :index,
                                                             :previous_cell_output_id).find_in_batches do |dao_inputs|
         dao_events_attributes = []
+        updated_withdraw_dao_events_attributes = []
         dao_inputs.each do |dao_input|
           previous_cell_output = CellOutput.
             where(id: dao_input.previous_cell_output_id).
@@ -277,6 +282,13 @@ module CkbSync
               interest: address.interest.to_i + interest,
             }
           end
+          updated_withdraw_dao_events_attributes << { block_id: previous_cell_output.block_id,
+                                                      ckb_transaction_id: previous_cell_output.ckb_transaction_id,
+                                                      cell_index: previous_cell_output.cell_index,
+                                                      event_type: "withdraw_from_dao",
+                                                      consumed_transaction_id: dao_input.ckb_transaction_id,
+                                                      consumed_block_timestamp: local_block.timestamp }
+
           # addrs_withdraw_info[address.id][:dao_deposit] = 0 if addrs_withdraw_info[address.id][:dao_deposit] < 0
           dao_events_attributes << {
             ckb_transaction_id: dao_input.ckb_transaction_id,
@@ -292,6 +304,10 @@ module CkbSync
           claimed_compensation += interest
         end
         DaoEvent.upsert_all(dao_events_attributes, unique_by: %i[block_id ckb_transaction_id cell_index event_type]) if dao_events_attributes.present?
+        if updated_withdraw_dao_events_attributes.present?
+          DaoEvent.upsert_all(updated_withdraw_dao_events_attributes, unique_by: %i[block_id ckb_transaction_id cell_index event_type],
+                                                                      update_only: %i[consumed_transaction_id consumed_block_timestamp])
+        end
       end
       # update dao contract info
       dao_contract.update!(
@@ -326,6 +342,7 @@ module CkbSync
           dao_events_attributes << {
             ckb_transaction_id: dao_output.ckb_transaction_id,
             cell_index: dao_output.cell_index,
+            cell_output_id: dao_output.id,
             block_id: local_block.id,
             address_id: address.id,
             event_type: "deposit_to_dao",
