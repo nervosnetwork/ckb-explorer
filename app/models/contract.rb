@@ -70,7 +70,7 @@ end
 #  source_url                     :string
 #  dep_type                       :integer
 #  website                        :string
-#  deployed_block_timestamp       :bigint
+#  deployed_block_timestamp       :decimal(20, )
 #  contract_cell_id               :bigint
 #  is_primary                     :boolean
 #  is_zero_lock                   :boolean
