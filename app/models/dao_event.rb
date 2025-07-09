@@ -23,6 +23,19 @@ class DaoEvent < ApplicationRecord
   scope :created_between, ->(start_block_timestamp, end_block_timestamp) {
                             created_after(start_block_timestamp).created_before(end_block_timestamp)
                           }
+  scope :consumed_before, ->(block_timestamp) {
+    where("consumed_block_timestamp <= ?", block_timestamp)
+  }
+  scope :consumed_after, ->(block_timestamp) {
+    where("consumed_block_timestamp >= ?", block_timestamp)
+  }
+  scope :consumed_between, ->(start_timestamp, end_timestamp) {
+                             consumed_after(start_timestamp).consumed_before(end_timestamp)
+                           }
+
+  scope :unconsumed_at, ->(block_timestamp) {
+                          where("consumed_block_timestamp > ? or consumed_block_timestamp is null", block_timestamp)
+                        }
 end
 
 # == Schema Information
