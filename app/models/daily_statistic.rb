@@ -69,14 +69,16 @@ class DailyStatistic < ApplicationRecord
   define_logic :claimed_compensation do
     claimed_compensation = 0
     if from_scratch
-      CellOutput.nervos_dao_withdrawing.consumed_before(ended_at).find_each do |nervos_dao_withdrawing_cell|
+      DaoEvent.processed.withdraw_from_dao.consumed_before(ended_at).find_each do |dao_event|
+        nervos_dao_withdrawing_cell = CellOutput.find_by(ckb_transaction_id: dao_event.ckb_transaction_id, cell_index: dao_event.cell_index)
         claimed_compensation += CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
       end
     else
       claimed_compensation_today = 0
 
-      CellOutput.nervos_dao_withdrawing.consumed_between(started_at,
-                                                         ended_at).find_each do |nervos_dao_withdrawing_cell|
+      DaoEvent.processed.withdraw_from_dao.consumed_between(started_at,
+                                                            ended_at).find_each do |dao_event|
+        nervos_dao_withdrawing_cell = CellOutput.find_by(ckb_transaction_id: dao_event.ckb_transaction_id, cell_index: dao_event.cell_index)
         claimed_compensation_today += CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
       end
 
@@ -90,14 +92,14 @@ class DailyStatistic < ApplicationRecord
     sum_interest_bearing = 0
     sum_uninterest_bearing = 0
 
-    CellOutput.nervos_dao_withdrawing.generated_before(ended_at).unconsumed_at(ended_at).find_each do |nervos_dao_withdrawing_cell|
-      nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
-      nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
+    DaoEvent.processed.withdraw_from_dao.created_before(ended_at).unconsumed_at(ended_at).find_each do |nervos_dao_withdrawing_cell|
+      nervos_dao_deposit_cell = CellInput.find_by(ckb_transaction_id: nervos_dao_withdrawing_cell.ckb_transaction_id, index: nervos_dao_withdrawing_cell.cell_index).previous_cell_output
       interest_bearing_deposits += nervos_dao_deposit_cell.capacity
       sum_interest_bearing += nervos_dao_deposit_cell.capacity * (nervos_dao_withdrawing_cell.block_timestamp - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
     end
 
-    CellOutput.nervos_dao_deposit.generated_before(ended_at).unconsumed_at(ended_at).find_each do |nervos_dao_deposit_cell|
+    DaoEvent.includes(:cell_output).processed.deposit_to_dao.created_before(ended_at).unconsumed_at(ended_at).find_each do |dao_event|
+      nervos_dao_deposit_cell = dao_event.cell_output
       uninterest_bearing_deposits += nervos_dao_deposit_cell.capacity
 
       sum_uninterest_bearing += nervos_dao_deposit_cell.capacity * (ended_at - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
@@ -478,8 +480,9 @@ class DailyStatistic < ApplicationRecord
     @phase1_dao_interests ||=
       begin
         total = 0
-        CellOutput.nervos_dao_withdrawing.
-          generated_before(ended_at).unconsumed_at(ended_at).find_each do |nervos_dao_withdrawing_cell|
+        DaoEvent.processed.withdraw_from_dao.
+          created_before(ended_at).unconsumed_at(ended_at).find_each do |dao_event|
+          nervos_dao_withdrawing_cell = CellOutput.find_by(ckb_transaction_id: dao_event.ckb_transaction_id, cell_index: dao_event.cell_index)
           total += CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
         end
         total
@@ -491,9 +494,9 @@ class DailyStatistic < ApplicationRecord
       begin
         tip_dao = current_tip_block.dao
         total = 0
-        CellOutput.nervos_dao_deposit.
-          generated_before(ended_at).unconsumed_at(ended_at).find_each do |cell_output|
-          total += DaoCompensationCalculator.new(cell_output, tip_dao).call
+        DaoEvent.includes(:cell_output).processed.deposit_to_dao.
+          created_before(ended_at).unconsumed_at(ended_at).find_each do |dao_event|
+          total += DaoCompensationCalculator.new(dao_event.cell_output, tip_dao).call
         end
         total
       end
