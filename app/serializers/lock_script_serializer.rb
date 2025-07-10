@@ -6,4 +6,6 @@ class LockScriptSerializer
   attribute :verified_script_name do |object|
     object.verified_script&.name
   end
+
+  attribute :tags, &:tags
 end
