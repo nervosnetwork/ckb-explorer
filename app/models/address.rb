@@ -14,7 +14,6 @@ class Address < ApplicationRecord
   has_many :dao_events
   belongs_to :lock_script, optional: true
   has_many :ckb_dao_transactions, -> { distinct }, through: :dao_events, source: :ckb_transaction
-
   has_one :bitcoin_address_mapping, foreign_key: "ckb_address_id"
   has_one :bitcoin_address, through: :bitcoin_address_mapping
 
@@ -41,25 +40,6 @@ class Address < ApplicationRecord
 
   def lock_info
     lock_script.lock_info
-  end
-
-  def lock_script
-    if lock_script_id
-      Rails.cache.realize(["Address", "lock_script", id], race_condition_ttl: 3.seconds) do
-        LockScript.where(address_id: self)&.first || LockScript.find(lock_script_id)
-      end
-    else
-      create_lock_script
-    end
-  end
-
-  def create_lock_script
-    addr = CkbUtils.parse_address address_hash
-    script = addr.script
-    ls = LockScript.find_or_create_by code_hash: script.code_hash, hash_type: script.hash_type, args: script.args
-    ls.update address_id: id
-    update lock_script_id: ls.id
-    ls
   end
 
   def self.find_by_address_hash(address_hash, *_args, **_kargs)
@@ -215,7 +195,7 @@ class Address < ApplicationRecord
 
   def cal_balance_occupied
     cell_outputs.live.find_each.map do |cell|
-      next if cell.type_hash.blank? && (cell.data.present? && cell.data == "0x")
+      next if cell.type_hash.blank? && cell.data.present? && cell.data == "0x"
 
       cell.capacity
     end.compact.sum
@@ -223,7 +203,7 @@ class Address < ApplicationRecord
 
   def cal_balance_occupied_inner_block(block_id)
     cell_outputs.inner_block(block_id).live.find_each.map do |cell|
-      next if cell.type_hash.blank? && (cell.data.present? && cell.data == "0x")
+      next if cell.type_hash.blank? && cell.data.present? && cell.data == "0x"
 
       cell.capacity
     end.compact.sum
