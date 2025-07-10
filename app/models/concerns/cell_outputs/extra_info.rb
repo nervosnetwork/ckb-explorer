@@ -193,6 +193,8 @@ module CellOutputs
         tags << "multisig" if
         (lock_script.code_hash == Settings.multisig_code_hash && lock_script.hash_type == "data1") ||
           (lock_script.code_hash == Settings.secp_multisig_cell_type_hash && lock_script.hash_type == "type")
+        tags << "multisig_time_lock" if tags.include?("multisig") && lock_script.args.length === (28 * 2) + 2
+        tags << "btc_time_lock" if Settings.btc_time_code_hash.include?(lock_script.code_hash) && lock_script.hash_type == "type"
         tags
       end
     end
