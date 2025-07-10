@@ -108,6 +108,16 @@ class LockScript < ApplicationRecord
     end
   end
 
+  def tags
+    result_tags = []
+    result_tags << "multisig" if (code_hash == Settings.multisig_code_hash && hash_type == "data1") ||
+      (code_hash == Settings.secp_multisig_cell_type_hash && hash_type == "type")
+    result_tags << "multisig_time_lock" if result_tags.include?("multisig") && args.length === (28 * 2) + 2
+    result_tags << "btc_time_lock" if Settings.btc_time_code_hash.include?(code_hash) && hash_type == "type"
+    result_tags << "rgb++" if Settings.rgbpp_code_hash.include?(code_hash) && hash_type == "type"
+    result_tags
+  end
+
   private
 
   def set_since_epoch_number_and_index(since_value)
