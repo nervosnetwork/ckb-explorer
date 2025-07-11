@@ -152,13 +152,13 @@ module Api
         tx1 = create(:ckb_transaction, block: block1,
                                        tx_hash: "0x3e89753ebca825e1504498eb18b56576d5b7eff59fe033346a10ab9e8ca359a4", block_timestamp: block1.timestamp)
         input_address1 = create(:address)
-        address1_lock = create(:lock_script, address_id: input_address1.id)
+        address1_lock = input_address1.lock_script
         info_ts = create(:type_script,
                          args: "0xcd89d8f36593a9a82501c024c5cdc4877ca11c5b3d5831b3e78334aecb978f0d",
                          code_hash: "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6",
                          hash_type: "type")
         info_output = create(:cell_output, ckb_transaction: tx1,
-                                           block: block1, capacity: 50000000 * 10**8,
+                                           block: block1, capacity: 50000000 * (10**8),
                                            tx_hash: tx1.tx_hash,
                                            cell_index: 1,
                                            address: input_address1,
@@ -179,7 +179,7 @@ module Api
                       mint_status: "minting",
                       udt_id: nil)
         input_address2 = create(:address)
-        address2_lock = create(:lock_script, address_id: input_address2.id)
+        address2_lock = input_address2.lock_script
 
         xudt_ts = create(:type_script,
                          args: "0x9709d30fc21348ae1d28a197310a80aec3b8cdb5c93814d5e240f9fba85b76af",
@@ -191,7 +191,7 @@ module Api
         tx2 = create(:ckb_transaction, block: block2,
                                        tx_hash: "0xd5d38a2096c10e5d0d55def7f2b3fe58779aad831fbc9dcd594446b1f0837430")
         xudt_output = create(:cell_output, ckb_transaction: tx2,
-                                           block: block2, capacity: 50000000 * 10**8,
+                                           block: block2, capacity: 50000000 * (10**8),
                                            tx_hash: tx2.tx_hash,
                                            type_hash: xudt_ts.script_hash,
                                            cell_index: 1,

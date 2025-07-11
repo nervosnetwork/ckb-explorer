@@ -4,7 +4,7 @@ module Api
   module V1
     class AddressesControllerTest < ActionDispatch::IntegrationTest
       test "should get success code when call show" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
 
         valid_get api_v1_address_url(address.address_hash)
 
@@ -12,7 +12,7 @@ module Api
       end
 
       test "should set right content type when call show" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
 
         valid_get api_v1_address_url(address.address_hash)
 
@@ -20,7 +20,7 @@ module Api
       end
 
       test "should respond with 415 Unsupported Media Type when Content-Type is wrong" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
 
         get api_v1_address_url(address.address_hash),
             headers: { "Content-Type": "text/plain" }
@@ -29,7 +29,7 @@ module Api
       end
 
       test "should respond with error object when Content-Type is wrong" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
         error_object = Api::V1::Exceptions::InvalidContentTypeError.new
         response_json = RequestErrorSerializer.new([error_object],
                                                    message: error_object.title).serialized_json
@@ -41,24 +41,24 @@ module Api
       end
 
       test "should respond with 406 Not Acceptable when Accept is wrong" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
 
         get api_v1_address_url(address.address_hash),
             headers: { "Content-Type": "application/vnd.api+json",
-                       "Accept": "application/json" }
+                       Accept: "application/json" }
 
         assert_equal 406, response.status
       end
 
       test "should respond with error object when Accept is wrong" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object],
                                                    message: error_object.title).serialized_json
 
         get api_v1_address_url(address.address_hash),
             headers: { "Content-Type": "application/vnd.api+json",
-                       "Accept": "application/json" }
+                       Accept: "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -76,7 +76,7 @@ module Api
       test "should return corresponding data with given address hash" do
         page = 1
         page_size = 100
-        address = create(:address, :with_lock_script)
+        address = create(:address)
         address.query_address = address.address_hash
 
         valid_get api_v1_address_url(address.address_hash)
@@ -90,7 +90,7 @@ module Api
       end
 
       test "should return corresponding data with given lock hash" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
 
         valid_get api_v1_address_url(address.lock_hash)
 
@@ -99,7 +99,7 @@ module Api
       end
 
       test "should contain right keys in the serialized object when call show" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
 
         valid_get api_v1_address_url(address.address_hash)
 
@@ -111,7 +111,7 @@ module Api
       end
 
       test "should return special address when query address is special" do
-        address = create(:address, :with_lock_script,
+        address = create(:address,
                          address_hash: "ckb1qyq0hcfpff4h8w8zvy44uurvlgdrr09tefwqx266dl")
 
         valid_get api_v1_address_url(address.address_hash)
@@ -120,7 +120,7 @@ module Api
       end
 
       test "should not return special address when query address is not special" do
-        address = create(:address, :with_lock_script,
+        address = create(:address,
                          address_hash: "ckb1qyqdmeuqrsrnm7e5vnrmruzmsp4m9wacf6vsxasryq")
 
         valid_get api_v1_address_url(address.address_hash)
@@ -128,7 +128,7 @@ module Api
       end
 
       test "should support full address query when short address's lock script exists" do
-        address = create(:address, :with_lock_script,
+        address = create(:address,
                          address_hash: "ckb1qyqt8xaupvm8837nv3gtc9x0ekkj64vud3jqfwyw5v")
         query_key = "ckb1qjda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xw3vumhs9nvu786dj9p0q5elx66t24n3kxgj53qks"
         address.query_address = query_key
@@ -143,7 +143,7 @@ module Api
       end
 
       test "should support short address query when full address's lock script exists" do
-        address = create(:address, :with_lock_script,
+        address = create(:address,
                          address_hash: "ckb1qjda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xw3vumhs9nvu786dj9p0q5elx66t24n3kxgj53qks")
         query_key = "ckb1qyqt8xaupvm8837nv3gtc9x0ekkj64vud3jqfwyw5v"
         address.query_address = query_key
@@ -158,7 +158,7 @@ module Api
       end
 
       test "should return published udt accounts with given address hash" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
         udt_account = create(:udt_account, published: true, address:)
         address.query_address = address.address_hash
         valid_get api_v1_address_url(address.address_hash)
@@ -177,7 +177,7 @@ module Api
       end
 
       test "should not return unpublished udt accounts with given address hash" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
         create(:udt_account, address:)
         address.query_address = address.address_hash
 
@@ -187,7 +187,7 @@ module Api
       end
 
       test "should return balance occupied" do
-        address = create(:address, :with_lock_script,
+        address = create(:address,
                          address_hash: "ckb1qyq0hcfpff4h8w8zvy44uurvlgdrr09tefwqx266dl")
 
         valid_get api_v1_address_url(address.address_hash)
@@ -196,7 +196,7 @@ module Api
 
       test "should return nrc 721 udt accounts with given address hash" do
         type_script = create :type_script
-        address = create(:address, :with_lock_script)
+        address = create(:address)
         factory_cell = create(:nrc_factory_cell,
                               verified: true,
                               name: "NrcFactoryToken",
@@ -233,7 +233,7 @@ module Api
         tc = create :token_collection, type_script: cluster_type,
                                        standard: "spore"
         create :token_item, collection_id: tc.id, cell_id: output.id
-        address = create(:address, :with_lock_script)
+        address = create(:address)
         udt = create(:udt, udt_type: "spore_cell", full_name: "SporeTest")
         udt_account = create(:udt_account, full_name: udt.full_name, published: true, address:, udt_id: udt.id, nft_token_id: "123456",
                                            udt_type: "spore_cell", type_hash: output.type_script.script_hash)
@@ -256,7 +256,7 @@ module Api
         udt = create(:udt, :omiga_inscription, full_name: "CKB Fist Inscription",
                                                symbol: "CKBI", decimal: 8)
         info = udt.omiga_inscription_info
-        address = create(:address, :with_lock_script)
+        address = create(:address)
         udt_account = create(:udt_account, symbol: udt.symbol, full_name: udt.full_name, decimal: udt.decimal, published: true, address:, udt_id: udt.id,
                                            udt_type: "omiga_inscription", type_hash: udt.type_hash, amount: info.mint_limit)
         address.query_address = address.address_hash

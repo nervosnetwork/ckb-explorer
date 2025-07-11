@@ -97,6 +97,7 @@ module CkbTransactions
               median_timestamp: cell_input.block&.median_timestamp.to_i,
             },
             tags: previous_cell_output.tags,
+            type_script: previous_cell_output.type_script&.to_node,
           }
 
           if previous_cell_output.nervos_dao_withdrawing?
@@ -154,6 +155,7 @@ module CkbTransactions
             generated_tx_hash: output.tx_hash,
             cell_index: output.cell_index,
             tags: output.tags,
+            type_script: output.type_script&.to_node,
           }
 
           display_output.merge!(attributes_for_udt_cell(output)) if output.udt?
