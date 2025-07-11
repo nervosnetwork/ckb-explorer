@@ -117,7 +117,7 @@ def format_node_block(node_block)
   header["timestamp"] = header["timestamp"].hex
   header["version"] = header["version"].hex
   header["nonce"] = header["nonce"].hex
-  header["epoch"] = "0x#{CKB::Utils.to_hex(header['epoch']).split(//).last(6).join('')}".hex
+  header["epoch"] = "0x#{CKB::Utils.to_hex(header['epoch']).split('').last(6).join('')}".hex
   proposals = node_block["proposals"].presence
   header.merge({ proposals: }.deep_stringify_keys)
 end
@@ -164,122 +164,122 @@ end
 def fake_node_block(block_hash = DEFAULT_NODE_BLOCK_HASH, number = "0xc")
   CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(DEFAULT_NODE_BLOCK_NUMBER + 1)
   json_block = {
-    "header": {
-      "dao": "0x01000000000000000000c16ff286230000a3a65e97fd03000057c138586f0000",
-      "compact_target": "0x1000",
-      "epoch": "0x0",
-      "hash": block_hash,
-      "number": number,
-      "parent_hash": "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-      "proposals_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "nonce": "0x2cfb33aba57e0338",
-      "timestamp": "0x16aa12ea9e3",
-      "transactions_root": "0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3",
-      "extra_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "version": "0x0",
+    header: {
+      dao: "0x01000000000000000000c16ff286230000a3a65e97fd03000057c138586f0000",
+      compact_target: "0x1000",
+      epoch: "0x0",
+      hash: block_hash,
+      number: number,
+      parent_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
+      proposals_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      nonce: "0x2cfb33aba57e0338",
+      timestamp: "0x16aa12ea9e3",
+      transactions_root: "0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3",
+      extra_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      version: "0x0",
     },
-    "proposals": [],
-    "transactions":
+    proposals: [],
+    transactions:
       [
         {
-          "header_deps": [],
-          "cell_deps": [],
-          "outputs_data": ["0x"],
-          "hash": "0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3",
-          "inputs": [
+          header_deps: [],
+          cell_deps: [],
+          outputs_data: ["0x"],
+          hash: "0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf3",
+          inputs: [
             {
-              "previous_output": {
-                "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-                "index": "0x0",
+              previous_output: {
+                tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+                index: "0x0",
               },
-              "since": "0x0",
+              since: "0x0",
             },
           ],
-          "outputs": [
+          outputs: [
             {
-              "capacity": "0x23c34600",
-              "data": "0x",
-              "lock": {
-                "args": "0xb2e61ff569acf041b3c2c17724e2379c581eeac3",
-                "code_hash": "0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794",
-                "hash_type": "data",
+              capacity: "0x23c34600",
+              data: "0x",
+              lock: {
+                args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3",
+                code_hash: "0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794",
+                hash_type: "data",
               },
-              "type": nil,
+              type: nil,
             },
           ],
-          "version": "0x0",
-          "witnesses": [
+          version: "0x0",
+          witnesses: [
             "0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000",
           ],
         },
         {
-          "header_deps": [],
-          "cell_deps": [],
-          "outputs_data": [
+          header_deps: [],
+          cell_deps: [],
+          outputs_data: [
             "0x",
           ],
-          "hash": "0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf2",
-          "inputs": [
+          hash: "0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6bf2",
+          inputs: [
             {
-              "previous_output": {
-                "tx_hash": "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                "index": "0x2",
+              previous_output: {
+                tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
+                index: "0x2",
               },
-              "since": "0x0",
+              since: "0x0",
             },
           ],
-          "outputs": [
+          outputs: [
             {
-              "capacity": "0x23c34600",
-              "data": "0x",
-              "lock": {
-                "args": "0xb2e61ff569acf041b3c2c17724e2379c581eeac3",
-                "code_hash": "0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794",
-                "hash_type": "data",
+              capacity: "0x23c34600",
+              data: "0x",
+              lock: {
+                args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3",
+                code_hash: "0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794",
+                hash_type: "data",
               },
-              "type": nil,
+              type: nil,
             },
           ],
-          "version": "0x0",
-          "witnesses": [
+          version: "0x0",
+          witnesses: [
             "0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000",
           ],
         },
         {
-          "header_deps": [],
-          "cell_deps": [],
-          "outputs_data": [
+          header_deps: [],
+          cell_deps: [],
+          outputs_data: [
             "0x",
           ],
-          "hash": "0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23",
-          "inputs": [
+          hash: "0xefb03572314fbb45aba0ef889373d3181117b253664de4dca0934e453b1e6b23",
+          inputs: [
             {
-              "previous_output": {
-                "tx_hash": "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                "index": "0x1",
+              previous_output: {
+                tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
+                index: "0x1",
               },
-              "since": "0x0",
+              since: "0x0",
             },
           ],
-          "outputs": [
+          outputs: [
             {
-              "capacity": "0x1dcd6500",
-              "data": "0x",
-              "lock": {
-                "args": "0xb2e61ff569acf041b3c2c17724e2379c581eeac3",
-                "code_hash": "0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794",
-                "hash_type": "data",
+              capacity: "0x1dcd6500",
+              data: "0x",
+              lock: {
+                args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3",
+                code_hash: "0x1d107ddec56ec77b79c41cd10b35a3b47434c93a604ecb8e8e73e7372fe1a794",
+                hash_type: "data",
               },
-              "type": nil,
+              type: nil,
             },
           ],
-          "version": "0x0",
-          "witnesses": [
+          version: "0x0",
+          witnesses: [
             "0x",
           ],
         },
       ],
-    "uncles": [],
+    uncles: [],
   }
   CKB::Types::Block.from_h(json_block.deep_symbolize_keys)
 end
@@ -340,14 +340,14 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
   cellbases_part1 = cellbases[0..1]
   cellbases_part2 = cellbases[2..8]
   cellbases_part3 = cellbases[9..-1]
-  address1 = create(:address, :with_lock_script)
+  address1 = create(:address)
   cellbases_part1.map do |cellbase|
     cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address1,
                                   lock_script: address1.lock_script)
   end
   # address1.ckb_transactions << cellbases_part1
   AccountBook.insert_all(cellbases_part1.map { |c| { address_id: address1.id, ckb_transaction_id: c.id } })
-  address2 = create(:address, :with_lock_script)
+  address2 = create(:address)
   cellbases_part2.map do |cellbase|
     cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address2,
                                   lock_script: address2.lock_script)
@@ -358,7 +358,7 @@ def generate_miner_ranking_related_data(block_timestamp = 1560578500000)
       { address_id: address2.id, ckb_transaction_id: c.id }
     end,
   )
-  address3 = create(:address, :with_lock_script)
+  address3 = create(:address)
   cellbases_part3.map do |cellbase|
     cellbase.cell_outputs.create!(block: cellbase.block, capacity: 10**8, address: address3,
                                   lock_script: address3.lock_script)
@@ -414,7 +414,7 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
                                 tags: ["dao"])
       create(:dao_event, ckb_transaction_id: ckb_transaction1.id, address_id: address.id, event_type: "deposit_to_dao")
       create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: number,
-                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, capacity: 10**8 * 1000, cell_type: "nervos_dao_deposit", address:)
+                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, capacity: (10**8) * 1000, cell_type: "nervos_dao_deposit", address:)
     else
       ckb_transaction2 = create(:ckb_transaction,
                                 tx_hash: "0x#{SecureRandom.hex(32)}",
@@ -427,7 +427,7 @@ def fake_dao_deposit_transaction(dao_cell_count, address)
              cell_index: number,
              tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
              block:,
-             capacity: 10**8 * 1000,
+             capacity: (10**8) * 1000,
              cell_type: "nervos_dao_deposit",
              address:)
     end
@@ -441,19 +441,19 @@ module RequestHelpers
 
   def valid_get(uri, **params)
     params[:params] ||= {}
-    params[:headers] = { "Content-Type": "application/vnd.api+json", "Accept": "application/vnd.api+json" }
+    params[:headers] = { "Content-Type": "application/vnd.api+json", Accept: "application/vnd.api+json" }
     send :get, uri, **params
   end
 
   def valid_post(uri, **params)
     params[:params] ||= {}
-    params[:headers] = { "Content-Type": "application/vnd.api+json", "Accept": "application/vnd.api+json" }
+    params[:headers] = { "Content-Type": "application/vnd.api+json", Accept: "application/vnd.api+json" }
     post uri, as: :json, **params
   end
 
   def valid_put(uri, **params)
     params[:params] ||= {}
-    params[:headers] = { "Content-Type": "application/vnd.api+json", "Accept": "application/vnd.api+json" }
+    params[:headers] = { "Content-Type": "application/vnd.api+json", Accept: "application/vnd.api+json" }
     put uri, as: :json, **params
   end
 end
@@ -464,7 +464,7 @@ module ActiveSupport
     # fixtures :all
     include FactoryBot::Syntax::Methods
     include ::RequestHelpers
-    parallelize(workers: ENV['PARALLEL_WORKERS'].to_i)
+    parallelize(workers: ENV["PARALLEL_WORKERS"].to_i)
 
     # Add more helper methods to be used by all tests here...
     def before_setup
