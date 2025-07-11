@@ -33,7 +33,7 @@ module Api
         udt = create(:udt, :omiga_inscription, full_name: "CKB Fist Inscription",
                                                symbol: "CKBI", decimal: 8)
         info = udt.omiga_inscription_info
-        address_lock = create(:lock_script, address_id: address.id)
+        address_lock = address.lock_script
         info_ts = create(:type_script,
                          args: "0xcd89d8f36593a9a82501c024c5cdc4877ca11c5b3d5831b3e78334aecb978f0d",
                          code_hash: "0x50fdea2d0030a8d0b3d69f883b471cab2a29cae6f01923f19cecac0f27fdaaa6",
@@ -73,7 +73,7 @@ module Api
 
       test "should paginate and asc sort live cells" do
         address = create(:address)
-        address_lock = create(:lock_script, address_id: address.id)
+        address_lock = address.lock_script
         outputs = create_list(:cell_output, 10, :address_live_cells, lock_script: address_lock, address_id: address.id)
         valid_get api_v1_address_live_cell_url(address.address_hash), params: { page: 1, page_size: 5, sort: "block_timestamp.asc" }
         assert_equal outputs.first.block_timestamp.to_s, json["data"].first["attributes"]["block_timestamp"]
@@ -81,7 +81,7 @@ module Api
 
       test "should paginate and desc sort live cells" do
         address = create(:address)
-        address_lock = create(:lock_script, address_id: address.id)
+        address_lock = address.lock_script
         outputs = create_list(:cell_output, 10, :address_live_cells, lock_script: address_lock, address_id: address.id)
         valid_get api_v1_address_live_cell_url(address.address_hash), params: { page: 1, page_size: 5, sort: "block_timestamp.desc" }
         assert_equal outputs.last.block_timestamp.to_s, json["data"].first["attributes"]["block_timestamp"]
