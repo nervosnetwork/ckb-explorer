@@ -40,7 +40,7 @@ module Api
       test "should respond with 406 Not Acceptable when Accept is wrong" do
         cell_output = create_cell_output
 
-        get api_v1_cell_output_lock_script_url(cell_output.id), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_cell_output_lock_script_url(cell_output.id), headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal 406, response.status
       end
@@ -50,7 +50,7 @@ module Api
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_cell_output_lock_script_url(cell_output.id), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_cell_output_lock_script_url(cell_output.id), headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -86,7 +86,7 @@ module Api
 
         valid_get api_v1_cell_output_lock_script_url(cell_output.id)
 
-        assert_equal %w(args code_hash hash_type verified_script_name).sort, json["data"]["attributes"].keys.sort
+        assert_equal %w(args code_hash hash_type verified_script_name tags).sort, json["data"]["attributes"].keys.sort
       end
 
       test "should return error object when no cell output found by id" do

@@ -28,7 +28,7 @@ class SuggestQueryTest < ActiveSupport::TestCase
   end
 
   test "should return Address by query key when query key is a exist address hash" do
-    address = create(:address, :with_lock_script)
+    address = create(:address)
     address.query_address = address.address_hash
 
     assert_equal AddressSerializer.new(address).serialized_json,
@@ -44,7 +44,7 @@ class SuggestQueryTest < ActiveSupport::TestCase
 
   test "should return serialized NullAddress when query key is a address that doesn't exist" do
     ENV["CKB_NET_MODE"] = "testnet"
-    create(:address, :with_lock_script)
+    create(:address)
     address = NullAddress.new("ckt1qyqrdsefa43s6m882pcj53m4gdnj4k440axqswmu83")
 
     assert_equal AddressSerializer.new(address).serialized_json,
@@ -66,6 +66,7 @@ class SuggestQueryTest < ActiveSupport::TestCase
 
   test "should return lock script by code_hash" do
     ls = create(:lock_script)
+
     assert_equal LockScriptSerializer.new(ls).serialized_json, SuggestQuery.new(ls.code_hash).find!.serialized_json
   end
 

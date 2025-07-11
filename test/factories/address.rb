@@ -19,17 +19,11 @@ FactoryBot.define do
       udt { create(:udt, published: true) }
     end
 
-    after(:create) do |address|
-      lock_hash = CkbUtils.parse_address(address.address_hash).script.compute_hash
-      address.update(lock_hash:)
-    end
-
-    trait :with_lock_script do
-      after(:create) do |address, _evaluator|
-        block = create(:block, :with_block_hash)
-        cell_output = create(:cell_output, :with_full_transaction, block:)
-        cell_output.lock_script.update(address:)
-      end
+    before(:create) do |address|
+      parsed_address = CkbUtils.parse_address(address.address_hash)
+      lock = LockScript.find_or_create_by(args: parsed_address.script.args, code_hash: parsed_address.script.code_hash, hash_type: parsed_address.script.hash_type,
+                                          script_hash: parsed_address.script.compute_hash)
+      address.update(lock_hash: lock.script_hash, lock_script_id: lock.id)
     end
 
     trait :with_transactions do

@@ -32,7 +32,7 @@ module Api
       end
 
       test "should respond with 406 Not Acceptable when Accept is wrong" do
-        get api_v1_suggest_queries_url, params: { q: "12" }, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_suggest_queries_url, params: { q: "12" }, headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal 406, response.status
       end
@@ -41,7 +41,7 @@ module Api
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_suggest_queries_url, params: { q: "12" }, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_suggest_queries_url, params: { q: "12" }, headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -75,7 +75,7 @@ module Api
       end
 
       test "should return address when query key is a exist address hash" do
-        address = create(:address, :with_lock_script)
+        address = create(:address)
         address.query_address = address.address_hash
         response_json = AddressSerializer.new(address).serialized_json
 
@@ -114,7 +114,7 @@ module Api
       end
 
       test "should support full address query when short address's lock script exists" do
-        address = create(:address, :with_lock_script, address_hash: "ckb1qyqt8xaupvm8837nv3gtc9x0ekkj64vud3jqfwyw5v")
+        address = create(:address, address_hash: "ckb1qyqt8xaupvm8837nv3gtc9x0ekkj64vud3jqfwyw5v")
         query_key = "ckb1qjda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xw3vumhs9nvu786dj9p0q5elx66t24n3kxgj53qks"
         address.query_address = query_key
         valid_get api_v1_suggest_queries_url, params: { q: query_key }
@@ -123,7 +123,7 @@ module Api
       end
 
       test "should support short address query when full address's lock script exists" do
-        address = create(:address, :with_lock_script, address_hash: "ckb1qjda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xw3vumhs9nvu786dj9p0q5elx66t24n3kxgj53qks")
+        address = create(:address, address_hash: "ckb1qjda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xw3vumhs9nvu786dj9p0q5elx66t24n3kxgj53qks")
         query_key = "ckb1qyqt8xaupvm8837nv3gtc9x0ekkj64vud3jqfwyw5v"
         address.query_address = query_key
         valid_get api_v1_suggest_queries_url, params: { q: query_key }
