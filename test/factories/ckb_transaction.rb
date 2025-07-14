@@ -4,8 +4,8 @@ FactoryBot.define do
     tx_hash { "0x#{SecureRandom.hex(32)}" }
     sequence(:tx_index) { |n| n }
     tx_status { "committed" }
-    block_number { block.number }
-    block_timestamp { block.timestamp }
+    block_number { block&.number }
+    block_timestamp { block&.timestamp }
     transaction_fee { 100 }
     version { 0 }
     bytes { 2000 }
@@ -81,17 +81,17 @@ FactoryBot.define do
 
     trait :with_cell_output_and_lock_and_type_script do
       after(:create) do |ckb_transaction, _evaluator|
-        output1 = create(:cell_output, capacity: 10**8 * 8,
+        output1 = create(:cell_output, capacity: (10**8) * 8,
                                        ckb_transaction:,
                                        block: ckb_transaction.block,
                                        tx_hash: ckb_transaction.tx_hash,
                                        cell_index: 0)
-        output2 = create(:cell_output, capacity: 10**8 * 8,
+        output2 = create(:cell_output, capacity: (10**8) * 8,
                                        ckb_transaction:,
                                        block: ckb_transaction.block,
                                        tx_hash: ckb_transaction.tx_hash,
                                        cell_index: 1)
-        output3 = create(:cell_output, capacity: 10**8 * 8,
+        output3 = create(:cell_output, capacity: (10**8) * 8,
                                        ckb_transaction:,
                                        block: ckb_transaction.block,
                                        tx_hash: ckb_transaction.tx_hash,
@@ -115,10 +115,10 @@ FactoryBot.define do
           tx = create(:ckb_transaction, :with_cell_output_and_lock_script,
                       block:)
           if evaluator.contained_address_ids.present?
-            create(:cell_output, capacity: 10**8 * 8,
+            create(:cell_output, capacity: (10**8) * 8,
                                  ckb_transaction:, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index, address_id: evaluator.contained_address_ids.first)
           else
-            create(:cell_output, capacity: 10**8 * 8,
+            create(:cell_output, capacity: (10**8) * 8,
                                  ckb_transaction:, block: ckb_transaction.block, tx_hash: ckb_transaction.tx_hash, cell_index: index)
           end
           previous_output = { tx_hash: tx.tx_hash, index: 0 }
@@ -133,7 +133,7 @@ FactoryBot.define do
 
     trait :with_single_output do
       after(:create) do |ckb_transaction|
-        create(:cell_output, capacity: 10**8 * 8,
+        create(:cell_output, capacity: (10**8) * 8,
                              ckb_transaction:,
                              block: ckb_transaction.block,
                              tx_hash: ckb_transaction.tx_hash,
@@ -144,7 +144,7 @@ FactoryBot.define do
     trait :cell_base_with_multiple_inputs_and_outputs do
       after(:create) do |ckb_transaction|
         15.times do |index|
-          create(:cell_output, capacity: 10**8 * 8,
+          create(:cell_output, capacity: (10**8) * 8,
                                ckb_transaction:,
                                block: ckb_transaction.block,
                                tx_hash: ckb_transaction.tx_hash,
@@ -160,7 +160,7 @@ FactoryBot.define do
     trait :with_cell_base do
       after(:create) do |ckb_transaction|
         15.times do |index|
-          create(:cell_output, capacity: 10**8 * 8,
+          create(:cell_output, capacity: (10**8) * 8,
                                ckb_transaction:,
                                block: ckb_transaction.block,
                                tx_hash: ckb_transaction.tx_hash,
