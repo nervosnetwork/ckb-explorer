@@ -23,8 +23,6 @@ module Api
         witness = Witness.new data: "0x750000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000007164f48d7a5bf2298166f8d81b81ea4e908e16ad1c000000302e3130332e3020286537373133386520323032322d30342d313129"
         Block.any_instance.stubs(:cellbase).returns(cellbase)
         CkbTransaction.any_instance.stubs(:witnesses).returns([witness])
-
-        Block.set_ckb_node_versions_from_miner_message
       end
       test "should get ckb_node_versions " do
         assert_equal Block.all.size, 4
