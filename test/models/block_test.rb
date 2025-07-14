@@ -286,29 +286,6 @@ class BlockTest < ActiveSupport::TestCase
     assert_equal result_last_7_days_ckb_node_version, result_sql
   end
 
-  test "it should update_counter_for_ckb_node_version" do
-    block1 = create(:block, block_hash: "001")
-    tx = create(:ckb_transaction, is_cellbase: true, block_id: block1.id,
-                                  witnesses: ["0x640000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000004a336470564d07ca7059b7980481c2d59809d6370b000000302e3130342e3120282029"])
-
-    block1.update_counter_for_ckb_node_version
-
-    assert_equal GlobalStatistic.find_by(name: "ckb_node_version_0.104.1").value, 1
-  end
-
-  test "it should update the block version" do
-    block2 = create(:block, :with_block_hash)
-    tx = create(:ckb_transaction, is_cellbase: true, block: block2,
-                                  witnesses: ["0x800000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dde7801c073dfb3464c7b1f05b806bb2bbb84e9927000000302e3130332e302028353161383134612d646972747920323032322d30342d3230292000000000"])
-    block3 = create(:block, :with_block_hash)
-    tx = create(:ckb_transaction, is_cellbase: true, block: block3,
-                                  witnesses: ["0x640000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000004a336470564d07ca7059b7980481c2d59809d6370b000000302e3130342e3120282029"])
-
-    Block.set_ckb_node_versions_from_miner_message
-    assert_equal GlobalStatistic.find_by(name: "ckb_node_version_0.104.1").value, 1
-    assert_equal GlobalStatistic.find_by(name: "ckb_node_version_0.103.0").value, 1
-  end
-
   test "cached_find not always return nil" do
     assert_nil Block.cached_find("111111")
     create(:block, number: 111111)

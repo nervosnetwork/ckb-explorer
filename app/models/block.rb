@@ -328,32 +328,9 @@ class Block < ApplicationRecord
       return
     end
 
-    # setup global ckb_node_version
-    name = "ckb_node_version_#{matched[0]}"
-    GlobalStatistic.increment(name)
-
     # update the current block's ckb_node_version
     self.ckb_node_version = matched[0]
     save!
-  end
-
-  # NOTICE: this method would do a fresh calculate for all the block's ckb_node_version, it will:
-  # 1. delete all the existing ckb_node_version_x.yyy.z
-  # 2. do a fresh calculate from block number 1 to the latest block at the moment
-  #
-  # USAGE:
-  # ```bash
-  # $ bundle exec rails runner Block.set_ckb_node_versions_from_miner_message
-  # ```
-  #
-  # @param options [Hash]
-  def self.set_ckb_node_versions_from_miner_message(options = {})
-    GlobalStatistic.where("name like ?", "ckb_node_version_%").delete_all
-    to_block_number = options[:to_block_number] || Block.last.number
-    # we only need last 100k blocks updated.
-    Block.last(100000).each do |block|
-      block.update_counter_for_ckb_node_version
-    end
   end
 end
 
