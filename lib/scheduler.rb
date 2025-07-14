@@ -139,4 +139,12 @@ s.cron "0 */4 * * *", overlap: false do
   call_worker FiberGraphDetectWorker
 end
 
+s.every "2h", overlap: false do
+  call_worker BitcoinVoutSpentCheckerWorker
+end
+
+s.every "1h", overlap: false do
+  call_worker CleanRejectedTxWorker
+end
+
 s.join
