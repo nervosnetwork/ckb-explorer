@@ -97,7 +97,7 @@ module CkbSync
       detect_token_transfer(token_transfer_ckb_tx_ids)
       detect_bitcoin_transactions(local_block)
 
-      local_block.update_counter_for_ckb_node_version
+      # local_block.update_counter_for_ckb_node_version
       local_block
     end
 
