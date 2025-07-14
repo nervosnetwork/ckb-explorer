@@ -3,7 +3,7 @@ FactoryBot.define do
     block
     address
     status { "live" }
-    capacity { 10**8 * 8 }
+    capacity { (10**8) * 8 }
     transient do
       data { nil }
     end
@@ -51,7 +51,7 @@ FactoryBot.define do
         cell.address.increment! :live_cells_count
       end
       income = cell.ckb_transaction.outputs.where(address: cell.address).sum(:capacity) - cell.ckb_transaction.inputs.where(address: cell.address).sum(:capacity)
-      AccountBook.upsert({ ckb_transaction_id: cell.ckb_transaction_id, address_id: cell.address_id, block_number: cell.block.number, tx_index: cell.ckb_transaction.tx_index, income: },
+      AccountBook.upsert({ ckb_transaction_id: cell.ckb_transaction_id, address_id: cell.address_id, block_number: cell.block&.number, tx_index: cell.ckb_transaction.tx_index, income: },
                          unique_by: %i[address_id ckb_transaction_id])
     end
   end
