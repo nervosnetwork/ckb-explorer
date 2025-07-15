@@ -829,39 +829,6 @@ ALTER SEQUENCE public.bitcoin_vouts_id_seq OWNED BY public.bitcoin_vouts.id;
 
 
 --
--- Name: block_propagation_delays; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.block_propagation_delays (
-    id bigint NOT NULL,
-    block_hash character varying,
-    created_at_unixtimestamp integer,
-    durations jsonb,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: block_propagation_delays_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.block_propagation_delays_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: block_propagation_delays_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.block_propagation_delays_id_seq OWNED BY public.block_propagation_delays.id;
-
-
---
 -- Name: block_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3288,13 +3255,6 @@ ALTER TABLE ONLY public.bitcoin_vouts ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
--- Name: block_propagation_delays id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.block_propagation_delays ALTER COLUMN id SET DEFAULT nextval('public.block_propagation_delays_id_seq'::regclass);
-
-
---
 -- Name: block_statistics id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3760,14 +3720,6 @@ ALTER TABLE ONLY public.bitcoin_vins
 
 ALTER TABLE ONLY public.bitcoin_vouts
     ADD CONSTRAINT bitcoin_vouts_pkey PRIMARY KEY (id);
-
-
---
--- Name: block_propagation_delays block_propagation_delays_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.block_propagation_delays
-    ADD CONSTRAINT block_propagation_delays_pkey PRIMARY KEY (id);
 
 
 --
@@ -4992,13 +4944,6 @@ CREATE INDEX index_bitcoin_vouts_on_consumed_by_id ON public.bitcoin_vouts USING
 --
 
 CREATE INDEX index_bitcoin_vouts_on_status ON public.bitcoin_vouts USING btree (status);
-
-
---
--- Name: index_block_propagation_delays_on_created_at_unixtimestamp; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_block_propagation_delays_on_created_at_unixtimestamp ON public.block_propagation_delays USING btree (created_at_unixtimestamp);
 
 
 --
@@ -6494,6 +6439,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250708075759'),
 ('20250708082522'),
 ('20250715021620'),
-('20250715022751');
+('20250715022751'),
+('20250715024716');
 
 
