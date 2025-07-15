@@ -899,37 +899,6 @@ ALTER SEQUENCE public.block_statistics_id_seq OWNED BY public.block_statistics.i
 
 
 --
--- Name: block_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.block_transactions (
-    id bigint NOT NULL,
-    block_id bigint,
-    ckb_transaction_id bigint,
-    tx_index integer DEFAULT 0 NOT NULL
-);
-
-
---
--- Name: block_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.block_transactions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: block_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.block_transactions_id_seq OWNED BY public.block_transactions.id;
-
-
---
 -- Name: blocks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -3230,13 +3199,6 @@ ALTER TABLE ONLY public.block_statistics ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
--- Name: block_transactions id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.block_transactions ALTER COLUMN id SET DEFAULT nextval('public.block_transactions_id_seq'::regclass);
-
-
---
 -- Name: blocks id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3689,14 +3651,6 @@ ALTER TABLE ONLY public.bitcoin_vouts
 
 ALTER TABLE ONLY public.block_statistics
     ADD CONSTRAINT block_statistics_pkey PRIMARY KEY (id);
-
-
---
--- Name: block_transactions block_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.block_transactions
-    ADD CONSTRAINT block_transactions_pkey PRIMARY KEY (id);
 
 
 --
@@ -4232,20 +4186,6 @@ ALTER TABLE ONLY public.xudt_tags
 --
 
 CREATE UNIQUE INDEX address_udt_tx_alt_pk ON public.address_udt_transactions USING btree (address_id, ckb_transaction_id);
-
-
---
--- Name: block_tx_alt_pk; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX block_tx_alt_pk ON public.block_transactions USING btree (block_id, ckb_transaction_id);
-
-
---
--- Name: block_tx_index; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX block_tx_index ON public.block_transactions USING btree (block_id, tx_index);
 
 
 --
@@ -4904,20 +4844,6 @@ CREATE INDEX index_bitcoin_vouts_on_status ON public.bitcoin_vouts USING btree (
 --
 
 CREATE UNIQUE INDEX index_block_statistics_on_block_number ON public.block_statistics USING btree (block_number);
-
-
---
--- Name: index_block_transactions_on_block_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_block_transactions_on_block_id ON public.block_transactions USING btree (block_id);
-
-
---
--- Name: index_block_transactions_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_block_transactions_on_ckb_transaction_id ON public.block_transactions USING btree (ckb_transaction_id);
 
 
 --
@@ -5999,14 +5925,6 @@ CREATE TRIGGER after_update_ckb_transactions_count AFTER UPDATE ON public.ckb_tr
 
 
 --
--- Name: block_transactions fk_rails_a0eeb26f19; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.block_transactions
-    ADD CONSTRAINT fk_rails_a0eeb26f19 FOREIGN KEY (block_id) REFERENCES public.blocks(id) ON DELETE CASCADE;
-
-
---
 -- Name: udt_transactions fk_rails_b9a9ee04fc; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -6387,6 +6305,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250715021620'),
 ('20250715022751'),
 ('20250715024716'),
-('20250715024926');
+('20250715024926'),
+('20250715025723');
 
 
