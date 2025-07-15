@@ -1927,7 +1927,7 @@ module CkbSync
         previous_cell_output_lock_script = create(:lock_script, code_hash: Settings.secp_cell_type_hash,
                                                                 args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3", hash_type: "type")
         previous_cell_output_type_script = create(:type_script,
-                                                  code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c", hash_type: "type", cell_output: previous_cell_output)
+                                                  code_hash: CkbSync::Api.instance.token_script_code_hash, args: "0x3ae8bce37310b44b4dec3ce6b03308ba39b603de000000020000000c", hash_type: "type")
         previous_cell_output.type_script_id = previous_cell_output_type_script.id
         previous_cell_output.lock_script_id = previous_cell_output_lock_script.id
         type_hash = CKB::Types::Script.new(**previous_cell_output_type_script.to_node).compute_hash
@@ -2265,7 +2265,7 @@ module CkbSync
                                     capacity: 300 * (10**8),
                                     type_hash: udt_type_script.compute_hash)
       previous_cell_output_type_script = create(:type_script, code_hash: Settings.sudt_cell_type_hash,
-                                                              args: issuer_address.lock_hash, hash_type: "data", cell_output: previous_cell_output)
+                                                              args: issuer_address.lock_hash, hash_type: "data")
       previous_cell_output.type_script_id = previous_cell_output_type_script.id
       previous_cell_output.lock_script_id = previous_cell_output_lock_script.id
 
@@ -2802,10 +2802,8 @@ module CkbSync
       output5 = create(:cell_output, ckb_transaction: tx5, block: block2, capacity: 70000 * (10**8),
                                      tx_hash: tx5.tx_hash, cell_index: 0, address: input_address5, cell_type: "udt", lock_script_id: lock5.id, type_hash: udt_script.compute_hash)
 
-      create(:type_script, args: udt_script.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data",
-                           cell_output: output1)
-      create(:type_script, args: udt_script1.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data",
-                           cell_output: output4)
+      create(:type_script, args: udt_script.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data")
+      create(:type_script, args: udt_script1.args, code_hash: Settings.sudt_cell_type_hash, hash_type: "data")
       Address.create(lock_hash: udt_script.args,
                      address_hash: "0x#{SecureRandom.hex(32)}")
       Address.create(lock_hash: udt_script1.args,

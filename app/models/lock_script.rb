@@ -4,16 +4,13 @@ class LockScript < ApplicationRecord
   # TODO remove this
   has_many :ckb_transactions, source: :ckb_transaction, through: :cell_outputs
   has_many :consumed_by_txs, source: :consumed_by, through: :cell_outputs
+  has_one :address
 
   validates_presence_of :code_hash
   attribute :code_hash, :ckb_hash
 
   scope :lock_script, ->(type_hash, data_hash) { where(code_hash: [type_hash, data_hash]) }
   scope :zero_lock, -> { where(code_hash: Contract::ZERO_LOCK_HASH) }
-
-  def address
-    @address ||= Address.find_by(lock_script_id: id)
-  end
 
   def to_ckb_type
     OpenStruct.new(code_hash: code_hash,
@@ -144,22 +141,16 @@ end
 #
 # Table name: lock_scripts
 #
-#  id             :bigint           not null, primary key
-#  args           :string
-#  code_hash      :binary
-#  cell_output_id :bigint
-#  address_id     :bigint
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
-#  hash_type      :string
-#  script_hash    :string
-#  script_id      :bigint
+#  id          :bigint           not null, primary key
+#  args        :string
+#  code_hash   :binary
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  hash_type   :string
+#  script_hash :string
 #
 # Indexes
 #
-#  index_lock_scripts_on_address_id                        (address_id)
-#  index_lock_scripts_on_cell_output_id                    (cell_output_id)
 #  index_lock_scripts_on_code_hash_and_hash_type_and_args  (code_hash,hash_type,args)
 #  index_lock_scripts_on_script_hash                       (script_hash) UNIQUE
-#  index_lock_scripts_on_script_id                         (script_id)
 #

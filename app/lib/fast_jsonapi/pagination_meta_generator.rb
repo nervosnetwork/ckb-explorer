@@ -3,13 +3,12 @@ module FastJsonapi
     DEFAULT_PAGE = 1
     DEFAULT_PER_PAGE = 20
 
-    def initialize(request:, records:, page:, page_size:, total_pages: nil, records_counter: nil, total_count: nil)
+    def initialize(request:, records:, page:, page_size:, total_pages: nil, total_count: nil)
       @url = request.base_url + request.path + query_string(request.query_parameters)
       @page = page.to_i
       @page_size = limit_page_size(records, page_size.to_i)
       @records = records
-      @records_counter = records_counter || records
-      @total_count = total_count || @records_counter.total_count.to_i
+      @total_count = total_count || records.total_count
       @total_pages = total_pages || calculated_total_pages
       @hash = { links: {}, meta: { total: @total_count, page_size: @page_size, total_pages: @total_pages } }
     end
@@ -24,7 +23,7 @@ module FastJsonapi
 
     private
 
-    attr_reader :page, :page_size, :records, :records_counter, :total_count
+    attr_reader :page, :page_size, :records, :total_count
     attr_accessor :url, :hash
 
     def current_page

@@ -17,8 +17,7 @@ module Api
           recent.page(@page).per(@page_size).fast_page
         json =
           Rails.cache.realize(ckb_udt_transactions.cache_key, version: ckb_udt_transactions.cache_version) do
-            records_counter = RecordCounters::AddressUdtTransactions.new(address, udt.id)
-            options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_udt_transactions, page: @page, page_size: @page_size, records_counter:).call
+            options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_udt_transactions, page: @page, page_size: @page_size).call
             CkbTransactionsSerializer.new(ckb_udt_transactions, options.merge(params: { previews: true })).serialized_json
           end
 

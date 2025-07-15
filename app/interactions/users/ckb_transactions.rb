@@ -19,7 +19,6 @@ module Users
 
       options = FastJsonapi::PaginationMetaGenerator.new(
         records: transactions,
-        records_counter: account_books,
         request:,
         page:,
         page_size:,
@@ -36,7 +35,7 @@ module Users
       address_ids = user.address_ids
       if address_hash.present?
         address = Address.find_address!(address_hash)
-        address_ids = Array[address.id]
+        address_ids = [address.id]
       end
 
       scope = AccountBook.joins(:ckb_transaction).where(

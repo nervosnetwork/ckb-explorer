@@ -3,7 +3,8 @@ require "test_helper"
 module Api
   module V1
     class BlocksControllerTest < ActionDispatch::IntegrationTest
-      BlockKeys = %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp difficulty version nonce epoch start_number length transactions_root reward_status received_tx_fee received_tx_fee_status block_index_in_epoch miner_reward miner_message size largest_block largest_block_in_epoch cycles max_cycles_in_epoch max_cycles).sort
+      BlockKeys = %w(block_hash number transactions_count proposals_count uncles_count uncle_block_hashes reward total_transaction_fee cell_consumed total_cell_capacity miner_hash timestamp
+                     difficulty version nonce epoch start_number length transactions_root reward_status received_tx_fee received_tx_fee_status block_index_in_epoch miner_reward miner_message size largest_block largest_block_in_epoch cycles max_cycles_in_epoch max_cycles).sort
       test "should get success code when visit index" do
         valid_get api_v1_blocks_url
 
@@ -32,7 +33,7 @@ module Api
       end
 
       test "should respond with 406 Not Acceptable when Accept is wrong" do
-        get api_v1_blocks_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_blocks_url, headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal 406, response.status
       end
@@ -41,7 +42,7 @@ module Api
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_blocks_url, headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_blocks_url, headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -170,8 +171,7 @@ module Api
 
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
-        records_counter = RecordCounters::Blocks.new
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: block_timestamps, page: page, page_size: page_size, records_counter: records_counter).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: block_timestamps, page: page, page_size: page_size).call
         response_blocks = BlockListSerializer.new(blocks, options).serialized_json
         assert_equal response_blocks, response.body
       end
@@ -184,8 +184,7 @@ module Api
 
         valid_get api_v1_blocks_url, params: { page: page, page_size: page_size }
 
-        records_counter = RecordCounters::Blocks.new
-        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: page, page_size: page_size, records_counter: records_counter).call
+        options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: page, page_size: page_size).call
         response_blocks = BlockSerializer.new(blocks, options).serialized_json
 
         assert_equal [], json["data"]
@@ -232,7 +231,7 @@ module Api
       end
 
       test "should respond with 406 Not Acceptable when Accept is wrong when visit show" do
-        get api_v1_block_url(1), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_block_url(1), headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal 406, response.status
       end
@@ -241,7 +240,7 @@ module Api
         error_object = Api::V1::Exceptions::InvalidAcceptError.new
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
-        get api_v1_block_url(1), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_block_url(1), headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -301,16 +300,14 @@ module Api
       end
 
       test "should get download_csv, by date" do
-
-        block = create :block, timestamp: Time.now.to_i * 1000, miner_hash: 'ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwau7qpcpealv6xf3a37pdcq6ajhwuyaxgs5g955'
+        block = create :block, timestamp: Time.now.to_i * 1000, miner_hash: "ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwau7qpcpealv6xf3a37pdcq6ajhwuyaxgs5g955"
 
         valid_get download_csv_api_v1_blocks_url(start_date: 1.day.ago.to_i * 1000)
         assert_response :success
       end
 
       test "should get download_csv, by block number" do
-
-        block = create :block, timestamp: Time.now.to_i * 1000, miner_hash: 'ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwau7qpcpealv6xf3a37pdcq6ajhwuyaxgs5g955'
+        block = create :block, timestamp: Time.now.to_i * 1000, miner_hash: "ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwau7qpcpealv6xf3a37pdcq6ajhwuyaxgs5g955"
 
         valid_get download_csv_api_v1_blocks_url(start_number: block.number - 1)
         puts response.body

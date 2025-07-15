@@ -70,9 +70,9 @@ FactoryBot.define do
                                        tx_hash: ckb_transaction.tx_hash,
                                        cell_index: 2)
 
-        lock1 = create(:lock_script, cell_output_id: output1.id)
-        lock2 = create(:lock_script, cell_output_id: output2.id)
-        lock3 = create(:lock_script, cell_output_id: output3.id)
+        lock1 = create(:lock_script)
+        lock2 = create(:lock_script)
+        lock3 = create(:lock_script)
         output1.update(lock_script_id: lock1.id)
         output2.update(lock_script_id: lock2.id)
         output3.update(lock_script_id: lock3.id)
@@ -96,12 +96,12 @@ FactoryBot.define do
                                        block: ckb_transaction.block,
                                        tx_hash: ckb_transaction.tx_hash,
                                        cell_index: 2)
-        lock1 = create(:lock_script, cell_output_id: output1.id)
-        type1 = create(:type_script, cell_output: output1)
-        lock2 = create(:lock_script, cell_output_id: output2.id)
-        type2 = create(:type_script, cell_output: output2)
-        lock3 = create(:lock_script, cell_output_id: output3.id)
-        type3 = create(:type_script, cell_output: output3)
+        lock1 = create(:lock_script)
+        type1 = create(:type_script)
+        lock2 = create(:lock_script)
+        type2 = create(:type_script)
+        lock3 = create(:lock_script)
+        type3 = create(:type_script)
         output1.update(lock_script_id: lock1.id, type_script_id: type1.id)
         output2.update(lock_script_id: lock2.id, type_script_id: type2.id)
         output3.update(lock_script_id: lock3.id, type_script_id: type3.id)
