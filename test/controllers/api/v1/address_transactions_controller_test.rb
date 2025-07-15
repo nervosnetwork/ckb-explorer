@@ -46,7 +46,7 @@ module Api
         get api_v1_address_transaction_url(address.address_hash),
             headers: {
               "Content-Type": "application/vnd.api+json",
-              "Accept": "application/json",
+              Accept: "application/json",
             }
 
         assert_equal 406, response.status
@@ -61,7 +61,7 @@ module Api
         get api_v1_address_transaction_url(address.address_hash),
             headers: {
               "Content-Type": "application/vnd.api+json",
-              "Accept": "application/json",
+              Accept: "application/json",
             }
 
         assert_equal response_json, response.body
@@ -75,13 +75,12 @@ module Api
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 
-        records_counter = RecordCounters::AddressTransactions.new(address)
+        address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:,
           records: ckb_transactions,
           page:,
           page_size:,
-          records_counter:,
         ).call
 
         assert_equal CkbTransactionsSerializer.new(
@@ -103,13 +102,12 @@ module Api
 
         valid_get api_v1_address_transaction_url(address.lock_hash)
 
-        records_counter = RecordCounters::AddressTransactions.new(address)
+        address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:,
           records: ckb_transactions,
           page:,
           page_size:,
-          records_counter:,
         ).call
 
         assert_equal CkbTransactionsSerializer.new(
@@ -157,7 +155,7 @@ module Api
                                                    block_timestamp: "1567131126594",
                                                    contained_address_ids: [address.id])
 
-        create(:cell_output, capacity: 10**8 * 8,
+        create(:cell_output, capacity: (10**8) * 8,
                              ckb_transaction: ckb_transaction,
                              block: ckb_transaction.block,
                              tx_hash: ckb_transaction.tx_hash,
@@ -170,13 +168,13 @@ module Api
         ckb_transaction1 = create(:ckb_transaction, block:,
                                                     block_timestamp: "1567131126596",
                                                     contained_address_ids: [address.id])
-        create(:cell_output, capacity: 10**8 * 8,
+        create(:cell_output, capacity: (10**8) * 8,
                              ckb_transaction: ckb_transaction1,
                              block: ckb_transaction1.block,
                              tx_hash: ckb_transaction1.tx_hash,
                              cell_index: 0,
                              address:)
-        create(:cell_output, capacity: 10**8 * 6,
+        create(:cell_output, capacity: (10**8) * 6,
                              ckb_transaction: consumed_ckb_transaction,
                              block: consumed_ckb_transaction.block,
                              tx_hash: consumed_ckb_transaction.tx_hash,
@@ -289,12 +287,11 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash),
                   params: { page_size: }
 
-        records_counter = RecordCounters::AddressTransactions.new(address)
+        address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:,
                                                            records: address_ckb_transactions,
                                                            page:,
-                                                           page_size:,
-                                                           records_counter:).call
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
@@ -315,12 +312,11 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash),
                   params: { page:, page_size: }
 
-        records_counter = RecordCounters::AddressTransactions.new(address)
+        address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:,
                                                            records: address_ckb_transactions,
                                                            page:,
-                                                           page_size:,
-                                                           records_counter:).call
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
@@ -340,12 +336,11 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash),
                   params: { page:, page_size: }
 
-        records_counter = RecordCounters::AddressTransactions.new(address)
+        address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:,
                                                            records: address_ckb_transactions,
                                                            page:,
-                                                           page_size:,
-                                                           records_counter:).call
+                                                           page_size:).call
         response_transaction = CkbTransactionsSerializer.new(
           address_ckb_transactions, options.merge(params: {
                                                     previews: true,
@@ -439,7 +434,7 @@ module Api
         get download_csv_api_v1_address_transactions_url(address.address_hash),
             headers: {
               "Content-Type": "application/vnd.api+json",
-              "Accept": "application/json",
+              Accept: "application/json",
             }
 
         assert_equal 406, response.status
@@ -454,7 +449,7 @@ module Api
         get download_csv_api_v1_address_transactions_url(address.address_hash),
             headers: {
               "Content-Type": "application/vnd.api+json",
-              "Accept": "application/json",
+              Accept: "application/json",
             }
 
         assert_equal response_json, response.body

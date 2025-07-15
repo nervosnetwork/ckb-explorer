@@ -45,13 +45,11 @@ module Api
           json =
             Rails.cache.realize(ckb_transactions.cache_key,
                                 version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
-              records_counter = RecordCounters::Transactions.new
               options = FastJsonapi::PaginationMetaGenerator.new(
                 request:,
                 records: ckb_transactions,
                 page: @page,
                 page_size: @page_size,
-                records_counter:,
               ).call
               CkbTransactionListSerializer.new(ckb_transactions,
                                                options).serialized_json
@@ -68,9 +66,10 @@ module Api
           @address = Address.cached_find(params[:address])
         end
 
+        total_count = 0
         ckb_transactions =
           if @address
-            records_counter = @tx_ids =
+            @tx_ids =
               AccountBook.tx_committed.where(
                 address_id: @address.id,
               ).order(
@@ -78,10 +77,11 @@ module Api
               ).select(
                 "ckb_transaction_id",
               ).page(@page).per(@page_size).fast_page
+            total_count = @tx_ids.total_count
             CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(block_number: :desc, tx_index: :desc)
           else
-            records_counter = RecordCounters::Transactions.new
-            CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
+            txs = CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
+            total_count = txs.total_count
           end
         ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id, :tags,
                                                    :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at)
@@ -93,7 +93,7 @@ module Api
               records: ckb_transactions,
               page: @page,
               page_size: @page_size,
-              records_counter:,
+              total_count: total_count,
             ).call
             CkbTransactionsSerializer.new(ckb_transactions,
                                           options.merge(params: {

@@ -29,7 +29,7 @@ module Api
 
       test "should respond with 406 Not Acceptable when Accept is wrong" do
         address = create(:address)
-        get api_v1_address_dao_transaction_url(address.address_hash), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_address_dao_transaction_url(address.address_hash), headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal 406, response.status
       end
@@ -39,7 +39,7 @@ module Api
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
         address = create(:address)
 
-        get api_v1_address_dao_transaction_url(address.address_hash), headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+        get api_v1_address_dao_transaction_url(address.address_hash), headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -153,8 +153,8 @@ module Api
         address_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: }
-        records_counter = RecordCounters::AddressDaoTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:, records_counter:).call
+        address.dao_transactions_count
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
@@ -170,8 +170,8 @@ module Api
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page_size: }
 
-        records_counter = RecordCounters::AddressDaoTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:, records_counter:).call
+        address.dao_transactions_count
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
@@ -187,8 +187,8 @@ module Api
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page:, page_size: }
 
-        records_counter = RecordCounters::AddressDaoTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:, records_counter:).call
+        address.dao_transactions_count
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal response_transaction, response.body
@@ -203,8 +203,8 @@ module Api
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page:, page_size: }
 
-        records_counter = RecordCounters::AddressDaoTransactions.new(address)
-        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:, records_counter:).call
+        address.dao_transactions_count
+        options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
         assert_equal [], json["data"]

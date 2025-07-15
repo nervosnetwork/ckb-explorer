@@ -41,7 +41,7 @@ module Api
         block = create(:block, :with_ckb_transactions)
 
         get api_v1_block_transaction_url(block.block_hash),
-            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+            headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal 406, response.status
       end
@@ -52,7 +52,7 @@ module Api
         response_json = RequestErrorSerializer.new([error_object], message: error_object.title).serialized_json
 
         get api_v1_block_transaction_url(block.block_hash),
-            headers: { "Content-Type": "application/vnd.api+json", "Accept": "application/json" }
+            headers: { "Content-Type": "application/vnd.api+json", Accept: "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -83,10 +83,9 @@ module Api
         valid_get api_v1_block_transaction_url(block.block_hash)
 
         ckb_transactions = block.ckb_transactions.order(:id).page(page).per(page_size)
-        records_counter = RecordCounters::BlockTransactions.new(block)
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:, records: ckb_transactions, page:,
-          page_size:, records_counter:
+          page_size:
         ).call
 
         assert_equal CkbTransactionsSerializer.new(
@@ -194,11 +193,9 @@ module Api
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page: }
 
-        records_counter = RecordCounters::BlockTransactions.new(block)
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:, records: ckb_transactions,
-          page:, page_size:,
-          records_counter:
+          page:, page_size:
         ).call
         response_transaction = CkbTransactionsSerializer.new(
           ckb_transactions,
@@ -217,11 +214,9 @@ module Api
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page_size: }
 
-        records_counter = RecordCounters::BlockTransactions.new(block)
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:, records: ckb_transactions,
-          page:, page_size:,
-          records_counter:
+          page:, page_size:
         ).call
         response_transaction = CkbTransactionsSerializer.new(
           ckb_transactions,
@@ -241,11 +236,9 @@ module Api
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page:, page_size: }
 
-        records_counter = RecordCounters::BlockTransactions.new(block)
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:, records: ckb_transactions,
-          page:, page_size:,
-          records_counter:
+          page:, page_size:
         ).call
         response_transaction = CkbTransactionsSerializer.new(
           ckb_transactions,
@@ -263,11 +256,9 @@ module Api
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: { page:, page_size: }
 
-        records_counter = RecordCounters::BlockTransactions.new(block.ckb_transactions)
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:, records: ckb_transactions,
-          page:, page_size:,
-          records_counter:
+          page:, page_size:
         ).call
         response_transaction = CkbTransactionsSerializer.new(
           ckb_transactions,
@@ -316,7 +307,6 @@ module Api
         block = create(:block, :with_ckb_transactions, transactions_count: 15)
         tx_hash = CkbTransaction.where(block:).pick(:tx_hash)
         ckb_transactions = block.ckb_transactions.where(tx_hash:).order(:id)
-        records_counter = RecordCounters::BlockTransactions.new(ckb_transactions)
         ckb_transactions = ckb_transactions.page(page).per(page_size).fast_page
 
         valid_get api_v1_block_transaction_url(block.block_hash),
@@ -324,8 +314,7 @@ module Api
 
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:, records: ckb_transactions,
-          page:, page_size:,
-          records_counter:
+          page:, page_size:
         ).call
         response_transaction = CkbTransactionsSerializer.new(
           ckb_transactions,
@@ -345,7 +334,6 @@ module Api
 
         ckb_transactions = block.ckb_transactions.joins(:account_books).
           where(account_books: { address_id: account_book.address_id })
-        records_counter = RecordCounters::BlockTransactions.new(ckb_transactions)
         ckb_transactions = ckb_transactions.page(page).per(page_size).fast_page
 
         valid_get api_v1_block_transaction_url(block.block_hash), params: {
@@ -355,8 +343,7 @@ module Api
 
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:, records: ckb_transactions,
-          page:, page_size:,
-          records_counter:
+          page:, page_size:
         ).call
         response_transaction = CkbTransactionsSerializer.new(
           ckb_transactions,
