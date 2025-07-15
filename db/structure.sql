@@ -2034,54 +2034,6 @@ ALTER SEQUENCE public.forked_events_id_seq OWNED BY public.forked_events.id;
 
 
 --
--- Name: global_statistics; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.global_statistics (
-    id bigint NOT NULL,
-    name character varying,
-    value bigint,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    comment character varying,
-    "#<ActiveRecord::ConnectionAdapters::PostgreSQL::TableDefinition" character varying
-);
-
-
---
--- Name: COLUMN global_statistics.name; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.global_statistics.name IS 'the name of something, e.g. my_table_rows_count';
-
-
---
--- Name: COLUMN global_statistics.value; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.global_statistics.value IS 'value of something, e.g. 888';
-
-
---
--- Name: global_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.global_statistics_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: global_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.global_statistics_id_seq OWNED BY public.global_statistics.id;
-
-
---
 -- Name: header_dependencies; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3353,13 +3305,6 @@ ALTER TABLE ONLY public.forked_events ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
--- Name: global_statistics id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.global_statistics ALTER COLUMN id SET DEFAULT nextval('public.global_statistics_id_seq'::regclass);
-
-
---
 -- Name: header_dependencies id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3931,14 +3876,6 @@ ALTER TABLE ONLY public.forked_blocks
 
 ALTER TABLE ONLY public.forked_events
     ADD CONSTRAINT forked_events_pkey PRIMARY KEY (id);
-
-
---
--- Name: global_statistics global_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.global_statistics
-    ADD CONSTRAINT global_statistics_pkey PRIMARY KEY (id);
 
 
 --
@@ -5096,13 +5033,6 @@ CREATE UNIQUE INDEX index_fiber_udt_cfg_infos_on_fiber_graph_node_id_and_udt_id 
 --
 
 CREATE INDEX index_forked_events_on_status ON public.forked_events USING btree (status);
-
-
---
--- Name: index_global_statistics_on_name; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_global_statistics_on_name ON public.global_statistics USING btree (name);
 
 
 --
@@ -6306,6 +6236,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250715022751'),
 ('20250715024716'),
 ('20250715024926'),
-('20250715025723');
+('20250715025723'),
+('20250715034316');
 
 
