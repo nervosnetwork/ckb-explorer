@@ -899,38 +899,6 @@ ALTER SEQUENCE public.block_statistics_id_seq OWNED BY public.block_statistics.i
 
 
 --
--- Name: block_time_statistics; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.block_time_statistics (
-    id bigint NOT NULL,
-    stat_timestamp numeric(30,0),
-    avg_block_time_per_hour numeric,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: block_time_statistics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.block_time_statistics_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: block_time_statistics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.block_time_statistics_id_seq OWNED BY public.block_time_statistics.id;
-
-
---
 -- Name: block_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3262,13 +3230,6 @@ ALTER TABLE ONLY public.block_statistics ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
--- Name: block_time_statistics id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.block_time_statistics ALTER COLUMN id SET DEFAULT nextval('public.block_time_statistics_id_seq'::regclass);
-
-
---
 -- Name: block_transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3728,14 +3689,6 @@ ALTER TABLE ONLY public.bitcoin_vouts
 
 ALTER TABLE ONLY public.block_statistics
     ADD CONSTRAINT block_statistics_pkey PRIMARY KEY (id);
-
-
---
--- Name: block_time_statistics block_time_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.block_time_statistics
-    ADD CONSTRAINT block_time_statistics_pkey PRIMARY KEY (id);
 
 
 --
@@ -4951,13 +4904,6 @@ CREATE INDEX index_bitcoin_vouts_on_status ON public.bitcoin_vouts USING btree (
 --
 
 CREATE UNIQUE INDEX index_block_statistics_on_block_number ON public.block_statistics USING btree (block_number);
-
-
---
--- Name: index_block_time_statistics_on_stat_timestamp; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_block_time_statistics_on_stat_timestamp ON public.block_time_statistics USING btree (stat_timestamp);
 
 
 --
@@ -6440,6 +6386,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250708082522'),
 ('20250715021620'),
 ('20250715022751'),
-('20250715024716');
+('20250715024716'),
+('20250715024926');
 
 
