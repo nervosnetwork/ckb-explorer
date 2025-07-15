@@ -2216,13 +2216,10 @@ CREATE TABLE public.lock_scripts (
     id bigint NOT NULL,
     args character varying,
     code_hash bytea,
-    cell_output_id bigint,
-    address_id bigint,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     hash_type character varying,
-    script_hash character varying,
-    script_id bigint
+    script_hash character varying
 );
 
 
@@ -2774,12 +2771,10 @@ CREATE TABLE public.type_scripts (
     id bigint NOT NULL,
     args character varying,
     code_hash bytea,
-    cell_output_id bigint,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     hash_type character varying,
-    script_hash character varying,
-    script_id bigint
+    script_hash character varying
 );
 
 
@@ -5308,20 +5303,6 @@ CREATE UNIQUE INDEX index_header_dependencies_on_ckb_transaction_id_and_index ON
 
 
 --
--- Name: index_lock_scripts_on_address_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_lock_scripts_on_address_id ON public.lock_scripts USING btree (address_id);
-
-
---
--- Name: index_lock_scripts_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_lock_scripts_on_cell_output_id ON public.lock_scripts USING btree (cell_output_id);
-
-
---
 -- Name: index_lock_scripts_on_code_hash_and_hash_type_and_args; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5333,13 +5314,6 @@ CREATE INDEX index_lock_scripts_on_code_hash_and_hash_type_and_args ON public.lo
 --
 
 CREATE UNIQUE INDEX index_lock_scripts_on_script_hash ON public.lock_scripts USING btree (script_hash);
-
-
---
--- Name: index_lock_scripts_on_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_lock_scripts_on_script_id ON public.lock_scripts USING btree (script_id);
 
 
 --
@@ -5518,13 +5492,6 @@ CREATE INDEX index_transaction_address_changes_on_ckb_transaction_id ON public.t
 
 
 --
--- Name: index_type_scripts_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_type_scripts_on_cell_output_id ON public.type_scripts USING btree (cell_output_id);
-
-
---
 -- Name: index_type_scripts_on_code_hash_and_hash_type_and_args; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5536,13 +5503,6 @@ CREATE INDEX index_type_scripts_on_code_hash_and_hash_type_and_args ON public.ty
 --
 
 CREATE UNIQUE INDEX index_type_scripts_on_script_hash ON public.type_scripts USING btree (script_hash);
-
-
---
--- Name: index_type_scripts_on_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_type_scripts_on_script_id ON public.type_scripts USING btree (script_id);
 
 
 --
@@ -6532,4 +6492,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250617051653'),
 ('20250625024348'),
 ('20250708075759'),
-('20250708082522');
+('20250708082522'),
+('20250715021620'),
+('20250715022751');
+
+

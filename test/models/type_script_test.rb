@@ -7,10 +7,6 @@ class TypeScriptTest < ActiveSupport::TestCase
     CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
   end
 
-  context "associations" do
-    should belong_to(:cell_output).optional
-  end
-
   context "validations" do
     should validate_presence_of(:code_hash)
   end
