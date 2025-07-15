@@ -2589,37 +2589,6 @@ ALTER SEQUENCE public.token_transfers_id_seq OWNED BY public.token_transfers.id;
 
 
 --
--- Name: transaction_address_changes; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.transaction_address_changes (
-    id bigint NOT NULL,
-    ckb_transaction_id bigint NOT NULL,
-    address_id bigint NOT NULL,
-    changes jsonb DEFAULT '{}'::jsonb NOT NULL
-);
-
-
---
--- Name: transaction_address_changes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.transaction_address_changes_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: transaction_address_changes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.transaction_address_changes_id_seq OWNED BY public.transaction_address_changes.id;
-
-
---
 -- Name: type_scripts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3410,13 +3379,6 @@ ALTER TABLE ONLY public.token_transfers ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
--- Name: transaction_address_changes id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.transaction_address_changes ALTER COLUMN id SET DEFAULT nextval('public.transaction_address_changes_id_seq'::regclass);
-
-
---
 -- Name: type_scripts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -4004,14 +3966,6 @@ ALTER TABLE ONLY public.token_items
 
 ALTER TABLE ONLY public.token_transfers
     ADD CONSTRAINT token_transfers_pkey PRIMARY KEY (id);
-
-
---
--- Name: transaction_address_changes transaction_address_changes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.transaction_address_changes
-    ADD CONSTRAINT transaction_address_changes_pkey PRIMARY KEY (id);
 
 
 --
@@ -5232,13 +5186,6 @@ CREATE INDEX index_token_transfers_on_transaction_id ON public.token_transfers U
 
 
 --
--- Name: index_transaction_address_changes_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_transaction_address_changes_on_ckb_transaction_id ON public.transaction_address_changes USING btree (ckb_transaction_id);
-
-
---
 -- Name: index_type_scripts_on_code_hash_and_hash_type_and_args; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5376,13 +5323,6 @@ CREATE UNIQUE INDEX index_xudt_tags_on_udt_id ON public.xudt_tags USING btree (u
 --
 
 CREATE UNIQUE INDEX pk ON public.udt_transactions USING btree (udt_id, ckb_transaction_id);
-
-
---
--- Name: tx_address_changes_alt_pk; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX tx_address_changes_alt_pk ON public.transaction_address_changes USING btree (address_id, ckb_transaction_id);
 
 
 --
@@ -6237,6 +6177,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250715024716'),
 ('20250715024926'),
 ('20250715025723'),
-('20250715034316');
+('20250715034316'),
+('20250715035736');
 
 
