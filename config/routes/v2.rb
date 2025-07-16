@@ -2,7 +2,6 @@ namespace :api do
   namespace :v2 do
     post "/das_accounts" => "das_accounts#query", as: :das_accounts
     post "/bitcoin_transactions" => "bitcoin_transactions#query", as: :bitcoin_transactions
-    post "/bitcoin_vouts/verify" => "bitcoin_vouts#verify", as: :bitcoin_vouts
     resources :ckb_transactions, only: %i[index show] do
       member do
         get :details
