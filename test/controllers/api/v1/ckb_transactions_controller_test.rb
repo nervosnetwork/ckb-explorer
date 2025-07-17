@@ -55,7 +55,7 @@ module Api
 
         get api_v1_ckb_transaction_url(ckb_transaction.tx_hash),
             headers: { "Content-Type": "application/vnd.api+json",
-                       "Accept": "application/json" }
+                       Accept: "application/json" }
 
         assert_equal 406, response.status
       end
@@ -68,7 +68,7 @@ module Api
 
         get api_v1_ckb_transaction_url(ckb_transaction.tx_hash),
             headers: { "Content-Type": "application/vnd.api+json",
-                       "Accept": "application/json" }
+                       Accept: "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -209,7 +209,7 @@ module Api
       test "should respond with 406 Not Acceptable when  call index and Accept is wrong" do
         get api_v1_ckb_transactions_url,
             headers: { "Content-Type": "application/vnd.api+json",
-                       "Accept": "application/json" }
+                       Accept: "application/json" }
 
         assert_equal 406, response.status
       end
@@ -221,7 +221,7 @@ module Api
 
         get api_v1_ckb_transactions_url,
             headers: { "Content-Type": "application/vnd.api+json",
-                       "Accept": "application/json" }
+                       Accept: "application/json" }
 
         assert_equal response_json, response.body
       end
@@ -381,9 +381,8 @@ module Api
         valid_get api_v1_ckb_transactions_url,
                   params: { page:, page_size: }
 
-        records_counter = RecordCounters::Transactions.new
         options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_transactions, page:,
-                                                           page_size:, records_counter:).call
+                                                           page_size:).call
         response_ckb_transactions = CkbTransactionListSerializer.new(
           ckb_transactions, options
         ).serialized_json
@@ -400,9 +399,8 @@ module Api
         valid_post api_v1_query_ckb_transactions_url,
                    params: { address: address.address_hash }
 
-        records_counter = RecordCounters::AddressTransactions.new(address)
         options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_transactions, page:,
-                                                           page_size:, records_counter:).call
+                                                           page_size:, total_count: address.ckb_transactions_count).call
 
         assert_equal CkbTransactionsSerializer.new(ckb_transactions, options.merge(params: { previews: true, address_id: address.id })).serialized_json,
                      response.body

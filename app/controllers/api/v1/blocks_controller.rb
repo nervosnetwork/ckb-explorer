@@ -34,9 +34,8 @@ module Api
 
           json =
             Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do
-              records_counter = RecordCounters::Blocks.new
               options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: @page,
-                                                                 page_size: @page_size, records_counter: records_counter).call
+                                                                 page_size: @page_size).call
               BlockListSerializer.new(blocks, options).serialized_json
             end
         end

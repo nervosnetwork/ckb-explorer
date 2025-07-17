@@ -13,9 +13,6 @@ class CkbTransaction < ApplicationRecord
   enum tx_status: { pending: 0, proposed: 1, committed: 2, rejected: 3 }, _prefix: :tx
   belongs_to :block, optional: true # when a transaction is pending, it does not belongs to any block
   has_many :block_transactions
-  has_many :included_blocks, class_name: "Block",
-                             through: :block_transactions,
-                             inverse_of: :contained_transactions
   has_many :account_books
   has_many :addresses, through: :account_books
   has_many :cell_inputs
@@ -51,8 +48,8 @@ class CkbTransaction < ApplicationRecord
   scope :inner_block, ->(block_id) { where("block_id = ?", block_id) }
   scope :h24, -> { where("block_timestamp >= ?", 24.hours.ago.to_i * 1000) }
 
-  after_commit :flush_cache
   before_destroy :recover_dead_cell
+  after_commit :flush_cache
 
   def self.cached_find(query_key)
     Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do

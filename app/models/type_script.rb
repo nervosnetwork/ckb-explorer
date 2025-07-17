@@ -78,20 +78,16 @@ end
 #
 # Table name: type_scripts
 #
-#  id             :bigint           not null, primary key
-#  args           :string
-#  code_hash      :binary
-#  cell_output_id :bigint
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
-#  hash_type      :string
-#  script_hash    :string
-#  script_id      :bigint
+#  id          :bigint           not null, primary key
+#  args        :string
+#  code_hash   :binary
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  hash_type   :string
+#  script_hash :string
 #
 # Indexes
 #
-#  index_type_scripts_on_cell_output_id                    (cell_output_id)
 #  index_type_scripts_on_code_hash_and_hash_type_and_args  (code_hash,hash_type,args)
 #  index_type_scripts_on_script_hash                       (script_hash) UNIQUE
-#  index_type_scripts_on_script_id                         (script_id)
 #
