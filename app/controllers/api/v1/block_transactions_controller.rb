@@ -21,14 +21,12 @@ module Api
 
         if stale?(ckb_transactions)
           expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-          records_counter = RecordCounters::BlockTransactions.new(ckb_transactions)
           ckb_transactions = ckb_transactions.page(@page).per(@page_size).fast_page
           options = FastJsonapi::PaginationMetaGenerator.new(
             request:,
             records: ckb_transactions,
             page: @page,
             page_size: @page_size,
-            records_counter:,
           ).call
           json = CkbTransactionsSerializer.new(ckb_transactions,
                                                options.merge(params: { previews: true })).serialized_json

@@ -341,7 +341,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                            tx_hash: udt_input_transaction.tx_hash,
                                            data: "0x000050ad321ea12e0000000000000000",
                                            type_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8")
-    type_script = create(:type_script, cell_output: udt_cell_output)
+    type_script = create(:type_script)
     create(:udt, code_hash: type_script.code_hash)
 
     cell_input = ckb_transaction.cell_inputs.first
@@ -386,7 +386,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                            tx_hash: udt_output_transaction.tx_hash,
                                            data: "0x000050ad321ea12e0000000000000000",
                                            type_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8")
-    type_script = create(:type_script, cell_output: udt_cell_output)
+    type_script = create(:type_script)
     create(:udt, code_hash: type_script.code_hash)
 
     expected_attributes = %i(

@@ -19,11 +19,6 @@ class Block < ApplicationRecord
 
   # the `ckb_transactions` is only available when the block is included in chain
   has_many :ckb_transactions
-  has_many :block_transactions
-  # the transactions included in the block no matter if the block is included in chain
-  has_many :contained_transactions, class_name: "CkbTransaction",
-                                    through: :block_transactions,
-                                    inverse_of: :included_blocks
   has_many :uncle_blocks
   has_many :cell_outputs
   has_many :cell_inputs
