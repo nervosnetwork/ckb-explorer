@@ -31,11 +31,12 @@ module Api
           head :not_found and return unless order_by.in? %w[number reward timestamp ckb_transactions_count]
 
           blocks = blocks.order(order_by => asc_or_desc).order("number DESC").page(@page).per(@page_size)
+          total_count = blocks[0].number + 1
 
           json =
             Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do
               options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: @page,
-                                                                 page_size: @page_size).call
+                                                                 page_size: @page_size, total_count:).call
               BlockListSerializer.new(blocks, options).serialized_json
             end
         end
