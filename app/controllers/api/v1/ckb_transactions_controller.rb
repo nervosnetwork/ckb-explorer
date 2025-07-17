@@ -41,7 +41,7 @@ module Api
 
           ckb_transactions = ckb_transactions.order(order_by => asc_or_desc).
             page(@page).per(@page_size).fast_page
-
+          total_count = TableRecordCount.find_by(table_name: "ckb_transactions")&.count
           json =
             Rails.cache.realize(ckb_transactions.cache_key,
                                 version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
@@ -50,6 +50,7 @@ module Api
                 records: ckb_transactions,
                 page: @page,
                 page_size: @page_size,
+                total_count:,
               ).call
               CkbTransactionListSerializer.new(ckb_transactions,
                                                options).serialized_json
@@ -66,7 +67,6 @@ module Api
           @address = Address.cached_find(params[:address])
         end
 
-        total_count = 0
         ckb_transactions =
           if @address
             @tx_ids =
@@ -80,8 +80,8 @@ module Api
             total_count = @tx_ids.total_count
             CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(block_number: :desc, tx_index: :desc)
           else
-            txs = CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
-            total_count = txs.total_count
+            total_count = TableRecordCount.find_by(table_name: "ckb_transactions")&.count
+            CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
           end
         ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id, :tags,
                                                    :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at)
