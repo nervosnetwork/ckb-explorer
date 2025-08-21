@@ -40,4 +40,5 @@ data
 .env.test.local
 .secrets
 .env
+/db/schema.rb
 

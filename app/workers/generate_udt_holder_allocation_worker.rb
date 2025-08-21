@@ -37,7 +37,7 @@ class GenerateUdtHolderAllocationWorker
     end
 
     allocation_data.each do |code_hash, count|
-      contract = Contract.find_by(code_hash:, is_lock_script: true)
+      contract = Contract.find_by(type_hash: code_hash, is_lock_script: true)
       next unless contract
 
       holder_allocation = UdtHolderAllocation.find_or_initialize_by(udt:, contract:)

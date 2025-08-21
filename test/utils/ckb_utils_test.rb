@@ -280,7 +280,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     assert_nil CkbUtils.parse_dao(nil)
   end
 
-  test ".parse_dao should return one open sturct with right attributes" do
+  test ".parse_dao should return one open struct with right attributes" do
     dao = "0x80d6ccc02604d52ebc30325a84902300e7d511536bb20a00002b5625ba150007"
     bin_dao = CKB::Utils.hex_to_bin(dao)
     c_i = bin_dao[0..7].unpack("Q<").pack("Q>").unpack1("H*").hex
