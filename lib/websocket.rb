@@ -42,7 +42,7 @@ Thread.new do
         begin
           ImportPendingTxWorker.perform(data)
         rescue StandardError => e
-          Rails.logger.error "Error occurred during ImportTransactionJob data: {data}, error: {e.message}"
+          Rails.logger.error "Error occurred during ImportTransactionJob data: #{data}, error: #{e.message}"
         end
       end
     end
