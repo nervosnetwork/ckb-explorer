@@ -40,7 +40,7 @@ Thread.new do
 
       ApplicationRecord.with_advisory_lock("CkbSyncer") do
         begin
-          ImportPendingTxWorker.perform(data)
+          ImportPendingTxWorker.new.perform(data)
         rescue StandardError => e
           Rails.logger.error "Error occurred during ImportTransactionJob data: #{data}, error: #{e.message}"
         end
