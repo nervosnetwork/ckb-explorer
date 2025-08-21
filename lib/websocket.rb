@@ -31,27 +31,23 @@ def subscribe(connection, topic)
   connection.flush
 end
 
-# queue = Queue.new
+queue = Queue.new
 
-# persister =
-#   Thread.new do
-#     Rails.application.executor.wrap do
-#       loop do
-#         data = queue.pop
+Thread.new do
+  Rails.application.executor.wrap do
+    loop do
+      data = queue.pop
 
-#         begin
-#           ImportTransactionJob.new.perform(data["transaction"], {
-#                                              cycles: data["cycles"].hex,
-#                                              fee: data["fee"].hex,
-#                                              size: data["size"].hex,
-#                                              timestamp: data["timestamp"].hex,
-#                                            })
-#         rescue StandardError => e
-#           Rails.logger.error "Error occurred during ImportTransactionJob data: #{data}, error: #{e.message}"
-#         end
-#       end
-#     end
-#   end
+      ApplicationRecord.with_advisory_lock("CkbSyncer") do
+        begin
+          ImportPendingTxWorker.perform(data)
+        rescue StandardError => e
+          Rails.logger.error "Error occurred during ImportTransactionJob data: {data}, error: {e.message}"
+        end
+      end
+    end
+  end
+end
 
 Async do |_task|
   endpoint = Async::HTTP::Endpoint.parse(URL, alpn_protocols: Async::HTTP::Protocol::HTTP11.names)
@@ -64,7 +60,7 @@ Async do |_task|
       res = message.to_h
       if res[:method] == "subscribe"
         data = JSON.parse res[:params][:result]
-        ImportPendingTxWorker.perform_async(data)
+        queue << data
       end
     end
   end
