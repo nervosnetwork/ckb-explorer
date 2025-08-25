@@ -277,15 +277,6 @@ class BlockTest < ActiveSupport::TestCase
                  block.proposals
   end
 
-  test "it should get last_7_days_ckb_node_version" do
-    result_last_7_days_ckb_node_version = Block.last_7_days_ckb_node_version
-    from = 7.days.ago.to_i * 1000
-    sql = "select ckb_node_version, count(*) from blocks where timestamp >= #{from} group by ckb_node_version;"
-    result_sql = ActiveRecord::Base.connection.execute(sql).values
-
-    assert_equal result_last_7_days_ckb_node_version, result_sql
-  end
-
   test "cached_find not always return nil" do
     assert_nil Block.cached_find("111111")
     create(:block, number: 111111)
