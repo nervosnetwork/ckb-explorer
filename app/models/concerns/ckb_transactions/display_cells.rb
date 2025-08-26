@@ -220,7 +220,7 @@ module CkbTransactions
       def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
         nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
         nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.
-          cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
+          cell_inputs.order("index asc")[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
         # start block: the block contains the transaction which generated the deposit cell output
         compensation_started_block = Block.select(:number, :timestamp).find(nervos_dao_deposit_cell.block.id)
         # end block: the block contains the transaction which generated the withdrawing cell
