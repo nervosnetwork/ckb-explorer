@@ -104,7 +104,7 @@ module CkbTransactions
             display_input.merge!(attributes_for_dao_input(previous_cell_output))
           end
           if previous_cell_output.nervos_dao_deposit?
-            display_input.merge!(attributes_for_dao_input(cell_outputs[cell_input.index], false))
+            display_input.merge!(attributes_for_dao_input(cell_outputs.order(:cell_index)[cell_input.index], false))
           end
           if previous_cell_output.udt?
             display_input.merge!(attributes_for_udt_cell(previous_cell_output))
