@@ -706,7 +706,7 @@ module CkbSync
         tx_id = tx["id"]
         full_tx_address_ids +=
           contained_addr_ids[tx_index].to_a.map do |address_id|
-            { address_id:, ckb_transaction_id: tx_id, income: addr_tx_changes[tx_index][address_id], block_number: target_block_number, tx_index: }
+            { address_id:, ckb_transaction_id: tx_id, income: addr_tx_changes[tx_index][address_id], block_number: tx["block_number"], tx_index: }
           end
         full_tx_udt_ids += contained_udt_ids[tx_index].to_a.map do |u|
           { udt_id: u, ckb_transaction_id: tx_id }
@@ -1241,7 +1241,7 @@ _prev_outputs, index = nil)
       CkbTransaction.where("tx_hash IN (#{binary_hashes}) AND tx_status = 0").update_all tx_status: "committed"
 
       txs = CkbTransaction.upsert_all(ckb_transactions_attributes, unique_by: %i[tx_status tx_hash],
-                                                                   returning: %w(id tx_hash tx_index block_timestamp created_at))
+                                                                   returning: %w(id tx_hash tx_index block_timestamp block_number created_at))
 
       if pending_txs.any?
         hash_to_pool_times = pending_txs.to_h

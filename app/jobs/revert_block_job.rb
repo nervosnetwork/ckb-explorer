@@ -22,13 +22,13 @@ class RevertBlockJob < ApplicationJob
         end
       benchmark :recalculate_udt_transactions_count, local_tip_block
       benchmark :decrease_records_count, local_tip_block
+      benchmark :update_address_balance_and_ckb_transactions_count, local_tip_block
 
       ApplicationRecord.benchmark "invalid! block" do
         local_tip_block.invalid!
       end
 
       benchmark :recalculate_udt_accounts, udt_type_hashes, local_tip_block
-      benchmark :update_address_balance_and_ckb_transactions_count, local_tip_block
       benchmark :revert_block_rewards, local_tip_block
       ForkedEvent.create!(block_number: local_tip_block.number, epoch_number: local_tip_block.epoch,
                           block_timestamp: local_tip_block.timestamp)
@@ -40,22 +40,78 @@ class RevertBlockJob < ApplicationJob
   end
 
   def update_address_balance_and_ckb_transactions_count(local_tip_block)
-    snapshots = AddressBlockSnapshot.where.not(block_id: local_tip_block.id).where(address_id: local_tip_block.address_ids).order(block_number: :desc).distinct.group_by(&:address_id)
-    local_tip_block.contained_addresses.each do |address|
-      snapshot = snapshots.fetch(address.id, []).first
-      if snapshot.present?
-        attrs = snapshot.final_state
-        address.update!(attrs)
-      else
-        address.live_cells_count = address.cell_outputs.live.count
-        address.ckb_transactions_count = AccountBook.tx_committed.where(address_id: address.id).count
-        address.dao_transactions_count = DaoEvent.processed.where(address_id: address.id).distinct.count(:ckb_transaction_id)
-        address.cal_balance!
-        address.save!
-      end
+    select_fields = [
+      "address_id",
+      "COUNT(*) AS cells_count",
+      "SUM(capacity) AS total_capacity",
+      "SUM(CASE WHEN type_hash IS NOT NULL OR data_hash IS NOT NULL THEN capacity ELSE 0 END) AS occupied_capacity",
+    ]
+    output_addrs =
+      local_tip_block.cell_outputs.live.select(select_fields.join(", ")).group(:address_id)
+    input_addrs =
+      CellOutput.where(consumed_block_timestamp: local_tip_block.timestamp).select(select_fields.join(", ")).group(:address_id)
+    out_hash = output_addrs.each_with_object({}) do |row, h|
+      h[row.address_id] = {
+        cells_count: row.cells_count.to_i,
+        total_capacity: row.total_capacity.to_i,
+        occupied_capacity: row.occupied_capacity.to_i,
+      }
     end
 
-    AddressBlockSnapshot.where(block_id: local_tip_block.id).delete_all
+    in_hash = input_addrs.each_with_object({}) do |row, h|
+      h[row.address_id] = {
+        cells_count: row.cells_count.to_i,
+        total_capacity: row.total_capacity.to_i,
+        occupied_capacity: row.occupied_capacity.to_i,
+      }
+    end
+
+    # Merge keys
+    all_ids = in_hash.keys | out_hash.keys
+
+    # 计算差值
+    address_balance_diff = all_ids.each_with_object({}) do |addr_id, h|
+      input  = in_hash[addr_id]  || { cells_count: 0, total_capacity: 0, occupied_capacity: 0 }
+      output = out_hash[addr_id] || { cells_count: 0, total_capacity: 0, occupied_capacity: 0 }
+
+      h[addr_id] = {
+        cells_count: input[:cells_count] - output[:cells_count],
+        total_capacity: input[:total_capacity] - output[:total_capacity],
+        occupied_capacity: input[:occupied_capacity] - output[:occupied_capacity],
+      }
+    end
+    # Preload dao transaction counts for all addresses in one query
+    dao_tx_counts = DaoEvent.processed.
+      where(block_id: local_tip_block.id, address_id: all_ids).
+      group(:address_id).
+      distinct.
+      count(:ckb_transaction_id)
+    tx_count_diffs = AccountBook.tx_committed.
+      where(block_number: local_tip_block.number, address_id: all_ids).
+      group(:address_id).
+      count
+
+    changes =
+      address_balance_diff.map do |address_id, changes|
+        tx_count_diff = tx_count_diffs[address_id] || 0
+        dao_tx_count_diff = dao_tx_counts[address_id] || 0
+        { address_id: address_id }.merge(changes).merge({ ckb_transactions_count: tx_count_diff, dao_transactions_count: dao_tx_count_diff })
+      end
+
+    changes.each do |change|
+      Address.where(id: change[:address_id]).update_all([
+                                                          "live_cells_count = live_cells_count + ?,
+     ckb_transactions_count = ckb_transactions_count - ?,
+     balance = balance + ?,
+     balance_occupied = balance_occupied + ?,
+     dao_transactions_count = dao_transactions_count - ?",
+                                                          change[:cells_count],
+                                                          change[:ckb_transactions_count],
+                                                          change[:total_capacity],
+                                                          change[:occupied_capacity],
+                                                          change[:dao_transactions_count],
+                                                        ])
+    end
   end
 
   def recalculate_udt_transactions_count(local_tip_block)
