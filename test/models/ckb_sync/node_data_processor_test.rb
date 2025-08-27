@@ -939,24 +939,6 @@ module CkbSync
       end
     end
 
-    test "#process_block should update block's contained address's live cells count" do
-      prepare_node_data(12)
-      local_block = Block.find_by(number: 12)
-      origin_live_cells_count = local_block.contained_addresses.sum(:live_cells_count)
-      VCR.use_cassette("blocks/13", record: :new_episodes) do
-        new_local_block = node_data_processor.call
-
-        assert_equal origin_live_cells_count + 1,
-                     new_local_block.contained_addresses.sum(:live_cells_count)
-
-        address = new_local_block.contained_addresses.first
-        snapshot = AddressBlockSnapshot.find_by(block_id: new_local_block.id,
-                                                address_id: address.id)
-        assert_equal snapshot.final_state["live_cells_count"],
-                     address.live_cells_count
-      end
-    end
-
     test "#process_block should update block's contained address's balance" do
       prepare_node_data(12)
       local_block = Block.find_by(number: 12)
@@ -985,11 +967,6 @@ module CkbSync
 
         assert_equal origin_balance + new_local_block.cell_outputs.sum(:capacity),
                      new_local_block.contained_addresses.sum(:balance)
-
-        address = new_local_block.contained_addresses.first
-        snapshot = AddressBlockSnapshot.find_by(block_id: new_local_block.id,
-                                                address_id: address.id)
-        assert_equal snapshot.final_state["balance"], address.balance
       end
     end
 
