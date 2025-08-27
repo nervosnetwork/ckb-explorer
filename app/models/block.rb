@@ -84,8 +84,9 @@ class Block < ApplicationRecord
     # for better query performance, we use epoch instead of timestamp here, it will utilize the index of `blocks.epoch`.
     # one epoch is 4 hours approximately, so we can get the last 42 epochs
     from = self.tip_block.epoch - 42
-    sql = "select ckb_node_version, count(*) from blocks where epoch >= #{from} group by ckb_node_version order by 1 asc;"
-    connection.execute(sql).values
+    sql = "select ckb_node_version, count(*) from blocks where epoch >= #{from} group by ckb_node_version"
+    # for better query performance, we avoid order by sql
+    connection.execute(sql).values.sort_by { |version_count| version_count[0] } 
   end
 
   # fetch block hash from cache
