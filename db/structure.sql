@@ -227,10 +227,10 @@ COMMENT ON COLUMN public.blocks.ckb_node_version IS 'ckb node version, e.g. 0.10
 --
 
 CREATE MATERIALIZED VIEW public.average_block_time_by_hour AS
- SELECT (blocks."timestamp" / 3600000) AS hour,
-    avg(blocks.block_time) AS avg_block_time_per_hour
+ SELECT ("timestamp" / 3600000) AS hour,
+    avg(block_time) AS avg_block_time_per_hour
    FROM public.blocks
-  GROUP BY (blocks."timestamp" / 3600000)
+  GROUP BY ("timestamp" / 3600000)
   WITH NO DATA;
 
 
@@ -2056,9 +2056,9 @@ ALTER SEQUENCE public.rgbpp_hourly_statistics_id_seq OWNED BY public.rgbpp_hourl
 --
 
 CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
- SELECT (average_block_time_by_hour.hour * 3600) AS "timestamp",
-    avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
-    avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
+ SELECT (hour * 3600) AS "timestamp",
+    avg(avg_block_time_per_hour) OVER (ORDER BY hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
+    avg(avg_block_time_per_hour) OVER (ORDER BY hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
    FROM public.average_block_time_by_hour
   WITH NO DATA;
 
@@ -4420,6 +4420,13 @@ CREATE INDEX index_bitcoin_vouts_on_bitcoin_address_id ON public.bitcoin_vouts U
 
 
 --
+-- Name: index_bitcoin_vouts_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_bitcoin_vouts_on_cell_output_id ON public.bitcoin_vouts USING btree (cell_output_id);
+
+
+--
 -- Name: index_bitcoin_vouts_on_ckb_transaction_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5868,6 +5875,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250715025723'),
 ('20250715034316'),
 ('20250715035736'),
-('20250715043211');
+('20250715043211'),
+('20250826022054');
 
 
