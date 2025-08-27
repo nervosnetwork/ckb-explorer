@@ -258,10 +258,9 @@ end
 #
 # Indexes
 #
-#  ckb_tx_uni_tx_hash                      (tx_status,tx_hash) UNIQUE
-#  idx_ckb_txs_for_blocks                  (block_id,block_timestamp)
-#  idx_ckb_txs_timestamp                   (block_timestamp DESC NULLS LAST,id)
-#  index_ckb_transactions_on_block_number  (block_number)
-#  index_ckb_transactions_on_tags          (tags) USING gin
-#  index_ckb_transactions_on_tx_hash       (tx_hash) USING hash
+#  ckb_tx_uni_tx_hash                 (tx_status,tx_hash) UNIQUE
+#  idx_ckb_txs_for_blocks             (block_id,block_timestamp)
+#  idx_ckb_txs_timestamp              (block_timestamp DESC NULLS LAST,id)
+#  index_ckb_transactions_on_tags     (tags) USING gin
+#  index_ckb_transactions_on_tx_hash  (tx_hash) USING hash
 #
