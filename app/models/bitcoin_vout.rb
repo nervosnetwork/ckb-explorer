@@ -40,6 +40,7 @@ end
 # Indexes
 #
 #  index_bitcoin_vouts_on_bitcoin_address_id  (bitcoin_address_id)
+#  index_bitcoin_vouts_on_cell_output_id      (cell_output_id)
 #  index_bitcoin_vouts_on_ckb_transaction_id  (ckb_transaction_id)
 #  index_bitcoin_vouts_on_consumed_by_id      (consumed_by_id)
 #  index_bitcoin_vouts_on_status              (status)
