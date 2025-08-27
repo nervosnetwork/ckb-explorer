@@ -505,53 +505,27 @@ module CkbSync
     def update_addresses_info(addrs_change, local_block, refresh_balance)
       return unless refresh_balance
 
-      snapshot_attrs = []
       ### because `upsert` don't validate record, so it may pass invalid data into database.
       ### here we use one by one update (maybe slower)
       addrs_change.each do |addr_id, values|
         addr = Address.find addr_id
         check_invalid_address(addr)
 
-        if addr.last_updated_block_number.nil?
-          addr.last_updated_block_number = local_block.number
-          addr.live_cells_count = addr.cell_outputs.live.count
-          addr.ckb_transactions_count = AccountBook.tx_committed.where(address_id: addr.id).count
-          addr.dao_transactions_count = DaoEvent.processed.where(address_id: addr.id).distinct.count(:ckb_transaction_id)
-          addr.cal_balance!
-          addr.save!
-        else
-          balance_diff = values[:balance_diff]
-          balance_occupied_diff = values[:balance_occupied_diff].presence || 0
-          live_cells_diff = values[:cells_diff]
-          dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
-          ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
+        balance_diff = values[:balance_diff]
+        balance_occupied_diff = values[:balance_occupied_diff].presence || 0
+        live_cells_diff = values[:cells_diff]
+        dao_txs_count = values[:dao_txs].present? ? values[:dao_txs].size : 0
+        ckb_txs_count = values[:ckb_txs].present? ? values[:ckb_txs].size : 0
 
-          addr.update!(
-            last_updated_block_number: local_block.number,
-            balance: addr.balance + balance_diff,
-            balance_occupied: addr.balance_occupied + balance_occupied_diff,
-            ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
-            live_cells_count: addr.live_cells_count + live_cells_diff,
-            dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
-          )
-        end
-        addr.reload
-        snapshot_attrs << {
-          block_number: local_block.number,
-          final_state: {
-            balance: addr.balance,
-            balance_occupied: addr.balance_occupied,
-            ckb_transactions_count: addr.ckb_transactions_count,
-            live_cells_count: addr.live_cells_count,
-            dao_transactions_count: addr.dao_transactions_count,
-            last_updated_block_number: local_block.number,
-          },
-          address_id: addr.id,
-          block_id: local_block.id,
-        }
+        addr.update!(
+          last_updated_block_number: local_block.number,
+          balance: addr.balance + balance_diff,
+          balance_occupied: addr.balance_occupied + balance_occupied_diff,
+          ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
+          live_cells_count: addr.live_cells_count + live_cells_diff,
+          dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
+        )
       end
-
-      AddressBlockSnapshot.upsert_all(snapshot_attrs, unique_by: %i[block_id address_id]) if snapshot_attrs.present?
     end
 
     def update_block_info!(local_block)
