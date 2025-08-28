@@ -227,10 +227,10 @@ COMMENT ON COLUMN public.blocks.ckb_node_version IS 'ckb node version, e.g. 0.10
 --
 
 CREATE MATERIALIZED VIEW public.average_block_time_by_hour AS
- SELECT (blocks."timestamp" / 3600000) AS hour,
-    avg(blocks.block_time) AS avg_block_time_per_hour
+ SELECT ("timestamp" / 3600000) AS hour,
+    avg(block_time) AS avg_block_time_per_hour
    FROM public.blocks
-  GROUP BY (blocks."timestamp" / 3600000)
+  GROUP BY ("timestamp" / 3600000)
   WITH NO DATA;
 
 
@@ -2056,9 +2056,9 @@ ALTER SEQUENCE public.rgbpp_hourly_statistics_id_seq OWNED BY public.rgbpp_hourl
 --
 
 CREATE MATERIALIZED VIEW public.rolling_avg_block_time AS
- SELECT (average_block_time_by_hour.hour * 3600) AS "timestamp",
-    avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
-    avg(average_block_time_by_hour.avg_block_time_per_hour) OVER (ORDER BY average_block_time_by_hour.hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
+ SELECT (hour * 3600) AS "timestamp",
+    avg(avg_block_time_per_hour) OVER (ORDER BY hour ROWS BETWEEN 24 PRECEDING AND CURRENT ROW) AS avg_block_time_daily,
+    avg(avg_block_time_per_hour) OVER (ORDER BY hour ROWS BETWEEN (7 * 24) PRECEDING AND CURRENT ROW) AS avg_block_time_weekly
    FROM public.average_block_time_by_hour
   WITH NO DATA;
 
@@ -4119,6 +4119,20 @@ CREATE INDEX ckb_transactions_committed_block_id_block_timestamp_idx ON public.c
 
 
 --
+-- Name: index_ckb_transactions_on_block_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_ckb_transactions_on_block_number ON ONLY public.ckb_transactions USING btree (block_number);
+
+
+--
+-- Name: ckb_transactions_committed_block_number_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_committed_block_number_idx ON public.ckb_transactions_committed USING btree (block_number);
+
+
+--
 -- Name: idx_ckb_txs_timestamp; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4168,6 +4182,13 @@ CREATE INDEX ckb_transactions_pending_block_id_block_timestamp_idx ON public.ckb
 
 
 --
+-- Name: ckb_transactions_pending_block_number_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_pending_block_number_idx ON public.ckb_transactions_pending USING btree (block_number);
+
+
+--
 -- Name: ckb_transactions_pending_block_timestamp_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4196,6 +4217,13 @@ CREATE INDEX ckb_transactions_proposed_block_id_block_timestamp_idx ON public.ck
 
 
 --
+-- Name: ckb_transactions_proposed_block_number_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_proposed_block_number_idx ON public.ckb_transactions_proposed USING btree (block_number);
+
+
+--
 -- Name: ckb_transactions_proposed_block_timestamp_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4221,6 +4249,13 @@ CREATE INDEX ckb_transactions_proposed_tx_hash_idx ON public.ckb_transactions_pr
 --
 
 CREATE INDEX ckb_transactions_rejected_block_id_block_timestamp_idx ON public.ckb_transactions_rejected USING btree (block_id, block_timestamp);
+
+
+--
+-- Name: ckb_transactions_rejected_block_number_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ckb_transactions_rejected_block_number_idx ON public.ckb_transactions_rejected USING btree (block_number);
 
 
 --
@@ -4417,6 +4452,13 @@ CREATE UNIQUE INDEX index_bitcoin_vins_on_ckb_transaction_id_and_cell_input_id O
 --
 
 CREATE INDEX index_bitcoin_vouts_on_bitcoin_address_id ON public.bitcoin_vouts USING btree (bitcoin_address_id);
+
+
+--
+-- Name: index_bitcoin_vouts_on_cell_output_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_bitcoin_vouts_on_cell_output_id ON public.bitcoin_vouts USING btree (cell_output_id);
 
 
 --
@@ -5323,6 +5365,13 @@ ALTER INDEX public.idx_ckb_txs_for_blocks ATTACH PARTITION public.ckb_transactio
 
 
 --
+-- Name: ckb_transactions_committed_block_number_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_block_number ATTACH PARTITION public.ckb_transactions_committed_block_number_idx;
+
+
+--
 -- Name: ckb_transactions_committed_block_timestamp_id_idx; Type: INDEX ATTACH; Schema: public; Owner: -
 --
 
@@ -5362,6 +5411,13 @@ ALTER INDEX public.ckb_tx_uni_tx_hash ATTACH PARTITION public.ckb_transactions_c
 --
 
 ALTER INDEX public.idx_ckb_txs_for_blocks ATTACH PARTITION public.ckb_transactions_pending_block_id_block_timestamp_idx;
+
+
+--
+-- Name: ckb_transactions_pending_block_number_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_block_number ATTACH PARTITION public.ckb_transactions_pending_block_number_idx;
 
 
 --
@@ -5407,6 +5463,13 @@ ALTER INDEX public.idx_ckb_txs_for_blocks ATTACH PARTITION public.ckb_transactio
 
 
 --
+-- Name: ckb_transactions_proposed_block_number_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_block_number ATTACH PARTITION public.ckb_transactions_proposed_block_number_idx;
+
+
+--
 -- Name: ckb_transactions_proposed_block_timestamp_id_idx; Type: INDEX ATTACH; Schema: public; Owner: -
 --
 
@@ -5446,6 +5509,13 @@ ALTER INDEX public.ckb_tx_uni_tx_hash ATTACH PARTITION public.ckb_transactions_p
 --
 
 ALTER INDEX public.idx_ckb_txs_for_blocks ATTACH PARTITION public.ckb_transactions_rejected_block_id_block_timestamp_idx;
+
+
+--
+-- Name: ckb_transactions_rejected_block_number_idx; Type: INDEX ATTACH; Schema: public; Owner: -
+--
+
+ALTER INDEX public.index_ckb_transactions_on_block_number ATTACH PARTITION public.ckb_transactions_rejected_block_number_idx;
 
 
 --
@@ -5868,6 +5938,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250715025723'),
 ('20250715034316'),
 ('20250715035736'),
-('20250715043211');
+('20250715043211'),
+('20250826022054'),
+('20250827065749');
 
 

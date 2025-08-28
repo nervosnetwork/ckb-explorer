@@ -104,7 +104,7 @@ module CkbTransactions
             display_input.merge!(attributes_for_dao_input(previous_cell_output))
           end
           if previous_cell_output.nervos_dao_deposit?
-            display_input.merge!(attributes_for_dao_input(cell_outputs[cell_input.index], false))
+            display_input.merge!(attributes_for_dao_input(cell_outputs.order(:cell_index)[cell_input.index], false))
           end
           if previous_cell_output.udt?
             display_input.merge!(attributes_for_udt_cell(previous_cell_output))
@@ -220,7 +220,7 @@ module CkbTransactions
       def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
         nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
         nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.
-          cell_inputs.order(:id)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
+          cell_inputs.order("index asc")[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
         # start block: the block contains the transaction which generated the deposit cell output
         compensation_started_block = Block.select(:number, :timestamp).find(nervos_dao_deposit_cell.block.id)
         # end block: the block contains the transaction which generated the withdrawing cell
