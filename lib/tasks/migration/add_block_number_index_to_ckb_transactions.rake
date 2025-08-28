@@ -7,8 +7,8 @@ namespace :migration do
 
     unless ActiveRecord::Base.connection.index_exists?(table_name, :column_name)
       ActiveRecord::Migration.suppress_messages do
-        ActiveRecord::Base.connection.add_index table_name, column_name, 
-                                                  name: index_name
+        ActiveRecord::Base.connection.execute('SET statement_timeout = 0')
+        ActiveRecord::Base.connection.add_index table_name, column_name, name: index_name
       end
       Rails.logger.info "Successfully created index #{index_name} on #{table_name}.#{column_name}"
     else
