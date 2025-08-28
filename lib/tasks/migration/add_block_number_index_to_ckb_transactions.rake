@@ -5,7 +5,7 @@ namespace :migration do
     column_name = :block_number
     index_name = "index_#{table_name}_on_#{column_name}".to_sym
 
-    unless ActiveRecord::Base.connection.index_exists?(table_name, :column_name)
+    unless ActiveRecord::Base.connection.index_exists?(table_name, column_name)
       ActiveRecord::Migration.suppress_messages do
         ActiveRecord::Base.connection.execute('SET statement_timeout = 0')
         ActiveRecord::Base.connection.add_index table_name, column_name, name: index_name
