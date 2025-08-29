@@ -106,10 +106,6 @@ s.cron "30 0 * * *" do
   call_worker Charts::ForkedEventProcessor
 end
 
-s.cron "0 6 * * 1" do
-  call_worker CleanAddressBlockSnapshotWorker
-end
-
 s.every "6h", overlap: false do
   call_worker ContractStatisticWorker
 end
