@@ -3,7 +3,9 @@
 class AverageBlockTimeByHour < ApplicationRecord
   self.table_name = "average_block_time_by_hour"
   def self.refresh
-    connection.execute "refresh materialized view CONCURRENTLY average_block_time_by_hour "
+    connection.execute "SET statement_timeout = 0"
+    connection.execute "refresh materialized view CONCURRENTLY average_block_time_by_hour"
+    connection.execute "RESET statement_timeout"
   end
 end
 
