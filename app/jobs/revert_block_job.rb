@@ -44,7 +44,7 @@ class RevertBlockJob < ApplicationJob
       "address_id",
       "COUNT(*) AS cells_count",
       "SUM(capacity) AS total_capacity",
-      "SUM(CASE WHEN type_hash IS NOT NULL OR data_hash IS NOT NULL THEN capacity ELSE 0 END) AS occupied_capacity",
+      "SUM(CASE WHEN type_hash IS NOT NULL OR data_hash IS NOT NULL THEN capacity ELSE 0 END) AS balance_occupied",
     ]
     output_addrs =
       local_tip_block.cell_outputs.live.select(select_fields.join(", ")).group(:address_id)
@@ -54,7 +54,7 @@ class RevertBlockJob < ApplicationJob
       h[row.address_id] = {
         cells_count: row.cells_count.to_i,
         total_capacity: row.total_capacity.to_i,
-        occupied_capacity: row.occupied_capacity.to_i,
+        balance_occupied: row.balance_occupied.to_i,
       }
     end
 
@@ -62,7 +62,7 @@ class RevertBlockJob < ApplicationJob
       h[row.address_id] = {
         cells_count: row.cells_count.to_i,
         total_capacity: row.total_capacity.to_i,
-        occupied_capacity: row.occupied_capacity.to_i,
+        balance_occupied: row.balance_occupied.to_i,
       }
     end
 
@@ -71,13 +71,13 @@ class RevertBlockJob < ApplicationJob
 
     # 计算差值
     address_balance_diff = all_ids.each_with_object({}) do |addr_id, h|
-      input  = in_hash[addr_id]  || { cells_count: 0, total_capacity: 0, occupied_capacity: 0 }
-      output = out_hash[addr_id] || { cells_count: 0, total_capacity: 0, occupied_capacity: 0 }
+      input  = in_hash[addr_id]  || { cells_count: 0, total_capacity: 0, balance_occupied: 0 }
+      output = out_hash[addr_id] || { cells_count: 0, total_capacity: 0, balance_occupied: 0 }
 
       h[addr_id] = {
         cells_count: input[:cells_count] - output[:cells_count],
         total_capacity: input[:total_capacity] - output[:total_capacity],
-        occupied_capacity: input[:occupied_capacity] - output[:occupied_capacity],
+        balance_occupied: input[:balance_occupied] - output[:balance_occupied],
       }
     end
     # Preload dao transaction counts for all addresses in one query
@@ -99,18 +99,16 @@ class RevertBlockJob < ApplicationJob
       end
 
     changes.each do |change|
-      Address.where(id: change[:address_id]).update_all([
-                                                          "live_cells_count = live_cells_count + ?,
-     ckb_transactions_count = ckb_transactions_count - ?,
-     balance = balance + ?,
-     balance_occupied = balance_occupied + ?,
-     dao_transactions_count = dao_transactions_count - ?",
-                                                          change[:cells_count],
-                                                          change[:ckb_transactions_count],
-                                                          change[:total_capacity],
-                                                          change[:occupied_capacity],
-                                                          change[:dao_transactions_count],
-                                                        ])
+      addr = Address.find_by_id(change[:address_id])
+      if addr {
+        addr.update!(
+          live_cells_count: addr.live_cells_count + change[:cells_count],
+          ckb_transactions_count: addr.ckb_transactions_count - change[:ckb_transactions_count],
+          balance: addr.balance + change[:total_capacity],
+          balance_occupied: addr.balance_occupied + change[:balance_occupied],
+          dao_transactions_count: addr.dao_transactions_count - change[:dao_transactions_count]
+        )
+      }
     end
   end
 
