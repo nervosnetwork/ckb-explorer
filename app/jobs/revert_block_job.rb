@@ -100,7 +100,7 @@ class RevertBlockJob < ApplicationJob
 
     changes.each do |change|
       addr = Address.find_by_id(change[:address_id])
-      if addr {
+      if addr
         addr.update!(
           live_cells_count: addr.live_cells_count + change[:cells_count],
           ckb_transactions_count: addr.ckb_transactions_count - change[:ckb_transactions_count],
@@ -108,7 +108,7 @@ class RevertBlockJob < ApplicationJob
           balance_occupied: addr.balance_occupied + change[:balance_occupied],
           dao_transactions_count: addr.dao_transactions_count - change[:dao_transactions_count]
         )
-      }
+      end
     end
   end
 
