@@ -75,13 +75,12 @@ class Address < ApplicationRecord
     address
   end
 
-  # @param lock_script [CKB::Types::Script]
+  # @param lock_script_hash [CKB::Types::Script] Hash
   # @param block_timestamp [Integer]
   # @param lock_script_id [Integer]
   # @return [Address]
-  def self.find_or_create_address(lock_script, block_timestamp, lock_script_id = nil)
-    lock_hash = lock_script.compute_hash
-    address_hash_2021 = CkbUtils.generate_address(lock_script, CKB::Address::Version::CKB2021)
+  def self.find_or_create_address(lock_script_hash, block_timestamp, lock_script_id = nil)
+    address_hash_2021 = CkbUtils.generate_address(lock_script_hash, CKB::Address::Version::CKB2021)
 
     address = Address.find_by(lock_hash:)
     if address.blank?

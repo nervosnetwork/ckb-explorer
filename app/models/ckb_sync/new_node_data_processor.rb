@@ -786,8 +786,7 @@ module CkbSync
       end
 
       build_addresses!(outputs, local_block)
-      # prepare script ids for insert cell_outputs
-      prepare_script_ids(outputs)
+
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
                           udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids)
       if cell_outputs_attributes.present?
@@ -874,34 +873,13 @@ module CkbSync
       block_number = local_cache.read("BlockNumber")
       outputs.each_value do |items|
         items.each do |item|
+          script_hash = item.lock.compute_hash
+          key = "lock_script_script_hash_#{script_hash}"
+          lock_script_id = Rails.cache.read(key) || LockScript.find_by(script_hash: script_hash)&.id
           address =
             local_cache.fetch("NodeData/Address/#{item.lock.code_hash}-#{item.lock.hash_type}-#{item.lock.args}") do
-              lock_script = LockScript.find_by(code_hash: item.lock.code_hash, hash_type: item.lock.hash_type, args: item.lock.args)
-              Address.find_or_create_address(item.lock, local_block.timestamp, lock_script.id)
+              Address.find_or_create_address(script_hash, local_block.timestamp, lock_script_id)
             end
-          local_cache.push(
-            "NodeData/#{block_number}/ContainedAddresses",
-            Address.new(id: address.id, created_at: address.created_at),
-          )
-        end
-      end
-    end
-
-    def prepare_script_ids(outputs)
-      outputs.each_value do |items|
-        items.each do |output|
-          local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}") do
-            # TODO use LockScript.where(script_hash: output.lock.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
-            LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type,
-                             args: output.lock.args).order("id asc").first
-          end
-          if output.type.present?
-            local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}") do
-              # TODO use TypeScript.where(script_hash: output.type.compute_hash).select(:id)&.first replace search by code_hash, hash_type and args query after script_hash has been filled
-              TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type,
-                               args: output.type.args).order("id asc").first
-            end
-          end
         end
       end
     end
@@ -912,32 +890,24 @@ module CkbSync
       block_number = local_cache.read("BlockNumber")
       outputs.each_value do |items|
         items.each do |output|
-          lock_cache_key = "NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}"
-          unless local_cache.read(lock_cache_key)
-            script_hash = output.lock.compute_hash
-            key = "lock_script_script_hash_#{script_hash}"
-            unless Rails.cache.exist?(key)
-              if LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).exists?
-                Rails.cache.write(key, "")
-              else
-                locks_attributes << script_attributes(output.lock, script_hash)
-                local_cache.write(lock_cache_key, true)
-              end
+          script_hash = output.lock.compute_hash
+          key = "lock_script_script_hash_#{script_hash}"
+          unless Rails.cache.exist?(key)
+            if lock_script = LockScript.find_by(script_hash: script_hash)
+              Rails.cache.write(key, lock_script.id)
+            else
+              locks_attributes << script_attributes(output.lock, script_hash)
             end
           end
 
           if output.type.present?
-            type_cache_key = "NodeData/#{block_number}/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}"
-            if !local_cache.read(type_cache_key)
-              script_hash = output.type.compute_hash
-              key = "type_script_script_hash_#{script_hash}"
-              unless Rails.cache.exist?(key)
-                if TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).exists?
-                  Rails.cache.write(key, "")
-                else
-                  types_attributes << script_attributes(output.type, script_hash)
-                  local_cache.write(type_cache_key, true)
-                end
+            script_hash = output.type.compute_hash
+            key = "type_script_script_hash_#{script_hash}"
+            unless Rails.cache.exist?(key)
+              if type_script = TypeScript.find_by(script_hash: script_hash)
+                Rails.cache.write(key, type_script.id)
+              else
+                types_attributes << script_attributes(output.type, script_hash)
               end
             end
           end
@@ -1133,11 +1103,18 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, tok
     end
 
     def cell_output_attributes(output, address, ckb_transaction, local_block, cell_index, output_data)
-      lock_script = local_cache.fetch("NodeData/LockScript/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}")
-      type_script =
+
+      script_hash = output.lock.compute_hash
+      key = "lock_script_script_hash_#{script_hash}"
+      lock_script_id = Rails.cache.read(key) || LockScript.find_by(script_hash: script_hash)&.id
+      
+      type_script_id =
         if output.type.present?
-          local_cache.fetch("NodeData/TypeScript/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}")
+          script_hash = output.type.compute_hash
+          key = "type_script_script_hash_#{script_hash}"
+          Rails.cache.read(key) || TypeScript.find_by(script_hash: script_hash)&.id
         end
+
       udt_amount = udt_amount(cell_type(output.type, output_data), output_data,
                               output.type&.args)
       cell_type = cell_type(output.type, output_data).to_s
@@ -1158,8 +1135,8 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, tok
         block_timestamp: local_block.timestamp,
         type_hash: output.type&.compute_hash,
         dao: local_block.dao,
-        lock_script_id: lock_script.id,
-        type_script_id: type_script&.id,
+        lock_script_id: lock_script_id,
+        type_script_id: type_script_id,
         udt_amount:,
         status: "live",
         created_at: Time.current,
@@ -1483,13 +1460,20 @@ _prev_outputs, index = nil)
       return if cellbase.witnesses.blank?
 
       lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-      lock = LockScript.find_or_create_by(
-        code_hash: lock_script.code_hash,
-        hash_type: lock_script.hash_type,
-        args: lock_script.args,
-      )
-      local_cache.fetch("NodeData/Address/#{lock_script.code_hash}-#{lock_script.hash_type}-#{lock_script.args}") do
-        Address.find_or_create_address(lock_script, block_timestamp, lock.id)
+
+      script_hash = lock_script.compute_hash
+      key = "lock_script_script_hash_#{script_hash}"
+      lock_script_id = Rails.cache.read(key) || LockScript.find_by(script_hash: script_hash)&.id
+      unless lock_script_id
+        lock_script_id = LockScript.create(
+          code_hash: lock_script.code_hash,
+          hash_type: lock_script.hash_type,
+          args: lock_script.args,
+          script_hash: script_hash
+        ).id
+      end
+      local_cache.fetch("NodeData/Address/#{script_hash}") do
+        Address.find_or_create_address(script_hash, block_timestamp, lock_script_id)
       end
     end
 

@@ -617,7 +617,7 @@ module CkbSync
         locks = node_block.transactions.map(&:outputs).flatten.map(&:lock)
         local_block = node_data_processor.process_block(node_block)
         expected_lock_address = locks.map do |lock|
-          Address.find_or_create_address(lock, node_block.header.timestamp)
+          Address.find_or_create_address(lock.compute_hash, node_block.header.timestamp)
         end
 
         assert_equal expected_lock_address,
@@ -633,7 +633,7 @@ module CkbSync
         locks = node_block.transactions.map(&:outputs).flatten.map(&:lock)
         local_block = node_data_processor.process_block(node_block)
         expected_lock_address = locks.map do |lock|
-          Address.find_or_create_address(lock, node_block.header.timestamp)
+          Address.find_or_create_address(lock.compute_hash, node_block.header.timestamp)
         end
 
         assert_equal expected_lock_address,
@@ -838,7 +838,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(25)
         cellbase = node_block.transactions.first
         lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-        miner_address = Address.find_or_create_address(lock_script,
+        miner_address = Address.find_or_create_address(lock_script.compute_hash,
                                                        node_block.header.timestamp)
 
         assert_difference -> { MiningInfo.count }, 1 do
@@ -886,7 +886,7 @@ module CkbSync
         node_block = CkbSync::Api.instance.get_block_by_number(25)
         cellbase = node_block.transactions.first
         lock_script = CkbUtils.generate_lock_script_from_cellbase(cellbase)
-        miner_address = Address.find_or_create_address(lock_script,
+        miner_address = Address.find_or_create_address(lock_script.compute_hash,
                                                        node_block.header.timestamp)
 
         assert_difference -> { miner_address.reload.mined_blocks_count }, 1 do
@@ -949,8 +949,8 @@ module CkbSync
                                        args: "0x#{SecureRandom.hex(20)}")
         lock2 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
                                        args: "0x#{SecureRandom.hex(20)}")
-        Address.find_or_create_address(lock1, node_block.header.timestamp)
-        Address.find_or_create_address(lock2, node_block.header.timestamp)
+        Address.find_or_create_address(lock1.compute_hash, node_block.header.timestamp)
+        Address.find_or_create_address(lock2.compute_hash, node_block.header.timestamp)
         300.times do |i|
           node_block.transactions.first.outputs << if i % 2 == 0
                                                      CKB::Types::Output.new(

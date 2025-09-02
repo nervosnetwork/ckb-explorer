@@ -470,7 +470,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_deposit_transaction(node_block)
         output = tx.outputs.first
-        address = Address.find_or_create_address(output.lock, node_block.header.timestamp)
+        address = Address.find_or_create_address(output.lock.compute_hash, node_block.header.timestamp)
         target_address = address
         assert_difference -> { address.reload.dao_deposit }, (10**8) * 1000 do
           node_data_processor.process_block(node_block)
@@ -541,7 +541,7 @@ module CkbSync
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         tx = fake_dao_deposit_transaction(node_block)
         output = tx.outputs.first
-        address = Address.find_or_create_address(output.lock, node_block.header.timestamp)
+        address = Address.find_or_create_address(output.lock.compute_hash, node_block.header.timestamp)
         assert_equal false, address.is_depositor
 
         assert_difference -> { address.reload.dao_deposit }, (10**8) * 1000 do
@@ -596,7 +596,7 @@ module CkbSync
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       lock = node_block.transactions.last.outputs.first.lock
       lock_script = create(:lock_script, code_hash: lock.code_hash, hash_type: lock.hash_type, args: lock.args)
-      address = Address.find_or_create_address(lock, node_block.header.timestamp, lock_script.id)
+      address = Address.find_or_create_address(lock.compute_hash, node_block.header.timestamp, lock_script.id)
       address.update(dao_deposit: 100000 * (10**8))
       block = create(:block, :with_block_hash)
       ckb_transaction1 = create(:ckb_transaction,

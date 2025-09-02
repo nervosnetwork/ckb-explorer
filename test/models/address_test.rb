@@ -71,7 +71,7 @@ class AddressTest < ActiveSupport::TestCase
       lock_script = node_block.transactions.first.outputs.first.lock
 
       assert_difference "Address.count", 0 do
-        Address.find_or_create_address(lock_script, node_block.header.timestamp)
+        Address.find_or_create_address(lock_script.compute_hash, node_block.header.timestamp)
       end
     end
   end
@@ -98,7 +98,7 @@ class AddressTest < ActiveSupport::TestCase
       CkbSync::NewNodeDataProcessor.new.process_block(node_block)
 
       lock_script = node_block.transactions.first.outputs.first.lock
-      address = Address.find_or_create_address(lock_script,
+      address = Address.find_or_create_address(lock_script.compute_hash,
                                                node_block.header.timestamp)
 
       assert_equal output.lock.compute_hash, address.lock_hash
@@ -308,7 +308,7 @@ class AddressTest < ActiveSupport::TestCase
     )
     addr = CKB::Address.new(lock_script).generate
     full_addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
-    Address.find_or_create_address(lock_script, Time.current.to_i)
+    Address.find_or_create_address(lock_script.compute_hash, Time.current.to_i)
     Address.cached_find(full_addr)
     address = Address.cached_find(addr)
 
@@ -324,7 +324,7 @@ class AddressTest < ActiveSupport::TestCase
     )
     addr = CKB::Address.new(lock_script).generate
     full_addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
-    Address.find_or_create_address(lock_script, Time.current.to_i)
+    Address.find_or_create_address(lock_script.compute_hash, Time.current.to_i)
     Address.cached_find(addr)
     address = Address.cached_find(full_addr)
 
@@ -361,7 +361,7 @@ class AddressTest < ActiveSupport::TestCase
       code_hash: "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8", hash_type: "type", args: "0xdde7801c073dfb3464c7b1f05b806bb2bbb84e99",
     )
     full_addr = CKB::Address.new(lock_script).send(:generate_full_payload_address)
-    address = Address.find_or_create_address(lock_script, Time.current.to_i)
+    address = Address.find_or_create_address(lock_script.compute_hash, Time.current.to_i)
     actual_address = Address.cached_find(lock_script.compute_hash)
 
     assert_equal address, actual_address
