@@ -14,7 +14,9 @@ class AddressUnclaimedCompensationGenerator
         end
 
       if values.present?
-        Address.upsert_all(values)
+        values.each_slice(500) do |batch|
+          Address.upsert_all(batch)
+        end
         addresses.map(&:flush_cache)
       end
     end
