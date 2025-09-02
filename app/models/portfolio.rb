@@ -6,8 +6,8 @@ class Portfolio < ApplicationRecord
     transaction do
       portfolio_attributes = []
       address_hashes.each do |address_hash|
-        address = Address.find_or_create_by_address_hash(address_hash)
-        portfolio_attributes << { user_id: user.id, address_id: address.id }
+        address_id = Address.find_or_create_by_address_hash(address_hash)
+        portfolio_attributes << { user_id: user.id, address_id: address_id }
       end
 
       Portfolio.upsert_all(portfolio_attributes, unique_by: [:user_id, :address_id])

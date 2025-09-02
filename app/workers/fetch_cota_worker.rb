@@ -25,9 +25,9 @@ class FetchCotaWorker
       tx = CkbTransaction.find_by tx_hash: t["tx_hash"]
       tt = TokenTransfer.find_or_initialize_by item_id: item.id, transaction_id: tx.id
       unless tt.persisted?
-        from = Address.find_or_create_by_address_hash(t["from"])
-        to = Address.find_or_create_by_address_hash(t["to"])
-        tt.update!(from:, to:, action:)
+        from_id = Address.find_or_create_by_address_hash(t["from"])
+        to_id = Address.find_or_create_by_address_hash(t["to"])
+        tt.update!(from_id:, to_id:, action:)
       end
     end
   end
@@ -56,9 +56,9 @@ class FetchCotaWorker
   end
 
   def find_or_create_item(collection, t)
-    to = Address.find_or_create_by_address_hash t["to"]
+    to_id = Address.find_or_create_by_address_hash t["to"]
     i = collection.items.find_or_initialize_by(token_id: t["token_index"].hex)
-    i.update! owner: to
+    i.update! owner_id: to_id
     i
   end
 

@@ -373,7 +373,8 @@ class AddressTest < ActiveSupport::TestCase
     )
     lock_hash = lock_script.compute_hash
     full_addr = CkbUtils.generate_address(lock_script)
-    addr = Address.find_or_create_by_address_hash(full_addr)
+    addr_id = Address.find_or_create_by_address_hash(full_addr)
+    addr = Address.find_by_id(addr_id)
     assert addr.persisted?
     assert_equal addr.lock_hash, lock_hash
     assert_equal addr.address_hash, full_addr
