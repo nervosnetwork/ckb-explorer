@@ -915,9 +915,14 @@ module CkbSync
           lock_cache_key = "NodeData/#{block_number}/Lock/#{output.lock.code_hash}-#{output.lock.hash_type}-#{output.lock.args}"
           unless local_cache.read(lock_cache_key)
             script_hash = output.lock.compute_hash
-            unless LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).exists?
-              locks_attributes << script_attributes(output.lock, script_hash)
-              local_cache.write(lock_cache_key, true)
+            key = "lock_script_script_hash_#{script_hash}"
+            unless Rails.cache.exist?(key)
+              if LockScript.where(code_hash: output.lock.code_hash, hash_type: output.lock.hash_type, args: output.lock.args).exists?
+                Rails.cache.write(key, "")
+              else
+                locks_attributes << script_attributes(output.lock, script_hash)
+                local_cache.write(lock_cache_key, true)
+              end
             end
           end
 
@@ -925,9 +930,14 @@ module CkbSync
             type_cache_key = "NodeData/#{block_number}/Type/#{output.type.code_hash}-#{output.type.hash_type}-#{output.type.args}"
             if !local_cache.read(type_cache_key)
               script_hash = output.type.compute_hash
-              unless TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).exists?
-                types_attributes << script_attributes(output.type, script_hash)
-                local_cache.write(type_cache_key, true)
+              key = "type_script_script_hash_#{script_hash}"
+              unless Rails.cache.exist?(key)
+                if TypeScript.where(code_hash: output.type.code_hash, hash_type: output.type.hash_type, args: output.type.args).exists?
+                  Rails.cache.write(key, "")
+                else
+                  types_attributes << script_attributes(output.type, script_hash)
+                  local_cache.write(type_cache_key, true)
+                end
               end
             end
           end
