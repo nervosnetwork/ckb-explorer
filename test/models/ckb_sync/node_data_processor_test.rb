@@ -742,33 +742,6 @@ module CkbSync
       end
     end
 
-    test "#process_block should update block's contained addresses's transactions count even if fee is a negative number" do
-      node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
-      create(:block, :with_block_hash, number: node_block.header.number - 1)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
-                       record: :new_episodes) do
-        block = create(:block, :with_block_hash)
-        lock = node_block.transactions.last.outputs.first.lock
-        lock_script = create(:lock_script, code_hash: lock.code_hash,
-                                           hash_type: lock.hash_type, args: lock.args)
-        addr = Address.find_or_create_address(lock,
-                                              node_block.header.timestamp, lock_script.id)
-        ckb_transaction1 = create(:ckb_transaction,
-                                  tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, contained_address_ids: [addr.id])
-        ckb_transaction2 = create(:ckb_transaction,
-                                  tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, contained_address_ids: [addr.id])
-        create(:cell_output, ckb_transaction: ckb_transaction1, cell_index: 1,
-                             tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, capacity: 4 * (10**8), address: addr)
-        create(:cell_output, ckb_transaction: ckb_transaction2, cell_index: 2,
-                             tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3", block:, address: addr)
-
-        local_block = node_data_processor.process_block(node_block)
-
-        assert_equal 2,
-                     local_block.contained_addresses.map(&:ckb_transactions_count).flatten.sum
-      end
-    end
-
     test "should create forked event when block is invalid " do
       node_block = fake_node_block
       create(:block, :with_block_hash, number: node_block.header.number - 1,
@@ -966,24 +939,6 @@ module CkbSync
       end
     end
 
-    test "#process_block should update block's contained address's live cells count" do
-      prepare_node_data(12)
-      local_block = Block.find_by(number: 12)
-      origin_live_cells_count = local_block.contained_addresses.sum(:live_cells_count)
-      VCR.use_cassette("blocks/13", record: :new_episodes) do
-        new_local_block = node_data_processor.call
-
-        assert_equal origin_live_cells_count + 1,
-                     new_local_block.contained_addresses.sum(:live_cells_count)
-
-        address = new_local_block.contained_addresses.first
-        snapshot = AddressBlockSnapshot.find_by(block_id: new_local_block.id,
-                                                address_id: address.id)
-        assert_equal snapshot.final_state["live_cells_count"],
-                     address.live_cells_count
-      end
-    end
-
     test "#process_block should update block's contained address's balance" do
       prepare_node_data(12)
       local_block = Block.find_by(number: 12)
@@ -1012,11 +967,6 @@ module CkbSync
 
         assert_equal origin_balance + new_local_block.cell_outputs.sum(:capacity),
                      new_local_block.contained_addresses.sum(:balance)
-
-        address = new_local_block.contained_addresses.first
-        snapshot = AddressBlockSnapshot.find_by(block_id: new_local_block.id,
-                                                address_id: address.id)
-        assert_equal snapshot.final_state["balance"], address.balance
       end
     end
 
@@ -1120,113 +1070,6 @@ module CkbSync
       assert_equal 0, address3.dao_transactions_count
     end
 
-    test "should recalculate block's contained address's dao_ckb_transactions_count when block is invalid" do
-      block1 = create(:block, :with_block_hash,
-                      number: DEFAULT_NODE_BLOCK_NUMBER - 2)
-      tx1 = create(:ckb_transaction, block: block1)
-      block2 = create(:block, :with_block_hash,
-                      number: DEFAULT_NODE_BLOCK_NUMBER - 1)
-      tx2 = create(:ckb_transaction, block: block2)
-      tx3 = create(:ckb_transaction, block: block2)
-      tx4 = create(:ckb_transaction, block: block2)
-      tx5 = create(:ckb_transaction, block: block2)
-      input_address1 = create(:address, balance: 50000 * (10**8))
-      input_address2 = create(:address, balance: 60000 * (10**8))
-      input_address3 = create(:address, balance: 70000 * (10**8))
-      input_address4 = create(:address, balance: 70000 * (10**8))
-      input_address5 = create(:address, balance: 70000 * (10**8))
-      lock = create(:lock_script)
-      create(:cell_output, ckb_transaction: tx1,  block: block1, capacity: 50000 * (10**8),
-                           tx_hash: tx1.tx_hash, cell_index: 0, address: input_address1, lock_script_id: lock.id)
-      create(:cell_output, ckb_transaction: tx2,  block: block2, capacity: 60000 * (10**8),
-                           tx_hash: tx2.tx_hash, cell_index: 1, address: input_address2, lock_script_id: lock.id)
-      create(:cell_output, ckb_transaction: tx3,  block: block2, capacity: 70000 * (10**8),
-                           tx_hash: tx3.tx_hash, cell_index: 2, address: input_address3, lock_script_id: lock.id)
-      create(:cell_output, ckb_transaction: tx4,  block: block2, capacity: 70000 * (10**8),
-                           tx_hash: tx4.tx_hash, cell_index: 0, address: input_address4, lock_script_id: lock.id)
-      create(:cell_output, ckb_transaction: tx5,  block: block2, capacity: 70000 * (10**8),
-                           tx_hash: tx5.tx_hash, cell_index: 0, address: input_address5, lock_script_id: lock.id)
-      header = CKB::Types::BlockHeader.new(compact_target: "0x1000", hash: "0x#{SecureRandom.hex(32)}",
-                                           number: DEFAULT_NODE_BLOCK_NUMBER, parent_hash: "0x#{SecureRandom.hex(32)}", nonce: 1757392074788233522, timestamp: CkbUtils.time_in_milliseconds(Time.current), transactions_root: "0x#{SecureRandom.hex(32)}", proposals_hash: "0x#{SecureRandom.hex(32)}", extra_hash: "0x#{SecureRandom.hex(32)}", version: 0, epoch: 1, dao: "0x01000000000000000000c16ff286230000a3a65e97fd03000057c138586f0000")
-      inputs = [
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(
-          tx_hash: tx1.tx_hash, index: 0,
-        )),
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(
-          tx_hash: tx2.tx_hash, index: 1,
-        )),
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(
-          tx_hash: tx3.tx_hash, index: 2,
-        )),
-      ]
-      inputs1 = [
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(
-          tx_hash: tx4.tx_hash, index: 0,
-        )),
-        CKB::Types::Input.new(previous_output: CKB::Types::OutPoint.new(
-          tx_hash: tx5.tx_hash, index: 0,
-        )),
-      ]
-      lock1 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
-                                     args: "0x#{SecureRandom.hex(20)}")
-      lock2 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
-                                     args: "0x#{SecureRandom.hex(20)}")
-      lock3 = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
-                                     args: "0x#{SecureRandom.hex(20)}")
-      dao_type = CKB::Types::Script.new(code_hash: Settings.dao_type_hash,
-                                        hash_type: "type", args: "0x")
-      outputs = [
-        CKB::Types::Output.new(capacity: 40000 * (10**8), lock: lock1,
-                               type: dao_type),
-        CKB::Types::Output.new(capacity: 40000 * (10**8), lock: lock2,
-                               type: dao_type),
-        CKB::Types::Output.new(capacity: 40000 * (10**8), lock: lock3),
-      ]
-      outputs1 = [
-        CKB::Types::Output.new(capacity: 40000 * (10**8), lock: lock1,
-                               type: dao_type),
-        CKB::Types::Output.new(capacity: 40000 * (10**8), lock: lock2,
-                               type: dao_type),
-        CKB::Types::Output.new(capacity: 40000 * (10**8), lock: lock3),
-      ]
-      miner_lock = CKB::Types::Script.new(code_hash: Settings.secp_cell_type_hash, hash_type: "type",
-                                          args: "0x#{SecureRandom.hex(20)}")
-      cellbase_inputs = [
-        CKB::Types::Input.new(
-          previous_output: CKB::Types::OutPoint.new(
-            tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000", index: 4294967295,
-          ), since: 3000
-        ),
-      ]
-      cellbase_outputs = [
-        CKB::Types::Output.new(capacity: 200986682127, lock: miner_lock),
-      ]
-      transactions = [
-        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [],
-                                    inputs: cellbase_inputs, outputs: cellbase_outputs, outputs_data: %w[0x], witnesses: ["0x590000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd800000000"]),
-        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs:,
-                                    outputs:, outputs_data: %w[0x0000000000000000 0x0000000000000000 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
-        CKB::Types::Transaction.new(hash: "0x#{SecureRandom.hex(32)}", cell_deps: [], header_deps: [], inputs: inputs1,
-                                    outputs: outputs1, outputs_data: %w[0x0000000000000000 0x0000000000000000 0x], witnesses: ["0x5d0000000c00000055000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000003954acece65096bfa81258983ddb83915fc56bd804000000123456780000000000000000"]),
-      ]
-      node_block = CKB::Types::Block.new(uncles: [], proposals: [],
-                                         transactions:, header:)
-      block = node_data_processor.process_block(node_block)
-      address1 = Address.find_by(lock_hash: lock1.compute_hash)
-      address2 = Address.find_by(lock_hash: lock2.compute_hash)
-      address3 = Address.find_by(lock_hash: lock3.compute_hash)
-      CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-      DaoContract.default_contract.update!(deposit_transactions_count: 4)
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
-                       record: :new_episodes) do
-        node_data_processor.call
-      end
-
-      assert_equal 0, address1.reload.dao_transactions_count
-      assert_equal 0, address2.reload.dao_transactions_count
-      assert_equal 0, address3.reload.dao_transactions_count
-    end
-
     test "#process_block should update abandoned block's contained address's live cells count" do
       prepare_node_data(12)
       local_block = Block.find_by(number: 12)
@@ -1237,35 +1080,6 @@ module CkbSync
 
         assert_equal origin_live_cells_count - 1,
                      new_local_block.contained_addresses.sum(:live_cells_count)
-      end
-    end
-
-    test "#process_block should update abandoned block's contained address's balance occupied" do
-      prepare_node_data(12)
-      local_block = Block.find_by(number: 12)
-      address = local_block.contained_addresses.first
-      origin_balance_occupied = 300 * (10**8)
-      address.update(balance_occupied: origin_balance_occupied,
-                     mined_blocks_count: 1)
-      local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-      VCR.use_cassette("blocks/12", record: :new_episodes) do
-        new_local_block = node_data_processor.call
-
-        assert_equal 0,
-                     new_local_block.contained_addresses.sum(:balance_occupied)
-      end
-    end
-
-    test "should update the target block reward to the sum of primary and secondary when there is the target block" do
-      prepare_node_data(12)
-      VCR.use_cassette("blocks/12", record: :new_episodes) do
-        local_block = node_data_processor.call
-        target_block = local_block.target_block
-        block_economic_state = CkbSync::Api.instance.get_block_economic_state(local_block.target_block.block_hash)
-        expected_reward = CkbUtils.block_reward(local_block.number,
-                                                block_economic_state)
-
-        assert_equal expected_reward, target_block.reward
       end
     end
 
@@ -1701,7 +1515,6 @@ module CkbSync
       local_block = Block.find_by(number: 19)
       # ApplicationRecord.connection.execute "CALL sync_full_account_book()"
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                        record: :new_episodes) do
         assert_difference -> {

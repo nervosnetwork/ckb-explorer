@@ -79,8 +79,6 @@ class CellOutput < ApplicationRecord
 
   attribute :tx_hash, :ckb_hash
 
-  attr_accessor :raw_address
-
   scope :consumed_after, ->(block_timestamp) {
                            where("consumed_block_timestamp >= ?", block_timestamp)
                          }
@@ -110,8 +108,6 @@ class CellOutput < ApplicationRecord
   scope :by_scripts, ->(lock_script_ids, type_script_ids) { where("lock_script_id IN (?) OR type_script_id IN (?)", lock_script_ids, type_script_ids) }
   scope :established_status, -> { where(status: ["live", "dead"]) }
 
-  before_create :setup_address
-
   def data=(new_data)
     @data = new_data
     if new_data
@@ -132,13 +128,6 @@ class CellOutput < ApplicationRecord
 
   def binary_data
     cell_datum&.data
-  end
-
-  def setup_address
-    if raw_address
-      self.address = Address.find_or_create_by_address_hash(raw_address,
-                                                            block_timestamp)
-    end
   end
 
   # @return [Boolean]
