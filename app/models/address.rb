@@ -51,28 +51,20 @@ class Address < ApplicationRecord
   def self.find_or_create_by_address_hash(address_hash, block_timestamp = 0)
     parsed = CkbUtils.parse_address(address_hash)
     lock_hash = parsed.script.compute_hash
-    lock_script = LockScript.find_by(
-      code_hash: parsed.code_hash,
-      hash_type: parsed.hash_type,
-      args: parsed.args,
-    )
 
-    create_with(
-      address_hash: CkbUtils.generate_address(parsed.script),
-      block_timestamp:,
-      lock_script_id: lock_script&.id,
-    ).find_or_create_by lock_hash:
-  end
+    key = "lock_script_hash_#{lock_hash}"
+    lock_script_id = Rails.cache.read(key) || LockScript.find_by(script_hash: lock_hash)&.id
 
-  def self.find_or_create_by_lock(lock_script)
-    lock_hash = lock_script.compute_hash
-    address_hash = CkbUtils.generate_address(lock_script)
-    address = Address.find_or_initialize_by(lock_hash:)
-    # force use new version address
-    address.address_hash = address_hash
-    address.lock_script = LockScript
-    address.save!
-    address
+    address_id = Rails.cache.read("address_lock_hash_#{lock_hash}")
+    if address_id
+      return address_id
+    else
+      create_with(
+        address_hash: CkbUtils.generate_address(parsed.script),
+        block_timestamp:,
+        lock_script_id: lock_script_id,
+      ).find_or_create_by(lock_hash:)&.id
+    end
   end
 
   # @param lock_script [CKB::Types::Script]
