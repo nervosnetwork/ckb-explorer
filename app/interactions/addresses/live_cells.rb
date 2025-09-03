@@ -63,7 +63,8 @@ module Addresses
         scope.where(lock_script_id: filtered_ids)
       when "deployment"
         scope_ids = scope.pluck(:id)
-        matched_ids = Contract.where(deployed_cell_output_id: scope_ids).pluck(:deployed_cell_output_id)
+        deployed_ids = Contract.pluck(:deployed_cell_output_id)
+        matched_ids = scope_ids & deployed_ids
         scope.where(id: matched_ids)
       else
         CellOutput.none
