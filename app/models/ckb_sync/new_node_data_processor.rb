@@ -244,8 +244,13 @@ module CkbSync
           withdraw_transaction_ids << dao_input.ckb_transaction_id
         end
         if dao_events_attributes.present?
-          dao_events_attributes.each_slice(500) do |batch|
-            DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type]) 
+          if CkbTransaction.where(tx_status: :pending).count == 0
+            data = dao_events_attributes.map{|kv| kv.values }
+            copy_to_db(DaoEvent.table_name, dao_events_attributes.first.keys, data)
+          else
+            dao_events_attributes.each_slice(500) do |batch|
+              DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type]) 
+            end
           end
         end
         if updated_deposit_dao_events_attributes.present?
@@ -1248,7 +1253,7 @@ _prev_outputs, index = nil)
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
       binary_hashes = CkbUtils.hexes_to_bins_sql(hashes)
-      pending_txs = CkbTransaction.where("tx_hash IN (#{binary_hashes})").where(tx_status: :pending).pluck(
+      pending_txs = CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").pluck(
         :tx_hash, :confirmation_time
       )
       CkbTransaction.where("tx_hash IN (#{binary_hashes}) AND tx_status = 0").update_all tx_status: "committed"
@@ -1512,6 +1517,23 @@ _prev_outputs, index = nil)
     def benchmark(method_name = nil, *args)
       ApplicationRecord.benchmark method_name do
         send(method_name, *args)
+      end
+    end
+
+    def copy_to_db(table, columns, data)
+      conn = ActiveRecord::Base.connection.raw_connection
+
+      begin
+        conn.copy_data("COPY #{table} (#{columns.join(', ')}) FROM STDIN WITH (FORMAT csv)") do
+          data.each do |row|
+            conn.put_copy_data(row.join(','))
+          end
+        end
+        puts "The data has been imported successfully, a total of #{data.size} rows."
+      rescue => e
+        puts "COPY import failed: #{e.message}"
+      ensure
+        conn&.put_copy_end
       end
     end
 
