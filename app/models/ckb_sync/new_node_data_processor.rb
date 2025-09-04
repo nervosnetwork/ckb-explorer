@@ -1079,6 +1079,10 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, tok
           address_id = Rails.cache.read("address_lock_hash_#{lock_script_hash}")
           unless address_id
             address_id = Address.find_by(lock_hash: lock_script_hash)&.id
+            unless address_id
+              lock_script_id = Rails.cache.read("lock_script_hash_#{lock_script_hash}") || LockScript.find_by(script_hash: lock_script_hash)&.id
+              address_id = Address.find_or_create_address(item.lock, local_block.timestamp, lock_script_id).id
+            end
             Rails.cache.write("address_lock_hash_#{lock_script_hash}", address_id) if address_id
           end
           cell_data = node_block.transactions[tx_index].outputs_data[cell_index]
