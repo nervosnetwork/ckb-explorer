@@ -107,10 +107,13 @@ class StatisticInfo < ApplicationRecord
   end
 
   define_logic :transaction_fee_rates do
+    ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
     txs = CkbTransaction.tx_committed.
       where("bytes > 0 and transaction_fee > 0 and confirmation_time > 0").
       order("id desc").limit(10000).
       pluck(:id, :created_at, :transaction_fee, :bytes, :confirmation_time)
+    ActiveRecord::Base.connection.execute("RESET statement_timeout")
+    
     txs.map do |id, created_at, transaction_fee, bytes, confirmation_time|
       {
         id:,
