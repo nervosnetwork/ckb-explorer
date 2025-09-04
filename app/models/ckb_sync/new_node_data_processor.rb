@@ -10,7 +10,7 @@ module CkbSync
     value :reorg_started_at, global: true
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :target_block_number, :addrs_changes,
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
-                  :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes, :no_pending_txs
+                  :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes, :no_pending_txs, :redis_keys
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -45,11 +45,14 @@ module CkbSync
     rescue StandardError => e
       Rails.logger.error e.message
       puts e.backtrace.join("\n")
+      Rails.cache.delete_multi(@redis_keys)
       raise e
     end
 
     def process_block(node_block, refresh_balance: true)
       local_block = nil
+      @no_pending_txs = false
+      @redis_keys = []
 
       ApplicationRecord.transaction do
         # build node data
@@ -924,9 +927,11 @@ module CkbSync
           script_hash = item.lock.compute_hash
           key = "lock_script_hash_#{script_hash}"
           lock_script_id = Rails.cache.read(key) || LockScript.find_by(script_hash: script_hash)&.id
-          unless Rails.cache.exist?("address_lock_hash_#{script_hash}")
+          address_redis_key = "address_lock_hash_#{script_hash}"
+          unless Rails.cache.exist?(address_redis_key)
             address = Address.find_or_create_address(item.lock, local_block.timestamp, lock_script_id)
-            Rails.cache.write("address_lock_hash_#{script_hash}", address.id)
+            Rails.cache.write(address_redis_key, address.id)
+            @redis_keys << address_redis_key
           end
         end
       end
@@ -943,6 +948,7 @@ module CkbSync
           unless Rails.cache.exist?(key)
             if lock_script = LockScript.find_by(script_hash: script_hash)
               Rails.cache.write(key, lock_script.id)
+              @redis_keys << key
             else
               locks_attributes << script_attributes(output.lock, script_hash)
             end
@@ -954,6 +960,7 @@ module CkbSync
             unless Rails.cache.exist?(key)
               if type_script = TypeScript.find_by(script_hash: script_hash)
                 Rails.cache.write(key, type_script.id)
+                @redis_keys << key
               else
                 types_attributes << script_attributes(output.type, script_hash)
               end
@@ -1076,10 +1083,18 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, tok
         end
         items.each do |item|
           lock_script_hash = item.lock.compute_hash
-          address_id = Rails.cache.read("address_lock_hash_#{lock_script_hash}")
+          address_key = "address_lock_hash_#{lock_script_hash}"
+          address_id = Rails.cache.read(address_key)
           unless address_id
             address_id = Address.find_by(lock_hash: lock_script_hash)&.id
-            Rails.cache.write("address_lock_hash_#{lock_script_hash}", address_id) if address_id
+            unless address_id
+              lock_script_id = Rails.cache.read("lock_script_hash_#{lock_script_hash}") || LockScript.find_by(script_hash: lock_script_hash)&.id
+              address_id = Address.find_or_create_address(item.lock, local_block.timestamp, lock_script_id).id
+            end
+            if address
+              Rails.cache.write(address_key, address_id)
+              @redis_keys << key
+            end
           end
           cell_data = node_block.transactions[tx_index].outputs_data[cell_index]
           change_rec = addrs_changes[address_id]
@@ -1536,10 +1551,12 @@ _prev_outputs, index = nil)
           script_hash: script_hash
         ).id
         Rails.cache.write(key, lock_script_id)
+        @redis_keys << key
       end
       unless Rails.cache.exist?("address_lock_hash_#{script_hash}")
         address = Address.find_or_create_address(lock_script, block_timestamp, lock_script_id)
         Rails.cache.write("address_lock_hash_#{script_hash}", address.id)
+        @redis_keys << "address_lock_hash_#{script_hash}"
       end
     end
 

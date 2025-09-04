@@ -99,7 +99,7 @@ class Address < ApplicationRecord
         },
       )
     end
-    address.save!
+    address.save! if address.changed?
     address
   end
 
