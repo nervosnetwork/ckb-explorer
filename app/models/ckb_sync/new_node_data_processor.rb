@@ -10,7 +10,7 @@ module CkbSync
     value :reorg_started_at, global: true
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :target_block_number, :addrs_changes,
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
-                  :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes
+                  :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes, :no_pending_txs
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -245,13 +245,21 @@ module CkbSync
         end
         if dao_events_attributes.present?
           dao_events_attributes.each_slice(500) do |batch|
-            DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type]) 
+            if @no_pending_txs
+              DaoEvent.insert_all(batch) 
+            else
+              DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type]) 
+            end
           end
         end
         if updated_deposit_dao_events_attributes.present?
           updated_deposit_dao_events_attributes.each_slice(500) do |batch|
-            DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type],
-                                update_only: %i[consumed_transaction_id consumed_block_timestamp])
+            if @no_pending_txs
+              DaoEvent.insert_all(batch)
+            else
+              DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type],
+                update_only: %i[consumed_transaction_id consumed_block_timestamp])
+            end
           end
         end
       end
@@ -311,14 +319,22 @@ module CkbSync
         end
         if dao_events_attributes.present?
           dao_events_attributes.each_slice(500) do |batch|
-            DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type])
+            if @no_pending_txs
+              DaoEvent.insert_all(batch)
+            else
+              DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type])
+            end
           end
         end
         
         if updated_withdraw_dao_events_attributes.present?
           updated_withdraw_dao_events_attributes.each_slice(500) do |batch|
-            DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type],
-                                                                      update_only: %i[consumed_transaction_id consumed_block_timestamp])
+            if @no_pending_txs
+              DaoEvent.insert_all(batch)
+            else
+              DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type],
+              update_only: %i[consumed_transaction_id consumed_block_timestamp])
+            end
           end
         end
       end
@@ -367,7 +383,11 @@ module CkbSync
         end
         if dao_events_attributes.present?
           dao_events_attributes.each_slice(500) do |batch|
-            DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type])
+            if @no_pending_txs
+              DaoEvent.insert_all(batch)
+            else
+              DaoEvent.upsert_all(batch, unique_by: %i[block_id ckb_transaction_id cell_index event_type])
+            end
           end
         end
         Rails.cache.delete("unmade_dao_interests")
@@ -737,28 +757,38 @@ module CkbSync
 
       if ckb_transactions_attributes.present?
         ckb_transactions_attributes.each_slice(500) do |batch|
-          CkbTransaction.upsert_all(batch,
-            unique_by: %i[id tx_status])
+          if @no_pending_txs
+            CkbTransaction.insert_all(batch)
+          else
+            CkbTransaction.upsert_all(batch, unique_by: %i[id tx_status])
+          end
         end
       end
       if full_tx_address_ids.present?
         full_tx_address_ids.each_slice(500) do |batch|
-          AccountBook.upsert_all batch,
-            unique_by: %i[address_id ckb_transaction_id]
+          if @no_pending_txs
+            AccountBook.insert_all batch
+          else
+            AccountBook.upsert_all batch, unique_by: %i[address_id ckb_transaction_id]
+          end
         end
       end
       if full_tx_udt_ids.present?
         full_tx_udt_ids.each_slice(500) do |batch|
-          UdtTransaction.upsert_all batch,
-                                    unique_by: %i[udt_id
-                                                  ckb_transaction_id]
+          if @no_pending_txs
+            UdtTransaction.insert_all batch
+          else
+            UdtTransaction.upsert_all batch, unique_by: %i[udt_id ckb_transaction_id]
+          end
         end
       end
       if full_udt_address_ids.present?
         full_udt_address_ids.each_slice(500) do |batch|
-          AddressUdtTransaction.upsert_all batch,
-                                          unique_by: %i[address_id
-                                                        ckb_transaction_id]
+          if @no_pending_txs
+            AddressUdtTransaction.insert_all batch
+          else
+            AddressUdtTransaction.upsert_all batch, unique_by: %i[address_id ckb_transaction_id]
+          end
         end
       end
     end
@@ -795,8 +825,11 @@ module CkbSync
         CellOutput.pending.where("tx_hash IN (#{binary_hashes})").update_all(status: :live)
         id_hashes = []
         cell_outputs_attributes.each_slice(500) do |batch|
-          id_hashes.concat CellOutput.upsert_all(batch, unique_by: %i[tx_hash cell_index status],
-                                                                   returning: %i[id data_hash])
+          if @no_pending_txs
+            id_hashes.concat CellOutput.insert_all(batch, returning: %i[id data_hash])
+          else
+            id_hashes.concat CellOutput.upsert_all(batch, unique_by: %i[tx_hash cell_index status], returning: %i[id data_hash])
+          end
         end
         cell_data_attrs = []
 
@@ -812,7 +845,11 @@ module CkbSync
 
         if cell_data_attrs.present?
           cell_data_attrs.each_slice(500) do |batch|
-            CellDatum.upsert_all(batch, unique_by: [:cell_output_id])
+            if @no_pending_txs
+              CellDatum.insert_all(batch)
+            else
+              CellDatum.upsert_all(batch, unique_by: [:cell_output_id])
+            end
           end
         end
       end
@@ -842,8 +879,11 @@ module CkbSync
       end
       if cell_deps_attrs.present?
         cell_deps_attrs.each_slice(500) do |batch|
-          CellDependency.upsert_all(batch,
-                                    unique_by: %i[ckb_transaction_id contract_cell_id dep_type])
+          if @no_pending_txs
+            CellDependency.insert_all(batch)
+          else
+            CellDependency.upsert_all(batch, unique_by: %i[ckb_transaction_id contract_cell_id dep_type])
+          end
         end
       end
 
@@ -853,16 +893,24 @@ module CkbSync
                         prev_outputs, addrs_changes, token_transfer_ckb_tx_ids)
 
       cell_inputs_attributes.each_slice(500) do |batch|
-        CellInput.upsert_all(batch,
-                            unique_by: %i[ckb_transaction_id index])
+        if @no_pending_txs
+          CellInput.insert_all(batch)
+        else
+          CellInput.upsert_all(batch, unique_by: %i[ckb_transaction_id index])
+        end
       end
       if prev_cell_outputs_attributes.present?
         cell_ouput_ids = prev_cell_outputs_attributes.pluck(:id)
         CellOutput.live.where(id: cell_ouput_ids).update_all(status: :dead)
         prev_cell_outputs_attributes.each_slice(500) do |batch|
-          CellOutput.upsert_all(batch,
-                              unique_by: %i[tx_hash cell_index status],
-                              record_timestamps: true)
+          if @no_pending_txs
+            CellOutput.insert_all(batch,
+                                record_timestamps: true)
+          else
+            CellOutput.upsert_all(batch,
+                                unique_by: %i[tx_hash cell_index status],
+                                record_timestamps: true)
+          end
         end
       end
 
@@ -1248,15 +1296,22 @@ _prev_outputs, index = nil)
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
       binary_hashes = CkbUtils.hexes_to_bins_sql(hashes)
-      pending_txs = CkbTransaction.where("tx_hash IN (#{binary_hashes})").where(tx_status: :pending).pluck(
+      pending_txs = CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").pluck(
         :tx_hash, :confirmation_time
       )
+      @no_pending_txs = (@no_pending_txs)
       CkbTransaction.where("tx_hash IN (#{binary_hashes}) AND tx_status = 0").update_all tx_status: "committed"
       txs = []
+      
       ckb_transactions_attributes.each_slice(500) do |batch|
-        txs.concat CkbTransaction.upsert_all(batch, unique_by: %i[tx_status tx_hash],
-                                                                   returning: %w(id tx_hash tx_index block_timestamp block_number created_at))
-      end 
+        if @no_pending_txs            
+          txs.concat CkbTransaction.insert_all(batch,
+                                      returning: %w(id tx_hash tx_index block_timestamp block_number created_at))
+        else
+          txs.concat CkbTransaction.upsert_all(batch, unique_by: %i[tx_status tx_hash],
+                                      returning: %w(id tx_hash tx_index block_timestamp block_number created_at))
+        end
+      end
 
       if pending_txs.any?
         hash_to_pool_times = pending_txs.to_h
@@ -1271,8 +1326,7 @@ _prev_outputs, index = nil)
             }
           end
         confirmation_time_attrs.each_slice(500) do |batch|
-          CkbTransaction.upsert_all(batch, update_only: [:confirmation_time],
-          unique_by: %i[id tx_status])
+          CkbTransaction.upsert_all(batch, update_only: [:confirmation_time], unique_by: %i[id tx_status])
         end
       end
 
@@ -1297,8 +1351,11 @@ _prev_outputs, index = nil)
       end
       if header_deps_attrs.present?
         header_deps_attrs.each_slice(500) do |batch|
-          HeaderDependency.upsert_all(batch,
-            unique_by: %i[ckb_transaction_id index])
+          if @no_pending_txs
+            HeaderDependency.insert_all(batch)
+          else
+            HeaderDependency.upsert_all(batch, unique_by: %i[ckb_transaction_id index])
+          end
         end
       end
 
@@ -1321,9 +1378,11 @@ _prev_outputs, index = nil)
 
       if witnesses_attrs.present?
         witnesses_attrs.each_slice(500) do |batch|
-          Witness.upsert_all(batch,
-                            unique_by: %i[ckb_transaction_id
-                                          index])
+          if @no_pending_txs
+            Witness.insert_all(batch)
+          else
+            Witness.upsert_all(batch, unique_by: %i[ckb_transaction_id index])
+          end
         end
       end
 
