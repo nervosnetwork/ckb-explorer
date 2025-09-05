@@ -417,11 +417,10 @@ module CkbSync
         next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
                                                 spore_cell did_cell omiga_inscription xudt xudt_compatible))
 
-        address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
-        udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type:).select(:id,
+        udt_account = UdtAccount.where(address_id: udt_output.address_id).where(type_hash: udt_output.type_hash, udt_type:).select(:id,
                                                                                                     :created_at).first
-        amount = udt_account_amount(udt_type, udt_output.type_hash, address)
+        amount = udt_account_amount(udt_type, udt_output.type_hash, udt_output.address_id)
         nft_token_id =
           case udt_type
           when "nrc_721_token"
@@ -448,11 +447,10 @@ module CkbSync
           next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
                                                   spore_cell did_cell omiga_inscription xudt xudt_compatible))
 
-          address = Address.find(udt_output.address_id)
           udt_type = udt_type(udt_output.cell_type)
-          udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type:).select(:id,
+          udt_account = UdtAccount.where(address_id: udt_output.address_id).where(type_hash: udt_output.type_hash, udt_type:).select(:id,
                                                                                                       :created_at).first
-          amount = udt_account_amount(udt_type, udt_output.type_hash, address)
+          amount = udt_account_amount(udt_type, udt_output.type_hash, udt_output.address_id)
           udt = Udt.where(type_hash: udt_output.type_hash, udt_type:).select(:id, :udt_type, :full_name,
                                                                              :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
           if udt_account.present?
@@ -461,7 +459,7 @@ module CkbSync
               udt_accounts_attributes << { id: udt_account.id, amount:,
                                            created_at: udt.created_at }
             when "m_nft_token", "nrc_721_token", "spore_cell", "did_cell"
-              udt_account.destroy unless address.cell_outputs.live.where(cell_type: udt_type).where(type_hash: udt_output.type_hash).exists?
+              udt_account.destroy unless CellOutput.live.where(address_id: udt_output.address_id).where(cell_type: udt_type).where(type_hash: udt_output.type_hash).exists?
             end
           end
         end
@@ -490,12 +488,12 @@ module CkbSync
       cell_type == "udt" ? "sudt" : cell_type
     end
 
-    def udt_account_amount(udt_type, type_hash, address)
+    def udt_account_amount(udt_type, type_hash, address_id)
       case udt_type
       when "sudt", "ssri"
-        address.cell_outputs.live.udt.where(type_hash:).sum(:udt_amount)
+        CellOutput.live.where(address_id:).udt.where(type_hash:).sum(:udt_amount)
       when "xudt", "xudt_compatible", "omiga_inscription", "m_nft_token", "spore_cell", "did_cell"
-        address.cell_outputs.live.where(cell_type: udt_type).where(type_hash:).sum(:udt_amount)
+        CellOutput.live.where(address_id:).where(cell_type: udt_type).where(type_hash:).sum(:udt_amount)
       else
         0
       end
