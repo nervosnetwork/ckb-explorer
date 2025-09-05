@@ -442,9 +442,9 @@ module CkbSync
       end
 
       local_block.ckb_transactions.pluck(:id).each do |tx_id| # iterator over each tx id for better sql performance
-        old = CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id, :type_hash, :cell_type)
+        # old = CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id, :type_hash, :cell_type)
         cell_outputs = @tx_previous_outputs[tx_id] || []
-        raise "debug error" if old.map(&:id).sum != cell_outputs.map(&:id).sum
+        # raise "debug error" if old.map(&:id).sum != cell_outputs.map(&:id).sum
         cell_outputs.each do |udt_output|
           next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
                                                   spore_cell did_cell omiga_inscription xudt xudt_compatible))
