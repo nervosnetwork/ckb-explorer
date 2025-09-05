@@ -28,7 +28,7 @@ module CkbSync
       return if target_block_number > tip_block_number - @offset.to_i
 
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
-      @target_block = target_block
+      
       if forked?(target_block, local_tip_block)
         self.reorg_started_at = Time.now
         res = RevertBlockJob.perform_now(local_tip_block)
