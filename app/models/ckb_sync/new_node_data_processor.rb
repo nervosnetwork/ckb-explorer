@@ -10,7 +10,7 @@ module CkbSync
     value :reorg_started_at, global: true
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :target_block_number, :addrs_changes,
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
-                  :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes, :redis_keys
+                  :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes, :redis_keys, :tx_previous_outputs
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -51,8 +51,8 @@ module CkbSync
 
     def process_block(node_block, refresh_balance: true)
       local_block = nil
-      @no_pending_txs = false
       @redis_keys = []
+      @tx_previous_outputs = {}
 
       ApplicationRecord.transaction do
         # build node data
@@ -442,8 +442,10 @@ module CkbSync
       end
 
       local_block.ckb_transactions.pluck(:id).each do |tx_id| # iterator over each tx id for better sql performance
-        CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id,
-                                                       :type_hash, :cell_type).each do |udt_output|
+        old = CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id, :type_hash, :cell_type)
+        cell_outputs = @tx_previous_outputs[tx_id] || []
+        raise "debug error" if old.map(&:id).sum != cell_outputs.map(&:id).sum
+        cell_outputs.each do |udt_output|
           next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
                                                   spore_cell did_cell omiga_inscription xudt xudt_compatible))
 
@@ -1205,6 +1207,9 @@ _prev_outputs, index = nil)
         # previous_output = prev_outputs["#{input.previous_output.tx_hash}-#{input.previous_output.index}"]
         previous_output = CellOutput.find_by tx_hash: input.previous_output.tx_hash,
                                              cell_index: input.previous_output.index
+
+        @tx_previous_outputs[ckb_transaction_id] = [] if @tx_previous_outputs[ckb_transaction_id] == nil
+        @tx_previous_outputs[ckb_transaction_id] << previous_output
 
         {
           cell_input: {
