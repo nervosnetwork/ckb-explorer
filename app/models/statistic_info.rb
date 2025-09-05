@@ -90,7 +90,9 @@ class StatisticInfo < ApplicationRecord
   end
 
   define_logic :address_balance_ranking do
+    ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
     addresses = Address.visible.where("balance > 0").order(balance: :desc).limit(50)
+    ActiveRecord::Base.connection.execute("RESET statement_timeout")
     addresses.each.with_index(1).map do |address, index|
       { address: address.address_hash, balance: address.balance.to_s,
         ranking: index.to_s }
