@@ -10,7 +10,7 @@ module CkbSync
     value :reorg_started_at, global: true
     attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :target_block_number, :addrs_changes,
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
-                  :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes, :redis_keys
+                  :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes, :redis_keys, :tx_previous_outputs
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -28,6 +28,7 @@ module CkbSync
       return if target_block_number > tip_block_number - @offset.to_i
 
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
+      
       if forked?(target_block, local_tip_block)
         self.reorg_started_at = Time.now
         res = RevertBlockJob.perform_now(local_tip_block)
@@ -51,8 +52,8 @@ module CkbSync
 
     def process_block(node_block, refresh_balance: true)
       local_block = nil
-      @no_pending_txs = false
       @redis_keys = []
+      @tx_previous_outputs = {}
 
       ApplicationRecord.transaction do
         # build node data
@@ -417,11 +418,10 @@ module CkbSync
         next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
                                                 spore_cell did_cell omiga_inscription xudt xudt_compatible))
 
-        address = Address.find(udt_output.address_id)
         udt_type = udt_type(udt_output.cell_type)
-        udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type:).select(:id,
+        udt_account = UdtAccount.where(address_id: udt_output.address_id).where(type_hash: udt_output.type_hash, udt_type:).select(:id,
                                                                                                     :created_at).first
-        amount = udt_account_amount(udt_type, udt_output.type_hash, address)
+        amount = udt_account_amount(udt_type, udt_output.type_hash, udt_output.address_id)
         nft_token_id =
           case udt_type
           when "nrc_721_token"
@@ -443,16 +443,17 @@ module CkbSync
       end
 
       local_block.ckb_transactions.pluck(:id).each do |tx_id| # iterator over each tx id for better sql performance
-        CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id,
-                                                       :type_hash, :cell_type).each do |udt_output|
+        # old = CellOutput.where(consumed_by_id: tx_id).select(:id, :address_id, :type_hash, :cell_type)
+        cell_outputs = @tx_previous_outputs[tx_id] || []
+        # raise "debug error" if old.map(&:id).sum != cell_outputs.map(&:id).sum
+        cell_outputs.each do |udt_output|
           next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
                                                   spore_cell did_cell omiga_inscription xudt xudt_compatible))
 
-          address = Address.find(udt_output.address_id)
           udt_type = udt_type(udt_output.cell_type)
-          udt_account = address.udt_accounts.where(type_hash: udt_output.type_hash, udt_type:).select(:id,
+          udt_account = UdtAccount.where(address_id: udt_output.address_id).where(type_hash: udt_output.type_hash, udt_type:).select(:id,
                                                                                                       :created_at).first
-          amount = udt_account_amount(udt_type, udt_output.type_hash, address)
+          amount = udt_account_amount(udt_type, udt_output.type_hash, udt_output.address_id)
           udt = Udt.where(type_hash: udt_output.type_hash, udt_type:).select(:id, :udt_type, :full_name,
                                                                              :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
           if udt_account.present?
@@ -461,7 +462,7 @@ module CkbSync
               udt_accounts_attributes << { id: udt_account.id, amount:,
                                            created_at: udt.created_at }
             when "m_nft_token", "nrc_721_token", "spore_cell", "did_cell"
-              udt_account.destroy unless address.cell_outputs.live.where(cell_type: udt_type).where(type_hash: udt_output.type_hash).exists?
+              udt_account.destroy unless CellOutput.live.where(address_id: udt_output.address_id).where(cell_type: udt_type).where(type_hash: udt_output.type_hash).exists?
             end
           end
         end
@@ -490,12 +491,12 @@ module CkbSync
       cell_type == "udt" ? "sudt" : cell_type
     end
 
-    def udt_account_amount(udt_type, type_hash, address)
+    def udt_account_amount(udt_type, type_hash, address_id)
       case udt_type
       when "sudt", "ssri"
-        address.cell_outputs.live.udt.where(type_hash:).sum(:udt_amount)
+        CellOutput.live.where(address_id:).udt.where(type_hash:).sum(:udt_amount)
       when "xudt", "xudt_compatible", "omiga_inscription", "m_nft_token", "spore_cell", "did_cell"
-        address.cell_outputs.live.where(cell_type: udt_type).where(type_hash:).sum(:udt_amount)
+        CellOutput.live.where(address_id:).where(cell_type: udt_type).where(type_hash:).sum(:udt_amount)
       else
         0
       end
@@ -1208,6 +1209,9 @@ _prev_outputs, index = nil)
         previous_output = CellOutput.find_by tx_hash: input.previous_output.tx_hash,
                                              cell_index: input.previous_output.index
 
+        @tx_previous_outputs[ckb_transaction_id] = [] if @tx_previous_outputs[ckb_transaction_id] == nil
+        @tx_previous_outputs[ckb_transaction_id] << previous_output
+
         {
           cell_input: {
             ckb_transaction_id:,
@@ -1229,7 +1233,7 @@ _prev_outputs, index = nil)
             cell_index: input.previous_output.index,
             status: "dead",
             consumed_by_id: ckb_transaction_id,
-            consumed_block_timestamp: CkbTransaction.find(ckb_transaction_id).block_timestamp,
+            consumed_block_timestamp: @local_block.timestamp,
           },
           capacity: previous_output.capacity,
           type_hash: previous_output.type_hash,
@@ -1266,7 +1270,7 @@ _prev_outputs, index = nil)
       pending_txs = CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").pluck(
         :tx_hash, :confirmation_time
       )
-      CkbTransaction.where("tx_hash IN (#{binary_hashes}) AND tx_status = 0").update_all tx_status: "committed"
+      CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").update_all tx_status: "committed" if pending_txs.size > 0
       txs = []
       ckb_transactions_attributes.each_slice(500) do |batch|
         txs.concat CkbTransaction.upsert_all(batch, unique_by: %i[tx_status tx_hash],
