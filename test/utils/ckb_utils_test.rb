@@ -253,7 +253,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
 
       assert_equal 10**8 * 3,
                    CkbUtils.ckb_transaction_fee(ckb_transaction,
-                                                input_capacities[ckb_transaction.id].sum, output_capacities[ckb_transaction.id].sum)
+                                                input_capacities[ckb_transaction.id].sum, output_capacities[ckb_transaction.id].sum, ckb_transaction.input_cells.to_a)
     end
   end
 
