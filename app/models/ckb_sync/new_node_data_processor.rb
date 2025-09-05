@@ -28,6 +28,7 @@ module CkbSync
       return if target_block_number > tip_block_number - @offset.to_i
 
       target_block = CkbSync::Api.instance.get_block_by_number(target_block_number)
+      @target_block = target_block
       if forked?(target_block, local_tip_block)
         self.reorg_started_at = Time.now
         res = RevertBlockJob.perform_now(local_tip_block)
@@ -1232,7 +1233,7 @@ _prev_outputs, index = nil)
             cell_index: input.previous_output.index,
             status: "dead",
             consumed_by_id: ckb_transaction_id,
-            consumed_block_timestamp: CkbTransaction.find(ckb_transaction_id).block_timestamp,
+            consumed_block_timestamp: @local_block.timestamp,
           },
           capacity: previous_output.capacity,
           type_hash: previous_output.type_hash,
@@ -1269,7 +1270,7 @@ _prev_outputs, index = nil)
       pending_txs = CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").pluck(
         :tx_hash, :confirmation_time
       )
-      CkbTransaction.where("tx_hash IN (#{binary_hashes}) AND tx_status = 0").update_all tx_status: "committed"
+      CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").update_all tx_status: "committed" if pending_txs.size > 0
       txs = []
       ckb_transactions_attributes.each_slice(500) do |batch|
         txs.concat CkbTransaction.upsert_all(batch, unique_by: %i[tx_status tx_hash],
