@@ -1263,7 +1263,7 @@ _prev_outputs, index = nil)
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
       binary_hashes = CkbUtils.hexes_to_bins_sql(hashes)
-      pending_txs = CkbTransaction.where("tx_hash IN (#{binary_hashes})").where(tx_status: :pending).pluck(
+      pending_txs = CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").pluck(
         :tx_hash, :confirmation_time
       )
       CkbTransaction.where("tx_hash IN (#{binary_hashes}) AND tx_status = 0").update_all tx_status: "committed"
