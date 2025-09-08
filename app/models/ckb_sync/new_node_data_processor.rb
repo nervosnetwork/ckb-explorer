@@ -560,7 +560,7 @@ module CkbSync
         total_transaction_fee: local_block.ckb_transactions.sum(:transaction_fee),
         ckb_transactions_count: local_block.ckb_transactions.count,
         live_cell_changes: local_block.ckb_transactions.sum(&:live_cell_changes),
-        address_ids: @contained_address_ids.flatten.uniq
+        address_ids: @contained_address_ids.map(&:to_a).flatten.uniq
       )
     end
 
