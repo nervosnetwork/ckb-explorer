@@ -19,7 +19,7 @@ class Address < ApplicationRecord
 
   validates :balance, :ckb_transactions_count, :interest, :dao_deposit,
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-  validates :lock_hash, presence: true, uniqueness: true
+  validates :lock_hash, presence: true, uniqueness: true, on: :create
 
   scope :visible, -> { where(visible: true) }
   scope :created_after, ->(block_timestamp) { where("block_timestamp >= ?", block_timestamp) }
