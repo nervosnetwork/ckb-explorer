@@ -186,7 +186,7 @@ class CkbUtils
     end
 
     if tx_previous_outputs.any?{|element| element.cell_type == "nervos_dao_withdrawing" }
-      dao_withdraw_tx_fee(ckb_transaction, tx_previous_outputs, tx_previous_outputs)
+      dao_withdraw_tx_fee(ckb_transaction, tx_previous_outputs)
     else
       normal_tx_fee(input_capacities, output_capacities)
     end
@@ -260,7 +260,7 @@ class CkbUtils
     input_capacities - output_capacities
   end
 
-  def self.dao_withdraw_tx_fee(ckb_transaction, dao_withdraw_tx_fee, tx_previous_outputs)
+  def self.dao_withdraw_tx_fee(ckb_transaction, tx_previous_outputs)
     nervos_dao_withdrawing_cells = tx_previous_outputs.select{|element| element.cell_type == "nervos_dao_withdrawing" }
 
     interests =
