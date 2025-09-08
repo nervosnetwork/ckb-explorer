@@ -1204,7 +1204,7 @@ _prev_outputs, index = nil)
         }
       else
         # previous_output = prev_outputs["#{input.previous_output.tx_hash}-#{input.previous_output.index}"]
-        previous_output = CellOutput.find_by tx_hash: input.previous_output.tx_hash,
+        previous_output = CellOutput.live.find_by tx_hash: input.previous_output.tx_hash,
                                              cell_index: input.previous_output.index
 
         @tx_previous_outputs[ckb_transaction_id] = [] if @tx_previous_outputs[ckb_transaction_id] == nil
