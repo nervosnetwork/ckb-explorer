@@ -619,7 +619,7 @@ module CkbSync
                   creator_id: m_nft_class_cell.address_id,
                 )
 
-                nft_token_attr[:full_name] = parsed_class_data.name.to_s
+                nft_token_attr[:full_name] = parsed_class_data.name.to_s.gsub(/\x00/, '')
                 nft_token_attr[:icon_file] = parsed_class_data.renderer.to_s
                 nft_token_attr[:published] = true
               end
@@ -632,7 +632,7 @@ module CkbSync
                 if spore_cluster_type_ids.present?
                   spore_cluster_cell = CellOutput.where(type_script_id: spore_cluster_type_ids, status: %i[pending live]).last
                   parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
-                  nft_token_attr[:full_name] = parsed_cluster_data[:name].to_s
+                  nft_token_attr[:full_name] = parsed_cluster_data[:name].to_s.gsub(/\x00/, '')
                 end
               end
             when "nrc_721_token"
@@ -640,7 +640,7 @@ module CkbSync
               nrc_721_factory_cell = NrcFactoryCell.create_or_find_by(code_hash: factory_cell.code_hash,
                                                                       hash_type: factory_cell.hash_type,
                                                                       args: factory_cell.args)
-              nft_token_attr[:full_name] = nrc_721_factory_cell.name.to_s
+              nft_token_attr[:full_name] = nrc_721_factory_cell.name.to_s.gsub(/\x00/, '')
               nft_token_attr[:symbol] =
                 nrc_721_factory_cell.symbol.to_s[0, 16]
               nft_token_attr[:icon_file] =
@@ -650,7 +650,7 @@ module CkbSync
               nft_token_attr[:published] = true
             when "omiga_inscription_info"
               info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
-              nft_token_attr[:full_name] = info[:name].to_s
+              nft_token_attr[:full_name] = info[:name].to_s.gsub(/\x00/, '')
               nft_token_attr[:symbol] = info[:symbol].to_s
               nft_token_attr[:decimal] = info[:decimal]
               nft_token_attr[:published] = true
@@ -662,7 +662,7 @@ module CkbSync
                 if output.type&.code_hash == CkbSync::Api.instance.unique_cell_code_hash
                   Rails.logger.info "info #{info}"
                   info = CkbUtils.parse_unique_cell(outputs_data[tx_index][index])
-                  nft_token_attr[:full_name] = info[:name].to_s
+                  nft_token_attr[:full_name] = info[:name].to_s.gsub(/\x00/, '')
                   nft_token_attr[:symbol] = info[:symbol].to_s
                   nft_token_attr[:decimal] = info[:decimal].to_i
                   nft_token_attr[:published] = true
