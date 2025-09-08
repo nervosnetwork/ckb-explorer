@@ -660,10 +660,11 @@ module CkbSync
               end
               items.each_with_index do |output, index|
                 if output.type&.code_hash == CkbSync::Api.instance.unique_cell_code_hash
+                  Rails.logger.info "info #{info}"
                   info = CkbUtils.parse_unique_cell(outputs_data[tx_index][index])
-                  nft_token_attr[:full_name] = info[:name]
-                  nft_token_attr[:symbol] = info[:symbol]
-                  nft_token_attr[:decimal] = info[:decimal]
+                  nft_token_attr[:full_name] = info[:name].to_s
+                  nft_token_attr[:symbol] = info[:symbol].to_s
+                  nft_token_attr[:decimal] = info[:decimal].to_i
                   nft_token_attr[:published] = true
                 end
               end
@@ -677,6 +678,7 @@ module CkbSync
       end
       if udts_attributes.present?
         unique_udt_attributes = udts_attributes.uniq { |ua| ua[:type_hash] }
+        Rails.logger.info "unique_udt_attributes: #{unique_udt_attributes}"
         returning_attrs = Udt.insert_all!(unique_udt_attributes, record_timestamps: true, returning: %w[id udt_type type_hash])
         omiga_inscription_info_attrs = returning_attrs.rows.filter do |r|
                                          r[1] == 4
