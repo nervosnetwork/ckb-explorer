@@ -713,7 +713,9 @@ class CkbUtils
   end
 
   def self.sanitize_string(str)
-    str.force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace, replace: "").gsub(/[[:cntrl:]\u2028\u2029\u200B]/, "")
+    return nil if str.nil?
+
+    str.to_s.force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace, replace: "").gsub(/[[:cntrl:]\u2028\u2029\u200B]/, "").strip
   rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
     ""
   end

@@ -586,7 +586,7 @@ module CkbSync
                 attrs[:pre_udt_hash] = pre_closed_info.udt_hash
                 attrs[:is_repeated_symbol] = pre_closed_info.is_repeated_symbol
               else
-                attrs[:is_repeated_symbol] = OmigaInscriptionInfo.where(symbol: info[:symbol].strip).exists?
+                attrs[:is_repeated_symbol] = OmigaInscriptionInfo.where(symbol: CkbUtils.sanitize_string(info[:symbol])).exists?
               end
               OmigaInscriptionInfo.upsert(attrs, unique_by: :udt_hash)
               [info[:udt_hash], "omiga_inscription"]
@@ -612,15 +612,15 @@ module CkbSync
                 parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
                 TokenCollection.find_or_create_by(
                   standard: "m_nft",
-                  name: parsed_class_data.name,
+                  name: CkbUtils.sanitize_string(parsed_class_data.name),
                   cell_id: m_nft_class_cell.id,
                   block_timestamp: m_nft_class_cell.block_timestamp,
-                  icon_url: parsed_class_data.renderer,
+                  icon_url: CkbUtils.sanitize_string(parsed_class_data.renderer),
                   creator_id: m_nft_class_cell.address_id,
                 )
 
-                nft_token_attr[:full_name] = parsed_class_data.name.to_s.gsub(/\x00/, '')
-                nft_token_attr[:icon_file] = parsed_class_data.renderer.to_s
+                nft_token_attr[:full_name] = CkbUtils.sanitize_string(parsed_class_data.name)
+                nft_token_attr[:icon_file] = CkbUtils.sanitize_string(parsed_class_data.renderer)
                 nft_token_attr[:published] = true
               end
             when "spore_cell", "did_cell"
@@ -632,7 +632,7 @@ module CkbSync
                 if spore_cluster_type_ids.present?
                   spore_cluster_cell = CellOutput.where(type_script_id: spore_cluster_type_ids, status: %i[pending live]).last
                   parsed_cluster_data = CkbUtils.parse_spore_cluster_data(spore_cluster_cell.data)
-                  nft_token_attr[:full_name] = parsed_cluster_data[:name].to_s.gsub(/\x00/, '')
+                  nft_token_attr[:full_name] = CkbUtils.sanitize_string(parsed_cluster_data[:name].to_s)
                 end
               end
             when "nrc_721_token"
@@ -640,7 +640,7 @@ module CkbSync
               nrc_721_factory_cell = NrcFactoryCell.create_or_find_by(code_hash: factory_cell.code_hash,
                                                                       hash_type: factory_cell.hash_type,
                                                                       args: factory_cell.args)
-              nft_token_attr[:full_name] = nrc_721_factory_cell.name.to_s.gsub(/\x00/, '')
+              nft_token_attr[:full_name] = nrc_721_factory_cell.name
               nft_token_attr[:symbol] =
                 nrc_721_factory_cell.symbol.to_s[0, 16]
               nft_token_attr[:icon_file] =
@@ -650,8 +650,8 @@ module CkbSync
               nft_token_attr[:published] = true
             when "omiga_inscription_info"
               info = CkbUtils.parse_omiga_inscription_info(outputs_data[tx_index][index])
-              nft_token_attr[:full_name] = info[:name].to_s.gsub(/\x00/, '')
-              nft_token_attr[:symbol] = info[:symbol].to_s
+              nft_token_attr[:full_name] = CkbUtils.sanitize_string(info[:name])
+              nft_token_attr[:symbol] = CkbUtils.sanitize_string(info[:symbol])
               nft_token_attr[:decimal] = info[:decimal]
               nft_token_attr[:published] = true
             when "xudt", "xudt_compatible"
@@ -660,11 +660,10 @@ module CkbSync
               end
               items.each_with_index do |output, index|
                 if output.type&.code_hash == CkbSync::Api.instance.unique_cell_code_hash
-                  Rails.logger.info "info #{info}"
                   info = CkbUtils.parse_unique_cell(outputs_data[tx_index][index])
-                  nft_token_attr[:full_name] = info[:name].to_s.gsub(/\x00/, '')
-                  nft_token_attr[:symbol] = info[:symbol].to_s
-                  nft_token_attr[:decimal] = info[:decimal].to_i
+                  nft_token_attr[:full_name] = CkbUtils.sanitize_string(info[:name])
+                  nft_token_attr[:symbol] = CkbUtils.sanitize_string(info[:symbol])
+                  nft_token_attr[:decimal] = info[:decimal]
                   nft_token_attr[:published] = true
                 end
               end
@@ -678,7 +677,6 @@ module CkbSync
       end
       if udts_attributes.present?
         unique_udt_attributes = udts_attributes.uniq { |ua| ua[:type_hash] }
-        Rails.logger.info "unique_udt_attributes: #{unique_udt_attributes}"
         returning_attrs = Udt.insert_all!(unique_udt_attributes, record_timestamps: true, returning: %w[id udt_type type_hash])
         omiga_inscription_info_attrs = returning_attrs.rows.filter do |r|
                                          r[1] == 4
@@ -1523,10 +1521,10 @@ _prev_outputs, index = nil)
       )
       parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(output_data)
       factory_cell.update(
-        name: parsed_factory_data.name,
-        symbol: parsed_factory_data.symbol,
-        base_token_uri: parsed_factory_data.base_token_uri,
-        extra_data: parsed_factory_data.extra_data,
+        name: CkbUtils.sanitize_string(parsed_factory_data.name),
+        symbol: CkbUtils.sanitize_string(parsed_factory_data.symbol),
+        base_token_uri: CkbUtils.sanitize_string(parsed_factory_data.base_token_uri),
+        extra_data: CkbUtils.sanitize_string(parsed_factory_data.extra_data),
       )
     end
 
