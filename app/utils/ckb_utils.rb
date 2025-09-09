@@ -178,24 +178,17 @@ class CkbUtils
   # @param input_capacities [Integer] The total input capacities
   # @param output_capacities [Integer] The total output capacities
   # @return [Integer] The transaction fee(in shannon)
-  def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities)
+  def self.ckb_transaction_fee(ckb_transaction, input_capacities, output_capacities, tx_previous_outputs)
     if ckb_transaction.is_a?(CkbTransaction)
       return 0 if ckb_transaction.is_cellbase
-
-      if ckb_transaction.inputs.where(cell_type: "nervos_dao_withdrawing").present?
-        dao_withdraw_tx_fee(ckb_transaction)
-      else
-        normal_tx_fee(input_capacities, output_capacities)
-      end
     else
       return 0 if ckb_transaction["is_cellbase"]
+    end
 
-      if CellOutput.where(consumed_by_id: ckb_transaction["id"],
-                          cell_type: "nervos_dao_withdrawing").present?
-        dao_withdraw_tx_fee(ckb_transaction)
-      else
-        normal_tx_fee(input_capacities, output_capacities)
-      end
+    if tx_previous_outputs.any?{|element| element.cell_type == "nervos_dao_withdrawing" }
+      dao_withdraw_tx_fee(ckb_transaction, tx_previous_outputs)
+    else
+      normal_tx_fee(input_capacities, output_capacities)
     end
   end
 
@@ -267,22 +260,14 @@ class CkbUtils
     input_capacities - output_capacities
   end
 
-  def self.dao_withdraw_tx_fee(ckb_transaction)
-    if ckb_transaction.is_a?(CkbTransaction)
-      nervos_dao_withdrawing_cells = ckb_transaction.inputs.nervos_dao_withdrawing
-      interests =
-        nervos_dao_withdrawing_cells.reduce(0) do |memo, nervos_dao_withdrawing_cell|
-          memo + dao_interest(nervos_dao_withdrawing_cell)
-        end
-      ckb_transaction.inputs.sum(:capacity) + interests - ckb_transaction.outputs.sum(:capacity)
-    else
-      nervos_dao_withdrawing_cells = CellOutput.where(consumed_by_id: ckb_transaction["id"]).nervos_dao_withdrawing
-      interests =
-        nervos_dao_withdrawing_cells.reduce(0) do |memo, nervos_dao_withdrawing_cell|
-          memo + dao_interest(nervos_dao_withdrawing_cell)
-        end
-      CellOutput.where(consumed_by_id: ckb_transaction["id"]).sum(:capacity) + interests - CellOutput.where(ckb_transaction: ckb_transaction["id"]).sum(:capacity)
-    end
+  def self.dao_withdraw_tx_fee(ckb_transaction, tx_previous_outputs)
+    nervos_dao_withdrawing_cells = tx_previous_outputs.select{|element| element.cell_type == "nervos_dao_withdrawing" }
+
+    interests =
+      nervos_dao_withdrawing_cells.reduce(0) do |memo, nervos_dao_withdrawing_cell|
+        memo + dao_interest(nervos_dao_withdrawing_cell)
+      end
+    tx_previous_outputs.sum(&:capacity) + interests - CellOutput.where(ckb_transaction: ckb_transaction["id"]).sum(:capacity)
   end
 
   def self.dao_interest(nervos_dao_withdrawing_cell)
@@ -728,7 +713,9 @@ class CkbUtils
   end
 
   def self.sanitize_string(str)
-    str.force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace, replace: "").gsub(/[[:cntrl:]\u2028\u2029\u200B]/, "")
+    return nil if str.nil?
+
+    str.to_s.force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace, replace: "").gsub(/[[:cntrl:]\u2028\u2029\u200B]/, "").strip
   rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
     ""
   end
