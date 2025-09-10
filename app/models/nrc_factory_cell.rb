@@ -15,11 +15,14 @@ class NrcFactoryCell < ApplicationRecord
   end
 
   def first_cell
-    @first_cell ||= CellOutput.where(type_script_id: type_script.id).first if type_script
+    @first_cell ||= CellOutput.where(type_script_id: type_script.id).order(id: :desc).last if type_script
   end
 
   def last_cell
-    @last_cell ||= CellOutput.where(type_script_id: type_script.id).last if type_script
+    if type_script
+      @last_cell ||= CellOutput.where(status: %i[pending live]).where(type_script_id: type_script.id).order(id: :desc).first
+      @last_cell ||= CellOutput.dead.where(type_script_id: type_script.id).order(id: :desc).first unless @last_cell
+    end
   end
 
   def token_collection
@@ -49,10 +52,17 @@ class NrcFactoryCell < ApplicationRecord
   end
 
   def parse_data
-    factory_data = CellOutput.where(
+    factory_cell = CellOutput.where(status: %i[pending live]).where(
       type_script_id: nrc_721_factory_cell_type.id,
       cell_type: "nrc_721_factory"
-    ).last&.data
+    ).order(id: :desc).first
+    factory_cell = CellOutput.dead.where(
+      type_script_id: nrc_721_factory_cell_type.id,
+      cell_type: "nrc_721_factory"
+    ).order(id: :desc).first unless factory_cell
+
+    factory_data = factory_cell&.data
+
     return if factory_data.blank?
 
     parsed_factory_data = CkbUtils.parse_nrc_721_factory_data(factory_data)
