@@ -532,29 +532,60 @@ module CkbSync
     def update_addresses_info(addrs_change, local_block, refresh_balance)
       return unless refresh_balance
 
-      ### because `upsert` don't validate record, so it may pass invalid data into database.
-      ### here we use one by one update (maybe slower)
-      address_ids = addrs_change.keys
+      addrs_change.to_a.each_slice(100) do |batch|
 
-      address_ids.each_slice(300) do |batch_ids|
-        batch_addresses = Address.where(id: batch_ids)
-        batch_addresses.each do |addr|
-          value = addrs_change[addr.id]
-          balance_diff = value[:balance_diff]
-          balance_occupied_diff = value[:balance_occupied_diff].presence || 0
-          live_cells_diff = value[:cells_diff]
-          dao_txs_count = value[:dao_txs].present? ? value[:dao_txs].size : 0
-          ckb_txs_count = value[:ckb_txs].present? ? value[:ckb_txs].size : 0
+        updates = batch.map do |key, value|
+          [key, { last_updated_block_number: local_block.number, 
+                balance: value[:balance_diff], 
+                balance_occupied: value[:balance_occupied_diff].presence || 0,
+                ckb_transactions_count: value[:ckb_txs].present? ? value[:ckb_txs].size : 0,
+                live_cells_count: value[:cells_diff],
+                dao_transactions_count: value[:dao_txs].present? ? value[:dao_txs].size : 0
+              }]
+        end.to_h
   
-          addr.update!(
-            last_updated_block_number: local_block.number,
-            balance: addr.balance + balance_diff,
-            balance_occupied: addr.balance_occupied + balance_occupied_diff,
-            ckb_transactions_count: addr.ckb_transactions_count + ckb_txs_count,
-            live_cells_count: addr.live_cells_count + live_cells_diff,
-            dao_transactions_count: addr.dao_transactions_count + dao_txs_count,
-          )
+        case_clauses = { last_updated_block_number: [], balance: [], balance_occupied: [], ckb_transactions_count: [], live_cells_count: [], dao_transactions_count: [] }
+        ids = []
+  
+        updates.each do |id, attrs|
+          ids << id
+          attrs.each do |column, value|
+            if column == :last_updated_block_number
+              case_clauses[column] << "WHEN #{id} THEN '#{ActiveRecord::Base.connection.quote(value)}'"
+            else
+              case_clauses[column] << "WHEN #{id} THEN #{column} + #{value}"
+            end
+          end
         end
+        
+        set_clauses = case_clauses.map do |column, clauses|
+          if clauses.any?
+            "  #{column} = CASE id\n    #{clauses.join("\n    ")}\n    ELSE #{column}\n  END"
+          else
+            nil
+          end
+        end.compact.join(",\n")
+        
+        id_list = ids.join(', ')
+        
+        sql = <<-SQL
+          UPDATE addresses
+          SET
+            #{set_clauses}
+          WHERE id IN (#{id_list})
+        SQL
+        
+        # puts sql
+  
+        ActiveRecord::Base.connection.execute(sql)
+  
+        updated_records = Address.where(id: ids).select(:lock_hash)
+        updated_records.each do |record|
+          $redis.pipelined do
+            Rails.cache.delete_multi(%W(#{record.class.name}/#{record.lock_hash}))
+          end
+        end
+      
       end
     end
 
