@@ -34,7 +34,8 @@ module CellOutputs
           ).first
 
           if m_nft_class_type.present?
-            m_nft_class_cell = m_nft_class_type.cell_outputs.last
+            m_nft_class_cell = m_nft_class_type.cell_outputs.where(status: %i[pending live]).order(id: :desc).first
+            m_nft_class_cell = m_nft_class_type.cell_outputs.dead.order(id: :desc).first unless m_nft_class_cell
             parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
             value = {
               class_name: parsed_class_data.name,

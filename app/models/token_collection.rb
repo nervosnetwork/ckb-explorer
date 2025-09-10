@@ -55,7 +55,10 @@ class TokenCollection < ApplicationRecord
   def update_info
     tc = self
     ts = tc.type_script
-    c = ts.cell_outputs.last
+
+    c = ts.cell_outputs.where(status: %i[pending live]).order(id: :desc).first
+    c = ts.cell_outputs.dead.order(id: :desc).first unless c
+
     tc.cell_id = c.id
     tc.creator_id = c.address_id
 
