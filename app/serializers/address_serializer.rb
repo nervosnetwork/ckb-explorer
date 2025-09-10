@@ -114,7 +114,9 @@ class AddressSerializer
         elsif udt_account.udt_type.in?(["spore_cell", "did_cell"])
           ts = TypeScript.where(script_hash: udt_account.type_hash).first
           if ts
-            data = ts.cell_outputs.live.order("id desc").first.data
+            cell = ts.cell_outputs.where(status: %i[pending live]).order(id: :desc).first 
+            cell = ts.cell_outputs.dead.order(id: :desc).first unless cell
+            data = cell.data
             i = TokenItem.includes(collection: :type_script).find_by type_script_id: ts.id
             coll = i&.collection
           end

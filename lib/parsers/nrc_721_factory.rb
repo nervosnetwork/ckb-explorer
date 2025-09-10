@@ -1,8 +1,15 @@
 class Parsers::Nrc721Factory
   def perform(cell)
-    factory_data = CellOutput.where(
+    factory_cell = CellOutput.where(status: %i[pending live]).where(
       type_script_id: nrc_721_factory_cell_type.id, 
-      cell_type: "nrc_721_factory").last.data
+      cell_type: "nrc_721_factory").order(id: :desc).first
+
+    factory_cell = CellOutput.dead.where(
+        type_script_id: nrc_721_factory_cell_type.id, 
+        cell_type: "nrc_721_factory").order(id: :desc).first unless factory_cell
+
+    factory_data = factory_cell.data
+
     cell.update parsed_data: CkbUtils.parse_nrc_721_factory_data(factory_data)
   end
 

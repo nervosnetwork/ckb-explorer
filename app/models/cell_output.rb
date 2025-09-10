@@ -207,7 +207,8 @@ class CellOutput < ApplicationRecord
         args: type_script.args[0..49],
       ).first
       if m_nft_class_type.present?
-        m_nft_class_cell = m_nft_class_type.cell_outputs.last
+        m_nft_class_cell = m_nft_class_type.cell_outputs.where(status: %i[pending live]).order(id: :desc).first
+        m_nft_class_cell = m_nft_class_type.cell_outputs.dead.order(id: :desc).first unless m_nft_class_cell
         parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
         coll = TokenCollection.find_or_create_by(
           standard: "m_nft",

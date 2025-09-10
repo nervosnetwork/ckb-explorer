@@ -130,7 +130,10 @@ class TokenTransferDetectWorker
       type_script_id: m_nft_class_type.id,
       sn: m_nft_class_type.script_hash,
     )
-    m_nft_class_cell = m_nft_class_type.cell_outputs.last
+
+    m_nft_class_cell = m_nft_class_type.cell_outputs.where(status: %i[pending live]).order(id: :desc).first
+    m_nft_class_cell = m_nft_class_type.cell_outputs.dead.order(id: :desc).first unless m_nft_class_cell
+    
     if m_nft_class_cell.present? && (coll.cell_id.blank? || (coll.cell_id < m_nft_class_cell.id))
       parsed_class_data = CkbUtils.parse_token_class_data(m_nft_class_cell.data)
       coll.cell_id = m_nft_class_cell.id
@@ -144,7 +147,9 @@ class TokenTransferDetectWorker
   end
 
   def find_or_create_spore_collection(_cell, type_script)
-    spore_cell = type_script.cell_outputs.order("id desc").first
+    spore_cell = type_script.cell_outputs.where(status: %i[pending live]).order(id: :desc).first
+    spore_cell = type_script.cell_outputs.dead.order(id: :desc).first unless spore_cell
+
     parsed_spore_cell = CkbUtils.parse_spore_cell_data(spore_cell.data)
     if parsed_spore_cell[:cluster_id].nil?
       spore_cluster_type = TypeScript.find_or_create_by(code_hash: CkbSync::Api.instance.spore_cluster_code_hashes.first, hash_type: "data1",
