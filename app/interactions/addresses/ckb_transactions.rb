@@ -14,11 +14,11 @@ module Addresses
 
       address_id = address.map(&:id)
       account_books = AccountBook.tx_committed.where(address_id:).
-        order("block_number desc, tx_index desc").
+        order(account_books_ordering).
         select(:ckb_transaction_id, :block_number, :tx_index).
-        distinct.
-        limit(Settings.query_default_limit)
-      records = CkbTransaction.includes(:account_books).where(id: account_books.map(&:ckb_transaction_id)).select(select_fields).order(transactions_ordering).page(page).per(page_size)
+        distinct.page(page).per(page_size)
+
+      records = CkbTransaction.includes(:account_books).where(id: account_books.map(&:ckb_transaction_id)).select(select_fields).order(transactions_ordering)
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address_id: })
 
@@ -28,8 +28,15 @@ module Addresses
 
     private
 
+    def account_books_ordering
+      _, sort_order = sort.split(".", 2)
+      sort_order = "asc" unless sort_order&.match?(/^(asc|desc)$/i)
+
+      "block_number #{sort_order}, tx_index desc"
+    end
+
     def transactions_ordering
-      sort_by = "ckb_transactions.block_timestamp"
+      sort_by = "ckb_transactions.block_number"
       _, sort_order = sort.split(".", 2)
       sort_order = "asc" unless sort_order&.match?(/^(asc|desc)$/i)
 
@@ -38,8 +45,9 @@ module Addresses
 
     def paginate_options(records, address_id)
       total_count = Address.where(id: address_id).sum(:ckb_transactions_count)
+      count = [total_count, 5000].min
       FastJsonapi::PaginationMetaGenerator.new(
-        request:, records:, page:, page_size:, total_pages: records.total_pages, total_count:,
+        request:, records:, page:, page_size:, total_pages: (count.to_f / page_size).ceil, total_count:,
       ).call
     end
 
