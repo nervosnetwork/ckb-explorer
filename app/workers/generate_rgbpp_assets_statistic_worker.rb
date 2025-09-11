@@ -61,8 +61,14 @@ class GenerateRgbppAssetsStatisticWorker
     udt_types = %i[xudt xudt_compatible spore_cell did_cell]
     udt_ids = Udt.where(udt_type: udt_types, published: true).ids
     address_ids = UdtAccount.where(udt_id: udt_ids).where("amount > 0").pluck(:address_id).uniq
-    holders_count = BitcoinAddressMapping.where(ckb_address_id: address_ids, created_at: ..ended_at).
-      distinct.count(:bitcoin_address_id)
+
+    all_addres_ids = BitcoinAddressMapping.where(created_at: ..ended_at).pluck(:ckb_address_id).uniq
+    filtered_addres_ids = address_ids & all_addres_ids
+
+    ActiveRecord::Base.connection.execute("SET statement_timeout = 0")
+    holders_count = BitcoinAddressMapping.where(ckb_address_id: filtered_addres_ids, created_at: ..ended_at).distinct.count(:bitcoin_address_id)
+    ActiveRecord::Base.connection.execute("RESET statement_timeout")
+    
     { indicator: "holders_count", value: holders_count, network: "btc" }
   end
 
