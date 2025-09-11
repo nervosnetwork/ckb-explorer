@@ -18,7 +18,7 @@ module Addresses
         select(:ckb_transaction_id, :block_number, :tx_index).
         distinct.page(page).per(page_size)
 
-      records = CkbTransaction.includes(:account_books).where(id: account_books.map(&:ckb_transaction_id)).select(select_fields).order(transactions_ordering)
+      records = CkbTransaction.where(id: account_books.map(&:ckb_transaction_id)).select(select_fields).order(transactions_ordering)
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address_id: })
 
