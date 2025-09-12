@@ -21,7 +21,7 @@ module Api
         if stale?(ckb_transactions)
           expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
           ckb_transactions = ckb_transactions
-              .includes(:cell_inputs, :outputs, :bitcoin_annotation)
+              .includes(:cell_inputs => [:previous_cell_output], :outputs => [], :bitcoin_annotation => [])
               # .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
               # .joins("LEFT JOIN cell_outputs ON cell_outputs.ckb_transaction_id = ckb_transactions.id")
               # .group(select_fields.join(','))
