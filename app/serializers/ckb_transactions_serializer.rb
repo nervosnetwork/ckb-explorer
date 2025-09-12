@@ -19,12 +19,14 @@ class CkbTransactionsSerializer
     if object.is_cellbase?
       1
     else
-      object.attributes['cell_inputs_count'].to_i
+      # object.attributes['cell_inputs_count'].to_i
+      object.cell_inputs.count
     end
   end
 
   attribute :display_outputs_count do |object|
-    object.attributes['cell_outputs_count'].to_i
+    # object.attributes['cell_outputs_count'].to_i
+    object.outputs.count
   end
 
   attribute :display_inputs do |object, params|

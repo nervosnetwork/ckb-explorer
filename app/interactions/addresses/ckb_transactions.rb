@@ -20,10 +20,11 @@ module Addresses
 
       records = CkbTransaction.where(id: account_books.map(&:ckb_transaction_id))
             .includes(:cell_inputs, :outputs, :bitcoin_annotation => [])
-            .select(select_fields + ["COUNT(cell_inputs.id) AS cell_inputs_count", "COUNT(cell_outputs.id) AS cell_outputs_count"])
-            .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
-            .joins("LEFT JOIN cell_outputs ON cell_outputs.ckb_transaction_id = ckb_transactions.id")
-            .group((select_fields).join(','))
+            # .select(select_fields + ["COUNT(cell_inputs.id) AS cell_inputs_count", "COUNT(cell_outputs.id) AS cell_outputs_count"])
+            .select(select_fields)
+            # .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
+            # .joins("LEFT JOIN cell_outputs ON cell_outputs.ckb_transaction_id = ckb_transactions.id")
+            # .group(select_fields.join(','))
             .order(transactions_ordering)
 
       options = paginate_options(records, address_id)
