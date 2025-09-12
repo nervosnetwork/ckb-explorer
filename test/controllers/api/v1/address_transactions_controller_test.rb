@@ -308,10 +308,10 @@ module Api
         page_size = 5
         address = create(:address, :with_transactions, transactions_count: 30)
 
-        address_ckb_transactions = address.ckb_transactions.order(block_number: :desc, tx_index: :desc).page(page).per(page_size)
+        address_ckb_transactions = address.ckb_transactions.order("ckb_transactions.id desc").page(page).per(page_size)
 
         valid_get api_v1_address_transaction_url(address.address_hash),
-                  params: { page:, page_size:, sort: :desc}
+                  params: { page:, page_size:, sort: "time.desc"}
 
         address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:,
