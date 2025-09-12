@@ -16,7 +16,7 @@ module Addresses
       address_id = address.map(&:id)
       account_books = AccountBook.tx_committed.where(address_id:).
         order(account_books_ordering).
-        select(:ckb_transaction_id, :block_number, :tx_index).
+        select(:ckb_transaction_id).
         distinct.page(page).per(page_size)
 
       includes = { :cell_inputs => [:previous_cell_output], :outputs => {}, :bitcoin_annotation => [] }
@@ -44,15 +44,14 @@ module Addresses
       _, sort_order = sort.split(".", 2)
       sort_order = "asc" unless sort_order&.match?(/^(asc|desc)$/i)
 
-      "block_number #{sort_order}, tx_index desc"
+      "ckb_transaction_id #{sort_order}"
     end
 
     def transactions_ordering
-      sort_by = "ckb_transactions.block_number"
       _, sort_order = sort.split(".", 2)
       sort_order = "asc" unless sort_order&.match?(/^(asc|desc)$/i)
 
-      "#{sort_by} #{sort_order}, ckb_transactions.tx_index desc"
+      "ckb_transactions.id #{sort_order}"
     end
 
     def paginate_options(records, address_id)
