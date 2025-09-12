@@ -11,9 +11,7 @@ module Api
         if stale?(dao_contract)
           expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
-          ckb_transactions = dao_contract.ckb_transactions.includes(:cell_inputs, :cell_outputs).tx_committed.select(
-            :id, :tx_hash, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at, :tags
-          ).order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc")
+          ckb_transactions = dao_contract.ckb_transactions.includes(:cell_inputs, :cell_outputs).tx_committed.order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc")
 
           if params[:tx_hash].present?
             ckb_transactions = ckb_transactions.where(tx_hash: params[:tx_hash])
@@ -27,7 +25,14 @@ module Api
               where(account_books: { address_id: address.id })
           end
 
-          ckb_transactions = ckb_transactions.page(@page).per(@page_size).fast_page
+          ckb_transactions = ckb_transactions
+                    .includes(:cell_inputs => [:previous_cell_output], :outputs => [], :bitcoin_annotation => [])
+                    # .select(select_fields + ["COUNT(cell_inputs.id) AS cell_inputs_count", "COUNT(cell_outputs.id) AS cell_outputs_count"])
+                    # .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
+                    # .joins("LEFT JOIN cell_outputs ON cell_outputs.ckb_transaction_id = ckb_transactions.id")
+                    # .group(select_fields.join(','))
+                    .select(select_fields)
+                    .page(@page).per(@page_size).fast_page
           options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_transactions,
                                                              page: @page, page_size: @page_size).call
           json = CkbTransactionsSerializer.new(ckb_transactions,
@@ -35,6 +40,11 @@ module Api
 
           render json:
         end
+      end
+
+      def select_fields
+        %i[ckb_transactions.id ckb_transactions.tx_hash ckb_transactions.block_id ckb_transactions.block_number ckb_transactions.block_timestamp
+        ckb_transactions.is_cellbase ckb_transactions.updated_at ckb_transactions.created_at ckb_transactions.tags]
       end
 
       def download_csv

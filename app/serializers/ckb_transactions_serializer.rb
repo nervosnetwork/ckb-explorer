@@ -16,10 +16,16 @@ class CkbTransactionsSerializer
   end
 
   attribute :display_inputs_count do |object|
-    object.is_cellbase ? 1 : object.cell_inputs.count
+    if object.is_cellbase?
+      1
+    else
+      # object.attributes['cell_inputs_count'].to_i
+      object.cell_inputs.count
+    end
   end
 
   attribute :display_outputs_count do |object|
+    # object.attributes['cell_outputs_count'].to_i
     object.outputs.count
   end
 
@@ -47,7 +53,7 @@ class CkbTransactionsSerializer
 
   attribute :income do |object, params|
     if params && params[:previews] && params[:address_id].present?
-      object.account_books.where(address_id: params[:address_id]).sum(:income)
+      object.account_books.find_by(address_id: params[:address_id]).income
     end
   end
 

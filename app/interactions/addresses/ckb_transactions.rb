@@ -9,16 +9,28 @@ module Addresses
     integer :page_size, default: CkbTransaction.default_per_page
 
     def execute
+      is_bitcoin = BitcoinUtils.valid_address?(key)
       address = Explore.run!(key:)
       raise AddressNotFoundError if address.is_a?(NullAddress)
 
       address_id = address.map(&:id)
       account_books = AccountBook.tx_committed.where(address_id:).
-        order("block_number desc, tx_index desc").
+        order(account_books_ordering).
         select(:ckb_transaction_id, :block_number, :tx_index).
-        distinct.
-        limit(Settings.query_default_limit)
-      records = CkbTransaction.includes(:account_books).where(id: account_books.map(&:ckb_transaction_id)).select(select_fields).order(transactions_ordering).page(page).per(page_size)
+        distinct.page(page).per(page_size)
+
+      includes = { :cell_inputs => [:previous_cell_output], :outputs => {}, :bitcoin_annotation => [] }
+      includes[:bitcoin_transfers] = {} if is_bitcoin
+
+      records = CkbTransaction.where(id: account_books.map(&:ckb_transaction_id))
+            .includes(includes)
+            # .select(select_fields + ["COUNT(cell_inputs.id) AS cell_inputs_count", "COUNT(cell_outputs.id) AS cell_outputs_count"])
+            .select(select_fields)
+            # .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
+            # .joins("LEFT JOIN cell_outputs ON cell_outputs.ckb_transaction_id = ckb_transactions.id")
+            # .group(select_fields.join(','))
+            .order(transactions_ordering)
+
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address_id: })
 
@@ -28,8 +40,15 @@ module Addresses
 
     private
 
+    def account_books_ordering
+      _, sort_order = sort.split(".", 2)
+      sort_order = "asc" unless sort_order&.match?(/^(asc|desc)$/i)
+
+      "block_number #{sort_order}, tx_index desc"
+    end
+
     def transactions_ordering
-      sort_by = "ckb_transactions.block_timestamp"
+      sort_by = "ckb_transactions.block_number"
       _, sort_order = sort.split(".", 2)
       sort_order = "asc" unless sort_order&.match?(/^(asc|desc)$/i)
 
@@ -38,14 +57,15 @@ module Addresses
 
     def paginate_options(records, address_id)
       total_count = Address.where(id: address_id).sum(:ckb_transactions_count)
+      count = [total_count, Settings.query_default_limit].min
       FastJsonapi::PaginationMetaGenerator.new(
-        request:, records:, page:, page_size:, total_pages: records.total_pages, total_count:,
+        request:, records:, page:, page_size:, total_pages: (count.to_f / page_size).ceil, total_count:,
       ).call
     end
 
     def select_fields
-      %i[id tx_hash tx_index block_id block_number block_timestamp
-         is_cellbase updated_at capacity_involved created_at tx_status]
+      %i[ckb_transactions.id ckb_transactions.tx_hash ckb_transactions.tx_index ckb_transactions.block_id ckb_transactions.block_number ckb_transactions.block_timestamp
+      ckb_transactions.is_cellbase ckb_transactions.updated_at ckb_transactions.capacity_involved ckb_transactions.created_at ckb_transactions.tx_status]
     end
 
     # A lock script can correspond to multiple CKB addresses
