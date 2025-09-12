@@ -5,9 +5,8 @@ module Api
 
       def show
         block = Block.find_by!(block_hash: params[:id])
-        ckb_transactions = block.ckb_transactions.
-          select(:id, :tx_hash, :tx_index, :block_id, :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at, :tags).
-          order(tx_index: :asc)
+        ckb_transactions = block.ckb_transactions.select(select_fields).order(tx_index: :asc)
+          # select(select_fields + ["COUNT(cell_inputs.id) AS cell_inputs_count", "COUNT(cell_outputs.id) AS cell_outputs_count"])
 
         if params[:tx_hash].present?
           ckb_transactions = ckb_transactions.where(tx_hash: params[:tx_hash])
@@ -21,7 +20,13 @@ module Api
 
         if stale?(ckb_transactions)
           expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
-          ckb_transactions = ckb_transactions.page(@page).per(@page_size).fast_page
+          ckb_transactions = ckb_transactions
+              .includes(:cell_inputs, :outputs, :bitcoin_annotation)
+              # .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
+              # .joins("LEFT JOIN cell_outputs ON cell_outputs.ckb_transaction_id = ckb_transactions.id")
+              # .group(select_fields.join(','))
+              .page(@page).per(@page_size).fast_page
+              
           options = FastJsonapi::PaginationMetaGenerator.new(
             request:,
             records: ckb_transactions,
@@ -38,6 +43,11 @@ module Api
       end
 
       private
+
+      def select_fields
+        %i[ckb_transactions.id ckb_transactions.tx_hash ckb_transactions.tx_index ckb_transactions.block_id ckb_transactions.block_number ckb_transactions.block_timestamp
+          ckb_transactions.is_cellbase ckb_transactions.updated_at ckb_transactions.created_at ckb_transactions.tags]
+      end
 
       def validate_query_params
         validator = Validations::BlockTransaction.new(params)

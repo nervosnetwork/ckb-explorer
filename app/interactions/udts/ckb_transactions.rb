@@ -30,7 +30,10 @@ module Udts
           where(account_books: { address_id: address.map(&:id) }).distinct
       end
 
-      records = ckb_transactions.page(page).per(page_size)
+      records = ckb_transactions
+                  .includes(:cell_inputs, :outputs, :bitcoin_annotation => [])
+                  .select(select_fields)
+                  .page(page).per(page_size)
       options = FastJsonapi::PaginationMetaGenerator.new(
         request:, records:, page:, page_size:,
       ).call
@@ -53,8 +56,8 @@ module Udts
     end
 
     def select_fields
-      %i[id tx_hash tx_index block_id block_number block_timestamp
-         is_cellbase updated_at created_at tags]
+      %i[ckb_transactions.id ckb_transactions.tx_hash ckb_transactions.tx_index ckb_transactions.block_id ckb_transactions.block_number ckb_transactions.block_timestamp
+      ckb_transactions.is_cellbase ckb_transactions.updated_at ckb_transactions.created_at ckb_transactions.tags]
     end
   end
 end

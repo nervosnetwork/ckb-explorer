@@ -14,7 +14,7 @@ module Addresses
 
       order_by, asc_or_desc = deployed_cells_ordering
       deployed_cell_output_ids = Contract.joins(:deployed_cell_output).where(cell_outputs: { address: address.map(&:id) }).pluck(:deployed_cell_output_id)
-      records = CellOutput.where(id: deployed_cell_output_ids).order(order_by => asc_or_desc).
+      records = CellOutput.includes(:type_script, :lock_script).where(id: deployed_cell_output_ids).order(order_by => asc_or_desc).
         page(page).per(page_size).fast_page
 
       options = FastJsonapi::PaginationMetaGenerator.new(request:, records:, page:, page_size:).call
