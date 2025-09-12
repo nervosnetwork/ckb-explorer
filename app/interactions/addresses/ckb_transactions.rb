@@ -18,7 +18,14 @@ module Addresses
         select(:ckb_transaction_id, :block_number, :tx_index).
         distinct.page(page).per(page_size)
 
-      records = CkbTransaction.where(id: account_books.map(&:ckb_transaction_id)).select(select_fields).order(transactions_ordering)
+      records = CkbTransaction.where(id: account_books.map(&:ckb_transaction_id))
+            .includes(:cell_inputs, :outputs, :bitcoin_annotation => [])
+            .select(select_fields + ["COUNT(cell_inputs.id) AS cell_inputs_count", "COUNT(cell_outputs.id) AS cell_outputs_count"])
+            .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
+            .joins("LEFT JOIN cell_outputs ON cell_outputs.ckb_transaction_id = ckb_transactions.id")
+            .group((select_fields).join(','))
+            .order(transactions_ordering)
+
       options = paginate_options(records, address_id)
       options.merge!(params: { previews: true, address_id: })
 
@@ -52,8 +59,8 @@ module Addresses
     end
 
     def select_fields
-      %i[id tx_hash tx_index block_id block_number block_timestamp
-         is_cellbase updated_at capacity_involved created_at tx_status]
+      %i[ckb_transactions.id ckb_transactions.tx_hash ckb_transactions.tx_index ckb_transactions.block_id ckb_transactions.block_number ckb_transactions.block_timestamp
+      ckb_transactions.is_cellbase ckb_transactions.updated_at ckb_transactions.capacity_involved ckb_transactions.created_at ckb_transactions.tx_status]
     end
 
     # A lock script can correspond to multiple CKB addresses
