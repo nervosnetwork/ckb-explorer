@@ -9,6 +9,7 @@ module Addresses
     integer :page_size, default: CkbTransaction.default_per_page
 
     def execute
+      is_bitcoin = BitcoinUtils.valid_address?(key)
       address = Explore.run!(key:)
       raise AddressNotFoundError if address.is_a?(NullAddress)
 
@@ -18,8 +19,11 @@ module Addresses
         select(:ckb_transaction_id, :block_number, :tx_index).
         distinct.page(page).per(page_size)
 
+      includes = { :cell_inputs => [:previous_cell_output], :outputs => {}, :bitcoin_annotation => [] }
+      includes[:bitcoin_transfers] = {} if is_bitcoin
+
       records = CkbTransaction.where(id: account_books.map(&:ckb_transaction_id))
-            .includes(:cell_inputs, :outputs, :bitcoin_annotation => [])
+            .includes(includes)
             # .select(select_fields + ["COUNT(cell_inputs.id) AS cell_inputs_count", "COUNT(cell_outputs.id) AS cell_outputs_count"])
             .select(select_fields)
             # .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
