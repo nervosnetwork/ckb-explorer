@@ -73,12 +73,12 @@ module Api
               AccountBook.tx_committed.where(
                 address_id: @address.id,
               ).order(
-                "block_number desc, tx_index desc",
+                "ckb_transaction_id desc",
               ).select(
                 "ckb_transaction_id",
               ).page(@page).per(@page_size).fast_page
             total_count = @tx_ids.total_count
-            CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(block_number: :desc, tx_index: :desc)
+            CkbTransaction.where(id: @tx_ids.map(&:ckb_transaction_id)).order(id: :desc)
           else
             total_count = TableRecordCount.find_by(table_name: "ckb_transactions")&.count
             CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
