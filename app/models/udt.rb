@@ -43,6 +43,30 @@ class Udt < ApplicationRecord
     }
   end
 
+  def icon_file
+    raw = read_attribute(:icon_file)
+    if raw.nil?
+      nil
+    else
+      domain1 = "oss.jinse.cc"
+      domain2 = "goldenlegend.oss-cn-hangzhou.aliyuncs.com"
+      regex = Regexp.new("#{Regexp.escape(domain1)}|#{Regexp.escape(domain2)}")
+
+      raw.gsub(regex, "https://images.nftbox.me/")
+    end
+  end
+
+  # def icon_file
+  #   self[:icon_url]
+  #   # return self[:icon_url] if self[:icon_url].nil?
+
+  #   # domain1 = "oss.jinse.cc"
+  #   # domain2 = "goldenlegend.oss-cn-hangzhou.aliyuncs.com"
+  #   # regex = Regexp.new("#{Regexp.escape(domain1)}|#{Regexp.escape(domain2)}")
+
+  #   # self[:icon_url].gsub(regex, "https://images.nftbox.me/")
+  # end
+
   def holders_count
     udt_holder_allocations.sum("ckb_holder_count + btc_holder_count")
   end
