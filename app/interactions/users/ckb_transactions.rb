@@ -51,7 +51,7 @@ module Users
 
     def sort_account_books(records)
       sorting, ordering = sort.split(".", 2)
-      sorting = "ckb_transactions.block_timestamp" if sorting == "time"
+      sorting = "ckb_transactions.id" if sorting == "time"
 
       if ordering.nil? || !ordering.match?(/^(asc|desc)$/i)
         ordering = "asc"
