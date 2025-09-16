@@ -37,11 +37,12 @@ module Api
           if @contracts.length == 1 && @contracts.first.type_hash == Contract::ZERO_LOCK_HASH
             address_ids = LockScript.zero_lock.select(:address_id)
             tx_ids = AccountBook.where(address_id: address_ids).
-              order("block_number DESC, tx_index DESC").
+              order("ckb_transaction_id DESC").
               select(:ckb_transaction_id).
-              limit(Settings.query_default_limit)
+              page(@page).per(@page_size)
+
             CkbTransaction.where(id: tx_ids).
-              order("block_number DESC, tx_index DESC").
+              order("id DESC").
               page(@page).per(@page_size)
           else
             contract_ids = @contracts.map { |contract| contract.id }
