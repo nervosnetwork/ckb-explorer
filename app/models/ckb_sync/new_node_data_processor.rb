@@ -971,8 +971,36 @@ module CkbSync
       inputs, ckb_txs, local_block_id, cell_inputs_attributes, prev_cell_outputs_attributes,
 input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes, token_transfer_ckb_tx_ids
     )
-      tx_index = 0
+      conditions = []
 
+      inputs.each do |_, items|
+        items.each do |input|
+          unless from_cell_base?(input)
+            conditions << { tx_hash: input.previous_output.tx_hash, cell_index: input.previous_output.index }
+          end
+        end
+      end
+
+      query = conditions.inject(nil) do |combined, cond|
+        q = CellOutput.live.where(cond)
+        combined.nil? ? q : combined.or(q)
+      end
+
+      results = query.to_a
+
+      tx_index = 0
+      inputs.each do |tx_index, items|
+        items.each do |input|
+          unless from_cell_base?(input)
+            ckb_transaction_id = ckb_txs[tx_index]["id"]
+            @tx_previous_outputs[ckb_transaction_id] = [] if @tx_previous_outputs[ckb_transaction_id] == nil
+            pout = results.find{|r| r.tx_hash == input.previous_output.tx_hash && r.cell_index == input.previous_output.index }
+            @tx_previous_outputs[ckb_transaction_id] << pout
+          end
+        end
+      end
+
+      tx_index = 0
       inputs.each do |tx_index, items|
         input_capacities[tx_index] = 0 if tx_index != 0
         items.each_with_index do |item, index|
@@ -1239,11 +1267,7 @@ _prev_outputs, index = nil)
         }
       else
         # previous_output = prev_outputs["#{input.previous_output.tx_hash}-#{input.previous_output.index}"]
-        previous_output = CellOutput.live.find_by tx_hash: input.previous_output.tx_hash,
-                                             cell_index: input.previous_output.index
-
-        @tx_previous_outputs[ckb_transaction_id] = [] if @tx_previous_outputs[ckb_transaction_id] == nil
-        @tx_previous_outputs[ckb_transaction_id] << previous_output
+        previous_output = @tx_previous_outputs[ckb_transaction_id].find{|p_out| input.previous_output.tx_hash == p_out.tx_hash && p_out.cell_index == input.previous_output.index }
 
         {
           cell_input: {
