@@ -225,6 +225,7 @@ module CkbSync
           end
           if addrs_withdraw_info[address.id][:dao_deposit] == 0
             addrs_withdraw_info[address.id][:is_depositor] = false
+            addrs_withdraw_info[address.id][:unclaimed_compensation] = address.cal_unclaimed_compensation
           end
 
           updated_deposit_dao_events_attributes << { block_id: previous_cell_output.block_id,
@@ -292,6 +293,11 @@ module CkbSync
               interest: address.interest.to_i + interest,
             }
           end
+
+          unless address.is_depositor
+            addrs_withdraw_info[address.id][:unclaimed_compensation] = 0
+          end
+
           updated_withdraw_dao_events_attributes << { block_id: previous_cell_output.block_id,
                                                       ckb_transaction_id: previous_cell_output.ckb_transaction_id,
                                                       cell_index: previous_cell_output.cell_index,
@@ -393,6 +399,7 @@ module CkbSync
           dao_deposit: address_info[:dao_deposit],
           interest: address_info[:interest],
           is_depositor: address_info[:is_depositor],
+          unclaimed_compensation: address_info[:unclaimed_compensation]
         }
       end
       if addresses_deposit_attributes.present?
