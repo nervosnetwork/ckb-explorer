@@ -9,7 +9,7 @@ class StatisticInfoChart
 
   def hash_rate
     to = Rails.cache.read("hash_rate_to")
-    Rails.cache.realize("hash_rate_chart_data_#{to}")&.uniq || []
+    Rails.cache.realize("hash_rate_chart_data_#{to}", expires_in: 15.hours)&.uniq || []
   end
 
   def uncle_rate
@@ -47,7 +47,7 @@ class StatisticInfoChart
       end
 
     Rails.cache.write("hash_rate_to", to)
-    Rails.cache.write("hash_rate_chart_data_#{to}", result.compact.uniq)
+    Rails.cache.write("hash_rate_chart_data_#{to}", result.compact.uniq, expires_in: 15.hours)
   end
 
   private

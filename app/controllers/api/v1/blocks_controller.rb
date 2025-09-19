@@ -9,7 +9,7 @@ module Api
           blocks = Block.recent.select(:id, :miner_hash, :number, :timestamp, :reward, :ckb_transactions_count,
                                        :live_cell_changes, :updated_at).limit(ENV["HOMEPAGE_BLOCK_RECORDS_COUNT"].to_i)
           json =
-            Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do
+            Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds, expires_in: 2.minutes) do
               BlockListSerializer.new(blocks).serialized_json
             end
         else
@@ -34,7 +34,7 @@ module Api
           total_count = TableRecordCount.find_by(table_name: "blocks")&.count
 
           json =
-            Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds) do
+            Rails.cache.realize(blocks.cache_key, version: blocks.cache_version, race_condition_ttl: 3.seconds, expires_in: 10.minutes) do
               options = FastJsonapi::PaginationMetaGenerator.new(request: request, records: blocks, page: @page,
                                                                  page_size: @page_size, total_count:).call
               BlockListSerializer.new(blocks, options).serialized_json
