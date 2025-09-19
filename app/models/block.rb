@@ -95,7 +95,7 @@ class Block < ApplicationRecord
   # @param block_hash [String] block hash
   # @return [Hash] raw hash of the block
   def self.fetch_raw_hash_with_cycles(block_hash)
-    Rails.cache.fetch(["Block", block_hash, "raw_hash_with_cycles"], expires_in: 1.day) do
+    Rails.cache.fetch(["Block", block_hash, "raw_hash_with_cycles"], expires_in: 10.minutes) do
       res = CkbSync::Api.instance.directly_single_call_rpc method: "get_block", params: [block_hash, "0x2", true]
 
       r = res["result"].with_indifferent_access
@@ -133,7 +133,7 @@ class Block < ApplicationRecord
     r = res["result"].with_indifferent_access
     # because the chain may reorg sometimes
     # so we can only store cache against block hash
-    Rails.cache.write(["Block", r["block"]["header"]["hash"], "raw_hash"], r["block"], expires_in: 1.day)
+    Rails.cache.write(["Block", r["block"]["header"]["hash"], "raw_hash"], r["block"], expires_in: 10.minutes)
     # store transaction hash directly to cache ahead
     r["block"]["transactions"].each do |tx|
       CkbTransaction.write_raw_hash_cache tx["hash"], tx
@@ -165,7 +165,7 @@ class Block < ApplicationRecord
   # @return [CKB::Types::Block]
   def sdk_block
     @sdk_block ||=
-      Rails.cache.fetch(["Block", block_hash, "object"], expires_in: 1.hour) do
+      Rails.cache.fetch(["Block", block_hash, "object"], expires_in: 10.minutes) do
         CKB::Types::Block.from_h(original_raw_hash)
       end
   end
@@ -238,7 +238,7 @@ class Block < ApplicationRecord
           where(number: query_key).first
         end
       if block.present?
-        Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds, expires_in: 30.minutes) do
+        Rails.cache.fetch([name, query_key], race_condition_ttl: 3.seconds, expires_in: 10.minutes) do
           BlockSerializer.new(block)
         end
       end
@@ -249,7 +249,7 @@ class Block < ApplicationRecord
   # @param epoch_number [Integer]
   # @return [Hash] {number: block_number, bytes: block_size}
   def self.largest_in_epoch(epoch_number)
-    Rails.cache.fetch([:epoch, epoch_number, :largest_block]) do
+    Rails.cache.fetch([:epoch, epoch_number, :largest_block], expires_in: 12.hour) do
       b = Block.where(epoch: epoch_number).order(block_size: :desc).first
       if b&.block_size
         {
