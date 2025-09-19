@@ -416,7 +416,7 @@ class CkbUtils
     when *CkbSync::Api.instance.xudt_compatible_code_hashes.product(["type"])
       return "xudt_compatible"
     when [CkbSync::Api.instance.xudt_code_hash, "type"], [CkbSync::Api.instance.xudt_data_hash, "data1"]
-      return Rails.cache.fetch(type_script.compute_hash) do
+      return Rails.cache.fetch(type_script.compute_hash, expires_in: 1.day) do
         OmigaInscriptionInfo.exists?(udt_hash: type_script.compute_hash) ? "omiga_inscription" : "xudt"
       end
     when [CkbSync::Api.instance.unique_cell_code_hash, "data1"]

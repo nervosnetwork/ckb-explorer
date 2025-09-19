@@ -52,13 +52,13 @@ class CkbTransaction < ApplicationRecord
   after_commit :flush_cache
 
   def self.cached_find(query_key)
-    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds) do
+    Rails.cache.realize([name, query_key], race_condition_ttl: 3.seconds, expires_in: 1.hour) do
       find_by(tx_hash: query_key)
     end
   end
 
   def self.largest_in_epoch(epoch_number)
-    Rails.cache.fetch(["epoch", epoch_number, "largest_tx"]) do
+    Rails.cache.fetch(["epoch", epoch_number, "largest_tx"], expires_in: 12.hour) do
       tx = CkbTransaction.where(block: { epoch_number: }).order(bytes: :desc).first
       if tx.bytes
         {
@@ -77,7 +77,7 @@ class CkbTransaction < ApplicationRecord
       raw_hash = tx_hash
       tx_hash = raw_hash["hash"]
     end
-    Rails.cache.write([name, tx_hash, "raw_hash"], raw_hash, expires_in: 1.day)
+    Rails.cache.write([name, tx_hash, "raw_hash"], raw_hash, expires_in: 10.minutes)
   end
 
   # fetch using rpc method "get_transaction"
@@ -86,7 +86,7 @@ class CkbTransaction < ApplicationRecord
   # @param write_raw_hash_cache [Boolean] if we should write raw hash of transaction without status to cache
   # @return [Hash]
   def self.fetch_raw_hash_with_status(tx_hash, write_raw_hash_cache: true)
-    Rails.cache.fetch([name, tx_hash, "raw_hash_with_status"], expires_in: 1.day, skip_nil: true) do
+    Rails.cache.fetch([name, tx_hash, "raw_hash_with_status"], expires_in: 10.minutes, skip_nil: true) do
       res = CkbSync::Api.instance.directly_single_call_rpc method: "get_transaction", params: [tx_hash]
       h = res["result"].with_indifferent_access
       self.write_raw_hash_cache(tx_hash, h["transaction"]) if write_raw_hash_cache
@@ -99,7 +99,7 @@ class CkbTransaction < ApplicationRecord
   # @param tx_hash [String]
   # @return [Hash]
   def self.fetch_raw_hash(tx_hash)
-    Rails.cache.fetch([name, tx_hash, "raw_hash"], expires_in: 1.day, skip_nil: true) do
+    Rails.cache.fetch([name, tx_hash, "raw_hash"], expires_in: 10.minutes, skip_nil: true) do
       fetch_raw_hash_with_status(tx_hash, write_raw_hash_cache: false)["transaction"]
     end
   end
@@ -108,9 +108,9 @@ class CkbTransaction < ApplicationRecord
   # @param tx_hash [String]
   # @return [CKB::Types::TransactionWithStatus]
   def self.fetch_sdk_transaction_with_status(tx_hash, write_object_cache: true)
-    Rails.cache.fetch([name, tx_hash, "object_with_status"], expires_in: 1.day, skip_nil: true) do
+    Rails.cache.fetch([name, tx_hash, "object_with_status"], expires_in: 10.minutes, skip_nil: true) do
       tx = CKB::Types::TransactionWithStatus.from_h fetch_raw_hash_with_status(tx_hash)
-      Rails.cache.write([name, tx_hash, "object"], tx.transaction, expires_in: 1.day) if write_object_cache
+      Rails.cache.write([name, tx_hash, "object"], tx.transaction, expires_in: 10.minutes) if write_object_cache
       tx
     end
   end
@@ -119,13 +119,13 @@ class CkbTransaction < ApplicationRecord
   # @param tx_hash [String]
   # @return [CKB::Types::Transaction]
   def self.fetch_sdk_transaction(tx_hash)
-    Rails.cache.fetch([name, tx_hash, "object"], expires_in: 1.day, skip_nil: true) do
+    Rails.cache.fetch([name, tx_hash, "object"], expires_in: 10.minutes, skip_nil: true) do
       sdk_tx_with_status = Rails.cache.read([name, tx_hash, "object_with_status"])
       if sdk_tx_with_status
         return sdk_transaction_with_status.transaction
       else
         tx = CKB::Types::Transaction.from_h fetch_raw_hash(tx_hash).with_indifferent_access
-        Rails.cache.write([name, tx_hash, "object"], tx, expires_in: 1.day)
+        Rails.cache.write([name, tx_hash, "object"], tx, expires_in: 10.minutes)
         tx
       end
     end
@@ -199,7 +199,7 @@ class CkbTransaction < ApplicationRecord
 
   # convert current record to raw hash with standard RPC json data structure
   def to_raw
-    Rails.cache.fetch([self.class.name, tx_hash, "raw_hash"], expires_in: 1.day) do
+    Rails.cache.fetch([self.class.name, tx_hash, "raw_hash"], expires_in: 10.minutes) do
       _outputs = cell_outputs.order(cell_index: :asc).to_a
       cell_deps = cell_dependencies.includes(:cell_output).to_a
 
