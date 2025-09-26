@@ -883,12 +883,41 @@ module CkbSync
 
       CellInput.import cell_inputs_attributes, validate: false, batch_size: 500
       if prev_cell_outputs_attributes.present?
-        cell_ouput_ids = prev_cell_outputs_attributes.pluck(:id)
-        CellOutput.live.where(id: cell_ouput_ids).update_all(status: :dead)
         prev_cell_outputs_attributes.each_slice(500) do |batch|
-          CellOutput.upsert_all(batch,
-                              unique_by: %i[tx_hash cell_index status],
-                              record_timestamps: true)
+          updates = batch.map do |attr|
+            [attr[:id], attr.slice(:status, :consumed_by_id, :consumed_block_timestamp)]
+          end.to_h
+
+          case_clauses = { status: [], consumed_by_id: [], consumed_block_timestamp: [] }
+          ids = []
+    
+          updates.each do |id, attrs|
+            ids << id
+            attrs.each do |column, value|
+              case_clauses[column] << "WHEN #{id} THEN '#{ActiveRecord::Base.connection.quote(value)}'"
+            end
+          end
+          
+          set_clauses = case_clauses.map do |column, clauses|
+            if clauses.any?
+              "  #{column} = CASE id\n    #{clauses.join("\n    ")}\n    ELSE #{column}\n  END"
+            else
+              nil
+            end
+          end.compact.join(",\n")
+          
+          id_list = ids.join(', ')
+          
+          sql = <<-SQL
+            UPDATE cell_outputs
+            SET
+              #{set_clauses}
+            WHERE id IN (#{id_list})
+          SQL
+          
+          # puts sql
+    
+          ActiveRecord::Base.connection.execute(sql)
         end
       end
 
@@ -1277,7 +1306,7 @@ _prev_outputs, index = nil)
             cell_type: previous_output.cell_type,
             tx_hash: input.previous_output.tx_hash,
             cell_index: input.previous_output.index,
-            status: "dead",
+            status: 1,
             consumed_by_id: ckb_transaction_id,
             consumed_block_timestamp: @local_block.timestamp,
           },
