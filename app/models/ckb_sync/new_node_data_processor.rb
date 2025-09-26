@@ -474,20 +474,13 @@ module CkbSync
       end
 
       if new_udt_accounts_attributes.present?
-        udt_attrs = new_udt_accounts_attributes.map! do |attr|
-          attr.merge!(created_at: Time.current,
-                      updated_at: Time.current)
-        end
-        udt_attrs.each_slice(500) do |batch|
-          UdtAccount.insert_all!(batch)
+        new_udt_accounts_attributes.each_slice(500) do |batch|
+          UdtAccount.insert_all!(batch, record_timestamps: true)
         end
       end
       if udt_accounts_attributes.present?
-        udt_accounts_attrs = udt_accounts_attributes.map! do |attr|
-          attr.merge!(updated_at: Time.current)
-        end
-        udt_accounts_attrs.each_slice(500) do |batch|
-          UdtAccount.upsert_all(batch)
+        udt_accounts_attributes.each_slice(500) do |batch|
+          UdtAccount.upsert_all(batch, record_timestamps: true)
         end
       end
     end
@@ -786,10 +779,7 @@ module CkbSync
         end
       end
       if full_tx_address_ids.present?
-        full_tx_address_ids.each_slice(500) do |batch|
-          AccountBook.upsert_all batch,
-            unique_by: %i[address_id ckb_transaction_id]
-        end
+        AccountBook.import full_tx_address_ids, validate: false, batch_size: 500
       end
       if full_tx_udt_ids.present?
         full_tx_udt_ids.each_slice(500) do |batch|
@@ -839,8 +829,8 @@ module CkbSync
         CellOutput.pending.where("tx_hash IN (#{binary_hashes})").update_all(status: :live)
         id_hashes = []
         cell_outputs_attributes.each_slice(500) do |batch|
-          id_hashes.concat CellOutput.upsert_all(batch, unique_by: %i[tx_hash cell_index status],
-                                                                   returning: %i[id data_hash])
+          result = CellOutput.import(batch, validate: false, returning: %i[id data_hash]).results
+          id_hashes.concat result.map{|item| {"id" => item[0], "data_hash" => item[1]} }
         end
         cell_data_attrs = []
 
@@ -855,9 +845,7 @@ module CkbSync
         end
 
         if cell_data_attrs.present?
-          cell_data_attrs.each_slice(500) do |batch|
-            CellDatum.upsert_all(batch, unique_by: [:cell_output_id])
-          end
+          CellDatum.import cell_data_attrs, validate: false, batch_size: 500
         end
       end
 
@@ -885,10 +873,7 @@ module CkbSync
         end
       end
       if cell_deps_attrs.present?
-        cell_deps_attrs.each_slice(500) do |batch|
-          CellDependency.upsert_all(batch,
-                                    unique_by: %i[ckb_transaction_id contract_cell_id dep_type])
-        end
+        CellDependency.import cell_deps_attrs, validate: false, batch_size: 500
       end
 
       prev_outputs = nil
@@ -896,17 +881,43 @@ module CkbSync
                         input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids,
                         prev_outputs, addrs_changes, token_transfer_ckb_tx_ids)
 
-      cell_inputs_attributes.each_slice(500) do |batch|
-        CellInput.upsert_all(batch,
-                            unique_by: %i[ckb_transaction_id index])
-      end
+      CellInput.import cell_inputs_attributes, validate: false, batch_size: 500
       if prev_cell_outputs_attributes.present?
-        cell_ouput_ids = prev_cell_outputs_attributes.pluck(:id)
-        CellOutput.live.where(id: cell_ouput_ids).update_all(status: :dead)
         prev_cell_outputs_attributes.each_slice(500) do |batch|
-          CellOutput.upsert_all(batch,
-                              unique_by: %i[tx_hash cell_index status],
-                              record_timestamps: true)
+          updates = batch.map do |attr|
+            [attr[:id], attr.slice(:status, :consumed_by_id, :consumed_block_timestamp)]
+          end.to_h
+
+          case_clauses = { status: [], consumed_by_id: [], consumed_block_timestamp: [] }
+          ids = []
+    
+          updates.each do |id, attrs|
+            ids << id
+            attrs.each do |column, value|
+              case_clauses[column] << "WHEN #{id} THEN '#{ActiveRecord::Base.connection.quote(value)}'"
+            end
+          end
+          
+          set_clauses = case_clauses.map do |column, clauses|
+            if clauses.any?
+              "  #{column} = CASE id\n    #{clauses.join("\n    ")}\n    ELSE #{column}\n  END"
+            else
+              nil
+            end
+          end.compact.join(",\n")
+          
+          id_list = ids.join(', ')
+          
+          sql = <<-SQL
+            UPDATE cell_outputs
+            SET
+              #{set_clauses}
+            WHERE id IN (#{id_list})
+          SQL
+          
+          # puts sql
+    
+          ActiveRecord::Base.connection.execute(sql)
         end
       end
 
@@ -1295,7 +1306,7 @@ _prev_outputs, index = nil)
             cell_type: previous_output.cell_type,
             tx_hash: input.previous_output.tx_hash,
             cell_index: input.previous_output.index,
-            status: "dead",
+            status: 1,
             consumed_by_id: ckb_transaction_id,
             consumed_block_timestamp: @local_block.timestamp,
           },
@@ -1337,8 +1348,8 @@ _prev_outputs, index = nil)
       CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").update_all tx_status: "committed" if pending_txs.size > 0
       txs = []
       ckb_transactions_attributes.each_slice(500) do |batch|
-        txs.concat CkbTransaction.upsert_all(batch, unique_by: %i[tx_status tx_hash],
-                                                                   returning: %w(id tx_hash tx_index block_timestamp block_number created_at))
+        results = CkbTransaction.import(batch, validate: false, returning: %w(id tx_hash tx_index block_timestamp block_number created_at)).results
+        txs.concat results.map{|item| { "id" => item[0], "tx_hash" => item[1], "tx_index" => item[2], "block_timestamp" => item[3], "block_number" => item[4], "created_at" => item[5] }  }
       end 
 
       if pending_txs.any?
@@ -1379,10 +1390,7 @@ _prev_outputs, index = nil)
         end
       end
       if header_deps_attrs.present?
-        header_deps_attrs.each_slice(500) do |batch|
-          HeaderDependency.upsert_all(batch,
-            unique_by: %i[ckb_transaction_id index])
-        end
+        HeaderDependency.import header_deps_attrs, validate: false, batch_size: 500
       end
 
       # process witnesses
@@ -1403,11 +1411,7 @@ _prev_outputs, index = nil)
       end
 
       if witnesses_attrs.present?
-        witnesses_attrs.each_slice(500) do |batch|
-          Witness.upsert_all(batch,
-                            unique_by: %i[ckb_transaction_id
-                                          index])
-        end
+        Witness.import witnesses_attrs, validate: false, batch_size: 500
       end
 
       txs

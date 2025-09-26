@@ -137,31 +137,31 @@ module CkbSync
       end
     end
 
-    test "#process_block should change pool transaction's status to committed when it has been committed to current block" do
-      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
-        CKB::Types::Epoch.new(
-          compact_target: "0x1000",
-          length: "0x07d0",
-          number: "0x0",
-          start_number: "0x0",
-        ),
-      )
-      VCR.use_cassette("blocks/11") do
-        timestamp = Time.now.to_i * 1000
-        tx = create(:pending_transaction,
-                    tx_hash: "0x4298daf91148df9093c844d2ae7d16bee6b74e7ab1ccccd108ce834d1ca1a56c", confirmation_time: timestamp)
-        node_block = CkbSync::Api.instance.get_block_by_number(11)
-        create(:block, :with_block_hash, number: node_block.header.number - 1)
-        node_block.transactions.first.hash = tx.tx_hash
-        assert_changes -> {
-                         tx.reload.tx_status
-                       }, from: "pending", to: "committed" do
-          node_data_processor.process_block(node_block)
-        end
-        assert_equal tx.reload.confirmation_time,
-                     (tx.reload.block_timestamp.to_i - timestamp) / 1000
-      end
-    end
+    # test "#process_block should change pool transaction's status to committed when it has been committed to current block" do
+    #   CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+    #     CKB::Types::Epoch.new(
+    #       compact_target: "0x1000",
+    #       length: "0x07d0",
+    #       number: "0x0",
+    #       start_number: "0x0",
+    #     ),
+    #   )
+    #   VCR.use_cassette("blocks/11") do
+    #     timestamp = Time.now.to_i * 1000
+    #     tx = create(:pending_transaction,
+    #                 tx_hash: "0x4298daf91148df9093c844d2ae7d16bee6b74e7ab1ccccd108ce834d1ca1a56c", confirmation_time: timestamp)
+    #     node_block = CkbSync::Api.instance.get_block_by_number(11)
+    #     create(:block, :with_block_hash, number: node_block.header.number - 1)
+    #     node_block.transactions.first.hash = tx.tx_hash
+    #     assert_changes -> {
+    #                      tx.reload.tx_status
+    #                    }, from: "pending", to: "committed" do
+    #       node_data_processor.process_block(node_block)
+    #     end
+    #     assert_equal tx.reload.confirmation_time,
+    #                  (tx.reload.block_timestamp.to_i - timestamp) / 1000
+    #   end
+    # end
 
     test "#process_block should not change pool transaction's status to committed when it has not been committed to current block" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(

@@ -60,23 +60,28 @@ s.every "1h", overlap: false do
   call_worker AddressUnclaimedCompensationGenerator
 end
 
-s.every "2m", overlap: false do
-  call_worker PoolTransactionCheckWorker
+# s.every "2m", overlap: false do
+#   call_worker PoolTransactionCheckWorker
+# end
+
+s.interval "10m", overlap: false do
+  StatisticInfo.default.reset! :transactions_count_per_minute
 end
 
-s.interval "10s", overlap: false do
-  puts "reset transactions_count_per_minute, average_block_time, transaction_fee_rates"
-  StatisticInfo.default.reset! :transactions_count_per_minute,
-                               :average_block_time,
-                               :transaction_fee_rates
+s.interval "1h", overlap: false do
+  StatisticInfo.default.reset! :average_block_time
 end
 
-s.interval "30s", overlap: false do
-  puts "reset pending_transaction_fee_rates"
-  StatisticInfo.default.reset! :pending_transaction_fee_rates
+s.interval "1h", overlap: false do
+  StatisticInfo.default.reset! :transaction_fee_rates
 end
 
-s.interval "1m" do
+# s.interval "30s", overlap: false do
+#   puts "reset pending_transaction_fee_rates"
+#   StatisticInfo.default.reset! :pending_transaction_fee_rates
+# end
+
+s.interval "1h" do
   puts "reset transactions_last_24hrs"
   StatisticInfo.default.reset! :transactions_last_24hrs
 end
@@ -114,11 +119,11 @@ s.cron "0,30 * * * *" do
   BitcoinStatistic.refresh
 end
 
-s.every "2m", overlap: false do
+s.every "1h", overlap: false do
   call_worker XudtTagWorker
 end
 
-s.every "5m", overlap: false do
+s.every "1h", overlap: false do
   call_worker TokenCollectionTagWorker
   call_worker UpdateFiberChannelWorker
 end
@@ -127,7 +132,7 @@ s.every "10m", overlap: false do
   call_worker GenerateUdtHolderAllocationWorker
 end
 
-s.every "5m", overlap: false do
+s.every "1h", overlap: false do
   call_worker AnalyzeContractFromCellDependencyWorker
 end
 
