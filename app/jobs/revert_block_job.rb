@@ -162,16 +162,13 @@ class RevertBlockJob < ApplicationJob
     dao_transactions_count = local_tip_block.ckb_transactions.where("tags @> array[?]::varchar[]", ["dao"]).count
     dao_contract = DaoContract.default_contract
 
-    withdraw_transactions_count, withdraw_total_deposit = revert_withdraw_from_dao(dao_events)
+    withdraw_total_deposit = revert_withdraw_from_dao(dao_events)
     claimed_compensation = revert_issue_interest(dao_events)
-    deposit_transactions_count, deposit_total_deposit = revert_deposit_to_dao(dao_events)
+    deposit_total_deposit = revert_deposit_to_dao(dao_events)
 
     dao_events.update_all(status: "reverted")
-    dao_contract.update!(deposit_transactions_count: dao_contract.deposit_transactions_count - deposit_transactions_count,
-                         withdraw_transactions_count: dao_contract.withdraw_transactions_count - withdraw_transactions_count,
-                         total_deposit: dao_contract.total_deposit + withdraw_total_deposit - deposit_total_deposit,
+    dao_contract.update!(total_deposit: dao_contract.total_deposit + withdraw_total_deposit - deposit_total_deposit,
                          claimed_compensation: dao_contract.claimed_compensation - claimed_compensation,
-                         ckb_transactions_count: dao_contract.ckb_transactions_count - dao_transactions_count,
                          depositors_count: DaoEvent.depositor.count)
   end
 
@@ -218,7 +215,7 @@ class RevertBlockJob < ApplicationJob
     upsert_data = address_attrs.values
     Address.upsert_all(upsert_data, unique_by: :id) if upsert_data.present?
 
-    [withdraw_from_dao_events.size, redundant_total_deposit]
+    redundant_total_deposit
   end
 
   def revert_deposit_to_dao(dao_events)
@@ -242,7 +239,7 @@ class RevertBlockJob < ApplicationJob
     Address.upsert_all(upsert_data, unique_by: :id) if upsert_data.present?
     Address.where(id: address_ids, dao_deposit: 0).update_all(is_depositor: false)
 
-    [deposit_to_dao_events.size, redundant_total_deposit]
+    redundant_total_deposit
   end
 
   def revert_block_rewards(local_tip_block)
