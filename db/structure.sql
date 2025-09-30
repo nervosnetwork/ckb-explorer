@@ -1215,14 +1215,10 @@ CREATE TABLE public.dao_contracts (
     id bigint NOT NULL,
     total_deposit numeric(30,0) DEFAULT 0.0,
     claimed_compensation numeric(30,0) DEFAULT 0.0,
-    deposit_transactions_count bigint DEFAULT 0,
-    withdraw_transactions_count bigint DEFAULT 0,
     depositors_count integer DEFAULT 0,
-    total_depositors_count bigint DEFAULT 0,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    unclaimed_compensation numeric(30,0),
-    ckb_transactions_count numeric(30,0) DEFAULT 0.0
+    unclaimed_compensation numeric(30,0)
 );
 
 
@@ -5940,6 +5936,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250715035736'),
 ('20250715043211'),
 ('20250826022054'),
-('20250827065749');
+('20250827065749'),
+('20250930015526');
 
 
