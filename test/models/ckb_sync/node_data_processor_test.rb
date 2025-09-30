@@ -2306,10 +2306,9 @@ module CkbSync
 
       assert_equal ["dao"], tx.tags
       assert_equal ["dao"], tx1.tags
-      assert_equal 2, DaoContract.default_contract.ckb_transactions_count
     end
 
-    test "should recalculate dao contract ckb_transactions_count when block is invalid and has dao txs" do
+    test "when block is invalid and has dao txs" do
       block1 = create(:block, :with_block_hash,
                       number: DEFAULT_NODE_BLOCK_NUMBER - 2)
       tx1 = create(:ckb_transaction, block: block1)
@@ -2401,16 +2400,6 @@ module CkbSync
                                          transactions:, header:)
       block = node_data_processor.process_block(node_block)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-      DaoContract.default_contract.update(deposit_transactions_count: 4)
-
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
-                       record: :new_episodes) do
-        assert_changes -> {
-                         DaoContract.default_contract.reload.ckb_transactions_count
-                       }, from: 2, to: 0 do
-          node_data_processor.call
-        end
-      end
     end
 
     test "should update tx's tags when output have udt cells" do
@@ -2565,7 +2554,6 @@ module CkbSync
       tx = block.ckb_transactions.where(is_cellbase: false).first
 
       assert_equal %w[dao udt], tx.tags
-      assert_equal 1, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "should update tx's tags when input have udt cells" do
@@ -3003,8 +2991,6 @@ module CkbSync
 
       assert_equal %w[dao udt], tx.tags
       assert_equal %w[dao udt], tx1.tags
-
-      assert_equal 2, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "#process_block should not update tx's tags when there aren't dao cells and udt cells" do
@@ -3372,7 +3358,6 @@ module CkbSync
       Sidekiq::Testing.inline!
       block = node_data_processor.process_block(node_block)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-      DaoContract.default_contract.update!(deposit_transactions_count: 4)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                        record: :new_episodes) do
         node_data_processor.call
