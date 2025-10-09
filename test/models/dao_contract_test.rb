@@ -8,12 +8,6 @@ class DaoContractTest < ActiveSupport::TestCase
     should validate_presence_of(:claimed_compensation)
     should validate_numericality_of(:claimed_compensation).
       is_greater_than_or_equal_to(0)
-    should validate_presence_of(:deposit_transactions_count)
-    should validate_numericality_of(:deposit_transactions_count).
-      is_greater_than_or_equal_to(0)
-    should validate_presence_of(:withdraw_transactions_count)
-    should validate_numericality_of(:withdraw_transactions_count).
-      is_greater_than_or_equal_to(0)
     should validate_presence_of(:depositors_count)
     should validate_numericality_of(:depositors_count).
       is_greater_than_or_equal_to(0)
@@ -22,8 +16,8 @@ class DaoContractTest < ActiveSupport::TestCase
   test "should have correct columns" do
     dao_contract = create(:dao_contract)
     expected_attributes = %w(
-      created_at deposit_transactions_count depositors_count id claimed_compensation
-      total_deposit total_depositors_count updated_at withdraw_transactions_count unclaimed_compensation ckb_transactions_count
+      created_at depositors_count id claimed_compensation
+      total_deposit updated_at unclaimed_compensation
     )
     assert_equal expected_attributes.sort, dao_contract.attributes.keys.sort
   end

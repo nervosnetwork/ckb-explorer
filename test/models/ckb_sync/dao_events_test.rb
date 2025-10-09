@@ -64,10 +64,7 @@ module CkbSync
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_withdraw_transaction(node_block)
-
-        assert_difference -> { DaoContract.default_contract.withdraw_transactions_count }, 1 do
-          node_data_processor.process_block(node_block)
-        end
+        node_data_processor.process_block(node_block)
 
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "withdraw_from_dao")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
@@ -220,7 +217,6 @@ module CkbSync
 
       assert_equal ["dao"], tx.tags
       assert_equal ["dao"], tx1.tags
-      assert_equal 2, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "should increase address dao_deposit when block is invalid and previous output is a dao cell" do
@@ -278,7 +274,7 @@ module CkbSync
       end
     end
 
-    test "should decrease dao contract withdraw_transactions_count when block is invalid and previous output is a dao cell" do
+    test "when block is invalid and previous output is a dao cell" do
       DaoCompensationCalculator.any_instance.stubs(:call).returns(1000)
       DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
@@ -296,10 +292,7 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
-        assert_difference -> { DaoContract.default_contract.reload.withdraw_transactions_count }, -1 do
-          node_data_processor.call
-        end
-
+        node_data_processor.call
         dao_events = local_block.dao_events.where(event_type: "withdraw_from_dao")
         assert_equal ["reverted"], dao_events.pluck(:status).uniq
       end
@@ -426,10 +419,8 @@ module CkbSync
       init_total_deposit = (10**8) * 10000
       init_depositors_count = 3
       init_interest_granted = (10**8) * 100
-      init_deposit_transactions_count = 2
-      init_withdraw_transactions_count = 1
       dao_contract.update(total_deposit: init_total_deposit, depositors_count: init_depositors_count,
-                          claimed_compensation: init_interest_granted, deposit_transactions_count: init_deposit_transactions_count, withdraw_transactions_count: init_withdraw_transactions_count)
+                          claimed_compensation: init_interest_granted)
       create_list(:dao_event, 3, status: :processed, contract_id: 1, event_type: "deposit_to_dao")
       prepare_node_data(HAS_UNCLES_BLOCK_NUMBER)
       local_block = Block.find_by(number: HAS_UNCLES_BLOCK_NUMBER)
@@ -441,8 +432,6 @@ module CkbSync
         assert_equal init_total_deposit, dao_contract.total_deposit
         assert_equal init_depositors_count, dao_contract.depositors_count
         assert_equal init_interest_granted, dao_contract.claimed_compensation
-        assert_equal init_deposit_transactions_count, dao_contract.deposit_transactions_count
-        assert_equal init_withdraw_transactions_count, dao_contract.withdraw_transactions_count
       end
     end
 
@@ -525,10 +514,7 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}", record: :new_episodes) do
-        assert_difference -> { dao_contract.reload.deposit_transactions_count }, -1 do
-          node_data_processor.call
-        end
-
+        node_data_processor.call
         deposit_to_dao_events = local_block.dao_events.where(event_type: "deposit_to_dao")
         assert_equal ["reverted"], deposit_to_dao_events.pluck(:status).uniq
       end
@@ -577,19 +563,14 @@ module CkbSync
       create(:block, :with_block_hash, number: node_block.header.number - 1)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         fake_dao_deposit_transaction(node_block)
-
-        assert_difference -> { DaoContract.default_contract.deposit_transactions_count }, 1 do
-          node_data_processor.process_block(node_block)
-        end
-
+        node_data_processor.process_block(node_block)
         deposit_to_dao_events = Block.find_by(number: node_block.header.number).dao_events.where(event_type: "deposit_to_dao")
         assert_equal ["processed"], deposit_to_dao_events.pluck(:status).uniq
       end
     end
 
     test "#process_block should not update dao contract total depositors count when depositors is already has been recorded" do
-      DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1,
-                                          total_depositors_count: 1)
+      DaoContract.default_contract.update(total_deposit: 100000000000000, depositors_count: 1)
       CkbSync::Api.any_instance.stubs(:calculate_dao_maximum_withdraw).returns("0x2faf0be8")
 
       node_block = fake_node_block("0x3307186493c5da8b91917924253a5ffd35231151649d0c7e2941aa8801815063")
@@ -614,10 +595,6 @@ module CkbSync
       output1.capacity = (10**8) * 1000
       tx1.outputs << output1
       tx1.outputs_data << CKB::Utils.bin_to_hex("\x00" * 8)
-
-      assert_no_changes -> { DaoContract.default_contract.total_depositors_count } do
-        node_data_processor.process_block(node_block)
-      end
     end
 
     test "#process_block should not update dao contract depositors count when depositors is already has been recorded" do
@@ -728,7 +705,6 @@ module CkbSync
       tx1 = block.ckb_transactions.where(is_cellbase: false).second
       assert_equal ["dao"], tx.tags
       assert_equal ["dao"], tx1.tags
-      assert_equal 2, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "should update tx's tags when output have udt cells and nervos_dao_withdrawing cell" do
@@ -793,7 +769,6 @@ module CkbSync
 
       tx = block.ckb_transactions.where(is_cellbase: false).first
       assert_equal %w[dao udt], tx.tags
-      assert_equal 1, DaoContract.default_contract.ckb_transactions_count
     end
 
     private

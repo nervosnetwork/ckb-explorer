@@ -185,12 +185,6 @@ module CkbSync
       process_withdraw_dao_events!(local_block, dao_contract)
       process_interest_dao_events!(local_block, dao_contract)
       dao_contract.update(depositors_count: DaoEvent.depositor.distinct.count(:address_id))
-
-      # update dao contract ckb_transactions_count
-      dao_contract.increment!(:ckb_transactions_count,
-                              local_block.ckb_transactions.where(
-                                "tags @> array[?]::varchar[]", ["dao"]
-                              ).count)
     end
 
     # Process DAO withdraw
@@ -263,8 +257,7 @@ module CkbSync
 
       # update dao contract info
       dao_contract.update!(
-        total_deposit: dao_contract.total_deposit - withdraw_amount,
-        withdraw_transactions_count: dao_contract.withdraw_transactions_count + withdraw_transaction_ids.size,
+        total_deposit: dao_contract.total_deposit - withdraw_amount
       )
       update_addresses_dao_info(addrs_withdraw_info)
     end
@@ -384,8 +377,7 @@ module CkbSync
       end
       # update dao contract info
       dao_contract.update!(
-        total_deposit: dao_contract.total_deposit + deposit_amount,
-        deposit_transactions_count: dao_contract.deposit_transactions_count + deposit_transaction_ids.size,
+        total_deposit: dao_contract.total_deposit + deposit_amount
       )
 
       update_addresses_dao_info(addresses_deposit_info)

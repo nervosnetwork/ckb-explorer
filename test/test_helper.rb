@@ -394,7 +394,6 @@ end
 
 def fake_dao_deposit_transaction(dao_cell_count, address)
   block = create(:block, :with_block_hash)
-  DaoContract.default_contract.update(ckb_transactions_count: dao_cell_count)
   address.update(dao_transactions_count: dao_cell_count)
   dao_cell_count.times do |number|
     if number % 2 == 0
