@@ -338,6 +338,7 @@ module CkbSync
         address = output.address
         address.update(dao_deposit: output.capacity)
         target_address = address
+        puts "node_block: #{node_block.header.number}"
         node_data_processor.process_block(node_block)
       end
 
@@ -822,14 +823,19 @@ module CkbSync
                                 tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
                                 block:)
       lock = create(:lock_script)
+
+      puts "data: #{CKB::Utils.bin_to_hex([block.number].pack('Q<'))}, block: #{block.number}"
+
       cell_output1 = create(:cell_output, ckb_transaction: ckb_transaction1,
                                           cell_index: 1,
                                           tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
                                           block:,
                                           cell_type: "nervos_dao_withdrawing",
                                           capacity: (10**8) * 1000,
-                                          data: CKB::Utils.bin_to_hex("\x02" * 8),
+                                          data: CKB::Utils.bin_to_hex([block.number].pack('Q<')),
                                           lock_script_id: lock.id)
+
+      puts "cell_output1 id: #{cell_output1.id}"
       cell_output2 = create(:cell_output, ckb_transaction: ckb_transaction2,
                                           cell_index: 1,
                                           tx_hash: "0x398315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e2",
@@ -859,12 +865,6 @@ module CkbSync
                           previous_output: {
                             tx_hash: "0x598315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
                             index: 2,
-                          })
-      create(:cell_input, block: ckb_transaction1.block,
-                          ckb_transaction: ckb_transaction1,
-                          previous_output: {
-                            tx_hash: "0x498315db9c7ba144cca74d2e9122ac9b3a3da1641b2975ae321d91ec34f1c0e3",
-                            index: 1,
                           })
       create(:cell_input, block: ckb_transaction1.block,
                           ckb_transaction: ckb_transaction1,

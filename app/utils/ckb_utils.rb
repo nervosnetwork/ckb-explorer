@@ -272,6 +272,8 @@ class CkbUtils
 
   def self.dao_interest(nervos_dao_withdrawing_cell)
     nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
+    puts "tx: #{nervos_dao_withdrawing_cell_generated_tx.tx_hash}, cell_index: #{nervos_dao_withdrawing_cell.cell_index}"
+    puts "nervos_dao_withdrawing_cell.data: #{nervos_dao_withdrawing_cell.data}, binary_data: #{nervos_dao_withdrawing_cell.binary_data}"
     block_number = CKB::Utils.hex_to_bin(nervos_dao_withdrawing_cell.data).unpack("Q<").pack("Q>").unpack1("H*").hex
     deposit_dao = Block.find_by_number(block_number).dao
     withdrawing_dao_cell_block_dao = nervos_dao_withdrawing_cell.dao
