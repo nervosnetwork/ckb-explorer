@@ -1,10 +1,11 @@
 class DaoCompensationCalculator
-  attr_reader :deposit_cell_output, :withdraw_block_dao, :withdraw_cell_output
+  attr_reader :deposit_cell_output, :withdraw_block_dao, :withdraw_cell_output, :deposit_dao
 
-  def initialize(deposit_cell_output, withdraw_block_dao, withdraw_cell_output = nil)
+  def initialize(deposit_cell_output, withdraw_block_dao, withdraw_cell_output = nil, deposit_dao = nil)
     @deposit_cell_output = deposit_cell_output
     @withdraw_cell_output = withdraw_cell_output
     @withdraw_block_dao = withdraw_block_dao
+    @deposit_dao = deposit_dao
   end
 
   def call
@@ -18,7 +19,11 @@ class DaoCompensationCalculator
   end
 
   def parsed_deposit_block_dao
-    CkbUtils.parse_dao(deposit_cell_output.dao)
+    if deposit_cell_output
+      CkbUtils.parse_dao(deposit_cell_output.dao)
+    else
+      CkbUtils.parse_dao(deposit_dao)
+    end
   end
 
   def compensation_generating_capacity

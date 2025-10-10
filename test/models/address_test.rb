@@ -153,6 +153,7 @@ class AddressTest < ActiveSupport::TestCase
                          capacity: 10000 * 10**8,
                          occupied_capacity: 6100000000,
                          cell_index: 0,
+                         data: CKB::Utils.bin_to_hex([previous_output_block.number].pack('Q<')),
                          dao: nervos_dao_withdrawing_block.dao)
     create(:cell_output, block: nervos_dao_withdrawing_block,
                          address:,
@@ -161,6 +162,7 @@ class AddressTest < ActiveSupport::TestCase
                          capacity: 20000 * 10**8,
                          occupied_capacity: 6100000000,
                          cell_index: 1,
+                         data: CKB::Utils.bin_to_hex([previous_output_block.number].pack('Q<')),
                          dao: nervos_dao_withdrawing_block.dao)
 
     deposit_cell = create(:cell_output, block: deposit_block,

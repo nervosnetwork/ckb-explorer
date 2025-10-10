@@ -2792,6 +2792,7 @@ module CkbSync
                            cell_index: 0,
                            address: input_address1,
                            cell_type: "nervos_dao_withdrawing",
+                           data: CKB::Utils.bin_to_hex([deposit_block.number].pack('Q<')),
                            dao: "0x28ef3c7ff3860700d88b1a61958923008ae424cd7200000000e3bad4847a0100", lock_script_id: lock1.id, occupied_capacity: 61 * (10**8))
       create(:cell_output, ckb_transaction: tx2,
                            block: block2,
@@ -2800,6 +2801,7 @@ module CkbSync
                            cell_index: 1,
                            address: input_address2,
                            cell_type: "nervos_dao_withdrawing",
+                           data: CKB::Utils.bin_to_hex([deposit_block.number].pack('Q<')),
                            dao: "0x2cd631702e870700b3df08d7d889230036f787487e00000000e3bad4847a0100", lock_script_id: lock2.id, occupied_capacity: 61 * (10**8))
 
       # udt cell
@@ -2854,6 +2856,7 @@ module CkbSync
                            cell_index: 0,
                            address: input_address4,
                            cell_type: "nervos_dao_withdrawing",
+                           data: CKB::Utils.bin_to_hex([deposit_block1.number].pack('Q<')),
                            dao: "0x28ef3c7ff3860700d88b1a61958923008ae424cd7200000000e3bad4847a0100", lock_script_id: lock4.id, occupied_capacity: 61 * (10**8))
 
       # udt cell
