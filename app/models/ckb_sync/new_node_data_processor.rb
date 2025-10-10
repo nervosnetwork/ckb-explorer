@@ -275,11 +275,9 @@ module CkbSync
         dao_inputs.each do |dao_input|
           previous_cell_output = CellOutput.
             where(id: dao_input.previous_cell_output_id).
-            select(:address_id, :block_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity).
+            select(:address_id, :block_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity, :id).
             take!
           address = previous_cell_output.address
-
-          puts "local_block: #{local_block.number}, output_id: #{dao_input.previous_cell_output_id}"
 
           interest = CkbUtils.dao_interest(previous_cell_output)
           if addrs_withdraw_info.key?(address.id)
@@ -1320,8 +1318,6 @@ _prev_outputs, index = nil)
       header_deps = {}
       witnesses = {}
       node_block.transactions.each_with_index do |tx, tx_index|
-        puts "local_block: #{local_block.number}, tx_hash #{tx.hash}, tx_index: #{tx_index}"
-
         attrs = ckb_transaction_attributes(local_block, tx, tx_index)
         if cycles
           attrs[:cycles] = tx_index > 0 ? cycles[tx_index - 1]&.hex : nil
