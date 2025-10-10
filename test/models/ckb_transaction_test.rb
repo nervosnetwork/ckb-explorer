@@ -192,6 +192,9 @@ class CkbTransactionTest < ActiveSupport::TestCase
                         previous_cell_output_id: nervos_dao_deposit_cell.id)
     started_block = Block.select(:number,
                                  :timestamp).find(nervos_dao_deposit_cell.block_id)
+
+    nervos_dao_withdrawing_cell.data = CKB::Utils.bin_to_hex([started_block.number].pack('Q<'))
+
     interest = DaoCompensationCalculator.new(deposit_cell,
                                              nervos_dao_withdrawing_cell.block.dao).call
     # binding.pry
@@ -260,6 +263,7 @@ class CkbTransactionTest < ActiveSupport::TestCase
                                                        data: "0x7512000000000000",
                                                        tx_hash: "0xf9aca16b49c7d037920ad9e5aecdac272412a5fbe0396f7d95b112bf790dd39f",
                                                        cell_index: 0,
+                                                       data: CKB::Utils.bin_to_hex([block.number].pack('Q<')),
                                                        cell_type: "nervos_dao_withdrawing")
     started_block = Block.select(:number,
                                  :timestamp).find(ckb_transaction.block_id)
