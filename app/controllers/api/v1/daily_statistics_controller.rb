@@ -15,7 +15,7 @@ module Api
 
       def rendered_json(daily_statistics)
         Rails.cache.realize("#{daily_statistics.cache_key}/#{params[:id]}", version: daily_statistics.cache_version,
-                                                                            race_condition_ttl: 3.seconds) do
+                                                                            race_condition_ttl: 3.seconds, expires_in: 1.day) do
           case params[:id]
           when "avg_hash_rate"
             DailyStatisticSerializer.new(daily_statistics.presence || [], { params: { indicator: params[:id] } })

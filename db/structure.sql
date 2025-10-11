@@ -628,6 +628,36 @@ ALTER SEQUENCE public.blocks_id_seq OWNED BY public.blocks.id;
 
 
 --
+-- Name: btc_account_books; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.btc_account_books (
+    id bigint NOT NULL,
+    ckb_transaction_id bigint,
+    bitcoin_address_id bigint
+);
+
+
+--
+-- Name: btc_account_books_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.btc_account_books_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: btc_account_books_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.btc_account_books_id_seq OWNED BY public.btc_account_books.id;
+
+
+--
 -- Name: cell_data; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1215,14 +1245,10 @@ CREATE TABLE public.dao_contracts (
     id bigint NOT NULL,
     total_deposit numeric(30,0) DEFAULT 0.0,
     claimed_compensation numeric(30,0) DEFAULT 0.0,
-    deposit_transactions_count bigint DEFAULT 0,
-    withdraw_transactions_count bigint DEFAULT 0,
     depositors_count integer DEFAULT 0,
-    total_depositors_count bigint DEFAULT 0,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    unclaimed_compensation numeric(30,0),
-    ckb_transactions_count numeric(30,0) DEFAULT 0.0
+    unclaimed_compensation numeric(30,0)
 );
 
 
@@ -2837,6 +2863,13 @@ ALTER TABLE ONLY public.blocks ALTER COLUMN id SET DEFAULT nextval('public.block
 
 
 --
+-- Name: btc_account_books id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.btc_account_books ALTER COLUMN id SET DEFAULT nextval('public.btc_account_books_id_seq'::regclass);
+
+
+--
 -- Name: cell_data cell_output_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3276,6 +3309,14 @@ ALTER TABLE ONLY public.block_statistics
 
 ALTER TABLE ONLY public.blocks
     ADD CONSTRAINT blocks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: btc_account_books btc_account_books_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.btc_account_books
+    ADD CONSTRAINT btc_account_books_pkey PRIMARY KEY (id);
 
 
 --
@@ -4529,6 +4570,13 @@ CREATE INDEX index_blocks_on_number ON public.blocks USING btree (number);
 --
 
 CREATE INDEX index_blocks_on_timestamp ON public.blocks USING btree ("timestamp" DESC NULLS LAST);
+
+
+--
+-- Name: index_btc_account_books_on_bitcoin_address_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_btc_account_books_on_bitcoin_address_id ON public.btc_account_books USING btree (bitcoin_address_id);
 
 
 --
@@ -5940,6 +5988,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250715035736'),
 ('20250715043211'),
 ('20250826022054'),
-('20250827065749');
+('20250827065749'),
+('20250930015526'),
+('20251011011714');
 
 

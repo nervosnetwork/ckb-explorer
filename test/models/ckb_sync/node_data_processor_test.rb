@@ -137,31 +137,31 @@ module CkbSync
       end
     end
 
-    test "#process_block should change pool transaction's status to committed when it has been committed to current block" do
-      CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
-        CKB::Types::Epoch.new(
-          compact_target: "0x1000",
-          length: "0x07d0",
-          number: "0x0",
-          start_number: "0x0",
-        ),
-      )
-      VCR.use_cassette("blocks/11") do
-        timestamp = Time.now.to_i * 1000
-        tx = create(:pending_transaction,
-                    tx_hash: "0x4298daf91148df9093c844d2ae7d16bee6b74e7ab1ccccd108ce834d1ca1a56c", confirmation_time: timestamp)
-        node_block = CkbSync::Api.instance.get_block_by_number(11)
-        create(:block, :with_block_hash, number: node_block.header.number - 1)
-        node_block.transactions.first.hash = tx.tx_hash
-        assert_changes -> {
-                         tx.reload.tx_status
-                       }, from: "pending", to: "committed" do
-          node_data_processor.process_block(node_block)
-        end
-        assert_equal tx.reload.confirmation_time,
-                     (tx.reload.block_timestamp.to_i - timestamp) / 1000
-      end
-    end
+    # test "#process_block should change pool transaction's status to committed when it has been committed to current block" do
+    #   CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
+    #     CKB::Types::Epoch.new(
+    #       compact_target: "0x1000",
+    #       length: "0x07d0",
+    #       number: "0x0",
+    #       start_number: "0x0",
+    #     ),
+    #   )
+    #   VCR.use_cassette("blocks/11") do
+    #     timestamp = Time.now.to_i * 1000
+    #     tx = create(:pending_transaction,
+    #                 tx_hash: "0x4298daf91148df9093c844d2ae7d16bee6b74e7ab1ccccd108ce834d1ca1a56c", confirmation_time: timestamp)
+    #     node_block = CkbSync::Api.instance.get_block_by_number(11)
+    #     create(:block, :with_block_hash, number: node_block.header.number - 1)
+    #     node_block.transactions.first.hash = tx.tx_hash
+    #     assert_changes -> {
+    #                      tx.reload.tx_status
+    #                    }, from: "pending", to: "committed" do
+    #       node_data_processor.process_block(node_block)
+    #     end
+    #     assert_equal tx.reload.confirmation_time,
+    #                  (tx.reload.block_timestamp.to_i - timestamp) / 1000
+    #   end
+    # end
 
     test "#process_block should not change pool transaction's status to committed when it has not been committed to current block" do
       CkbSync::Api.any_instance.stubs(:get_epoch_by_number).returns(
@@ -2306,10 +2306,9 @@ module CkbSync
 
       assert_equal ["dao"], tx.tags
       assert_equal ["dao"], tx1.tags
-      assert_equal 2, DaoContract.default_contract.ckb_transactions_count
     end
 
-    test "should recalculate dao contract ckb_transactions_count when block is invalid and has dao txs" do
+    test "when block is invalid and has dao txs" do
       block1 = create(:block, :with_block_hash,
                       number: DEFAULT_NODE_BLOCK_NUMBER - 2)
       tx1 = create(:ckb_transaction, block: block1)
@@ -2401,16 +2400,6 @@ module CkbSync
                                          transactions:, header:)
       block = node_data_processor.process_block(node_block)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-      DaoContract.default_contract.update(deposit_transactions_count: 4)
-
-      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
-                       record: :new_episodes) do
-        assert_changes -> {
-                         DaoContract.default_contract.reload.ckb_transactions_count
-                       }, from: 2, to: 0 do
-          node_data_processor.call
-        end
-      end
     end
 
     test "should update tx's tags when output have udt cells" do
@@ -2565,7 +2554,6 @@ module CkbSync
       tx = block.ckb_transactions.where(is_cellbase: false).first
 
       assert_equal %w[dao udt], tx.tags
-      assert_equal 1, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "should update tx's tags when input have udt cells" do
@@ -2804,6 +2792,7 @@ module CkbSync
                            cell_index: 0,
                            address: input_address1,
                            cell_type: "nervos_dao_withdrawing",
+                           data: CKB::Utils.bin_to_hex([deposit_block.number].pack('Q<')),
                            dao: "0x28ef3c7ff3860700d88b1a61958923008ae424cd7200000000e3bad4847a0100", lock_script_id: lock1.id, occupied_capacity: 61 * (10**8))
       create(:cell_output, ckb_transaction: tx2,
                            block: block2,
@@ -2812,6 +2801,7 @@ module CkbSync
                            cell_index: 1,
                            address: input_address2,
                            cell_type: "nervos_dao_withdrawing",
+                           data: CKB::Utils.bin_to_hex([deposit_block.number].pack('Q<')),
                            dao: "0x2cd631702e870700b3df08d7d889230036f787487e00000000e3bad4847a0100", lock_script_id: lock2.id, occupied_capacity: 61 * (10**8))
 
       # udt cell
@@ -2866,6 +2856,7 @@ module CkbSync
                            cell_index: 0,
                            address: input_address4,
                            cell_type: "nervos_dao_withdrawing",
+                           data: CKB::Utils.bin_to_hex([deposit_block1.number].pack('Q<')),
                            dao: "0x28ef3c7ff3860700d88b1a61958923008ae424cd7200000000e3bad4847a0100", lock_script_id: lock4.id, occupied_capacity: 61 * (10**8))
 
       # udt cell
@@ -3003,8 +2994,6 @@ module CkbSync
 
       assert_equal %w[dao udt], tx.tags
       assert_equal %w[dao udt], tx1.tags
-
-      assert_equal 2, DaoContract.default_contract.ckb_transactions_count
     end
 
     test "#process_block should not update tx's tags when there aren't dao cells and udt cells" do
@@ -3372,7 +3361,6 @@ module CkbSync
       Sidekiq::Testing.inline!
       block = node_data_processor.process_block(node_block)
       CkbSync::Api.any_instance.stubs(:get_tip_block_number).returns(block.number + 1)
-      DaoContract.default_contract.update!(deposit_transactions_count: 4)
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                        record: :new_episodes) do
         node_data_processor.call

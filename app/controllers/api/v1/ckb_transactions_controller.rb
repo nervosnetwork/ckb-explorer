@@ -12,7 +12,7 @@ module Api
           ).limit((Settings.homepage_transactions_records_count || 15).to_i)
           json =
             Rails.cache.realize(ckb_transactions.cache_key,
-                                version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
+                                version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds, expires_in: 2.minutes) do
               CkbTransactionListSerializer.new(ckb_transactions).serialized_json
             end
           render json:
@@ -44,7 +44,7 @@ module Api
           total_count = TableRecordCount.find_by(table_name: "ckb_transactions")&.count
           json =
             Rails.cache.realize(ckb_transactions.cache_key,
-                                version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds) do
+                                version: ckb_transactions.cache_version, race_condition_ttl: 3.seconds, expires_in: 10.minutes) do
               options = FastJsonapi::PaginationMetaGenerator.new(
                 request:,
                 records: ckb_transactions,
@@ -87,7 +87,7 @@ module Api
                                                    :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at)
         json =
           Rails.cache.realize(ckb_transactions.cache_key,
-                              version: ckb_transactions.cache_version, race_condition_ttl: 1.minute) do
+                              version: ckb_transactions.cache_version, race_condition_ttl: 1.minute, expires_in: 10.minutes) do
             options = FastJsonapi::PaginationMetaGenerator.new(
               request:,
               records: ckb_transactions,

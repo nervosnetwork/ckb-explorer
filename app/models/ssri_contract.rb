@@ -4,7 +4,7 @@ class SsriContract < ApplicationRecord
   scope :udt, -> { where(is_udt: true) }
 
   def self.udt_code_hashes
-    Rails.cache.fetch("ssri_contracts:udt_code_hashes") do
+    Rails.cache.fetch("ssri_contracts:udt_code_hashes", expires_in: 1.day) do
       udt.pluck(:code_hash, :hash_type)
     end
   end
