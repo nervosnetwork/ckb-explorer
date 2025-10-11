@@ -1,4 +1,5 @@
 class BtcAccountBook < ApplicationRecord
+  belongs_to :bitcoin_address
 end
 
 # == Schema Information
