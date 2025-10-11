@@ -3,7 +3,15 @@ require "simplecov-cobertura"
 if ENV["CI"]
   SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 end
-SimpleCov.start "rails"
+SimpleCov.start "rails" do
+  add_filter "/app/channels/"
+  add_filter "/app/jobs/"
+  add_filter "/app/mailers/"
+  add_filter "/lib/api/"
+  add_filter "/lib/fast_jsonapi"
+  add_filter "/lib/ckb_block_node_processor.rb"
+  add_filter "/lib/ckb_statistic_info_chart_data_updater.rb"
+end
 require "database_cleaner"
 require "database_cleaner/active_record"
 require "minitest/reporters"
