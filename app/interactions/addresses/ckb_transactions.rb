@@ -12,19 +12,27 @@ module Addresses
       is_bitcoin = BitcoinUtils.valid_address?(key)
 
       if is_bitcoin
-        account_books = BtcAccountBook.includes(:bitcoin_address).
-          where(bitcoin_address: { address_hash: key }).
+        address = BitcoinAddress.find_by(address_hash: key)
+        raise AddressNotFoundError unless address
+        address = [address]
+
+        account_books = BtcAccountBook.
+          where(bitcoin_address_id: address[0].id).
           order(account_books_ordering).
           page(page).per(page_size)
+
+        total_count = BtcAccountBook.where(bitcoin_address_id: address[0].id).count
       else
         address = Explore.run!(key:)
         raise AddressNotFoundError if address.is_a?(NullAddress)
 
-        address_id = address.map(&:id)
+        address_id = address.map(&:id).first
         account_books = AccountBook.tx_committed.where(address_id:).
           order(account_books_ordering).
           select(:ckb_transaction_id).
           page(page).per(page_size)
+
+        total_count = Address.find(address_id).ckb_transactions_count
       end
 
       ckb_transaction_ids = account_books.map(&:ckb_transaction_id)
@@ -36,8 +44,9 @@ module Addresses
             .includes(includes)
             .select(select_fields)
             .order(transactions_ordering)
+            
 
-      options = paginate_options(records, address_id)
+      options = paginate_options(records, total_count)
       options.merge!(params: { previews: true, address_id: })
 
       result = CkbTransactionsSerializer.new(records, options)
@@ -60,8 +69,7 @@ module Addresses
       "ckb_transactions.id #{sort_order}"
     end
 
-    def paginate_options(records, address_id)
-      total_count = Address.where(id: address_id).sum(:ckb_transactions_count)
+    def paginate_options(records, total_count)
       count = [total_count, Settings.query_default_limit].min
       FastJsonapi::PaginationMetaGenerator.new(
         request:, records:, page:, page_size:, total_pages: (count.to_f / page_size).ceil, total_count:,
