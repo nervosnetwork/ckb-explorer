@@ -10,25 +10,31 @@ module Addresses
 
     def execute
       is_bitcoin = BitcoinUtils.valid_address?(key)
-      address = Explore.run!(key:)
-      raise AddressNotFoundError if address.is_a?(NullAddress)
 
-      address_id = address.map(&:id)
-      account_books = AccountBook.tx_committed.where(address_id:).
-        order(account_books_ordering).
-        select(:ckb_transaction_id).
-        distinct.page(page).per(page_size)
+      if is_bitcoin
+        account_books = BtcAccountBook.includes(:bitcoin_address).
+          where(bitcoin_address: { address_hash: key }).
+          order(account_books_ordering).
+          page(page).per(page_size)
+      else
+        address = Explore.run!(key:)
+        raise AddressNotFoundError if address.is_a?(NullAddress)
+
+        address_id = address.map(&:id)
+        account_books = AccountBook.tx_committed.where(address_id:).
+          order(account_books_ordering).
+          select(:ckb_transaction_id).
+          page(page).per(page_size)
+      end
+
+      ckb_transaction_ids = account_books.map(&:ckb_transaction_id)
 
       includes = { :cell_inputs => [:previous_cell_output], :outputs => {}, :bitcoin_annotation => [] }
       includes[:bitcoin_transfers] = {} if is_bitcoin
 
-      records = CkbTransaction.where(id: account_books.map(&:ckb_transaction_id))
+      records = CkbTransaction.where(id: ckb_transaction_ids)
             .includes(includes)
-            # .select(select_fields + ["COUNT(cell_inputs.id) AS cell_inputs_count", "COUNT(cell_outputs.id) AS cell_outputs_count"])
             .select(select_fields)
-            # .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
-            # .joins("LEFT JOIN cell_outputs ON cell_outputs.ckb_transaction_id = ckb_transactions.id")
-            # .group(select_fields.join(','))
             .order(transactions_ordering)
 
       options = paginate_options(records, address_id)
