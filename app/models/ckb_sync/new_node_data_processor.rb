@@ -275,9 +275,10 @@ module CkbSync
         dao_inputs.each do |dao_input|
           previous_cell_output = CellOutput.
             where(id: dao_input.previous_cell_output_id).
-            select(:address_id, :block_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity).
+            select(:address_id, :block_id, :ckb_transaction_id, :dao, :cell_index, :capacity, :occupied_capacity, :id).
             take!
           address = previous_cell_output.address
+
           interest = CkbUtils.dao_interest(previous_cell_output)
           if addrs_withdraw_info.key?(address.id)
             addrs_withdraw_info[address.id][:interest] += interest

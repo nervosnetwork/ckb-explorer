@@ -272,10 +272,11 @@ class CkbUtils
 
   def self.dao_interest(nervos_dao_withdrawing_cell)
     nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
-    nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.cell_inputs.order(:index)[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
+    block_number = CKB::Utils.hex_to_bin(nervos_dao_withdrawing_cell.data).unpack("Q<").pack("Q>").unpack1("H*").hex
+    deposit_dao = Block.find_by_number(block_number).dao
     withdrawing_dao_cell_block_dao = nervos_dao_withdrawing_cell.dao
-    DaoCompensationCalculator.new(nervos_dao_deposit_cell, withdrawing_dao_cell_block_dao,
-                                  nervos_dao_withdrawing_cell).call
+    DaoCompensationCalculator.new(nil, withdrawing_dao_cell_block_dao,
+                                  nervos_dao_withdrawing_cell, deposit_dao).call
   end
 
   # see https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0027-block-structure/0027-block-structure.md#compact_target-uint32
