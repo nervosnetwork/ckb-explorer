@@ -16,9 +16,8 @@ module Addresses
         raise AddressNotFoundError unless address
         address = [address]
 
-        address_id = address[0].id
         account_books = BtcAccountBook.
-          where(bitcoin_address_id: address_id).
+          where(bitcoin_address_id: address[0].id).
           order(account_books_ordering).
           page(page).per(page_size)
 
