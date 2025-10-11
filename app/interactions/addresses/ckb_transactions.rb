@@ -12,9 +12,8 @@ module Addresses
       is_bitcoin = BitcoinUtils.valid_address?(key)
 
       if is_bitcoin
-        ckb_transaction_ids = BtcAccountBook.includes(:bitcoin_address).
+        account_books = BtcAccountBook.includes(:bitcoin_address).
           where(bitcoin_address: { address_hash: key }).
-          pluck(:ckb_address_id).
           order(account_books_ordering).
           page(page).per(page_size)
       else
@@ -26,9 +25,9 @@ module Addresses
           order(account_books_ordering).
           select(:ckb_transaction_id).
           page(page).per(page_size)
-
-        ckb_transaction_ids = account_books.map(&:ckb_transaction_id)
       end
+
+      ckb_transaction_ids = account_books.map(&:ckb_transaction_id)
 
       includes = { :cell_inputs => [:previous_cell_output], :outputs => {}, :bitcoin_annotation => [] }
       includes[:bitcoin_transfers] = {} if is_bitcoin
