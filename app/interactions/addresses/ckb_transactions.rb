@@ -21,7 +21,7 @@ module Addresses
           order(account_books_ordering).
           page(page).per(page_size)
 
-        total_count = BtcAccountBook.where(bitcoin_address_id: address_id).count
+        total_count = BtcAccountBook.where(bitcoin_address_id: address[0].id).count
       else
         address = Explore.run!(key:)
         raise AddressNotFoundError if address.is_a?(NullAddress)
