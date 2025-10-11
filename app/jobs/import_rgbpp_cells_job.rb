@@ -172,6 +172,8 @@ class ImportRgbppCellsJob < ApplicationJob
       create_with(bitcoin_address_id: bitcoin_address.id).
       find_or_create_by!(ckb_address_id: cell_output.address_id)
 
+    BtcAccountBook.find_or_create_by!(ckb_transaction_id: cell_output.ckb_transaction_id, bitcoin_address_id: bitcoin_address.id)
+
     bitcoin_address
   end
 
