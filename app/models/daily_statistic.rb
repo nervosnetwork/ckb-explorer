@@ -204,19 +204,27 @@ class DailyStatistic < ApplicationRecord
         end
       end
 
-    ranges.each_with_index.map do |range, index|
+    counts = ranges.each_with_index.map do |range, index|
       begin_value = range[0] * (10**8)
       end_value = range[1] * (10**8)
       if index == max_n - 1
         addresses_count = Address.visible.where("balance > ?", begin_value).count
-        total_addresses_count = Address.visible.where("balance > 0").count
       else
         addresses_count = Address.visible.where("balance > ? and balance <= ?", begin_value, end_value).count
-        total_addresses_count = Address.visible.where("balance > 0 and balance <= ?", end_value).count
       end
 
-      [range[1], addresses_count, total_addresses_count]
+      [range[1], addresses_count]
     end
+
+    total_addresses_count = 0
+    
+    results = []
+    counts.each do |c|
+      results << [c[0], c[1], total_addresses_count]
+      total_addresses_count += c[1]
+    end
+
+    results
   end
 
   define_logic :total_tx_fee do
@@ -497,7 +505,6 @@ class DailyStatistic < ApplicationRecord
       begin
         total = 0
         phase1_cells.each do |nervos_dao_withdrawing_cell|
-          puts nervos_dao_withdrawing_cell.attributes
           total += CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
         end
         total
