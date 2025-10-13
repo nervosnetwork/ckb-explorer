@@ -76,9 +76,23 @@ class DailyStatistic < ApplicationRecord
     else
       claimed_compensation_today = 0
 
-      DaoEvent.processed.withdraw_from_dao.consumed_between(started_at,
-                                                            ended_at).find_each do |dao_event|
-        nervos_dao_withdrawing_cell = CellOutput.find_by(ckb_transaction_id: dao_event.ckb_transaction_id, cell_index: dao_event.cell_index)
+      events = DaoEvent.processed.withdraw_from_dao.consumed_between(started_at, ended_at).select(:ckb_transaction_id, :cell_index).all
+
+      results = if events.blank?
+        []
+      else
+        pairs = events.map{|e| [e.ckb_transaction_id, e.cell_index] }
+        conditions = pairs.map do |tx_id, cell_idx|
+          ["ckb_transaction_id = #{tx_id} AND cell_index = #{cell_idx}"]
+        end
+        query = conditions.map do |cond|
+          "(#{cond[0]})"
+        end.join(" OR ")
+        CellOutput.where(query)
+      end
+
+
+      results.each do |nervos_dao_withdrawing_cell|
         claimed_compensation_today += CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
       end
 
@@ -92,13 +106,16 @@ class DailyStatistic < ApplicationRecord
     sum_interest_bearing = 0
     sum_uninterest_bearing = 0
 
-    DaoEvent.processed.withdraw_from_dao.created_before(ended_at).unconsumed_at(ended_at).find_each do |nervos_dao_withdrawing_cell|
-      nervos_dao_deposit_cell = CellInput.find_by(ckb_transaction_id: nervos_dao_withdrawing_cell.ckb_transaction_id, index: nervos_dao_withdrawing_cell.cell_index).previous_cell_output
-      interest_bearing_deposits += nervos_dao_deposit_cell.capacity
-      sum_interest_bearing += nervos_dao_deposit_cell.capacity * (nervos_dao_withdrawing_cell.block_timestamp - nervos_dao_deposit_cell.block_timestamp) / MILLISECONDS_IN_DAY
+    phase1_cells.each do |nervos_dao_withdrawing_cell|
+      interest_bearing_deposits += nervos_dao_withdrawing_cell.capacity
+
+      block_number = CKB::Utils.hex_to_bin(nervos_dao_withdrawing_cell.data).unpack("Q<").pack("Q>").unpack1("H*").hex
+      nervos_dao_deposit_block_timestamp = Block.find_by_number(block_number).timestamp
+
+      sum_interest_bearing += nervos_dao_withdrawing_cell.capacity * (nervos_dao_withdrawing_cell.block_timestamp - nervos_dao_deposit_block_timestamp) / MILLISECONDS_IN_DAY
     end
 
-    DaoEvent.includes(:cell_output).processed.deposit_to_dao.created_before(ended_at).unconsumed_at(ended_at).find_each do |dao_event|
+    unmaed_cells.each do |dao_event|
       nervos_dao_deposit_cell = dao_event.cell_output
       uninterest_bearing_deposits += nervos_dao_deposit_cell.capacity
 
@@ -139,8 +156,7 @@ class DailyStatistic < ApplicationRecord
     if from_scratch
       CellOutput.generated_before(ended_at).unconsumed_at(ended_at).count
     else
-      CellOutput.generated_between(started_at, ended_at).count +
-        yesterday_daily_statistic.live_cells_count.to_i - dead_cells_count_today
+      CellOutput.generated_between(started_at, ended_at).count + yesterday_daily_statistic.live_cells_count.to_i - dead_cells_count_today
     end
   end
 
@@ -480,13 +496,33 @@ class DailyStatistic < ApplicationRecord
     @phase1_dao_interests ||=
       begin
         total = 0
-        DaoEvent.processed.withdraw_from_dao.
-          created_before(ended_at).unconsumed_at(ended_at).find_each do |dao_event|
-          nervos_dao_withdrawing_cell = CellOutput.find_by(ckb_transaction_id: dao_event.ckb_transaction_id, cell_index: dao_event.cell_index)
+        phase1_cells.each do |nervos_dao_withdrawing_cell|
+          puts nervos_dao_withdrawing_cell.attributes
           total += CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
         end
         total
       end
+  end
+
+  def phase1_cells
+    return @phase1_cells if @phase1_cells
+    events = DaoEvent.processed.withdraw_from_dao.created_before(ended_at).unconsumed_at(ended_at).select(:ckb_transaction_id, :cell_index).all
+    if events.blank?
+      return @phase1_cells = []
+    end
+
+    pairs = events.map{|e| [e.ckb_transaction_id, e.cell_index] }
+    conditions = pairs.map do |tx_id, cell_idx|
+      ["ckb_transaction_id = #{tx_id} AND cell_index = #{cell_idx}"]
+    end
+    query = conditions.map do |cond|
+      "(#{cond[0]})"
+    end.join(" OR ")
+    @phase1_cells = CellOutput.where(query).to_a
+  end
+
+  def unmaed_cells
+    @unmaed_cells ||= DaoEvent.includes(:cell_output).processed.deposit_to_dao.created_before(ended_at).unconsumed_at(ended_at).to_a
   end
 
   def unmade_dao_interests
@@ -494,8 +530,7 @@ class DailyStatistic < ApplicationRecord
       begin
         tip_dao = current_tip_block.dao
         total = 0
-        DaoEvent.includes(:cell_output).processed.deposit_to_dao.
-          created_before(ended_at).unconsumed_at(ended_at).find_each do |dao_event|
+        unmaed_cells.each do |dao_event|
           total += DaoCompensationCalculator.new(dao_event.cell_output, tip_dao).call
         end
         total
