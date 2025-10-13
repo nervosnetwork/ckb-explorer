@@ -4398,6 +4398,20 @@ CREATE INDEX index_addresses_on_address_hash ON public.addresses USING hash (add
 
 
 --
+-- Name: index_addresses_on_balance; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_addresses_on_balance ON public.addresses USING btree (balance);
+
+
+--
+-- Name: index_addresses_on_block_timestamp; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_addresses_on_block_timestamp ON public.addresses USING btree (block_timestamp);
+
+
+--
 -- Name: index_addresses_on_is_depositor; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5990,6 +6004,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250826022054'),
 ('20250827065749'),
 ('20250930015526'),
-('20251011011714');
+('20251011011714'),
+('20251013082609');
 
 
