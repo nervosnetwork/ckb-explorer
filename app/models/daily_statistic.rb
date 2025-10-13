@@ -220,8 +220,8 @@ class DailyStatistic < ApplicationRecord
     
     results = []
     counts.each do |c|
-      results << [c[0], c[1], total_addresses_count]
       total_addresses_count += c[1]
+      results << [c[0], c[1], total_addresses_count]
     end
 
     results
