@@ -3,7 +3,7 @@ module Api
     module NFT
       class CollectionsController < BaseController
         def index
-          scope = TokenCollection.includes(:items, :creator, :type_script)
+          scope = TokenCollection.includes(:items, :creator, :type_script, :cell)
           if params[:type].present?
             scope = scope.where(standard: params[:type])
           end

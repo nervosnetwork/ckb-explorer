@@ -13,11 +13,7 @@ module Api
         raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
 
         ckb_udt_transactions = address.ckb_udt_transactions(udt.id)
-          .includes(:cell_inputs => [:previous_cell_output], :outputs => [], :bitcoin_annotation => [])
-          # .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
-          # .joins("LEFT JOIN cell_outputs ON cell_outputs.ckb_transaction_id = ckb_transactions.id")
-          # .group(select_fields.join(','))
-          # .select(select_fields + ["COUNT(cell_inputs.id) AS cell_inputs_count", "COUNT(cell_outputs.id) AS cell_outputs_count"])
+          .includes(:cell_inputs => [:previous_cell_output], :cell_outputs => [], :bitcoin_annotation => [])
           .select(select_fields)
           .recent.page(@page).per(@page_size).fast_page
         json =
