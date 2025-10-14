@@ -9,8 +9,8 @@ module CkbTransactions
         if is_cellbase
           cellbase_display_inputs
         else
-          cell_inputs_for_display = cell_inputs.order(id: :asc)
-          cell_inputs_for_display = cell_inputs_for_display.limit(10) if previews
+          cell_inputs_for_display = cell_inputs.sort_by(&:id)
+          cell_inputs_for_display = cell_inputs_for_display.first(10) if previews
           normal_tx_display_inputs(cell_inputs_for_display)
         end
       end
@@ -19,8 +19,8 @@ module CkbTransactions
         if is_cellbase
           cellbase_display_outputs
         else
-          cell_outputs_for_display = cell_outputs.order(id: :asc)
-          cell_outputs_for_display = cell_outputs_for_display.limit(10) if previews
+          cell_outputs_for_display = cell_outputs.sort_by(&:id)
+          cell_outputs_for_display = cell_outputs_for_display.first(10) if previews
           normal_tx_display_outputs(cell_outputs_for_display)
         end
       end
@@ -41,7 +41,7 @@ module CkbTransactions
       end
 
       def cellbase_display_outputs
-        cell_outputs_for_display = cell_outputs.order(id: :asc)
+        cell_outputs_for_display = cell_outputs.sort_by(&:id)
         cellbase = Cellbase.new(block)
         cell_outputs_for_display.map do |output|
           consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
@@ -104,7 +104,7 @@ module CkbTransactions
             display_input.merge!(attributes_for_dao_input(previous_cell_output))
           end
           if previous_cell_output.nervos_dao_deposit?
-            display_input.merge!(attributes_for_dao_input(cell_outputs.order(:cell_index)[cell_input.index], false))
+            display_input.merge!(attributes_for_dao_input(cell_outputs.sort_by(&:cell_index)[cell_input.index], false))
           end
           if previous_cell_output.udt?
             display_input.merge!(attributes_for_udt_cell(previous_cell_output))

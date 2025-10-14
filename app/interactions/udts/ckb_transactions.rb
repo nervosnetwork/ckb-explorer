@@ -30,8 +30,10 @@ module Udts
           where(account_books: { address_id: address.map(&:id) }).distinct
       end
 
+      includes = { :cell_inputs => {:previous_cell_output => {:type_script => [], :bitcoin_vout => [], :lock_script => [] }, :block => []}, :cell_outputs => {}, :bitcoin_annotation => [], :account_books => {} }
+
       records = ckb_transactions
-                  .includes(:cell_inputs => [:previous_cell_output], :cell_outputs => [], :bitcoin_annotation => [])
+                  .includes(includes)
                   .select(select_fields)
                   .page(page).per(page_size)
       options = FastJsonapi::PaginationMetaGenerator.new(
