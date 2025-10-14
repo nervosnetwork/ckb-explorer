@@ -18,10 +18,12 @@ module Api
             where(account_books: { address_id: address.id })
         end
 
+        includes = { :cell_inputs => {:previous_cell_output => {:type_script => [], :bitcoin_vout => [], :lock_script => [] }, :block => []}, :cell_outputs => {}, :bitcoin_annotation => [], :account_books => {} }
+
         if stale?(ckb_transactions)
           expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
           ckb_transactions = ckb_transactions
-              .includes(:cell_inputs => [:previous_cell_output], :cell_outputs => [], :bitcoin_annotation => [])
+              .includes(includes)
               .page(@page).per(@page_size).fast_page
               
           options = FastJsonapi::PaginationMetaGenerator.new(
