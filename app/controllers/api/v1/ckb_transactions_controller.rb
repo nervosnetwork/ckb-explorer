@@ -83,7 +83,9 @@ module Api
             total_count = TableRecordCount.find_by(table_name: "ckb_transactions")&.count
             CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
           end
-        ckb_transactions = ckb_transactions.select(:id, :tx_hash, :block_id, :tags,
+
+        includes = { :cell_inputs => {:previous_cell_output => {:type_script => [], :bitcoin_vout => [], :lock_script => [] }, :block => []}, :cell_outputs => {}, :bitcoin_annotation => [], :account_books => {} }
+        ckb_transactions = ckb_transactions.includes(includes).select(:id, :tx_hash, :block_id, :tags,
                                                    :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at)
         json =
           Rails.cache.realize(ckb_transactions.cache_key,
