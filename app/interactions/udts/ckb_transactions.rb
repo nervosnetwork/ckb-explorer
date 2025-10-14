@@ -31,7 +31,7 @@ module Udts
       end
 
       records = ckb_transactions
-                  .includes(:cell_inputs, :outputs, :bitcoin_annotation => [])
+                  .includes(:cell_inputs => [:previous_cell_output], :cell_outputs => [], :bitcoin_annotation => [])
                   .select(select_fields)
                   .page(page).per(page_size)
       options = FastJsonapi::PaginationMetaGenerator.new(

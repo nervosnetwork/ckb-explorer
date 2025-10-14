@@ -26,11 +26,7 @@ module Api
           end
 
           ckb_transactions = ckb_transactions
-                    .includes(:cell_inputs => [:previous_cell_output], :outputs => [], :bitcoin_annotation => [])
-                    # .select(select_fields + ["COUNT(cell_inputs.id) AS cell_inputs_count", "COUNT(cell_outputs.id) AS cell_outputs_count"])
-                    # .joins("LEFT JOIN cell_inputs ON cell_inputs.ckb_transaction_id = ckb_transactions.id")
-                    # .joins("LEFT JOIN cell_outputs ON cell_outputs.ckb_transaction_id = ckb_transactions.id")
-                    # .group(select_fields.join(','))
+                    .includes(:cell_inputs => [:previous_cell_output], :cell_outputs => [], :bitcoin_annotation => [])
                     .select(select_fields)
                     .page(@page).per(@page_size).fast_page
           options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_transactions,

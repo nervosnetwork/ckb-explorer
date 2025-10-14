@@ -19,7 +19,7 @@ module CkbTransactions
         if is_cellbase
           cellbase_display_outputs
         else
-          cell_outputs_for_display = outputs.order(id: :asc)
+          cell_outputs_for_display = cell_outputs.order(id: :asc)
           cell_outputs_for_display = cell_outputs_for_display.limit(10) if previews
           normal_tx_display_outputs(cell_outputs_for_display)
         end
@@ -41,7 +41,7 @@ module CkbTransactions
       end
 
       def cellbase_display_outputs
-        cell_outputs_for_display = outputs.order(id: :asc)
+        cell_outputs_for_display = cell_outputs.order(id: :asc)
         cellbase = Cellbase.new(block)
         cell_outputs_for_display.map do |output|
           consumed_tx_hash = output.live? ? nil : output.consumed_by.tx_hash
@@ -89,7 +89,7 @@ module CkbTransactions
             capacity: previous_cell_output.capacity,
             occupied_capacity: previous_cell_output.occupied_capacity,
             address_hash: previous_cell_output.address_hash,
-            generated_tx_hash: previous_cell_output.ckb_transaction.tx_hash,
+            generated_tx_hash: previous_cell_output.tx_hash,
             cell_index: previous_cell_output.cell_index,
             cell_type: previous_cell_output.cell_type,
             since: {
@@ -218,14 +218,11 @@ module CkbTransactions
       end
 
       def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
-        nervos_dao_withdrawing_cell_generated_tx = nervos_dao_withdrawing_cell.ckb_transaction
-        nervos_dao_deposit_cell = nervos_dao_withdrawing_cell_generated_tx.
-          cell_inputs.order("index asc")[nervos_dao_withdrawing_cell.cell_index].previous_cell_output
+        block_number = CKB::Utils.hex_to_bin(nervos_dao_withdrawing_cell.data).unpack("Q<").pack("Q>").unpack1("H*").hex
         # start block: the block contains the transaction which generated the deposit cell output
-        compensation_started_block = Block.select(:number, :timestamp).find(nervos_dao_deposit_cell.block.id)
+        compensation_started_block = Block.select(:number, :timestamp).find_by_number(block_number)
         # end block: the block contains the transaction which generated the withdrawing cell
-        compensation_ended_block = Block.select(:number, :timestamp).
-          find(nervos_dao_withdrawing_cell_generated_tx.block_id)
+        compensation_ended_block = Block.select(:number, :timestamp).find(nervos_dao_withdrawing_cell.block_id)
         interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
 
         attributes = {

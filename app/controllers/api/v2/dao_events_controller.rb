@@ -14,7 +14,7 @@ module Api::V2
 
       total = ckb_transactions.count
       ckb_transactions = ckb_transactions
-            .includes(:cell_inputs => [:previous_cell_output], :outputs => [], :bitcoin_annotation => [])
+            .includes(:cell_inputs => [:previous_cell_output], :cell_outputs => [], :bitcoin_annotation => [])
             .page(page).per(page_size).fast_page
 
       activities = CkbTransactionsSerializer.new(ckb_transactions).serializable_hash

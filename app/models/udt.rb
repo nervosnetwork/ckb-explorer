@@ -57,7 +57,9 @@ class Udt < ApplicationRecord
   end
 
   def holders_count
-    udt_holder_allocations.sum("ckb_holder_count + btc_holder_count")
+    Rails.cache.fetch("udt_holders_count_#{id}", expires_in: 1.hours) do
+      udt_holder_allocations.sum("ckb_holder_count + btc_holder_count")
+    end
   end
 
   def ssri_contract_outpoint

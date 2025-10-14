@@ -37,7 +37,7 @@ module Addresses
 
       ckb_transaction_ids = account_books.map(&:ckb_transaction_id)
 
-      includes = { :cell_inputs => [:previous_cell_output], :outputs => {}, :bitcoin_annotation => [] }
+      includes = { :cell_inputs => [:previous_cell_output], :cell_outputs => {}, :bitcoin_annotation => [], :account_books => {} }
       includes[:bitcoin_transfers] = {} if is_bitcoin
 
       records = CkbTransaction.where(id: ckb_transaction_ids)
