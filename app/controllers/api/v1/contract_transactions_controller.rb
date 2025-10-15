@@ -11,7 +11,7 @@ module Api
         if stale?(dao_contract)
           expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds
 
-          ckb_transactions = dao_contract.ckb_transactions.includes(:cell_inputs, :cell_outputs).tx_committed.order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc")
+          ckb_transactions = dao_contract.ckb_transactions.tx_committed.order("ckb_transactions.block_timestamp desc nulls last, ckb_transactions.id desc")
 
           if params[:tx_hash].present?
             ckb_transactions = ckb_transactions.where(tx_hash: params[:tx_hash])
@@ -25,7 +25,9 @@ module Api
               where(account_books: { address_id: address.id })
           end
 
-          includes = { :cell_inputs => {:previous_cell_output => {:type_script => [], :bitcoin_vout => [], :lock_script => [] }, :block => []}, :cell_outputs => {}, :bitcoin_annotation => [], :account_books => {} }
+          includes = { bitcoin_annotation: [], 
+              cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script],
+              cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
 
           ckb_transactions = ckb_transactions
                     .includes(includes)

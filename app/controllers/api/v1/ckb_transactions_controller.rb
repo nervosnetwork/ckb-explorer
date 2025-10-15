@@ -84,7 +84,10 @@ module Api
             CkbTransaction.recent.normal.page(@page).per(@page_size).fast_page
           end
 
-        includes = { :cell_inputs => {:previous_cell_output => {:type_script => [], :bitcoin_vout => [], :lock_script => [] }, :block => []}, :cell_outputs => {}, :bitcoin_annotation => [], :account_books => {} }
+        includes = { bitcoin_annotation: [], 
+              cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script], 
+              cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
+
         ckb_transactions = ckb_transactions.includes(includes).select(:id, :tx_hash, :block_id, :tags,
                                                    :block_number, :block_timestamp, :is_cellbase, :updated_at, :created_at)
         json =
@@ -139,7 +142,15 @@ module Api
       end
 
       def find_transaction
-        @ckb_transaction = CkbTransaction.where(tx_hash: params[:id]).order(tx_status: :asc).first
+
+        includes = { bitcoin_annotation: [], 
+                  witnesses: [],
+                  block: [:epoch_statistic],
+                  cell_dependencies: [:cell_output, :contract],
+                  cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script], 
+                  cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
+
+        @ckb_transaction = CkbTransaction.includes(includes).where(tx_hash: params[:id]).first
         raise Api::V1::Exceptions::CkbTransactionNotFoundError if @ckb_transaction.blank?
       end
     end

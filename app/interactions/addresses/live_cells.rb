@@ -39,9 +39,9 @@ module Addresses
       scope =
         if bound_status
           vout_ids = BitcoinVout.where(address_id: address_ids, status: bound_status).pluck(:cell_output_id)
-          CellOutput.live.includes(:type_script, :lock_script).where(id: vout_ids)
+          CellOutput.live.includes(:type_script, :lock_script, :block).where(id: vout_ids)
         else
-          CellOutput.live.includes(:type_script, :lock_script).where(address_id: address_ids)
+          CellOutput.live.includes(:type_script, :lock_script, :block).where(address_id: address_ids)
         end
 
       tag.present? ? filter_by_tag(scope) : scope

@@ -7,7 +7,7 @@ module CellOutputs
       def udt_info
         return unless cell_type.in?(%w(udt xudt xudt_compatible ssri))
 
-        udt_info = Udt.find_by(type_hash:, published: true)
+        udt_info = udt_cell
         CkbUtils.hash_value_to_s(
           symbol: udt_info&.symbol,
           amount: udt_amount,
@@ -190,7 +190,7 @@ module CellOutputs
       def tags
         tags = []
         tags << "fiber" if lock_script.code_hash == Settings.fiber_funding_code_hash
-        tags << "deployment" if Contract.exists?(deployed_cell_output_id: id)
+        tags << "deployment" if deployed_contract
         tags << "multisig" if
         (lock_script.code_hash == Settings.multisig_code_hash && lock_script.hash_type == "data1") ||
           (lock_script.code_hash == Settings.secp_multisig_cell_type_hash && lock_script.hash_type == "type")
