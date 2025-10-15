@@ -59,7 +59,7 @@ module Api
         address = create(:address, :with_transactions)
         fake_dao_deposit_transaction(3, address)
         ckb_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
-
+        
         valid_get api_v1_address_dao_transaction_url(address.address_hash)
 
         options = FastJsonapi::PaginationMetaGenerator.new(request:, records: ckb_dao_transactions, page:, page_size:).call

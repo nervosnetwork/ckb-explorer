@@ -226,6 +226,8 @@ class CkbTransactionTest < ActiveSupport::TestCase
       compensation_ended_block_number compensation_started_timestamp compensation_ended_timestamp
       interest cell_type cell_index since locked_until_block_number locked_until_block_timestamp tags type_script
     ).sort
+        
+    ckb_transaction = CkbTransaction.includes(:bitcoin_annotation, :account_books, cell_outputs: [:address, :deployed_contract], cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]).find(ckb_transaction.id)
     display_inputs = ckb_transaction.display_inputs
     assert_equal expected_attributes, display_inputs.first.keys.sort
     assert_equal expected_display_input, display_inputs.first.sort
@@ -277,9 +279,9 @@ class CkbTransactionTest < ActiveSupport::TestCase
       occupied_capacity: deposit_output_cell.occupied_capacity,
       address_hash: deposit_output_cell.address_hash,
       generated_tx_hash: deposit_output_cell.ckb_transaction.tx_hash,
-      compensation_started_block_number: started_block.number,
+      compensation_started_block_number: ckb_transaction.block_number,
       compensation_ended_block_number: ended_block.number,
-      compensation_started_timestamp: started_block.timestamp,
+      compensation_started_timestamp: ckb_transaction.block_timestamp,
       compensation_ended_timestamp: ended_block.timestamp,
       interest:,
       cell_type: deposit_output_cell.cell_type,

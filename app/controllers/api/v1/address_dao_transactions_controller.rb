@@ -8,7 +8,10 @@ module Api
         address = Address.find_address!(params[:id])
         raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
 
-        includes = { :cell_inputs => {:previous_cell_output => {:type_script => [], :bitcoin_vout => [], :lock_script => [] }, :block => []}, :cell_outputs => {}, :bitcoin_annotation => [], :account_books => {} }
+        includes = { bitcoin_annotation: [], 
+                    cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script], 
+                    cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
+
         ckb_dao_transactions = address.ckb_dao_transactions
           .includes(includes)
           .select(select_fields)

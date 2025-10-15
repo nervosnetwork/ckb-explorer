@@ -30,7 +30,9 @@ module Udts
           where(account_books: { address_id: address.map(&:id) }).distinct
       end
 
-      includes = { :cell_inputs => {:previous_cell_output => {:type_script => [], :bitcoin_vout => [], :lock_script => [] }, :block => []}, :cell_outputs => {}, :bitcoin_annotation => [], :account_books => {} }
+      includes = { bitcoin_annotation: [], 
+            cell_outputs: [:address, :deployed_contract, :udt_cell, :type_script, :bitcoin_vout, :lock_script], 
+            cell_inputs: [:block, previous_cell_output: [:address, :udt_cell, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
 
       records = ckb_transactions
                   .includes(includes)

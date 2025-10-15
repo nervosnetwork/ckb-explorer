@@ -260,6 +260,7 @@ module Api
         udt_account = create(:udt_account, symbol: udt.symbol, full_name: udt.full_name, decimal: udt.decimal, published: true, address:, udt_id: udt.id,
                                            udt_type: "omiga_inscription", type_hash: udt.type_hash, amount: info.mint_limit)
         address.query_address = address.address_hash
+
         valid_get api_v1_address_url(address.address_hash)
         assert_equal [
           {
