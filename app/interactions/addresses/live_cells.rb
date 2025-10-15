@@ -39,9 +39,9 @@ module Addresses
       scope =
         if bound_status
           vout_ids = BitcoinVout.where(address_id: address_ids, status: bound_status).pluck(:cell_output_id)
-          CellOutput.live.includes(:type_script, :lock_script, :block).where(id: vout_ids)
+          CellOutput.live.where(id: vout_ids)
         else
-          CellOutput.live.includes(:type_script, :lock_script, :block).where(address_id: address_ids)
+          CellOutput.live.where(address_id: address_ids)
         end
 
       tag.present? ? filter_by_tag(scope) : scope
@@ -50,22 +50,25 @@ module Addresses
     def filter_by_tag(scope)
       case tag
       when "fiber"
+        scope2 = scope
         lock_script_ids = scope.where.not(lock_script_id: nil).distinct.pluck(:lock_script_id)
         filtered_ids = LockScript.where(id: lock_script_ids, code_hash: Settings.fiber_funding_code_hash).pluck(:id)
-        scope.where(lock_script_id: filtered_ids)
+        scope2.includes(:type_script, :lock_script, :block).where(lock_script_id: filtered_ids)
       when "multisig"
+        scope2 = scope
         lock_script_ids = scope.where.not(lock_script_id: nil).distinct.pluck(:lock_script_id)
         filtered_ids = LockScript.where(id: lock_script_ids).where(
           "(code_hash = ? AND hash_type = ?) OR (code_hash = ? AND hash_type = ?)",
           Settings.multisig_code_hash, "data1",
           Settings.secp_multisig_cell_type_hash, "type"
         ).pluck(:id)
-        scope.where(lock_script_id: filtered_ids)
+        scope2.includes(:type_script, :lock_script, :block).where(lock_script_id: filtered_ids)
       when "deployment"
+        scope2 = scope
         scope_ids = scope.pluck(:id)
         deployed_ids = Contract.pluck(:deployed_cell_output_id)
         matched_ids = scope_ids & deployed_ids
-        scope.where(id: matched_ids)
+        scope2.includes(:type_script, :lock_script, :block).where(id: matched_ids)
       else
         CellOutput.none
       end
