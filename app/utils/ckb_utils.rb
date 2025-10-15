@@ -270,9 +270,11 @@ class CkbUtils
     tx_previous_outputs.sum(&:capacity) + interests - CellOutput.where(ckb_transaction: ckb_transaction["id"]).sum(:capacity)
   end
 
-  def self.dao_interest(nervos_dao_withdrawing_cell)
-    block_number = CKB::Utils.hex_to_bin(nervos_dao_withdrawing_cell.data).unpack("Q<").pack("Q>").unpack1("H*").hex
-    deposit_dao = Block.find_by_number(block_number).dao
+  def self.dao_interest(nervos_dao_withdrawing_cell, deposit_dao = nil)
+    unless deposit_dao
+      block_number = CKB::Utils.hex_to_bin(nervos_dao_withdrawing_cell.data).unpack("Q<").pack("Q>").unpack1("H*").hex
+      deposit_dao = Block.find_by_number(block_number).dao 
+    end
     withdrawing_dao_cell_block_dao = nervos_dao_withdrawing_cell.dao
     DaoCompensationCalculator.new(nil, withdrawing_dao_cell_block_dao,
                                   nervos_dao_withdrawing_cell, deposit_dao).call

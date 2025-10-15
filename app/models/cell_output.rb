@@ -49,6 +49,8 @@ class CellOutput < ApplicationRecord
   belongs_to :address
   belongs_to :lock_script
   belongs_to :type_script, optional: true
+  has_one :deployed_contract, foreign_key: :deployed_cell_output_id, class_name: "Contract"
+  belongs_to :udt_cell, ->(c) { where(published: true) }, foreign_key: :type_hash, class_name: 'Udt', optional: true
 
   has_many :cell_dependencies, foreign_key: :contract_cell_id,
                                dependent: :delete_all
