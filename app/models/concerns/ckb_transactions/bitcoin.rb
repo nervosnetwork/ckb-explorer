@@ -23,7 +23,7 @@ module CkbTransactions
       def rgb_txid
         return if !rgb_transaction? && !btc_time_transaction?
 
-        transfer = bitcoin_transfers.order(lock_type: :asc).first
+        transfer = bitcoin_transfers.sort_by(&:lock_type).first
         transfer&.bitcoin_transaction&.txid
       end
 

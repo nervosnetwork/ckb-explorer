@@ -37,7 +37,7 @@ class AddressSerializer
   end
   attribute :udt_accounts do |object|
     if object.udt_accounts.present?
-      object.udt_accounts.published.map do |udt_account|
+      object.udt_accounts.find_all{|u| u.published }.map do |udt_account|
         if udt_account.udt_type == "sudt"
           {
             symbol: udt_account.symbol,

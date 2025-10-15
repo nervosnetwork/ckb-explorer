@@ -18,7 +18,9 @@ module Api
             where(account_books: { address_id: address.id })
         end
 
-        includes = { :cell_inputs => {:previous_cell_output => {:type_script => [], :bitcoin_vout => [], :lock_script => [] }, :block => []}, :cell_outputs => {}, :bitcoin_annotation => [], :account_books => {} }
+        includes = { bitcoin_annotation: [], 
+                    cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script], 
+                    cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
 
         if stale?(ckb_transactions)
           expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 5.seconds

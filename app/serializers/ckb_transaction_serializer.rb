@@ -7,11 +7,11 @@ class CkbTransactionSerializer
   attributes :is_cellbase, :tx_status
 
   attribute :witnesses do |o|
-    o.witnesses.order("index ASC")&.map(&:data) || []
+    o.witnesses.sort_by(&:index)&.map(&:data) || []
   end
 
   attribute :cell_deps do |o|
-    o.cell_dependencies.order("id asc").includes(:cell_output, :contracts).to_a.map(&:to_raw)
+    o.cell_dependencies.sort_by(&:id).map(&:to_raw)
   end
 
   attribute :header_deps do |o|

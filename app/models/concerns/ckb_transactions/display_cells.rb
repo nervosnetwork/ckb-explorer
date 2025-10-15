@@ -104,7 +104,9 @@ module CkbTransactions
             display_input.merge!(attributes_for_dao_input(previous_cell_output))
           end
           if previous_cell_output.nervos_dao_deposit?
-            display_input.merge!(attributes_for_dao_input(cell_outputs.sort_by(&:cell_index)[cell_input.index], false))
+            nervos_dao_withdrawing_cell = cell_outputs.sort_by(&:cell_index)[cell_input.index]
+            compensation_started_block = cell_input.block
+            display_input.merge!(attributes_for_dao_input(nervos_dao_withdrawing_cell, compensation_started_block, false))
           end
           if previous_cell_output.udt?
             display_input.merge!(attributes_for_udt_cell(previous_cell_output))
@@ -217,13 +219,15 @@ module CkbTransactions
         { omiga_inscription_info: info, extra_info: info }
       end
 
-      def attributes_for_dao_input(nervos_dao_withdrawing_cell, is_phase2 = true)
-        block_number = CKB::Utils.hex_to_bin(nervos_dao_withdrawing_cell.data).unpack("Q<").pack("Q>").unpack1("H*").hex
-        # start block: the block contains the transaction which generated the deposit cell output
-        compensation_started_block = Block.select(:number, :timestamp).find_by_number(block_number)
+      def attributes_for_dao_input(nervos_dao_withdrawing_cell, compensation_started_block = nil, is_phase2 = true)
+        unless compensation_started_block
+          started_block_number = CKB::Utils.hex_to_bin(nervos_dao_withdrawing_cell.data).unpack("Q<").pack("Q>").unpack1("H*").hex
+          # start block: the block contains the transaction which generated the deposit cell output
+          compensation_started_block = Block.find_by_number(started_block_number)
+        end
         # end block: the block contains the transaction which generated the withdrawing cell
-        compensation_ended_block = Block.select(:number, :timestamp).find(nervos_dao_withdrawing_cell.block_id)
-        interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell)
+        compensation_ended_block = nervos_dao_withdrawing_cell.block
+        interest = CkbUtils.dao_interest(nervos_dao_withdrawing_cell, compensation_started_block.dao)
 
         attributes = {
           compensation_started_block_number: compensation_started_block.number,
@@ -234,9 +238,8 @@ module CkbTransactions
         }
 
         if is_phase2
-          number, timestamp = Block.where(id: block_id).pick(:number, :timestamp) # locked_until_block
-          attributes[:locked_until_block_number] = number
-          attributes[:locked_until_block_timestamp] = timestamp
+          attributes[:locked_until_block_number] = block_number
+          attributes[:locked_until_block_timestamp] = block_timestamp
         end
 
         CkbUtils.hash_value_to_s(attributes)

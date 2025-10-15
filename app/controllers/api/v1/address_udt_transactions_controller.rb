@@ -12,7 +12,10 @@ module Api
         udt = Udt.find_by(type_hash: params[:type_hash], published: true)
         raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
 
-        includes = { :cell_inputs => {:previous_cell_output => {:type_script => [], :bitcoin_vout => [], :lock_script => [] }, :block => []}, :cell_outputs => {}, :bitcoin_annotation => [], :account_books => {} }
+        includes = { bitcoin_annotation: [], 
+                    cell_outputs: [:address, :deployed_contract, :udt_cell, :type_script, :bitcoin_vout, :lock_script], 
+                    cell_inputs: [:block, previous_cell_output: [:udt_cell, :address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
+
         ckb_udt_transactions = address.ckb_udt_transactions(udt.id)
           .includes(includes)
           .select(select_fields)
