@@ -20,13 +20,13 @@ class CkbTransactionsSerializer
       1
     else
       # object.attributes['cell_inputs_count'].to_i
-      object.cell_inputs.count
+      object.cell_inputs.size
     end
   end
 
   attribute :display_outputs_count do |object|
     # object.attributes['cell_outputs_count'].to_i
-    object.outputs.count
+    object.outputs.size
   end
 
   attribute :display_inputs do |object, params|
