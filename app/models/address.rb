@@ -16,6 +16,7 @@ class Address < ApplicationRecord
   has_many :ckb_dao_transactions, -> { distinct }, through: :dao_events, source: :ckb_transaction
   has_one :bitcoin_address_mapping, foreign_key: "ckb_address_id"
   has_one :bitcoin_address, through: :bitcoin_address_mapping
+  has_one :bitcoin_vout
 
   validates :balance, :ckb_transactions_count, :interest, :dao_deposit,
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
