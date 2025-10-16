@@ -1,7 +1,7 @@
 module FastJsonapi
   class PaginationMetaGenerator
     DEFAULT_PAGE = 1
-    DEFAULT_PER_PAGE = 20
+    DEFAULT_PER_PAGE = 10
 
     def initialize(request:, records:, page:, page_size:, total_pages: nil, total_count: nil)
       @url = request.base_url + request.path + query_string(request.query_parameters)

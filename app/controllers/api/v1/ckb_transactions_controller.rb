@@ -85,7 +85,7 @@ module Api
           end
 
         includes = { bitcoin_annotation: [], 
-              cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script], 
+              cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script, :consumed_by], 
               cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
 
         ckb_transactions = ckb_transactions.includes(includes).select(:id, :tx_hash, :block_id, :tags,
@@ -147,7 +147,7 @@ module Api
                   witnesses: [],
                   block: [:epoch_statistic],
                   cell_dependencies: [:cell_output, :contract],
-                  cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script], 
+                  cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script, :consumed_by], 
                   cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
 
         @ckb_transaction = CkbTransaction.includes(includes).where(tx_hash: params[:id]).first
