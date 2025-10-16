@@ -64,15 +64,18 @@ module Api
       def rgb_digest
         expires_in 10.seconds, public: true, must_revalidate: true
 
-        @ckb_transaction = CkbTransaction.includes(:cell_inputs => [:previous_cell_output], :cell_outputs => {}).find_by(tx_hash: params[:id])
+        includes = {
+            cell_outputs: [:lock_script, address: [bitcoin_vout: [:bitcoin_address]]], 
+            input_cells: [:lock_script, address: [bitcoin_vout: [:bitcoin_address]]]}
+
+        @ckb_transaction = CkbTransaction.includes(includes).find_by(tx_hash: params[:id])
         return head :not_found unless @ckb_transaction
 
         transfers = [].tap do |res|
-          combine_transfers(@ckb_transaction).each do |address_id, transfers|
-            vout = BitcoinVout.includes(:bitcoin_address).find_by(address_id:)
-            next unless vout
+          combine_transfers(@ckb_transaction).each do |address, transfers|
+            next unless address.bitcoin_vout
 
-            res << { address: vout&.bitcoin_address&.address_hash, transfers: }
+            res << { address: address.bitcoin_vout&.bitcoin_address&.address_hash, transfers: }
           end
         end
 

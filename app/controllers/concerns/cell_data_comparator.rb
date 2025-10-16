@@ -4,8 +4,7 @@ module CellDataComparator
   private
 
   def compare_cells(transaction)
-    combine_transfers(transaction).map do |address_id, transfers|
-      address = Address.find_by(id: address_id)
+    combine_transfers(transaction).map do |address, transfers|
       { address: address.address_hash, transfers: }
     end
   end
@@ -26,8 +25,13 @@ module CellDataComparator
 
   def diff_normal_cells(inputs, outputs)
     transfers = Hash.new { |h, k| h[k] = Array.new }
-    inputs = inputs.normal.group(:address_id).sum(:capacity)
-    outputs = outputs.normal.group(:address_id).sum(:capacity)
+    inputs = inputs.find_all{|i| i.cell_type.to_s == "normal" }.group_by(&:address).transform_values do |items|
+      items.sum { |item| item[:capacity] }
+    end
+
+    outputs = outputs.find_all{|i| i.cell_type.to_s == "normal" }.group_by(&:address).transform_values do |items|
+      items.sum { |item| item[:capacity] }
+    end 
 
     (inputs.keys | outputs.keys).each do |k|
       capacity = outputs[k].to_f - inputs[k].to_f
@@ -42,7 +46,7 @@ module CellDataComparator
     udt_infos = Hash.new { |h, k| h[k] = nil }
 
     process_udt = ->(c, h) {
-      info = Udt.find_by(type_hash: c.type_hash, published: true)
+      info = c.udt_cell
       unless udt_infos[c.type_hash]
         udt_infos[c.type_hash] = {
           symbol: info&.symbol,
@@ -51,15 +55,16 @@ module CellDataComparator
         }
       end
 
-      k = [c.address_id, c.type_hash, c.cell_type]
+      k = [c.address, c.type_hash, c.cell_type]
       h[k] ||= { capacity: 0.0, amount: 0.0 }
       h[k][:capacity] += c.capacity
       h[k][:amount] += c.udt_amount.to_f
     }
 
     cell_types = %w(udt omiga_inscription xudt xudt_compatible)
-    inputs = inputs.where(cell_type: cell_types).each_with_object({}) { |c, h| process_udt.call(c, h) }
-    outputs = outputs.where(cell_type: cell_types).each_with_object({}) { |c, h| process_udt.call(c, h) }
+
+    inputs = inputs.find_all{|i| cell_types.include?(i.cell_type.to_s) }.each_with_object({}) { |c, h| process_udt.call(c, h) }
+    outputs = outputs.find_all{|i| cell_types.include?(i.cell_type.to_s) }.each_with_object({}) { |c, h| process_udt.call(c, h) }
 
     (inputs.keys | outputs.keys).each do |k|
       input = inputs[k]
@@ -77,8 +82,14 @@ module CellDataComparator
   def diff_dao_capacities(inputs, outputs)
     transfers = Hash.new { |h, k| h[k] = Array.new }
     cell_types = %w(nervos_dao_deposit nervos_dao_withdrawing)
-    inputs = inputs.where(cell_type: cell_types).group(:address_id, :cell_type).sum(:capacity)
-    outputs = outputs.where(cell_type: cell_types).group(:address_id, :cell_type).sum(:capacity)
+
+    inputs = inputs.find_all{|i| cell_types.include?(i.cell_type.to_s) }.group_by{|i| [i.address, i.cell_type] }.transform_values do |items|
+      items.sum { |item| item[:capacity] }
+    end
+
+    outputs = outputs.find_all{|i| cell_types.include?(i.cell_type.to_s) }.group_by{|i| [i.address, i.cell_type] }.transform_values do |items|
+      items.sum { |item| item[:capacity] }
+    end
 
     (inputs.keys | outputs.keys).each do |k|
       capacity = outputs[k].to_f - inputs[k].to_f
@@ -90,8 +101,14 @@ module CellDataComparator
 
   def diff_cota_nft_cells(transaction, inputs, outputs)
     transfers = Hash.new { |h, k| h[k] = Array.new }
-    inputs = inputs.cota_regular.group(:address_id).sum(:capacity)
-    outputs = outputs.cota_regular.group(:address_id).sum(:capacity)
+
+    inputs = inputs.find_all{|i| i.cell_type.to_s == 'cota_regular' }.group_by(&:address).transform_values do |items|
+      items.sum { |item| item[:capacity] }
+    end 
+
+    outputs = outputs.find_all{|i| i.cell_type.to_s == 'cota_regular' }.group_by(&:address).transform_values do |items|
+      items.sum { |item| item[:capacity] }
+    end 
 
     (inputs.keys | outputs.keys).each do |k|
       capacity = outputs[k].to_f - inputs[k].to_f
@@ -108,7 +125,7 @@ module CellDataComparator
                     m_nft_class nrc_721_factory cota_registry spore_cluster)
 
     process_nft = ->(c, h, o) {
-      k = [c.address_id, c.cell_type, c.type_hash]
+      k = [c.address, c.cell_type, c.type_hash]
       h[k] ||= { capacity: 0.0, count: 0 }
       h[k][:capacity] += c.capacity
       h[k][:count] += o
@@ -117,18 +134,18 @@ module CellDataComparator
         nft_infos[c.type_hash] = nft_info(c)
       end
     }
-    inputs = inputs.where(cell_type: cell_types).each_with_object({}) { |c, h| process_nft.call(c, h, -1) }
-    outputs = outputs.where(cell_type: cell_types).each_with_object({}) { |c, h| process_nft.call(c, h, 1) }
+    inputs = inputs.find_all{|i| cell_types.include?(i.cell_type.to_s) }.each_with_object({}) { |c, h| process_nft.call(c, h, -1) }
+    outputs = outputs.find_all{|i| cell_types.include?(i.cell_type.to_s) }.each_with_object({}) { |c, h| process_nft.call(c, h, 1) }
 
     (inputs.keys | outputs.keys).each do |k|
-      address_id, cell_type, type_hash = k
+      address, cell_type, type_hash = k
       input = inputs[k]
       output = outputs[k]
       capacity = output&.dig(:capacity).to_f - input&.dig(:capacity).to_f
       count = output&.dig(:count).to_i + input&.dig(:count).to_i
       transfer = { capacity:, cell_type:, count: }
       transfer.merge!(nft_infos[type_hash]) if nft_infos[type_hash]
-      transfers[address_id] << CkbUtils.hash_value_to_s(transfer)
+      transfers[address] << CkbUtils.hash_value_to_s(transfer)
     end
 
     transfers
@@ -157,7 +174,7 @@ module CellDataComparator
     end
   end
 
-  def cota_info(transaction, address_id)
+  def cota_info(transaction, address)
     info = Array.new
     process_transfer = ->(item, count) {
       collection = item.collection
@@ -171,8 +188,8 @@ module CellDataComparator
     }
 
     transaction.token_transfers.each do |t|
-      process_transfer.call(t.item, -1) if t.from_id == address_id
-      process_transfer.call(t.item, 1) if t.to_id == address_id
+      process_transfer.call(t.item, -1) if t.from_id == address.id
+      process_transfer.call(t.item, 1) if t.to_id == address.id
     end
 
     info
