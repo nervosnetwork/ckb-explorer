@@ -13,7 +13,7 @@ module Api
         raise Api::V1::Exceptions::UdtNotFoundError if udt.blank?
 
         includes = { bitcoin_annotation: [], 
-                    cell_outputs: [:address, :deployed_contract, :udt_cell, :type_script, :bitcoin_vout, :lock_script], 
+                    cell_outputs: [:address, :deployed_contract, :udt_cell, :type_script, :bitcoin_vout, :lock_script, :consumed_by], 
                     cell_inputs: [:block, previous_cell_output: [:udt_cell, :address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
 
         ckb_udt_transactions = address.ckb_udt_transactions(udt.id)

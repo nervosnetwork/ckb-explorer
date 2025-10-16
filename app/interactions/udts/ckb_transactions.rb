@@ -31,7 +31,7 @@ module Udts
       end
 
       includes = { bitcoin_annotation: [], 
-            cell_outputs: [:address, :deployed_contract, :udt_cell, :type_script, :bitcoin_vout, :lock_script], 
+            cell_outputs: [:address, :deployed_contract, :udt_cell, :type_script, :bitcoin_vout, :lock_script, :consumed_by], 
             cell_inputs: [:block, previous_cell_output: [:address, :udt_cell, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
 
       records = ckb_transactions
