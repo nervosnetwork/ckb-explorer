@@ -40,11 +40,11 @@ module Addresses
       includes = if is_bitcoin
         { bitcoin_annotation: [], 
           bitcoin_transfers: [:bitcoin_transaction],
-          cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script, bitcoin_vout: [:bitcoin_address, :bitcoin_transaction]], 
+          cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script, bitcoin_vout: [:bitcoin_address, :bitcoin_transaction, :consumed_by]], 
           cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script, bitcoin_vout: [:bitcoin_address, :bitcoin_transaction]]]}
       else
         { bitcoin_annotation: [], 
-          cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script], 
+          cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script, :consumed_by], 
           cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
       end
 
