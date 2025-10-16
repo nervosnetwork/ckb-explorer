@@ -9,7 +9,7 @@ module Api
         raise Api::V1::Exceptions::AddressNotFoundError if address.is_a?(NullAddress)
 
         includes = { bitcoin_annotation: [], 
-                    cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script], 
+                    cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script, :consumed_by], 
                     cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
 
         ckb_dao_transactions = address.ckb_dao_transactions

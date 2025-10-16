@@ -19,7 +19,7 @@ module Api
         end
 
         includes = { bitcoin_annotation: [], 
-                    cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script], 
+                    cell_outputs: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script, :consumed_by], 
                     cell_inputs: [:block, previous_cell_output: [:address, :deployed_contract, :type_script, :bitcoin_vout, :lock_script]]}
 
         if stale?(ckb_transactions)
