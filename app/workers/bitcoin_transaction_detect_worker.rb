@@ -15,7 +15,7 @@ class BitcoinTransactionDetectWorker
     @btc_time_cell_ids = [] # btc time cells
 
     ApplicationRecord.transaction do
-      block.ckb_transactions.each do |transaction|
+      block.ckb_transactions.includes(input_cells: [:lock_script], cell_outputs: [:lock_script]).each do |transaction|
         inputs = transaction.input_cells
         outputs = transaction.cell_outputs
         (inputs + outputs).each { collect_rgb_ids(_1) }
@@ -32,7 +32,7 @@ class BitcoinTransactionDetectWorker
         ImportBtcTimeCellsJob.perform_now(_1)
       end
       # update bitcoin annotation
-      build_bitcoin_annotations!
+      build_bitcoin_annotations! unless @txids.empty?
     end
   end
 
@@ -91,7 +91,7 @@ class BitcoinTransactionDetectWorker
   def build_bitcoin_annotations!
     annotations = []
 
-    @block.ckb_transactions.each do |transaction|
+    @block.ckb_transactions.where(id: @txids).each do |transaction|
       leap_direction, transfer_step = annotation_workflow_attributes(transaction)
       tags = annotation_tags(transaction)
 
