@@ -7,7 +7,7 @@ namespace :migration do
 
     Address.find_each do |addr|
       addr.update(balance: addr.cell_outputs.live.sum(:capacity), ckb_transactions_count: addr.custom_ckb_transactions.count,
-        live_cells_count: addr.cell_outputs.live.count, dao_transactions_count: addr.ckb_dao_transactions.count)
+        live_cells_count: addr.cell_outputs.live.count)
       progress_bar.increment
     end
 
