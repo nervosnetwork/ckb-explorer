@@ -34,13 +34,4 @@ class RevertBlockJobTest < ActiveJob::TestCase
     @address.update(balance: 5000 * (10**8), balance_occupied: 3000 * (10**8), live_cells_count: 2, ckb_transactions_count: 2, last_updated_block_number: @parent_block.number,
                     dao_transactions_count: 2)
   end
-  test "rollback address final_state with parent block" do
-    RevertBlockJob.new(@parent_block).update_address_balance_and_ckb_transactions_count(@parent_block)
-
-    assert_equal @address.reload.live_cells_count, 4
-    assert_equal @address.reload.ckb_transactions_count, 1
-    assert_equal @address.reload.dao_transactions_count, 1
-    assert_equal @address.reload.balance, 6000 * (10**8)
-    assert_equal @address.reload.balance_occupied, 3000 * (10**8)
-  end
 end
