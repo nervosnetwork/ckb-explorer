@@ -22,7 +22,6 @@ class RevertBlockJob < ApplicationJob
         end
       benchmark :recalculate_udt_transactions_count, local_tip_block
       benchmark :decrease_records_count, local_tip_block
-      benchmark :update_address_balance_and_ckb_transactions_count, local_tip_block
 
       ApplicationRecord.benchmark "invalid! block" do
         local_tip_block.invalid!
@@ -36,79 +35,6 @@ class RevertBlockJob < ApplicationJob
         Charts::BlockStatisticGenerator.new(local_tip_block.number).call
       end
       local_tip_block
-    end
-  end
-
-  def update_address_balance_and_ckb_transactions_count(local_tip_block)
-    select_fields = [
-      "address_id",
-      "COUNT(*) AS cells_count",
-      "SUM(capacity) AS total_capacity",
-      "SUM(CASE WHEN type_hash IS NOT NULL OR data_hash IS NOT NULL THEN capacity ELSE 0 END) AS balance_occupied",
-    ]
-    output_addrs =
-      local_tip_block.cell_outputs.live.select(select_fields.join(", ")).group(:address_id)
-    input_addrs =
-      CellOutput.where(consumed_block_timestamp: local_tip_block.timestamp).select(select_fields.join(", ")).group(:address_id)
-    out_hash = output_addrs.each_with_object({}) do |row, h|
-      h[row.address_id] = {
-        cells_count: row.cells_count.to_i,
-        total_capacity: row.total_capacity.to_i,
-        balance_occupied: row.balance_occupied.to_i,
-      }
-    end
-
-    in_hash = input_addrs.each_with_object({}) do |row, h|
-      h[row.address_id] = {
-        cells_count: row.cells_count.to_i,
-        total_capacity: row.total_capacity.to_i,
-        balance_occupied: row.balance_occupied.to_i,
-      }
-    end
-
-    # Merge keys
-    all_ids = in_hash.keys | out_hash.keys
-
-    # 计算差值
-    address_balance_diff = all_ids.each_with_object({}) do |addr_id, h|
-      input  = in_hash[addr_id]  || { cells_count: 0, total_capacity: 0, balance_occupied: 0 }
-      output = out_hash[addr_id] || { cells_count: 0, total_capacity: 0, balance_occupied: 0 }
-
-      h[addr_id] = {
-        cells_count: input[:cells_count] - output[:cells_count],
-        total_capacity: input[:total_capacity] - output[:total_capacity],
-        balance_occupied: input[:balance_occupied] - output[:balance_occupied],
-      }
-    end
-    # Preload dao transaction counts for all addresses in one query
-    dao_tx_counts = DaoEvent.processed.
-      where(block_id: local_tip_block.id, address_id: all_ids).
-      group(:address_id).
-      distinct.
-      count(:ckb_transaction_id)
-    tx_count_diffs = AccountBook.tx_committed.
-      where(block_number: local_tip_block.number, address_id: all_ids).
-      group(:address_id).
-      count
-
-    changes =
-      address_balance_diff.map do |address_id, changes|
-        tx_count_diff = tx_count_diffs[address_id] || 0
-        dao_tx_count_diff = dao_tx_counts[address_id] || 0
-        { address_id: address_id }.merge(changes).merge({ ckb_transactions_count: tx_count_diff, dao_transactions_count: dao_tx_count_diff })
-      end
-
-    changes.each do |change|
-      addr = Address.find_by_id(change[:address_id])
-      if addr
-        addr.update!(
-          live_cells_count: addr.live_cells_count + change[:cells_count],
-          ckb_transactions_count: addr.ckb_transactions_count - change[:ckb_transactions_count],
-          balance: addr.balance + change[:total_capacity],
-          balance_occupied: addr.balance_occupied + change[:balance_occupied],
-          dao_transactions_count: addr.dao_transactions_count - change[:dao_transactions_count]
-        )
-      end
     end
   end
 
@@ -159,7 +85,6 @@ class RevertBlockJob < ApplicationJob
 
   def revert_dao_contract_related_operations(local_tip_block)
     dao_events = DaoEvent.where(block: local_tip_block).processed
-    dao_transactions_count = local_tip_block.ckb_transactions.where("tags @> array[?]::varchar[]", ["dao"]).count
     dao_contract = DaoContract.default_contract
 
     withdraw_total_deposit = revert_withdraw_from_dao(dao_events)
