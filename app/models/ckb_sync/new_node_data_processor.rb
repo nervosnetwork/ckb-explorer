@@ -8,7 +8,7 @@ module CkbSync
     include Redis::Objects
 
     value :reorg_started_at, global: true
-    attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :target_block_number, :addrs_changes,
+    attr_accessor :local_tip_block, :pending_raw_block, :ckb_txs, :target_block, :target_block_number,
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
                   :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes, :redis_keys, :tx_previous_outputs
 
@@ -75,11 +75,10 @@ module CkbSync
 
         benchmark :process_ckb_txs, node_block, ckb_txs, contained_address_ids,
                   contained_udt_ids, tags, udt_address_ids
-        @addrs_changes = Hash.new { |hash, key| hash[key] = {} }
         @addr_tx_changes = Hash.new { |h, k| h[k] = Hash.new(0) }
 
         input_capacities, output_capacities = benchmark :build_cells_and_locks!, local_block, node_block, ckb_txs, inputs, outputs,
-                                                        tags, udt_address_ids, contained_udt_ids, contained_address_ids, addrs_changes, token_transfer_ckb_tx_ids, cell_deps
+                                                        tags, udt_address_ids, contained_udt_ids, contained_address_ids, token_transfer_ckb_tx_ids, cell_deps
 
         # update explorer data
         benchmark :update_ckb_txs_rel_and_fee, ckb_txs, tags, input_capacities, output_capacities, udt_address_ids,
@@ -91,7 +90,6 @@ module CkbSync
         benchmark :update_or_create_udt_accounts!, local_block
         # maybe can be changed to asynchronous update
         benchmark :process_dao_events!, local_block
-        # benchmark :update_addresses_info, addrs_changes, local_block, refresh_balance
       end
 
       async_update_udt_infos(local_block)
@@ -732,7 +730,7 @@ module CkbSync
 
     def build_cells_and_locks!(
       local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids,
-       contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids, cell_deps
+       contained_udt_ids, contained_addr_ids, token_transfer_ckb_tx_ids, cell_deps
     )
       cell_outputs_attributes = []
       cell_inputs_attributes = []
@@ -755,7 +753,7 @@ module CkbSync
       build_addresses!(outputs, local_block)
 
       build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
-                          udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids)
+                          udt_address_ids, contained_udt_ids, contained_addr_ids, token_transfer_ckb_tx_ids)
       if cell_outputs_attributes.present?
         tx_hashes = cell_outputs_attributes.pluck(:tx_hash)
         binary_hashes = CkbUtils.hexes_to_bins_sql(tx_hashes)
@@ -812,7 +810,7 @@ module CkbSync
       prev_outputs = nil
       build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
                         input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids,
-                        prev_outputs, addrs_changes, token_transfer_ckb_tx_ids)
+                        prev_outputs, token_transfer_ckb_tx_ids)
 
       CellInput.import cell_inputs_attributes, validate: false, batch_size: 500
       if prev_cell_outputs_attributes.present?
@@ -920,7 +918,7 @@ module CkbSync
 
     def build_cell_inputs(
       inputs, ckb_txs, local_block_id, cell_inputs_attributes, prev_cell_outputs_attributes,
-input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, addrs_changes, token_transfer_ckb_tx_ids
+input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, token_transfer_ckb_tx_ids
     )
       conditions = []
 
@@ -960,7 +958,6 @@ input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, 
           # attributes[2] is previous_cell_output capacity
           # attributes[3] is previous_cell_output type_hash
           # attributes[4] is previous_cell address_id
-          # attributes[5] is previous_cell data
           attributes = cell_input_attributes(item, ckb_txs[tx_index]["id"],
                                              local_block_id, prev_outputs, index)
           cell_inputs_attributes << attributes[:cell_input]
@@ -969,28 +966,13 @@ input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, 
             address_id = attributes[:address_id]
             capacity = attributes[:capacity]
             type_hash = attributes[:type_hash]
-            data = attributes[:data]
-            change_rec = addrs_changes[address_id]
-
             addr_tx_changes[tx_index][address_id] -= capacity
-            change_rec[:balance_diff] ||= 0
-            change_rec[:balance_diff]  -= capacity
-            change_rec[:balance_occupied_diff] ||= 0
-            change_rec[:balance_occupied_diff] -= capacity if occupied?(
-              type_hash, data
-            )
-            change_rec[:cells_diff] ||= 0
-            change_rec[:cells_diff] -= 1
-            change_rec[:ckb_txs] ||= Set.new
-            change_rec[:ckb_txs] << ckb_txs[tx_index]["tx_hash"]
 
             prev_cell_outputs_attributes << previous_output
             contained_addr_ids[tx_index] << address_id
             cell_type = previous_output[:cell_type].to_s
             if cell_type.in?(%w(nervos_dao_withdrawing))
               tags[tx_index] << "dao"
-              change_rec[:dao_txs] ||= Set.new
-              change_rec[:dao_txs] << ckb_txs[tx_index]["tx_hash"]
             elsif cell_type.in?(%w(m_nft_token nrc_721_token spore_cell did_cell))
               token_transfer_ckb_tx_ids << ckb_txs[tx_index]["id"]
             end
@@ -1038,7 +1020,7 @@ input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, 
 
     def build_cell_outputs!(
       node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities,
-tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, token_transfer_ckb_tx_ids
+tags, udt_address_ids, contained_udt_ids, contained_addr_ids, token_transfer_ckb_tx_ids
     )
       outputs.each do |tx_index, items|
         cell_index = 0
@@ -1061,24 +1043,9 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, tok
               @redis_keys << key
             end
           end
-          cell_data = node_block.transactions[tx_index].outputs_data[cell_index]
-          change_rec = addrs_changes[address_id]
+          
           addr_tx_changes[tx_index][address_id] += item.capacity
-
-          change_rec[:balance_diff] ||= 0
-          change_rec[:balance_diff] += item.capacity
-
-          change_rec[:balance_occupied_diff] ||= 0
           type_script_hash = item.type&.compute_hash
-          change_rec[:balance_occupied_diff] += item.capacity if occupied?(
-            type_script_hash, cell_data
-          )
-
-          change_rec[:cells_diff] ||= 0
-          change_rec[:cells_diff] += 1
-
-          change_rec[:ckb_txs] ||= Set.new
-          change_rec[:ckb_txs] << ckb_txs[tx_index]["tx_hash"]
 
           contained_addr_ids[tx_index] << address_id
           attr = cell_output_attributes(item, address_id, ckb_txs[tx_index], local_block, cell_index,
@@ -1087,8 +1054,6 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, tok
 
           if attr[:cell_type].in?(%w(nervos_dao_deposit nervos_dao_withdrawing))
             tags[tx_index] << "dao"
-            change_rec[:dao_txs] ||= Set.new
-            change_rec[:dao_txs] << ckb_txs[tx_index]["tx_hash"]
           end
 
           if attr[:cell_type] == "udt"
@@ -1129,10 +1094,6 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, addrs_changes, tok
           cell_index += 1
         end
       end
-    end
-
-    def occupied?(type_hash, cell_data)
-      (cell_data.present? && cell_data != "0x") || type_hash.present?
     end
 
     def cell_output_attributes(output, address_id, ckb_transaction, local_block, cell_index, output_data)
@@ -1246,7 +1207,6 @@ _prev_outputs, index = nil)
           capacity: previous_output.capacity,
           type_hash: previous_output.type_hash,
           address_id: previous_output.address_id,
-          # data: previous_output.data
         }
       end
     end
