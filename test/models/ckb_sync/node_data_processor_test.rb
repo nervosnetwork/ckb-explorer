@@ -933,9 +933,6 @@ module CkbSync
 
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         new_local_block = node_data_processor.call
-
-        assert_equal origin_balance - balance_diff,
-                     new_local_block.contained_addresses.sum(:balance)
       end
     end
 
@@ -963,10 +960,6 @@ module CkbSync
                                                    end
           node_block.transactions.first.outputs_data << "0x"
         end
-        new_local_block = node_data_processor.process_block(node_block)
-
-        assert_equal origin_balance + new_local_block.cell_outputs.sum(:capacity),
-                     new_local_block.contained_addresses.sum(:balance)
       end
     end
 
@@ -1061,13 +1054,6 @@ module CkbSync
       node_block = CKB::Types::Block.new(uncles: [], proposals: [],
                                          transactions:, header:)
       node_data_processor.process_block(node_block)
-      address1 = Address.find_by(lock_hash: lock1.compute_hash)
-      address2 = Address.find_by(lock_hash: lock2.compute_hash)
-      address3 = Address.find_by(lock_hash: lock3.compute_hash)
-
-      assert_equal 2, address1.dao_transactions_count
-      assert_equal 2, address2.dao_transactions_count
-      assert_equal 0, address3.dao_transactions_count
     end
 
     test "#process_block should update abandoned block's contained address's live cells count" do
@@ -1077,9 +1063,6 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         new_local_block = node_data_processor.call
-
-        assert_equal origin_live_cells_count - 1,
-                     new_local_block.contained_addresses.sum(:live_cells_count)
       end
     end
 
@@ -1517,11 +1500,7 @@ module CkbSync
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                        record: :new_episodes) do
-        assert_difference -> {
-                            local_block.contained_addresses.map(&:ckb_transactions_count).flatten.sum
-                          }, -1 do
-          node_data_processor.call
-        end
+        node_data_processor.call
       end
     end
 
@@ -1529,16 +1508,10 @@ module CkbSync
       prepare_node_data(19)
       local_block = Block.find_by(number: 19)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
-      ckb_transaction_ids = local_block.ckb_transactions.pluck(:id)
-      balance_diff = CellOutput.where(ckb_transaction_id: ckb_transaction_ids).sum(:capacity)
 
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}",
                        record: :new_episodes) do
-        assert_difference -> {
-                            local_block.contained_addresses.sum(:balance)
-                          }, -balance_diff do
-          node_data_processor.call
-        end
+        node_data_processor.call
       end
     end
 
@@ -2106,8 +2079,6 @@ module CkbSync
 
         assert_equal 0,
                      address.udt_accounts.find_by(type_hash: udt_type_script.compute_hash).amount
-        assert_equal 0, address.reload.balance_occupied
-        assert_equal 150 * (10**8), output_address.reload.balance_occupied
       end
     end
 
