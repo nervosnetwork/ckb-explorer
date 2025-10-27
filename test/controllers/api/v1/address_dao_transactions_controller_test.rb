@@ -153,7 +153,6 @@ module Api
         address_dao_transactions = address.ckb_dao_transactions.recent.page(page).per(page_size)
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page: }
-        address.dao_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
@@ -170,7 +169,6 @@ module Api
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page_size: }
 
-        address.dao_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
@@ -187,7 +185,6 @@ module Api
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page:, page_size: }
 
-        address.dao_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
@@ -203,7 +200,6 @@ module Api
 
         valid_get api_v1_address_dao_transaction_url(address.address_hash), params: { page:, page_size: }
 
-        address.dao_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:, records: address_dao_transactions, page:, page_size:).call
         response_transaction = CkbTransactionsSerializer.new(address_dao_transactions, options.merge(params: { previews: true })).serialized_json
 
