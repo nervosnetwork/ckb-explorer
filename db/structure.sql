@@ -61,38 +61,6 @@ ALTER SEQUENCE public.account_books_id_seq OWNED BY public.account_books.id;
 
 
 --
--- Name: address_block_snapshots; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.address_block_snapshots (
-    id bigint NOT NULL,
-    address_id bigint,
-    block_id bigint,
-    block_number bigint,
-    final_state jsonb
-);
-
-
---
--- Name: address_block_snapshots_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.address_block_snapshots_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: address_block_snapshots_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.address_block_snapshots_id_seq OWNED BY public.address_block_snapshots.id;
-
-
---
 -- Name: address_udt_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -123,7 +91,6 @@ CREATE TABLE public.addresses (
     average_deposit_time bigint,
     unclaimed_compensation numeric(30,0),
     is_depositor boolean DEFAULT false,
-    dao_transactions_count bigint DEFAULT 0.0,
     lock_script_id bigint,
     balance_occupied numeric(30,0) DEFAULT 0.0,
     last_updated_block_number bigint
@@ -2772,13 +2739,6 @@ ALTER TABLE ONLY public.account_books ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
--- Name: address_block_snapshots id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.address_block_snapshots ALTER COLUMN id SET DEFAULT nextval('public.address_block_snapshots_id_seq'::regclass);
-
-
---
 -- Name: addresses id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -3197,14 +3157,6 @@ ALTER TABLE ONLY public.xudt_tags ALTER COLUMN id SET DEFAULT nextval('public.xu
 
 ALTER TABLE ONLY public.account_books
     ADD CONSTRAINT account_books_pkey PRIMARY KEY (id);
-
-
---
--- Name: address_block_snapshots address_block_snapshots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.address_block_snapshots
-    ADD CONSTRAINT address_block_snapshots_pkey PRIMARY KEY (id);
 
 
 --
@@ -4360,27 +4312,6 @@ CREATE INDEX index_account_books_on_block_number_and_tx_index ON public.account_
 --
 
 CREATE INDEX index_account_books_on_ckb_transaction_id ON public.account_books USING btree (ckb_transaction_id);
-
-
---
--- Name: index_address_block_snapshots_on_address_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_address_block_snapshots_on_address_id ON public.address_block_snapshots USING btree (address_id);
-
-
---
--- Name: index_address_block_snapshots_on_block_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_address_block_snapshots_on_block_id ON public.address_block_snapshots USING btree (block_id);
-
-
---
--- Name: index_address_block_snapshots_on_block_id_and_address_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_address_block_snapshots_on_block_id_and_address_id ON public.address_block_snapshots USING btree (block_id, address_id);
 
 
 --
@@ -6005,6 +5936,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250827065749'),
 ('20250930015526'),
 ('20251011011714'),
-('20251013082609');
+('20251013082609'),
+('20251027053353'),
+('20251027054232');
 
 
