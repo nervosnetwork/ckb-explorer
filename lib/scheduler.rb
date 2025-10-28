@@ -115,7 +115,7 @@ s.every "6h", overlap: false do
   call_worker ContractStatisticWorker
 end
 
-s.every "10h" overlap: false do
+s.every "10h", overlap: false do
   call_worker CalculateAddressInfoWorker
 end
 
