@@ -8,7 +8,6 @@ namespace :migration do
       local_tip_block = Block.recent.first
       address.update(
         ckb_transactions_count: AccountBook.where(address_id: address.id).where("block_number <= ?", local_tip_block.number).count,
-        dao_transactions_count: DaoEvent.processed.where(address_id: address.id).where("block_timestamp <= ?", local_tip_block.timestamp).distinct.count(:ckb_transaction_id),
         last_updated_block_number: local_tip_block.number,
       )
       AddressBlockSnapshot.where(address_id: address.id).delete_all

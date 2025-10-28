@@ -222,7 +222,6 @@ end
 #  average_deposit_time      :bigint
 #  unclaimed_compensation    :decimal(30, )
 #  is_depositor              :boolean          default(FALSE)
-#  dao_transactions_count    :bigint           default(0)
 #  lock_script_id            :bigint
 #  balance_occupied          :decimal(30, )    default(0)
 #  last_updated_block_number :bigint
