@@ -207,7 +207,7 @@ module Api
         page = 2
         page_size = 10
         address = create(:address, :with_pending_transactions, transactions_count: 30)
-        address_ckb_transactions = address.custom_ckb_transactions.
+        address_ckb_transactions = address.ckb_transactions.
           order("id desc NULLS LAST").
           page(page).
           per(page_size)
