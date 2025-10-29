@@ -7,7 +7,6 @@ namespace :migration do
       puts address.id
       local_tip_block = Block.recent.first
       address.update(
-        ckb_transactions_count: AccountBook.where(address_id: address.id).where("block_number <= ?", local_tip_block.number).count,
         last_updated_block_number: local_tip_block.number,
       )
       AddressBlockSnapshot.where(address_id: address.id).delete_all
