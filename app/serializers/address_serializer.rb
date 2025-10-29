@@ -7,10 +7,10 @@ class AddressSerializer
     object.query_address || object.address_hash
   end
   attribute :balance do |object|
-    object.balance.to_s
+    object.current_balance.to_s
   end
   attribute :transactions_count do |object|
-    object.ckb_transactions_count.to_s
+    object.current_ckb_transactions_count.to_s
   end
   attribute :dao_deposit do |object|
     object.dao_deposit.to_s
@@ -27,7 +27,7 @@ class AddressSerializer
     Settings.special_addresses[object.address_hash]
   end
   attribute :live_cells_count do |object|
-    object.live_cells_count.to_s
+    object.current_live_cells_count.to_s
   end
   attribute :mined_blocks_count do |object|
     object.mined_blocks_count.to_s
@@ -144,7 +144,7 @@ class AddressSerializer
     (object.interest.to_i + object.unclaimed_compensation.to_i).to_s
   end
   attribute :balance_occupied do |object|
-    object.balance_occupied.to_s
+    object.current_balance_occupied.to_s
   end
   attribute :bitcoin_address_hash do |object|
     object.bitcoin_address&.address_hash

@@ -160,6 +160,22 @@ class Address < ApplicationRecord
     save!
   end
 
+  def current_balance
+    self.cell_outputs.live.sum(:capacity)
+  end
+
+  def current_ckb_transactions_count
+    AccountBook.where(address_id: self.id).count
+  end
+
+  def current_live_cells_count
+    self.cell_outputs.live.count
+  end
+
+  def current_balance_occupied
+    self.cell_outputs.live.occupied.sum(:capacity)
+  end
+
   def cal_balance
     total = cell_outputs.live.sum(:capacity)
     occupied = cell_outputs.live.occupied.sum(:capacity)
