@@ -161,7 +161,7 @@ class Address < ApplicationRecord
   end
 
   def current_balance
-    self.cell_outputs.live.sum(:capacity)
+    self.cell_outputs.live.sum(:capacity).to_i
   end
 
   def current_ckb_transactions_count
@@ -173,12 +173,12 @@ class Address < ApplicationRecord
   end
 
   def current_balance_occupied
-    self.cell_outputs.live.occupied.sum(:capacity)
+    self.cell_outputs.live.occupied.sum(:capacity).to_i
   end
 
   def cal_balance
-    total = cell_outputs.live.sum(:capacity)
-    occupied = cell_outputs.live.occupied.sum(:capacity)
+    total = cell_outputs.live.sum(:capacity).to_i
+    occupied = cell_outputs.live.occupied.sum(:capacity).to_i
     [total, occupied]
   end
 
