@@ -2,7 +2,7 @@ module Api
   module V1
     class AddressesController < ApplicationController
       def show
-        expires_in 5.minutes, public: true, must_revalidate: true, stale_while_revalidate: 10.seconds
+        expires_in 10.seconds, public: true, must_revalidate: true, stale_while_revalidate: 10.seconds
 
         json = Addresses::Info.run!(
           { request:, key: params[:id],
