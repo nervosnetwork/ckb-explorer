@@ -13,6 +13,22 @@ class NullAddress
     0
   end
 
+  def current_balance
+    0
+  end
+
+  def current_ckb_transactions_count
+    0
+  end
+
+  def current_live_cells_count
+    0
+  end
+
+  def current_balance_occupied
+    0
+  end
+
   def ckb_transactions_count
     0
   end
