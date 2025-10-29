@@ -13,6 +13,7 @@ class BitcoinTransactionDetectWorker
     @txids = [] # bitcoin txids
     @rgbpp_cell_ids = [] # rgbpp cells
     @btc_time_cell_ids = [] # btc time cells
+    @ckb_txids = []
 
     ApplicationRecord.transaction do
       block.ckb_transactions.includes(input_cells: [:lock_script], cell_outputs: [:lock_script]).each do |transaction|
@@ -48,6 +49,8 @@ class BitcoinTransactionDetectWorker
       ).exists?
         @rgbpp_cell_ids << cell_output_id
         @txids << txid
+        @ckb_txids << cell_output.ckb_transaction_id
+        @ckb_txids << cell_output.consumed_by_id
       end
     end
 
@@ -60,6 +63,8 @@ class BitcoinTransactionDetectWorker
       ).exists?
         @btc_time_cell_ids << cell_output_id
         @txids << txid
+        @ckb_txids << cell_output.ckb_transaction_id
+        @ckb_txids << cell_output.consumed_by_id
       end
     end
   end
@@ -91,7 +96,7 @@ class BitcoinTransactionDetectWorker
   def build_bitcoin_annotations!
     annotations = []
 
-    @block.ckb_transactions.where(id: @txids).each do |transaction|
+    @block.ckb_transactions.where(id: @ckb_txids).each do |transaction|
       leap_direction, transfer_step = annotation_workflow_attributes(transaction)
       tags = annotation_tags(transaction)
 
