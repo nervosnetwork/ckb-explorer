@@ -50,6 +50,7 @@ class BitcoinTransactionDetectWorker
         @rgbpp_cell_ids << cell_output_id
         @txids << txid
         @ckb_txids << cell_output.ckb_transaction_id
+        @ckb_txids << cell_output.consumed_by_id
       end
     end
 
@@ -63,6 +64,7 @@ class BitcoinTransactionDetectWorker
         @btc_time_cell_ids << cell_output_id
         @txids << txid
         @ckb_txids << cell_output.ckb_transaction_id
+        @ckb_txids << cell_output.consumed_by_id
       end
     end
   end
