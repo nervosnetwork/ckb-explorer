@@ -191,7 +191,7 @@ module Api
                          address_hash: "ckb1qyq0hcfpff4h8w8zvy44uurvlgdrr09tefwqx266dl")
 
         valid_get api_v1_address_url(address.address_hash)
-        assert_equal "0.0", json.dig("data", 0, "attributes", "balance_occupied")
+        assert_equal "0", json.dig("data", 0, "attributes", "balance_occupied")
       end
 
       test "should return nrc 721 udt accounts with given address hash" do
