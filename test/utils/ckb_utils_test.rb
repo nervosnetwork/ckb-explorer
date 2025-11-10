@@ -454,7 +454,7 @@ class CkbUtilsTest < ActiveSupport::TestCase
     info = CkbUtils.parse_unique_cell(data)
     assert_equal info[:decimal], 8
     assert_equal info[:name], "Unique BBQ"
-    assert_nil info[:sybol]
+    assert_nil info[:symbol]
   end
 
   test "calculate commitment with single input and output including typescript" do
