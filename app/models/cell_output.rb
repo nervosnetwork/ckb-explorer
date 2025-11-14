@@ -228,65 +228,6 @@ class CellOutput < ApplicationRecord
     end
   end
 
-  # Because the balance of address equals to the total capacity of all live cells in this address,
-  # So we can directly aggregate balance by address from database.
-  def self.refresh_address_balances
-    puts "refreshing all balances"
-    # fix balance and live cell count for all addresses
-    connection.execute <<-SQL
-    UPDATE addresses SET balance=sq.balance, live_cells_count=c
-    FROM  (
-      SELECT address_id, SUM(capacity) as balance, COUNT(*) as c
-      FROM  cell_outputs
-      WHERE status = 0
-      GROUP  BY address_id
-      ) AS sq
-    WHERE  addresses.id=sq.address_id;
-    SQL
-    # fix occupied balances for all addresses
-    puts "refreshing all occupied balances"
-    connection.execute <<-SQL
-    UPDATE addresses SET balance_occupied=sq.balance
-    FROM  (
-      SELECT address_id, SUM(capacity) as balance
-      FROM  cell_outputs
-      WHERE status = 0
-            AND "cell_outputs"."type_hash" IS NOT NULL AND "cell_outputs"."data" != '\x3078'
-      GROUP  BY address_id
-      ) AS sq
-    WHERE  addresses.id=sq.address_id;
-    SQL
-    puts "refreshing dao deposits"
-    connection.execute <<-SQL
-    UPDATE addresses SET dao_deposit=sq.sum, is_depositor = sq.sum > 0
-    FROM  (
-      SELECT address_id, SUM(capacity) as sum
-      FROM  cell_outputs
-      WHERE status = 0
-            AND cell_type = 1
-      GROUP  BY address_id
-      ) AS sq
-    WHERE  addresses.id=sq.address_id;
-    SQL
-  end
-
-  # update the history data, which cell_type should be "cota_registry" or "cota_regular"
-  def self.update_cell_types_for_cota
-    TypeScript.where(code_hash: CkbSync::Api.instance.cota_registry_code_hash).each do |type_script|
-      CellOutput.where(type_script_id: type_script.id).each do |cell_output|
-        cell_output.cell_type = "cota_registry"
-        cell_output.save!
-      end
-    end
-
-    TypeScript.where(code_hash: CkbSync::Api.instance.cota_regular_code_hash).each do |type_script|
-      CellOutput.where(type_script_id: type_script.id).each do |cell_output|
-        cell_output.cell_type = "cota_regular"
-        cell_output.save!
-      end
-    end
-  end
-
   def self.dead_reltuples_count
     sql = "SELECT reltuples FROM pg_class WHERE relname = 'cell_outputs_dead'"
     result = ActiveRecord::Base.connection.execute(sql)
