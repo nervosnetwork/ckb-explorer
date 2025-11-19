@@ -24,7 +24,6 @@ class UpdateCellOutputsStatus
     address = Address.find_by_id address_id
     return unless address
 
-    address.live_cells_count = address.cell_outputs.live.count
     address.cal_balance!
     address.save!
     address.flush_cache

@@ -13,8 +13,6 @@ class UpdateAddressInfoWorker
         id: addr.id,
         balance: balance,
         balance_occupied: balance_occupied,
-        ckb_transactions_count: AccountBook.where(address_id: addr.id).count,
-        live_cells_count: addr.cell_outputs.live.count,
         updated_at: Time.current
       }
     end
