@@ -46,7 +46,6 @@ class ImportRgbppCellsJob < ApplicationJob
           lock_type: "rgbpp",
           cell_output_id: cell_output.id,
         }
-
       rescue StandardError => e
         Rails.logger.error("Handle rgbpp cell (id: #{cell_output.id}) failed: #{e.message}")
         raise e
@@ -86,7 +85,7 @@ class ImportRgbppCellsJob < ApplicationJob
   end
 
   def fetch_raw_transactions!(utxo_map)
-    txids = utxo_map.values.map { _1[:txid] }.uniq
+    txids = utxo_map.values.pluck(:txid).uniq
 
     raw_tx_data = {}
     txids.each do |txid|
@@ -124,7 +123,7 @@ class ImportRgbppCellsJob < ApplicationJob
 
     unique_transaction_attributes = transaction_attributes.values
     BitcoinTransaction.upsert_all(unique_transaction_attributes, unique_by: :txid)
-    BitcoinTransaction.where(txid: unique_transaction_attributes.map { |tx| tx[:txid] }).index_by(&:txid)
+    BitcoinTransaction.where(txid: unique_transaction_attributes.pluck(:txid)).index_by(&:txid)
   end
 
   def build_op_returns!(raw_tx, tx, ckb_tx)
@@ -173,6 +172,10 @@ class ImportRgbppCellsJob < ApplicationJob
       find_or_create_by!(ckb_address_id: cell_output.address_id)
 
     BtcAccountBook.find_or_create_by!(ckb_transaction_id: cell_output.ckb_transaction_id, bitcoin_address_id: bitcoin_address.id)
+
+    if cell_output.consumed_by_id
+      BtcAccountBook.find_or_create_by!(ckb_transaction_id: cell_output.consumed_by_id, bitcoin_address_id: bitcoin_address.id)
+    end
 
     bitcoin_address
   end
