@@ -38,7 +38,7 @@ class AnalyzeContractFromCellDependencyWorker
   def load_unanalyzed_dependencies
     CellDependency.where(contract_analyzed: false).
       where.not(block_number: nil).
-      limit(200).
+      limit(500).
       group_by(&:ckb_transaction_id)
   end
 
