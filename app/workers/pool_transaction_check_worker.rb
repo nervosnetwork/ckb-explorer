@@ -1,5 +1,5 @@
-# 1.Check every pending transaction in the pool if rejected
-# 2.When a pending tx import to db and the same tx was import by node processor,it will exist two same tx with different status
+# 1. Check every pending transaction in the pool if rejected
+# 2. When a pending tx is imported to db and the same tx was imported by node processor, it will exist two same tx with different status
 class PoolTransactionCheckWorker
   include Sidekiq::Worker
   sidekiq_options retry: 0
