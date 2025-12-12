@@ -10,7 +10,7 @@ class AddressSerializer
     object.current_balance.to_s
   end
   attribute :transactions_count do |object|
-    object.current_ckb_transactions_count.to_s
+    object.ckb_transactions_count.to_s
   end
   attribute :dao_deposit do |object|
     object.dao_deposit.to_s
@@ -27,7 +27,7 @@ class AddressSerializer
     Settings.special_addresses[object.address_hash]
   end
   attribute :live_cells_count do |object|
-    object.current_live_cells_count.to_s
+    object.live_cells_count.to_s
   end
   attribute :mined_blocks_count do |object|
     object.mined_blocks_count.to_s
