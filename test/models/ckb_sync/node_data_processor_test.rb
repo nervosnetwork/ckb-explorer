@@ -1059,7 +1059,6 @@ module CkbSync
     test "#process_block should update abandoned block's contained address's live cells count" do
       prepare_node_data(12)
       local_block = Block.find_by(number: 12)
-      origin_live_cells_count = local_block.contained_addresses.sum(:live_cells_count)
       local_block.update(block_hash: "0x419c632366c8eb9635acbb39ea085f7552ae62e1fdd480893375334a0f37d1bx")
       VCR.use_cassette("blocks/12", record: :new_episodes) do
         new_local_block = node_data_processor.call

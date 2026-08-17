@@ -138,7 +138,7 @@ class UdtRegister
     # update addresses transaction page cache
     CkbTransaction.where(id: tx_ids).find_each do |ckb_tx|
       Address.where(id: ckb_tx.contained_address_ids).find_each do |address|
-        ckb_transactions = address.custom_ckb_transactions.select(:id, :tx_hash, :block_id, :block_number,
+        ckb_transactions = address.ckb_transactions.select(:id, :tx_hash, :block_id, :block_number,
                                                                   :block_timestamp, :is_cellbase, :updated_at).recent.page(1).per(CkbTransaction.default_per_page)
         Rails.cache.delete("#{ckb_transactions.cache_key}/#{address.query_address}")
       end

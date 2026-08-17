@@ -7,8 +7,6 @@ namespace :migration do
       if address.last_updated_block_number.nil?
         local_tip_block = Block.recent.first
         address.last_updated_block_number = local_tip_block.number
-        address.live_cells_count = address.cell_outputs.live.where("block_timestamp <= ?", local_tip_block.timestamp).count
-        address.ckb_transactions_count = AccountBook.where(address_id: address.id).where("block_number <= ?", local_tip_block.number).count
         address.cal_balance!
         address.save!
       end

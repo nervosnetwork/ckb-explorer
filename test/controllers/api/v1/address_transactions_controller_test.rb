@@ -75,7 +75,6 @@ module Api
 
         valid_get api_v1_address_transaction_url(address.address_hash)
 
-        address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:,
           records: ckb_transactions,
@@ -102,7 +101,6 @@ module Api
 
         valid_get api_v1_address_transaction_url(address.lock_hash)
 
-        address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(
           request:,
           records: ckb_transactions,
@@ -257,7 +255,7 @@ module Api
         page = 2
         page_size = 10
         address = create(:address, :with_transactions, transactions_count: 30)
-        address_ckb_transactions = address.custom_ckb_transactions.
+        address_ckb_transactions = address.ckb_transactions.
           order("block_timestamp desc nulls last, id desc").
           page(page).
           per(page_size)
@@ -287,7 +285,6 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash),
                   params: { page_size: }
 
-        address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:,
                                                            records: address_ckb_transactions,
                                                            page:,
@@ -313,7 +310,6 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash),
                   params: { page:, page_size:, sort: "time.desc"}
 
-        address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:,
                                                            records: address_ckb_transactions,
                                                            page:,
@@ -337,7 +333,6 @@ module Api
         valid_get api_v1_address_transaction_url(address.address_hash),
                   params: { page:, page_size: }
 
-        address.ckb_transactions_count
         options = FastJsonapi::PaginationMetaGenerator.new(request:,
                                                            records: address_ckb_transactions,
                                                            page:,

@@ -7,7 +7,6 @@ FactoryBot.define do
     end
 
     balance { 0 }
-    ckb_transactions_count { 0 }
     lock_hash { "0x#{SecureRandom.hex(32)}" }
     last_updated_block_number { 10 }
 
@@ -27,7 +26,6 @@ FactoryBot.define do
     end
 
     trait :with_transactions do
-      ckb_transactions_count { 3 }
       after(:create) do |address, evaluator|
         block = create(:block, :with_block_hash)
         ckb_transactions = []
@@ -36,12 +34,10 @@ FactoryBot.define do
         end
 
         AccountBook.upsert_all(ckb_transactions.map { |t| { address_id: address.id, ckb_transaction_id: t.id, block_number: t.block_number, tx_index: t.tx_index } })
-        address.update(ckb_transactions_count: address.ckb_transactions.count)
       end
     end
 
     trait :with_pending_transactions do
-      ckb_transactions_count { 3 }
       after(:create) do |address, evaluator|
         block = create(:block, :with_block_hash)
         ckb_transactions = []
@@ -56,12 +52,10 @@ FactoryBot.define do
             { address_id: address.id, ckb_transaction_id: t.id, income: }
           end
         AccountBook.upsert_all(attrs)
-        address.update(ckb_transactions_count: address.ckb_transactions.count)
       end
     end
 
     trait :with_udt_transactions do
-      ckb_transactions_count { 20 }
       after(:create) do |address, evaluator|
         evaluator.transactions_count.times do
           block = create(:block, :with_block_hash)
