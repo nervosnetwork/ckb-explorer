@@ -1734,6 +1734,55 @@ module CkbSync
       end
     end
 
+    test "process_block skips a missing historical xudt without rolling back" do
+      prepare_node_data(10)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        historical_block = create(:block, :with_block_hash, number: node_block.header.number - 1)
+        historical_tx = create(:ckb_transaction, block: historical_block)
+        type_script = create(:type_script, code_hash: Settings.xudt_data_hash, hash_type: "data1")
+        historical_output = create(
+          :cell_output,
+          block: historical_block,
+          ckb_transaction: historical_tx,
+          tx_hash: historical_tx.tx_hash,
+          cell_index: 0,
+          capacity: 1_000 * (10**8),
+          cell_type: "xudt",
+          type_hash: type_script.script_hash,
+          type_script:,
+        )
+        input = CKB::Types::Input.new(
+          previous_output: CKB::Types::OutPoint.new(tx_hash: historical_output.tx_hash, index: 0),
+        )
+        output = CKB::Types::Output.new(
+          capacity: 150 * (10**8),
+          lock: CKB::Types::Script.new(
+            code_hash: Settings.secp_cell_type_hash,
+            args: "0x#{SecureRandom.hex(20)}",
+            hash_type: "type",
+          ),
+          type: nil,
+        )
+        consuming_tx = CKB::Types::Transaction.new(
+          hash: "0x#{SecureRandom.hex(32)}",
+          inputs: [input],
+          outputs: [output],
+          outputs_data: ["0x"],
+        )
+        node_block.transactions << consuming_tx
+
+        assert_no_difference -> { Udt.count } do
+          node_data_processor.process_block(node_block)
+        end
+
+        local_tx = CkbTransaction.find_by!(tx_hash: consuming_tx.hash)
+        assert_not Udt.exists?(type_hash: type_script.script_hash)
+        assert_not UdtTransaction.exists?(ckb_transaction_id: local_tx.id)
+        assert historical_output.reload.dead?
+      end
+    end
+
     test "#process_block should create one udt when there is one m_nft_token cell" do
       create(:address)
       prepare_node_data(10)

@@ -427,8 +427,16 @@ module CkbSync
           when "spore_cell", "did_cell"
             udt_output.type_script.args.hex
           end
-        udt = Udt.where(type_hash: udt_output.type_hash, udt_type:).select(:id, :udt_type, :full_name,
-                                                                           :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
+        udt = Udt.where(type_hash: udt_output.type_hash, udt_type:).select(
+          :id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at,
+        ).first
+        unless udt
+          Rails.logger.error(
+            "Missing Udt, skip udt account update: cell_output_id=#{udt_output.id}, " \
+            "cell_type=#{udt_output.cell_type}, type_hash=#{udt_output.type_hash}, udt_type=#{udt_type}",
+          )
+          next
+        end
         if udt_account.present?
           udt_accounts_attributes << { id: udt_account.id, amount:,
                                        created_at: udt.created_at }
@@ -450,8 +458,16 @@ module CkbSync
           udt_account = UdtAccount.where(address_id: udt_output.address_id).where(type_hash: udt_output.type_hash, udt_type:).select(:id,
                                                                                                       :created_at).first
           amount = udt_account_amount(udt_type, udt_output.type_hash, udt_output.address_id)
-          udt = Udt.where(type_hash: udt_output.type_hash, udt_type:).select(:id, :udt_type, :full_name,
-                                                                             :symbol, :decimal, :published, :code_hash, :type_hash, :created_at).take!
+          udt = Udt.where(type_hash: udt_output.type_hash, udt_type:).select(
+            :id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at,
+          ).first
+          unless udt
+            Rails.logger.error(
+              "Missing Udt, skip udt account update: cell_output_id=#{udt_output.id}, " \
+              "cell_type=#{udt_output.cell_type}, type_hash=#{udt_output.type_hash}, udt_type=#{udt_type}",
+            )
+            next
+          end
           if udt_account.present?
             case udt_type
             when "sudt", "ssri", "omiga_inscription", "xudt", "xudt_compatible"
@@ -675,7 +691,7 @@ module CkbSync
           contained_addr_ids[tx_index].to_a.map do |address_id|
             { address_id:, ckb_transaction_id: tx_id, income: addr_tx_changes[tx_index][address_id], block_number: tx["block_number"], tx_index: }
           end
-        full_tx_udt_ids += contained_udt_ids[tx_index].to_a.map do |u|
+        full_tx_udt_ids += contained_udt_ids[tx_index].to_a.compact.map do |u|
           { udt_id: u, ckb_transaction_id: tx_id }
         end
         full_udt_address_ids += udt_address_ids[tx_index].to_a.map do |a|
