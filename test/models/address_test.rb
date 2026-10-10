@@ -182,7 +182,7 @@ class AddressTest < ActiveSupport::TestCase
                  address.cal_unclaimed_compensation
   end
 
-  test "#custom_ckb_transactions should return correct ckb transactions" do
+  test "#ckb_transactions should return correct ckb transactions" do
     address = create(:address)
     block = create(:block)
     ckb_transactions = create_list(:ckb_transaction, 30, block:, address:,
@@ -195,7 +195,7 @@ class AddressTest < ActiveSupport::TestCase
     expected_ckb_transactions = CkbTransaction.where(id: ckb_transaction_ids).recent
 
     assert_equal expected_ckb_transactions.pluck(:id),
-                 address.custom_ckb_transactions.recent.pluck(:id)
+                 address.ckb_transactions.recent.pluck(:id)
   end
 
   test "#ckb_dao_transactions should return correct ckb transactions with dao cell" do

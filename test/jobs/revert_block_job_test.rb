@@ -15,7 +15,7 @@ class RevertBlockJobTest < ActiveJob::TestCase
     deposit_dao_event = create(:dao_event, block_id: first_block.id, block_timestamp: first_block.timestamp, ckb_transaction_id: tx.id, address_id: @address.id, value: 3000 * (10**8),
                                            event_type: "deposit_to_dao")
 
-    @address.update(balance: 6000 * (10**8), balance_occupied: 3000 * (10**8), live_cells_count: 4, ckb_transactions_count: 1, last_updated_block_number: first_block.number)
+    @address.update(balance: 6000 * (10**8), balance_occupied: 3000 * (10**8), last_updated_block_number: first_block.number)
     @parent_block = create(:block, parent_hash: first_block.hash, address_ids: [@address.id], number: 11)
     parent_tx = create(:ckb_transaction, block: @parent_block)
     create(:cell_input, block_id: @parent_block.id, ckb_transaction: parent_tx, previous_cell_output_id: previous_cell_output1.id, index: 0)
@@ -31,6 +31,6 @@ class RevertBlockJobTest < ActiveJob::TestCase
     deposit_dao_event.update(consumed_block_timestamp: @parent_block.timestamp, consumed_transaction_id: parent_tx.id)
     create(:dao_event, block_id: @parent_block.id, block_timestamp: @parent_block.timestamp, ckb_transaction_id: parent_tx.id, address_id: @address.id, value: 3000 * (10**8),
                        event_type: "withdraw_from_dao")
-    @address.update(balance: 5000 * (10**8), balance_occupied: 3000 * (10**8), live_cells_count: 2, ckb_transactions_count: 2, last_updated_block_number: @parent_block.number)
+    @address.update(balance: 5000 * (10**8), balance_occupied: 3000 * (10**8), last_updated_block_number: @parent_block.number)
   end
 end
