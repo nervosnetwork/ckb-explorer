@@ -9,7 +9,7 @@ class UdtVerificationMailerTest < ActionMailer::TestCase
     end
 
     # Test the body of the sent email contains what we expect it to
-    assert_equal ["noreply@magickbase.com"], email.from
+    assert_equal ["noreply-ckb-explorer@nervos.org"], email.from
     assert_equal ["receiver@example.com"], email.to
     assert_equal "Token Info Verification", email.subject
     assert_equal "#{read_fixture('send_token_email.en.text.erb').join}\n", email.body.to_s
@@ -25,3 +25,4 @@ class UdtVerificationMailerTest < ActionMailer::TestCase
     assert_equal "#{read_fixture('send_token_email.zh_CN.text.erb').join}\n", email.body.to_s.tr("\r", "")
   end
 end
+

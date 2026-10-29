@@ -1,5 +1,6 @@
 name: Pull, build docker image and push to repository
 on:
+  workflow_dispatch:
   workflow_call:
     secrets:
       GHCR_USERNAME:
