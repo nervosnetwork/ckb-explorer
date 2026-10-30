@@ -18,7 +18,7 @@ class Address < ApplicationRecord
   has_one :bitcoin_address, through: :bitcoin_address_mapping
   has_one :bitcoin_vout
 
-  validates :balance, :ckb_transactions_count, :interest, :dao_deposit,
+  validates :balance, :interest, :dao_deposit,
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :lock_hash, presence: true, uniqueness: true, on: :create
 
@@ -29,10 +29,6 @@ class Address < ApplicationRecord
   after_commit :flush_cache
 
   attr_accessor :query_address
-
-  def custom_ckb_transactions
-    ckb_transactions
-  end
 
   def ckb_udt_transactions(udt)
     udt = Udt.find_by_id(udt) unless udt.is_a?(Udt)
@@ -164,11 +160,12 @@ class Address < ApplicationRecord
     self.cell_outputs.live.sum(:capacity).to_i
   end
 
-  def current_ckb_transactions_count
+
+  def ckb_transactions_count
     AccountBook.where(address_id: self.id).count
   end
 
-  def current_live_cells_count
+  def live_cells_count
     self.cell_outputs.live.count
   end
 

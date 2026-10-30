@@ -5,8 +5,7 @@ namespace :migration do
 		  addr_attrs = []
 		  Address.where(id: block.address_ids).select(:id, :mined_blocks_count, :created_at).each do |addr|
 			  next if addr.mined_blocks_count > 0
-        addr_attrs << { id: addr.id, balance: addr.cell_outputs.live.sum(:capacity), 
-												ckb_transactions_count: addr.custom_ckb_transactions.count, live_cells_count: addr.cell_outputs.live.count,
+        addr_attrs << { id: addr.id, balance: addr.cell_outputs.live.sum(:capacity),
                         updated_at: Time.current }
 		  end
 		  Address.upsert_all(addr_attrs)

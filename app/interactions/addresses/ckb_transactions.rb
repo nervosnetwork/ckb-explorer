@@ -32,7 +32,7 @@ module Addresses
           select(:ckb_transaction_id).
           page(page).per(page_size)
 
-        total_count = Address.find(address_id).current_ckb_transactions_count
+        total_count = Address.find(address_id).ckb_transactions_count
       end
 
       ckb_transaction_ids = account_books.map(&:ckb_transaction_id)
