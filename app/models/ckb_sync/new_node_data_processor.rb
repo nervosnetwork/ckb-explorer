@@ -826,7 +826,7 @@ module CkbSync
           cell_index = out_point.index.is_a?(String) ? out_point.index.hex : out_point.index
           pointer = [out_point.tx_hash, cell_index]
           unless cell_outputs_by_pointer.key?(pointer)
-            cell_outputs_by_pointer[pointer] = CellOutput.find_by_pointer(out_point.tx_hash, out_point.index)
+            cell_outputs_by_pointer[pointer] = CellOutput.find_by_pointer(out_point.tx_hash, cell_index)
           end
 
           cell_output = cell_outputs_by_pointer[pointer]
