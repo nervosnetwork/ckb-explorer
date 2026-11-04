@@ -1573,7 +1573,7 @@ _prev_outputs, index = nil)
         # witnesses: tx.witnesses,
         is_cellbase: tx_index.zero?,
         live_cell_changes: live_cell_changes(tx, tx_index),
-        bytes: tx.serialized_size_in_block,
+        bytes: CkbSync::TransactionSizeCalculator.serialized_size_in_block(tx),
         tx_index:,
       }
     end
