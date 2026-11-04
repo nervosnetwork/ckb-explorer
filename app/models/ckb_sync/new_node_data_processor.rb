@@ -1105,9 +1105,34 @@ input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, 
 
           ckb_transaction_id = ckb_txs[tx_index]["id"]
           @tx_previous_outputs[ckb_transaction_id] ||= []
-          @tx_previous_outputs[ckb_transaction_id] <<
-            previous_outputs_by_pointer[previous_output_key(input.previous_output.tx_hash,
-                                                             input.previous_output.index)]
+          previous_output = previous_outputs_by_pointer[previous_output_key(input.previous_output.tx_hash,
+                                                                            input.previous_output.index)]
+          unless previous_output
+            # Fallback to the scalar lookup used before the batched query. This
+            # also tells us whether the row is missing or the batched lookup
+            # simply failed to find it.
+            previous_output = CellOutput.live.find_by(
+              tx_hash: input.previous_output.tx_hash,
+              cell_index: input.previous_output.index,
+            )
+            if previous_output
+              Rails.logger.warn(
+                "[block-sync] previous output map miss resolved: " \
+                "#{input.previous_output.tx_hash}##{input.previous_output.index}",
+              )
+            else
+              any_status = CellOutput.find_by(
+                tx_hash: input.previous_output.tx_hash,
+                cell_index: input.previous_output.index,
+              )
+              Rails.logger.error(
+                "[block-sync] previous output not found: " \
+                "#{input.previous_output.tx_hash}##{input.previous_output.index}, " \
+                "any_status=#{any_status&.status || 'missing'}",
+              )
+            end
+          end
+          @tx_previous_outputs[ckb_transaction_id] << previous_output
         end
       end
 
@@ -1347,7 +1372,11 @@ _prev_outputs, index = nil)
         }
       else
         # previous_output = prev_outputs["#{input.previous_output.tx_hash}-#{input.previous_output.index}"]
-        previous_output = @tx_previous_outputs[ckb_transaction_id].find{|p_out| input.previous_output.tx_hash == p_out.tx_hash && p_out.cell_index == input.previous_output.index }
+        previous_output = @tx_previous_outputs[ckb_transaction_id].compact.find { |p_out| input.previous_output.tx_hash == p_out.tx_hash && p_out.cell_index == input.previous_output.index }
+        unless previous_output
+          raise "Previous cell output not found: #{input.previous_output.tx_hash}##{input.previous_output.index} " \
+                "(block #{@local_block&.number})"
+        end
 
         {
           cell_input: {
