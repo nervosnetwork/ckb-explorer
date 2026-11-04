@@ -748,6 +748,12 @@ module CkbSync
       local_block, node_block, ckb_txs, inputs, outputs, tags, udt_address_ids,
        contained_udt_ids, contained_addr_ids, token_transfer_ckb_tx_ids, cell_deps
     )
+      # Resolve locks, type scripts, and addresses once per block instead of once per output.
+      @lock_script_ids = {}
+      @type_script_ids = {}
+      @address_ids = {}
+      @redis_keys ||= []
+
       cell_outputs_attributes = []
       cell_inputs_attributes = []
       prev_cell_outputs_attributes = []
@@ -757,12 +763,18 @@ module CkbSync
 
       if lock_scripts_attributes.any?
         lock_scripts_attributes.each_slice(500) do |batch|
-          LockScript.upsert_all(batch, unique_by: :script_hash, returning: [:id], record_timestamps: true)
+          result = LockScript.upsert_all(
+            batch, unique_by: :script_hash, returning: %i[id script_hash], record_timestamps: true,
+          )
+          record_script_ids(result, @lock_script_ids)
         end
       end
       if type_scripts_attributes.any?
         type_scripts_attributes.each_slice(500) do |batch|
-          TypeScript.upsert_all(batch, unique_by: :script_hash, returning: [:id], record_timestamps: true)
+          result = TypeScript.upsert_all(
+            batch, unique_by: :script_hash, returning: %i[id script_hash], record_timestamps: true,
+          )
+          record_script_ids(result, @type_script_ids)
         end
       end
 
@@ -804,16 +816,29 @@ module CkbSync
       end
 
       cell_deps_attrs = []
+      cell_outputs_by_pointer = {}
       cell_deps.each do |tx_hash, cell_deps|
         txid = hash2id[tx_hash]
         tx_index = hash2index[tx_hash]
 
         cell_deps.each do |cell_dep|
+          out_point = cell_dep.out_point
+          cell_index = out_point.index.is_a?(String) ? out_point.index.hex : out_point.index
+          pointer = [out_point.tx_hash, cell_index]
+          unless cell_outputs_by_pointer.key?(pointer)
+            cell_outputs_by_pointer[pointer] = CellOutput.find_by_pointer(out_point.tx_hash, cell_index)
+          end
+
+          cell_output = cell_outputs_by_pointer[pointer]
+          unless cell_output
+            raise "CellOutput not found for cell dependency #{out_point.tx_hash}##{out_point.index}"
+          end
+
           cell_deps_attrs <<
             {
               ckb_transaction_id: txid,
               dep_type: cell_dep.dep_type,
-              contract_cell_id: CellOutput.find_by_pointer(cell_dep.out_point.tx_hash, cell_dep.out_point.index).id,
+              contract_cell_id: cell_output.id,
               block_number: local_block.number,
               tx_index:,
             }
@@ -872,55 +897,133 @@ module CkbSync
     end
 
     def build_addresses!(outputs, local_block)
-      block_number = local_cache.read("BlockNumber")
+      @address_ids ||= {}
+      @lock_script_ids ||= {}
+      @redis_keys ||= []
+
+      locks_by_hash = {}
       outputs.each_value do |items|
         items.each do |item|
-          script_hash = item.lock.compute_hash
-          key = "lock_script_hash_#{script_hash}"
-          lock_script_id = Rails.cache.read(key) || LockScript.find_by(script_hash: script_hash)&.id
-          address_redis_key = "address_lock_hash_#{script_hash}"
-          unless Rails.cache.exist?(address_redis_key)
-            address = Address.find_or_create_address(item.lock, local_block.timestamp, lock_script_id)
-            Rails.cache.write(address_redis_key, address.id)
-            @redis_keys << address_redis_key
-          end
+          lock_hash = item.lock.compute_hash
+          locks_by_hash[lock_hash] ||= item.lock
         end
       end
+      return if locks_by_hash.empty?
+
+      cache_keys = locks_by_hash.keys.map { |lock_hash| "address_lock_hash_#{lock_hash}" }
+      Rails.cache.read_multi(*cache_keys).each do |key, address_id|
+        next if address_id.nil?
+
+        @address_ids[key.delete_prefix("address_lock_hash_")] = address_id
+      end
+
+      cache_entries = {}
+      locks_by_hash.each do |lock_hash, lock|
+        next if @address_ids.key?(lock_hash)
+
+        lock_script_id = @lock_script_ids[lock_hash] || lock_script_id_for(lock_hash)
+        address = Address.find_or_create_address(lock, local_block.timestamp, lock_script_id)
+        @address_ids[lock_hash] = address.id
+        cache_entries["address_lock_hash_#{lock_hash}"] = address.id
+      end
+
+      return if cache_entries.empty?
+
+      Rails.cache.write_multi(cache_entries)
+      @redis_keys.concat(cache_entries.keys)
     end
 
     def build_scripts(outputs)
-      locks_attributes = Set.new
-      types_attributes = Set.new
-      block_number = local_cache.read("BlockNumber")
+      @lock_script_ids ||= {}
+      @type_script_ids ||= {}
+
+      locks_by_hash = {}
+      types_by_hash = {}
       outputs.each_value do |items|
         items.each do |output|
-          script_hash = output.lock.compute_hash
-          key = "lock_script_hash_#{script_hash}"
-          unless Rails.cache.exist?(key)
-            if lock_script = LockScript.find_by(script_hash: script_hash)
-              Rails.cache.write(key, lock_script.id)
-              @redis_keys << key
-            else
-              locks_attributes << script_attributes(output.lock, script_hash)
-            end
-          end
+          lock_hash = output.lock.compute_hash
+          locks_by_hash[lock_hash] ||= output.lock
 
-          if output.type.present?
-            script_hash = output.type.compute_hash
-            key = "type_script_hash_#{script_hash}"
-            unless Rails.cache.exist?(key)
-              if type_script = TypeScript.find_by(script_hash: script_hash)
-                Rails.cache.write(key, type_script.id)
-                @redis_keys << key
-              else
-                types_attributes << script_attributes(output.type, script_hash)
-              end
-            end
-          end
+          next if output.type.blank?
+
+          type_hash = output.type.compute_hash
+          types_by_hash[type_hash] ||= output.type
         end
       end
 
-      [locks_attributes.to_a.compact, types_attributes.to_a.compact]
+      lock_scripts_attributes = fetch_scripts(
+        locks_by_hash, "lock_script_hash_", LockScript, @lock_script_ids,
+      )
+      type_scripts_attributes = fetch_scripts(
+        types_by_hash, "type_script_hash_", TypeScript, @type_script_ids,
+      )
+
+      [lock_scripts_attributes, type_scripts_attributes]
+    end
+
+    def fetch_scripts(scripts_by_hash, key_prefix, script_class, script_ids)
+      return [] if scripts_by_hash.empty?
+
+      @redis_keys ||= []
+      cache_keys = scripts_by_hash.keys.map { |script_hash| "#{key_prefix}#{script_hash}" }
+      Rails.cache.read_multi(*cache_keys).each do |key, id|
+        next if id.nil?
+
+        script_ids[key.delete_prefix(key_prefix)] = id
+      end
+
+      new_scripts = {}
+      cache_entries = {}
+      scripts_by_hash.each do |script_hash, script|
+        next if script_ids.key?(script_hash)
+
+        if (script_record = script_class.find_by(script_hash:))
+          script_ids[script_hash] = script_record.id
+          cache_entries["#{key_prefix}#{script_hash}"] = script_record.id
+        else
+          new_scripts[script_hash] = script_attributes(script, script_hash)
+        end
+      end
+
+      if cache_entries.any?
+        Rails.cache.write_multi(cache_entries)
+        @redis_keys.concat(cache_entries.keys)
+      end
+
+      new_scripts.values
+    end
+
+    def record_script_ids(result, script_ids)
+      return unless result.respond_to?(:columns) && result.respond_to?(:rows)
+
+      columns = result.columns.map(&:to_s)
+      id_index = columns.index("id")
+      script_hash_index = columns.index("script_hash")
+      return unless id_index && script_hash_index
+
+      result.rows.each do |row|
+        script_ids[row[script_hash_index]] = row[id_index]
+      end
+    end
+
+    def lock_script_id_for(script_hash)
+      @lock_script_ids ||= {}
+      return @lock_script_ids[script_hash] if @lock_script_ids.key?(script_hash)
+
+      script_id =
+        Rails.cache.read("lock_script_hash_#{script_hash}") || LockScript.find_by(script_hash:)&.id
+      @lock_script_ids[script_hash] = script_id if script_id
+      script_id
+    end
+
+    def type_script_id_for(script_hash)
+      @type_script_ids ||= {}
+      return @type_script_ids[script_hash] if @type_script_ids.key?(script_hash)
+
+      script_id =
+        Rails.cache.read("type_script_hash_#{script_hash}") || TypeScript.find_by(script_hash:)&.id
+      @type_script_ids[script_hash] = script_id if script_id
+      script_id
     end
 
     def script_attributes(script, script_hash)
@@ -1038,6 +1141,10 @@ input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, 
       node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities,
 tags, udt_address_ids, contained_udt_ids, contained_addr_ids, token_transfer_ckb_tx_ids
     )
+      @address_ids ||= {}
+      @lock_script_ids ||= {}
+      @redis_keys ||= []
+
       outputs.each do |tx_index, items|
         cell_index = 0
         # tx_index == 0 is cellbase, no need to calculate fee
@@ -1046,20 +1153,19 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, token_transfer_ckb
         end
         items.each do |item|
           lock_script_hash = item.lock.compute_hash
-          address_key = "address_lock_hash_#{lock_script_hash}"
-          address_id = Rails.cache.read(address_key)
+          address_id = @address_ids[lock_script_hash]
           unless address_id
-            address_id = Address.find_by(lock_hash: lock_script_hash)&.id
-            unless address_id
-              lock_script_id = Rails.cache.read("lock_script_hash_#{lock_script_hash}") || LockScript.find_by(script_hash: lock_script_hash)&.id
-              address_id = Address.find_or_create_address(item.lock, local_block.timestamp, lock_script_id).id
-            end
-            if address
-              Rails.cache.write(address_key, address_id)
-              @redis_keys << key
-            end
+            address = Address.find_or_create_address(
+              item.lock, local_block.timestamp,
+              @lock_script_ids[lock_script_hash] || lock_script_id_for(lock_script_hash),
+            )
+            address_id = address.id
+            @address_ids[lock_script_hash] = address_id
+            address_key = "address_lock_hash_#{lock_script_hash}"
+            Rails.cache.write(address_key, address_id)
+            @redis_keys << address_key
           end
-          
+
           addr_tx_changes[tx_index][address_id] += item.capacity
           type_script_hash = item.type&.compute_hash
 
@@ -1114,19 +1220,13 @@ tags, udt_address_ids, contained_udt_ids, contained_addr_ids, token_transfer_ckb
 
     def cell_output_attributes(output, address_id, ckb_transaction, local_block, cell_index, output_data)
       lock_script_hash = output.lock.compute_hash
-      key = "lock_script_hash_#{lock_script_hash}"
-      lock_script_id = Rails.cache.read(key) || LockScript.find_by(script_hash: lock_script_hash)&.id
-      
-      type_script_hash = output.type&.compute_hash
-      type_script_id =
-        if output.type.present?
-          key = "type_script_hash_#{type_script_hash}"
-          Rails.cache.read(key) || TypeScript.find_by(script_hash: type_script_hash)&.id
-        end
+      lock_script_id = @lock_script_ids[lock_script_hash] || lock_script_id_for(lock_script_hash)
 
-      udt_amount = udt_amount(cell_type(output.type, output_data), output_data,
-                              output.type&.args)
+      type_script_hash = output.type&.compute_hash
+      type_script_id = type_script_id_for(type_script_hash) if type_script_hash
+
       cell_type = cell_type(output.type, output_data).to_s
+      udt_amount = udt_amount(cell_type, output_data, output.type&.args)
       if cell_type == "nrc_721_factory"
         update_nrc_factory_cell_info(output.type,
                                      output_data)
