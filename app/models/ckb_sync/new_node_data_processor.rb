@@ -1091,9 +1091,12 @@ input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, 
 
       previous_outputs = []
       tx_hashes.each_slice(500) do |batch|
-        # tx_hash is a bytea column; pass raw bytes so Rails' array quoting
-        # matches the stored value instead of the hex string representation.
-        binary_hashes = batch.map { |tx_hash| CKB::Utils.hex_to_bin(tx_hash) }
+        # CkbHashType treats every string starting with "0x" as a hex string.
+        # Wrap the raw hash bytes in Binary::Data so a hash whose first bytes
+        # are 0x30 0x78 (the ASCII "0x") is not decoded a second time.
+        binary_hashes = batch.map do |tx_hash|
+          ActiveModel::Type::Binary::Data.new(CKB::Utils.hex_to_bin(tx_hash))
+        end
         previous_outputs.concat CellOutput.live.where(tx_hash: binary_hashes).to_a
       end
       previous_outputs_by_pointer =
