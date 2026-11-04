@@ -823,16 +823,22 @@ module CkbSync
 
         cell_deps.each do |cell_dep|
           out_point = cell_dep.out_point
-          pointer = [out_point.tx_hash, out_point.index]
+          cell_index = out_point.index.is_a?(String) ? out_point.index.hex : out_point.index
+          pointer = [out_point.tx_hash, cell_index]
           unless cell_outputs_by_pointer.key?(pointer)
             cell_outputs_by_pointer[pointer] = CellOutput.find_by_pointer(out_point.tx_hash, out_point.index)
+          end
+
+          cell_output = cell_outputs_by_pointer[pointer]
+          unless cell_output
+            raise "CellOutput not found for cell dependency #{out_point.tx_hash}##{out_point.index}"
           end
 
           cell_deps_attrs <<
             {
               ckb_transaction_id: txid,
               dep_type: cell_dep.dep_type,
-              contract_cell_id: cell_outputs_by_pointer[pointer].id,
+              contract_cell_id: cell_output.id,
               block_number: local_block.number,
               tx_index:,
             }
@@ -1004,16 +1010,20 @@ module CkbSync
       @lock_script_ids ||= {}
       return @lock_script_ids[script_hash] if @lock_script_ids.key?(script_hash)
 
-      @lock_script_ids[script_hash] =
+      script_id =
         Rails.cache.read("lock_script_hash_#{script_hash}") || LockScript.find_by(script_hash:)&.id
+      @lock_script_ids[script_hash] = script_id if script_id
+      script_id
     end
 
     def type_script_id_for(script_hash)
       @type_script_ids ||= {}
       return @type_script_ids[script_hash] if @type_script_ids.key?(script_hash)
 
-      @type_script_ids[script_hash] =
+      script_id =
         Rails.cache.read("type_script_hash_#{script_hash}") || TypeScript.find_by(script_hash:)&.id
+      @type_script_ids[script_hash] = script_id if script_id
+      script_id
     end
 
     def script_attributes(script, script_hash)
