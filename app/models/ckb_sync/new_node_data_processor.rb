@@ -917,14 +917,51 @@ module CkbSync
         @address_ids[key.delete_prefix("address_lock_hash_")] = address_id
       end
 
-      cache_entries = {}
-      locks_by_hash.each do |lock_hash, lock|
-        next if @address_ids.key?(lock_hash)
+      missing_hashes = locks_by_hash.keys.reject { |lock_hash| @address_ids.key?(lock_hash) }
+      return if missing_hashes.empty?
 
-        lock_script_id = @lock_script_ids[lock_hash] || lock_script_id_for(lock_hash)
-        address = Address.find_or_create_address(lock, local_block.timestamp, lock_script_id)
+      cache_entries = {}
+      existing_hashes = []
+      missing_hashes.each_slice(500) do |batch|
+        Address.where(lock_hash: batch).pluck(:lock_hash, :id).each do |lock_hash, address_id|
+          lock_hash = normalize_bytea_value(lock_hash)
+          @address_ids[lock_hash] = address_id
+          cache_entries["address_lock_hash_#{lock_hash}"] = address_id
+          existing_hashes << lock_hash
+        end
+      end
+
+      # Keep the existing repair path for addresses that are already in the DB.
+      existing_hashes.each do |lock_hash|
+        address = Address.find_or_create_address(
+          locks_by_hash[lock_hash], local_block.timestamp,
+          @lock_script_ids[lock_hash] || lock_script_id_for(lock_hash),
+        )
         @address_ids[lock_hash] = address.id
         cache_entries["address_lock_hash_#{lock_hash}"] = address.id
+      end
+
+      new_hashes = missing_hashes.reject { |lock_hash| @address_ids.key?(lock_hash) }
+      if new_hashes.any?
+        new_address_attributes = new_hashes.map do |lock_hash|
+          {
+            lock_hash:,
+            address_hash: CkbUtils.generate_address(
+              locks_by_hash[lock_hash], CKB::Address::Version::CKB2021,
+            ),
+            block_timestamp: local_block.timestamp,
+            lock_script_id: @lock_script_ids[lock_hash] || lock_script_id_for(lock_hash),
+          }
+        end
+        new_address_attributes.each_slice(500) do |batch|
+          Address.insert_all(
+            batch, returning: %i[id lock_hash], record_timestamps: true,
+          ).rows.each do |id, lock_hash|
+            lock_hash = normalize_bytea_value(lock_hash)
+            @address_ids[lock_hash] = id
+            cache_entries["address_lock_hash_#{lock_hash}"] = id
+          end
+        end
       end
 
       return if cache_entries.empty?
@@ -972,17 +1009,22 @@ module CkbSync
         script_ids[key.delete_prefix(key_prefix)] = id
       end
 
-      new_scripts = {}
+      missing_hashes = scripts_by_hash.keys.reject { |script_hash| script_ids.key?(script_hash) }
+      return [] if missing_hashes.empty?
+
       cache_entries = {}
-      scripts_by_hash.each do |script_hash, script|
+      missing_hashes.each_slice(500) do |batch|
+        script_class.where(script_hash: batch).pluck(:script_hash, :id).each do |script_hash, id|
+          script_ids[script_hash] = id
+          cache_entries["#{key_prefix}#{script_hash}"] = id
+        end
+      end
+
+      new_scripts = {}
+      missing_hashes.each do |script_hash|
         next if script_ids.key?(script_hash)
 
-        if (script_record = script_class.find_by(script_hash:))
-          script_ids[script_hash] = script_record.id
-          cache_entries["#{key_prefix}#{script_hash}"] = script_record.id
-        else
-          new_scripts[script_hash] = script_attributes(script, script_hash)
-        end
+        new_scripts[script_hash] = script_attributes(scripts_by_hash[script_hash], script_hash)
       end
 
       if cache_entries.any?
@@ -1039,32 +1081,33 @@ module CkbSync
       inputs, ckb_txs, local_block_id, cell_inputs_attributes, prev_cell_outputs_attributes,
 input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, prev_outputs, token_transfer_ckb_tx_ids
     )
-      conditions = []
-
+      tx_hashes = []
       inputs.each do |_, items|
         items.each do |input|
-          unless from_cell_base?(input)
-            conditions << { tx_hash: input.previous_output.tx_hash, cell_index: input.previous_output.index }
-          end
+          tx_hashes << input.previous_output.tx_hash unless from_cell_base?(input)
         end
       end
+      tx_hashes = tx_hashes.uniq
 
-      query = conditions.inject(nil) do |combined, cond|
-        q = CellOutput.live.where(cond)
-        combined.nil? ? q : combined.or(q)
+      previous_outputs = []
+      tx_hashes.each_slice(500) do |batch|
+        # tx_hash is a bytea column; pass raw bytes so Rails' array quoting
+        # matches the stored value instead of the hex string representation.
+        binary_hashes = batch.map { |tx_hash| CKB::Utils.hex_to_bin(tx_hash) }
+        previous_outputs.concat CellOutput.live.where(tx_hash: binary_hashes).to_a
       end
+      previous_outputs_by_pointer =
+        previous_outputs.index_by { |output| previous_output_key(output.tx_hash, output.cell_index) }
 
-      results = query.to_a
-
-      tx_index = 0
       inputs.each do |tx_index, items|
         items.each do |input|
-          unless from_cell_base?(input)
-            ckb_transaction_id = ckb_txs[tx_index]["id"]
-            @tx_previous_outputs[ckb_transaction_id] = [] if @tx_previous_outputs[ckb_transaction_id] == nil
-            pout = results.find{|r| r.tx_hash == input.previous_output.tx_hash && r.cell_index == input.previous_output.index }
-            @tx_previous_outputs[ckb_transaction_id] << pout
-          end
+          next if from_cell_base?(input)
+
+          ckb_transaction_id = ckb_txs[tx_index]["id"]
+          @tx_previous_outputs[ckb_transaction_id] ||= []
+          @tx_previous_outputs[ckb_transaction_id] <<
+            previous_outputs_by_pointer[previous_output_key(input.previous_output.tx_hash,
+                                                             input.previous_output.index)]
         end
       end
 
@@ -1135,6 +1178,15 @@ input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids, 
           end
         end
       end
+    end
+
+    def previous_output_key(tx_hash, index)
+      [tx_hash.to_s.b, index.is_a?(String) ? index.hex : index]
+    end
+
+    def normalize_bytea_value(value)
+      value = value.to_s
+      value.start_with?("\\x") ? [value[2..]].pack("H*") : value
     end
 
     def build_cell_outputs!(
