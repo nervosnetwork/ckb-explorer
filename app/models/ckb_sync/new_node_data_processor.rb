@@ -57,14 +57,15 @@ module CkbSync
 
       ApplicationRecord.transaction do
         # build node data
-        local_block = @local_block = build_block!(node_block)
+        local_block = @local_block = benchmark(:build_block!, node_block)
         local_cache.write("BlockNumber", local_block.number)
-        build_uncle_blocks!(node_block, local_block.id)
+        benchmark :build_uncle_blocks!, node_block, local_block.id
         inputs = @inputs = {}
         outputs = @outputs = {}
         outputs_data = @outputs_data = {}
         cell_deps = {}
-        @ckb_txs = build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data, cell_deps).to_a
+        @ckb_txs = benchmark(:build_ckb_transactions!, node_block, local_block, inputs, outputs, outputs_data,
+                             cell_deps).to_a
         benchmark :build_udts!, local_block, outputs, outputs_data
 
         tags = []
@@ -759,36 +760,50 @@ module CkbSync
       prev_cell_outputs_attributes = []
       input_capacities = []
       output_capacities = []
-      lock_scripts_attributes, type_scripts_attributes = build_scripts(outputs)
+      lock_scripts_attributes, type_scripts_attributes = ApplicationRecord.benchmark("build_scripts") do
+        build_scripts(outputs)
+      end
 
       if lock_scripts_attributes.any?
-        lock_scripts_attributes.each_slice(500) do |batch|
-          result = LockScript.upsert_all(
-            batch, unique_by: :script_hash, returning: %i[id script_hash], record_timestamps: true,
-          )
-          record_script_ids(result, @lock_script_ids)
+        ApplicationRecord.benchmark("lock_scripts_upsert") do
+          lock_scripts_attributes.each_slice(500) do |batch|
+            result = LockScript.upsert_all(
+              batch, unique_by: :script_hash, returning: %i[id script_hash], record_timestamps: true,
+            )
+            record_script_ids(result, @lock_script_ids)
+          end
         end
       end
       if type_scripts_attributes.any?
-        type_scripts_attributes.each_slice(500) do |batch|
-          result = TypeScript.upsert_all(
-            batch, unique_by: :script_hash, returning: %i[id script_hash], record_timestamps: true,
-          )
-          record_script_ids(result, @type_script_ids)
+        ApplicationRecord.benchmark("type_scripts_upsert") do
+          type_scripts_attributes.each_slice(500) do |batch|
+            result = TypeScript.upsert_all(
+              batch, unique_by: :script_hash, returning: %i[id script_hash], record_timestamps: true,
+            )
+            record_script_ids(result, @type_script_ids)
+          end
         end
       end
 
-      build_addresses!(outputs, local_block)
+      ApplicationRecord.benchmark("build_addresses") do
+        build_addresses!(outputs, local_block)
+      end
 
-      build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
-                          udt_address_ids, contained_udt_ids, contained_addr_ids, token_transfer_ckb_tx_ids)
+      ApplicationRecord.benchmark("build_cell_outputs") do
+        build_cell_outputs!(node_block, outputs, ckb_txs, local_block, cell_outputs_attributes, output_capacities, tags,
+                            udt_address_ids, contained_udt_ids, contained_addr_ids, token_transfer_ckb_tx_ids)
+      end
       if cell_outputs_attributes.present?
         tx_hashes = cell_outputs_attributes.pluck(:tx_hash)
         binary_hashes = CkbUtils.hexes_to_bins_sql(tx_hashes)
-        CellOutput.pending.where("tx_hash IN (#{binary_hashes})").update_all(status: :live)
+        ApplicationRecord.benchmark("cell_outputs_pending_update") do
+          CellOutput.pending.where("tx_hash IN (#{binary_hashes})").update_all(status: :live)
+        end
         id_hashes = []
         cell_outputs_attributes.each_slice(500) do |batch|
-          result = CellOutput.import(batch, validate: false, returning: %i[id data_hash]).results
+          result = ApplicationRecord.benchmark("cell_outputs_import") do
+            CellOutput.import(batch, validate: false, returning: %i[id data_hash])
+          end.results
           id_hashes.concat result.map{|item| {"id" => item[0], "data_hash" => item[1]} }
         end
         cell_data_attrs = []
@@ -804,7 +819,9 @@ module CkbSync
         end
 
         if cell_data_attrs.present?
-          CellDatum.import cell_data_attrs, validate: false, batch_size: 500
+          ApplicationRecord.benchmark("cell_datum_import") do
+            CellDatum.import cell_data_attrs, validate: false, batch_size: 500
+          end
         end
       end
 
@@ -845,15 +862,21 @@ module CkbSync
         end
       end
       if cell_deps_attrs.present?
-        CellDependency.import cell_deps_attrs, validate: false, batch_size: 500
+        ApplicationRecord.benchmark("cell_deps_import") do
+          CellDependency.import cell_deps_attrs, validate: false, batch_size: 500
+        end
       end
 
       prev_outputs = nil
-      build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
-                        input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids,
-                        prev_outputs, token_transfer_ckb_tx_ids)
+      ApplicationRecord.benchmark("build_cell_inputs") do
+        build_cell_inputs(inputs, ckb_txs, local_block.id, cell_inputs_attributes, prev_cell_outputs_attributes,
+                          input_capacities, tags, udt_address_ids, contained_udt_ids, contained_addr_ids,
+                          prev_outputs, token_transfer_ckb_tx_ids)
+      end
 
-      CellInput.import cell_inputs_attributes, validate: false, batch_size: 500
+      ApplicationRecord.benchmark("cell_inputs_import") do
+        CellInput.import cell_inputs_attributes, validate: false, batch_size: 500
+      end
       if prev_cell_outputs_attributes.present?
         prev_cell_outputs_attributes.each_slice(500) do |batch|
           updates = batch.map do |attr|
@@ -889,7 +912,9 @@ module CkbSync
           
           # puts sql
     
-          ActiveRecord::Base.connection.execute(sql)
+          ApplicationRecord.benchmark("prev_outputs_update") do
+            ActiveRecord::Base.connection.execute(sql)
+          end
         end
       end
 
@@ -1412,7 +1437,9 @@ _prev_outputs, index = nil)
     end
 
     def build_ckb_transactions!(node_block, local_block, inputs, outputs, outputs_data, cell_deps)
-      cycles = CkbSync::Api.instance.get_block_cycles node_block.header.hash
+      cycles = ApplicationRecord.benchmark("fetch_block_cycles") do
+        CkbSync::Api.instance.get_block_cycles node_block.header.hash
+      end
       ckb_transactions_attributes = []
       hashes = []
       header_deps = {}
@@ -1435,15 +1462,31 @@ _prev_outputs, index = nil)
       # First update status thus we can use upsert later. otherwise, we may not be able to
       # locate correct record according to tx_hash
       binary_hashes = CkbUtils.hexes_to_bins_sql(hashes)
-      pending_txs = CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").pluck(
-        :tx_hash, :confirmation_time
-      )
-      CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").update_all tx_status: "committed" if pending_txs.size > 0
+      pending_txs = ApplicationRecord.benchmark("pending_txs_lookup") do
+        CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").pluck(
+          :tx_hash, :confirmation_time
+        )
+      end
+      if pending_txs.size > 0
+        ApplicationRecord.benchmark("pending_txs_update") do
+          CkbTransaction.where(tx_status: :pending).where("tx_hash IN (#{binary_hashes})").update_all tx_status: "committed"
+        end
+      end
       txs = []
       ckb_transactions_attributes.each_slice(500) do |batch|
-        results = CkbTransaction.import(batch, validate: false, returning: %w(id tx_hash tx_index block_timestamp block_number created_at)).results
-        txs.concat results.map{|item| { "id" => item[0], "tx_hash" => item[1], "tx_index" => item[2], "block_timestamp" => item[3], "block_number" => item[4], "created_at" => item[5] }  }
-      end 
+        results = ApplicationRecord.benchmark("ckb_transactions_import") do
+          CkbTransaction.import(
+            batch, validate: false,
+            returning: %w(id tx_hash tx_index block_timestamp block_number created_at),
+          )
+        end.results
+        txs.concat(results.map do |item|
+          {
+            "id" => item[0], "tx_hash" => item[1], "tx_index" => item[2], "block_timestamp" => item[3],
+            "block_number" => item[4], "created_at" => item[5],
+          }
+        end)
+      end
 
       if pending_txs.any?
         hash_to_pool_times = pending_txs.to_h
@@ -1458,8 +1501,10 @@ _prev_outputs, index = nil)
             }
           end
         confirmation_time_attrs.each_slice(500) do |batch|
-          CkbTransaction.upsert_all(batch, update_only: [:confirmation_time],
-          unique_by: %i[id tx_status])
+          ApplicationRecord.benchmark("confirmation_time_upsert") do
+            CkbTransaction.upsert_all(batch, update_only: [:confirmation_time],
+            unique_by: %i[id tx_status])
+          end
         end
       end
 
@@ -1483,7 +1528,9 @@ _prev_outputs, index = nil)
         end
       end
       if header_deps_attrs.present?
-        HeaderDependency.import header_deps_attrs, validate: false, batch_size: 500
+        ApplicationRecord.benchmark("header_deps_import") do
+          HeaderDependency.import header_deps_attrs, validate: false, batch_size: 500
+        end
       end
 
       # process witnesses
@@ -1504,7 +1551,9 @@ _prev_outputs, index = nil)
       end
 
       if witnesses_attrs.present?
-        Witness.import witnesses_attrs, validate: false, batch_size: 500
+        ApplicationRecord.benchmark("witnesses_import") do
+          Witness.import witnesses_attrs, validate: false, batch_size: 500
+        end
       end
 
       txs
