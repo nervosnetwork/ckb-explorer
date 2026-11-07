@@ -587,10 +587,8 @@ module CkbSync
       keys = outputs.map { |output| [output.address_id.to_i, output.type_hash] }.uniq
       return {} if keys.empty?
 
-      UdtAccount.where(
-        address_id: keys.map(&:first).uniq,
-        type_hash: keys.map(&:last).uniq,
-      ).select(:id, :address_id, :type_hash).each_with_object({}) do |account, result|
+      condition, *values = composite_in_condition(%w[address_id type_hash], keys)
+      UdtAccount.where(condition, *values).select(:id, :address_id, :type_hash).each_with_object({}) do |account, result|
         result[[account.address_id.to_i, account.type_hash]] ||= account
       end
     end
@@ -606,12 +604,12 @@ module CkbSync
       end.uniq
       return {} if query_keys.empty?
 
+      sql_keys = query_keys.map do |address_id, type_hash, cell_type|
+        [address_id, type_hash, CellOutput.cell_types[cell_type] || cell_type]
+      end
+      condition, *values = composite_in_condition(%w[address_id type_hash cell_type], sql_keys)
       rows = CellOutput.live.
-        where(
-          address_id: query_keys.map(&:first).uniq,
-          type_hash: query_keys.pluck(1).uniq,
-          cell_type: query_keys.map(&:last).uniq,
-        ).
+        where(condition, *values).
         group(:address_id, :type_hash, :cell_type).
         sum(:udt_amount)
 
@@ -624,18 +622,26 @@ module CkbSync
     def live_udt_keys(keys)
       return Set.new if keys.empty?
 
+      sql_keys = keys.map do |address_id, type_hash, cell_type|
+        [address_id, type_hash, CellOutput.cell_types[cell_type] || cell_type]
+      end
+      condition, *values = composite_in_condition(%w[address_id type_hash cell_type], sql_keys)
       rows = CellOutput.live.
-        where(
-          address_id: keys.map(&:first).uniq,
-          type_hash: keys.pluck(1).uniq,
-          cell_type: keys.map(&:last).uniq,
-        ).
+        where(condition, *values).
         group(:address_id, :type_hash, :cell_type).
         count
 
       rows.each_with_object(Set.new) do |((address_id, type_hash, cell_type), _count), result|
         result << [normalize_address_id(address_id), type_hash, normalize_cell_type(cell_type)]
       end
+    end
+
+    # Builds a parameterized row-value IN clause so multi-column lookups use
+    # exactly the keys touched by the block instead of the cross-product of
+    # independent IN lists.
+    def composite_in_condition(columns, keys)
+      placeholders = keys.map { "(#{Array.new(columns.size, '?').join(', ')})" }.join(", ")
+      ["(#{columns.join(', ')}) IN (#{placeholders})", *keys.flatten]
     end
 
     def udt_amount_for(amounts, output, udt_type)
