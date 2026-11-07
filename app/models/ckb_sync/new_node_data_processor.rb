@@ -27,6 +27,7 @@ module CkbSync
       "spore_cell" => "spore_cell",
       "did_cell" => "did_cell",
     }.freeze
+    UDT_ACCOUNT_SLOW_THRESHOLD_MS = 1_000
 
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
@@ -426,25 +427,85 @@ module CkbSync
     end
 
     def update_or_create_udt_accounts!(local_block)
-      token_outputs, consumed_outputs = udt_cell_outputs_for(local_block)
+      started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      timings = {}
+
+      token_outputs, consumed_outputs = measure_udt_step(timings, :cell_outputs) do
+        udt_cell_outputs_for(local_block)
+      end
       return if token_outputs.empty? && consumed_outputs.empty?
 
-      type_script_args = type_script_args_for(token_outputs)
-      udts_by_key = load_udts_for(token_outputs + consumed_outputs)
-      accounts_by_key = load_udt_accounts_for(token_outputs + consumed_outputs)
-      amounts = load_udt_account_amounts(token_outputs + consumed_outputs)
+      type_script_args = measure_udt_step(timings, :type_script_args) do
+        type_script_args_for(token_outputs)
+      end
+      all_outputs = token_outputs + consumed_outputs
+      udts_by_key = measure_udt_step(timings, :load_udts) do
+        load_udts_for(all_outputs)
+      end
+      accounts_by_key = measure_udt_step(timings, :load_accounts) do
+        load_udt_accounts_for(all_outputs)
+      end
+      amounts = measure_udt_step(timings, :load_amounts) do
+        load_udt_account_amounts(all_outputs)
+      end
 
       new_accounts = {}
       account_updates = {}
-      build_output_udt_accounts(token_outputs, type_script_args, udts_by_key, accounts_by_key, amounts,
-                                new_accounts, account_updates)
-      build_consumed_udt_accounts(consumed_outputs, udts_by_key, accounts_by_key, amounts,
+      measure_udt_step(timings, :build_outputs) do
+        build_output_udt_accounts(token_outputs, type_script_args, udts_by_key, accounts_by_key, amounts,
                                   new_accounts, account_updates)
-      destroy_ids = burned_nft_account_ids(consumed_outputs, udts_by_key, accounts_by_key,
-                                           new_accounts, account_updates)
+      end
+      measure_udt_step(timings, :build_consumed) do
+        build_consumed_udt_accounts(consumed_outputs, udts_by_key, accounts_by_key, amounts,
+                                    new_accounts, account_updates)
+      end
+      destroy_ids = measure_udt_step(timings, :burned_nfts) do
+        burned_nft_account_ids(consumed_outputs, udts_by_key, accounts_by_key,
+                               new_accounts, account_updates)
+      end
 
-      UdtAccount.where(id: destroy_ids).delete_all if destroy_ids.any?
-      persist_udt_account_changes(new_accounts, account_updates)
+      measure_udt_step(timings, :delete) do
+        UdtAccount.where(id: destroy_ids).delete_all if destroy_ids.any?
+      end
+      measure_udt_step(timings, :persist) do
+        persist_udt_account_changes(new_accounts, account_updates)
+      end
+
+      total_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
+      log_udt_account_timings(local_block, token_outputs, consumed_outputs, all_outputs, accounts_by_key,
+                              amounts, new_accounts, account_updates, destroy_ids, timings, total_ms)
+    end
+
+    def measure_udt_step(timings, name)
+      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      result = yield
+      timings[name] = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start) * 1000).round(1)
+      result
+    end
+
+    # Logs slow blocks by default; set UDT_ACCOUNT_TIMING_LOG=1 to log every block.
+    def log_udt_account_timings(local_block, token_outputs, consumed_outputs, all_outputs, accounts_by_key,
+                                amounts, new_accounts, account_updates, destroy_ids, timings, total_ms)
+      slow = total_ms >= UDT_ACCOUNT_SLOW_THRESHOLD_MS
+      return unless slow || ENV["UDT_ACCOUNT_TIMING_LOG"] == "1"
+
+      type_hashes = all_outputs.filter_map(&:type_hash)
+      timing_details = timings.map { |name, ms| "#{name}=#{ms}ms" }.join(" ")
+      message = "[udt-account] block=#{local_block.number} outputs=#{token_outputs.size} " \
+                "consumed=#{consumed_outputs.size} type_hashes=#{type_hashes.uniq.size} " \
+                "accounts=#{accounts_by_key.size} amount_keys=#{amounts.size} " \
+                "new=#{new_accounts.size} updates=#{account_updates.size} destroys=#{destroy_ids.size} " \
+                "#{timing_details} total=#{total_ms.round(1)}ms"
+      if slow
+        top_types = top_udt_type_hashes(type_hashes)
+        message += " top_types=#{top_types}" if top_types.present?
+      end
+      Rails.logger.info(message)
+    end
+
+    def top_udt_type_hashes(type_hashes)
+      type_hashes.tally.sort_by { |type_hash, count| [-count, type_hash] }.first(5).
+        map { |type_hash, count| "#{type_hash}:#{count}" }.join(",")
     end
 
     def udt_cell_outputs_for(local_block)
