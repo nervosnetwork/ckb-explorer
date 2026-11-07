@@ -504,17 +504,20 @@ module CkbSync
 
       live_keys = live_udt_keys(nft_keys)
       nft_keys.filter_map do |key|
+        next unless udts_by_key[[key[1], key[2]]]
+        next if live_keys.include?(key)
+
         account = accounts_by_key[[key[0], key[1]]]
-        account.id if burned_nft_account?(key, account, udts_by_key, new_accounts, account_updates, live_keys)
+        if account
+          # An output pass may have staged an update for an intermediate cell
+          # that was consumed later in this block. Final liveness wins.
+          account_updates.delete(account.id)
+          account.id
+        else
+          new_accounts.delete([key[0], key[1]])
+          nil
+        end
       end
-    end
-
-    def burned_nft_account?(key, account, udts_by_key, new_accounts, account_updates, live_keys)
-      return false if account.nil?
-      return false if new_accounts.key?([key[0], key[1]]) || account_updates.key?(account.id)
-      return false unless udts_by_key[[key[1], key[2]]]
-
-      live_keys.exclude?(key)
     end
 
     def nft_consumed_key(output)
