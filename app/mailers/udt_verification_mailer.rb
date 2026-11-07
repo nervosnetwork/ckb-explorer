@@ -1,5 +1,5 @@
 class UdtVerificationMailer < ApplicationMailer
-  default from: "noreply@magickbase.com"
+  default from: "noreply-ckb-explorer@nervos.org"
 
   def send_token
     email = params[:email]
@@ -10,3 +10,4 @@ class UdtVerificationMailer < ApplicationMailer
     end
   end
 end
+

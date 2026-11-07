@@ -4,8 +4,7 @@ permissions:
   pull-requests: write
 
 on:
-  push:
-    branches: [develop]
+  workflow_dispatch:
 
 jobs:
   request-to-deploy-testnet:
