@@ -12,13 +12,14 @@ module CkbSync
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
                   :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes, :redis_keys, :tx_previous_outputs
 
+    # SSRI accounts are maintained by SsriContractWorker, so ssri cells are
+    # intentionally excluded from the block processor's account updates.
     UDT_CELL_TYPES = %w(udt m_nft_token nrc_721_token spore_cell did_cell
                         omiga_inscription xudt xudt_compatible).freeze
     NFT_UDT_TYPES = %w(m_nft_token nrc_721_token spore_cell did_cell).freeze
     # Maps Udt/UdtAccount types to the cell_outputs.cell_type used for balance sums.
     UDT_AMOUNT_CELL_TYPES = {
       "sudt" => "udt",
-      "ssri" => "udt",
       "xudt" => "xudt",
       "xudt_compatible" => "xudt_compatible",
       "omiga_inscription" => "omiga_inscription",

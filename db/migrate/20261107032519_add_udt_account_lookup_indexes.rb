@@ -11,14 +11,14 @@ class AddUdtAccountLookupIndexes < ActiveRecord::Migration[7.0]
       INCLUDE (udt_amount)
     SQL
 
-    add_index :udt_accounts,
-              %i[address_id type_hash udt_type],
-              algorithm: :concurrently,
-              name: "index_udt_accounts_on_address_type_and_udt_type"
+    execute <<~SQL.squish
+      CREATE INDEX CONCURRENTLY IF NOT EXISTS index_udt_accounts_on_address_type_and_udt_type
+      ON udt_accounts (address_id, type_hash, udt_type)
+    SQL
   end
 
   def down
-    remove_index :udt_accounts, name: "index_udt_accounts_on_address_type_and_udt_type"
-    remove_index :cell_outputs_live, name: "index_cell_outputs_live_on_address_type_cell_and_udt_amount"
+    execute "DROP INDEX CONCURRENTLY IF EXISTS index_udt_accounts_on_address_type_and_udt_type"
+    execute "DROP INDEX CONCURRENTLY IF EXISTS index_cell_outputs_live_on_address_type_cell_and_udt_amount"
   end
 end
