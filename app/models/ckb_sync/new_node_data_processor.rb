@@ -438,14 +438,15 @@ module CkbSync
       type_script_args = measure_udt_step(timings, :type_script_args) do
         type_script_args_for(token_outputs)
       end
+      all_outputs = token_outputs + consumed_outputs
       udts_by_key = measure_udt_step(timings, :load_udts) do
-        load_udts_for(token_outputs + consumed_outputs)
+        load_udts_for(all_outputs)
       end
       accounts_by_key = measure_udt_step(timings, :load_accounts) do
-        load_udt_accounts_for(token_outputs + consumed_outputs)
+        load_udt_accounts_for(all_outputs)
       end
       amounts = measure_udt_step(timings, :load_amounts) do
-        load_udt_account_amounts(token_outputs + consumed_outputs)
+        load_udt_account_amounts(all_outputs)
       end
 
       new_accounts = {}
@@ -471,8 +472,8 @@ module CkbSync
       end
 
       total_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000
-      log_udt_account_timings(local_block, token_outputs, consumed_outputs, accounts_by_key, amounts,
-                              new_accounts, account_updates, destroy_ids, timings, total_ms)
+      log_udt_account_timings(local_block, token_outputs, consumed_outputs, all_outputs, accounts_by_key,
+                              amounts, new_accounts, account_updates, destroy_ids, timings, total_ms)
     end
 
     def measure_udt_step(timings, name)
@@ -483,12 +484,12 @@ module CkbSync
     end
 
     # Logs slow blocks by default; set UDT_ACCOUNT_TIMING_LOG=1 to log every block.
-    def log_udt_account_timings(local_block, token_outputs, consumed_outputs, accounts_by_key, amounts,
-                                new_accounts, account_updates, destroy_ids, timings, total_ms)
+    def log_udt_account_timings(local_block, token_outputs, consumed_outputs, all_outputs, accounts_by_key,
+                                amounts, new_accounts, account_updates, destroy_ids, timings, total_ms)
       slow = total_ms >= UDT_ACCOUNT_SLOW_THRESHOLD_MS
-      return unless slow || ENV["UDT_ACCOUNT_TIMING_LOG"].present?
+      return unless slow || ENV["UDT_ACCOUNT_TIMING_LOG"] == "1"
 
-      type_hashes = (token_outputs + consumed_outputs).filter_map(&:type_hash)
+      type_hashes = all_outputs.filter_map(&:type_hash)
       timing_details = timings.map { |name, ms| "#{name}=#{ms}ms" }.join(" ")
       message = "[udt-account] block=#{local_block.number} outputs=#{token_outputs.size} " \
                 "consumed=#{consumed_outputs.size} type_hashes=#{type_hashes.uniq.size} " \
