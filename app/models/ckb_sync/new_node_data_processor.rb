@@ -12,6 +12,22 @@ module CkbSync
                   :outputs, :inputs, :outputs_data, :udt_address_ids, :contained_address_ids,
                   :contained_udt_ids, :cell_datas, :enable_cota, :token_transfer_ckb_tx_ids, :addr_tx_changes, :redis_keys, :tx_previous_outputs
 
+    # SSRI accounts are maintained by SsriContractWorker, so ssri cells are
+    # intentionally excluded from the block processor's account updates.
+    UDT_CELL_TYPES = %w(udt m_nft_token nrc_721_token spore_cell did_cell
+                        omiga_inscription xudt xudt_compatible).freeze
+    NFT_UDT_TYPES = %w(m_nft_token nrc_721_token spore_cell did_cell).freeze
+    # Maps Udt/UdtAccount types to the cell_outputs.cell_type used for balance sums.
+    UDT_AMOUNT_CELL_TYPES = {
+      "sudt" => "udt",
+      "xudt" => "xudt",
+      "xudt_compatible" => "xudt_compatible",
+      "omiga_inscription" => "omiga_inscription",
+      "m_nft_token" => "m_nft_token",
+      "spore_cell" => "spore_cell",
+      "did_cell" => "did_cell",
+    }.freeze
+
     def initialize(enable_cota = ENV["COTA_AGGREGATOR_URL"].present?)
       @enable_cota = enable_cota
       @local_cache = LocalCache.new
@@ -410,102 +426,260 @@ module CkbSync
     end
 
     def update_or_create_udt_accounts!(local_block)
-      new_udt_accounts_attributes = Set.new
-      udt_accounts_attributes = Set.new
-      local_block.cell_outputs.select(:id, :address_id, :type_hash, :cell_type,
-                                      :type_script_id).each do |udt_output|
-        next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
-                                                spore_cell did_cell omiga_inscription xudt xudt_compatible))
+      token_outputs, consumed_outputs = udt_cell_outputs_for(local_block)
+      return if token_outputs.empty? && consumed_outputs.empty?
 
-        udt_type = udt_type(udt_output.cell_type)
-        udt_account = UdtAccount.where(address_id: udt_output.address_id).where(type_hash: udt_output.type_hash, udt_type:).select(:id,
-                                                                                                    :created_at).first
-        amount = udt_account_amount(udt_type, udt_output.type_hash, udt_output.address_id)
-        nft_token_id =
-          case udt_type
-          when "nrc_721_token"
-            CkbUtils.parse_nrc_721_args(udt_output.type_script.args).token_id
-          when "spore_cell", "did_cell"
-            udt_output.type_script.args.hex
-          end
-        udt = Udt.where(type_hash: udt_output.type_hash, udt_type:).select(
-          :id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at,
-        ).first
+      type_script_args = type_script_args_for(token_outputs)
+      udts_by_key = load_udts_for(token_outputs + consumed_outputs)
+      accounts_by_key = load_udt_accounts_for(token_outputs + consumed_outputs)
+      amounts = load_udt_account_amounts(token_outputs + consumed_outputs)
+
+      new_accounts = {}
+      account_updates = {}
+      build_output_udt_accounts(token_outputs, type_script_args, udts_by_key, accounts_by_key, amounts,
+                                new_accounts, account_updates)
+      build_consumed_udt_accounts(consumed_outputs, udts_by_key, accounts_by_key, amounts,
+                                  new_accounts, account_updates)
+      destroy_ids = burned_nft_account_ids(consumed_outputs, udts_by_key, accounts_by_key,
+                                           new_accounts, account_updates)
+
+      UdtAccount.where(id: destroy_ids).delete_all if destroy_ids.any?
+      persist_udt_account_changes(new_accounts, account_updates)
+    end
+
+    def udt_cell_outputs_for(local_block)
+      block_outputs = local_block.cell_outputs.
+        select(:id, :address_id, :type_hash, :cell_type, :type_script_id).to_a
+      token_outputs = block_outputs.select { |output| udt_cell_output?(output) }
+      consumed_outputs = (@tx_previous_outputs || {}).values.flatten.compact.
+        select { |output| udt_cell_output?(output) }
+      [token_outputs, consumed_outputs]
+    end
+
+    def build_output_udt_accounts(token_outputs, type_script_args, udts_by_key, accounts_by_key, amounts,
+                                  new_accounts, account_updates)
+      token_outputs.each do |output|
+        udt_type = udt_type(output.cell_type)
+        udt = udts_by_key[[output.type_hash, udt_type]]
         unless udt
-          Rails.logger.error(
-            "Missing Udt, skip udt account update: cell_output_id=#{udt_output.id}, " \
-            "cell_type=#{udt_output.cell_type}, type_hash=#{udt_output.type_hash}, udt_type=#{udt_type}",
-          )
+          log_missing_udt(output, udt_type)
           next
         end
-        if udt_account.present?
-          udt_accounts_attributes << { id: udt_account.id, amount:,
-                                       created_at: udt.created_at }
+
+        key = [output.address_id.to_i, output.type_hash]
+        amount = udt_amount_for(amounts, output, udt_type)
+        if (account = accounts_by_key[key])
+          account_updates[account.id] = { id: account.id, amount:, created_at: udt.created_at }
         else
-          new_udt_accounts_attributes << {
-            address_id: udt_output.address_id, udt_type: udt.udt_type, full_name: udt.full_name, symbol: udt.symbol, decimal: udt.decimal,
-            published: udt.published, code_hash: udt.code_hash, type_hash: udt.type_hash, amount:, udt_id: udt.id, nft_token_id:
-          }
+          new_accounts[key] = new_udt_account_attributes(output, udt, amount, type_script_args)
         end
       end
+    end
 
-      local_block.ckb_transactions.pluck(:id).each do |tx_id| # iterator over each tx id for better sql performance
-        cell_outputs = @tx_previous_outputs[tx_id] || []
-        cell_outputs.each do |udt_output|
-          next unless udt_output.cell_type.in?(%w(udt m_nft_token nrc_721_token
-                                                  spore_cell did_cell omiga_inscription xudt xudt_compatible))
+    def build_consumed_udt_accounts(consumed_outputs, udts_by_key, accounts_by_key, amounts,
+                                    new_accounts, account_updates)
+      consumed_outputs.each do |output|
+        udt_type = udt_type(output.cell_type)
+        next if NFT_UDT_TYPES.include?(udt_type)
 
-          udt_type = udt_type(udt_output.cell_type)
-          udt_account = UdtAccount.where(address_id: udt_output.address_id).where(type_hash: udt_output.type_hash, udt_type:).select(:id,
-                                                                                                      :created_at).first
-          amount = udt_account_amount(udt_type, udt_output.type_hash, udt_output.address_id)
-          udt = Udt.where(type_hash: udt_output.type_hash, udt_type:).select(
-            :id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at,
-          ).first
-          unless udt
-            Rails.logger.error(
-              "Missing Udt, skip udt account update: cell_output_id=#{udt_output.id}, " \
-              "cell_type=#{udt_output.cell_type}, type_hash=#{udt_output.type_hash}, udt_type=#{udt_type}",
-            )
-            next
-          end
-          if udt_account.present?
-            case udt_type
-            when "sudt", "ssri", "omiga_inscription", "xudt", "xudt_compatible"
-              udt_accounts_attributes << { id: udt_account.id, amount:,
-                                           created_at: udt.created_at }
-            when "m_nft_token", "nrc_721_token", "spore_cell", "did_cell"
-              udt_account.destroy unless CellOutput.live.where(address_id: udt_output.address_id).where(cell_type: udt_type).where(type_hash: udt_output.type_hash).exists?
-            end
-          end
-        end
-      end
+        key = [output.address_id.to_i, output.type_hash]
+        account = accounts_by_key[key]
+        next if account.nil?
+        next if new_accounts.key?(key) || account_updates.key?(account.id)
 
-      if new_udt_accounts_attributes.present?
-        new_udt_accounts_attributes.each_slice(500) do |batch|
-          UdtAccount.insert_all!(batch, record_timestamps: true)
+        udt = udts_by_key[[output.type_hash, udt_type]]
+        unless udt
+          log_missing_udt(output, udt_type)
+          next
+        end
+
+        amount = udt_amount_for(amounts, output, udt_type)
+        account_updates[account.id] = { id: account.id, amount:, created_at: udt.created_at }
+      end
+    end
+
+    def burned_nft_account_ids(consumed_outputs, udts_by_key, accounts_by_key, new_accounts, account_updates)
+      nft_keys = consumed_outputs.filter_map { |output| nft_consumed_key(output) }.uniq
+      return [] if nft_keys.empty?
+
+      live_keys = live_udt_keys(nft_keys)
+      nft_keys.filter_map do |key|
+        next unless udts_by_key[[key[1], key[2]]]
+        next if live_keys.include?(key)
+
+        account = accounts_by_key[[key[0], key[1]]]
+        if account
+          # An output pass may have staged an update for an intermediate cell
+          # that was consumed later in this block. Final liveness wins.
+          account_updates.delete(account.id)
+          account.id
+        else
+          new_accounts.delete([key[0], key[1]])
+          nil
         end
       end
-      if udt_accounts_attributes.present?
-        udt_accounts_attributes.each_slice(500) do |batch|
-          UdtAccount.upsert_all(batch, record_timestamps: true)
-        end
+    end
+
+    def nft_consumed_key(output)
+      udt_type = udt_type(output.cell_type)
+      [output.address_id.to_i, output.type_hash, udt_type] if NFT_UDT_TYPES.include?(udt_type)
+    end
+
+    def new_udt_account_attributes(output, udt, amount, type_script_args)
+      {
+        address_id: output.address_id,
+        udt_type: udt.udt_type,
+        full_name: udt.full_name,
+        symbol: udt.symbol,
+        decimal: udt.decimal,
+        published: udt.published,
+        code_hash: udt.code_hash,
+        type_hash: udt.type_hash,
+        amount:,
+        udt_id: udt.id,
+        nft_token_id: nft_token_id_for(output, udt_type(output.cell_type), type_script_args),
+      }
+    end
+
+    def persist_udt_account_changes(new_accounts, account_updates)
+      new_accounts.values.each_slice(500) do |batch|
+        UdtAccount.insert_all!(batch, record_timestamps: true)
       end
+      account_updates.values.each_slice(500) do |batch|
+        UdtAccount.upsert_all(batch, record_timestamps: true)
+      end
+    end
+
+    def udt_cell_output?(output)
+      output.type_hash.present? && output.cell_type.in?(UDT_CELL_TYPES)
     end
 
     def udt_type(cell_type)
       cell_type == "udt" ? "sudt" : cell_type
     end
 
-    def udt_account_amount(udt_type, type_hash, address_id)
-      case udt_type
-      when "sudt", "ssri"
-        CellOutput.live.where(address_id:).udt.where(type_hash:).sum(:udt_amount)
-      when "xudt", "xudt_compatible", "omiga_inscription", "m_nft_token", "spore_cell", "did_cell"
-        CellOutput.live.where(address_id:).where(cell_type: udt_type).where(type_hash:).sum(:udt_amount)
-      else
-        0
+    # Loads all type script args needed for NFT token ids in one query.
+    def type_script_args_for(outputs)
+      type_script_ids = outputs.filter_map(&:type_script_id).uniq
+      return {} if type_script_ids.empty?
+
+      TypeScript.where(id: type_script_ids).pluck(:id, :args).to_h
+    end
+
+    # Loads all Udt records touched by this block, keyed by [type_hash, udt_type].
+    def load_udts_for(outputs)
+      keys = outputs.map { |output| [output.type_hash, udt_type(output.cell_type)] }.uniq
+      return {} if keys.empty?
+
+      Udt.where(
+        type_hash: keys.map(&:first).uniq,
+        udt_type: keys.map(&:last).uniq,
+      ).select(
+        :id, :udt_type, :full_name, :symbol, :decimal, :published, :code_hash, :type_hash, :created_at
+      ).each_with_object({}) do |udt, result|
+        result[[udt.type_hash, udt.udt_type]] ||= udt
       end
+    end
+
+    # Loads all existing accounts touched by this block, keyed by [address_id, type_hash].
+    # udt_accounts has a unique index on (type_hash, address_id), so one row per key.
+    def load_udt_accounts_for(outputs)
+      keys = outputs.map { |output| [output.address_id.to_i, output.type_hash] }.uniq
+      return {} if keys.empty?
+
+      condition, *values = composite_in_condition(%w[address_id type_hash], keys)
+      UdtAccount.where(condition, *values).select(:id, :address_id, :type_hash).each_with_object({}) do |account, result|
+        result[[account.address_id.to_i, account.type_hash]] ||= account
+      end
+    end
+
+    # Computes all live balances for this block in one grouped query instead of
+    # one SUM per UDT cell output.
+    def load_udt_account_amounts(outputs)
+      query_keys = outputs.filter_map do |output|
+        next if output.type_hash.blank?
+
+        cell_type = UDT_AMOUNT_CELL_TYPES[udt_type(output.cell_type)]
+        [output.address_id.to_i, output.type_hash, cell_type] if cell_type
+      end.uniq
+      return {} if query_keys.empty?
+
+      sql_keys = query_keys.map do |address_id, type_hash, cell_type|
+        [address_id, type_hash, CellOutput.cell_types[cell_type] || cell_type]
+      end
+      condition, *values = composite_in_condition(%w[address_id type_hash cell_type], sql_keys)
+      rows = CellOutput.live.
+        where(condition, *values).
+        group(:address_id, :type_hash, :cell_type).
+        sum(:udt_amount)
+
+      rows.each_with_object({}) do |((address_id, type_hash, cell_type), amount), amounts|
+        amounts[[normalize_address_id(address_id), type_hash, normalize_cell_type(cell_type)]] = amount
+      end
+    end
+
+    # Returns the [address_id, type_hash, cell_type] keys that still have a live output.
+    def live_udt_keys(keys)
+      return Set.new if keys.empty?
+
+      sql_keys = keys.map do |address_id, type_hash, cell_type|
+        [address_id, type_hash, CellOutput.cell_types[cell_type] || cell_type]
+      end
+      condition, *values = composite_in_condition(%w[address_id type_hash cell_type], sql_keys)
+      rows = CellOutput.live.
+        where(condition, *values).
+        group(:address_id, :type_hash, :cell_type).
+        count
+
+      rows.each_with_object(Set.new) do |((address_id, type_hash, cell_type), _count), result|
+        result << [normalize_address_id(address_id), type_hash, normalize_cell_type(cell_type)]
+      end
+    end
+
+    # Builds a parameterized row-value IN clause so multi-column lookups use
+    # exactly the keys touched by the block instead of the cross-product of
+    # independent IN lists.
+    def composite_in_condition(columns, keys)
+      placeholders = keys.map { "(#{Array.new(columns.size, '?').join(', ')})" }.join(", ")
+      ["(#{columns.join(', ')}) IN (#{placeholders})", *keys.flatten]
+    end
+
+    def udt_amount_for(amounts, output, udt_type)
+      cell_type = UDT_AMOUNT_CELL_TYPES[udt_type]
+      return 0 if cell_type.nil?
+
+      amounts.fetch([output.address_id.to_i, output.type_hash, cell_type], 0)
+    end
+
+    def nft_token_id_for(output, udt_type, type_script_args)
+      return unless NFT_UDT_TYPES.include?(udt_type)
+
+      args = type_script_args[output.type_script_id]
+      return if args.nil?
+
+      case udt_type
+      when "nrc_721_token"
+        CkbUtils.parse_nrc_721_args(args).token_id
+      when "spore_cell", "did_cell"
+        args.hex
+      end
+    end
+
+    def normalize_address_id(address_id)
+      address_id.to_i
+    end
+
+    def normalize_cell_type(cell_type)
+      return cell_type unless cell_type.is_a?(Integer)
+
+      CellOutput.cell_types.key(cell_type) || cell_type
+    end
+
+    def log_missing_udt(output, udt_type)
+      Rails.logger.error(
+        "Missing Udt, skip udt account update: cell_output_id=#{output.id}, " \
+        "cell_type=#{output.cell_type}, type_hash=#{output.type_hash}, udt_type=#{udt_type}",
+      )
     end
 
     def update_table_records_count(local_block)

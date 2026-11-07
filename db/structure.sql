@@ -3972,6 +3972,13 @@ CREATE INDEX cell_outputs_live_type_script_id_idx ON public.cell_outputs_live US
 
 
 --
+-- Name: index_cell_outputs_live_on_address_type_cell_and_udt_amount; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cell_outputs_live_on_address_type_cell_and_udt_amount ON public.cell_outputs_live USING btree (address_id, type_hash, cell_type) INCLUDE (udt_amount);
+
+
+--
 -- Name: cell_outputs_pending_address_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4949,6 +4956,13 @@ CREATE UNIQUE INDEX index_type_scripts_on_script_hash ON public.type_scripts USI
 --
 
 CREATE INDEX index_udt_accounts_on_address_id ON public.udt_accounts USING btree (address_id);
+
+
+--
+-- Name: index_udt_accounts_on_address_type_and_udt_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_udt_accounts_on_address_type_and_udt_type ON public.udt_accounts USING btree (address_id, type_hash, udt_type);
 
 
 --
@@ -5938,6 +5952,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20251011011714'),
 ('20251013082609'),
 ('20251027053353'),
-('20251027054232');
+('20251027054232'),
+('20261107032519');
 
 
