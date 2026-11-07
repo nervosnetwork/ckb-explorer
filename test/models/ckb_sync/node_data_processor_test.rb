@@ -1892,6 +1892,35 @@ module CkbSync
       end
     end
 
+    test "#process_block should sum udt cells of the same type for one address" do
+      prepare_node_data(10)
+      VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
+        node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
+        create(:block, :with_block_hash, number: node_block.header.number - 1)
+        node_output = node_block.transactions.first.outputs.first
+        new_node_output = node_output.dup
+        node_block.transactions.first.outputs << new_node_output
+        type_script = CKB::Types::Script.new(code_hash: Settings.sudt_cell_type_hash,
+                                             args: "0xb2e61ff569acf041b3c2c17724e2379c581eeac3",
+                                             hash_type: "type")
+        node_output.type = type_script
+        new_node_output.type = type_script
+        node_block.transactions.first.outputs_data[0] =
+          "0x000050ad321ea12e0000000000000000"
+        node_block.transactions.first.outputs_data[1] =
+          "0x0000909dceda82370000000000000000"
+        create(:udt, code_hash: Settings.sudt_cell_type_hash, type_hash: type_script.compute_hash)
+        address_hash = CkbUtils.generate_address(node_output.lock)
+        address = Address.find_by_address_hash(address_hash)
+        node_data_processor.process_block(node_block)
+
+        expected_amount = CkbUtils.parse_udt_cell_data("0x000050ad321ea12e0000000000000000") +
+                          CkbUtils.parse_udt_cell_data("0x0000909dceda82370000000000000000")
+        assert_equal expected_amount,
+                     address.udt_accounts.find_by(type_hash: type_script.compute_hash).amount
+      end
+    end
+
     test "#process_block should update udt addresses_count and total_amount when there are udt cells" do
       issuer_address1 = create(:address)
       issuer_address2 = create(:address)
