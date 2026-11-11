@@ -1,12 +1,9 @@
 name: Pull, build docker image and push to repository
 on:
+  push:
+    branches: [develop]
   workflow_dispatch:
   workflow_call:
-    secrets:
-      GHCR_USERNAME:
-        required: true
-      GHCR_TOKEN:
-        required: true
     outputs:
       # Image name
       image-name:
@@ -16,6 +13,10 @@ on:
       image-tag:
         description: image tag(version)
         value: ${{ jobs.build.outputs.image-tag }}
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,12 +34,12 @@ jobs:
         id: docker_build
         uses: mr-smithers-excellent/docker-build-push@v5
         with:
-          image: ckb-explorer-api
+          image: ckb-explorer
           registry: ghcr.io
-          githubOrg: magickbase # optional
-          username: ${{ secrets.GHCR_USERNAME }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          githubOrg: nervosnetwork
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: DeleteUselessImages
-        run: docker images && docker images| grep "ckb-explorer-api" | grep -v "IMAGE ID" | awk 'NR>1 {print $3}' | xargs -I {}  docker rmi {}
+        run: docker images && docker images| grep "ckb-explorer" | grep -v "IMAGE ID" | awk 'NR>1 {print $3}' | xargs -I {}  docker rmi {}
       - name: CheckImage
         run: docker images && df -hT && df -ih
