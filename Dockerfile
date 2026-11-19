@@ -1,7 +1,9 @@
 ARG RUBY_VERSION=3.1.2
 FROM ruby:$RUBY_VERSION as builder
 LABEL MAINTAINER Nervos Network
-RUN apt-get update && apt-get install -y  build-essential \
+# Bullseye LTS ended on 2026-08-31; retain its signed security packages via a snapshot.
+RUN sed -i '/^deb .* bullseye-security /c\deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/20260831T235959Z/ bullseye-security main' /etc/apt/sources.list && \
+  apt-get update -o APT::Update::Error-Mode=any && apt-get install -y  build-essential \
   git libpq-dev libcurl4 libjemalloc2 \
   libsecp256k1-dev  libsodium-dev
 ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
@@ -24,7 +26,8 @@ ADD . /usr/src/
 
 
 FROM ruby:${RUBY_VERSION}-slim
-RUN apt-get update && apt-get install -y \
+RUN sed -i '/^deb .* bullseye-security /c\deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/20260831T235959Z/ bullseye-security main' /etc/apt/sources.list && \
+  apt-get update -o APT::Update::Error-Mode=any && apt-get install -y \
   libpq5 libsodium23 curl \
   libcurl4 libjemalloc2 \
   && rm -rf /var/lib/apt/lists/*
