@@ -62,7 +62,11 @@ module CkbSync
     rescue StandardError => e
       Rails.logger.error e.message
       puts e.backtrace.join("\n")
-      Rails.cache.delete_multi(@redis_keys)
+      # @redis_keys is only assigned once process_block starts. Failures before
+      # that (e.g. get_tip_block_number timing out) leave it nil, and
+      # delete_multi(nil) would raise a NoMethodError that masks the real error
+      # and kills the syncer process.
+      Rails.cache.delete_multi(@redis_keys) if @redis_keys.present?
       raise e
     end
 

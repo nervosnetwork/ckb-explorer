@@ -24,6 +24,13 @@ module CkbSync
       CkbSync::Api.any_instance.stubs(:get_blockchain_info).returns(OpenStruct.new(chain: "ckb_testnet"))
     end
 
+    test "#call should re-raise the original error when the node RPC fails before processing a block" do
+      CkbSync::Api.any_instance.stubs(:get_tip_block_number).
+        raises(Net::ReadTimeout.new("execution expired"))
+
+      assert_raises(Net::ReadTimeout) { node_data_processor.call }
+    end
+
     test "#process_block should create one block" do
       VCR.use_cassette("blocks/#{DEFAULT_NODE_BLOCK_NUMBER}") do
         node_block = CkbSync::Api.instance.get_block_by_number(DEFAULT_NODE_BLOCK_NUMBER)
